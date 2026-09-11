@@ -30,6 +30,7 @@ class BladeBlizzardKitsuneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BladeBlizzardKitsune()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
         harness.activateHandAbility(player1, 0, bears.getId());
         harness.passBothPriorities();
 

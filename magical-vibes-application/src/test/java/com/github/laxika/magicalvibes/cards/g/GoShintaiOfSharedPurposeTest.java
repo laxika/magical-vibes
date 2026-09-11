@@ -20,14 +20,15 @@ class GoShintaiOfSharedPurposeTest extends BaseCardTest {
     void paysToCreateOneSpiritPerShrine() {
         harness.addToBattlefield(player1, new GoShintaiOfSharedPurpose());
         harness.addToBattlefield(player1, new HondenOfSeeingWinds());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(2);
     }

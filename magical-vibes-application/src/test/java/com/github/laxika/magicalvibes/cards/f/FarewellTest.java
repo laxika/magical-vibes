@@ -76,7 +76,7 @@ class FarewellTest extends BaseCardTest {
 
         cast(new int[]{3});
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName).containsExactly("Farewell");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opponentsCard);
@@ -97,7 +97,7 @@ class FarewellTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ghostly Prison");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName).containsExactly("Farewell");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .contains(ownCard)

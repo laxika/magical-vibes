@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.f.FragmentOfKonda;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "12")
 public class TheFallOfLordKonda extends Card {
@@ -31,10 +31,10 @@ public class TheFallOfLordKonda extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileTargetPermanentEffect(chapterOneFilter));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
-                new PermanentPredicateTargetFilter(
+        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+                new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         chapterOneFilter,
-                        "Target must be a creature an opponent controls with mana value 4 or greater")));
+                        "Target must be a creature an opponent controls with mana value 4 or greater"), 1, 1)));
 
         addEffect(EffectSlot.SAGA_CHAPTER_II,
                 new EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(new PermanentTruePredicate()));

@@ -70,6 +70,21 @@ class MichikosReignOfTruthTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, portrait)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Chapter III returns a stolen Saga under its controller's control")
+    void stolenSagaReturnsUnderControllersControl() {
+        MichikosReignOfTruth card = new MichikosReignOfTruth();
+        card.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, card);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+
+        Permanent portrait = findPermanent(player1, "Portrait of Michiko");
+        assertThat(portrait.isTransformed()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new MichikosReignOfTruth());
         saga.setCounterCount(CounterType.LORE, loreCounters);

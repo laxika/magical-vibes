@@ -104,7 +104,8 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         ArgumentCaptor<List<Integer>> validIndices = ArgumentCaptor.forClass(List.class);
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), validIndices.capture(), any(), anyBoolean(),
                 anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false),
-                eq(0), eq(0), anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull());
+                eq(0), eq(0), anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(),
+                isNull(), anySet());
         assertThat(validIndices.getValue()).containsExactly(0);
     }
 

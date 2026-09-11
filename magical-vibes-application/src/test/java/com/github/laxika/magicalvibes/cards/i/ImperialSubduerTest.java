@@ -27,6 +27,7 @@ class ImperialSubduerTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(victim.getId());
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
 
         assertThat(victim.isTapped()).isTrue();
     }
@@ -39,6 +40,7 @@ class ImperialSubduerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
 
         assertThat(victim.isTapped()).isTrue();
     }

@@ -1652,6 +1652,7 @@ class SpellCastingServiceTest {
             Card land = createLand("Exiled Plains");
             gd.addToExile(player1Id, land);
             gd.exilePlayPermissions.put(land.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, land.getId())).thenReturn(true);
 
             svc.playCardFromExile(gd, player1, land.getId(), 0, null);
 
@@ -1698,6 +1699,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Exiled Bear", "{1}{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 2);
 
             svc.playCardFromExile(gd, player1, creature.getId(), 0, null);
@@ -1722,6 +1724,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Free Bear", "{4}{G}{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             gd.exilePlayWithoutPayingManaCost.add(creature.getId());
             // Player has no mana at all — the play must still succeed.
 
@@ -1741,6 +1744,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Exiled Bear", "{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 1);
             int before = gd.getSpellsCastThisTurnCount(player1Id);
 

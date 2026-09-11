@@ -44,7 +44,21 @@ public class DistributeCountersAmongControlledCreaturesEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DistributeCountersAmongControlledCreaturesEffect) effect;
-        List<Permanent> creatures = eligibleCreatures(gameData, entry.getControllerId(), e.permanentFilter());
+        List<Permanent> creatures;
+        if (e.targetsPlayer()) {
+            List<UUID> boundTargets = entry.targetsForBoundEffectGroup(effect);
+            UUID playerId = boundTargets == null ? entry.getTargetId()
+                    : boundTargets.stream().findFirst().orElse(null);
+            FilterContext context = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
+            creatures = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(permanent -> e.permanentFilter() == null
+                            ? gameQueryService.isCreature(gameData, permanent)
+                            : predicateEvaluationService.matchesPermanentPredicate(
+                                    permanent, e.permanentFilter(), context))
+                    .toList();
+        } else {
+            creatures = eligibleCreatures(gameData, entry.getControllerId(), e.permanentFilter());
+        }
         int total = amountEvaluationService.evaluate(gameData, e.total(),
                 AmountContext.forStackEntry(entry, null));
 

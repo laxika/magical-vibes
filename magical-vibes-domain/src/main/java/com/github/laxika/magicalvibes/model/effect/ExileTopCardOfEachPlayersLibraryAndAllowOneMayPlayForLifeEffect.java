@@ -5,5 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * to play one of those cards, using life equal to a spell's mana value instead of its mana cost.
  */
 public record ExileTopCardOfEachPlayersLibraryAndAllowOneMayPlayForLifeEffect()
-        implements CardEffect {
+        implements CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.SOURCE_SELF;
+    }
 }

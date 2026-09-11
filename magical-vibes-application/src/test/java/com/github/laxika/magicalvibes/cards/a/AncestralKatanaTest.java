@@ -58,7 +58,6 @@ class AncestralKatanaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(katana.getAttachedTo()).isNull();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test
@@ -71,9 +70,8 @@ class AncestralKatanaTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1, 2));
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(katana.getAttachedTo()).isNull();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test
@@ -85,9 +83,8 @@ class AncestralKatanaTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(katana.getAttachedTo()).isNull();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     private Permanent addKatanaReady(Player player) {

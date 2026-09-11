@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImperialMoth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BefriendingTheMoths.class, GrizzlyBears.class})
+@CardUsed({BefriendingTheMoths.class, ImperialMoth.class, GrizzlyBears.class})
 class BefriendingTheMothsTest extends BaseCardTest {
 
     @Test

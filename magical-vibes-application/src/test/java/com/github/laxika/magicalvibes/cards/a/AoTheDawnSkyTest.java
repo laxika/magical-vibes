@@ -45,6 +45,7 @@ class AoTheDawnSkyTest extends BaseCardTest {
 
         destroyAo();
         harness.handleListChoice(player1, BATTLEFIELD_MODE);
+        harness.passBothPriorities();
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -77,6 +78,7 @@ class AoTheDawnSkyTest extends BaseCardTest {
 
         destroyAo();
         harness.handleListChoice(player1, COUNTER_MODE);
+        harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

@@ -21,12 +21,14 @@ class EiganjoExemplarTest extends BaseCardTest {
     void samuraiAttackingAloneGetsBoosted() {
         addCreatureReady(player1, new EiganjoExemplar());
         Permanent samurai = addCreatureReady(player1, new MothriderSamurai());
+        int samuraiPower = gqs.getEffectivePower(gd, samurai);
+        int samuraiToughness = gqs.getEffectiveToughness(gd, samurai);
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(samuraiPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(samuraiToughness + 1);
     }
 
     @Test
@@ -34,12 +36,14 @@ class EiganjoExemplarTest extends BaseCardTest {
     void warriorAttackingAloneGetsBoosted() {
         addCreatureReady(player1, new EiganjoExemplar());
         Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        int warriorPower = gqs.getEffectivePower(gd, warrior);
+        int warriorToughness = gqs.getEffectiveToughness(gd, warrior);
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(warriorPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(warriorToughness + 1);
     }
 
     @Test
@@ -47,12 +51,14 @@ class EiganjoExemplarTest extends BaseCardTest {
     void otherCreatureAttackingAloneIsNotBoosted() {
         addCreatureReady(player1, new EiganjoExemplar());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        int bearsPower = gqs.getEffectivePower(gd, bears);
+        int bearsToughness = gqs.getEffectiveToughness(gd, bears);
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(bearsPower);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(bearsToughness);
     }
 
     @Test
@@ -60,14 +66,18 @@ class EiganjoExemplarTest extends BaseCardTest {
     void multipleAttackersAreNotBoosted() {
         addCreatureReady(player1, new EiganjoExemplar());
         Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        int warriorPower = gqs.getEffectivePower(gd, warrior);
+        int warriorToughness = gqs.getEffectiveToughness(gd, warrior);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        int bearsPower = gqs.getEffectivePower(gd, bears);
+        int bearsToughness = gqs.getEffectiveToughness(gd, bears);
 
         declareAttackers(player1, List.of(1, 2));
 
-        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(warriorPower);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(warriorToughness);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(bearsPower);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(bearsToughness);
     }
 
     @Test
@@ -75,16 +85,18 @@ class EiganjoExemplarTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new EiganjoExemplar());
         Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        int warriorPower = gqs.getEffectivePower(gd, warrior);
+        int warriorToughness = gqs.getEffectiveToughness(gd, warrior);
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(warriorPower + 1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(warriorPower);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(warriorToughness);
     }
 }

@@ -14,10 +14,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InvokeJustice.class, GrizzlyBears.class, BoostedSloop.class})
 class InvokeJusticeTest extends BaseCardTest {
@@ -35,10 +33,10 @@ class InvokeJusticeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, graveyardPermanent.getId(),
-                List.of(player2.getId(), targetCreature.getId(), targetVehicle.getId()),
-                Map.of(targetCreature.getId(), 1, targetVehicle.getId(), 3));
+        harness.castSorcery(player1, 0, List.of(graveyardPermanent.getId(), player2.getId()));
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player1, 3);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -49,16 +47,52 @@ class InvokeJusticeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Rejects counter targets not controlled by the chosen player")
-    void rejectsPermanentsNotControlledByTargetPlayer() {
+    @DisplayName("The returned permanent may receive all four counters")
+    void returnedPermanentCanReceiveCounters() {
         Card graveyardPermanent = new GrizzlyBears();
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(graveyardPermanent));
         harness.setHand(player1, List.of(new InvokeJustice()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, graveyardPermanent.getId(),
-                List.of(player2.getId(), ownCreature.getId()), Map.of(ownCreature.getId(), 4)))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castSorcery(player1, 0, List.of(graveyardPermanent.getId(), player1.getId()));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 4);
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Recipients with shroud may receive counters because they are not targets")
+    void shroudDoesNotPreventDistribution() {
+        Card graveyardPermanent = new GrizzlyBears();
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        recipient.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.SHROUD);
+        harness.setGraveyard(player1, List.of(graveyardPermanent));
+        harness.setHand(player1, List.of(new InvokeJustice()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castSorcery(player1, 0, List.of(graveyardPermanent.getId(), player2.getId()));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 4);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A targeted player with no eligible permanents receives no counters")
+    void noEligibleRecipientsStillReturnsPermanent() {
+        Card graveyardPermanent = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(graveyardPermanent));
+        harness.setHand(player1, List.of(new InvokeJustice()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castSorcery(player1, 0, List.of(graveyardPermanent.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

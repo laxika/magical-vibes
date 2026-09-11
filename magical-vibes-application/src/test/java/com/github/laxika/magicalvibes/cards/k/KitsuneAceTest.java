@@ -28,6 +28,7 @@ class KitsuneAceTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS));
         harness.handleListChoice(player1, "That Vehicle gains first strike until end of turn");
         harness.passBothPriorities();
 

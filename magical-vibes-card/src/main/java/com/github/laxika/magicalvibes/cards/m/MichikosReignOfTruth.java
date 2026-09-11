@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.p.PortraitOfMichiko;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -33,7 +34,11 @@ public class MichikosReignOfTruth extends Card {
         target(TargetFilters.creature()).addEffect(EffectSlot.SAGA_CHAPTER_II,
                 new BoostTargetCreatureEffect(
                         artifactsAndEnchantmentsYouControl, artifactsAndEnchantmentsYouControl));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+                new SagaChapterTargetGroup(TargetFilters.creature(), 1, 1)));
+        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
+                new SagaChapterTargetGroup(TargetFilters.creature(), 1, 1)));
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

@@ -65,6 +65,8 @@ class KamiOfIndustryTest extends BaseCardTest {
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).isEmpty();
+        assertThat(choice).isNull();
+        harness.assertInGraveyard(player1, "Gilded Lotus");
+        harness.assertNotOnBattlefield(player1, "Gilded Lotus");
     }
 }

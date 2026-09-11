@@ -4465,3 +4465,6 @@ Use `PlaneswalkEffect()`, `ChaosEnsuesEffect()`, and `RollPlanarDieEffect()` for
 
 `BlankPlanarDieRollsCauseChaosEffect()` is the encounter payload for Chaotic Aether; it makes blank planar-die rolls trigger chaos until the phenomenon is planeswalked away from.
 `PlaneswalkIfPlanarSourceHasCountersEffect(CounterType, int)` checks the live face-up planar source and planeswalks when it has at least the specified counter threshold (Aretopolis).
+
+- `DistributeCountersAmongControlledCreaturesEffect(...).forTargetPlayer()` - target a player, then choose the division at resolution among matching permanents that player controls. The recipients are not targets; the predicate can include noncreature Vehicles (Invoke Justice).
+- `ExileTopCardOfEachPlayersLibraryAndAllowOneMayPlayForLifeEffect` implements `CombatDamageTriggerContextEffect` with `SOURCE_SELF` so the permission grant and exiled cards retain the damage-dealing source (Nashi, Moon Sage's Scion).

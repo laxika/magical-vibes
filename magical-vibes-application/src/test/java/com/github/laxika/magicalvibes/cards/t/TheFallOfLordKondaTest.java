@@ -98,9 +98,9 @@ class TheFallOfLordKondaTest extends BaseCardTest {
     }
 
     private Permanent addPermanentOwnedBy(Player controller, Player owner) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(controller, new Forest());
-        permanent.getCard().setOwnerId(owner.getId());
-        return permanent;
+        Card card = new Forest();
+        card.setOwnerId(owner.getId());
+        return harness.addToBattlefieldAndReturn(controller, card);
     }
 
     private void advanceToNextChapter() {

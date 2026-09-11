@@ -70,6 +70,7 @@ class NashiMoonSagesScionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NashiMoonSagesScion()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
         harness.activateHandAbility(player1, 0, attacker.getId());
         harness.passBothPriorities();
 
@@ -83,11 +84,12 @@ class NashiMoonSagesScionTest extends BaseCardTest {
     private Permanent addAttackingNashi() {
         Permanent nashi = addCreatureReady(player1, new NashiMoonSagesScion());
         nashi.setAttacking(true);
+        nashi.setAttackTarget(player2.getId());
         return nashi;
     }
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
