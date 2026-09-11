@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "36")
+@CardRegistration(set = "DDN", collectorNumber = "69")
 public class TraumaticVisions extends Card {
 
     public TraumaticVisions() {
