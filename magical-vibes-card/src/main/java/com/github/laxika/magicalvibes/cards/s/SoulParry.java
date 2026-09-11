@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "21")
+@CardRegistration(set = "DDO", collectorNumber = "24")
 public class SoulParry extends Card {
 
     public SoulParry() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToBattlefieldElseToHandEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "107")
+@CardRegistration(set = "DDO", collectorNumber = "51")
 public class CoilingOracle extends Card {
 
     public CoilingOracle() {
