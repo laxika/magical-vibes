@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "90")
+@CardRegistration(set = "DDM", collectorNumber = "58")
 public class CorpseTraders extends Card {
 
     public CorpseTraders() {
