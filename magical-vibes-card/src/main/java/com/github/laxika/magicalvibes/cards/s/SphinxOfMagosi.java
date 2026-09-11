@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "89")
+@CardRegistration(set = "W16", collectorNumber = "6")
 public class SphinxOfMagosi extends Card {
 
     public SphinxOfMagosi() {

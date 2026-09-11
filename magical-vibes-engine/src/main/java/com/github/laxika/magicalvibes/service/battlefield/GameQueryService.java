@@ -1087,6 +1087,7 @@ public class GameQueryService {
                 if (permanent.isFaceDown()) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof HandAbilityGrantingEffect grant
+                            && (!grant.controllerHandOnly() || controllerId.equals(ownerId))
                             && predicateEvaluationService.matchesCardPredicate(
                             card, grant.filter(), null, gameData, ownerId)) {
                         result.add(grant.grantedAbility().withGrantSource(permanent.getId()));
@@ -6570,8 +6571,14 @@ public class GameQueryService {
                 .anyMatch(PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect.class::isInstance));
     }
 
-    public boolean allowsInstantSpeedLoyaltyActivation(Permanent permanent) {
+    public boolean allowsInstantSpeedLoyaltyActivation(GameData gameData, Permanent permanent) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return false;
+        }
         return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(
+                        gameData, permanent, controllerId, effect))
                 .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance);
     }
 

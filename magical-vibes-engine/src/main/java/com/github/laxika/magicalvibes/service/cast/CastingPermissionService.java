@@ -553,6 +553,15 @@ public class CastingPermissionService {
             manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
         }
 
+        Set<Integer> exactRestrictedValues = gameData
+                .opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(castingPlayerId))
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(java.util.stream.Collectors.toSet());
+        boolean exactRestricted = chosenX != null
+                ? exactRestrictedValues.contains(manaValue)
+                : !hasX && exactRestrictedValues.contains(manaValue);
+
         int tightestMax = Integer.MAX_VALUE;
         boolean restricted = false;
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -577,7 +586,9 @@ public class CastingPermissionService {
                 }
             }
         }
-        if (!restricted) return false;
+        if (!restricted) return exactRestricted;
+
+        if (exactRestricted) return true;
 
         if (chosenX == null) {
             // Playability: any {X} spell can pick X high enough to exceed the cap.
@@ -2038,6 +2049,7 @@ public class CastingPermissionService {
     /** Returns whether the player has an active direct permission to play the exiled card. */
     public boolean hasExilePlayPermission(GameData gameData, UUID playerId, UUID cardId) {
         if (!playerId.equals(gameData.exilePlayPermissions.get(cardId))) return false;
+        if (!gameData.hasExilePlayPermissionRemaining(cardId)) return false;
         Condition condition = gameData.exilePlayPermissionConditions.get(cardId);
         return condition == null || conditionEvaluationService.isMet(
                 gameData, condition, ConditionContext.forCasting(playerId));
@@ -2072,6 +2084,16 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /** Returns whether a temporary exile permission replaces a spell's mana cost with life. */
+    public boolean hasManaValueLifeAlternativeFromExile(GameData gameData, UUID playerId,
+                                                         UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null) return false;
+        GameData.ExileCastPermission permission =
+                findTemporaryExileCastPermission(gameData, playerId, entry, false);
+        return permission != null && permission.payLifeEqualToManaValue();
     }
 
     public boolean hasManaValueLifeAlternativeFromExiledWithSource(GameData gameData,
@@ -2164,9 +2186,9 @@ public class CastingPermissionService {
         return true;
     }
 
-    /** Marks a once-per-turn normal-cost exile-cast permission after a successful spell cast. */
+    /** Marks a once-per-turn or one-shot normal-cost exile-cast permission after a successful spell cast. */
     public void markOncePerTurnExileCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
-        if (card == null || card.hasType(CardType.LAND)) return;
+        if (card == null) return;
         ExiledCardEntry entry = gameData.findExiledCard(card.getId());
         if (entry == null || entry.sourcePermanentId() == null) return;
 
@@ -2179,7 +2201,7 @@ public class CastingPermissionService {
                         activeExileCastPermissions(gameData, source, sourceControllerId).toList();
                 boolean hasUnlimitedPermission = permissions.stream()
                         .filter(permission -> !permission.waterbendManaValue())
-                        .anyMatch(permission -> !permission.oncePerTurn()
+                        .anyMatch(permission -> !permission.oncePerTurn() && !permission.oneShot()
                                 && canAccessExiledEntry(source, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, source, entry));
                 if (hasUnlimitedPermission) return;
@@ -2192,6 +2214,15 @@ public class CastingPermissionService {
                                 && applies(permission, gameData, playerId, source, entry));
                 if (hasOncePerTurnPermission) {
                     gameData.oncePerTurnExileCastPermissionsUsedThisTurn.add(source.getId());
+                }
+                boolean hasOneShotPermission = permissions.stream()
+                        .filter(AllowCastFromCardsExiledWithSourceEffect::oneShot)
+                        .filter(permission -> !permission.waterbendManaValue())
+                        .anyMatch(permission -> canAccessExiledEntry(
+                                source, sourceControllerId, permission, entry, playerId)
+                                && applies(permission, gameData, playerId, source, entry));
+                if (hasOneShotPermission) {
+                    gameData.oneShotExileCastPermissionsUsed.add(source.getId());
                 }
                 return;
             }
@@ -2259,8 +2290,13 @@ public class CastingPermissionService {
                             || permission.waterbendManaValue()
                             || !canAccessExiledEntry(perm, sourceControllerId, permission, entry, playerId)
                             || !applies(permission, gameData, playerId, perm, entry)) continue;
-                    if (consume && permission.oncePerTurn()) {
-                        gameData.freeCastPermanentUsedThisTurn.add(perm.getId());
+                    if (consume) {
+                        if (permission.oncePerTurn()) {
+                            gameData.freeCastPermanentUsedThisTurn.add(perm.getId());
+                        }
+                        if (permission.oneShot()) {
+                            gameData.oneShotExileCastPermissionsUsed.add(perm.getId());
+                        }
                     }
                     return true;
                 }
@@ -2341,6 +2377,9 @@ public class CastingPermissionService {
         if (permission.oncePerTurn()
                 && (gameData.freeCastPermanentUsedThisTurn.contains(source.getId())
                 || gameData.oncePerTurnExileCastPermissionsUsedThisTurn.contains(source.getId()))) return false;
+        if (permission.oneShot()
+                && (gameData.oneShotExileCastPermissionsUsed.contains(source.getId())
+                || source.getControlChangeSequence() > 0)) return false;
         if (permission.filter() != null
                 && !predicateEvaluationService.matchesCardPredicate(entry.card(), permission.filter(), null)) {
             return false;

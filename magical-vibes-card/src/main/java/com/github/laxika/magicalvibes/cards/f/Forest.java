@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "NEO", collectorNumber = "292")
 @CardRegistration(set = "3ED", collectorNumber = "306")
 @CardRegistration(set = "DDM", collectorNumber = "84")
 @CardRegistration(set = "DDM", collectorNumber = "85")
@@ -356,6 +357,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DSK", collectorNumber = "285")
 @CardRegistration(set = "DSK", collectorNumber = "286")
 @CardRegistration(set = "TMT", collectorNumber = "195")
+@CardRegistration(set = "NEO", collectorNumber = "291")
 @CardRegistration(set = "ZNR", collectorNumber = "278")
 @CardRegistration(set = "ZNR", collectorNumber = "279")
 @CardRegistration(set = "ZNR", collectorNumber = "280")
@@ -398,6 +400,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "PC2", collectorNumber = "154")
 @CardRegistration(set = "PC2", collectorNumber = "155")
 @CardRegistration(set = "PC2", collectorNumber = "156")
+@CardRegistration(set = "EVG", collectorNumber = "28")
+@CardRegistration(set = "EVG", collectorNumber = "29")
+@CardRegistration(set = "EVG", collectorNumber = "30")
+@CardRegistration(set = "EVG", collectorNumber = "31")
+@CardRegistration(set = "GVL", collectorNumber = "28")
+@CardRegistration(set = "GVL", collectorNumber = "29")
+@CardRegistration(set = "GVL", collectorNumber = "30")
+@CardRegistration(set = "GVL", collectorNumber = "31")
 public class Forest extends Card {
 
     public Forest() {

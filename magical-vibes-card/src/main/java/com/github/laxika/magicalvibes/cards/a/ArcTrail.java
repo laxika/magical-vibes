@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "81")
 @CardRegistration(set = "PC2", collectorNumber = "39")
+@CardRegistration(set = "DDN", collectorNumber = "23")
 public class ArcTrail extends Card {
 
     public ArcTrail() {
