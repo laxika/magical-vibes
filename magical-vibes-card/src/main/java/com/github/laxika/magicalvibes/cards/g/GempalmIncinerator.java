@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "94")
 @CardRegistration(set = "DD1", collectorNumber = "37")
+@CardRegistration(set = "EVG", collectorNumber = "37")
 public class GempalmIncinerator extends Card {
 
     public GempalmIncinerator() {
