@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "224")
+@CardRegistration(set = "ZNR", collectorNumber = "185")
 public class GnarlidColony extends Card {
 
     public GnarlidColony() {

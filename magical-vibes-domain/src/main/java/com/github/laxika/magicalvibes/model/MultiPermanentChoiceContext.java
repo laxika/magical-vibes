@@ -217,6 +217,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller may choose an Equipment attached to a creature they control to unattach. */
+    record UnattachEquipmentFromControlledCreature(StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The defending player sacrifices the chosen attacking creatures. */
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
@@ -318,6 +323,12 @@ public sealed interface MultiPermanentChoiceContext {
     /** Return exactly the required number of matching permanents, or all available if fewer exist. */
     record ReturnNControlledPermanentsToHand(
             com.github.laxika.magicalvibes.model.effect.ReturnNControlledPermanentsToHandEffect effect)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Return up to N matching permanents controlled by the resolving player. */
+    record ReturnUpToNControlledPermanentsToHand(
+            com.github.laxika.magicalvibes.model.effect.ReturnUpToNControlledPermanentsToHandEffect effect)
             implements MultiPermanentChoiceContext {
     }
 
@@ -512,6 +523,11 @@ public sealed interface MultiPermanentChoiceContext {
     /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
     record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** Put counters on the chosen permanent, attribute them to another player, and remember it. */
+    record OwnPermanentCounterPlacementByPlayerWithChosenReference(
+            CounterType counterType, int count, UUID placingPlayerId) implements MultiPermanentChoiceContext {
     }
 
     /** Put one counter on an opponent's creature for each remaining cumulative-upkeep payment. */

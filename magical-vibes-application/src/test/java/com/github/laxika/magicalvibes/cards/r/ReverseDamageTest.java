@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReverseDamage.class, GrizzlyBears.class, LightningBolt.class, ProdigalSorcerer.class})
+@CardUsed({ReverseDamage.class, GrizzlyBears.class, Blaze.class, ProdigalSorcerer.class})
 class ReverseDamageTest extends BaseCardTest {
 
     @Test
@@ -68,20 +68,49 @@ class ReverseDamageTest extends BaseCardTest {
     @DisplayName("Prevents damage from a chosen spell and gains that much life")
     void preventsDamageFromChosenSpellAndGainsLife() {
         harness.setLife(player1, 20);
-        LightningBolt bolt = new LightningBolt();
-        harness.setHand(player2, List.of(bolt));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
+        Blaze blaze = new Blaze();
+        harness.setHand(player2, List.of(blaze));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorcery(player2, 0, 3, player1.getId());
         castReverseDamage(player1);
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(bolt.getId());
-        harness.handlePermanentChosen(player1, bolt.getId());
+                .containsExactly(blaze.getId());
+        harness.handlePermanentChosen(player1, blaze.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not consume the player-only shield")
+    void damageToCreatureDoesNotConsumePlayerShield() {
+        harness.setLife(player1, 20);
+        Permanent source = addCreatureReady(player2, new ProdigalSorcerer());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castReverseDamage(player1);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        int sourceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(source);
+        harness.activateAbility(player2, sourceIndex, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        sourceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(source);
+        harness.activateAbility(player2, sourceIndex, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 

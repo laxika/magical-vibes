@@ -191,6 +191,10 @@ public class CounterSupport {
     }
 
     public void counterSpellAndPutOnTopOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback()) {
+            counterSpellAndExile(gameData, source, target);
+            return;
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -216,6 +220,10 @@ public class CounterSupport {
      * is no card to place (a copy, or a controlled-counter replacement such as Guile applied).
      */
     public Card counterSpellOntoLibraryPendingEndChoice(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback()) {
+            counterSpellAndExile(gameData, source, target);
+            return null;
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -245,6 +253,10 @@ public class CounterSupport {
      * controlled-counter effect (Guile).
      */
     public Card counterSpellGainingArtifactOrCreatureControl(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback()) {
+            counterSpellAndExile(gameData, source, target);
+            return null;
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -259,9 +271,14 @@ public class CounterSupport {
                 return null;
             }
             Card spell = target.getCard();
+            if ((target.isCastWithDisturb() || target.isCastTransformed()) && spell.getBackFaceCard() != null) {
+                spell = spell.getBackFaceCard();
+            }
             Card physicalCard = target.getPhysicalCard();
             if (sharesCardType(spell, Set.of(CardType.ARTIFACT, CardType.CREATURE))) {
                 gained = physicalCard;
+            } else if (target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+                exileService.exileCard(gameData, target.getOwnerId(), physicalCard);
             } else {
                 graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
                         physicalCard, target.getControllerId());

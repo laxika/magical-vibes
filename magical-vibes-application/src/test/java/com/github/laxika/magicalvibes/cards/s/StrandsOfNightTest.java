@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AetherFlash;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
-import com.github.laxika.magicalvibes.cards.w.WindingCanyons;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,10 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StrandsOfNight.class, BenalishKnight.class, AetherFlash.class,
-        Swamp.class, WindingCanyons.class})
+@CardUsed({AetherFlash.class, BenalishKnight.class, Forest.class, GrizzlyBears.class, StrandsOfNight.class, Swamp.class})
 class StrandsOfNightTest extends BaseCardTest {
 
     @Test
@@ -51,11 +52,11 @@ class StrandsOfNightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate with a land that is not a Swamp")
-    void cannotActivateWithNonSwampLand() {
-        Card creature = new BenalishKnight();
+    @DisplayName("Cannot use a Forest to pay the Swamp sacrifice cost")
+    void cannotActivateWithForestInsteadOfSwamp() {
+        Card creature = new GrizzlyBears();
         harness.addToBattlefield(player1, new StrandsOfNight());
-        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player1, new Forest());
         harness.setGraveyard(player1, List.of(creature));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 20);
@@ -64,8 +65,45 @@ class StrandsOfNightTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Swamp");
 
-        harness.assertOnBattlefield(player1, "Winding Canyons");
+        harness.assertOnBattlefield(player1, "Forest");
         harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without two black mana")
+    void cannotActivateWithoutEnoughBlackMana() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new StrandsOfNight());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when unable to pay 2 life")
+    void cannotActivateWithInsufficientLife() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new StrandsOfNight());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test
@@ -76,12 +114,14 @@ class StrandsOfNightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.setGraveyard(player1, List.of(nonCreature));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(nonCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Swamp");
         harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test
@@ -92,6 +132,7 @@ class StrandsOfNightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.setGraveyard(player2, List.of(creature));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,46 +140,27 @@ class StrandsOfNightTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Swamp");
         harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Cannot activate when you have less than 2 life")
-    void cannotActivateWithoutEnoughLife() {
-        Card creature = new BenalishKnight();
+    @DisplayName("Fizzles if the targeted creature leaves the graveyard before resolution")
+    void fizzlesIfTargetLeavesGraveyard() {
+        Card creature = new GrizzlyBears();
         harness.addToBattlefield(player1, new StrandsOfNight());
         harness.addToBattlefield(player1, new Swamp());
-        harness.setGraveyard(player1, List.of(creature));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setLife(player1, 1);
-
-        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough life");
-
-        harness.assertOnBattlefield(player1, "Swamp");
-        harness.assertLife(player1, 1);
-    }
-
-    @Test
-    @DisplayName("Does not return the target if it leaves the graveyard before resolution")
-    void targetLeavingGraveyardBeforeResolutionFizzles() {
-        Card creature = new BenalishKnight();
-        Swamp swamp = new Swamp();
-        harness.addToBattlefield(player1, new StrandsOfNight());
-        harness.addToBattlefield(player1, swamp);
         harness.setGraveyard(player1, List.of(creature));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 20);
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId()));
-
-        harness.setHand(player1, List.of(creature));
-        harness.setGraveyard(player1, List.of(swamp));
+        gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(creature.getId()));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Benalish Knight");
-        harness.assertInHand(player1, "Benalish Knight");
-        harness.assertInGraveyard(player1, "Swamp");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
         harness.assertLife(player1, 18);
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

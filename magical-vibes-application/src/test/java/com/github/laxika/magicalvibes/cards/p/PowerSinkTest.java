@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
+import com.github.laxika.magicalvibes.cards.s.SavageSummoning;
 import com.github.laxika.magicalvibes.cards.s.Scragnoth;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudElf;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PowerSink.class, CanopySpider.class, Forest.class, SkyshroudElf.class})
+@CardUsed({CanopySpider.class, Forest.class, GlacialChasm.class, PowerSink.class, SavageSummoning.class, Scragnoth.class, SkyshroudElf.class})
 class PowerSinkTest extends BaseCardTest {
 
     private CanopySpider prepareCounterTarget() {
@@ -200,6 +201,52 @@ class PowerSinkTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(SavageSummoning.class)
+    void appliesNotPaidRiderWhenUncounterableSpellControllerDeclines() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        SavageSummoning summoning = new SavageSummoning();
+        harness.setHand(player1, List.of(summoning));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2); // {G} to cast Savage Summoning, {1} remains for X
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
+
+        harness.castInstant(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, summoning.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not tap non-land permanents with mana abilities")
+    void doesNotTapNonLandManaSources() {
+        CanopySpider spider = prepareCounterTarget();
+        Permanent manaCreature = harness.addToBattlefieldAndReturn(player1, new SkyshroudElf());
+        Permanent manaLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, spider.getId());
+        harness.passBothPriorities();
+
+        assertThat(manaCreature.isTapped()).isFalse();
+        assertThat(manaLand.isTapped()).isTrue();
+    }
+
+    @Test
     @CardUsed(Scragnoth.class)
     @DisplayName("Offers payment for an uncounterable spell and leaves it on the stack when paid")
     void offersPaymentForUncounterableSpell() {
@@ -225,25 +272,5 @@ class PowerSinkTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Scragnoth");
-    }
-
-    @Test
-    @DisplayName("Does not tap non-land permanents with mana abilities")
-    void doesNotTapNonLandManaSources() {
-        CanopySpider spider = prepareCounterTarget();
-        Permanent manaCreature = harness.addToBattlefieldAndReturn(player1, new SkyshroudElf());
-        Permanent manaLand = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.setHand(player2, List.of(new PowerSink()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, spider.getId());
-        harness.passBothPriorities();
-
-        assertThat(manaCreature.isTapped()).isFalse();
-        assertThat(manaLand.isTapped()).isTrue();
     }
 }

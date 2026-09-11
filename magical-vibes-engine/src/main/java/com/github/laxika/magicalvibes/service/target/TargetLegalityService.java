@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSour
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
@@ -320,7 +321,8 @@ public class TargetLegalityService {
                             && returnEffect.minTargets() == 0)
                     || effects.stream().anyMatch(effect ->
                     effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
-                            && returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS)
+                            && (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS
+                            || returnEffect.dynamicMaxTargets() != null && returnEffect.minTargets() == 0))
                     || xValue != null && xValue == 0 && effects.stream()
                     .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect
                             && ((ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect).xScaled());
@@ -2052,8 +2054,15 @@ public class TargetLegalityService {
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
                                               Permanent sourcePermanent, SpellTarget group,
                                               boolean giftPromised) {
+        return getEffectiveMaxTargetsForGroup(
+                gameData, card, controllerId, sourcePermanent, group, false, giftPromised);
+    }
+
+    public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
+                                              Permanent sourcePermanent, SpellTarget group,
+                                              boolean kicked, boolean giftPromised) {
         return effectiveGroupMaxTargets(
-                gameData, controllerId, sourcePermanent, group, 0, false, giftPromised);
+                gameData, controllerId, sourcePermanent, group, 0, kicked, giftPromised);
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
@@ -4186,6 +4195,13 @@ public class TargetLegalityService {
             return chosenNumber > 0 && (manaValue == chosenNumber
                     || power != null && power == chosenNumber
                     || toughness != null && toughness == chosenNumber);
+        }
+        if (predicate instanceof StackEntryManaValueParityMatchesSourceChosenParityPredicate) {
+            if (source == null || source.getChosenManaValueParity() == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return source.getChosenManaValueParity().matches(manaValue);
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());

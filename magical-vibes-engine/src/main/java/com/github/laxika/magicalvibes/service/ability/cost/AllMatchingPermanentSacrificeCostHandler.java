@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
@@ -18,13 +19,22 @@ public class AllMatchingPermanentSacrificeCostHandler implements PermanentChoice
 
     private final SacrificeAllMatchingPermanentsCost cost;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
 
     public AllMatchingPermanentSacrificeCostHandler(SacrificeAllMatchingPermanentsCost cost,
                                                       PredicateEvaluationService predicateEvaluationService,
                                                       PermanentSacrificeAction sacrificeAction) {
+        this(cost, predicateEvaluationService, null, sacrificeAction);
+    }
+
+    public AllMatchingPermanentSacrificeCostHandler(SacrificeAllMatchingPermanentsCost cost,
+                                                      PredicateEvaluationService predicateEvaluationService,
+                                                      GameQueryService gameQueryService,
+                                                      PermanentSacrificeAction sacrificeAction) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
         this.sacrificeAction = sacrificeAction;
     }
 
@@ -41,7 +51,10 @@ public class AllMatchingPermanentSacrificeCostHandler implements PermanentChoice
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
-        // Sacrificing zero matching permanents is legal.
+        if (gameQueryService != null && matchingPermanents(gameData, playerId).stream()
+                .anyMatch(permanent -> !gameQueryService.canSacrificePermanentForCosts(gameData, permanent))) {
+            throw new IllegalStateException("A matching permanent cannot be sacrificed as a cost");
+        }
     }
 
     @Override
@@ -53,6 +66,8 @@ public class AllMatchingPermanentSacrificeCostHandler implements PermanentChoice
         return battlefield.stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, cost.filter()))
+                .filter(permanent -> gameQueryService == null
+                        || gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -61,6 +76,9 @@ public class AllMatchingPermanentSacrificeCostHandler implements PermanentChoice
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
             throw new IllegalStateException("Permanent does not match the required predicate");
+        }
+        if (gameQueryService != null && !gameQueryService.canSacrificePermanentForCosts(gameData, chosen)) {
+            throw new IllegalStateException("This permanent cannot be sacrificed as a cost");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);
     }
@@ -73,5 +91,16 @@ public class AllMatchingPermanentSacrificeCostHandler implements PermanentChoice
     @Override
     public boolean shouldAutoPayAll(GameData gameData, UUID playerId, int remaining) {
         return true;
+    }
+
+    private List<Permanent> matchingPermanents(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+        return battlefield.stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, cost.filter()))
+                .toList();
     }
 }

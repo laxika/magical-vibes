@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * than an ETB trigger.
  */
 @CardRegistration(set = "M12", collectorNumber = "83")
+@CardRegistration(set = "DDK", collectorNumber = "10")
 public class BloodrageVampire extends Card {
 
     public BloodrageVampire() {

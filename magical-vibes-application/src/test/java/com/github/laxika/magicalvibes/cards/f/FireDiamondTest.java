@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FireDiamond.class})
@@ -18,10 +16,7 @@ class FireDiamondTest extends BaseCardTest {
     @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new FireDiamond()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new FireDiamond(), "{2}");
         harness.passBothPriorities();
 
         Permanent diamond = findPermanent(player1, "Fire Diamond");

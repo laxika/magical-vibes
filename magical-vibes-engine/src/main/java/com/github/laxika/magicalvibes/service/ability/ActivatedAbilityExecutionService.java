@@ -771,13 +771,8 @@ public class ActivatedAbilityExecutionService {
             // watchers must see it exactly as they see a printed ON_TAP land.
             if (ability.isRequiresTap() && permanent.getCard().hasType(CardType.LAND)) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
-                Set<ManaColor> producedColors = snapshotEffects.stream()
-                        .filter(AwardManaEffect.class::isInstance)
-                        .map(AwardManaEffect.class::cast)
-                        .map(AwardManaEffect::color)
-                        .map(color -> ManaProductionSupport.effectiveColor(
-                                gameData, playerId, permanent, color))
-                        .collect(java.util.stream.Collectors.toSet());
+                Set<ManaColor> producedColors = newlyProducedManaTypes(
+                        manaTypesBefore, pool.getAllManaTotals());
                 triggerCollectionService.checkLandTapTriggers(
                         gameData, playerId, permanent.getId(), producedColors);
                 if (gameData.stack.size() > stackBeforeLandTapTriggers) {
@@ -872,6 +867,17 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
+    }
+
+    private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
+                                                          Map<ManaColor, Integer> after) {
+        Set<ManaColor> produced = EnumSet.noneOf(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            if (after.getOrDefault(color, 0) > before.getOrDefault(color, 0)) {
+                produced.add(color);
+            }
+        }
+        return produced;
     }
 
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
@@ -1607,6 +1613,8 @@ public class ActivatedAbilityExecutionService {
                         permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                                 gameData, permanent, playerId);
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
+                        permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                                gameData, permanent, count, playerId);
                     }
                     String counterName = counters.counterType().name().toLowerCase();
                     String counterText = count == 1

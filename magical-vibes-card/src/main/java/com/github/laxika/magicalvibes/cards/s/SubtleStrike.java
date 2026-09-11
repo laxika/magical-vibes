@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "100")
+@CardRegistration(set = "ZNR", collectorNumber = "128")
 public class SubtleStrike extends Card {
 
     public SubtleStrike() {

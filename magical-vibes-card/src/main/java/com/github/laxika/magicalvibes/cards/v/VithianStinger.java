@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "120")
+@CardRegistration(set = "DDK", collectorNumber = "47")
 public class VithianStinger extends Card {
 
     public VithianStinger() {

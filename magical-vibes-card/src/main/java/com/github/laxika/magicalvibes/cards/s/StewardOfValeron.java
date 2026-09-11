@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "198")
+@CardRegistration(set = "DDG", collectorNumber = "11")
 public class StewardOfValeron extends Card {
 
     public StewardOfValeron() {

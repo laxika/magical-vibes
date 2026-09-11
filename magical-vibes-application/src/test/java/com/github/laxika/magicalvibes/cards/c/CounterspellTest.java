@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.r.RootwaterHunter;
 import com.github.laxika.magicalvibes.cards.c.Capsize;
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
+import com.github.laxika.magicalvibes.cards.r.RootwaterHunter;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Counterspell.class, HornedTurtle.class, Capsize.class, Commandeer.class, RootwaterHunter.class})
+@CardUsed({Capsize.class, Commandeer.class, Counterspell.class, HornedTurtle.class, RootwaterHunter.class})
 class CounterspellTest extends BaseCardTest {
 
     @Test
@@ -95,6 +94,7 @@ class CounterspellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts a spell controlled by another player into its owner's graveyard")
+    @CardUsed(Commandeer.class)
     void putsControlledSpellIntoOwnersGraveyard() {
         HornedTurtle turtle = new HornedTurtle();
         var turtlePermanent = harness.addToBattlefieldAndReturn(player1, turtle);

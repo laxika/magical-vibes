@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "215")
+@CardRegistration(set = "TD2", collectorNumber = "7")
 public class MyrRetriever extends Card {
 
     public MyrRetriever() {

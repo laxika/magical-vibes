@@ -74,6 +74,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryAndOrGraveyardChoice,
+        PendingInteraction.SearchHandAndOrLibraryChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.TurtlesForeverSearchChoice,
@@ -1440,6 +1441,35 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             libraryCardIds = java.util.Set.copyOf(libraryCardIds);
             handCardIds = java.util.Set.copyOf(handCardIds);
             outsideGameCardIds = java.util.Set.copyOf(outsideGameCardIds);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, 1);
+        }
+    }
+
+    /** One matching card from the controller's hand or library is chosen for its destination. */
+    record SearchHandAndOrLibraryChoice(UUID playerId, java.util.List<Card> pool,
+                                        java.util.Set<UUID> libraryCardIds,
+                                        java.util.Set<UUID> handCardIds,
+                                        boolean librarySearchAllowed, String cardLabel,
+                                        LibrarySearchDestination destination)
+            implements PendingInteraction {
+
+        public SearchHandAndOrLibraryChoice {
+            pool = java.util.List.copyOf(pool);
+            libraryCardIds = java.util.Set.copyOf(libraryCardIds);
+            handCardIds = java.util.Set.copyOf(handCardIds);
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -4596,19 +4626,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                             String label, String cardName,
-                                             CounterType enterWithCounter, boolean grantHaste,
-                                             boolean returnToHandAtEndStep)
+                                               String label, String cardName,
+                                               CounterType enterWithCounter, int enterWithCounterCount,
+                                               boolean grantHaste,
+                                               boolean returnToHandAtEndStep)
             implements PendingInteraction {
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String label, String cardName) {
-            this(playerId, validCardIds, label, cardName, null, false, false);
+                                                 String label, String cardName) {
+            this(playerId, validCardIds, label, cardName, null, 0, false, false);
         }
 
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String label, String cardName,
-                                                CounterType enterWithCounter) {
-            this(playerId, validCardIds, label, cardName, enterWithCounter, false, false);
+                                                 String label, String cardName,
+                                                 CounterType enterWithCounter) {
+            this(playerId, validCardIds, label, cardName, enterWithCounter,
+                    enterWithCounter == null ? 0 : 1, false, false);
         }
 
         public PutCardFromHandOrGraveyardChoice {

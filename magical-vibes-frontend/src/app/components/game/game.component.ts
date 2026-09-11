@@ -1387,6 +1387,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.choosingAdditionalSacrifice) {
+      if (perm && isPermanentCreature(perm)) {
+        this.choice.targeting.toggleAdditionalSacrifice(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.choosingBuybackSacrifice) {
       if (perm && isPermanentLand(perm)) {
         this.choice.targeting.toggleBuybackSacrifice(perm.id);
@@ -1680,6 +1686,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKickerPermanent) { t.cancelKickerPermanent(); return true; }
+    if (t.choosingAdditionalSacrifice) { t.cancelAdditionalSacrifice(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
     if (t.choosingBuybackSacrifice) { t.cancelBuybackSacrifice(); return true; }
     if (t.choosingBuybackDiscard) { t.cancelBuybackDiscard(); return true; }
@@ -1719,6 +1726,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent
       || t.choosingBuyback || t.choosingBuybackSacrifice || t.choosingBuybackDiscard
+      || t.choosingAdditionalSacrifice
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard || t.selectingAlternateCostGraveyardCards
       || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost

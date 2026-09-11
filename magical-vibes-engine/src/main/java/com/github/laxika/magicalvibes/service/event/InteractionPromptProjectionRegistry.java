@@ -121,6 +121,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class,
                 this::projectSearchLibraryAndOrGraveyardChoice);
+        register(PendingInteraction.SearchHandAndOrLibraryChoice.class,
+                this::projectSearchHandAndOrLibraryChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
@@ -685,6 +687,17 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.pool()),
                 1,
                 "Choose a " + interaction.cardLabel() + " from your library or graveyard to reveal and put it "
+                        + (toBattlefield ? "onto the battlefield." : "into your hand."));
+    }
+
+    private InteractionPromptMessage projectSearchHandAndOrLibraryChoice(
+            GameData gameData, PendingInteraction.SearchHandAndOrLibraryChoice interaction) {
+        boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                1,
+                "Choose a " + interaction.cardLabel() + " from your hand or library to reveal and put it "
                         + (toBattlefield ? "onto the battlefield." : "into your hand."));
     }
 

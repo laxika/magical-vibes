@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "CSP", collectorNumber = "130")
+@CardRegistration(set = "DDG", collectorNumber = "21")
 public class JuniperOrderRanger extends Card {
 
     public JuniperOrderRanger() {

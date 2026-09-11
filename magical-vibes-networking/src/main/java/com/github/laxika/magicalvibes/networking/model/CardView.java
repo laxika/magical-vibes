@@ -93,6 +93,7 @@ public record CardView(
         List<String> additionalCreatureTypeChoices,
         int additionalCostLifePayment,
         String additionalCostManaCost,
+        boolean additionalSacrificeCreature,
         boolean alternateCostCollectEvidence,
         int alternateCostCollectEvidenceAmount,
         CardView prepareSpell

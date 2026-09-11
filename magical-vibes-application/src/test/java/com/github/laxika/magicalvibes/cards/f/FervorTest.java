@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Fervor.class, ArdentMilitia.class})
+@CardUsed({ArdentMilitia.class, Fervor.class, Opalescence.class})
 class FervorTest extends BaseCardTest {
 
     @Test
@@ -50,6 +50,17 @@ class FervorTest extends BaseCardTest {
     void animatedFervorHasHaste() {
         Permanent fervor = harness.addToBattlefieldAndReturn(player1, new Fervor());
         harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, fervor)).isTrue();
+        assertThat(gqs.hasKeyword(gd, fervor, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("An animated Fervor also has haste when it is a creature you control")
+    void fervorEnteringAfterOpalescenceHasHaste() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent fervor = harness.addToBattlefieldAndReturn(player1, new Fervor());
 
         assertThat(gqs.isCreature(gd, fervor)).isTrue();
         assertThat(gqs.hasKeyword(gd, fervor, Keyword.HASTE)).isTrue();

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
@@ -48,6 +49,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -311,6 +313,15 @@ class AttackLegalityServiceTest extends BaseCardTest {
         attacker.setPowerModifier(5);
 
         assertThat(als.canAttack(gd, attacker, player1.getId())).isFalse();
+    }
+
+    @Test
+    void faceDownSourceDoesNotApplyGlobalAttackRestriction() {
+        Permanent zombies = addCreatureReady(player1, new ScatheZombies());
+        Permanent light = harness.addToBattlefieldAndReturn(player2, new LightOfDay());
+        light.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(als.canAttack(gd, zombies, player1.getId())).isTrue();
     }
 
     @Test

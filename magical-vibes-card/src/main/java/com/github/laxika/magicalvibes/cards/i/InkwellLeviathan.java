@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Trample, Islandwalk, Shroud (all auto-loaded from Scryfall). No card-specific engine logic.
  */
 @CardRegistration(set = "CON", collectorNumber = "30")
+@CardRegistration(set = "PD3", collectorNumber = "10")
 public class InkwellLeviathan extends Card {
 
     public InkwellLeviathan() {

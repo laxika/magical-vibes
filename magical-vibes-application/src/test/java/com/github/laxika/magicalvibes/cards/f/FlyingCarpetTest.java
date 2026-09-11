@@ -33,6 +33,19 @@ class FlyingCarpetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate ability while Flying Carpet is tapped")
+    void cannotActivateWhileTapped() {
+        addReadyCarpet(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Resolving ability grants flying to target creature")
     void resolvingGrantsFlying() {
         addReadyCarpet(player1);

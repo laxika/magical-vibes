@@ -104,8 +104,7 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, justice.getId());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -214,6 +213,24 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new CircleOfProtectionWhite());
+        Permanent source = addCreatureReady(player1, new PearledUnicorn());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        source.setAttacking(true);
+        resolveCombat(player1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(source.getId()));
     }
 
 }

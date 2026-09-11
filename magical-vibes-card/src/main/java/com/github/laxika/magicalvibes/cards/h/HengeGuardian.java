@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "297")
+@CardRegistration(set = "DDG", collectorNumber = "55")
 public class HengeGuardian extends Card {
 
     public HengeGuardian() {

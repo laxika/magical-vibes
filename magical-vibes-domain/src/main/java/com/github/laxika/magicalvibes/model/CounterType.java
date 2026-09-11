@@ -65,6 +65,7 @@ public enum CounterType {
     HATCHLING,
     HOUR,
     HOURGLASS,
+    HONE,
     HOOFPRINT,
     HUNGER,
     INTERVENTION,

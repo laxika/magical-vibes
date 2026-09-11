@@ -58,7 +58,7 @@ public class LookAtTopCardMayPlayLandOrCastFreeEffectHandler implements NormalEf
         if (topCard.hasType(CardType.LAND)) {
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
             if (!controllerId.equals(gameData.activePlayerId)
-                    || landsPlayed >= (gameData.getMaxLandsThisTurn(controllerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, controllerId))) {
+                    || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, controllerId)) {
                 putTopCardIntoHand(gameData, controllerId, deck, topCard, playerName);
                 return;
             }
