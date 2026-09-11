@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DPA", collectorNumber = "106")
+@CardRegistration(set = "DDN", collectorNumber = "37")
+@CardRegistration(set = "DDN", collectorNumber = "78")
 @CardRegistration(set = "DDL", collectorNumber = "37")
 @CardRegistration(set = "DDL", collectorNumber = "38")
 @CardRegistration(set = "DDL", collectorNumber = "74")
@@ -338,6 +340,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MOM", collectorNumber = "280")
 @CardRegistration(set = "MOM", collectorNumber = "288")
 @CardRegistration(set = "MOM", collectorNumber = "289")
+@CardRegistration(set = "NEO", collectorNumber = "289")
+@CardRegistration(set = "NEO", collectorNumber = "290")
 @CardRegistration(set = "RAV", collectorNumber = "299")
 @CardRegistration(set = "RAV", collectorNumber = "300")
 @CardRegistration(set = "RAV", collectorNumber = "301")
@@ -406,6 +410,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDK", collectorNumber = "75")
 @CardRegistration(set = "DDK", collectorNumber = "76")
 @CardRegistration(set = "DDK", collectorNumber = "77")
+@CardRegistration(set = "DDN", collectorNumber = "35")
+@CardRegistration(set = "DDN", collectorNumber = "36")
 @CardRegistration(set = "EVG", collectorNumber = "59")
 @CardRegistration(set = "EVG", collectorNumber = "60")
 @CardRegistration(set = "EVG", collectorNumber = "61")

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ALA", collectorNumber = "74")
 @CardRegistration(set = "HOP", collectorNumber = "26")
+@CardRegistration(set = "DDN", collectorNumber = "5")
 public class DregscapeZombie extends Card {
 
     public DregscapeZombie() {

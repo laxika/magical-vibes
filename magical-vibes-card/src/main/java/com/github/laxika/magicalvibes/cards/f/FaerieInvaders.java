@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "51")
+@CardRegistration(set = "DDN", collectorNumber = "57")
 public class FaerieInvaders extends Card {
 
     public FaerieInvaders() {

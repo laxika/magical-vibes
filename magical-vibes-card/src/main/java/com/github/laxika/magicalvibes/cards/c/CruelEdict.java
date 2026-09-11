@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "121")
 @CardRegistration(set = "P02", collectorNumber = "67")
 @CardRegistration(set = "DDC", collectorNumber = "48")
+@CardRegistration(set = "DVD", collectorNumber = "48")
 public class CruelEdict extends Card {
 
     public CruelEdict() {

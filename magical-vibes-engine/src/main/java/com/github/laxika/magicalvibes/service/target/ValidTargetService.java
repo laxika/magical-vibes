@@ -1691,8 +1691,7 @@ public class ValidTargetService {
                         if (!matchesReturnCardFilter(gameData, rge, c, card.getId(), controllerId, xValue)) {
                             continue;
                         }
-                        int requiredManaValue = effectiveXValue
-                                + (rge.requiresManaValueEqualsX() ? rge.manaValueXOffset() : 0);
+                        int requiredManaValue = rge.requiredManaValue(effectiveXValue);
                         if (rge.requiresManaValueEqualsX() && c.getManaValue() != requiredManaValue) {
                             continue;
                         }
@@ -1813,13 +1812,13 @@ public class ValidTargetService {
                             if (effect instanceof ReturnCardFromGraveyardEffect returnEffect
                                     && returnEffect.requiresManaValueEqualsX()
                                     && !costDerivedManaValueTarget
-                                    && c.getManaValue() != effectiveXValue + returnEffect.manaValueXOffset()) {
+                                    && c.getManaValue() != returnEffect.requiredManaValue(effectiveXValue)) {
                                 continue;
                             }
                             if (effect instanceof ReturnCardFromGraveyardEffect returnEffect
                                     && returnEffect.requiresManaValueAtMostX()
                                     && !costDerivedManaValueTarget
-                                    && c.getManaValue() > effectiveXValue) {
+                                    && c.getManaValue() > returnEffect.requiredManaValue(effectiveXValue)) {
                                 continue;
                             }
                             validIds.add(c.getId());
@@ -1918,7 +1917,11 @@ public class ValidTargetService {
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(),
                     sourceCardId, gameData, controllerId, null, null, xValue);
-        } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
+        } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect e) {
+            if (e.targetFilter() != null) {
+                return predicateEvaluationService.matchesCardPredicate(c, e.targetFilter(), sourceCardId,
+                        gameData, controllerId, null, null, xValue);
+            }
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
         return effect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards;

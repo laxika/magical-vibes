@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "17")
 @CardRegistration(set = "DDC", collectorNumber = "18")
+@CardRegistration(set = "DVD", collectorNumber = "18")
 public class SerrasBoon extends Card {
 
     public SerrasBoon() {
