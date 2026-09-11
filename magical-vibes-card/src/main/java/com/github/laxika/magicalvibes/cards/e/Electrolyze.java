@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "111")
+@CardRegistration(set = "MMA", collectorNumber = "175")
 public class Electrolyze extends Card {
 
     public Electrolyze() {

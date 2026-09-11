@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "171")
+@CardRegistration(set = "DDL", collectorNumber = "72")
 public class LlanowarReborn extends Card {
 
     public LlanowarReborn() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCar
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "173")
+@CardRegistration(set = "MMA", collectorNumber = "124")
 public class PardicDragon extends Card {
 
     public PardicDragon() {

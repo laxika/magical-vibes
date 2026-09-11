@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "21")
 @CardRegistration(set = "DDF", collectorNumber = "66")
+@CardRegistration(set = "MMA", collectorNumber = "40")
 public class EchoingTruth extends Card {
 
     public EchoingTruth() {

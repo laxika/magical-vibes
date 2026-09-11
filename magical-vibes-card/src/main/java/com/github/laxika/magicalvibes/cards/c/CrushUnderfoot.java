@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "162")
+@CardRegistration(set = "MMA", collectorNumber = "109")
 public class CrushUnderfoot extends Card {
 
     public CrushUnderfoot() {

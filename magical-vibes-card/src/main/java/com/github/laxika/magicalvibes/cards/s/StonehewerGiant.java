@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForEquipmentToBa
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "24")
+@CardRegistration(set = "MMA", collectorNumber = "31")
 public class StonehewerGiant extends Card {
 
     public StonehewerGiant() {

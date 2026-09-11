@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "160")
+@CardRegistration(set = "MMA", collectorNumber = "116")
 public class Grapeshot extends Card {
 
     public Grapeshot() {

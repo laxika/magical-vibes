@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "135")
+@CardRegistration(set = "DDM", collectorNumber = "35")
 public class DreadStatuary extends Card {
 
     public DreadStatuary() {
