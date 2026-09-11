@@ -29,7 +29,7 @@ public class AgathaOfTheVileCauldron extends Card {
         addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate())), new SourcePower()));
+                        new PermanentControlledBySourceControllerPredicate())), new SourcePower(), true, true, false));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
