@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "115")
+@CardRegistration(set = "MD1", collectorNumber = "4")
 public class InquisitionOfKozilek extends Card {
 
     public InquisitionOfKozilek() {
