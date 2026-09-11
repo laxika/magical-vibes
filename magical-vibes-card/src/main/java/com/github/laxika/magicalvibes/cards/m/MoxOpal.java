@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "179")
+@CardRegistration(set = "MPS", collectorNumber = "19")
 public class MoxOpal extends Card {
 
     public MoxOpal() {
