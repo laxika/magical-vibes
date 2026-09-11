@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
@@ -208,6 +209,8 @@ class SpellCastingServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
+        lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
@@ -1248,6 +1251,34 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
             DrawCardEffect effect = (DrawCardEffect) gd.stack.getLast().getEffectsToResolve().get(0);
             assertThat(effect.amount()).isEqualTo(new Fixed(2));
+        }
+
+        @Test
+        @DisplayName("Pays the additional cost from the chosen modal mode")
+        void paysAdditionalCostFromChosenMode() {
+            Card modal = createInstant("Test Modal Sacrifice", "{2}{R}");
+            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Sacrifice and draw", List.of(
+                            new SacrificeCreatureCost(false, true), new DrawCardEffect(1))),
+                    new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1))
+            )));
+            Permanent creature = new Permanent(createCreature("Sacrifice Creature", "{1}"));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            setHand(player1Id, List.of(modal));
+            addMana(player1Id, ManaColor.RED, 1);
+            addMana(player1Id, ManaColor.COLORLESS, 2);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, creature)).thenReturn(2);
+            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, creature)).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, 0, null, null, null, null, false, creature.getId());
+
+            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, creature);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getXValue()).isEqualTo(2);
         }
 
         @Test

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.c.CursedScroll;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HerosResolve.class, CanopySpider.class, CursedScroll.class})
+@CardUsed({CanopySpider.class, CursedScroll.class, GrizzlyBears.class, HerosResolve.class})
 class HerosResolveTest extends BaseCardTest {
 
     @Test
@@ -91,6 +92,37 @@ class HerosResolveTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Hero's Resolve can enchant a creature an opponent controls")
+    void attachesToOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HerosResolve()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Hero's Resolve");
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Hero's Resolve does not affect other creatures")
+    void doesNotAffectOtherCreatures() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HerosResolve());
+        aura.setAttachedTo(enchanted.getId());
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 
     @Test

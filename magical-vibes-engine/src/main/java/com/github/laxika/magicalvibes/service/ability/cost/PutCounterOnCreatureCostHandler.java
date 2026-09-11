@@ -69,6 +69,8 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         if (type == CounterType.PLUS_ONE_PLUS_ONE) {
             gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(player.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(player.getId());
+            gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.merge(
+                    player.getId(), count, Integer::sum);
         }
 
         String counterWord = count == 1

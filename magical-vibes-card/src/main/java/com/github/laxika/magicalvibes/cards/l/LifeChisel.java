@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "283")
+@CardRegistration(set = "ME3", collectorNumber = "199")
 public class LifeChisel extends Card {
 
     public LifeChisel() {

@@ -64,7 +64,14 @@ public class ManaTapTriggerCollectorService {
             return false;
         }
 
-        ManaColor manaColor = nonlandTap.producedManaTypes().iterator().next();
+        if (trigger.requiredColor() != null
+                && !nonlandTap.producedManaTypes().contains(trigger.requiredColor())) {
+            return false;
+        }
+
+        ManaColor manaColor = trigger.requiredColor() != null
+                ? trigger.requiredColor()
+                : nonlandTap.producedManaTypes().iterator().next();
         match.gameData().playerManaPools.get(match.controllerId()).add(manaColor);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(match.controllerId())

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpell
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "59")
+@CardRegistration(set = "PC2", collectorNumber = "19")
 public class IllusoryAngel extends Card {
 
     public IllusoryAngel() {

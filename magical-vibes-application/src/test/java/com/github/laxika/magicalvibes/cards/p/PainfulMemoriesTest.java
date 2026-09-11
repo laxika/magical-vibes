@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,8 +57,10 @@ class PainfulMemoriesTest extends BaseCardTest {
     @DisplayName("Resolving against an empty hand does nothing")
     void emptyHandDoesNothing() {
         harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new PainfulMemories()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        castPainfulMemories();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -71,6 +74,18 @@ class PainfulMemoriesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PainfulMemories()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -97,6 +112,10 @@ class PainfulMemoriesTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()).toList())
                 .noneMatch(message -> message.contains(card.getName()));
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"REVEAL_HAND\""))
+                .hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"REVEAL_HAND\""))
+                .isEmpty();
     }
 
     @Test

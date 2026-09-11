@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "FDN", collectorNumber = "178")
+@CardRegistration(set = "ZNR", collectorNumber = "112")
 public class MaraudingBlightPriest extends Card {
 
     public MaraudingBlightPriest() {

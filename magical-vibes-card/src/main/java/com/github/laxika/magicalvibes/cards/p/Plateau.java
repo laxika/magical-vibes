@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "284")
 @CardRegistration(set = "3ED", collectorNumber = "284")
+@CardRegistration(set = "ME3", collectorNumber = "209")
 public class Plateau extends Card {
 
     public Plateau() {

@@ -67,6 +67,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.Scry.class, this::projectScry);
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
+        register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
@@ -119,6 +121,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class,
                 this::projectSearchLibraryAndOrGraveyardChoice);
+        register(PendingInteraction.SearchHandAndOrLibraryChoice.class,
+                this::projectSearchHandAndOrLibraryChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
@@ -202,6 +206,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.DiscardCostChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PlanarAbilityHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class,
                 this::projectPutCardsFromHandOnLibraryCardChoice);
@@ -331,6 +337,24 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.LibraryReorder interaction) {
         return InteractionPromptMessage.cardOrder(
                 cardViews(interaction.cards()), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectPlanarCardChoice(
+            GameData gameData, PendingInteraction.PlanarCardChoice interaction) {
+        Map<UUID, Card> cardsById = interaction.revealedCards().stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<CardView> cardViews = interaction.validPlaneCardIds().stream()
+                .map(cardsById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectSpatialMergingCardOrder(
+            GameData gameData, PendingInteraction.SpatialMergingCardOrder interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cardsToBottom()), interaction.prompt());
     }
 
     private InteractionPromptMessage projectMayAbilityChoice(
@@ -663,6 +687,17 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.pool()),
                 1,
                 "Choose a " + interaction.cardLabel() + " from your library or graveyard to reveal and put it "
+                        + (toBattlefield ? "onto the battlefield." : "into your hand."));
+    }
+
+    private InteractionPromptMessage projectSearchHandAndOrLibraryChoice(
+            GameData gameData, PendingInteraction.SearchHandAndOrLibraryChoice interaction) {
+        boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                1,
+                "Choose a " + interaction.cardLabel() + " from your hand or library to reveal and put it "
                         + (toBattlefield ? "onto the battlefield." : "into your hand."));
     }
 

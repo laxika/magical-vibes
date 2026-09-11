@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
+import com.github.laxika.magicalvibes.cards.v.Vertigo;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,10 +14,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FemerefArchers.class, PearlDragon.class, FemerefScouts.class})
+@CardUsed({FemerefArchers.class, PearlDragon.class, GrizzlyBears.class, Vertigo.class})
 class FemerefArchersTest extends BaseCardTest {
 
     @Test
@@ -55,7 +60,7 @@ class FemerefArchersTest extends BaseCardTest {
     @DisplayName("Cannot target attacking creature without flying")
     void cannotTargetAttackingCreatureWithoutFlying() {
         addCreatureReady(player1, new FemerefArchers());
-        Permanent attacker = addAttackingCreature(player2, new FemerefScouts());
+        Permanent attacker = addAttackingCreature(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -97,6 +102,24 @@ class FemerefArchersTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that loses flying before resolution")
+    void targetMustStillHaveFlyingOnResolution() {
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        harness.setHand(player2, List.of(new Vertigo()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

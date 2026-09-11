@@ -177,6 +177,10 @@ class GameQueryServiceTest {
 
     @Test
     void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
+        ReflectionTestUtils.setField(gqs, "landPlayPermissionService",
+                new com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService(
+                        new com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver(
+                                conditionEvaluationService)));
         var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
         Card card = new Card();
         card.addEffect(EffectSlot.STATIC, new ConditionalEffect(condition,

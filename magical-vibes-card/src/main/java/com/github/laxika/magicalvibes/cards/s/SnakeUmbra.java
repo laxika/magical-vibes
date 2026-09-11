@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "207")
+@CardRegistration(set = "PC2", collectorNumber = "78")
 public class SnakeUmbra extends Card {
 
     public SnakeUmbra() {

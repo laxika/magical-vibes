@@ -114,6 +114,26 @@ class EnterTriggerCollectorServiceTest {
     private GameData gd;
     private UUID player1Id;
 
+    @Test
+    void landDamageTriggerPreservesEnteringPermanentAndController() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        Card landCard = new Card();
+        landCard.setName("Entering land");
+        landCard.setType(CardType.LAND);
+        Permanent land = new Permanent(landCard);
+        gd.playerBattlefields.put(opponentId, new ArrayList<>(List.of(land)));
+        addAllyCreatureTrigger(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(2,
+                        com.github.laxika.magicalvibes.model.effect.DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+
+        service.checkOpponentLandEntersTriggers(gd, opponentId, landCard);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(land.getId());
+        assertThat(gd.stack.getFirst().getTriggeringPermanentControllerId()).isEqualTo(opponentId);
+    }
+
     @BeforeEach
     void setUp() {
         lenient().when(gameQueryService.computeStaticBonus(any(GameData.class), any(Permanent.class), isNull()))

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BayouDragonfly;
 import com.github.laxika.magicalvibes.cards.f.Firefly;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MirrisGuile;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,9 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Insight.class, BayouDragonfly.class, Firefly.class, MirrisGuile.class})
+@CardUsed({BayouDragonfly.class, Firefly.class, Forest.class, Insight.class, MirrisGuile.class})
 class InsightTest extends BaseCardTest {
 
     /** Player1 controls Insight; it is player2's (the opponent's) turn. */
@@ -93,5 +96,18 @@ class InsightTest extends BaseCardTest {
 
         // Hand size unchanged aside from the cast spell leaving hand.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent's land play does not trigger")
+    void opponentLandPlayDoesNotTrigger() {
+        setUpOpponentTurn();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.setHand(player2, List.of(new Forest()));
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 }

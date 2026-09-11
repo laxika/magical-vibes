@@ -1090,8 +1090,17 @@ public class EnterTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
         UUID targetPlayerId = pe.enteringControllerId();
-        enqueue(match, new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER), targetPlayerId,
-                pe.perEffectTriggerCount());
+        DealDamageToPlayersEffect resolvedDamage = damageEffect.recipient() == DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER
+                ? damageEffect : new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER);
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
+                    match.controllerId(), cardName + "'s ability", new ArrayList<>(List.of(resolvedDamage)),
+                    targetPlayerId, match.permanent().getId());
+            entry.setTriggeringPermanentId(findEnteringPermanentId(match, pe.enteringCard()));
+            entry.setTriggeringPermanentControllerId(targetPlayerId);
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "163")
+@CardRegistration(set = "DDK", collectorNumber = "53")
 public class SkirsdagCultist extends Card {
 
     public SkirsdagCultist() {

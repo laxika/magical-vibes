@@ -14,5 +14,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * untap step untap, other untap effects (Seedborn Muse untapping during another player's untap step,
  * "untap target permanent") are unaffected.</p>
  */
-public record RemoveCountersInsteadOfUntappingEffect(CounterType counterType) implements CardEffect {
+public record RemoveCountersInsteadOfUntappingEffect(CounterType counterType)
+        implements UntapStepReplacementEffect {
 }

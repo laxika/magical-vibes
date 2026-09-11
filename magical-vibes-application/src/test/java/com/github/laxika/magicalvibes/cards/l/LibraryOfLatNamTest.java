@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -91,10 +90,24 @@ class LibraryOfLatNamTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Declining with an empty library finishes without a search choice")
+    void declineWithEmptyLibraryFinishesWithoutChoice() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new LibraryOfLatNam()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new LibraryOfLatNam(), "{4}{U}");
         harness.passBothPriorities();
     }
 

@@ -347,7 +347,7 @@ public class DamagePreventionService {
                 if (counters > 0) {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                             permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-                    recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                    recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
                 }
             }
             return 0;
@@ -515,7 +515,7 @@ public class DamagePreventionService {
                     int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
                     if (counters > 0) {
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
                     }
                 }
                 return 0;
@@ -526,7 +526,7 @@ public class DamagePreventionService {
                     if (counters > 0) {
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                                 permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
                     }
                 }
                 return 0;
@@ -542,7 +542,7 @@ public class DamagePreventionService {
                     if (counters > 0) {
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                                 permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
                     }
                 }
                 damage -= temperPrevented;
@@ -2437,11 +2437,14 @@ public class DamagePreventionService {
         return Math.max(0, damage - totalReduction);
     }
 
-    private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent permanent) {
+    private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+            GameData gameData, Permanent permanent, int count) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        if (controllerId != null && gameQueryService.isCreature(gameData, permanent)) {
+        if (controllerId != null && count > 0 && gameQueryService.isCreature(gameData, permanent)) {
             gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+            gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.merge(
+                    controllerId, count, Integer::sum);
         }
     }
 }

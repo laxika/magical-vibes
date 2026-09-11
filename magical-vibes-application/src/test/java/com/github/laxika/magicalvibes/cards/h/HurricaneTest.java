@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArmoredPegasus.class, BalduvianBears.class, Hurricane.class, WindSpirit.class})
+@CardUsed({ArmoredPegasus.class, GrizzlyBears.class, Hurricane.class, WindSpirit.class})
 class HurricaneTest extends BaseCardTest {
 
     @Test
@@ -78,6 +78,19 @@ class HurricaneTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Hurricane deals exactly X damage to a flying creature")
+    void hurricaneDealsExactlyXDamageToFlyingCreatures() {
+        harness.addToBattlefield(player2, new WindSpirit());
+
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertOnBattlefield(player2, "Wind Spirit");
+        assertThat(findPermanent(player2, "Wind Spirit").getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Hurricane damages flying creatures controlled by either player")
     void hurricaneDamagesFlyingCreaturesControlledByEitherPlayer() {
         harness.addToBattlefield(player1, new WindSpirit());
@@ -95,14 +108,14 @@ class HurricaneTest extends BaseCardTest {
     @DisplayName("Hurricane does not kill non-flying creatures")
     void hurricaneDoesNotKillNonFlyingCreatures() {
         // Put a non-flying creature on opponent's battlefield
-        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveSorcery(player1, 0, 3);
 
         // Non-flying creature survives
-        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

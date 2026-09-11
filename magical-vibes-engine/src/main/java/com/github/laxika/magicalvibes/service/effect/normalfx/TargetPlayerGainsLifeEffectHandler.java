@@ -36,10 +36,12 @@ public class TargetPlayerGainsLifeEffectHandler implements NormalEffectHandlerBe
         if (targetPlayerIds.isEmpty()) {
             return;
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, null));
+        AmountContext amountContext = AmountContext.forStackEntry(entry, null);
         for (UUID targetPlayerId : targetPlayerIds) {
             if (gameData.playerIds.contains(targetPlayerId)) {
+                int amount = amountEvaluationService.evaluate(gameData, e.amount(),
+                        amountContext.withControllerId(targetPlayerId)
+                                .withTargetPermanentId(targetPlayerId));
                 lifeSupport.applyGainLife(gameData, targetPlayerId, amount);
             }
         }

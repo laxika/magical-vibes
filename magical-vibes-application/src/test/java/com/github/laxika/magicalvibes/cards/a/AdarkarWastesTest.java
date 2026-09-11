@@ -55,6 +55,21 @@ class AdarkarWastesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Pain-land damage is dealt to the ability's controller")
+    void painLandDamagesItsController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new AdarkarWastes());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
         Permanent wastes = harness.addToBattlefieldAndReturn(player1, new AdarkarWastes());

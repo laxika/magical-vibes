@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "165")
+@CardRegistration(set = "ME3", collectorNumber = "111")
 public class StormWorld extends Card {
 
     public StormWorld() {

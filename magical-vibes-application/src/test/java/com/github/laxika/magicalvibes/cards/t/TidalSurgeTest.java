@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CravenGiant;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalSurge.class, CravenGiant.class, SkyshroudFalcon.class, Island.class})
+@CardUsed({CravenGiant.class, GrizzlyBears.class, Island.class, SkyshroudFalcon.class, TidalSurge.class, WindDrake.class})
 class TidalSurgeTest extends BaseCardTest {
 
     private void castTidalSurge(List<UUID> targets) {
@@ -47,12 +50,25 @@ class TidalSurgeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target only one creature")
     void tapsOneCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new CravenGiant());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
-        castTidalSurge(List.of(target.getId()));
+        castTidalSurge(List.of(creature.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .filteredOn(p -> p.getId().equals(target.getId()))
+                .filteredOn(p -> p.getId().equals(creature.getId()))
+                .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void tapsOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        castTidalSurge(List.of(creature.getId()));
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getId().equals(creature.getId()))
                 .allMatch(Permanent::isTapped);
     }
 
@@ -69,12 +85,36 @@ class TidalSurgeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with flying")
     void cannotTargetFlyer() {
-        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new SkyshroudFalcon());
-        harness.setHand(player1, List.of(new TidalSurge()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new WindDrake());
+        prepareTidalSurge();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(flyer.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature without flying");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreature() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        prepareTidalSurge();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature without flying");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than three targets")
+    void cannotTargetMoreThanThreeCreatures() {
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        Permanent third = addCreatureReady(player2, new GrizzlyBears());
+        Permanent fourth = addCreatureReady(player2, new GrizzlyBears());
+        prepareTidalSurge();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
