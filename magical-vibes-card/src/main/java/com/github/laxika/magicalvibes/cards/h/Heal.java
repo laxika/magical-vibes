@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 
 @CardRegistration(set = "5ED", collectorNumber = "32")
 @CardRegistration(set = "ICE", collectorNumber = "30")
+@CardRegistration(set = "ME3", collectorNumber = "14")
 public class Heal extends Card {
 
     public Heal() {

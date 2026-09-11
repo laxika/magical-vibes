@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "37")
 @CardRegistration(set = "LEG", collectorNumber = "119")
+@CardRegistration(set = "ME3", collectorNumber = "76")
 public class Takklemaggot extends Card {
 
     public Takklemaggot() {

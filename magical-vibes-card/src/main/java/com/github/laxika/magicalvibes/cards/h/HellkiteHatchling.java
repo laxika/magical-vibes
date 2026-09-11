@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "CON", collectorNumber = "111")
+@CardRegistration(set = "PC2", collectorNumber = "95")
 public class HellkiteHatchling extends Card {
 
     public HellkiteHatchling() {

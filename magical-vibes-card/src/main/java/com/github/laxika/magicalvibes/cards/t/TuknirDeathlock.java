@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "267")
+@CardRegistration(set = "ME3", collectorNumber = "184")
 public class TuknirDeathlock extends Card {
 
     public TuknirDeathlock() {

@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -307,6 +308,9 @@ public class StackResolutionService {
                 ? entry.getBestowOriginalCard() : entry.getPhysicalCard());
         if (entry.isCastFaceDown()) {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            if (entry.isFaceDownTurnsFaceUpOnDamageOrTap()) {
+                perm.addTemporaryTriggeredEffect(EffectSlot.STATIC, new TurnFaceUpOnDamageOrTapEffect());
+            }
         }
         perm.setCastFromZone(entry.getSourceZone());
         entry.getEnteringCounters().forEach((counterType, count) ->

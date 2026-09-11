@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "BOK", collectorNumber = "76")
+@CardRegistration(set = "PC2", collectorNumber = "35")
 public class OkibaGangShinobi extends Card {
 
     public OkibaGangShinobi() {

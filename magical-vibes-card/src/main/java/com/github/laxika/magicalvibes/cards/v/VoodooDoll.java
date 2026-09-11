@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "111")
 @CardRegistration(set = "LEG", collectorNumber = "298")
+@CardRegistration(set = "ME3", collectorNumber = "203")
 public class VoodooDoll extends Card {
 
     public VoodooDoll() {

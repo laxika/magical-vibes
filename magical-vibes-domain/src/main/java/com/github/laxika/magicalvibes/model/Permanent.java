@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -984,6 +985,9 @@ public class Permanent {
         if (amount <= 0) {
             return;
         }
+        if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
+            turnFaceUp();
+        }
         this.markedDamage += amount;
         if (sourceId != null) {
             this.markedDamageBySource.merge(sourceId, amount, Integer::sum);
@@ -1004,7 +1008,15 @@ public class Permanent {
     }
 
     public void tap() {
+        if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
+            turnFaceUp();
+        }
         this.tapped = true;
+    }
+
+    private boolean hasTemporaryStaticEffect(Class<? extends CardEffect> effectType) {
+        return temporaryTriggeredEffects.getOrDefault(EffectSlot.STATIC, List.of()).stream()
+                .anyMatch(effectType::isInstance);
     }
 
     /** Sets the permanent's status for an entry replacement without applying untap effects. */

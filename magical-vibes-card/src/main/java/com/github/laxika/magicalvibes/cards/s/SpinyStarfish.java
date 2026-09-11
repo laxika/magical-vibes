@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "35")
+@CardRegistration(set = "ME3", collectorNumber = "50")
 public class SpinyStarfish extends Card {
 
     public SpinyStarfish() {

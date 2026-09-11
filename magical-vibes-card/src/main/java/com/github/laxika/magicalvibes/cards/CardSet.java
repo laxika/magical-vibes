@@ -153,6 +153,7 @@ public enum CardSet {
     SET_TSB("TSB"),
     SET_ME1("ME1"),
     SET_ME2("ME2"),
+    SET_ME3("ME3"),
     SET_FUT("FUT"),
     SET_ATH("ATH"),
     SET_LEG("LEG"),
@@ -193,6 +194,7 @@ public enum CardSet {
     SET_CP3("CP3"),
     SET_PHUK("PHUK"),
     SET_PD2("PD2"),
+    SET_PC2("PC2"),
     SET_PD3("PD3");
 
     @Getter

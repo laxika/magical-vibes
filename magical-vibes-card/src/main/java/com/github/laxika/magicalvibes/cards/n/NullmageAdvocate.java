@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "126")
+@CardRegistration(set = "PC2", collectorNumber = "70")
 public class NullmageAdvocate extends Card {
 
     public NullmageAdvocate() {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LEG", collectorNumber = "105")
+@CardRegistration(set = "ME3", collectorNumber = "70")
 public class Hellfire extends Card {
 
     public Hellfire() {
