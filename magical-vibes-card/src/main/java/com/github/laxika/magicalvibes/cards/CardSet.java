@@ -183,6 +183,7 @@ public enum CardSet {
     SET_DD2("DD2"),
     SET_DDC("DDC"),
     SET_DDD("DDD"),
+    SET_GVL("GVL"),
     SET_DDE("DDE"),
     SET_DDF("DDF"),
     SET_DDG("DDG"),
