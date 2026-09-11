@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "170")
 @CardRegistration(set = "DD2", collectorNumber = "58")
+@CardRegistration(set = "JVC", collectorNumber = "58")
 public class KeldonMegaliths extends Card {
 
     public KeldonMegaliths() {

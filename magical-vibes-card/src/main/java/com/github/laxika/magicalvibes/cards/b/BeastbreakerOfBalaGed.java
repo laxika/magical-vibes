@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "178")
+@CardRegistration(set = "DDP", collectorNumber = "10")
 public class BeastbreakerOfBalaGed extends Card {
 
     public BeastbreakerOfBalaGed() {

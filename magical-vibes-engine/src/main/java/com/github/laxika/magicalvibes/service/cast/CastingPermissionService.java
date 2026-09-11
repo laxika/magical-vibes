@@ -2212,7 +2212,7 @@ public class CastingPermissionService {
                         .anyMatch(permission -> canAccessExiledEntry(
                                 source, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, source, entry));
-                if (hasOncePerTurnPermission) {
+                if (hasOncePerTurnPermission && !card.hasType(CardType.LAND)) {
                     gameData.oncePerTurnExileCastPermissionsUsedThisTurn.add(source.getId());
                 }
                 boolean hasOneShotPermission = permissions.stream()
@@ -2374,7 +2374,7 @@ public class CastingPermissionService {
         if (permission.controllerTurnOnly() && !playerId.equals(gameData.activePlayerId)) return false;
         if (permission.ownOnly() && !playerId.equals(entry.ownerId())) return false;
         if (permission.thisTurnOnly() && entry.exiledTurnNumber() != gameData.turnNumber) return false;
-        if (permission.oncePerTurn()
+        if (permission.oncePerTurn() && !entry.card().hasType(CardType.LAND)
                 && (gameData.freeCastPermanentUsedThisTurn.contains(source.getId())
                 || gameData.oncePerTurnExileCastPermissionsUsedThisTurn.contains(source.getId()))) return false;
         if (permission.oneShot()

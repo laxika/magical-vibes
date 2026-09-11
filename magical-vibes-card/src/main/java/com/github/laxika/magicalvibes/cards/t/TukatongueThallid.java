@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "96")
 @CardRegistration(set = "PC2", collectorNumber = "79")
+@CardRegistration(set = "MM2", collectorNumber = "167")
 public class TukatongueThallid extends Card {
 
     public TukatongueThallid() {

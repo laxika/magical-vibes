@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "10E", collectorNumber = "256")
 @CardRegistration(set = "CHK", collectorNumber = "204")
 @CardRegistration(set = "WOE", collectorNumber = "166")
+@CardRegistration(set = "MM2", collectorNumber = "142")
 public class CommuneWithNature extends Card {
 
     public CommuneWithNature() {

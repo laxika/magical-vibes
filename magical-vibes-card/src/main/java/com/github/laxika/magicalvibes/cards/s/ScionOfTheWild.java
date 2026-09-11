@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "295")
 @CardRegistration(set = "RAV", collectorNumber = "182")
+@CardRegistration(set = "MM2", collectorNumber = "160")
 public class ScionOfTheWild extends Card {
 
     public ScionOfTheWild() {

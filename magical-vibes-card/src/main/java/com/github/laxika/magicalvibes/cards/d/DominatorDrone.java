@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "92")
+@CardRegistration(set = "DDP", collectorNumber = "51")
 public class DominatorDrone extends Card {
 
     public DominatorDrone() {

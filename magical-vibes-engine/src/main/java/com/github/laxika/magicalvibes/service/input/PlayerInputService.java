@@ -831,6 +831,42 @@ public class PlayerInputService {
                 sourceCard.getName());
     }
 
+    /** Begins the next active-player-ordered choice for an entering permanent. */
+    public boolean beginChooseModeOnEnterChoiceForEachPlayer(GameData gameData, Card sourceCard,
+            UUID sourcePermanentId, List<String> modes) {
+        Permanent source = findPermanentById(gameData, sourcePermanentId);
+        if (source == null) return false;
+
+        UUID nextPlayer = apnapPlayerOrder(gameData).stream()
+                .filter(gameData.playerIds::contains)
+                .filter(playerId -> !source.getChosenModeByPlayer().containsKey(playerId))
+                .findFirst()
+                .orElse(null);
+        if (nextPlayer == null) return false;
+
+        beginChooseModeOnEnterChoice(gameData, nextPlayer, sourceCard, sourcePermanentId, modes);
+        return true;
+    }
+
+    private static Permanent findPermanentById(GameData gameData, UUID permanentId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(permanentId)) return permanent;
+            }
+        }
+        return null;
+    }
+
+    private static List<UUID> apnapPlayerOrder(GameData gameData) {
+        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = ordered.indexOf(gameData.activePlayerId);
+        if (activeIndex <= 0) return ordered;
+        List<UUID> rotated = new ArrayList<>(ordered.size());
+        rotated.addAll(ordered.subList(activeIndex, ordered.size()));
+        rotated.addAll(ordered.subList(0, activeIndex));
+        return rotated;
+    }
+
     public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
             List<Integer> modeIndices) {

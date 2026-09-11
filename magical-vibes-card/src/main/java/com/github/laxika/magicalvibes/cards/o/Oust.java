@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "40")
+@CardRegistration(set = "DDP", collectorNumber = "7")
 public class Oust extends Card {
 
     public Oust() {
