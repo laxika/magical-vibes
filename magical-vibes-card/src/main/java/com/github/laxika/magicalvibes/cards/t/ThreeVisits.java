@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "153")
+@CardRegistration(set = "ME3", collectorNumber = "135")
 public class ThreeVisits extends Card {
 
     public ThreeVisits() {

@@ -32,6 +32,19 @@ class LeadGolemTest extends BaseCardTest {
         assertThat(entry.getSourcePermanentId()).isEqualTo(golem.getId());
     }
 
+    @Test
+    @DisplayName("Only the attacking Lead Golem gets an attack trigger")
+    void onlyAttackingGolemTriggers() {
+        Permanent nonAttackingGolem = addCreatureReady(player1, new LeadGolem());
+        Permanent attackingGolem = addCreatureReady(player1, new LeadGolem());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(attackingGolem.getId());
+        assertThat(nonAttackingGolem.getSkipUntapCount()).isZero();
+    }
+
     // ===== Attack trigger resolution =====
 
     @Test

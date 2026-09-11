@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameLogSegment;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AgonizingMemories.class, Abeyance.class, AlabasterDragon.class})
+@CardUsed({Abeyance.class, AgonizingMemories.class, AlabasterDragon.class, GrizzlyBears.class, Peek.class})
 class AgonizingMemoriesTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -105,6 +107,28 @@ class AgonizingMemoriesTest extends BaseCardTest {
         // Player2's hand should only have the remaining card
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
                 .containsExactly(card3.getId());
+    }
+
+    @Test
+    @DisplayName("Places exactly two selected cards on top in selection order")
+    void placesExactlyTwoCardsOnTopInSelectionOrder() {
+        Card firstHandCard = new GrizzlyBears();
+        Card secondHandCard = new Peek();
+        Card existingLibraryTop = new AgonizingMemories();
+        harness.setHand(player2, List.of(firstHandCard, secondHandCard));
+        harness.setLibrary(player2, List.of(existingLibraryTop));
+
+        harness.setHand(player1, List.of(new AgonizingMemories()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(secondHandCard, firstHandCard, existingLibraryTop);
     }
 
     @Test

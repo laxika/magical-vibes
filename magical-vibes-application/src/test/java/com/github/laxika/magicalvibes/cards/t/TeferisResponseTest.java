@@ -71,7 +71,7 @@ class TeferisResponseTest extends BaseCardTest {
         Permanent forest = addForest(player1);
         FallowEarth fallowEarth = new FallowEarth();
         harness.setHand(player1, List.of(fallowEarth, new TeferisResponse()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

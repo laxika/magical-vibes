@@ -48,12 +48,15 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtyp
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceDashCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceNinjutsuCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostPerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -1040,6 +1043,44 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("A symmetric reduction can make an activated ability free")
+        void symmetricReductionCanMakeAbilityFree() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+                    new PermanentIsCreaturePredicate(), 2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Permanent creature = new Permanent(new Card());
+            ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{2}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability, 1))
+                    .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("A reduction can require one mana to remain")
+        void reductionCanRequireOneManaToRemain() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+                    new PermanentIsCreaturePredicate(), 2, true, true));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Permanent creature = new Permanent(new Card());
+            ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{2}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability, 1))
+                    .isEqualTo(1);
+        }
+
+        @Test
         @DisplayName("Dynamic symmetric activated-ability reductions use the reducing permanent")
         void dynamicSymmetricReductionUsesReducingPermanent() {
             Card reducer = new Card();
@@ -1128,6 +1169,25 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
 
             assertThat(svc.getCyclingAbilityCostReduction(gd, player1Id)).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("Ninjutsu ability cost reductions")
+    class NinjutsuAbilityCostReductions {
+
+        @Test
+        @DisplayName("Uses only ninjutsu reducers controlled by the activating player")
+        void usesOnlyControllerNinjutsuReducers() {
+            Card playerReducer = new Card();
+            playerReducer.addEffect(EffectSlot.STATIC, new ReduceNinjutsuCostEffect(2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(playerReducer));
+
+            Card opponentReducer = new Card();
+            opponentReducer.addEffect(EffectSlot.STATIC, new ReduceNinjutsuCostEffect(3));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
+
+            assertThat(svc.getNinjutsuAbilityCostReduction(gd, player1Id)).isEqualTo(2);
         }
     }
 
@@ -1283,6 +1343,39 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Battlefield source-relative reduction applies only to the source permanent")
+        void battlefieldSourceRelativeReductionAppliesOnlyToSource() {
+            var predicate = new PermanentIsSourcePermanentPredicate();
+            Card sourceCard = new Card();
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 2, true));
+            Permanent source = new Permanent(sourceCard);
+            Permanent other = new Permanent(new Card());
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(other);
+
+            Card spell = new Card();
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.findPermanentById(gd, other.getId())).thenReturn(other);
+            when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(gd, other.getId())).thenReturn(player1Id);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), eq(predicate), any(FilterContext.class)))
+                    .thenAnswer(invocation -> {
+                        Permanent candidate = invocation.getArgument(0);
+                        FilterContext context = invocation.getArgument(2);
+                        return context.sourcePermanentSnapshot() != null
+                                && context.sourcePermanentSnapshot().getId().equals(candidate.getId());
+                    });
+
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(source.getId())))
+                    .isEqualTo(2);
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(other.getId())))
+                    .isZero();
+        }
+
+        @Test
         @DisplayName("Stack-entry reduction applies when first target is a matching spell on the stack")
         void stackEntryReductionApplies() {
             var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate(
@@ -1384,6 +1477,20 @@ class CastingCostServiceTest {
             assertThat(svc.computeTargetBasedCostReduction(
                     gd, player1Id, spell, List.of(bear.getId(), bear.getId())))
                     .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Target-count reduction counts every target occurrence")
+        void targetCountReductionCountsEveryTargetOccurrence() {
+            Card hinata = new Card();
+            hinata.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostForEachTargetEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
+
+            Card spell = new Card();
+            UUID targetId = UUID.randomUUID();
+
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, spell, List.of(targetId, targetId))).isEqualTo(2);
         }
 
         @Test
@@ -1531,6 +1638,18 @@ class CastingCostServiceTest {
                 eq(source), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
         assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, source.getId(), null)).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Opponent target-count tax applies once per target and not to the controller")
+    void targetingSpellCostModifierIncludesOpponentTargetCountTax() {
+        Card hinata = new Card();
+        hinata.addEffect(EffectSlot.STATIC, new IncreaseOpponentCastCostPerTargetEffect(1));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
+        List<UUID> targetIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+
+        assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, null, null, targetIds)).isEqualTo(2);
+        assertThat(svc.getTargetingSpellCostModifier(gd, player1Id, null, null, targetIds)).isZero();
     }
 
     @Test

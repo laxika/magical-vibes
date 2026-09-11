@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "109")
+@CardRegistration(set = "DDM", collectorNumber = "67")
 public class HypnoticCloud extends Card {
 
     public HypnoticCloud() {

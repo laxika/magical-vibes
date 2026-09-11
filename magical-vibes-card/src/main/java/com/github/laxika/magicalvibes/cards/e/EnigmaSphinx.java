@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "106")
+@CardRegistration(set = "PC2", collectorNumber = "89")
 public class EnigmaSphinx extends Card {
 
     public EnigmaSphinx() {

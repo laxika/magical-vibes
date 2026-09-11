@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "77")
+@CardRegistration(set = "ME3", collectorNumber = "120")
 public class GaeasTouch extends Card {
 
     public GaeasTouch() {

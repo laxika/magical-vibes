@@ -22,6 +22,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SCG", collectorNumber = "111")
 @CardRegistration(set = "DD1", collectorNumber = "1")
+@CardRegistration(set = "EVG", collectorNumber = "1")
 public class AmbushCommander extends Card {
 
     public AmbushCommander() {

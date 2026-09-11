@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "MOM", collectorNumber = "270")
 @CardRegistration(set = "IKO", collectorNumber = "249")
 @CardRegistration(set = "FRF", collectorNumber = "169")
+@CardRegistration(set = "NEO", collectorNumber = "269")
 public class JungleHollow extends Card {
 
     public JungleHollow() {

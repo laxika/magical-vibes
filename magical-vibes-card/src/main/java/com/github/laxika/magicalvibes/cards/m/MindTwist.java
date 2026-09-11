@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "4ED", collectorNumber = "147")
 @CardRegistration(set = "SUM", collectorNumber = "117")
 @CardRegistration(set = "3ED", collectorNumber = "117")
+@CardRegistration(set = "ME3", collectorNumber = "72")
 public class MindTwist extends Card {
 
     public MindTwist() {

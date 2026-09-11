@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "186")
+@CardRegistration(set = "ME3", collectorNumber = "118")
 public class FireSprites extends Card {
 
     public FireSprites() {

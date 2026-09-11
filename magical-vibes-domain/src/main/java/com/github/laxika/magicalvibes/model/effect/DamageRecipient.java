@@ -24,7 +24,7 @@ public enum DamageRecipient {
      * (Refuse), or {@code TargetSpellPower} for "damage equal to that spell's power" (Essence Backlash).
      */
     TARGET_SPELL_CONTROLLER,
-    /** The controller of the permanent that caused the trigger ({@code entry.getTargetId()} baked at trigger time). */
+    /** The triggering permanent's current controller, or its last known controller after it leaves. */
     TRIGGERING_PERMANENT_CONTROLLER,
     /**
      * The player whose action caused the trigger — "that player" ({@code entry.getTargetId()} baked

@@ -34,7 +34,7 @@ class SquadCommanderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = korWarriorTokens(player1);
         assertThat(tokens).hasSize(4);
@@ -65,6 +65,7 @@ class SquadCommanderTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -101,6 +102,6 @@ class SquadCommanderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

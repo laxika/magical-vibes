@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "117")
+@CardRegistration(set = "DDL", collectorNumber = "51")
 public class CrownedCeratok extends Card {
 
     public CrownedCeratok() {

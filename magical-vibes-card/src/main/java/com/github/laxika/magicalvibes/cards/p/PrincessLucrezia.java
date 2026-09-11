@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "LEG", collectorNumber = "249")
+@CardRegistration(set = "ME3", collectorNumber = "166")
 public class PrincessLucrezia extends Card {
 
     public PrincessLucrezia() {

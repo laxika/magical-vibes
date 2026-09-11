@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "118a")
 @CardRegistration(set = "ALL", collectorNumber = "118b")
+@CardRegistration(set = "ME3", collectorNumber = "189")
 public class Astrolabe extends Card {
 
     public Astrolabe() {

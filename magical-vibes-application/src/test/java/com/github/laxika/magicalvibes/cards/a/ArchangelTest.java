@@ -24,9 +24,11 @@ class ArchangelTest extends BaseCardTest {
         addCreatureReady(player2, new NorwoodRanger());
         attacker.setAttacking(true);
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
     }
@@ -34,10 +36,10 @@ class ArchangelTest extends BaseCardTest {
     @Test
     @DisplayName("Flying allows another creature with flying to block Archangel")
     void flyingAllowsFlyingCreatureToBlock() {
-        Permanent attacker = addCreatureReady(player1, new Archangel());
+        addCreatureReady(player1, new Archangel());
         Permanent blocker = addCreatureReady(player2, new Archangel());
-        attacker.setAttacking(true);
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

@@ -28,4 +28,10 @@ public record BoostEquippedCreatureUntilEndOfTurnEffect(
     public boolean resolvesAgainstAttachedPermanent() {
         return true;
     }
+
+    @Override
+    public boolean hasAbilityResolutionCondition() {
+        return powerBoost.requiresAbilityResolutionCount()
+                || toughnessBoost.requiresAbilityResolutionCount();
+    }
 }

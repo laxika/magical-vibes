@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "83")
+@CardRegistration(set = "MMA", collectorNumber = "79")
 public class DeepcavernImp extends Card {
 
     public DeepcavernImp() {

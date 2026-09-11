@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
@@ -309,6 +310,18 @@ public class CombatAttackService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CombatCreatureLimitEffect limit
+                            && (!filterByAttackTarget
+                            || limit.appliesToAttackTarget(gameData.planechase.controllerId,
+                            planar.getId(), attackTargetId))) {
+                        maximum[0] = Math.min(maximum[0], limit.maxAttackers());
+                    }
+                }
+            }
+        }
         return maximum[0];
     }
 
@@ -1067,6 +1080,8 @@ public class CombatAttackService {
                         // Two-target "remove a counter from a creature you control, then put one on up
                         // to one creature the defending player controls" (Decimator Beetle). The normal
                         // pipeline collects only one target, so route to the bespoke two-step flow.
+                        boolean isTriggerTimeModal = otherEffects.size() == 1
+                                && otherEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect;
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
                                 .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
@@ -1080,7 +1095,11 @@ public class CombatAttackService {
                                 : gameData.playerIds.contains(attackedTargetId)
                                         ? attackedTargetId
                                         : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                        if (isCounterMove) {
+                        if (isTriggerTimeModal) {
+                            ChooseOneAtTriggerTimeEffect modal = (ChooseOneAtTriggerTimeEffect) otherEffects.getFirst();
+                            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                    attacker.getCard(), playerId, modal.choice(), attacker.getId()));
+                        } else if (isCounterMove) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackCounterMoveFirstTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId(), defendingPlayerId));
@@ -1139,7 +1158,7 @@ public class CombatAttackService {
                                     gameData, attacker, attackTrigger);
                         }
 
-                        if (!needsGraveyardTarget) {
+                        if (!needsGraveyardTarget && !isTriggerTimeModal) {
                             gameLogService.append(gameData,
                                     GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                             log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
@@ -1631,6 +1650,10 @@ public class CombatAttackService {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
+        }
+
+        for (int idx : attackerIndices) {
+            triggerCollectionService.checkPlanarAllyCreatureAttackTriggers(gameData, battlefield.get(idx));
         }
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers

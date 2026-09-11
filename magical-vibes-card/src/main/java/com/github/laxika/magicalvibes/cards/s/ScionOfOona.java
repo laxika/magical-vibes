@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "83")
+@CardRegistration(set = "MMA", collectorNumber = "63")
 public class ScionOfOona extends Card {
 
     public ScionOfOona() {

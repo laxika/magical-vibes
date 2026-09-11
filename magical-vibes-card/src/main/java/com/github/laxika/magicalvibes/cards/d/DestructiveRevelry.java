@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "192")
+@CardRegistration(set = "DDL", collectorNumber = "66")
 public class DestructiveRevelry extends Card {
 
     public DestructiveRevelry() {

@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MysticCompass.class, Forest.class, GrizzlyBears.class})
+@CardUsed({MysticCompass.class, Forest.class, GrizzlyBears.class, CityOfBrass.class})
 class MysticCompassTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -42,12 +44,14 @@ class MysticCompassTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without the {1} mana")
     void cannotActivateWithoutMana() {
-        addReadyCompass(player1);
+        Permanent compass = addReadyCompass(player1);
         harness.addToBattlefield(player1, new Forest());
         UUID forestId = harness.getPermanentId(player1, "Forest");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forestId))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(compass.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     // ===== Type replacement (rule 305.7) =====
@@ -57,11 +61,7 @@ class MysticCompassTest extends BaseCardTest {
     void chosenTypeReplacesSubtypes() {
         Permanent forest = becomeIsland(player1);
 
-        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
-        assertThat(bonus.landSubtypeOverriding()).isTrue();
-        assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test
@@ -71,7 +71,7 @@ class MysticCompassTest extends BaseCardTest {
 
         int forestIndex = gd.playerBattlefields.get(player1.getId())
                 .indexOf(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest")));
-        gs.tapPermanent(gd, player1, forestIndex);
+        harness.tapPermanent(player1, forestIndex);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
@@ -83,11 +83,25 @@ class MysticCompassTest extends BaseCardTest {
     @DisplayName("Override is cleared at end of turn")
     void overrideClearedAtEndOfTurn() {
         Permanent forest = becomeIsland(player1);
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
 
-        forest.resetModifiers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    @DisplayName("Replacing a nonbasic land removes its old abilities")
+    void replacingNonbasicLandRemovesOldAbilities() {
+        Permanent city = becomeIsland(player1, new CityOfBrass());
+        harness.setLife(player1, 20);
+
+        int cityIndex = gd.playerBattlefields.get(player1.getId()).indexOf(city);
+        int blueBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
+        harness.tapPermanent(player1, cityIndex);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 20);
     }
 
     // ===== Targeting =====
@@ -123,7 +137,7 @@ class MysticCompassTest extends BaseCardTest {
         harness.handleListChoice(player1, CardSubtype.ISLAND.name());
 
         Permanent forest = gqs.findPermanentById(gd, opponentForestId);
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test
@@ -148,18 +162,22 @@ class MysticCompassTest extends BaseCardTest {
         return perm;
     }
 
-    /** Adds a ready Mystic Compass + Forest for {@code player}, then makes the Forest become an Island. */
+    /** Adds a ready Mystic Compass + land for {@code player}, then makes the land become an Island. */
     private Permanent becomeIsland(Player player) {
+        return becomeIsland(player, new Forest());
+    }
+
+    private Permanent becomeIsland(Player player, Card land) {
         addReadyCompass(player);
-        harness.addToBattlefield(player, new Forest());
+        harness.addToBattlefield(player, land);
         harness.addMana(player, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player);
-        UUID forestId = harness.getPermanentId(player, "Forest");
+        UUID landId = harness.getPermanentId(player, land.getName());
 
-        harness.activateAbility(player, 0, null, forestId);
+        harness.activateAbility(player, 0, null, landId);
         harness.passBothPriorities();
-        harness.handleListChoice(player, "ISLAND");
+        harness.handleListChoice(player, CardSubtype.ISLAND.name());
 
-        return gqs.findPermanentById(gd, forestId);
+        return gqs.findPermanentById(gd, landId);
     }
 }

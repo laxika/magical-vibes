@@ -18,8 +18,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param unpreventable whether the damage can't be prevented
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
-                                        PermanentPredicate attachedCountFilter, boolean unpreventable)
+                                        PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                        boolean recordDamageDealt)
         implements DamageDealingEffect, CombatDamageTriggerContextEffect {
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable) {
+        this(amount, recipient, attachedCountFilter, unpreventable, false);
+    }
+
+    /** Records actual damage in the entry's event value for a subsequent effect. */
+    public DealDamageToPlayersEffect recordingDamageDealt() {
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true);
+    }
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
         this(new Fixed(damage), recipient, null, false);

@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -307,6 +308,9 @@ public class StackResolutionService {
                 ? entry.getBestowOriginalCard() : entry.getPhysicalCard());
         if (entry.isCastFaceDown()) {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            if (entry.isFaceDownTurnsFaceUpOnDamageOrTap()) {
+                perm.addTemporaryTriggeredEffect(EffectSlot.STATIC, new TurnFaceUpOnDamageOrTapEffect());
+            }
         }
         perm.setCastFromZone(entry.getSourceZone());
         entry.getEnteringCounters().forEach((counterType, count) ->
@@ -330,6 +334,8 @@ public class StackResolutionService {
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
+        // Devour granted while the spell was on the stack (Jund).
+        perm.setGrantedDevour(entry.getGrantedDevour());
         entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
                 effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
@@ -1216,8 +1222,9 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated or triggered ability whose effects branch on {@code NthAbilityResolutionThisTurn}
-     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * entry is an activated or triggered ability whose effects branch on a resolution count
+     * (explicitly through {@code NthAbilityResolutionThisTurn} or through a dynamic amount such as
+     * Bronze Cudgels' "where X is the number of times this ability has resolved this turn").
      * Counted at resolution (not activation), so copies of the ability count but activations
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only

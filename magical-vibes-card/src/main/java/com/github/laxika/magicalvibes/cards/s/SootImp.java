@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "EVE", collectorNumber = "43")
 @CardRegistration(set = "DDC", collectorNumber = "37")
+@CardRegistration(set = "DVD", collectorNumber = "37")
 public class SootImp extends Card {
 
     public SootImp() {

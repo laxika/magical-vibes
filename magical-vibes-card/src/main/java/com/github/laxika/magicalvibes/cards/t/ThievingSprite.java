@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "143")
+@CardRegistration(set = "MMA", collectorNumber = "101")
 public class ThievingSprite extends Card {
 
     public ThievingSprite() {

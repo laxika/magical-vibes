@@ -27,7 +27,7 @@ class OrahSkyclaveHierophantTest extends BaseCardTest {
         Card nonCleric = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(eligible, equalManaValue, nonCleric));
         harness.addToBattlefield(player1, new OrahSkyclaveHierophant());
-        Permanent dyingCleric = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+        Permanent dyingCleric = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
 
         destroy(dyingCleric);
 
@@ -42,7 +42,8 @@ class OrahSkyclaveHierophantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Expedition Healer");
         harness.assertInGraveyard(player1, "Taborax, Hope's Demise");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Expedition Healer");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .doesNotContain(eligible.getId());
     }
 
     @Test
@@ -64,7 +65,7 @@ class OrahSkyclaveHierophantTest extends BaseCardTest {
     @DisplayName("Returns a lesser Cleric when Orah dies")
     void returnsLesserClericWhenOrahDies() {
         Card eligible = new ExpeditionHealer();
-        Card equalManaValue = new TaboraxHopesDemise();
+        Card equalManaValue = new OrahSkyclaveHierophant();
         harness.setGraveyard(player1, List.of(eligible, equalManaValue));
         Permanent orah = harness.addToBattlefieldAndReturn(player1, new OrahSkyclaveHierophant());
 
@@ -80,7 +81,8 @@ class OrahSkyclaveHierophantTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Expedition Healer");
         harness.assertInGraveyard(player1, "Orah, Skyclave Hierophant");
-        harness.assertInGraveyard(player1, "Taborax, Hope's Demise");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(equalManaValue.getId());
     }
 
     private void destroy(Permanent permanent) {

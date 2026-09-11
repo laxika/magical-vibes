@@ -92,6 +92,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Tag("scryfall")
 @ExtendWith(CardUsedExtension.class)
@@ -2340,6 +2341,7 @@ class AiDecisionEngineTest {
         }
 
         private EasyAiDecisionEngine createEngine() {
+            when(mockGameQueryService.getMaxLandsThisTurn(mockGd, mockAiPlayer.getId())).thenReturn(1);
             AiTestPlayabilityStub.installPotentialManaService(
                     mockGameActionAvailabilityService, mockGameQueryService);
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(

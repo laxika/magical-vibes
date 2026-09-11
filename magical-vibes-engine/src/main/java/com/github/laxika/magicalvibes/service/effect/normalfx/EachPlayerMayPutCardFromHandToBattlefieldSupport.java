@@ -18,9 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Coordinates Show and Tell-style choices in active-player order. The normal mode places all
- * chosen cards onto the battlefield as one simultaneous batch; the repeating mode places each
- * choice immediately and starts another round when appropriate.
+ * Coordinates hand-to-battlefield choices in player order. The normal mode places all chosen
+ * cards onto the battlefield as one simultaneous batch; a controller-first non-repeating mode
+ * and the repeating mode place each choice immediately.
  */
 @Slf4j
 @Component

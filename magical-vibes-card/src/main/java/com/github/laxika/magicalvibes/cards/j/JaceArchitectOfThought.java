@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchEachPlayerLibraryForNon
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "44")
+@CardRegistration(set = "DDM", collectorNumber = "1")
 public class JaceArchitectOfThought extends Card {
 
     public JaceArchitectOfThought() {

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.planar.PlanarAbilityService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -244,6 +246,30 @@ public final class HandCardChoiceInteractionHandlers {
         public void handleAnswer(GameData gameData, Player player, PendingInteraction.DiscardCostChoice interaction,
                                  InteractionAnswer answer) {
             abilityActivationService.handleActivatedAbilityDiscardCostChosen(gameData, player, cardIndex(answer));
+        }
+    }
+
+    /** Choose the card exiled for a planar activation cost. */
+    @Component
+    public static class PlanarAbilityHandCardChoiceInteractionHandler
+            extends Base<PendingInteraction.PlanarAbilityHandCardChoice> {
+
+        private final PlanarAbilityService planarAbilityService;
+
+        public PlanarAbilityHandCardChoiceInteractionHandler(@Lazy PlanarAbilityService planarAbilityService) {
+            this.planarAbilityService = planarAbilityService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PlanarAbilityHandCardChoice> handledType() {
+            return PendingInteraction.PlanarAbilityHandCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PlanarAbilityHandCardChoice interaction,
+                                 InteractionAnswer answer) {
+            planarAbilityService.completeHandCardCostChoice(gameData, player, interaction, cardIndex(answer));
         }
     }
 }

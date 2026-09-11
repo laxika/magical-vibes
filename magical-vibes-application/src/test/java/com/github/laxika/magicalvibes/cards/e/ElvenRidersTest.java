@@ -23,7 +23,7 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders cannot be blocked by non-Wall non-flying creature")
     void cannotBeBlockedByNormalCreature() {
-        Permanent riders = attackingRiders();
+        attackingRiders();
         addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
@@ -36,7 +36,7 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders can be blocked by a Wall")
     void canBeBlockedByWall() {
-        Permanent riders = attackingRiders();
+        attackingRiders();
         addCreatureReady(player2, new WallOfFire());
 
         prepareDeclareBlockers();
@@ -48,7 +48,7 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Riders can be blocked by a creature with flying")
     void canBeBlockedByFlyingCreature() {
-        Permanent riders = attackingRiders();
+        attackingRiders();
         Permanent flyer = addCreatureReady(player2, new AirElemental());
 
         prepareDeclareBlockers();
@@ -60,7 +60,7 @@ class ElvenRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Reach is not enough to block Elven Riders")
     void reachIsNotEnoughToBlock() {
-        Permanent riders = attackingRiders();
+        attackingRiders();
         addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
@@ -70,9 +70,8 @@ class ElvenRidersTest extends BaseCardTest {
                 .hasMessageContaining("can only be blocked by creatures with flying or Walls");
     }
 
-    private Permanent attackingRiders() {
+    private void attackingRiders() {
         Permanent riders = addCreatureReady(player1, new ElvenRiders());
         riders.setAttacking(true);
-        return riders;
     }
 }

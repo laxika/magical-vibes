@@ -516,28 +516,50 @@ public class DeathTriggerCollectorService {
 
     @CollectsTrigger(value = DistributeCountersAmongCreaturesOnDeathEffect.class,
             slot = EffectSlot.ON_DEATH)
+    @CollectsTrigger(value = DistributeCountersAmongCreaturesOnDeathEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleDistributeCountersAmongCreaturesOnDeath(TriggerMatchContext match,
             DistributeCountersAmongCreaturesOnDeathEffect effect, TriggerContext ctx) {
-        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        Permanent dyingPermanent = sd.dyingPermanent();
-        if (dyingPermanent == null) {
+        Card dyingCard;
+        java.util.UUID controllerId;
+        int counters;
+        if (ctx instanceof TriggerContext.SelfDeath sd) {
+            Permanent dyingPermanent = sd.dyingPermanent();
+            if (dyingPermanent == null) {
+                return false;
+            }
+            dyingCard = sd.dyingCard();
+            controllerId = sd.controllerId();
+            counters = effect.countFromSourcePower()
+                    ? Math.max(0, dyingPermanent.getEffectivePower())
+                    : effect.countFromSourceCounters()
+                            ? dyingPermanent.getCounterCount(effect.counterType())
+                            : effect.count();
+        } else if (ctx instanceof TriggerContext.CreatureDeath cd) {
+            if (!effect.countFromSourcePower()) {
+                return false;
+            }
+            dyingCard = cd.dyingCard();
+            controllerId = cd.dyingCreatureControllerId();
+            counters = Math.max(0, cd.dyingCreaturePower());
+        } else {
             return false;
         }
         // The dying-source form snapshots at death — the permanent is gone by resolution. The "you
         // may" and the division (pendingETBDamageAssignments) both happen when the trigger resolves.
-        int counters = effect.countFromSourceCounters()
-                ? dyingPermanent.getCounterCount(effect.counterType())
-                : effect.count();
         CardEffect baked = new DistributeCountersAmongCreaturesOnDeathEffect(
-                effect.counterType(), counters, effect.countFromSourceCounters(), effect.anyCreature());
-        MayEffect may = new MayEffect(baked, "distribute " + counters + " counter(s) among "
-                + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"));
+                effect.counterType(), counters, effect.countFromSourceCounters(), effect.anyCreature(),
+                false, effect.optional());
+        CardEffect queued = effect.optional()
+                ? new MayEffect(baked, "distribute " + counters + " counter(s) among "
+                        + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"))
+                : baked;
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                sd.dyingCard(),
-                sd.controllerId(),
-                sd.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(may))
+                dyingCard,
+                controllerId,
+                dyingCard.getName() + "'s ability",
+                new ArrayList<>(List.of(queued))
         ));
         return true;
     }
@@ -978,6 +1000,17 @@ public class DeathTriggerCollectorService {
                 "'s ability triggers (equipped creature died)."));
         log.info("Game {} - {} return trigger fires (equipped creature died)", gameData.id, match.permanent().getCard().getName());
         return true;
+    }
+
+    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
+    boolean handleEquippedCreatureDeathExileAndTrack(TriggerMatchContext match,
+            ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
+        CardEffect bound = ecd.dyingCard() == null
+                ? effect
+                : effect.boundToDyingCard(ecd.dyingCard().getId());
+        return handleEquippedCreatureDeathDefault(match, bound, ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
@@ -3364,13 +3397,19 @@ public class DeathTriggerCollectorService {
     boolean handleReturnAllCardsExiledWithSourceOnLeave(TriggerMatchContext match,
             ReturnAllCardsExiledWithSourceEffect effect, TriggerContext ctx) {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        UUID sourcePermanentId = effect.useLinkedSource()
+                ? match.permanent().getChosenPermanentId()
+                : match.permanent().getId();
+        if (sourcePermanentId == null) {
+            return false;
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
-                match.permanent().getId(),
+                sourcePermanentId,
                 List.of()
         ));
         logSelfLeaves(match);

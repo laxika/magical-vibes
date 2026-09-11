@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "152")
+@CardRegistration(set = "MMA", collectorNumber = "112")
 public class EmptyTheWarrens extends Card {
 
     public EmptyTheWarrens() {

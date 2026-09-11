@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssault;
 import com.github.laxika.magicalvibes.cards.g.GoblinRabblemaster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HedronFieldsOfAgadeem;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.InstillEnergy;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -32,12 +33,15 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +49,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +81,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         GoblinAssault.class,
         GoblinRabblemaster.class,
         GrizzlyBears.class,
+        HedronFieldsOfAgadeem.class,
         HillGiant.class,
         InstillEnergy.class,
         Island.class,
@@ -295,6 +301,27 @@ class AttackLegalityServiceTest extends BaseCardTest {
 
         assertThat(als.canAttack(gd, zombies, player1.getId())).isFalse();
         assertThat(als.canAttack(gd, bears, player1.getId())).isTrue();
+    }
+
+    @Test
+    void faceUpPlanarGlobalCantAttackOrBlockRestrictionStopsAttacking() {
+        gd.planechase = new PlanechaseState();
+        gd.planechase.controllerId = player1.getId();
+        gd.planechase.faceUp.add(new PlanarObject(new HedronFieldsOfAgadeem(), gd.nextTimestamp()));
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setPowerModifier(5);
+
+        assertThat(als.canAttack(gd, attacker, player1.getId())).isFalse();
+    }
+
+    @Test
+    void faceDownSourceDoesNotApplyGlobalAttackRestriction() {
+        Permanent zombies = addCreatureReady(player1, new ScatheZombies());
+        Permanent light = harness.addToBattlefieldAndReturn(player2, new LightOfDay());
+        light.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(als.canAttack(gd, zombies, player1.getId())).isTrue();
     }
 
     @Test

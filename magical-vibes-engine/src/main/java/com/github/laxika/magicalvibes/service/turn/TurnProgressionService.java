@@ -311,6 +311,7 @@ public class TurnProgressionService {
                     p.setBlockedThisCombat(false);
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
+                gameData.combatDamageToPlayersThisCombat.clear();
                 processTargetCreatureMustAttackNextCombat(gameData);
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);
@@ -650,6 +651,7 @@ public class TurnProgressionService {
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
+        gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
@@ -711,6 +713,7 @@ public class TurnProgressionService {
         gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
+        gameData.damageDealtToPlayersBySourceThisTurn.clear();
         gameData.sorcerySpellDamageDealtThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
@@ -773,6 +776,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnExileCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
+        gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
@@ -845,6 +849,7 @@ public class TurnProgressionService {
                 shield -> nextActive.equals(shield.protectedPlayerId()));
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);

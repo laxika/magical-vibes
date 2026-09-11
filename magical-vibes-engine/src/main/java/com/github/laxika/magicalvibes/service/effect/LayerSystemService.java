@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -1499,6 +1500,15 @@ public class LayerSystemService {
                             landSubtypeOverride, null, null));
                 }
             }
+            case GrantSubtypesToSelfEffect grant -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                CharacteristicState state = states.get(source.permanent().getId());
+                grant.grantedSubtypes().forEach(state::addSubtype);
+                record(board, instance, source,
+                        new L4Contribution(grant.grantedSubtypes(), false, false));
+            }
             case GrantAllCreatureTypesToOwnCreaturesEffect grant -> {
                 manage(board, instance);
                 List<CardSubtype> allCreatureTypes = new ArrayList<>();
@@ -1562,6 +1572,11 @@ public class LayerSystemService {
             }
             case SetCardTypesEffect set -> {
                 manage(board, instance);
+                if (set.scope() == GrantScope.SELF
+                        && set.duration() == EffectDuration.WHILE_ATTACHED
+                        && (instance.source() == null || !instance.source().permanent().isAttached())) {
+                    return;
+                }
                 for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(set.cardTypes());
                     record(board, instance, target, new L4Contribution(

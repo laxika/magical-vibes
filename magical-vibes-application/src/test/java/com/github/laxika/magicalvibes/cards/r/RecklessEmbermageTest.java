@@ -63,6 +63,20 @@ class RecklessEmbermageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target itself and takes both points of damage")
+    void canTargetItself() {
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
+        addRedMana(player1);
+
+        harness.activateAbility(player1, 0, null, embermage.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Reckless Embermage");
+        harness.assertInGraveyard(player1, "Reckless Embermage");
+    }
+
+    @Test
     @DisplayName("Ability has no tap cost — repeating it twice kills the Embermage")
     void repeatedActivationsKillItself() {
         addCreatureReady(player1, new RecklessEmbermage());
