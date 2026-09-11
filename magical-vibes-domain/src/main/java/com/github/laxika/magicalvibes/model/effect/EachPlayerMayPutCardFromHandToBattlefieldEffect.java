@@ -10,9 +10,10 @@ import java.util.List;
 /**
  * Lets each player, or each player other than the effect's controller, optionally put matching
  * card(s) from their hand onto the battlefield. Choices are made in active-player order and the
- * chosen cards normally enter simultaneously. The repeating mode puts each chosen card onto the
- * battlefield immediately and starts another round beginning with the effect's controller after
- * any card enters.
+ * chosen cards normally enter simultaneously. A non-repeating controller-first effect puts each
+ * chosen card onto the battlefield immediately. The repeating mode also puts each chosen card
+ * immediately and starts another round beginning with the effect's controller after any card
+ * enters.
  */
 public record EachPlayerMayPutCardFromHandToBattlefieldEffect(CardPredicate predicate, String label,
                                                               boolean opponentsOnly,

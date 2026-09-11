@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "9")
+@CardRegistration(set = "MMA", collectorNumber = "15")
 public class FeudkillersVerdict extends Card {
 
     public FeudkillersVerdict() {

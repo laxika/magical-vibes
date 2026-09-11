@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "71")
+@CardRegistration(set = "DDM", collectorNumber = "14")
 public class PhantasmalDragon extends Card {
 
     public PhantasmalDragon() {

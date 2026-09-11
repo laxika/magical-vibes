@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "103")
+@CardRegistration(set = "MMA", collectorNumber = "200")
 public class ArcboundWanderer extends Card {
 
     public ArcboundWanderer() {

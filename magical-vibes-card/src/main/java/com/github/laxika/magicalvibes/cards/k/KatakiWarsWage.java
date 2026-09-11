@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeU
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "SOK", collectorNumber = "14")
+@CardRegistration(set = "MD1", collectorNumber = "24")
+@CardRegistration(set = "MMA", collectorNumber = "20")
 public class KatakiWarsWage extends Card {
 
     public KatakiWarsWage() {

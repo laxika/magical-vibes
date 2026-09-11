@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
  * uses the stack once a player would next receive priority.
  */
 @CardRegistration(set = "DGM", collectorNumber = "120")
+@CardRegistration(set = "DDL", collectorNumber = "48")
 public class ZhurTaaDruid extends Card {
 
     public ZhurTaaDruid() {

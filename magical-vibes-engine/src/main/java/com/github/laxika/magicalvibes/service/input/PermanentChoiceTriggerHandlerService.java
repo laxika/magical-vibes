@@ -1984,6 +1984,24 @@ public class PermanentChoiceTriggerHandlerService {
         handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
     }
 
+    public void handleEtbGraveyardCardTargetGroup(GameData gameData, List<UUID> targets,
+            MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup context) {
+        var pending = context.pending();
+        if (targets.isEmpty()) {
+            handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), pending);
+            return;
+        }
+        List<UUID> chosen = new ArrayList<>(pending.chosenTargetsSoFar());
+        chosen.addAll(targets);
+        var completedGroup = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                pending.sourceCard(), pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
+                chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
+                pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
+                pending.resumePendingMayResolution(), pending.triggeringCardId(),
+                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource());
+        handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
+    }
+
     public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
         if (etbTokenTargetService.handleETBTokenTargetChosen(gameData, targetId, etbTtt)) {
             return;

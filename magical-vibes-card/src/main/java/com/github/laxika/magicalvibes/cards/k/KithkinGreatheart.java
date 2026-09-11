@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "25")
+@CardRegistration(set = "MMA", collectorNumber = "21")
 public class KithkinGreatheart extends Card {
 
     public KithkinGreatheart() {
