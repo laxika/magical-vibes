@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "341")
+@CardRegistration(set = "3ED", collectorNumber = "270")
 @CardRegistration(set = "5ED", collectorNumber = "393")
 @CardRegistration(set = "6ED", collectorNumber = "304")
 @CardRegistration(set = "9ED", collectorNumber = "305")
@@ -14,5 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MRD", collectorNumber = "224")
 @CardRegistration(set = "AER", collectorNumber = "167")
 @CardRegistration(set = "SUM", collectorNumber = "270")
+@CardRegistration(set = "ATQ", collectorNumber = "60")
+@CardRegistration(set = "MPS", collectorNumber = "42")
 public class Ornithopter extends Card {
 }

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "39")
+@CardRegistration(set = "MMA", collectorNumber = "50")
 public class LatchkeyFaerie extends Card {
 
     public LatchkeyFaerie() {

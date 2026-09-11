@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlabornMusketeer;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeaDrake.class, AlabornMusketeer.class, Island.class})
 class SeaDrakeTest extends BaseCardTest {
 
     @Test
@@ -48,12 +50,34 @@ class SeaDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target the same land twice")
+    void cannotTargetSameLandTwice() {
+        harness.addToBattlefield(player1, new Island());
+        UUID land = harness.getPermanentId(player1, "Island");
+
+        assertThatThrownBy(() -> castSeaDrake(List.of(land, land)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    @DisplayName("Requires two targets")
+    void requiresTwoTargets() {
+        harness.addToBattlefield(player1, new Island());
+        UUID land = harness.getPermanentId(player1, "Island");
+
+        assertThatThrownBy(() -> castSeaDrake(List.of(land)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must choose 2 targets");
+    }
+
+    @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonland() {
         harness.addToBattlefield(player1, new Island());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AlabornMusketeer());
         UUID land = harness.getPermanentId(player1, "Island");
-        UUID creature = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID creature = harness.getPermanentId(player1, "Alaborn Musketeer");
 
         assertThatThrownBy(() -> castSeaDrake(List.of(land, creature)))
                 .isInstanceOf(IllegalStateException.class)

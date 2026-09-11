@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NPH", collectorNumber = "58")
 @CardRegistration(set = "PLC", collectorNumber = "70")
+@CardRegistration(set = "DDD", collectorNumber = "58")
+@CardRegistration(set = "GVL", collectorNumber = "58")
 public class Enslave extends Card {
 
     public Enslave() {

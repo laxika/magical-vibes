@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayer
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "204")
+@CardRegistration(set = "DDL", collectorNumber = "54")
 public class DeusOfCalamity extends Card {
 
     public DeusOfCalamity() {
         // Trample is auto-loaded from Scryfall.
         // Whenever this creature deals 6 or more damage to an opponent, destroy target land that player controls.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new DestroyPermanentDamagedPlayerControlsEffect(new PermanentIsLandPredicate(), 6));
     }
 }

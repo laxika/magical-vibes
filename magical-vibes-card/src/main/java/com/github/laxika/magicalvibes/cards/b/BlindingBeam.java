@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "7")
+@CardRegistration(set = "DDF", collectorNumber = "28")
+@CardRegistration(set = "MMA", collectorNumber = "7")
 public class BlindingBeam extends Card {
 
     public BlindingBeam() {

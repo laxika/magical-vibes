@@ -44,6 +44,26 @@ class CommandTheDreadhordeTest extends BaseCardTest {
     }
 
     @Test
+    void onlyLegalTargetsDealDamageAndReturn() {
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(opponentCreature.getId());
+    }
+
+    @Test
     void mayChooseNoTargets() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));

@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
+import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionGreen.class, BalduvianBears.class, ZuranSpellcaster.class, Hurricane.class, GrizzlyBears.class, MerfolkOfThePearlTrident.class})
+@CardUsed({AirElemental.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GrizzlyBears.class, Hurricane.class, MerfolkOfThePearlTrident.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -52,6 +50,22 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(greenSource.getId()).doesNotContain(nonGreenSource.getId());
+    }
+
+    @Test
+    @DisplayName("Multicolored sources with green in their colors are valid choices")
+    void multicoloredGreenSourceIsValidChoice() {
+        addReadyCircle(player1);
+        Permanent redGreenSource = addCreatureReady(player2, new CentaurArcher());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(redGreenSource.getId());
     }
 
     @Test
@@ -122,7 +136,7 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test
@@ -179,12 +193,33 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
         return addCreatureReady(player, new CircleOfProtectionGreen());
     }
 
+    @Test
+    void chosenSourceDamageToControlledCreatureIsNotPrevented() {
+        addReadyCircle(player1);
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        target.setAttacking(true);
+        Permanent archers = addCreatureReady(player2, new FemerefArchers());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, archers.getId());
+
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerSourceNextDamageShields)
+                .filteredOn(s -> s.playerId().equals(player1.getId()))
+                .anyMatch(s -> s.sourceId().equals(archers.getId()));
+    }
+
     private Permanent addReadyGreenCreature(Player player) {
-        return addCreatureReady(player, new BalduvianBears());
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent addReadyNonGreenCreature(Player player) {
-        return addCreatureReady(player, new ZuranSpellcaster());
+        return addCreatureReady(player, new MerfolkOfThePearlTrident());
     }
 
     @Test

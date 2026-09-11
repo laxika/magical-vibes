@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ALA", collectorNumber = "161")
+@CardRegistration(set = "HOP", collectorNumber = "84")
 public class BullCerodon extends Card {
 
     public BullCerodon() {

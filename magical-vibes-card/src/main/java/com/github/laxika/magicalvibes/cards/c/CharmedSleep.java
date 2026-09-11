@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "AFR", collectorNumber = "50")
 @CardRegistration(set = "ELD", collectorNumber = "40")
 public class CharmedSleep extends Card {
 
     public CharmedSleep() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
     }
 }

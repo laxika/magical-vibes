@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "158")
+@CardRegistration(set = "HOP", collectorNumber = "134")
+@CardRegistration(set = "PC2", collectorNumber = "119")
+@CardRegistration(set = "MM2", collectorNumber = "244")
 public class GruulTurf extends Card {
 
     public GruulTurf() {

@@ -1,13 +1,20 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesCreatureRestCantBlockEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -23,7 +30,6 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerChoosesCreatureRestCantBlockEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -48,15 +54,26 @@ public class TargetPlayerChoosesCreatureRestCantBlockEffectHandler implements No
             }
         }
 
-        // With 0 or 1 creatures there are no "other" creatures to restrict — nothing happens.
-        if (creatureIds.size() <= 1) {
-            String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" resolves but " + playerName + " has no other creatures to restrict.").build());
+        if (creatureIds.isEmpty()) {
+            restrictOtherCreatures(gameData, targetPlayerId, null);
             return;
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, targetPlayerId, creatureIds, 1,
                 new MultiPermanentChoiceContext.ChooseCreatureRestCantBlock(targetPlayerId),
                 "Choose a creature to keep able to block. Your other creatures can't block this turn.");
+    }
+
+    public static void restrictOtherCreatures(GameData gameData, UUID playerId, UUID keptId) {
+        PermanentPredicate predicate = new PermanentControlledByPlayerPredicate(playerId);
+        if (keptId != null) {
+            predicate = new PermanentAllOfPredicate(List.of(predicate,
+                    new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(keptId))));
+        }
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Other creatures can't block", null, playerId,
+                new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
+                        new PermanentTruePredicate(), "can't block this turn"),
+                null, null, predicate, EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 }

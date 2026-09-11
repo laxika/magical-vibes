@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WWK", collectorNumber = "90")
+@CardRegistration(set = "DDI", collectorNumber = "67")
 public class SearingBlaze extends Card {
 
     public SearingBlaze() {

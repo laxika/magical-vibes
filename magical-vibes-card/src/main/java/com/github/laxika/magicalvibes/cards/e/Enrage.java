@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "180")
 @CardRegistration(set = "8ED", collectorNumber = "185")
+@CardRegistration(set = "SCG", collectorNumber = "91")
+@CardRegistration(set = "DPA", collectorNumber = "43")
 public class Enrage extends Card {
 
     public Enrage() {

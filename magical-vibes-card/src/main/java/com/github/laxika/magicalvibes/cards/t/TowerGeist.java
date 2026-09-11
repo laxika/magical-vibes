@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "DKA", collectorNumber = "53")
 @CardRegistration(set = "INR", collectorNumber = "93")
 @CardRegistration(set = "ORI", collectorNumber = "80")
+@CardRegistration(set = "DDQ", collectorNumber = "30")
 public class TowerGeist extends Card {
 
     public TowerGeist() {

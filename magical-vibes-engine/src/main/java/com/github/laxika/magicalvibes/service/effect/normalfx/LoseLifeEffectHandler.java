@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -74,7 +75,8 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case OWNER -> lifeSupport.applyLifeLoss(gameData, ownerId, amount, sourceName);
-            case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, e, amount, sourceName);
+            case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER ->
+                    loseTargetPlayerLife(gameData, entry, e, amount, sourceName, amountContext);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
@@ -111,19 +113,28 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void loseTargetPlayerLife(GameData gameData, StackEntry entry, LoseLifeEffect effect,
-            int amount, String sourceName) {
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null && entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
-            targetPlayerId = entry.getTargetIds().getFirst();
+            int amount, String sourceName, AmountContext amountContext) {
+        List<UUID> targetPlayerIds = effect.recipient() == LoseLifeRecipient.TARGET_PLAYER
+                ? entry.targetsForEffect(effect) : List.of();
+        if (targetPlayerIds.isEmpty()) {
+            UUID targetPlayerId = entry.getTargetId();
+            if (targetPlayerId == null && !entry.getTargetIds().isEmpty()) {
+                targetPlayerId = entry.getTargetIds().getFirst();
+            }
+            targetPlayerIds = targetPlayerId == null ? List.of() : List.of(targetPlayerId);
         }
-        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-            return;
+        int totalLifeLost = 0;
+        for (UUID targetPlayerId : targetPlayerIds) {
+            if (!gameData.playerIds.contains(targetPlayerId)) continue;
+            int targetAmount = targetPlayerIds.size() == 1 ? amount
+                    : amountEvaluationService.evaluate(gameData, effect.amount(),
+                    amountContext.withTargetPermanentId(targetPlayerId));
+            int lifeBefore = gameData.getLife(targetPlayerId);
+            lifeSupport.applyLifeLoss(gameData, targetPlayerId, targetAmount, sourceName);
+            totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(targetPlayerId));
         }
-        int lifeBefore = gameData.getLife(targetPlayerId);
-        lifeSupport.applyLifeLoss(gameData, targetPlayerId, amount, sourceName);
-        int lifeLost = Math.max(0, lifeBefore - gameData.getLife(targetPlayerId));
-        if (controllerGainsLifeLost(gameData, entry, effect) && lifeLost > 0) {
-            lifeSupport.applyGainLife(gameData, entry.getControllerId(), lifeLost);
+        if (controllerGainsLifeLost(gameData, entry, effect) && totalLifeLost > 0) {
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), totalLifeLost);
         }
     }
 
@@ -165,8 +176,9 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             if (e.exemptIfControls() != null && controlsMatching(gameData, playerId, e.exemptIfControls())) {
                 continue;
             }
+            int lifeBefore = gameData.getLife(playerId);
             lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
-            totalLifeLost += amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(playerId));
         }
 
         if (controllerGainsLifeLost(gameData, entry, e) && totalLifeLost > 0) {

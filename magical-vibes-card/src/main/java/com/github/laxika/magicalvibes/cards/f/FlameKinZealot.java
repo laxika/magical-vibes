@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "RAV", collectorNumber = "206")
+@CardRegistration(set = "DDN", collectorNumber = "17")
 public class FlameKinZealot extends Card {
 
     public FlameKinZealot() {

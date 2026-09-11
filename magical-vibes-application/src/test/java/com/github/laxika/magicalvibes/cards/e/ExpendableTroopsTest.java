@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ExpendableTroops.class, YavimayaWurm.class})
 class ExpendableTroopsTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,19 @@ class ExpendableTroopsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not damage a target that stops attacking or blocking before resolution")
+    void doesNotDamageTargetThatLeavesCombatBeforeResolution() {
+        addReadyTroops(player1);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is neither attacking nor blocking")
     void cannotTargetIdleCreature() {
         addReadyTroops(player1);
@@ -61,18 +76,13 @@ class ExpendableTroopsTest extends BaseCardTest {
     }
 
     private Permanent addReadyTroops(Player player) {
-        Permanent troops = new Permanent(new ExpendableTroops());
-        troops.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(troops);
-        return troops;
+        return addCreatureReady(player, new ExpendableTroops());
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking, boolean blocking) {
-        Permanent creature = new Permanent(new FugitiveWizard());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player, new YavimayaWurm());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }

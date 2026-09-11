@@ -20,6 +20,7 @@ public final class AiInteractionStrategies {
         register(new AlternateCastXValueChoiceAiStrategy());
         register(new TurnFaceUpXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
+        register(new WorldsWithinWorldsChoiceAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
         register(new HandBottomExileChoiceAiStrategy());
         register(new EcologicalAppreciationSearchChoiceAiStrategy());
@@ -33,6 +34,9 @@ public final class AiInteractionStrategies {
         register(new PutCardsFromHandOnLibraryDestinationChoiceAiStrategy());
         register(new CounteredSpellLibraryDestinationChoiceAiStrategy());
         register(new LibraryReorderAiStrategy());
+        register(new SpatialMergingCardOrderAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
+        register(new InvokeCalamityCastChoiceAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
@@ -98,6 +102,8 @@ public final class AiInteractionStrategies {
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
+        register(new SearchHandAndOrLibraryChoiceAiStrategy());
+        register(new LibrarySearchDestinationChoiceAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
         register(new ShuffleCardsFromOutsideGameChoiceAiStrategy());
         register(new PermanentChoiceAiStrategy());
@@ -113,6 +119,10 @@ public final class AiInteractionStrategies {
         register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
         register(new NivMizzetColorPairChoiceAiStrategy());
         register(new FaceUpExiledCardChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class, 2));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OblivionSowerLandChoice.class, 0));
         register(new ETBExiledCardTargetChoiceAiStrategy());
     }
 

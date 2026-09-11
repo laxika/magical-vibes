@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "59")
+@CardRegistration(set = "3ED", collectorNumber = "47")
 @CardRegistration(set = "5ED", collectorNumber = "71")
 @CardRegistration(set = "6ED", collectorNumber = "56")
 @CardRegistration(set = "7ED", collectorNumber = "58")
@@ -18,5 +19,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "BRB", collectorNumber = "3")
 @CardRegistration(set = "BTD", collectorNumber = "1")
 @CardRegistration(set = "SUM", collectorNumber = "47")
+@CardRegistration(set = "DD2", collectorNumber = "13")
+@CardRegistration(set = "DPA", collectorNumber = "1")
+@CardRegistration(set = "JVC", collectorNumber = "13")
+@CardRegistration(set = "W17", collectorNumber = "7")
 public class AirElemental extends Card {
 }

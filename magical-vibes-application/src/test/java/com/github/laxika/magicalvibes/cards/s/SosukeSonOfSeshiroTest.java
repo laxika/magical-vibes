@@ -3,12 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.BramblewoodParagon;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SosukeSonOfSeshiro.class, SkeletalSnake.class, GiantSpider.class, BramblewoodParagon.class, GrizzlyBears.class})
 class SosukeSonOfSeshiroTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other Snake creatures you control get +1/+0")
     void boostsOtherSnakes() {
-        addReady(player1, new SosukeSonOfSeshiro());
-        addReady(player1, new SkeletalSnake());
+        addCreatureReady(player1, new SosukeSonOfSeshiro());
+        addCreatureReady(player1, new SkeletalSnake());
 
         Permanent snake = findPermanent(player1, "Skeletal Snake");
         assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(3);
@@ -32,7 +32,7 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Sosuke does not boost himself")
     void doesNotBoostItself() {
-        addReady(player1, new SosukeSonOfSeshiro());
+        addCreatureReady(player1, new SosukeSonOfSeshiro());
 
         Permanent sosuke = findPermanent(player1, "Sosuke, Son of Seshiro");
         assertThat(gqs.getEffectivePower(gd, sosuke)).isEqualTo(3);
@@ -42,8 +42,8 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost an opponent's Snakes")
     void doesNotBoostOpponentSnakes() {
-        addReady(player1, new SosukeSonOfSeshiro());
-        addReady(player2, new SkeletalSnake());
+        addCreatureReady(player1, new SosukeSonOfSeshiro());
+        addCreatureReady(player2, new SkeletalSnake());
 
         Permanent snake = findPermanent(player2, "Skeletal Snake");
         assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(2);
@@ -53,9 +53,9 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("A creature Sosuke damages in combat survives the damage but is destroyed at end of combat")
     void ownCombatDamageDestroysAtEndOfCombat() {
-        Permanent sosuke = addReady(player1, new SosukeSonOfSeshiro());
+        Permanent sosuke = addCreatureReady(player1, new SosukeSonOfSeshiro());
         sosuke.setAttacking(true);
-        addReady(player2, new GiantSpider()); // 2/4, survives Sosuke's 3 damage
+        addCreatureReady(player2, new GiantSpider()); // 2/4, survives Sosuke's 3 damage
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -71,10 +71,10 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Another Warrior you control triggers the end-of-combat destruction")
     void otherWarriorCombatDamageDestroysAtEndOfCombat() {
-        addReady(player1, new SosukeSonOfSeshiro());
-        Permanent paragon = addReady(player1, new BramblewoodParagon()); // Elf Warrior, not a Snake
+        addCreatureReady(player1, new SosukeSonOfSeshiro());
+        Permanent paragon = addCreatureReady(player1, new BramblewoodParagon()); // Elf Warrior, not a Snake
         paragon.setAttacking(true);
-        addReady(player2, new GiantSpider());
+        addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
@@ -90,10 +90,10 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Warrior you control does not schedule any destruction")
     void nonWarriorDoesNotSchedule() {
-        addReady(player1, new SosukeSonOfSeshiro());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SosukeSonOfSeshiro());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        addReady(player2, new GiantSpider());
+        addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
@@ -102,12 +102,5 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

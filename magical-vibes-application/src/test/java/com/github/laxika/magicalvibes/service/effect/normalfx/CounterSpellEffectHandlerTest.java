@@ -60,6 +60,56 @@ class CounterSpellEffectHandlerTest {
     private UUID player2Id;
     private CounterSpellEffectHandler counterSpellHandler;
 
+    @Test
+    void desertionUsesDisturbBackFaceTypeAndExilesEnchantment() {
+        Card front = new Card();
+        front.setName("Front creature");
+        front.setType(CardType.CREATURE);
+        Card back = new Card();
+        back.setName("Back enchantment");
+        back.setType(CardType.ENCHANTMENT);
+        front.setBackFaceCard(back);
+        StackEntry target = instantSpellEntry(front, player1Id, null);
+        target.setCastWithDisturb(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Counter"), player2Id, front.getId());
+
+        Card gained = counterSupport.counterSpellGainingArtifactOrCreatureControl(gd, counter, target);
+
+        assertThat(gained).isNull();
+        verify(exileService).exileCard(gd, player1Id, front);
+        assertThat(gd.stack).doesNotContain(target);
+    }
+
+    @Test
+    void libraryTopCounterExilesFlashbackSpell() {
+        Card spell = createInstantCard("Flashback spell");
+        StackEntry target = instantSpellEntry(spell, player1Id, null);
+        target.setCastWithFlashback(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Counter"), player2Id, spell.getId());
+
+        counterSpellHandler.resolve(gd, counter, new CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP));
+
+        verify(exileService).exileCard(gd, player1Id, spell);
+        assertThat(gd.stack).doesNotContain(target);
+    }
+
+    @Test
+    void libraryEndCounterDoesNotOfferChoiceForFlashbackSpell() {
+        Card spell = createInstantCard("Flashback spell");
+        StackEntry target = instantSpellEntry(spell, player1Id, null);
+        target.setCastWithFlashback(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Counter"), player2Id, spell.getId());
+
+        counterSpellHandler.resolve(gd, counter,
+                new CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP_OR_BOTTOM));
+
+        verify(exileService).exileCard(gd, player1Id, spell);
+        verify(interactionHandlerRegistry, never()).begin(any(), any());
+    }
+
     @BeforeEach
     void setUp() {
 
@@ -140,7 +190,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
-                verify(graveyardService).addCardToGraveyard(gd, player1Id, bears);
+                verify(graveyardService).addCardToGraveyardFromSpell(gd, player1Id, bears, player1Id);
                 verify(stateTriggerService).cleanupResolvedStateTrigger(gd, bearsEntry);
             }
 
@@ -158,7 +208,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
-                verify(graveyardService).addCardToGraveyard(gd, player1Id, might);
+                verify(graveyardService).addCardToGraveyardFromSpell(gd, player1Id, might, player1Id);
             }
 
             @Test
@@ -181,7 +231,7 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
                 assertThat(gd.playerHands.get(player1Id)).containsExactly(bears);
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -193,7 +243,7 @@ class CounterSpellEffectHandlerTest {
 
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
@@ -212,7 +262,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).contains(bearsEntry);
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -244,7 +294,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is countered.")));
             }
 
@@ -256,7 +306,7 @@ class CounterSpellEffectHandlerTest {
 
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
@@ -277,7 +327,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).contains(bearsEntry);
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -295,7 +345,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, counterEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Fume Spitter"));
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Fume Spitter's ability is countered.")));
             }
 
@@ -313,7 +363,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, counterEntry, new CounterSpellEffect());
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Some Creature"));
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Some Creature's ability is countered.")));
             }
 }

@@ -13,6 +13,12 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "363")
 @CardRegistration(set = "ATH", collectorNumber = "77")
+@CardRegistration(set = "ATQ", collectorNumber = "82a")
+@CardRegistration(set = "ATQ", collectorNumber = "82b")
+@CardRegistration(set = "ATQ", collectorNumber = "82c")
+@CardRegistration(set = "ATQ", collectorNumber = "82d")
+@CardRegistration(set = "V09", collectorNumber = "13")
+@CardRegistration(set = "EXP", collectorNumber = "43")
 public class StripMine extends Card {
 
     public StripMine() {

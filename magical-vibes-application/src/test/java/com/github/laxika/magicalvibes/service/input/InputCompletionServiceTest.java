@@ -47,6 +47,24 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class InputCompletionServiceTest {
 
     @Test
+    void pendingRegenerationChoiceIsServicedBeforePriorityResumes() {
+        var choice = new PendingInteraction.ColorChoice(playerId, UUID.randomUUID(), null,
+                new com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice(
+                        UUID.randomUUID(), java.util.Map.of("Plain shield", "PLAIN")),
+                List.of("Plain shield"), "Choose a shield");
+        gameData.pendingInteractions.add(choice);
+        doAnswer(invocation -> {
+            gameData.interaction.beginInteraction(choice);
+            return null;
+        }).when(stateBasedActionService).performStateBasedActions(gameData);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(gameData.interaction.activeInteraction()).isSameAs(choice);
+        verifyNoInteractions(playerInputService, turnProgressionService, effectResolutionService);
+    }
+
+    @Test
     void resumesPendingDrawsBeforeTriggerChoicesAndPriority() {
         DrawService drawService = mock(DrawService.class);
         ReflectionTestUtils.setField(service, "drawService", drawService);

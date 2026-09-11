@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "34")
 @CardRegistration(set = "EXO", collectorNumber = "21")
 @CardRegistration(set = "BRB", collectorNumber = "76")
+@CardRegistration(set = "HOP", collectorNumber = "7")
+@CardRegistration(set = "MD1", collectorNumber = "1")
 public class SoulWarden extends Card {
 
     public SoulWarden() {

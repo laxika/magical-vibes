@@ -69,12 +69,12 @@ class WildfireTest extends BaseCardTest {
         for (int i = 0; i < 4; i++) {
             harness.addToBattlefield(player1, new Mountain());
         }
-        for (int i = 0; i < 5; i++) {
+        harness.addToBattlefield(player2, new Mountain());
+        for (int i = 0; i < 4; i++) {
             harness.addToBattlefield(player2, new Forest());
         }
 
-        harness.castFromHand(player1, new Wildfire(), "{4}{R}{R}");
-        harness.passBothPriorities();
+        castWildfire();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -85,13 +85,13 @@ class WildfireTest extends BaseCardTest {
 
         List<UUID> toSacrifice = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Forest"))
-                .limit(4)
                 .map(Permanent::getId)
                 .toList();
         harness.handleMultiplePermanentsChosen(player2, toSacrifice);
 
-        assertThat(landCount(player1)).isZero();
         assertThat(landCount(player2)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Mountain");
+        assertThat(landCount(player1)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -118,6 +118,8 @@ class WildfireTest extends BaseCardTest {
 
         castWildfire();
 
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player1, "Thundering Giant");
         harness.assertNotOnBattlefield(player2, "Thundering Giant");
         harness.assertOnBattlefield(player2, "Shivan Hellkite");

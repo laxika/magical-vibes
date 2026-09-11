@@ -30,7 +30,7 @@ class CoilingRebirthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         int opponentHandSize = gd.playerHands.get(player2.getId()).size();
 
-        harness.castSorceryWithGift(player1, 0, creature.getId(), true);
+        harness.castSorceryWithGift(player1, 0, List.of(creature.getId()), true);
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
@@ -55,7 +55,7 @@ class CoilingRebirthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         int opponentHandSize = gd.playerHands.get(player2.getId()).size();
 
-        harness.castSorceryWithGift(player1, 0, creature.getId(), false);
+        harness.castSorceryWithGift(player1, 0, List.of(creature.getId()), false);
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
@@ -74,7 +74,7 @@ class CoilingRebirthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorceryWithGift(player1, 0, creature.getId(), true);
+        harness.castSorceryWithGift(player1, 0, List.of(creature.getId()), true);
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
@@ -92,7 +92,7 @@ class CoilingRebirthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.castSorceryWithGift(player1, 0, instant.getId(), false))
+        assertThatThrownBy(() -> harness.castSorceryWithGift(player1, 0, List.of(instant.getId()), false))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

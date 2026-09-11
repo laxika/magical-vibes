@@ -1,65 +1,86 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScareTactics.class, RagingGoblin.class, Spellbook.class})
 class ScareTacticsTest extends BaseCardTest {
 
     @Test
     void boostsCreaturesYouControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.setHand(player1, List.of(new ScareTactics()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
-            if (permanent.getCard().hasType(CardType.CREATURE)) {
-                assertThat(permanent.getEffectivePower()).isEqualTo(3);
-                assertThat(permanent.getEffectiveToughness()).isEqualTo(2);
-            }
-        }
+        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(1);
     }
 
     @Test
     void doesNotBoostOpponentsCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
         harness.setHand(player1, List.of(new ScareTactics()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
     }
 
     @Test
     void boostExpiresAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.setHand(player1, List.of(new ScareTactics()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotBoostNoncreaturesYouControl() {
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new ScareTactics()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
         assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(noncreature.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void doesNotBoostCreaturesEnteringAfterResolution() {
+        Permanent creatureBeforeResolution = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new ScareTactics()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        Permanent creatureAfterResolution = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+
+        assertThat(creatureBeforeResolution.getEffectivePower()).isEqualTo(2);
+        assertThat(creatureAfterResolution.getEffectivePower()).isEqualTo(1);
     }
 }

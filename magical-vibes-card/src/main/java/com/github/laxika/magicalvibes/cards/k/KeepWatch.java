@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "43")
+@CardRegistration(set = "HOP", collectorNumber = "10")
 public class KeepWatch extends Card {
 
     public KeepWatch() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -86,28 +87,43 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             }
         }
         if (effect.chooseAttackTarget()) {
-            int tokenCount = copyCount * gameQueryService.getTokenMultiplier(gameData, tokenControllerId);
-            PermanentChoiceContext.CreateTokenCopiesAttacking context =
-                    new PermanentChoiceContext.CreateTokenCopiesAttacking(
-                            tokenControllerId, entry.getCard(), entry.getSourcePermanentId(), targetId,
-                            effect, tokenCount, List.of());
-            beginAttackTargetChoice(gameData, context);
+            int tokenCount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId, copyCount, tokenSubtypes(targetPermanent.getCard(), effect), true);
+            if (tokenCount > 0) {
+                beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(tokenControllerId, entry.getCard(), entry.getSourcePermanentId(), targetId, effect, tokenCount, List.of()));
+            }
             return;
         }
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, targetPermanent.getCard()),
                 sourcePermanent, tokenControllerId, effect);
     }
+    private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
+        List<CardSubtype> subtypes =
+                sourceCard.getSubtypes() == null
+                        ? new java.util.ArrayList<>()
+                        : new java.util.ArrayList<>(sourceCard.getSubtypes());
+        if (effect.additionalSubtypes() != null) {
+            for (var subtype : effect.additionalSubtypes()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+        }
+        return subtypes;
+    }
 
-    private void beginAttackTargetChoice(GameData gameData,
-                                         PermanentChoiceContext.CreateTokenCopiesAttacking context) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
-        List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+    private void beginAttackTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokenCopiesAttacking context) {
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(context.controllerId()))
+                .toList();
+        List<UUID> planeswalkerIds = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
                 .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 
         gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), planeswalkerIds,
-                List.of(opponentId), "Choose the player or planeswalker for the next token to attack.");
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), planeswalkerIds, opponentIds,
+                "Choose the player or planeswalker for the token to attack.");
     }
 }

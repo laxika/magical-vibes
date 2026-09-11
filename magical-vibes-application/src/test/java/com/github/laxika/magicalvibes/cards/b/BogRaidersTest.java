@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({BogRaiders.class, CoralMerfolk.class, Swamp.class})
 class BogRaidersTest extends BaseCardTest {
 
-    // ===== Swampwalk =====
 
     @Test
     @DisplayName("Bog Raiders cannot be blocked when defending player controls a Swamp")
@@ -27,7 +26,7 @@ class BogRaidersTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        atkPerm.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         prepareDeclareBlockers();
 
@@ -45,7 +44,7 @@ class BogRaidersTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        atkPerm.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         prepareDeclareBlockers();
 
@@ -65,7 +64,7 @@ class BogRaidersTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        atkPerm.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         prepareDeclareBlockers();
 
@@ -77,7 +76,6 @@ class BogRaidersTest extends BaseCardTest {
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
 
-    // ===== Combat damage =====
 
     @Test
     @DisplayName("Unblocked Bog Raiders deals 2 damage to defending player")
@@ -85,7 +83,7 @@ class BogRaidersTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        atkPerm.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         resolveCombat();
 

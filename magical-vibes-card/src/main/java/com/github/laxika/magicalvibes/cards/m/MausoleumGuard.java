@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "20")
 @CardRegistration(set = "INR", collectorNumber = "33")
+@CardRegistration(set = "DDK", collectorNumber = "13")
 public class MausoleumGuard extends Card {
 
     public MausoleumGuard() {

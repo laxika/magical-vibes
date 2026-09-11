@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
@@ -115,5 +117,21 @@ class PathOfPeaceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Coral Merfolk");
         assertThat(gd.getLife(player1.getId())).isEqualTo(ownerLifeBefore + 4);
         assertThat(gd.getLife(player2.getId())).isEqualTo(controllerLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Its owner gains life even when the target creature is indestructible")
+    void ownerGainsLifeWhenCreatureIsIndestructible() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new PathOfPeace()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        int ownerLifeBefore = gd.getLife(player2.getId());
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+        harness.assertNotInGraveyard(player2, "Coral Merfolk");
+        harness.assertLife(player2, ownerLifeBefore + 4);
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -19,9 +20,11 @@ import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +56,10 @@ public class CreatureControlService {
     private final GameQueryService gameQueryService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    @Lazy
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
@@ -88,9 +95,13 @@ public class CreatureControlService {
     public void applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
                                    CardEffect wrappedEffect, EffectDuration duration,
                                    UUID sourcePermanentId, String sourceCardName) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
+        FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), null, null, duration, 0));
+        if (duration == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN) {
+            gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
+                    stamped.id(), newControllerId, gameData.turnNumber));
+        }
         recomputeControl(gameData, target);
     }
 
@@ -423,6 +434,17 @@ public class CreatureControlService {
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 stale = source == null || !source.isTapped();
+            }
+            if (!stale && fe.effect() instanceof GainControlOfTargetEffect control
+                    && control.maintainTargetPredicate()) {
+                Permanent source = fe.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
+                FilterContext context = source == null ? null : new FilterContext(
+                        gameData, source.getCard().getId(), fe.controllerId(), null, source, source.getId());
+                stale = affected == null || source == null || predicateEvaluationService == null
+                        || !predicateEvaluationService.matchesPermanentPredicate(
+                                affected, control.targetPredicate(), context);
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());

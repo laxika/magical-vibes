@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "105")
+@CardRegistration(set = "DDE", collectorNumber = "56")
 public class ExoticCurse extends Card {
 
     public ExoticCurse() {

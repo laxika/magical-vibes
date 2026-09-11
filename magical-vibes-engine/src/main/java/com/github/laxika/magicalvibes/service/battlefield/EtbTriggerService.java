@@ -143,11 +143,17 @@ public class EtbTriggerService {
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
-        if (enteringPermanent != null && modeChoice != null
-                && enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
-            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
-                    enteringPermanent.getId(), modeChoice.modes());
-            return;
+        if (enteringPermanent != null && modeChoice != null) {
+            if (modeChoice.eachPlayer()) {
+                if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                        gameData, card, enteringPermanent.getId(), modeChoice.modes())) {
+                    return;
+                }
+            } else if (enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+                playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                        enteringPermanent.getId(), modeChoice.modes());
+                return;
+            }
         }
         ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseColorEffect)
@@ -223,11 +229,17 @@ public class EtbTriggerService {
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
-        if (enteringPermanent != null && modeChoice != null
-                && enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
-            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
-                    enteringPermanent.getId(), modeChoice.modes());
-            return;
+        if (enteringPermanent != null && modeChoice != null) {
+            if (modeChoice.eachPlayer()) {
+                if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                        gameData, card, enteringPermanent.getId(), modeChoice.modes())) {
+                    return;
+                }
+            } else if (enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+                playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                        enteringPermanent.getId(), modeChoice.modes());
+                return;
+            }
         }
         SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
@@ -328,7 +340,7 @@ public class EtbTriggerService {
                             choice.options().size(),
                             Math.max(0, amountEvaluationService.evaluate(gameData,
                                     triggerTimeChoice.maximumChoices(),
-                                    new AmountContext(controllerId, enteringPermanent, null, 0, 0))));
+                                    new AmountContext(controllerId, enteringPermanent, null, xValue, 0))));
                     if (maximumChoices == 0) {
                         continue;
                     }
@@ -377,13 +389,9 @@ public class EtbTriggerService {
                             repeatedAdditionalCosts, convokeCreatureIds);
                     continue;
                 }
-                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
-                gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
-                // Naban: extra triggers for Wizard ETB
-                for (int i = 0; i < extraTriggerCopies; i++) {
-                    gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
-                }
+                queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
+                        List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
+                        repeatedAdditionalCosts, convokeCreatureIds);
             }
 
             if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
@@ -442,6 +450,7 @@ public class EtbTriggerService {
         }
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
+        triggerCollectionService.checkPlanarCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
@@ -453,6 +462,7 @@ public class EtbTriggerService {
         if (!faceDown && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkPlanarLandEntersTriggers(gameData, controllerId, card);
         }
     }
 
@@ -600,6 +610,11 @@ public class EtbTriggerService {
                         .filter(e -> !EffectResolution.targetsSpellOnStack(e)
                                 || isMixedPermanentAndSpellTarget(e)).toList()
                 : List.of();
+        boolean combinesGraveyardCardExileWithOtherEffects = graveyardCardsExileEffects.size() == 1
+                && !otherEffects.isEmpty()
+                && otherEffects.size() + graveyardCardsExileEffects.size() == mandatoryEffects.size()
+                && targetId == null
+                && targetIds.isEmpty();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
@@ -620,7 +635,7 @@ public class EtbTriggerService {
                 && sourceBattlefield.getLast().isControlledDragonAsCast();
 
         // Put non-special effects on the stack as before
-        if (!otherEffects.isEmpty()) {
+        if (!otherEffects.isEmpty() && !combinesGraveyardCardExileWithOtherEffects) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
@@ -708,10 +723,10 @@ public class EtbTriggerService {
                     TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
 
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     for (int i = 0; i < extraTriggerCopies; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     }
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose a target."));
@@ -805,7 +820,7 @@ public class EtbTriggerService {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                        card, controllerId, List.of(effect), sourcePermanentId, etbTargetFilter));
+                        card, controllerId, List.of(effect), sourcePermanentId, etbTargetFilter, xValue));
             }
         }
 
@@ -826,7 +841,10 @@ public class EtbTriggerService {
         for (CardEffect effect : graveyardCardsExileEffects) {
             ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, List.of(effect), exile);
+                List<CardEffect> effects = combinesGraveyardCardExileWithOtherEffects
+                        ? mandatoryEffects : List.of(effect);
+                graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
+                        gameData, controllerId, card, effects, exile);
             }
         }
 
@@ -897,9 +915,18 @@ public class EtbTriggerService {
                     : Math.max(0, amountEvaluationService.evaluate(gameData, returnEffect.dynamicMaxTargets(),
                             new AmountContext(controllerId, null, null, xValue, 0, false, null,
                                     repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+            Integer maxTotalManaValue = null;
+            if (returnEffect.hasTotalManaValueCap()) {
+                maxTotalManaValue = returnEffect.dynamicMaxTotalManaValue() == null
+                        ? returnEffect.maxTotalManaValue()
+                        : Math.max(0, amountEvaluationService.evaluate(gameData,
+                                returnEffect.dynamicMaxTotalManaValue(),
+                                new AmountContext(controllerId, null, null, xValue, 0, false, null,
+                                        repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+            }
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
-                        List.of(effect), returnEffect, maxTargets);
+                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue);
             }
         }
 

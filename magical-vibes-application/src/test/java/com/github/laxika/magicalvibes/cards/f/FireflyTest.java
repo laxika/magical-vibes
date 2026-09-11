@@ -2,21 +2,22 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Firefly.class)
 class FireflyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability gives +1/+0 until end of turn")
     void abilityBoostsPower() {
-        Permanent firefly = addReadyFirefly(player1);
+        Permanent firefly = addCreatureReady(player1, new Firefly());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -29,7 +30,7 @@ class FireflyTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated repeatedly for a cumulative boost")
     void abilityStacks() {
-        Permanent firefly = addReadyFirefly(player1);
+        Permanent firefly = addCreatureReady(player1, new Firefly());
         harness.addMana(player1, ManaColor.RED, 3);
 
         for (int i = 0; i < 3; i++) {
@@ -44,7 +45,7 @@ class FireflyTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOff() {
-        Permanent firefly = addReadyFirefly(player1);
+        Permanent firefly = addCreatureReady(player1, new Firefly());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -61,17 +62,21 @@ class FireflyTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without red mana")
     void cannotActivateWithoutMana() {
-        addReadyFirefly(player1);
+        addCreatureReady(player1, new Firefly());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addReadyFirefly(Player player) {
-        Permanent perm = new Permanent(new Firefly());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot pay the red activation cost with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new Firefly());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 }

@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ONS", collectorNumber = "229")
+@CardRegistration(set = "DD1", collectorNumber = "50")
+@CardRegistration(set = "EVG", collectorNumber = "50")
 public class SkirkFireMarshal extends Card {
 
     public SkirkFireMarshal() {

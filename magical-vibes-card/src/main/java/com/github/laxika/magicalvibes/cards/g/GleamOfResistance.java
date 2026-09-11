@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "8")
+@CardRegistration(set = "MMA", collectorNumber = "17")
 public class GleamOfResistance extends Card {
 
     public GleamOfResistance() {

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model;
 
 public enum LibrarySearchDestination {
     HAND,
+    /** Reveal the chosen card, then let the searcher put it into their hand or graveyard. */
+    HAND_OR_GRAVEYARD,
     /** Reveal the chosen card, return it to the library, then shuffle. */
     REVEAL_ONLY,
     BATTLEFIELD,
@@ -25,6 +27,8 @@ public enum LibrarySearchDestination {
     EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
     /** Exile one card face down with a source while putting a preselected remainder on the bottom in any order. */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
+    /** Exile one card face down with a hatching counter while putting a preselected remainder on the bottom in any order. */
+    EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM,
     /** Exile one card face down with a source while putting a preselected remainder into the target player's graveyard. */
     EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
     /** Exile one card face up with permission to play it this turn, putting the rest on the bottom randomly. */

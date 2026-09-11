@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "208")
+@CardRegistration(set = "ZNR", collectorNumber = "167")
 public class SpitfireLagac extends Card {
 
     public SpitfireLagac() {

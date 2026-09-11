@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "2")
+@CardRegistration(set = "FDN", collectorNumber = "490")
 public class AngelicEdict extends Card {
 
     public AngelicEdict() {

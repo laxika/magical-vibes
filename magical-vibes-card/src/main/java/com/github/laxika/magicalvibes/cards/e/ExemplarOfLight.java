@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "11")
+@CardRegistration(set = "FDN", collectorNumber = "297")
+@CardRegistration(set = "FDN", collectorNumber = "366")
+@CardRegistration(set = "FDN", collectorNumber = "445")
 public class ExemplarOfLight extends Card {
 
     public ExemplarOfLight() {

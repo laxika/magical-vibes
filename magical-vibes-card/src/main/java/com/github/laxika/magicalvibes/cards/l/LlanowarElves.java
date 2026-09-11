@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "274")
 @CardRegistration(set = "BRB", collectorNumber = "39")
+@CardRegistration(set = "DD1", collectorNumber = "9")
 @CardRegistration(set = "FDN", collectorNumber = "227")
+@CardRegistration(set = "FDN", collectorNumber = "429")
+@CardRegistration(set = "FDN", collectorNumber = "439")
 @CardRegistration(set = "M10", collectorNumber = "189")
 @CardRegistration(set = "M11", collectorNumber = "184")
 @CardRegistration(set = "M12", collectorNumber = "182")
@@ -19,8 +22,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "239")
 @CardRegistration(set = "5ED", collectorNumber = "313")
 @CardRegistration(set = "4ED", collectorNumber = "261")
+@CardRegistration(set = "3ED", collectorNumber = "211")
 @CardRegistration(set = "BTD", collectorNumber = "58")
 @CardRegistration(set = "SUM", collectorNumber = "211")
+@CardRegistration(set = "EVG", collectorNumber = "9")
 public class LlanowarElves extends Card {
 
     public LlanowarElves() {

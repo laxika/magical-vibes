@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "TMT", collectorNumber = "78")
+@CardRegistration(set = "TMT", collectorNumber = "269")
 public class SouthWindAvatar extends Card {
 
     public SouthWindAvatar() {

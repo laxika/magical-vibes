@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -307,6 +308,9 @@ public class StackResolutionService {
                 ? entry.getBestowOriginalCard() : entry.getPhysicalCard());
         if (entry.isCastFaceDown()) {
             perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            if (entry.isFaceDownTurnsFaceUpOnDamageOrTap()) {
+                perm.addTemporaryTriggeredEffect(EffectSlot.STATIC, new TurnFaceUpOnDamageOrTapEffect());
+            }
         }
         perm.setCastFromZone(entry.getSourceZone());
         entry.getEnteringCounters().forEach((counterType, count) ->
@@ -330,6 +334,8 @@ public class StackResolutionService {
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
+        // Devour granted while the spell was on the stack (Jund).
+        perm.setGrantedDevour(entry.getGrantedDevour());
         entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
                 effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
@@ -343,6 +349,9 @@ public class StackResolutionService {
             perm.setBestow(true);
         } else if (entry.getPhysicalCard() != card) {
             perm.setCard(characteristics);
+            if (entry.isCastTransformed()) {
+                perm.setTransformed(true);
+            }
         } else if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);
@@ -397,7 +406,7 @@ public class StackResolutionService {
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
-                if (triggeredEntry.getCard().getId().equals(card.getId())) {
+                if (triggeredEntry.getTargetableId().equals(card.getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
             }
@@ -422,7 +431,7 @@ public class StackResolutionService {
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
-                if (triggeredEntry.getCard().getId().equals(card.getId())) {
+                if (triggeredEntry.getTargetableId().equals(card.getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
             }
@@ -446,7 +455,8 @@ public class StackResolutionService {
                 || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
-            graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            graveyardService.addCardToGraveyardFromSpell(gameData, ownerId, physicalCard,
+                    entry.getControllerId());
         }
     }
 
@@ -483,6 +493,11 @@ public class StackResolutionService {
             return playerInputService.beginCardNameChoice(
                     gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
                     true, attachedTo);
+        }
+        if (effect.requiredType() != null) {
+            return playerInputService.beginCardNameChoice(
+                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
+                    false, attachedTo, effect.requiredType());
         }
         return playerInputService.beginCardNameChoice(
                 gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
@@ -645,7 +660,8 @@ public class StackResolutionService {
                     .card(card)
                     .text(" fizzles (enchanted creature card no longer in a graveyard).")
                     .build());
-            graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), card);
+            graveyardService.addCardToGraveyardFromSpell(gameData, entry.getOwnerId(), card,
+                    entry.getControllerId());
             log.info("Game {} - {} fizzles, reanimation target {} not in graveyard", gameData.id, card.getName(), entry.getTargetId());
             return;
         }
@@ -835,10 +851,23 @@ public class StackResolutionService {
                 return;
             }
 
-            Permanent enchPerm = createEnteringPermanent(entry, card, characteristics);
+            Card enteringCharacteristics = characteristics;
+            if (card.getSelectedRoomDoor() != null && characteristics.getSpellTargets().isEmpty()) {
+                enteringCharacteristics = characteristics.createRuntimeCopy();
+                enteringCharacteristics.appendSpellTargetingForEffectsFrom(entry.getPhysicalCard(),
+                        entry.getPhysicalCard().getEffects(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED));
+            }
+            Permanent enchPerm = createEnteringPermanent(entry, card, enteringCharacteristics);
+            if (card.getSelectedRoomDoor() != null) {
+                enchPerm.unlockRoomDoor(card.getSelectedRoomDoor());
+            }
             // Pass cast X / kicked so "enters with X counters" replacements and ETB triggers that
             // read XValue (e.g. The Meathook Massacre) see the paid X.
             putResolvedPermanentOntoBattlefield(gameData, controllerId, enchPerm, entry);
+            if (card.getSelectedRoomDoor() != null) {
+                triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
+                        gameData, controllerId, enchPerm, card.getSelectedRoomDoor());
+            }
             queueWarpExileIfPresent(gameData, entry, enchPerm);
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
@@ -1131,7 +1160,8 @@ public class StackResolutionService {
                     exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
                     gameLogService.append(gameData, GameLog.isExiled(dispositionCard));
                 } else {
-                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), dispositionCard);
+                    graveyardService.addCardToGraveyardFromSpell(gameData, entry.getOwnerId(), dispositionCard,
+                            entry.getControllerId());
                 }
             }
         } else {
@@ -1172,6 +1202,7 @@ public class StackResolutionService {
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
+            gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
@@ -1191,8 +1222,9 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated or triggered ability whose effects branch on {@code NthAbilityResolutionThisTurn}
-     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * entry is an activated or triggered ability whose effects branch on a resolution count
+     * (explicitly through {@code NthAbilityResolutionThisTurn} or through a dynamic amount such as
+     * Bronze Cudgels' "where X is the number of times this ability has resolved this turn").
      * Counted at resolution (not activation), so copies of the ability count but activations
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only
@@ -1367,7 +1399,8 @@ public class StackResolutionService {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " is exiled with a dream counter."));
         } else {
-            boolean enteredGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            boolean enteredGraveyard = graveyardService.addCardToGraveyardFromSpell(
+                    gameData, ownerId, physicalCard, entry.getControllerId());
             if (enteredGraveyard) {
                 triggerCollectionService.collectSpellHauntTrigger(gameData, physicalCard, entry.getControllerId());
             }

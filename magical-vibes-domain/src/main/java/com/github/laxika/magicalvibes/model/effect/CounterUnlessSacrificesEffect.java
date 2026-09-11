@@ -10,17 +10,23 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  * @param filter the permanent filter for the sacrifice
  * @param sacrificeDescription the noun used in the choice prompt
  */
-public record CounterUnlessSacrificesEffect(PermanentPredicate filter, String sacrificeDescription)
+public record CounterUnlessSacrificesEffect(PermanentPredicate filter, String sacrificeDescription,
+                                            int requiredCount)
         implements CounterUnlessEffect, TriggeringSpellReferencingEffect {
 
     /** Creates the unrestricted permanent-sacrifice variant used by ward. */
     public CounterUnlessSacrificesEffect() {
-        this(new PermanentTruePredicate(), "permanent");
+        this(new PermanentTruePredicate(), "permanent", 1);
     }
 
     /** Creates a sacrifice variant restricted to the supplied permanent filter. */
     public CounterUnlessSacrificesEffect(PermanentPredicate filter) {
-        this(filter, "permanent");
+        this(filter, "permanent", 1);
+    }
+
+    /** Creates a sacrifice variant requiring exactly the supplied number of permanents. */
+    public CounterUnlessSacrificesEffect(PermanentPredicate filter, String sacrificeDescription) {
+        this(filter, sacrificeDescription, 1);
     }
 
     @Override
@@ -35,6 +41,6 @@ public record CounterUnlessSacrificesEffect(PermanentPredicate filter, String sa
 
     @Override
     public int ransomMagnitude() {
-        return 1;
+        return requiredCount;
     }
 }

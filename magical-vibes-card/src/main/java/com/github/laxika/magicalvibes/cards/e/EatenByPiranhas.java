@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "54")
+@CardRegistration(set = "FDN", collectorNumber = "507")
 public class EatenByPiranhas extends Card {
 
     public EatenByPiranhas() {

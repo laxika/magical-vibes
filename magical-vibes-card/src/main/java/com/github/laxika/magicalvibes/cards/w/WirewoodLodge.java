@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "329")
+@CardRegistration(set = "DD1", collectorNumber = "26")
+@CardRegistration(set = "EVG", collectorNumber = "27")
 public class WirewoodLodge extends Card {
 
     public WirewoodLodge() {

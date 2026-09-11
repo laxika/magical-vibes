@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowTargetPlayerToTargetSour
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "83")
+@CardRegistration(set = "ME1", collectorNumber = "113")
 public class AutumnWillow extends Card {
 
     public AutumnWillow() {

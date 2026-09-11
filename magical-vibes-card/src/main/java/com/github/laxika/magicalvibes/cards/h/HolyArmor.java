@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "3ED", collectorNumber = "23")
 @CardRegistration(set = "4ED", collectorNumber = "29")
 @CardRegistration(set = "SUM", collectorNumber = "23")
 public class HolyArmor extends Card {

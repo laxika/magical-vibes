@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "201")
+@CardRegistration(set = "CP2", collectorNumber = "4")
+@CardRegistration(set = "DDM", collectorNumber = "63")
 public class ReaperOfTheWilds extends Card {
 
     public ReaperOfTheWilds() {

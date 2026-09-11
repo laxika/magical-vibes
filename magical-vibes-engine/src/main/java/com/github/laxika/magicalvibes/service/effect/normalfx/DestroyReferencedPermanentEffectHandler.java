@@ -67,6 +67,9 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
 
     private Permanent findAttached(GameData gameData, StackEntry entry) {
         Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source != null && source.isAttached()) {
             return gameQueryService.findPermanentById(gameData, source.getAttachedTo());
         }

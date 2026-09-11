@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDefendingPlay
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -89,6 +90,7 @@ public class TriggerTargetCollector {
                          boolean canTargetPlayers,
                          boolean canTargetPermanents,
                          boolean canTargetExiledCards,
+                         List<UUID> validGraveyardCardIds,
                          boolean opponentOnly) {
     }
 
@@ -179,6 +181,13 @@ public class TriggerTargetCollector {
                           Options options,
                           Permanent sourcePermanentSnapshot,
                           UUID defendingPlayerId) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, defendingPlayerId, null);
+    }
+
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue) {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -189,12 +198,17 @@ public class TriggerTargetCollector {
         boolean canTargetExiledCards = effects.stream()
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+        boolean canTargetGraveyardCards = effects.stream()
+                .map(e -> unwrap(e, options))
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
 
         if (targetFilter instanceof PermanentPredicateTargetFilter
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
             canTargetPlayers = false;
+            canTargetGraveyardCards = false;
         } else if (targetFilter instanceof PlayerPredicateTargetFilter) {
             canTargetPermanents = false;
+            canTargetGraveyardCards = false;
         }
 
         // An effect narrows the player half on its own only when it says so through
@@ -223,7 +237,7 @@ public class TriggerTargetCollector {
 
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
-                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, xValue, sourcePermanentSnapshot)
                     .withSourcePermanentId(sourcePermanentSnapshot == null
                             ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
@@ -248,7 +262,7 @@ public class TriggerTargetCollector {
                 effectPredicate = EffectResolution.declaredPermanentRestriction(targetingEffects)
                         .orElse(null);
                 if (effectPredicate != null) {
-                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null,
+                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, xValue,
                             sourcePermanentSnapshot).withDefendingPlayerId(defendingPlayerId);
                 }
             }
@@ -259,6 +273,7 @@ public class TriggerTargetCollector {
             // AnyTargetPredicateTargetFilter governs in the same way (Scuttling Doom Engine's death
             // trigger reaches planeswalkers, not creatures).
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
+                    || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
             if (effectPredicate != null) {
@@ -294,7 +309,7 @@ public class TriggerTargetCollector {
                     ? declaredPermanentTarget.permanentRestriction().orElseThrow()
                     : null;
             FilterContext declaredTargetFilterCtx = declaredTargetRestriction != null
-                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, null)
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, xValue, null)
                     : null;
 
             for (UUID pid : gameData.orderedPlayerIds) {
@@ -330,6 +345,10 @@ public class TriggerTargetCollector {
                         continue;
                     }
 
+                    if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                            gameData, p, sourceCard, controllerId).isPresent()) {
+                        continue;
+                    }
                     validTargets.add(p.getId());
                 }
             }
@@ -356,8 +375,28 @@ public class TriggerTargetCollector {
             }
         }
 
+        List<UUID> validGraveyardCardIds = new ArrayList<>();
+        if (canTargetGraveyardCards && targetValidationService != null) {
+            List<CardEffect> graveyardEffects = effects.stream()
+                    .map(e -> unwrap(e, options))
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
+            for (List<Card> graveyard : gameData.playerGraveyards.values()) {
+                for (Card card : graveyard) {
+                    boolean valid = graveyardEffects.stream().anyMatch(effect ->
+                            targetValidationService.checkEffectTargets(
+                                    List.of(effect),
+                                    new TargetValidationContext(gameData, card.getId(), Zone.GRAVEYARD,
+                                            sourceCard, 0, controllerId, sourcePermanentSnapshot)).isEmpty());
+                    if (valid) {
+                        validGraveyardCardIds.add(card.getId());
+                    }
+                }
+            }
+        }
+
         return new Result(validTargets, canTargetPlayers, canTargetPermanents,
-                canTargetExiledCards, opponentOnly);
+                canTargetExiledCards, validGraveyardCardIds, opponentOnly);
     }
 
     /**
@@ -388,6 +427,7 @@ public class TriggerTargetCollector {
             case MayEffect may -> effectiveTargetEffect(may.wrapped(), may.elseEffect(), effect);
             case MayPayManaEffect mayPay -> effectiveTargetEffect(
                     mayPay.wrapped(), mayPay.elseEffect(), effect);
+            case OncePerTurnTriggerEffect once -> once.wrapped();
             default -> effect;
         };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;

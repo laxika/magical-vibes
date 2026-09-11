@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Replaces the former {@code SkipNextUntapOnTargetEffect}, {@code SkipNextUntapAllAttackingCreaturesEffect}
  * and {@code SkipNextUntapPermanentsOfTargetPlayerEffect}.
+ * When {@code matchAtUntap} is true, the target-player scope stores a player-wide restriction and
+ * evaluates matching permanents during that player's upcoming untap steps, including later arrivals.
  *
  * <p>Also a {@link CombatOpponentReferencingEffect}: when placed on the {@code ON_BLOCK} slot of an
  * attached permanent (aura/equipment) with {@link TapUntapScope#TARGET}, {@code CombatTriggerService}
@@ -22,9 +24,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param scope      which permanent(s) to keep tapped through their next untap step
  * @param filter     optional predicate narrowing the scanned scopes (null = no restriction)
  * @param untapSteps number of upcoming untap steps to skip
+ * @param matchAtUntap whether the target player's matching permanents are determined at untap
  */
-public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps)
+public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
+                                  boolean matchAtUntap)
         implements CardEffect, CombatOpponentReferencingEffect {
+
+    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps) {
+        this(scope, filter, untapSteps, false);
+    }
 
     public SkipNextUntapEffect(TapUntapScope scope) {
         this(scope, null, 1);
@@ -39,6 +47,9 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
     }
 
     public SkipNextUntapEffect {
+        if (matchAtUntap && scope != TapUntapScope.TARGET_PLAYERS_PERMANENTS) {
+            throw new IllegalArgumentException("Matching at untap requires a target player");
+        }
         if (untapSteps < 1) {
             throw new IllegalArgumentException("untapSteps must be positive");
         }

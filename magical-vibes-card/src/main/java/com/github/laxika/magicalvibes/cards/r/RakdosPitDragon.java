@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "69")
+@CardRegistration(set = "DD2", collectorNumber = "44")
+@CardRegistration(set = "JVC", collectorNumber = "44")
 public class RakdosPitDragon extends Card {
 
     public RakdosPitDragon() {

@@ -6,5 +6,6 @@ import java.util.UUID;
  * Marker for one grouped offer created by
  * {@link MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect}.
  */
-public record ReturnMilledCardToHandOrPutCounterOnSourceEffect(UUID groupId) implements CardEffect {
+public record ReturnMilledCardToHandOrPutCounterOnSourceEffect(UUID groupId, int maxCount)
+        implements CardEffect {
 }

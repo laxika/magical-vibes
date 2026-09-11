@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ElvishBerserker.class, GrizzlyBears.class})
 class ElvishBerserkerTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Becoming blocked creates one becomes-blocked trigger")
     void becomingBlockedCreatesTrigger() {
-        Permanent berserker = addReadyBerserker(player1);
+        Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
         berserker.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -31,16 +30,15 @@ class ElvishBerserkerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Elvish Berserker");
         assertThat(trigger.getSourcePermanentId()).isEqualTo(berserker.getId());
     }
 
     @Test
     @DisplayName("With one blocker Elvish Berserker gets +1/+1 until end of turn")
     void oneBlockerGivesPlusOnePlusOne() {
-        Permanent berserker = addReadyBerserker(player1);
+        Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
         berserker.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -55,10 +53,10 @@ class ElvishBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("With two blockers Elvish Berserker gets +2/+2 until end of turn")
     void twoBlockersGivesPlusTwoPlusTwo() {
-        Permanent berserker = addReadyBerserker(player1);
+        Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
         berserker.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -76,7 +74,7 @@ class ElvishBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("If unblocked no becomes-blocked trigger is created")
     void unblockedCreatesNoTrigger() {
-        Permanent berserker = addReadyBerserker(player1);
+        Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
         berserker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -87,16 +85,4 @@ class ElvishBerserkerTest extends BaseCardTest {
         assertThat(berserker.getToughnessModifier()).isZero();
     }
 
-    private Permanent addReadyBerserker(Player player) {
-        Permanent permanent = new Permanent(new ElvishBerserker());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-    }
 }

@@ -21,6 +21,14 @@ import java.util.UUID;
  */
 public sealed interface MultiPermanentChoiceContext {
 
+    /** Selects an optional group of player targets without reserving the controller as a decline sentinel. */
+    record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
+    /** Selects an optional graveyard-card target while walking an ETB or planar target group. */
+    record EtbGraveyardCardTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
     record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
                                              PermanentPredicate permanentFilter)
             implements MultiPermanentChoiceContext {
@@ -209,6 +217,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller may choose an Equipment attached to a creature they control to unattach. */
+    record UnattachEquipmentFromControlledCreature(StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The defending player sacrifices the chosen attacking creatures. */
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
@@ -282,9 +295,17 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect, int requiredCount) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand(CardEffect thenEffect) {
+            this(thenEffect, 0);
+        }
+
+        public ReturnTargetPermanentsToHand(int requiredCount) {
+            this(null, requiredCount);
+        }
+
         public ReturnTargetPermanentsToHand() {
-            this(null);
+            this(null, 0);
         }
     }
 
@@ -302,6 +323,12 @@ public sealed interface MultiPermanentChoiceContext {
     /** Return exactly the required number of matching permanents, or all available if fewer exist. */
     record ReturnNControlledPermanentsToHand(
             com.github.laxika.magicalvibes.model.effect.ReturnNControlledPermanentsToHandEffect effect)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Return up to N matching permanents controlled by the resolving player. */
+    record ReturnUpToNControlledPermanentsToHand(
+            com.github.laxika.magicalvibes.model.effect.ReturnUpToNControlledPermanentsToHandEffect effect)
             implements MultiPermanentChoiceContext {
     }
 
@@ -496,6 +523,11 @@ public sealed interface MultiPermanentChoiceContext {
     /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
     record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** Put counters on the chosen permanent, attribute them to another player, and remember it. */
+    record OwnPermanentCounterPlacementByPlayerWithChosenReference(
+            CounterType counterType, int count, UUID placingPlayerId) implements MultiPermanentChoiceContext {
     }
 
     /** Put one counter on an opponent's creature for each remaining cumulative-upkeep payment. */
@@ -708,7 +740,7 @@ public sealed interface MultiPermanentChoiceContext {
      * creature's ETB triggers proceed. Carries the entry context needed to resume
      * {@code processCreatureETBEffects} for the discard trigger.
      */
-    record DevourSacrifice(UUID enteringPermanentId, int multiplier, UUID controllerId, Card card,
+    record DevourSacrifice(UUID enteringPermanentId, DynamicAmount multiplier, UUID controllerId, Card card,
                            UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {
     }

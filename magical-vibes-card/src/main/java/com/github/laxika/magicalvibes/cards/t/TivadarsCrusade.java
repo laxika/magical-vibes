@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DRK", collectorNumber = "18")
+@CardRegistration(set = "ME1", collectorNumber = "28")
 public class TivadarsCrusade extends Card {
 
     public TivadarsCrusade() {

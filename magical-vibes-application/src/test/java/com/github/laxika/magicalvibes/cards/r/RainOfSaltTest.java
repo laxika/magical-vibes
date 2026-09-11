@@ -85,4 +85,20 @@ class RainOfSaltTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(mountainId, mountainId)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target lands controlled by either player")
+    void canTargetLandsControlledByEitherPlayer() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new RainOfSalt()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID mountainId = harness.getPermanentId(player2, "Mountain");
+        harness.castAndResolveSorcery(player1, 0, List.of(forestId, mountainId));
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Mountain");
+    }
 }

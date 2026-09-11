@@ -109,7 +109,7 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
         if (targetCardId == null) return null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 return se.getControllerId();
             }
         }

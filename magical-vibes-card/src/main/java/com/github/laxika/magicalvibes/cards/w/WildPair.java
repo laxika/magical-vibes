@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSameTotalPowerToughnessEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "144")
+@CardRegistration(set = "H09", collectorNumber = "30")
 public class WildPair extends Card {
 
     public WildPair() {

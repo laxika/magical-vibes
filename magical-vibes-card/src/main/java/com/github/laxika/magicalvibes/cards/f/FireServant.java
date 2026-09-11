@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "137")
+@CardRegistration(set = "PD2", collectorNumber = "15")
 public class FireServant extends Card {
 
     public FireServant() {

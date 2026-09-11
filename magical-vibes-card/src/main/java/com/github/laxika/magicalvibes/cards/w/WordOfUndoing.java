@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "108")
+@CardRegistration(set = "ME1", collectorNumber = "56")
 public class WordOfUndoing extends Card {
 
     public WordOfUndoing() {

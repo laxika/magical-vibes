@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BlessedReversal;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DefenseGrid.class, BlessedReversal.class})
 class DefenseGridTest extends BaseCardTest {
 
     @Test
@@ -18,11 +17,8 @@ class DefenseGridTest extends BaseCardTest {
     void notTaxedOnOwnTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        // {R} is enough on the caster's own turn
-        harness.castInstant(player1, 0, player2.getId());
+        // {1}{W} is enough on the caster's own turn
+        harness.castFromHand(player1, new BlessedReversal(), "{1}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -33,11 +29,8 @@ class DefenseGridTest extends BaseCardTest {
     void taxedOnOpponentsTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-
-        // {R} is not enough during player1's turn — needs {3}{R}
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        // {1}{W} is not enough during player1's turn - needs {4}{W}
+        assertThatThrownBy(() -> harness.castFromHand(player2, new BlessedReversal(), "{1}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -47,10 +40,7 @@ class DefenseGridTest extends BaseCardTest {
     void castableWithExtraManaOnOpponentsTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 4);
-
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castFromHand(player2, new BlessedReversal(), "{4}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
@@ -61,12 +51,35 @@ class DefenseGridTest extends BaseCardTest {
     void controllerAlsoTaxedOffTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
         // Even Defense Grid's controller pays {3} more when it's not their turn
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new BlessedReversal(), "{1}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A spell is untaxed on its controller's turn even when another player controls Defense Grid")
+    void untaxedWhenAnotherPlayerControlsGrid() {
+        harness.addToBattlefield(player1, new DefenseGrid());
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new BlessedReversal(), "{1}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Defense Grids add their taxes together")
+    void multipleGridsStack() {
+        harness.addToBattlefield(player1, new DefenseGrid());
+        harness.addToBattlefield(player1, new DefenseGrid());
+        harness.forceActivePlayer(player1);
+
+        // {1}{W} plus {3} for each Grid = {7}{W}
+        harness.castFromHand(player2, new BlessedReversal(), "{7}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }

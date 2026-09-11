@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "50")
+@CardRegistration(set = "DD2", collectorNumber = "17")
+@CardRegistration(set = "MM2", collectorNumber = "39")
+@CardRegistration(set = "JVC", collectorNumber = "17")
+@CardRegistration(set = "MMA", collectorNumber = "36")
 public class Aethersnipe extends Card {
 
     public Aethersnipe() {

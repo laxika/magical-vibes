@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "98")
+@CardRegistration(set = "DDE", collectorNumber = "26")
+@CardRegistration(set = "DDD", collectorNumber = "52")
+@CardRegistration(set = "HOP", collectorNumber = "31")
+@CardRegistration(set = "GVL", collectorNumber = "52")
 public class HideousEnd extends Card {
 
     public HideousEnd() {

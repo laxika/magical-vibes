@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "132")
+@CardRegistration(set = "DDL", collectorNumber = "46")
 public class KavuPredator extends Card {
 
     public KavuPredator() {

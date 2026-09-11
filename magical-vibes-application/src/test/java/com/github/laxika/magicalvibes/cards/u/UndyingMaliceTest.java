@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,66 +22,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UndyingMaliceTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Returns the targeted creature tapped with a +1/+1 counter under its owner's control")
+    @DisplayName("Returns the creature tapped under its owner's control with a +1/+1 counter")
     void returnsTappedWithCounterUnderOwnersControl() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        var card = target.getCard();
+        Permanent target = addCreature(player2);
+        Card targetCard = target.getCard();
 
-        castUndyingMalice(target);
-        destroyTarget(player1, target);
+        castUndyingMalice(player1, target.getId());
+        castDoomBlade(player1, target.getId());
         harness.passBothPriorities();
 
         Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                .filter(permanent -> permanent.getCard().getId().equals(targetCard.getId()))
                 .findFirst()
                 .orElseThrow();
         assertThat(returned.isTapped()).isTrue();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
+                .noneMatch(card -> card.getId().equals(targetCard.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(targetCard.getId()));
     }
 
     @Test
-    @DisplayName("The granted death ability expires at end of turn")
-    void grantedAbilityExpiresAtEndOfTurn() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
-        var card = target.getCard();
+    @DisplayName("The granted death trigger expires at end of turn")
+    void deathTriggerExpiresAtEndOfTurn() {
+        Permanent target = addCreature(player1);
+        Card targetCard = target.getCard();
 
-        castUndyingMalice(target);
+        castUndyingMalice(player1, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        destroyTarget(player2, target);
+        castDoomBlade(player2, target.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
+                .anyMatch(card -> card.getId().equals(targetCard.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+                .noneMatch(permanent -> permanent.getCard().getId().equals(targetCard.getId()));
     }
 
-    private void castUndyingMalice(Permanent target) {
-        harness.forceActivePlayer(player1);
+    private Permanent addCreature(Player player) {
+        Permanent permanent = new Permanent(new GrizzlyBears());
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
+    }
+
+    private void castUndyingMalice(Player caster, UUID targetId) {
+        harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new UndyingMalice()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.setHand(caster, List.of(new UndyingMalice()));
+        harness.addMana(caster, ManaColor.BLACK, 1);
+        harness.castInstant(caster, 0, targetId);
         harness.passBothPriorities();
     }
 
-    private void destroyTarget(Player caster, Permanent target) {
+    private void castDoomBlade(Player caster, UUID targetId) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new DoomBlade()));
-        harness.addMana(caster, ManaColor.BLACK, 1);
-        harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castInstant(caster, 0, target.getId());
+        harness.addMana(caster, ManaColor.BLACK, 2);
+        harness.castInstant(caster, 0, targetId);
         harness.passBothPriorities();
     }
 }

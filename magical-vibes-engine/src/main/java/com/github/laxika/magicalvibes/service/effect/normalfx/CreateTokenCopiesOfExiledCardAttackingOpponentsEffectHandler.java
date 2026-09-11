@@ -49,7 +49,8 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
             return;
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), true);
+        int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                gameData, entry.getControllerId(), 1, exiledCard.getSubtypes(), true);
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect();

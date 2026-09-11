@@ -39,6 +39,9 @@ public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHand
         var linked = (CreateTokenAndLinkToSourceEffect) effect;
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null && !linked.linkTokenToSource() && entry.getSourcePermanentSnapshot() != null) {
+            source = new Permanent(entry.getSourcePermanentSnapshot());
+        }
 
         CreateTokenEffect token = linked.token();
         if (source != null && linked.linkTokenToSource()) {

@@ -124,6 +124,15 @@ public class GraveyardTargetValidators {
                         "Target must be a card put into a graveyard from the battlefield this turn");
             }
         }
+        if (effect.targetPutIntoGraveyardFromAnywhereThisTurn()) {
+            boolean tracked = graveyardOwnerId != null
+                    && ctx.gameData().cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of())
+                            .contains(ctx.targetId());
+            if (!tracked) {
+                throw new IllegalStateException("Target must be a card put into a graveyard this turn");
+            }
+        }
         if (effect.targetNotPutIntoGraveyardThisCombat()) {
             boolean tracked = graveyardOwnerId != null
                     && ctx.gameData().cardsPutIntoGraveyardThisCombat
@@ -133,8 +142,7 @@ public class GraveyardTargetValidators {
                 throw new IllegalStateException("Target can't have been put into a graveyard during this combat");
             }
         }
-        int requiredManaValue = ctx.xValue()
-                + (effect.requiresManaValueEqualsX() ? effect.manaValueXOffset() : 0);
+        int requiredManaValue = effect.requiredManaValue(ctx.xValue());
         if (effect.requiresManaValueEqualsX()
                 && !ctx.deferCostDerivedXValueChecks()
                 && graveyardCard.getManaValue() != requiredManaValue) {

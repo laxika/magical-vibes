@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "6ED", collectorNumber = "316")
 @CardRegistration(set = "7ED", collectorNumber = "322")
 @CardRegistration(set = "SUM", collectorNumber = "279")
+@CardRegistration(set = "3ED", collectorNumber = "279")
 public class ThroneOfBone extends Card {
 
     public ThroneOfBone() {

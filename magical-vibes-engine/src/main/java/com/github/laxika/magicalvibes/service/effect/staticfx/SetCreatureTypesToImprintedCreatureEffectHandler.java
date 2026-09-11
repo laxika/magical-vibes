@@ -26,7 +26,7 @@ public class SetCreatureTypesToImprintedCreatureEffectHandler implements StaticE
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        Card imprinted = context.gameData().getImprintedCard(context.source().getCard());
+        Card imprinted = context.gameData().getImprintedCard(context.sourceCard());
         if (imprinted == null
                 || context.gameData().findExiledCard(imprinted.getId()) == null
                 || !imprinted.hasType(CardType.CREATURE)) {

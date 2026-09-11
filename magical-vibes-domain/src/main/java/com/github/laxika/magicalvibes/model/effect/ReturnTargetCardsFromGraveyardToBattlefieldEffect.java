@@ -24,6 +24,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean enterTapped,
         DynamicAmount dynamicMaxTargets,
         int maxTotalManaValue,
+        DynamicAmount dynamicMaxTotalManaValue,
         CardColor grantColor,
         CardSubtype grantSubtype,
         CounterType counterType,
@@ -33,7 +34,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean grantHaste,
         boolean sacrificeAtEndStep,
         int minTargets
-) implements CardEffect {
+) implements AggregateManaValueTargetEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter) {
@@ -148,6 +149,24 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean grantHaste,
                                                               boolean sacrificeAtEndStep,
                                                               int minTargets) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets, maxTotalManaValue, null, grantColor, grantSubtype, counterType, counterCount, source, singleGraveyard, grantHaste, sacrificeAtEndStep, minTargets);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -163,6 +182,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.enterTapped = enterTapped;
         this.dynamicMaxTargets = dynamicMaxTargets;
         this.maxTotalManaValue = maxTotalManaValue;
+        this.dynamicMaxTotalManaValue = dynamicMaxTotalManaValue;
         this.grantColor = grantColor;
         this.grantSubtype = grantSubtype;
         this.counterType = counterType;
@@ -188,12 +208,26 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.ALL_GRAVEYARDS, true, grantHaste, sacrificeAtEndStep);
     }
 
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withinTotalManaValue(CardPredicate filter, DynamicAmount maxTotalManaValue, boolean grantHasteUntilEndOfTurn) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(filter, 0, false, false, maxTotalManaValue, 0, maxTotalManaValue, null, null, null, 0, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, grantHasteUntilEndOfTurn, false, 0);
+    }
+
+    public boolean grantHasteUntilEndOfTurn() {
+        return grantHaste;
+    }
+
     public boolean xScaled() {
-        return maxTargets == 0 && dynamicMaxTargets == null && maxTotalManaValue == 0;
+        return maxTargets == 0 && dynamicMaxTargets == null && maxTotalManaValue == 0
+                && dynamicMaxTotalManaValue == null;
     }
 
     public boolean hasTotalManaValueCap() {
-        return maxTotalManaValue > 0;
+        return maxTotalManaValue > 0 || dynamicMaxTotalManaValue != null;
+    }
+
+    @Override
+    public boolean hasAggregateManaValueLimit() {
+        return hasTotalManaValueCap();
     }
 
     @Override

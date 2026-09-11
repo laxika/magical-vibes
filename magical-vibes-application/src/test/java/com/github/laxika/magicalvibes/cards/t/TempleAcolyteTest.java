@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(TempleAcolyte.class)
 class TempleAcolyteTest extends BaseCardTest {
 
     @Test
@@ -22,9 +23,8 @@ class TempleAcolyteTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB trigger on stack
         harness.passBothPriorities(); // resolve GainLifeEffect
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        // Started at 20, gained 3 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
     }
 }

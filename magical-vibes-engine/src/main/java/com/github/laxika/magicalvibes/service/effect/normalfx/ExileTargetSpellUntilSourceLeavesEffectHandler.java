@@ -43,7 +43,7 @@ public class ExileTargetSpellUntilSourceLeavesEffectHandler implements NormalEff
         if (targetCardId == null) return;
 
         StackEntry target = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (target == null) {

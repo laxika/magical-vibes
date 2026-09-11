@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "56")
 @CardRegistration(set = "4ED", collectorNumber = "46")
 @CardRegistration(set = "SUM", collectorNumber = "37")
+@CardRegistration(set = "3ED", collectorNumber = "37")
+@CardRegistration(set = "DDL", collectorNumber = "20")
 public class Righteousness extends Card {
 
     public Righteousness() {

@@ -21,6 +21,27 @@ class BattlefieldEntryServiceTest {
             new BattlefieldEntryService(placementService, interactionService, triggerService);
 
     @Test
+    void landNameChoicePausesPlacementUntilNameIsChosen() {
+        var input = mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class);
+        var entryService = new BattlefieldEntryService(placementService, interactionService, triggerService, input);
+        GameData gameData = mock(GameData.class);
+        UUID controllerId = UUID.randomUUID();
+        Card land = new Card();
+        land.setType(com.github.laxika.magicalvibes.model.CardType.LAND);
+        land.addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect(
+                        com.github.laxika.magicalvibes.model.CardType.LAND));
+        org.mockito.Mockito.when(input.beginCardNameChoice(gameData, controllerId, land,
+                java.util.List.of(), false, false, null, com.github.laxika.magicalvibes.model.CardType.LAND,
+                com.github.laxika.magicalvibes.model.Zone.HAND)).thenReturn(true);
+
+        entryService.putLandOntoBattlefield(gameData, controllerId, new Permanent(land),
+                com.github.laxika.magicalvibes.model.Zone.HAND);
+
+        org.mockito.Mockito.verifyNoInteractions(placementService);
+    }
+
+    @Test
     void delegatesDefaultPlacementToPlacementWorkflow() {
         GameData gameData = mock(GameData.class);
         UUID controllerId = UUID.randomUUID();

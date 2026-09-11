@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "303")
 @CardRegistration(set = "TSB", collectorNumber = "112")
+@CardRegistration(set = "V10", collectorNumber = "9")
 public class Mirari extends Card {
 
     public Mirari() {

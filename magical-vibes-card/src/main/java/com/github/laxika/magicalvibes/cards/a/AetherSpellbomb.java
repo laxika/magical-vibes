@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "141")
+@CardRegistration(set = "DDF", collectorNumber = "61")
+@CardRegistration(set = "MMA", collectorNumber = "196")
 public class AetherSpellbomb extends Card {
 
     public AetherSpellbomb() {

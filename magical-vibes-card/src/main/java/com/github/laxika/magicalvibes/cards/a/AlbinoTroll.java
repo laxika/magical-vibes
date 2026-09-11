@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "231")
+@CardRegistration(set = "DDD", collectorNumber = "3")
+@CardRegistration(set = "GVL", collectorNumber = "3")
 public class AlbinoTroll extends Card {
 
     public AlbinoTroll() {

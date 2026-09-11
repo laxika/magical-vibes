@@ -18,8 +18,17 @@ import java.util.List;
 @CardRegistration(set = "M10", collectorNumber = "229")
 @CardRegistration(set = "M11", collectorNumber = "229")
 @CardRegistration(set = "ONE", collectorNumber = "261")
+@CardRegistration(set = "DSK", collectorNumber = "269")
 @CardRegistration(set = "SOS", collectorNumber = "265")
 @CardRegistration(set = "TSP", collectorNumber = "279")
+@CardRegistration(set = "DDE", collectorNumber = "66")
+@CardRegistration(set = "H09", collectorNumber = "34")
+@CardRegistration(set = "TD2", collectorNumber = "41")
+@CardRegistration(set = "DDH", collectorNumber = "76")
+@CardRegistration(set = "HOP", collectorNumber = "139")
+@CardRegistration(set = "MMA", collectorNumber = "224")
+@CardRegistration(set = "PC2", collectorNumber = "129")
+@CardRegistration(set = "DDN", collectorNumber = "74")
 public class TerramorphicExpanse extends Card {
 
     public TerramorphicExpanse() {

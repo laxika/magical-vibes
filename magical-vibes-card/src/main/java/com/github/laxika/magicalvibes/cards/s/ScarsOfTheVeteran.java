@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "16")
+@CardRegistration(set = "CST", collectorNumber = "4")
+@CardRegistration(set = "CST", collectorNumber = "16")
+@CardRegistration(set = "ME2", collectorNumber = "34")
 public class ScarsOfTheVeteran extends Card {
 
     public ScarsOfTheVeteran() {

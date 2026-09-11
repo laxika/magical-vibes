@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,13 +10,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(TreetopVillage.class)
 class TreetopVillageTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -26,10 +28,8 @@ class TreetopVillageTest extends BaseCardTest {
     @DisplayName("Treetop Village enters the battlefield tapped")
     void entersBattlefieldTapped() {
         harness.setHand(player1, List.of(new TreetopVillage()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent village = findPermanent(player1, "Treetop Village");
         assertThat(village.isTapped()).isTrue();
@@ -40,10 +40,8 @@ class TreetopVillageTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Treetop Village produces green mana")
     void tappingProducesGreenMana() {
-        Permanent village = addVillageReady(player1);
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(village);
-
-        gs.tapPermanent(gd, player1, index);
+        addVillageReady(player1);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
@@ -51,7 +49,7 @@ class TreetopVillageTest extends BaseCardTest {
     // ===== Animate ability =====
 
     @Test
-    @DisplayName("Activating ability puts AnimateLand on the stack")
+    @DisplayName("Activating ability puts Treetop Village's ability on the stack")
     void activatingAbilityPutsOnStack() {
         Permanent village = addVillageReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -61,7 +59,6 @@ class TreetopVillageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Treetop Village");
         assertThat(entry.getTargetId()).isEqualTo(village.getId());
     }
 
@@ -75,15 +72,12 @@ class TreetopVillageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(village.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(village.getAnimatedPower()).isEqualTo(3);
-        assertThat(village.getAnimatedToughness()).isEqualTo(3);
         assertThat(gqs.isCreature(gd, village)).isTrue();
         assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(3);
-        assertThat(village.getAnimatedColor()).isEqualTo(CardColor.GREEN);
-        assertThat(village.getTransientSubtypes()).containsExactly(CardSubtype.APE);
-        assertThat(village.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.getEffectiveColors(gd, village)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, village)).containsExactly(CardSubtype.APE);
+        assertThat(gqs.hasKeyword(gd, village, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -95,8 +89,10 @@ class TreetopVillageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(village.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.isLand(gd, village)).isTrue();
         assertThat(gqs.isCreature(gd, village)).isTrue();
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
@@ -127,11 +123,11 @@ class TreetopVillageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(village.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, village)).isFalse();
-        assertThat(village.getGrantedKeywords()).isEmpty();
-        assertThat(village.getTransientSubtypes()).isEmpty();
-        assertThat(village.getAnimatedColor()).isNull();
+        assertThat(gqs.isLand(gd, village)).isTrue();
+        assertThat(gqs.hasKeyword(gd, village, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, village)).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, village)).isEmpty();
     }
 
     // ===== Mana cost enforcement =====
@@ -147,6 +143,43 @@ class TreetopVillageTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Ability requires one generic and one green mana")
+    void abilityRequiresOneGenericAndOneGreenMana() {
+        addVillageReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while Treetop Village is tapped")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent village = addVillageReady(player1);
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(village.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated during another player's turn")
+    void abilityCanBeActivatedDuringAnotherPlayersTurn() {
+        addVillageReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
     // ===== Not a creature before activation =====
 
     @Test
@@ -155,16 +188,12 @@ class TreetopVillageTest extends BaseCardTest {
         Permanent village = addVillageReady(player1);
 
         assertThat(gqs.isCreature(gd, village)).isFalse();
-        assertThat(village.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.isLand(gd, village)).isTrue();
     }
 
     // ===== Helper methods =====
 
     private Permanent addVillageReady(Player player) {
-        TreetopVillage card = new TreetopVillage();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new TreetopVillage());
     }
 }

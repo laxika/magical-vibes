@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGra
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "218")
+@CardRegistration(set = "HOP", collectorNumber = "124")
+@CardRegistration(set = "MD1", collectorNumber = "21")
+@CardRegistration(set = "MMA", collectorNumber = "213")
 public class RelicOfProgenitus extends Card {
 
     public RelicOfProgenitus() {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.p.PriestOfTitania;
 import com.github.laxika.magicalvibes.cards.s.SavageSummoning;
+import com.github.laxika.magicalvibes.cards.s.Scragnoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,6 +58,7 @@ class PowerSinkTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GlacialChasm.class)
     @DisplayName("Does not tap lands without mana abilities")
     void doesNotTapLandsWithoutManaAbilities() {
         ElvishLyrist lyrist = prepareCounterTarget();
@@ -197,26 +199,52 @@ class PowerSinkTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(SavageSummoning.class)
+    @CardUsed(Scragnoth.class)
     @DisplayName("Applies the not-paid rider even when the target spell cannot be countered")
     void appliesNotPaidRiderToUncounterableSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Scragnoth scragnoth = new Scragnoth();
+        harness.setHand(player1, List.of(scragnoth));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, scragnoth.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed(SavageSummoning.class)
+    void appliesNotPaidRiderWhenUncounterableSpellControllerDeclines() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         SavageSummoning summoning = new SavageSummoning();
         harness.setHand(player1, List.of(summoning));
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2); // {G} to cast Savage Summoning, {1} remains for X
 
         harness.setHand(player2, List.of(new PowerSink()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
 
         harness.castInstant(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, summoning.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
         assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     @Test
@@ -237,5 +265,33 @@ class PowerSinkTest extends BaseCardTest {
 
         assertThat(manaCreature.isTapped()).isFalse();
         assertThat(manaLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed(Scragnoth.class)
+    @DisplayName("Offers payment for an uncounterable spell and leaves it on the stack when paid")
+    void offersPaymentForUncounterableSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Scragnoth scragnoth = new Scragnoth();
+        harness.setHand(player1, List.of(scragnoth));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 6); // 5 to cast Scragnoth, 1 to pay X
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, scragnoth.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(land.isTapped()).isFalse();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Scragnoth");
     }
 }

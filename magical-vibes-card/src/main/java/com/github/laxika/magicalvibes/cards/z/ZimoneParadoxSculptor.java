@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "126")
+@CardRegistration(set = "FDN", collectorNumber = "351")
+@CardRegistration(set = "FDN", collectorNumber = "412")
+@CardRegistration(set = "FDN", collectorNumber = "483")
 public class ZimoneParadoxSculptor extends Card {
 
     public ZimoneParadoxSculptor() {

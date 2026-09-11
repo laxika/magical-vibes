@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "101")
+@CardRegistration(set = "MM2", collectorNumber = "144")
 public class GnarlidPack extends Card {
 
     public GnarlidPack() {

@@ -49,6 +49,8 @@ public class CharacteristicState {
      *  layer can report additive color grants as the difference from this baseline. */
     private final Set<CardColor> seededColors = EnumSet.noneOf(CardColor.class);
     private final Set<Keyword> keywords = new HashSet<>();
+    private int flankingInstances;
+    private boolean seeded;
     /** Keywords this permanent is prohibited from having or gaining by a granted restriction. */
     private final Set<Keyword> blockedKeywords = new HashSet<>();
     /** The keywords the state was seeded with (printed + persistent one-shot grants),
@@ -172,6 +174,8 @@ public class CharacteristicState {
         this.colorsOverridden = source.colorsOverridden;
         this.seededColors.addAll(source.seededColors);
         this.keywords.addAll(source.keywords);
+        this.flankingInstances = source.flankingInstances;
+        this.seeded = source.seeded;
         this.blockedKeywords.addAll(source.blockedKeywords);
         this.seededKeywords.addAll(source.seededKeywords);
         this.protectionColors.addAll(source.protectionColors);
@@ -250,6 +254,8 @@ public class CharacteristicState {
      * seeding (constructor values plus engine-side legacy transient state) is complete.
      */
     public void snapshotSeededCharacteristics() {
+        flankingInstances = keywords.contains(Keyword.FLANKING) ? 1 : 0;
+        seeded = true;
         seededColors.clear();
         seededColors.addAll(colors);
         seededKeywords.clear();
@@ -283,22 +289,30 @@ public class CharacteristicState {
 
     public void addKeyword(Keyword keyword) {
         if (!blockedKeywords.contains(keyword)) {
+            if (seeded && keyword == Keyword.FLANKING) flankingInstances++;
             keywords.add(keyword);
         }
     }
 
     public void addKeywords(Collection<Keyword> granted) {
-        granted.stream()
-                .filter(keyword -> !blockedKeywords.contains(keyword))
-                .forEach(keywords::add);
+        for (Keyword keyword : granted) {
+            if (!blockedKeywords.contains(keyword)) {
+                if (seeded && keyword == Keyword.FLANKING) {
+                    flankingInstances++;
+                }
+                keywords.add(keyword);
+            }
+        }
     }
 
     public void removeKeyword(Keyword keyword) {
+        if (keyword == Keyword.FLANKING) flankingInstances = 0;
         keywords.remove(keyword);
     }
 
     /** Applies a keyword restriction and removes the keyword already present, if any. */
     public void blockKeyword(Keyword keyword) {
+        if (keyword == Keyword.FLANKING) flankingInstances = 0;
         blockedKeywords.add(keyword);
         keywords.remove(keyword);
     }
@@ -333,6 +347,7 @@ public class CharacteristicState {
      * here.
      */
     public void loseAllAbilities(long timestamp) {
+        flankingInstances = 0;
         keywords.clear();
         blockedKeywords.clear();
         protectionColors.clear();
@@ -347,6 +362,7 @@ public class CharacteristicState {
      * Abilities granted by later timestamps are added normally by the layered pass.
      */
     public void loseAllNonManaAbilities(long timestamp) {
+        flankingInstances = 0;
         keywords.clear();
         blockedKeywords.clear();
         protectionColors.clear();

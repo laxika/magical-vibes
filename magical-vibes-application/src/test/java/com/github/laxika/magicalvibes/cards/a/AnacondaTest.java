@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,19 +17,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Anaconda.class, ArgothianSwine.class, Swamp.class})
 class AnacondaTest extends BaseCardTest {
 
-    // ===== Swampwalk =====
-
     @Test
     @DisplayName("Anaconda cannot be blocked when defending player controls a Swamp")
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
 
         Permanent blockerPerm = addCreatureReady(player2, new ArgothianSwine());
-
         Permanent atkPerm = addCreatureReady(player1, new Anaconda());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers(player1);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -42,11 +39,27 @@ class AnacondaTest extends BaseCardTest {
     @DisplayName("Anaconda can be blocked when defending player does not control a Swamp")
     void canBeBlockedWhenDefenderDoesNotControlSwamp() {
         Permanent blockerPerm = addCreatureReady(player2, new ArgothianSwine());
-
         Permanent atkPerm = addCreatureReady(player1, new Anaconda());
-        atkPerm.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+        prepareDeclareBlockers();
 
-        prepareDeclareBlockers(player1);
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Anaconda can be blocked when only the attacking player controls a Swamp")
+    void canBeBlockedWhenOnlyAttackerControlsSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+
+        Permanent blockerPerm = addCreatureReady(player2, new ArgothianSwine());
+        Permanent atkPerm = addCreatureReady(player1, new Anaconda());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

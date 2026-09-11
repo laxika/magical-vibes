@@ -58,6 +58,29 @@ class JadeMonolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing a spell as the source redirects its damage to the controller")
+    void redirectsDamageFromChosenSpellSourceToController() {
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent protectedCreature = addReadyStats(player2, 4, 4);
+        LightningBolt lightningBolt = new LightningBolt();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.setHand(player1, List.of(lightningBolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, protectedCreature.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lightningBolt.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(0);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("Choosing a source registers a next-event redirect shield pointing at the controller")
     void choosingSourceCreatesNextEventShield() {
         Permanent monolith = addCreatureReady(player1, new JadeMonolith());

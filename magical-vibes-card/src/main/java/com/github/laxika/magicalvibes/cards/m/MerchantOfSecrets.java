@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "90")
+@CardRegistration(set = "LGN", collectorNumber = "44")
 public class MerchantOfSecrets extends Card {
 
     public MerchantOfSecrets() {

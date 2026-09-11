@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,34 +14,46 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Vengeance.class, ShuFootSoldiers.class, Forest.class})
 class VengeanceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving destroys target tapped creature")
     void resolvingDestroysTargetTappedCreature() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Vengeance()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Shu Foot Soldiers");
+        harness.assertInGraveyard(player2, "Shu Foot Soldiers");
+    }
+
+    @Test
+    @DisplayName("Can target a tapped creature you control")
+    void canTargetTappedCreatureYouControl() {
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
+        tappedCreature.tap();
+
+        harness.setHand(player1, List.of(new Vengeance()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Shu Foot Soldiers");
+        harness.assertInGraveyard(player1, "Shu Foot Soldiers");
     }
 
     @Test
     @DisplayName("Cannot target an untapped creature")
     void cannotTargetUntappedCreature() {
-        Permanent tappedValid = new Permanent(new GrizzlyBears());
+        Permanent tappedValid = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
         tappedValid.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedValid);
 
-        Permanent untappedCreature = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(untappedCreature);
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
 
         harness.setHand(player1, List.of(new Vengeance()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -56,13 +66,11 @@ class VengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a tapped noncreature")
     void cannotTargetTappedNonCreature() {
-        Permanent tappedValid = new Permanent(new GrizzlyBears());
+        Permanent tappedValid = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
         tappedValid.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedValid);
 
-        Permanent tappedLand = new Permanent(new Forest());
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         tappedLand.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedLand);
 
         harness.setHand(player1, List.of(new Vengeance()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -75,9 +83,8 @@ class VengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target creature becomes untapped before resolution")
     void fizzlesIfTargetBecomesUntapped() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Vengeance()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -88,8 +95,7 @@ class VengeanceTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 }

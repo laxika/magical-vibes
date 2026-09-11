@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * Capability interface for static effects that impose an additional mana cost to declare the
@@ -18,4 +19,12 @@ public interface AttackCostEffect extends CardEffect {
      * {@code 0} means the attack is free.
      */
     int attackCost(Permanent creature);
+
+    /**
+     * Optional dynamic amount for effects whose tax is evaluated from the live game state when
+     * the attack is declared. A {@code null} result keeps the fixed-cost path above.
+     */
+    default DynamicAmount dynamicAttackCost() {
+        return null;
+    }
 }

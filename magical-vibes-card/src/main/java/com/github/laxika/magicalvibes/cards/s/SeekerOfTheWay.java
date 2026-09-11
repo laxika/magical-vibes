@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "22")
+@CardRegistration(set = "CP3", collectorNumber = "2")
 public class SeekerOfTheWay extends Card {
 
     public SeekerOfTheWay() {

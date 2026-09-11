@@ -178,6 +178,7 @@ public class CombatService {
     public void clearCombatState(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
+        gameData.declaredAttackerIdsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
         gameData.combatDamageBlockerAssignments.clear();
@@ -491,6 +492,8 @@ public class CombatService {
                         }
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                     }
+                    permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                            gameData, perm, action.amount(), action.placingPlayerId());
                 }
             }
             if (action.alsoTap()) {

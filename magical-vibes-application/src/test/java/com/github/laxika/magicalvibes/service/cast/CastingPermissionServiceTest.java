@@ -711,7 +711,9 @@ class CastingPermissionServiceTest {
             Card creature = new Card();
             creature.setType(CardType.CREATURE);
             when(predicateEvaluationService.matchesCardPredicate(
-                    eq(creature), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player2Id)))
+                    eq(creature), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player2Id),
+                    org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                    org.mockito.ArgumentMatchers.isNull()))
                     .thenReturn(true);
 
             assertThat(svc.isSpellCastingAllowed(gd, player2Id, creature)).isFalse();

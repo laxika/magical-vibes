@@ -1,35 +1,34 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.s.Souldrinker;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LightOfDay.class, ScatheZombies.class, Souldrinker.class, TrainedArmodon.class})
 class LightOfDayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Black creature cannot attack while Light of Day is on the battlefield")
     void blackCreatureCannotAttack() {
         harness.addToBattlefield(player1, new LightOfDay());
-        Permanent black = addReadyCreature(player1, CardColor.BLACK);
-
-        beginAttack(player1);
+        Permanent black = addCreatureReady(player1, new Souldrinker());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(black);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(idx)))
+        assertThatThrownBy(() -> declareAttackers(List.of(idx)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -38,28 +37,28 @@ class LightOfDayTest extends BaseCardTest {
     void nonBlackCreatureCanAttack() {
         harness.addToBattlefield(player1, new LightOfDay());
         harness.setLife(player2, 20);
-        Permanent white = addReadyCreature(player1, CardColor.WHITE);
+        Permanent nonblack = addCreatureReady(player1, new TrainedArmodon());
 
-        beginAttack(player1);
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(nonblack);
+        declareAttackers(List.of(idx));
 
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(white);
-        gs.declareAttackers(gd, player1, List.of(idx));
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
     @DisplayName("Black creature cannot block while Light of Day is on the battlefield")
     void blackCreatureCannotBlock() {
         harness.addToBattlefield(player1, new LightOfDay());
-        Permanent attacker = addReadyCreature(player1, CardColor.WHITE);
+        Permanent attacker = addCreatureReady(player1, new TrainedArmodon());
         attacker.setAttacking(true);
-        addReadyCreature(player2, CardColor.BLACK);
+        addCreatureReady(player2, new Souldrinker());
 
-        beginBlock();
+        prepareDeclareBlockers();
 
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIdx))))
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -67,11 +66,11 @@ class LightOfDayTest extends BaseCardTest {
     @DisplayName("Non-black creature blocks normally while Light of Day is on the battlefield")
     void nonBlackCreatureCanBlock() {
         harness.addToBattlefield(player1, new LightOfDay());
-        Permanent attacker = addReadyCreature(player1, CardColor.WHITE);
+        Permanent attacker = addCreatureReady(player1, new TrainedArmodon());
         attacker.setAttacking(true);
-        addReadyCreature(player2, CardColor.GREEN);
+        addCreatureReady(player2, new TrainedArmodon());
 
-        beginBlock();
+        prepareDeclareBlockers();
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIdx)));
 
@@ -81,46 +80,29 @@ class LightOfDayTest extends BaseCardTest {
     @Test
     @DisplayName("Black creature can attack again after Light of Day leaves the battlefield")
     void restrictionLiftsWhenLightOfDayLeaves() {
-        Permanent lightOfDay = new Permanent(new LightOfDay());
-        gd.playerBattlefields.get(player1.getId()).add(lightOfDay);
+        Permanent lightOfDay = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
         harness.setLife(player2, 20);
-        Permanent black = addReadyCreature(player1, CardColor.BLACK);
+        Permanent black = addCreatureReady(player1, new Souldrinker());
 
         gd.playerBattlefields.get(player1.getId()).remove(lightOfDay);
 
-        beginAttack(player1);
-
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(black);
-        gs.declareAttackers(gd, player1, List.of(idx));
+        declareAttackers(List.of(idx));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    private Permanent addReadyCreature(Player player, CardColor color) {
-        Card card = new Card();
-        card.setName("Test " + color + " Creature");
-        card.setType(CardType.CREATURE);
-        card.setColor(color);
-        card.setColors(List.of(color));
-        card.setPower(2);
-        card.setToughness(2);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("A face-down Light of Day does not restrict black creatures")
+    void faceDownLightOfDayHasNoEffect() {
+        Permanent lightOfDay = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
+        lightOfDay.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLife(player2, 20);
+        Permanent black = addCreatureReady(player1, new ScatheZombies());
 
-    private void beginAttack(Player attacker) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(black);
+        declareAttackers(List.of(idx));
 
-    private void beginBlock() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }

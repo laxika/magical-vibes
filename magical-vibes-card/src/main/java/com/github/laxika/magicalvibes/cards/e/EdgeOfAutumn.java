@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "144")
+@CardRegistration(set = "DDG", collectorNumber = "25")
 public class EdgeOfAutumn extends Card {
 
     public EdgeOfAutumn() {

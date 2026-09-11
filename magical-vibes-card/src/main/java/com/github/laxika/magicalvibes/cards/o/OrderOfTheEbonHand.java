@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "FEM", collectorNumber = "42c")
 @CardRegistration(set = "FEM", collectorNumber = "137")
 @CardRegistration(set = "FEM", collectorNumber = "139")
+@CardRegistration(set = "ME1", collectorNumber = "78")
 public class OrderOfTheEbonHand extends Card {
 
     public OrderOfTheEbonHand() {

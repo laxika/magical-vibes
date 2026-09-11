@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatur
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
@@ -104,7 +106,7 @@ public class TargetPolarityClassifier {
      * Group-level polarity for one multi-target group's effects, collapsed by the same
      * priority as {@link #classifyCard}. Returns null when no effect classifies.
      */
-    TargetPolarity classifyGroup(GameData gameData, List<CardEffect> groupEffects, UUID aiPlayerId) {
+    TargetPolarity classifyGroup(GameData gameData, List<? extends CardEffect> groupEffects, UUID aiPlayerId) {
         TargetPolarity best = null;
         for (CardEffect effect : groupEffects) {
             best = higherPriority(best, classify(gameData, effect, aiPlayerId));
@@ -117,6 +119,10 @@ public class TargetPolarityClassifier {
      * the guard test keeps that set empty for the card pool's spell/ETB surface.
      */
     TargetPolarity classify(GameData gameData, CardEffect effect, UUID aiPlayerId) {
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect modal) {
+            return classifyGroup(gameData, modal.choice().options().stream()
+                    .flatMap(option -> option.effects().stream()).toList(), aiPlayerId);
+        }
         // Wrappers: classify what actually happens to the target. Kicker-style replacements
         // use the base mode only — the AI never kicks (mirrors computeBaseAllowedTargets).
         if (effect instanceof ConditionalEffect conditional) {
@@ -154,6 +160,19 @@ public class TargetPolarityClassifier {
                 best = higherPriority(best, classify(gameData, reward, aiPlayerId));
             }
             return best;
+        }
+        if (effect instanceof RollD20Effect roll) {
+            TargetPolarity best = null;
+            for (CardEffect branch : new CardEffect[]{roll.zeroOrLess(), roll.oneToNine(),
+                    roll.tenToNineteen(), roll.twenty()}) {
+                if (branch != null) {
+                    best = higherPriority(best, classify(gameData, branch, aiPlayerId));
+                }
+            }
+            return best;
+        }
+        if (effect instanceof BoostTargetCreaturesByPositionEffect boosts) {
+            return classifyGroup(gameData, boosts.boosts(), aiPlayerId);
         }
         if (effect instanceof SequenceEffect sequence) {
             TargetPolarity best = null;
@@ -367,10 +386,14 @@ public class TargetPolarityClassifier {
     private static final Map<String, TargetPolarity> FIXED_BY_CLASS_NAME = Map.ofEntries(
             // The target leaves the battlefield (or the board position it holds).
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DestroyUpToTargetsThenReturnFromGraveyardEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Blood Frenzy: the pump rides along, but the target still dies at the next end
             // step, so removal outranks the boost's BENEFICIAL and aims at the opponent.
             entry("DestroyTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DestroyTargetPermanentAtEndStepIfAttackedEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PhaseOutTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PutCountersOnSelfEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetCreatureAndAllWithSameNameEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -379,6 +402,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetCreatureAndCopyEnchantedCreatureEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -444,6 +468,7 @@ public class TargetPolarityClassifier {
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
             entry("RemoveAllCountersAndLockPermanentEffect", TargetPolarity.HARMFUL),
+            entry("RemoveAllCountersFromTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),
             entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),
@@ -487,10 +512,13 @@ public class TargetPolarityClassifier {
             entry("EarthbendTargetLandThenFightEffect", TargetPolarity.BENEFICIAL),
             entry("AttachOneOfControlledEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
+            entry("AttachTargetEquipmentsToTargetCreatureThenEffect", TargetPolarity.BENEFICIAL),
+            entry("AttachTargetToSourcePermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
             entry("DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect", TargetPolarity.BENEFICIAL),
+            entry("PreventAllDamageToTargetFromColorlessSourcesEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
@@ -516,6 +544,7 @@ public class TargetPolarityClassifier {
             entry("GuardianAngelPermissionEffect", TargetPolarity.BENEFICIAL),
             entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
+            entry("MakeCreatureBlockableOnlyByFilterThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("TapCombatOpponentsOfTargetAtEndOfCombatEffect", TargetPolarity.BENEFICIAL),
             entry("TransformTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
@@ -560,6 +589,7 @@ public class TargetPolarityClassifier {
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("MakeTargetCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantBasicLandTypeToTargetEffect", TargetPolarity.NEUTRAL),
             entry("GrantColorEffect", TargetPolarity.NEUTRAL),

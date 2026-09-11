@@ -1,30 +1,27 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianFurnace;
+import com.github.laxika.magicalvibes.cards.w.WindingCanyons;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NullRod.class, MindStone.class, PhyrexianFurnace.class, WindingCanyons.class})
 class NullRodTest extends BaseCardTest {
 
     @Test
     void preventsArtifactManaAbilities() {
         addNullRod(player1);
-        addArtifactWithManaAbility(player2);
+        harness.addToBattlefield(player2, new MindStone());
 
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
@@ -32,9 +29,9 @@ class NullRodTest extends BaseCardTest {
     @Test
     void preventsNonManaArtifactAbilities() {
         addNullRod(player1);
-        addArtifactWithActivatedAbility(player2);
+        harness.addToBattlefield(player2, new PhyrexianFurnace());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
@@ -42,41 +39,48 @@ class NullRodTest extends BaseCardTest {
     @Test
     void doesNotPreventLandManaAbilities() {
         addNullRod(player1);
+        harness.addToBattlefield(player2, new WindingCanyons());
 
-        Card land = new Card();
-        land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(land));
+        harness.activateAbility(player2, 0, 0, null, null);
 
-        harness.tapPermanent(player2, 0);
-
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
-    private Permanent addNullRod(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new NullRod());
+    @Test
+    void doesNotPreventNonManaAbilitiesOfLands() {
+        addNullRod(player1);
+        harness.addToBattlefield(player2, new WindingCanyons());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
     }
 
-    private void addArtifactWithManaAbility(Player player) {
-        Card artifact = new Card();
-        artifact.setName("Mana Artifact");
-        artifact.setType(CardType.ARTIFACT);
-        artifact.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(artifact));
+    @Test
+    void preventsOwnArtifactAbilities() {
+        addNullRod(player1);
+        harness.addToBattlefield(player1, new MindStone());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
     }
 
-    private void addArtifactWithActivatedAbility(Player player) {
-        Card artifact = new Card();
-        artifact.setName("Activated Artifact");
-        artifact.setType(CardType.ARTIFACT);
-        artifact.addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: Deal 1 damage to any target."
-        ));
-        Permanent permanent = new Permanent(artifact);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+    @Test
+    void removingNullRodReenablesArtifactAbilities() {
+        Permanent nullRod = harness.addToBattlefieldAndReturn(player1, new NullRod());
+        harness.addToBattlefield(player2, new MindStone());
+
+        gd.playerBattlefields.get(player1.getId()).remove(nullRod);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    private void addNullRod(Player player) {
+        harness.addToBattlefield(player, new NullRod());
     }
 }

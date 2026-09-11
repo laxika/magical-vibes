@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "230")
+@CardRegistration(set = "DDD", collectorNumber = "23")
+@CardRegistration(set = "GVL", collectorNumber = "23")
+@CardRegistration(set = "DDS", collectorNumber = "43")
 public class BeastAttack extends Card {
 
     public BeastAttack() {

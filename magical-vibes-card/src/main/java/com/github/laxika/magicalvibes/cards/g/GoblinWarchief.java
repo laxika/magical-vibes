@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "130")
+@CardRegistration(set = "SCG", collectorNumber = "97")
+@CardRegistration(set = "DD1", collectorNumber = "42")
+@CardRegistration(set = "DDN", collectorNumber = "9")
+@CardRegistration(set = "EVG", collectorNumber = "42")
 public class GoblinWarchief extends Card {
 
     public GoblinWarchief() {

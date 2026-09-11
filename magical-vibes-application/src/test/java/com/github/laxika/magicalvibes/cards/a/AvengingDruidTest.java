@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TirelessTracker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AvengingDruid.class, Shock.class, Forest.class, Island.class, GrizzlyBears.class})
 class AvengingDruidTest extends BaseCardTest {
 
     @Test
@@ -58,6 +61,21 @@ class AvengingDruidTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock, bears);
+    }
+
+    @Test
+    @CardUsed(TirelessTracker.class)
+    @DisplayName("Putting the revealed land onto the battlefield triggers landfall")
+    void revealedLandTriggersLandfall() {
+        addCreatureReady(player1, new TirelessTracker());
+        Card shock = new Shock();
+        Card forest = new Forest();
+        attackAndResolveTrigger(List.of(shock, forest));
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
     private void attackAndResolveTrigger(List<Card> library) {

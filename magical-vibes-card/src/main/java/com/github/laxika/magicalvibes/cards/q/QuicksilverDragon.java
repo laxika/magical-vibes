@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ONS", collectorNumber = "103")
+@CardRegistration(set = "DD2", collectorNumber = "19")
+@CardRegistration(set = "JVC", collectorNumber = "19")
 public class QuicksilverDragon extends Card {
 
     public QuicksilverDragon() {

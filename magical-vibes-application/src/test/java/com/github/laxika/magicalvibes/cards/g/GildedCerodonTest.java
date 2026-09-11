@@ -48,9 +48,8 @@ class GildedCerodonTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, blocker.getId());
-        harness.passBothPriorities(); // resolve the attack trigger — condition unmet, effect fizzles
 
+        assertThat(gd.stack).isEmpty();
         assertThat(blocker.isCantBlockThisTurn()).isFalse();
     }
 }

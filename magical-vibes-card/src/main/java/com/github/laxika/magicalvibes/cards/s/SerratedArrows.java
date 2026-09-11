@@ -20,6 +20,8 @@ import java.util.List;
 @CardRegistration(set = "HML", collectorNumber = "110")
 @CardRegistration(set = "ATH", collectorNumber = "70")
 @CardRegistration(set = "TSB", collectorNumber = "114")
+@CardRegistration(set = "DDD", collectorNumber = "20")
+@CardRegistration(set = "GVL", collectorNumber = "20")
 public class SerratedArrows extends Card {
 
     public SerratedArrows() {

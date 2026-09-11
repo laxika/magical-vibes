@@ -5,6 +5,8 @@ public enum CountScope {
     CONTROLLER,
     OPPONENTS,
     ANY_PLAYER,
+    /** The player remembered by the source permanent's as-enters choice. */
+    CHOSEN_PLAYER,
     /**
      * The single player targeted by the effect (read from the stack entry's target channel via
      * {@code AmountContext.targetPermanentId} — which, for player-targeting effects, holds the

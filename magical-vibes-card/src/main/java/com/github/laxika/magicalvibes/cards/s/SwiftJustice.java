@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "RTR", collectorNumber = "26")
+@CardRegistration(set = "DDN", collectorNumber = "62")
 public class SwiftJustice extends Card {
 
     public SwiftJustice() {

@@ -9,6 +9,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "14")
+@CardRegistration(set = "MM2", collectorNumber = "25")
 public class MirranCrusader extends Card {
 
     public MirranCrusader() {

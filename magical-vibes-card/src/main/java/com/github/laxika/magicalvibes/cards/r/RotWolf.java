@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "90")
+@CardRegistration(set = "TD2", collectorNumber = "54")
 public class RotWolf extends Card {
 
     public RotWolf() {

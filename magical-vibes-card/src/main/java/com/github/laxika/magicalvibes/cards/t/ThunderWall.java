@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "104")
+@CardRegistration(set = "ME2", collectorNumber = "71")
 public class ThunderWall extends Card {
 
     public ThunderWall() {

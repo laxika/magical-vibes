@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeepSeaSerpent.class, Island.class})
 class DeepSeaSerpentTest extends BaseCardTest {
 
     // ===== Attack restriction =====
@@ -27,16 +28,8 @@ class DeepSeaSerpentTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent serpent = new Permanent(new DeepSeaSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        addCreatureReady(player1, new DeepSeaSerpent());
+        declareAttackers(List.of(0));
 
         // Combat auto-advances; 5/5 unblocked deals 5 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
@@ -45,16 +38,9 @@ class DeepSeaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Deep-Sea Serpent cannot attack when defending player does not control an Island")
     void cannotAttackWhenDefenderDoesNotControlIsland() {
-        Permanent serpent = new Permanent(new DeepSeaSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        addCreatureReady(player1, new DeepSeaSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -68,16 +54,9 @@ class DeepSeaSerpentTest extends BaseCardTest {
         changeling.setKeywords(Set.of(Keyword.CHANGELING));
         gd.playerBattlefields.get(player2.getId()).add(new Permanent(changeling));
 
-        Permanent serpent = new Permanent(new DeepSeaSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        addCreatureReady(player1, new DeepSeaSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -88,15 +67,9 @@ class DeepSeaSerpentTest extends BaseCardTest {
     void dealsFiveDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent serpent = new Permanent(new DeepSeaSerpent());
-        serpent.setSummoningSick(false);
+        Permanent serpent = addCreatureReady(player1, new DeepSeaSerpent());
         serpent.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }

@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "AKR", collectorNumber = "46")
 @CardRegistration(set = "BRB", collectorNumber = "100")
 @CardRegistration(set = "SUM", collectorNumber = "46")
+@CardRegistration(set = "3ED", collectorNumber = "46")
+@CardRegistration(set = "V14", collectorNumber = "15")
+@CardRegistration(set = "MP2", collectorNumber = "7")
 public class WrathOfGod extends Card {
 
     public WrathOfGod() {

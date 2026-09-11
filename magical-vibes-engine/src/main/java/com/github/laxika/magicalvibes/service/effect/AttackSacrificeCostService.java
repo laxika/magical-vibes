@@ -170,7 +170,7 @@ public class AttackSacrificeCostService {
             if (toSacrifice == null) {
                 break;
             }
-            permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(
                     gameData, playerId, toSacrifice.getCard());
             gameLogService.append(gameData,

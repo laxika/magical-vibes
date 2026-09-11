@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUnti
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "16")
+@CardRegistration(set = "MMA", collectorNumber = "30")
 public class StirThePride extends Card {
 
     public StirThePride() {

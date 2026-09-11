@@ -26,13 +26,18 @@ public class ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler implements
         if (!source.controlledBy(context.castingPlayerId())) {
             return 0;
         }
+        if (reduce.kickedOnly() && !context.kicked()) {
+            return 0;
+        }
 
         var sourceCardId = source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId();
         if (!predicateEvaluationService.matchesCardPredicate(
                 context.spell(), reduce.predicate(), sourceCardId, context.gameData(), context.castingPlayerId())) {
             return 0;
         }
+        var kickedSpellIds = context.gameData().getKickedSpellsCastThisTurn(context.castingPlayerId());
         boolean alreadyCastMatchingSpell = context.gameData().getSpellsCastThisTurn(context.castingPlayerId()).stream()
+                .filter(spell -> !reduce.kickedOnly() || kickedSpellIds.contains(spell.getId()))
                 .anyMatch(spell -> predicateEvaluationService.matchesCardPredicate(
                         spell, reduce.predicate(), sourceCardId, context.gameData(), context.castingPlayerId()));
         return alreadyCastMatchingSpell ? 0 : -reduce.amount();

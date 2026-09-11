@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "23")
+@CardRegistration(set = "DDF", collectorNumber = "8")
+@CardRegistration(set = "DDO", collectorNumber = "16")
 public class KorSkyfisher extends Card {
 
     public KorSkyfisher() {

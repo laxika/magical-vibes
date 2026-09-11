@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -39,6 +42,27 @@ public class CombatRemovalSupport {
 
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " removes ", permanent.getCard(), " from combat."));
         log.info("Game {} - {} removes {} from combat", gameData.id, entry.getCard().getName(), permanent.getCard().getName());
+    }
+
+    public void removeFromCombatAndUnblockSoleBlockers(GameData gameData, StackEntry entry,
+                                                       Permanent permanent) {
+        List<UUID> previouslyBlockedAttackerIds = new ArrayList<>(permanent.getBlockingTargetIds());
+        removeFromCombat(gameData, entry, permanent);
+
+        for (UUID attackerId : previouslyBlockedAttackerIds) {
+            Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+            if (attacker == null || !attacker.isAttacking()
+                    || hadAnotherBlockerThisCombat(gameData, attackerId, permanent.getId())
+                    || hasOtherBlocker(gameData, attackerId, permanent.getId())) {
+                continue;
+            }
+            attacker.setBlockedWithoutBlockers(false);
+        }
+    }
+
+    private boolean hadAnotherBlockerThisCombat(GameData gameData, UUID attackerId, UUID removedBlockerId) {
+        Set<UUID> blockers = gameData.combatBlockOpponentIdsThisCombat.get(attackerId);
+        return blockers != null && blockers.stream().anyMatch(id -> !id.equals(removedBlockerId));
     }
 
     private boolean hasOtherBlocker(GameData gameData, UUID attackerId, UUID removedBlockerId) {

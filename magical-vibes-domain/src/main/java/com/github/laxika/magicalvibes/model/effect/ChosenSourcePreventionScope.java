@@ -8,6 +8,9 @@ public enum ChosenSourcePreventionScope {
     /** "The next time it would deal damage to you this turn, prevent that damage." */
     NEXT_DAMAGE_TO_CONTROLLER,
 
+    /** "The next time an unblocked creature would deal combat damage to you, prevent all but 1." */
+    NEXT_COMBAT_DAMAGE_TO_CONTROLLER_ALL_BUT_ONE,
+
     /** "The next time it would deal damage to any target this turn, prevent that damage." */
     NEXT_DAMAGE_TO_ANY_TARGET,
 

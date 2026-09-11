@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "91")
+@CardRegistration(set = "ME1", collectorNumber = "119")
 public class GargantuanGorilla extends Card {
 
     public GargantuanGorilla() {

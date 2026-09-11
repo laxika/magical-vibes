@@ -14,6 +14,6 @@ public class FalsePeace extends Card {
     public FalsePeace() {
         // Target player skips all combat phases of their next turn.
         addEffect(EffectSlot.SPELL,
-                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER));
+                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, true));
     }
 }

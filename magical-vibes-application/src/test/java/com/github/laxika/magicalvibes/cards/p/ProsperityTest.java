@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Prosperity.class})
+@CardUsed({GrizzlyBears.class, Prosperity.class})
 class ProsperityTest extends BaseCardTest {
 
     @Test
@@ -42,6 +44,21 @@ class ProsperityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("X=0 does not make a player lose with an empty library")
+    void xZeroDoesNotAttemptAnEmptyLibraryDraw() {
+        harness.setHand(player1, List.of(new Prosperity()));
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1); // X=0: {0}{U} = 1
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Prosperity goes to graveyard and the stack empties")
     void resolvesToGraveyard() {
         harness.setHand(player1, List.of(new Prosperity()));
@@ -54,12 +71,12 @@ class ProsperityTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({PhyrexianWalker.class})
+    @CardUsed({GrizzlyBears.class})
     @DisplayName("X=1: each player draws one card from their own library")
     void eachPlayerDrawsOneCardFromTheirOwnLibrary() {
         Prosperity player1Spell = new Prosperity();
-        PhyrexianWalker player1Card = new PhyrexianWalker();
-        PhyrexianWalker player2Card = new PhyrexianWalker();
+        GrizzlyBears player1Card = new GrizzlyBears();
+        GrizzlyBears player2Card = new GrizzlyBears();
         harness.setHand(player1, List.of(player1Spell));
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(player1Card));

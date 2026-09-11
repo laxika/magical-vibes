@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "199")
+@CardRegistration(set = "ME1", collectorNumber = "104")
 public class MRtonStromgald extends Card {
 
     public MRtonStromgald() {

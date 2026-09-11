@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "168")
+@CardRegistration(set = "ZNR", collectorNumber = "193")
 public class LotusCobra extends Card {
 
     public LotusCobra() {

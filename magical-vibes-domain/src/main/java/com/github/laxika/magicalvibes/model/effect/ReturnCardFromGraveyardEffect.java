@@ -87,6 +87,11 @@ import java.util.Set;
  *                             {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
+ * @param targetPutIntoGraveyardFromAnywhereThisTurn {@code true} to restrict the <b>targeted</b>
+ *                             graveyard card to one that was put into a graveyard from anywhere this turn
+ *                             (e.g. Night Nurse, Healer of Heroes); reads the
+ *                             {@code cardsPutIntoGraveyardFromAnywhereThisTurn} tracking of the graveyard's
+ *                             owner and is only meaningful when {@link #targetGraveyard} is {@code true}
  * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
  *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
  *                             only meaningful when {@link #targetGraveyard} is {@code true}
@@ -99,6 +104,8 @@ import java.util.Set;
  *                             permanent or player for it to enchant as it enters the battlefield
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
+ * @param gainLifeEqualToReturnedToughness {@code true} if the controller gains life equal to the
+ *                             returned permanent's effective toughness after it enters the battlefield
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
  *                             card's mana value after it is returned (e.g. Reanimate); only meaningful
  *                             on the pre-targeted path
@@ -126,8 +133,9 @@ import java.util.Set;
  *                             its owner's hand at the beginning of the next end step (Cauldron Dance)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
- * @param manaValueXOffset     offset added to X when {@link #requiresManaValueEqualsX} is enabled
- *                             (e.g. a target with mana value X plus one)
+ * @param manaValueXOffset     offset added to X when {@link #requiresManaValueEqualsX} or
+ *                             {@link #requiresManaValueAtMostX} is enabled (e.g. a target with
+ *                             mana value X plus one or less than X)
  * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
  *                             less than or equal to the spell's X value (e.g. Profane Command)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
@@ -242,6 +250,8 @@ import java.util.Set;
  * @param unearth              {@code true} when the battlefield return is an unearth activation,
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
+ * @param grantOnDeathEffect   when non-null, the returned permanent gains this persistent
+ *                             {@code ON_DEATH} ability
  * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
  * @param eventCardIdsOnly       when {@code true}, restricts a resolution-time graveyard choice to cards whose
  *                               ids were recorded by a preceding event on the current stack entry
@@ -266,10 +276,12 @@ public record ReturnCardFromGraveyardEffect(
         boolean discardedOrCycledThisTurn,
         boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
+        boolean targetPutIntoGraveyardFromAnywhereThisTurn,
         boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
         boolean chooseAuraAttachment,
         boolean gainLifeEqualToManaValue,
+        boolean gainLifeEqualToReturnedToughness,
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,
         boolean grantHaste,
@@ -324,8 +336,86 @@ public record ReturnCardFromGraveyardEffect(
         boolean eventCardIdsOnly,
         EffectDuration battlefieldEffectGrantDuration,
         int targetGroup
-) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
+, CardEffect grantOnDeathEffect) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
         SacrificedPermanentManaValueAwareEffect {
+        public ReturnCardFromGraveyardEffect(
+        GraveyardChoiceDestination destination,
+        CardPredicate filter,
+        boolean sourceChosenSubtype,
+        GraveyardSearchScope source,
+        boolean targetGraveyard,
+        boolean mandatory,
+        boolean upTo,
+        boolean returnAll,
+        boolean thisTurnOnly,
+        boolean fromBattlefieldThisTurn,
+        boolean fromAnywhereThisTurn,
+        boolean discardedOrCycledThisTurn,
+        boolean discardedByOpponentThisTurn,
+        boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
+        boolean targetNotPutIntoGraveyardThisCombat,
+        PermanentPredicate attachmentTarget,
+        boolean chooseAuraAttachment,
+        boolean gainLifeEqualToManaValue,
+        boolean gainLifeEqualToReturnedToughness,
+        boolean loseLifeEqualToManaValue,
+        boolean attachToSource,
+        boolean grantHaste,
+        boolean grantHasteUntilNextTurn,
+        Set<Keyword> grantKeywords,
+        boolean exileAtEndStep,
+        boolean exileAtYourNextEndStep,
+        boolean sacrificeAtEndStep,
+        boolean returnToHandAtEndStep,
+        boolean requiresManaValueEqualsX,
+        int manaValueXOffset,
+        boolean requiresManaValueAtMostX,
+        CardColor grantColor,
+        CardSubtype grantSubtype,
+        List<CardSubtype> grantSubtypes,
+        boolean grantIndestructible,
+        boolean enterTapped,
+        boolean underOwnersControl,
+        boolean returnAtRandom,
+        int randomCount,
+        boolean choosePermanentType,
+        boolean exileSourceFromGraveyard,
+        boolean enterAttacking,
+        boolean maxManaValueEqualsLifeGainedThisTurn,
+        boolean enterWithMannequinCounter,
+        CardSubtype grantSourceHasteIfSubtype,
+        boolean greatestPower,
+        boolean topmost,
+        boolean exileIfLeavesBattlefield,
+        boolean exileIfDying,
+        String grantCumulativeUpkeepCost,
+        CardSubtype plusOneCountersIfSubtype,
+        CardSubtype plusOneCountersIfExiledCostCardHasSubtype,
+        CounterType counterIfExiledCostCardHasSubtype,
+        int counterCountIfExiledCostCardHasSubtype,
+        CardType plusOneCountersIfCardType,
+        Condition plusOneCountersIfCondition,
+        int plusOneCounterCount,
+        CardSubtype createTokensIfSubtype,
+        CreateTokenEffect createTokensEffect,
+        CounterType enterWithCounter,
+        int enterWithCounterCount,
+        Set<CounterType> enterWithCounters,
+        boolean linkToSource,
+        boolean battlefieldIfCreatureElseHand,
+        boolean battlefieldIfCreatureElseExile,
+        boolean shuffleGraveyardBeforeRandomSelection,
+        DynamicAmount dynamicMaxManaValue,
+        boolean unearth,
+        boolean exileAtNextUpkeep,
+        List<CardEffect> battlefieldEffectGrants,
+        boolean eventCardIdsOnly,
+        EffectDuration battlefieldEffectGrantDuration,
+        int targetGroup
+) {
+            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null);
+        }
+
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -367,6 +457,11 @@ public record ReturnCardFromGraveyardEffect(
     @Override
     public List<Integer> targetGroups() {
         return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    /** Returns the effective mana-value bound for an X-based target restriction. */
+    public int requiredManaValue(int xValue) {
+        return xValue + ((requiresManaValueEqualsX || requiresManaValueAtMostX) ? manaValueXOffset : 0);
     }
 
     @Override

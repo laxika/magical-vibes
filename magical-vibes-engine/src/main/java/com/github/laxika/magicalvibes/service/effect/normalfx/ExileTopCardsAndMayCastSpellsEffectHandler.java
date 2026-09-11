@@ -89,9 +89,14 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             return;
         }
 
+        int maxCastCount = Math.min(e.maxCastCount(), castableSpellIds.size());
+        if (maxCastCount <= 0) {
+            return;
+        }
+
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
-                        controllerId, castableSpellIds, castableSpellIds.size()));
+                        controllerId, castableSpellIds, maxCastCount));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, entry.getCard().getName(), castableSpellIds.size());
     }

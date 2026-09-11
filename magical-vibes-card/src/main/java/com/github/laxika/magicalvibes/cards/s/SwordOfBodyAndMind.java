@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "208")
+@CardRegistration(set = "V10", collectorNumber = "14")
+@CardRegistration(set = "MPS", collectorNumber = "50")
 public class SwordOfBodyAndMind extends Card {
 
     public SwordOfBodyAndMind() {

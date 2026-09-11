@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.m.MonssGoblinRaiders;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IronStar.class, MonssGoblinRaiders.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({IronStar.class, RagingGoblin.class, GrizzlyBears.class, Mountain.class})
 class IronStarTest extends BaseCardTest {
 
     // ===== Controller casts red spell =====
@@ -26,7 +26,7 @@ class IronStarTest extends BaseCardTest {
     void controllerCastsRedSpellAndPays() {
         harness.addToBattlefield(player1, new IronStar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castFromHand(player1, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -51,7 +51,7 @@ class IronStarTest extends BaseCardTest {
     void controllerCastsRedSpellAndDeclines() {
         harness.addToBattlefield(player1, new IronStar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castFromHand(player1, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -66,7 +66,7 @@ class IronStarTest extends BaseCardTest {
     @DisplayName("Accepting without enough mana gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new IronStar());
-        harness.castFromHand(player1, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -89,7 +89,7 @@ class IronStarTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castFromHand(player2, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player2, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -104,6 +104,23 @@ class IronStarTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
+    @Test
+    @DisplayName("Each Iron Star triggers independently for one red spell")
+    void eachIronStarTriggersIndependently() {
+        harness.addToBattlefield(player1, new IronStar());
+        harness.addToBattlefield(player1, new IronStar());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
     // ===== Paying by tapping a land during the prompt (CR 605.3a) =====
 
     @Test
@@ -111,7 +128,7 @@ class IronStarTest extends BaseCardTest {
     void tapLandDuringPromptThenPay() {
         harness.addToBattlefield(player1, new IronStar());
         harness.addToBattlefield(player1, new Mountain());
-        harness.castFromHand(player1, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -133,7 +150,7 @@ class IronStarTest extends BaseCardTest {
     void opponentCannotTapDuringPrompt() {
         harness.addToBattlefield(player1, new IronStar());
         harness.addToBattlefield(player2, new Mountain());
-        harness.castFromHand(player1, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         harness.passBothPriorities();
 
@@ -162,7 +179,7 @@ class IronStarTest extends BaseCardTest {
     void triggerResolvesAfterIronStarLeavesBattlefield() {
         var ironStar = harness.addToBattlefieldAndReturn(player1, new IronStar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castFromHand(player1, new MonssGoblinRaiders(), "{R}");
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()

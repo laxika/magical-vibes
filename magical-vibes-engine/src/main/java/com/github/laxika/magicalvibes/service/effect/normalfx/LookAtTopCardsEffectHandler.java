@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,6 +101,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
                 resolveMayPutOnTopRestToGraveyard(gameData, entry, lookCount, chooseCount);
+            } else if (e.optional() && e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY
+                    && e.choosePredicate() != null && chooseCount > 1) {
+                resolveMayPutAnyNumberOnTopRestOnBottom(
+                        gameData, entry, e, lookCount, chooseCount);
             } else {
                 resolvePutOneOnTop(gameData, entry, e, lookCount);
             }
@@ -107,6 +113,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             resolveOneToGraveyardRestOnTop(gameData, entry, lookCount);
         } else if (e.chosenDestination() == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
             resolveOneToExilePlayableRestOnBottomRandom(gameData, entry, lookCount);
+        } else if (e.chosenDestination()
+                == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND) {
+            resolveOneToExileFaceDownRestToBottomRandomAndMayCast(
+                    gameData, entry, lookCount, chooseManaValueAtMost);
         } else if (e.optional()) {
             resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
@@ -279,7 +289,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         List<Card> matchingCards = e.choosePredicate() == null
                 ? topCards
-                : filterEligibleCards(topCards, e.choosePredicate(), entry.getCard().getId(), gameData, controllerId);
+                : filterEligibleCards(topCards, e.choosePredicate(), entry, gameData, controllerId);
         if (matchingCards.isEmpty()) {
             if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
@@ -336,6 +346,32 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 true));
     }
 
+    private void resolveMayPutAnyNumberOnTopRestOnBottom(
+            GameData gameData, StackEntry entry, LookAtTopCardsEffect effect,
+            int lookCount, int chooseCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) {
+            return;
+        }
+
+        List<Card> matchingCards = filterEligibleCards(result.topCards(), effect.choosePredicate(),
+                entry, gameData, result.controllerId());
+        if (matchingCards.isEmpty()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    result.controllerId(), result.topCards(), true, result.controllerId(),
+                    "Put these cards on the bottom of your library in any order.", List.of()));
+            return;
+        }
+
+        int maxCount = Math.min(chooseCount, matchingCards.size());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                result.controllerId(), result.topCards(),
+                matchingCards.stream().map(Card::getId).toList(), maxCount,
+                "You may reveal any number of matching cards from among them and put them on top of your library. "
+                        + "Put the rest on the bottom in any order.", true));
+    }
+
     private void resolveOneToGraveyardRestOnTop(GameData gameData, StackEntry entry, int lookCount) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
@@ -368,6 +404,29 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                prompt,
+                false));
+    }
+
+    private void resolveOneToExileFaceDownRestToBottomRandomAndMayCast(
+            GameData gameData, StackEntry entry, int lookCount, int maxManaValue) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+
+        String prompt = "Exile one card face down. You may cast it without paying its mana cost "
+                + "if it's an instant spell with mana value " + maxManaValue
+                + " or less. Put the rest on the bottom of your library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND)
+                        .filterCardTypes(Set.of(CardType.INSTANT))
+                        .mayCastManaValueAtMost(maxManaValue)
                         .build(),
                 prompt,
                 false));
@@ -448,7 +507,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry.getCard().getId(), gameData, controllerId).stream()
+                entry, gameData, controllerId).stream()
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .toList();
         if (matchingCards.isEmpty()) {
@@ -523,7 +582,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     e.payLifePerSelectedCard() > 0
                             ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
                     null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
-                    false, e.payLifePerSelectedCard() > 0, null, false, false));
+                    false, e.payLifePerSelectedCard() > 0, null, false, false).withSelectedCardFollowUp(e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
             return;
         }
 
@@ -561,10 +620,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(controllerId, card);
             }
             if (!topCards.isEmpty()) {
-                GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
-                appendCardList(builder, topCards);
-                builder.text(" into their hand.");
-                gameLogService.append(gameData, builder.build());
+                gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCards.size()
+                        + " card(s) into their hand."));
             }
             return;
         }
@@ -611,10 +668,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(controllerId, card);
             }
             if (!topCards.isEmpty()) {
-                GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
-                appendCardList(builder, topCards);
-                builder.text(" into their hand.");
-                gameLogService.append(gameData, builder.build());
+                if (e.reveal()) {
+                    GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
+                    appendCardList(builder, topCards);
+                    builder.text(" into their hand.");
+                    gameLogService.append(gameData, builder.build());
+                } else {
+                    gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCards.size()
+                            + " card(s) into their hand."));
+                }
             }
             return;
         }
@@ -629,7 +691,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
                         + " into your hand and " + restPhrase,
-                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false));
+                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false)
+                .withRevealSelected(e.reveal()));
     }
 
     /**
@@ -642,7 +705,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             List<Card> topCards, String playerName, LookAtTopCardsEffect e, int chooseCount,
             boolean randomRemaining) {
         List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry.getCard().getId(), gameData, controllerId);
+                entry, gameData, controllerId);
 
         if (eligibleCards.size() > chooseCount) {
             List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
@@ -672,7 +735,14 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> remainingCards = new ArrayList<>(topCards);
         remainingCards.removeAll(eligibleCards);
         if (!remainingCards.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            if (randomRemaining) {
+                java.util.Collections.shuffle(remainingCards);
+                gameData.playerDecks.get(controllerId).addAll(remainingCards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts the rest on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            }
         }
     }
 
@@ -704,7 +774,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> eligibleCards = filterEligibleCards(topCards, handChoicePredicate,
-                entry.getCard().getId(), gameData, controllerId);
+                entry, gameData, controllerId);
 
         if (eligibleCards.isEmpty()) {
             for (Card card : topCards) {
@@ -823,11 +893,12 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate,
-            UUID sourceCardId, GameData gameData, UUID controllerId) {
+            StackEntry entry, GameData gameData, UUID controllerId) {
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : topCards) {
             if (predicateEvaluationService.matchesCardPredicate(
-                    card, predicate, sourceCardId, gameData, controllerId)) {
+                    card, predicate, entry.getCard().getId(), gameData, controllerId,
+                    entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
                 eligibleCards.add(card);
             }
         }

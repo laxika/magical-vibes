@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "NPH", collectorNumber = "123")
+@CardRegistration(set = "TD2", collectorNumber = "78")
 public class TriumphOfTheHordes extends Card {
 
     public TriumphOfTheHordes() {

@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@CardUsed(DelusionsOfMediocrity.class)
 class DelusionsOfMediocrityTest extends BaseCardTest {
 
     @Test
@@ -31,9 +33,7 @@ class DelusionsOfMediocrityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DelusionsOfMediocrity());
         harness.setLife(player1, 30);
 
-        Permanent delusions = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof DelusionsOfMediocrity)
-                .findFirst().orElseThrow();
+        Permanent delusions = findPermanent(player1, "Delusions of Mediocrity");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, delusions));
 

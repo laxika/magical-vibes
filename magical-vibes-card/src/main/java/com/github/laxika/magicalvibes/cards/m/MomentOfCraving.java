@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "79")
+@CardRegistration(set = "FDN", collectorNumber = "524")
 public class MomentOfCraving extends Card {
 
     public MomentOfCraving() {

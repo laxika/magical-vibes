@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PillagingHorde.class, GrizzlyBears.class})
 class PillagingHordeTest extends BaseCardTest {
 
     // ===== ETB prompt =====
@@ -45,6 +46,23 @@ class PillagingHordeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Accepting with multiple cards discards exactly one without a card choice")
+    void acceptingWithMultipleCardsDiscardsExactlyOneWithoutCardChoice() {
+        harness.castFromHand(player1, new PillagingHorde(), "{2}{R}{R}");
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities(); // resolve creature spell → ETB on stack
+        harness.passBothPriorities(); // resolve ETB → may ability prompt
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Pillaging Horde");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
     // ===== Decline — sacrifice =====
 
     @Test
@@ -64,10 +82,7 @@ class PillagingHordeTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices with no card to discard")
     void autoSacrificesWithEmptyHand() {
-        harness.setHand(player1, List.of(new PillagingHorde()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PillagingHorde(), "{2}{R}{R}");
         harness.setHand(player1, List.of());
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
@@ -86,10 +101,7 @@ class PillagingHordeTest extends BaseCardTest {
      * discard is deterministic, resolving through to the may ability prompt.
      */
     private void castPillagingHordeWithCardInHand() {
-        harness.setHand(player1, List.of(new PillagingHorde()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PillagingHorde(), "{2}{R}{R}");
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt

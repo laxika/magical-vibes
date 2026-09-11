@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseLandOfEachBasicTypeThenDestroyEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "146")
+@CardRegistration(set = "V10", collectorNumber = "13")
+@CardRegistration(set = "MPS", collectorNumber = "49")
 public class SunderingTitan extends Card {
 
     public SunderingTitan() {

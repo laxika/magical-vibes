@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "16")
+@CardRegistration(set = "MMA", collectorNumber = "27")
 public class SaltfieldRecluse extends Card {
 
     public SaltfieldRecluse() {

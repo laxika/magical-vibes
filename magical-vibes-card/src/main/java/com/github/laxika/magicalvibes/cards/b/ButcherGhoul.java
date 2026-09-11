@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "INR", collectorNumber = "373")
 @CardRegistration(set = "INR", collectorNumber = "99")
 @CardRegistration(set = "AVR", collectorNumber = "89")
+@CardRegistration(set = "DDQ", collectorNumber = "53")
 public class ButcherGhoul extends Card {
     // Undying is auto-loaded from Scryfall; return mechanic is handled by the engine.
 }

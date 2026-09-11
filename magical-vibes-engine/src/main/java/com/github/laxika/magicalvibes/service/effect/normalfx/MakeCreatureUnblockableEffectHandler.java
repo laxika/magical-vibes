@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +40,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         // "X target creatures can't be blocked this turn").
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
             for (UUID targetId : entry.getTargetIds()) {
-                makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId));
+                makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId), entry, unblockable);
             }
             return;
         }
@@ -50,7 +55,23 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         } else {
             targetId = entry.getTargetId();
         }
-        makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId));
+        makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId), entry, unblockable);
+    }
+
+    private void makeUnblockable(GameData gameData, Permanent target, StackEntry entry,
+                                 MakeCreatureUnblockableEffect effect) {
+        if (target == null) return;
+        if (effect.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+            makeUnblockable(gameData, target);
+            return;
+        }
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
+                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.TARGET),
+                target.getId(), null, null, effect.duration(), 0));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                effect.duration() == EffectDuration.UNTIL_END_OF_COMBAT
+                        ? " can't be blocked this combat." : " can't be blocked."));
     }
 
     public void makeUnblockable(GameData gameData, Permanent target) {

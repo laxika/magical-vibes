@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "46")
+@CardRegistration(set = "TMT", collectorNumber = "231")
 public class MondoGecko extends Card {
 
     public MondoGecko() {

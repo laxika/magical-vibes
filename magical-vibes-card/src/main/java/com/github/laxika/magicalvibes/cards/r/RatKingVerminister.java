@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "71")
+@CardRegistration(set = "TMT", collectorNumber = "266")
 public class RatKingVerminister extends Card {
 
     public RatKingVerminister() {

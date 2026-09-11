@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -86,7 +88,11 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
             Permanent perm = new Permanent(card);
             perm.setEnteredFromExile(true);
+            if (returnEffect.enterTapped()) {
+                perm.tap();
+            }
             perm.getPersistentGrantedKeywords().addAll(returnEffect.grantedKeywords());
+            applyPermanentCharacteristics(gameData, newControllerId, perm, returnEffect);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(perm);
@@ -95,6 +101,34 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
                     gameData.id, card.getName(), entry.getCard().getName());
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, newControllerId, card, null, false);
+        }
+    }
+
+    private void applyPermanentCharacteristics(GameData gameData, UUID controllerId,
+                                               Permanent permanent,
+                                               ReturnAllCardsExiledWithSourceEffect effect) {
+        if (effect.basePower() != null) {
+            permanent.setBasePowerOverriddenPermanently(true);
+            permanent.setPermanentBasePowerOverride(effect.basePower());
+            permanent.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
+        }
+        if (effect.baseToughness() != null) {
+            permanent.setBaseToughnessOverriddenPermanently(true);
+            permanent.setPermanentBaseToughnessOverride(effect.baseToughness());
+            permanent.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+        }
+        if (effect.grantedSubtype() != null
+                && !permanent.getGrantedSubtypes().contains(effect.grantedSubtype())) {
+            permanent.getGrantedSubtypes().add(effect.grantedSubtype());
+        }
+        if (effect.enteringCounterType() != null
+                && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+            int placed = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                    effect.enteringCounterType(), 1);
+            if (placed > 0) {
+                permanent.setCounterCount(effect.enteringCounterType(),
+                        permanent.getCounterCount(effect.enteringCounterType()) + placed);
+            }
         }
     }
 }

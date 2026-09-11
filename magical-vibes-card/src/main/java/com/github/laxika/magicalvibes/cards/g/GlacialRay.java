@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "168")
+@CardRegistration(set = "MMA", collectorNumber = "115")
 public class GlacialRay extends Card {
 
     public GlacialRay() {

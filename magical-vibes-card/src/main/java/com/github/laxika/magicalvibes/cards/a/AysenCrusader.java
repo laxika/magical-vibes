@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "4")
+@CardRegistration(set = "ME2", collectorNumber = "7")
 public class AysenCrusader extends Card {
 
     public AysenCrusader() {

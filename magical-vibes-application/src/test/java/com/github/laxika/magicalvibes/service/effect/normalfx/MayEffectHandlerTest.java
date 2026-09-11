@@ -18,6 +18,22 @@ import static org.mockito.Mockito.*;
 class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
+    void triggeringPermanentCurrentControllerMakesTheChoice() {
+        MayEffect effect = new MayEffect(new DrawCardEffect(1), "Draw?", null,
+                MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+        StackEntry entry = createEntryWithTarget(createCard("Source"), player1Id, List.of(effect), player1Id);
+        UUID triggeringId = UUID.randomUUID();
+        entry.setTriggeringPermanentId(triggeringId);
+        entry.setTriggeringPermanentControllerId(player1Id);
+        when(gameQueryService.findPermanentController(gd, triggeringId)).thenReturn(player2Id);
+
+        resolveEffect(gd, entry, effect);
+
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+    }
+
+    @Test
             @DisplayName("Sets resolvingMayEffectFromStack flag and adds pending may ability")
             void setsFlagAndAddsPendingMay() {
                 Card card = createCard("Ob Nixilis");

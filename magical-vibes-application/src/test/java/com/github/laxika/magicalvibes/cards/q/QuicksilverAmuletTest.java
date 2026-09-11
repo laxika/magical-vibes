@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DefenseGrid;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({QuicksilverAmulet.class, DefenseGrid.class, GiantCockroach.class})
 class QuicksilverAmuletTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activated ability taps the Amulet, spends {4}, and goes on the stack")
     void activatingAbilityUsesTapAndMana() {
-        Permanent amulet = addAmulet();
+        Permanent amulet = addCreatureReady(player1, new QuicksilverAmulet());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -34,14 +36,14 @@ class QuicksilverAmuletTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Quicksilver Amulet");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(amulet.getId());
     }
 
     @Test
     @DisplayName("Accepting the may choice offers only creature cards in hand")
     void resolvingPromptsOnlyCreatureChoices() {
-        addAmulet();
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        addCreatureReady(player1, new QuicksilverAmulet());
+        harness.setHand(player1, List.of(new DefenseGrid(), new GiantCockroach(), new DefenseGrid()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -59,8 +61,9 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a creature puts it onto the battlefield untapped")
     void choosingCreaturePutsItOntoBattlefield() {
-        addAmulet();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new QuicksilverAmulet());
+        GiantCockroach creature = new GiantCockroach();
+        harness.setHand(player1, List.of(creature));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -70,18 +73,16 @@ class QuicksilverAmuletTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> "Grizzly Bears".equals(permanent.getCard().getName()))
-                .allMatch(permanent -> !permanent.isTapped())).isTrue();
+                .anyMatch(permanent -> permanent.getCard() == creature && !permanent.isTapped())).isTrue();
     }
 
     @Test
     @DisplayName("Declining the may choice leaves hand and battlefield unchanged")
     void decliningMayLeavesHandUnchanged() {
-        addAmulet();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new QuicksilverAmulet());
+        harness.setHand(player1, List.of(new GiantCockroach()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -97,10 +98,29 @@ class QuicksilverAmuletTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability resolves after the Amulet leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent amulet = addCreatureReady(player1, new QuicksilverAmulet());
+        GiantCockroach creature = new GiantCockroach();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(amulet);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == creature && !permanent.isTapped());
+    }
+
+    @Test
     @DisplayName("Ability does not prompt when controller has no creature cards in hand")
     void noCreaturesInHandSkipsChoice() {
-        addAmulet();
-        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        addCreatureReady(player1, new QuicksilverAmulet());
+        harness.setHand(player1, List.of(new DefenseGrid(), new DefenseGrid()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -117,7 +137,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability while tapped")
     void cannotActivateWhileTapped() {
-        Permanent amulet = addAmulet();
+        Permanent amulet = addCreatureReady(player1, new QuicksilverAmulet());
         amulet.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -129,7 +149,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
-        addAmulet();
+        addCreatureReady(player1, new QuicksilverAmulet());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -137,10 +157,4 @@ class QuicksilverAmuletTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addAmulet() {
-        Permanent amulet = new Permanent(new QuicksilverAmulet());
-        amulet.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(amulet);
-        return amulet;
-    }
 }

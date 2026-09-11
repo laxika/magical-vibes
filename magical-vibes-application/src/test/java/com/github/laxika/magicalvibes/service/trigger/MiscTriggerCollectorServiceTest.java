@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,7 +17,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -36,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -123,6 +130,37 @@ class MiscTriggerCollectorServiceTest {
     private MiscTriggerCollectorService sut;
 
     private TriggerCollectorRegistry registry;
+
+    @Test
+    void enchantedTapDamagePreservesTriggeringPermanent() {
+        Permanent aura = createPermanent("Damage aura");
+        Permanent land = createPermanent("Tapped land");
+        var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
+
+        registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+                effect, new TriggerContext.EnchantedPermanentTap(land, player2Id));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(land.getId());
+        assertThat(gd.stack.getFirst().getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
+    void cardsLeavingGraveyardQueueTargetChoiceBeforeTrigger() {
+        Permanent source = createPermanent("Hardened Academic");
+        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
+                new TriggerContext.ControllerCardsLeaveGraveyard(player1Id));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.sourcePermanentId()).isEqualTo(source.getId());
+    }
 
     @Test
     void enchantedPermanentTapModalWaitsForModeAndTargetBeforeGoingOnTheStack() {
@@ -285,6 +323,33 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("crewed trigger queues a targeted effect for target selection")
+    void crewedTargetedTriggerQueuesTargetSelection() {
+        Card sourceCard = createCard("Mobilizer Mech");
+        var effect = new com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect(
+                null, null, List.of(), java.util.Set.of(), null, java.util.Set.of(),
+                com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, null);
+        sourceCard.addEffect(EffectSlot.ON_SELF_BECOMES_CREWED, effect);
+        Permanent perm = new Permanent(sourceCard);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_SELF_BECOMES_CREWED,
+                effect,
+                new TriggerContext.SelfBecomesCrewed(player1Id));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        PermanentChoiceContext.SelfTriggeredAbilityTarget pending =
+                gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        assertThat(pending).isNotNull();
+        assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(pending.sourcePermanentSnapshot()).isNotNull();
+        assertThat(pending.effects()).containsExactly(effect);
     }
 
     @Test
@@ -828,6 +893,23 @@ class MiscTriggerCollectorServiceTest {
     class LifeLossMill {
 
         @Test
+        @DisplayName("mills the controller when dispatched from the controller life-loss slot")
+        void millsControllerForLifeLost() {
+            Permanent master = createPermanent("The Master of Lake-town");
+            var effect = new MillOpponentOnLifeLossEffect();
+            var ctx = new TriggerContext.LifeLoss(player1Id, 2);
+
+            gd.playerIdToName.put(player1Id, "Player1");
+
+            boolean result = registry.dispatch(
+                    match(master, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
+        }
+
+        @Test
         @DisplayName("mills opponent for the amount of life lost and returns true")
         void millsOpponentForLifeLost() {
             Permanent mindcrank = createPermanent("Mindcrank");
@@ -1021,6 +1103,32 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — GrantKeywordEffect")
+    class LifeGainGrantKeyword {
+
+        @Test
+        @DisplayName("puts keyword-grant trigger on the stack")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Kalastria Nightwatch");
+            var effect = new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getDescription()).contains("Kalastria Nightwatch");
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+        }
+    }
+
+    @Nested
     @DisplayName("ON_CONTROLLER_GAINS_LIFE — UntapPermanentsEffect")
     class LifeGainUntapSelf {
 
@@ -1189,6 +1297,34 @@ class MiscTriggerCollectorServiceTest {
         assertThat(entry.getControllerId()).isEqualTo(player1Id);
         assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
         assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_LOSES_LIFE — SequenceEffect")
+    class ControllerLifeLossSequence {
+
+        @Test
+        @DisplayName("puts triggered ability on stack with the life-loss amount")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Marina Vendrell's Grimoire");
+            var effect = SequenceEffect.of(
+                    new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER),
+                    new ConditionalEffect(new ControllerHandEmpty(), new ControllerLosesGameEffect()));
+            var ctx = new TriggerContext.LifeLoss(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var entry = gd.stack.getLast();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        }
     }
 
     // ===== ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — BoostSelfEffect =====

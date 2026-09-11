@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "17")
+@CardRegistration(set = "TMT", collectorNumber = "215")
+@CardRegistration(set = "TMT", collectorNumber = "301")
 public class LeonardoSewerSamurai extends Card {
 
     public LeonardoSewerSamurai() {

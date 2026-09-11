@@ -53,6 +53,8 @@ class GoblinMatronTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosenCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(chosenCard);
+        assertThat(gameLogContains("reveals")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -71,17 +73,21 @@ class GoblinMatronTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the may ability with no Goblin card finds nothing")
-    void acceptingMayWithNoGoblinFindsNothing() {
+    @DisplayName("Accepting with no Goblin cards leaves the library unchanged")
+    void noGoblinCardsLeaveLibraryUnchanged() {
         setupAndCast();
-        harness.setLibrary(player1, List.of(new Island()));
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(island));
 
         harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(island);
+        assertThat(gameLogContains("finds no Goblin cards")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
     private void setupAndCast() {

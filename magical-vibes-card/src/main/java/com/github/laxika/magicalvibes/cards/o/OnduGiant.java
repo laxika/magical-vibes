@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "ROE", collectorNumber = "202")
+@CardRegistration(set = "PC2", collectorNumber = "71")
+@CardRegistration(set = "DDP", collectorNumber = "19")
 public class OnduGiant extends Card {
 
     public OnduGiant() {

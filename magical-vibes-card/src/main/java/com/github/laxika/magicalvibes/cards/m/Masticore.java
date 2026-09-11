@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "134")
+@CardRegistration(set = "V10", collectorNumber = "7")
 public class Masticore extends Card {
 
     public Masticore() {

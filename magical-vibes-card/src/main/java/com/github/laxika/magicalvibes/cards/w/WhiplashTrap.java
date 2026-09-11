@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "77")
+@CardRegistration(set = "HOP", collectorNumber = "16")
+@CardRegistration(set = "DDN", collectorNumber = "70")
 public class WhiplashTrap extends Card {
 
     public WhiplashTrap() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 @CardRegistration(set = "M10", collectorNumber = "196")
 @CardRegistration(set = "M11", collectorNumber = "187")
 @CardRegistration(set = "DOM", collectorNumber = "175")
+@CardRegistration(set = "DPA", collectorNumber = "77")
 public class NaturesSpiral extends Card {
 
     public NaturesSpiral() {

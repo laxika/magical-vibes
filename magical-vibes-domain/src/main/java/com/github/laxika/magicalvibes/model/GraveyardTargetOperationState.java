@@ -37,6 +37,8 @@ public class GraveyardTargetOperationState {
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
      */
     public boolean singleGraveyard;
+    /** Evaluated aggregate mana-value limit for an ETB graveyard return choice, when present. */
+    public Integer totalManaValueCap;
     /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */
     public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
     /** In-progress payment that moves a fixed number of cards from the controller's graveyard. */
@@ -77,6 +79,8 @@ public class GraveyardTargetOperationState {
     public boolean sourceAlternateCostAtTrigger;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */
     public Integer triggeringPermanentPowerAtTrigger;
+    /** Permanent that caused a triggered ability, retained through graveyard target selection. */
+    public UUID triggeringPermanentId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
     public String chapterName;
     /**
@@ -175,6 +179,10 @@ public class GraveyardTargetOperationState {
     public UUID scroungeChosenCardId;
     /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */
     public boolean resolutionTimeScroungeResume;
+    /** Card chosen by the defending player for a resolution-time attack-trigger graveyard choice. */
+    public UUID defendingPlayerChoosesCardFromGraveyardChosenCardId;
+    /** Whether a resolution-time attack-trigger graveyard choice is awaiting an answer. */
+    public boolean resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume;
     /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
     public boolean resolutionTimeOpponentChoosesCardToHandResume;
     /** Opponent selected by the controller for the resolution-time graveyard choice. */
@@ -189,6 +197,8 @@ public class GraveyardTargetOperationState {
      * {@code BattlefieldEntryService.handleCreatureEnteredBattlefield}.
      */
     public AsEntersGraveyardExileContext asEntersExile;
+    /** As-enters choice that moves two opponent-owned exiled cards to their owners' graveyards. */
+    public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
     public MilledCreaturesToHandContext milledCreaturesToHand;
 
@@ -206,6 +216,16 @@ public class GraveyardTargetOperationState {
                                              int countersPerCard) {
             this(enteringPermanentId, controllerId, card, targetId, wasCastFromHand, etbMode,
                     xValue, kicked, targetIds, countersPerCard, List.of());
+        }
+    }
+
+    /** Entry context needed to resume Ulamog's Despoiler after its exile choice. */
+    public record AsEntersOpponentExileToGraveyardContext(UUID enteringPermanentId, UUID controllerId,
+                                                           Card card, UUID targetId, boolean wasCastFromHand,
+                                                           int etbMode, int xValue, boolean kicked,
+                                                           List<UUID> targetIds, int counterCount) {
+        public AsEntersOpponentExileToGraveyardContext {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
         }
     }
 

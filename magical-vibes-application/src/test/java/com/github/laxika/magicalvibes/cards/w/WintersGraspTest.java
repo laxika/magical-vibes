@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WintersGrasp.class, Forest.class, GrizzlyBears.class, Mountain.class})
 class WintersGraspTest extends BaseCardTest {
 
     @Test
@@ -27,8 +26,7 @@ class WintersGraspTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -42,8 +40,7 @@ class WintersGraspTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         UUID targetId = harness.getPermanentId(player1, "Forest");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
@@ -63,8 +60,7 @@ class WintersGraspTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test

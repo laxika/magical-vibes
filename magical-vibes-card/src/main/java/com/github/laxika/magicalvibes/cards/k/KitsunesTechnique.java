@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "42")
+@CardRegistration(set = "TMT", collectorNumber = "229")
 public class KitsunesTechnique extends Card {
 
     public KitsunesTechnique() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEqual
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "243")
+@CardRegistration(set = "DDE", collectorNumber = "47")
 public class DarigaazTheIgniter extends Card {
 
     public DarigaazTheIgniter() {

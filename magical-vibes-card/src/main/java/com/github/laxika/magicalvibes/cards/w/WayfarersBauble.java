@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "165")
+@CardRegistration(set = "DDI", collectorNumber = "63")
+@CardRegistration(set = "MM2", collectorNumber = "234")
 public class WayfarersBauble extends Card {
 
     public WayfarersBauble() {

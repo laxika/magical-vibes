@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "176")
+@CardRegistration(set = "DD2", collectorNumber = "48")
+@CardRegistration(set = "JVC", collectorNumber = "48")
 public class Hostility extends Card {
 
     public Hostility() {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "155")
+@CardRegistration(set = "DD1", collectorNumber = "54")
+@CardRegistration(set = "EVG", collectorNumber = "54")
 public class BoggartShenanigans extends Card {
 
     public BoggartShenanigans() {

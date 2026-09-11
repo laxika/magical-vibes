@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "190")
+@CardRegistration(set = "DD2", collectorNumber = "37")
+@CardRegistration(set = "MM2", collectorNumber = "126")
+@CardRegistration(set = "JVC", collectorNumber = "37")
 public class SoulbrightFlamekin extends Card {
 
     public SoulbrightFlamekin() {

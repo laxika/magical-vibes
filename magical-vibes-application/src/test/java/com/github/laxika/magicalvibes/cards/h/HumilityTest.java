@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Humility.class, AirElemental.class, ProdigalSorcerer.class})
 class HumilityTest extends BaseCardTest {
 
     @Test
@@ -56,7 +59,7 @@ class HumilityTest extends BaseCardTest {
     @Test
     @DisplayName("An activated ability of a creature can no longer be activated")
     void creatureActivatedAbilityIsStripped() {
-        harness.addToBattlefield(player1, new ProdigalSorcerer());
+        addCreatureReady(player1, new ProdigalSorcerer());
         resolveHumility();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -78,6 +81,18 @@ class HumilityTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Humility affects itself when Opalescence makes it a creature")
+    void animatedHumilityIsAlsoAffected() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent humility = harness.addToBattlefieldAndReturn(player1, new Humility());
+
+        assertThat(gqs.isCreature(gd, humility)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, humility)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, humility)).isEqualTo(1);
+    }
+
     /** Casts and resolves Humility for player1, returning the resulting battlefield permanent. */
     private Permanent resolveHumility() {
         harness.setHand(player1, List.of(new Humility()));
@@ -85,9 +100,6 @@ class HumilityTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Humility"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Humility");
     }
 }

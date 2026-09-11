@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffec
 import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
@@ -187,6 +188,63 @@ class SpellCastTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Test
+    void referringToTheTriggeringSpellDoesNotMakeItADeclaredTarget() {
+        Permanent source = createPermanent("Spell watcher");
+        Card spell = createInstant("Triggering spell");
+        var effect = new SpellCastTriggerEffect(null, List.of(new BoostSelfEffect(2, 2),
+                new MayEffect(new com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect(),
+                        "Choose new targets?")));
+        var context = new TriggerContext.SpellCast(spell, player1Id, true);
+        when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(null),
+                eq(source.getOriginalCard().getId()), any(), any())).thenReturn(true);
+
+        registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, context);
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry triggeredAbility = gd.stack.getLast();
+        assertThat(triggeredAbility.isNonTargeting()).isTrue();
+        assertThat(triggeredAbility.getTriggeringCardId()).isEqualTo(spell.getId());
+    }
+
+    @Test
+    void spellCastTriggerPreservesChosenX() {
+        Permanent source = createPermanent("X source");
+        Card spell = createInstant("X spell");
+        StackEntry spellEntry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
+                player1Id, "X spell", List.of(), 3, (UUID) null);
+        gd.stack.add(spellEntry);
+        var effect = new SpellCastTriggerEffect(null, List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(new XValue())));
+        when(predicateEvaluationService.matchesCardPredicate(spell, null,
+                source.getOriginalCard().getId(), gd, player1Id)).thenReturn(true);
+
+        registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+                effect, new TriggerContext.SpellCast(spell, player1Id, true));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
+    }
+
+    @Test
+    void secondSpellDamageRequestsATargetBeforeStacking() {
+        Permanent perm = createPermanent("Second spell source");
+        Card spell = createInstant("Spell");
+        gd.recordSpellCast(player1Id, spell);
+        gd.recordSpellCast(player1Id, spell);
+        var effect = new com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect(
+                2, List.of(new DealDamageToAnyTargetEffect(2)));
+
+        boolean result = registry.dispatch(match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                new TriggerContext.SpellCast(spell, player1Id, true));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                .isNotNull();
     }
 
     @Nested
@@ -1441,6 +1499,36 @@ class SpellCastTriggerCollectorServiceTest {
                     .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
                     .findFirst()
                     .orElseThrow();
+            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+        }
+
+        @Test
+        @DisplayName("queues a turn-scoped modal spell-cast trigger")
+        void queuesTurnScopedModalSpellCastTrigger() {
+            Permanent perm = createPermanent("The Vision");
+            var filter = new CardNamedPredicate("Opt");
+            var effect = new ChooseModeNotYetChosenThisTurnOnSpellCastEffect(filter, List.of(
+                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
+                    new ChooseOneEffect.ChooseOneOption("Second mode", new CreateTokenEffect("Spirit", 1, 1,
+                            CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))));
+            Card spellCard = createInstant("Opt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(perm.getOriginalCard().getId()), any(), eq(player1Id))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            var pending = gd.pendingInteractions.stream()
+                    .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                    .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(pending.modesResetEachTurn()).isTrue();
             assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
         }
 

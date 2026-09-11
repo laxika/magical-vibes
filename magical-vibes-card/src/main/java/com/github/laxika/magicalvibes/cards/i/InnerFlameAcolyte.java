@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "181")
+@CardRegistration(set = "DD2", collectorNumber = "41")
+@CardRegistration(set = "JVC", collectorNumber = "41")
 public class InnerFlameAcolyte extends Card {
 
     public InnerFlameAcolyte() {

@@ -19,6 +19,8 @@ import java.util.Set;
 @CardRegistration(set = "FEM", collectorNumber = "74c")
 @CardRegistration(set = "FEM", collectorNumber = "74d")
 @CardRegistration(set = "TSB", collectorNumber = "86")
+@CardRegistration(set = "ME2", collectorNumber = "180")
+@CardRegistration(set = "MMA", collectorNumber = "167")
 public class Thallid extends Card {
 
     public Thallid() {

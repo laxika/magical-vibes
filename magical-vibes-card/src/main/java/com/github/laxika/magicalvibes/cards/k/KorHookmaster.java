@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "20")
+@CardRegistration(set = "DDF", collectorNumber = "12")
+@CardRegistration(set = "DDN", collectorNumber = "52")
 public class KorHookmaster extends Card {
 
     public KorHookmaster() {

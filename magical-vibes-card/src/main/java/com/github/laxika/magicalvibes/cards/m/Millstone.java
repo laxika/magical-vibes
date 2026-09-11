@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M14", collectorNumber = "213")
 @CardRegistration(set = "M19", collectorNumber = "242")
 @CardRegistration(set = "SUM", collectorNumber = "265")
+@CardRegistration(set = "ATQ", collectorNumber = "56")
+@CardRegistration(set = "3ED", collectorNumber = "265")
 public class Millstone extends Card {
 
     public Millstone() {

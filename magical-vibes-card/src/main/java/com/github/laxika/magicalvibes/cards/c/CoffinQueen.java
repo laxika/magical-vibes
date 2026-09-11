@@ -43,5 +43,7 @@ public class CoffinQueen extends Card {
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
+        addEffect(EffectSlot.ON_SELF_BECOMES_CONTROLLED,
+                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
     }
 }

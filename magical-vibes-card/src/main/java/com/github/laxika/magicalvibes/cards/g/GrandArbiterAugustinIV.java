@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "DIS", collectorNumber = "112")
+@CardRegistration(set = "MMA", collectorNumber = "176")
 public class GrandArbiterAugustinIV extends Card {
 
     public GrandArbiterAugustinIV() {

@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 /**
  * Creates the wrapped token under the control of the player whose action caused the trigger.
  *
- * <p>The trigger collector carries that player on the stack entry's non-targeting target slot.
- * In a spell-cast trigger, the collector also stores the triggering spell's mana value in the
- * entry event value, so the token blueprint may use {@code EventValue} for its power and toughness.
+ * <p>The trigger collector carries that player on the stack entry. Permanent-event triggers use
+ * the triggering permanent's controller field; spell-cast and upkeep triggers use the target or
+ * active-player context as appropriate. In a spell-cast trigger, the collector also stores the
+ * triggering spell's mana value in the entry event value, so the token blueprint may use
+ * {@code EventValue} for its power and toughness.
  *
  * @param token token blueprint to create
  */

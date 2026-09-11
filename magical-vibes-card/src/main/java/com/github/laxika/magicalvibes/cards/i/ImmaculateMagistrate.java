@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "219")
+@CardRegistration(set = "DPA", collectorNumber = "70")
 public class ImmaculateMagistrate extends Card {
 
     public ImmaculateMagistrate() {

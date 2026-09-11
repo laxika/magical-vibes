@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "151")
 @CardRegistration(set = "INR", collectorNumber = "266")
+@CardRegistration(set = "V16", collectorNumber = "6")
 public class Helvault extends Card {
 
     public Helvault() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "174")
+@CardRegistration(set = "3ED", collectorNumber = "174")
 public class SedgeTroll extends Card {
 
     public SedgeTroll() {

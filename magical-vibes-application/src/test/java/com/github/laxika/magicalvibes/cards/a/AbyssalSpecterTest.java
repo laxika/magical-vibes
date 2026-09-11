@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbyssalSpecter.class, Counterspell.class, Island.class, KjeldoranSkyknight.class})
+@CardUsed({AbyssalSpecter.class, Counterspell.class, Island.class, WindDrake.class})
 class AbyssalSpecterTest extends BaseCardTest {
 
     @Test
@@ -44,7 +44,7 @@ class AbyssalSpecterTest extends BaseCardTest {
     @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         addAttackingSpecter(player1);
-        addCreatureReady(player2, new KjeldoranSkyknight());
+        addCreatureReady(player2, new WindDrake());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -83,6 +83,23 @@ class AbyssalSpecterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Damage to its controller also makes that player discard a card")
+    void damageToControllerMakesControllerDiscard() {
+        AbyssalSpecter card = new AbyssalSpecter();
+        card.addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+        Permanent specter = addCreatureReady(player1, card);
+        harness.setHand(player1, List.of(new Counterspell()));
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
+                null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 
     private Permanent addAttackingSpecter(Player player) {

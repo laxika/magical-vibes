@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "154")
+@CardRegistration(set = "MM2", collectorNumber = "209")
 public class EtchedChampion extends Card {
 
     public EtchedChampion() {

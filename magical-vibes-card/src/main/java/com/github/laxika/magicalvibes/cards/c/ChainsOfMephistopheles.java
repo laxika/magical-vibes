@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacementEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "91")
+@CardRegistration(set = "ME1", collectorNumber = "63")
 public class ChainsOfMephistopheles extends Card {
 
     public ChainsOfMephistopheles() {

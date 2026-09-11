@@ -32,7 +32,8 @@ public class MagmasaurUpkeepEffectHandler implements NormalEffectHandlerBean {
 
         if (magmasaurUpkeepSupport.counters(gameData, entry.getSourcePermanentId()) <= 0) {
             magmasaurUpkeepSupport.applyPenalty(
-                    gameData, controllerId, entry.getSourcePermanentId(), entry.getCard());
+                    gameData, controllerId, entry.getSourcePermanentId(), entry.getCard(),
+                    entry.getSourcePermanentSnapshot());
             return;
         }
 

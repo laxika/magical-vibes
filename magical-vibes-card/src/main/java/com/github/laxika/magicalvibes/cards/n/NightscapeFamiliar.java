@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "48")
+@CardRegistration(set = "DDH", collectorNumber = "44")
 public class NightscapeFamiliar extends Card {
 
     public NightscapeFamiliar() {

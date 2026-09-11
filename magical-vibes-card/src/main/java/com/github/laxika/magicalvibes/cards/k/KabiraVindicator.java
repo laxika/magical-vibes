@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "28")
+@CardRegistration(set = "DDG", collectorNumber = "16")
+@CardRegistration(set = "DDP", collectorNumber = "4")
 public class KabiraVindicator extends Card {
 
     public KabiraVindicator() {

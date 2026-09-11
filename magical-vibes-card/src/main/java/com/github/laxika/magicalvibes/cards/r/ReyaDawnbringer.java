@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "35")
 @CardRegistration(set = "INV", collectorNumber = "33")
+@CardRegistration(set = "DDC", collectorNumber = "13")
+@CardRegistration(set = "DVD", collectorNumber = "13")
 public class ReyaDawnbringer extends Card {
 
     public ReyaDawnbringer() {

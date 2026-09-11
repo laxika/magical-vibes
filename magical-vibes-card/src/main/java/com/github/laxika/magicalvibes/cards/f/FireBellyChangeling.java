@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "164")
+@CardRegistration(set = "DDG", collectorNumber = "51")
 public class FireBellyChangeling extends Card {
 
     public FireBellyChangeling() {

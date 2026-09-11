@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "318")
+@CardRegistration(set = "DD1", collectorNumber = "58")
+@CardRegistration(set = "EVG", collectorNumber = "58")
 public class GoblinBurrows extends Card {
 
     private static final PermanentAllOfPredicate GOBLIN_CREATURE = new PermanentAllOfPredicate(List.of(

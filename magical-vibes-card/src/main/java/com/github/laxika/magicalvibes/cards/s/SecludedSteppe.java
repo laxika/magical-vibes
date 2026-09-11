@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "324")
+@CardRegistration(set = "DDC", collectorNumber = "25")
+@CardRegistration(set = "DDO", collectorNumber = "29")
+@CardRegistration(set = "DVD", collectorNumber = "25")
 public class SecludedSteppe extends Card {
 
     public SecludedSteppe() {

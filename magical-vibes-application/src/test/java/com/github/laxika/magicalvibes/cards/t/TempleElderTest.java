@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(TempleElder.class)
 class TempleElderTest extends BaseCardTest {
 
     @Test
@@ -47,8 +49,7 @@ class TempleElderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new TempleElder());
-        findPermanent(player1, "Temple Elder").setSummoningSick(false);
+        addCreatureReady(player1, new TempleElder());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -58,8 +59,7 @@ class TempleElderTest extends BaseCardTest {
     }
 
     private void setupElderOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new TempleElder());
-        findPermanent(player1, "Temple Elder").setSummoningSick(false);
+        addCreatureReady(player1, new TempleElder());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

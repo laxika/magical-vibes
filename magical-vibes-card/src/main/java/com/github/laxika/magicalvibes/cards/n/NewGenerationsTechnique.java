@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "TMT", collectorNumber = "126")
+@CardRegistration(set = "TMT", collectorNumber = "240")
 public class NewGenerationsTechnique extends Card {
 
     public NewGenerationsTechnique() {

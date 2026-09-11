@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "273")
+@CardRegistration(set = "HOP", collectorNumber = "135")
 public class LeechriddenSwamp extends Card {
 
     public LeechriddenSwamp() {

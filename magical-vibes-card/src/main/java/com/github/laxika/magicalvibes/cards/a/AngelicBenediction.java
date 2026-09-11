@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "3")
 @CardRegistration(set = "M13", collectorNumber = "4")
+@CardRegistration(set = "DDC", collectorNumber = "19")
+@CardRegistration(set = "DVD", collectorNumber = "19")
 public class AngelicBenediction extends Card {
 
     public AngelicBenediction() {

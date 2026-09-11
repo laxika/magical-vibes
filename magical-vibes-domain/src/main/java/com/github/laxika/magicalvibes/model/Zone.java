@@ -17,6 +17,8 @@ public enum Zone {
     EXILE,
     /** A player's hand: cards they can normally cast or play from (CR 402). */
     HAND,
+    /** Cards a player owns that began outside the game, such as cards in their sideboard. */
+    OUTSIDE_GAME,
     /** A player's command zone: holds their commander(s) and similar objects (CR 903.6). */
     COMMAND
 }

@@ -64,8 +64,14 @@ public class EquipSupport {
 
     public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host,
                                       boolean permitsNonCreatureTarget) {
+        return canAttachEquipment(gameData, equipment, host, permitsNonCreatureTarget, false);
+    }
+
+    public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host,
+                                      boolean permitsNonCreatureTarget,
+                                      boolean permitsCreatureEquipment) {
         if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
-                || gameQueryService.isCreature(gameData, equipment)
+                || (!permitsCreatureEquipment && gameQueryService.isCreature(gameData, equipment))
                 || (!permitsNonCreatureTarget && !gameQueryService.isCreature(gameData, host))
                 || gameQueryService.cantBeEquipped(gameData, host)
                 || gameQueryService.hasProtectionFromSource(gameData, host, equipment)) {
@@ -110,7 +116,7 @@ public class EquipSupport {
                 
                 gameLogService.append(gameData, GameLog.cardTextCard(oldCreature.getCard(), " is sacrificed (", equipment.getCard(), " became unattached)."));
                 log.info("Game {} - {} sacrificed due to {} unattach", gameData.id, oldCreature.getCard().getName(), equipment.getCard().getName());
-                permanentRemovalService.removePermanentToGraveyard(gameData, oldCreature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, oldCreature);
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }

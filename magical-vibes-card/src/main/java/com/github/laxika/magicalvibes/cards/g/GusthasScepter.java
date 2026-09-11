@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHa
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "120")
+@CardRegistration(set = "ME2", collectorNumber = "209")
 public class GusthasScepter extends Card {
 
     public GusthasScepter() {

@@ -1,21 +1,25 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Doomsday.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class DoomsdayTest extends BaseCardTest {
 
     private void cast() {
@@ -27,122 +31,218 @@ class DoomsdayTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void setLibrary(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
-    }
-
-    private void setGraveyard(List<Card> cards) {
-        gd.playerGraveyards.get(player1.getId()).clear();
-        gd.playerGraveyards.get(player1.getId()).addAll(cards);
-    }
-
     @Test
-    @DisplayName("Resolving prompts a choice over library+graveyard and controller loses half life")
-    void promptsChoiceAndLosesHalfLife() {
-        setLibrary(List.of(new Shock(), new GrizzlyBears()));
-        setGraveyard(List.of(new LlanowarElves()));
+    @DisplayName("Choice and reordering finish before the controller loses half life")
+    void choiceAndReorderingFinishBeforeLifeLoss() {
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(shock, bears));
+        harness.setGraveyard(player1, List.of(elves));
         harness.setLife(player1, 20);
 
         cast();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DoomsdayChoice.class);
+        harness.assertLife(player1, 20);
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), bears.getId(), elves.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+
         harness.assertLife(player1, 10);
     }
 
     @Test
-    @DisplayName("Keeping a single card puts it on top; the rest are exiled")
-    void keepSingleCard() {
-        Card shock = new Shock();
-        Card bears = new GrizzlyBears();
-        setLibrary(List.of(shock));
-        setGraveyard(List.of(bears));
+    @DisplayName("Keeping five cards puts them on top and exiles the rest")
+    void keepsFiveCardsAndExilesTheRest() {
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        Card third = new LlanowarElves();
+        Card fourth = new Shock();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new LlanowarElves();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setGraveyard(player1, List.of(fourth, fifth, sixth));
 
         cast();
 
-        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId(), fifth.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
 
         List<Card> library = gd.playerDecks.get(player1.getId());
-        assertThat(library).hasSize(1);
-        assertThat(library.getFirst().getId()).isEqualTo(bears.getId());
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(shock.getId()));
+        assertThat(library).containsExactly(fifth, fourth, third, second, first);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(sixth);
     }
 
     @Test
-    @DisplayName("Keeping multiple cards prompts a reorder, then places them on top in that order")
-    void keepMultipleCardsReorder() {
+    @DisplayName("Keeping all available cards when fewer than five are available allows reordering")
+    void keepsAllAvailableCardsWhenFewerThanFiveAndReorders() {
         Card shock = new Shock();
         Card bears = new GrizzlyBears();
         Card elves = new LlanowarElves();
-        setLibrary(List.of(shock, bears));
-        setGraveyard(List.of(elves));
+        harness.setLibrary(player1, List.of(shock, bears));
+        harness.setGraveyard(player1, List.of(elves));
 
         cast();
 
-        // Keep Shock and Llanowar Elves (pool order: shock, bears, elves).
-        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), elves.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), bears.getId(), elves.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(bears.getId()));
 
-        // Chosen order = [shock, elves]; reorder [1, 0] puts Elves on top, Shock second.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
 
         List<Card> library = gd.playerDecks.get(player1.getId());
-        assertThat(library).hasSize(2);
-        assertThat(library.get(0).getId()).isEqualTo(elves.getId());
-        assertThat(library.get(1).getId()).isEqualTo(shock.getId());
+        assertThat(library).containsExactly(elves, shock, bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test
-    @DisplayName("Keeping zero cards exiles everything and leaves the library empty")
-    void keepZeroCards() {
+    @DisplayName("Keeping all available cards when fewer than five are available exiles nothing")
+    void keepsAllCardsWhenFewerThanFiveAreAvailable() {
         Card shock = new Shock();
         Card bears = new GrizzlyBears();
-        setLibrary(List.of(shock));
-        setGraveyard(List.of(bears));
+        harness.setLibrary(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of(bears));
 
         cast();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId(), bears.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
 
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(shock.getId()))
-                .anyMatch(c -> c.getId().equals(bears.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock, bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test
-    @DisplayName("Half your life loss is rounded up")
+    @DisplayName("Rejects selecting fewer than five cards when at least five are available")
+    void requiresFiveCardsWhenEnoughAreAvailable() {
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        Card third = new LlanowarElves();
+        Card fourth = new Shock();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new LlanowarElves();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
+
+        cast();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects selecting fewer than all available cards when fewer than five are available")
+    void requiresAllCardsWhenFewerThanFiveAreAvailable() {
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        cast();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With five or more available cards, exactly five must be chosen")
+    void requiresExactlyFiveCardsWhenPoolIsLarge() {
+        List<Card> pool = List.of(
+                new Shock(), new GrizzlyBears(), new LlanowarElves(), new Shock(), new GrizzlyBears());
+        harness.setLibrary(player1, pool.subList(0, 3));
+        harness.setGraveyard(player1, pool.subList(3, 5));
+
+        cast();
+
+        PendingInteraction.DoomsdayChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.legalOptions())
+                .isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 5, 5));
+    }
+
+    @Test
+    @DisplayName("Half your life loss is rounded up and happens after the card choice")
     void halfLifeRoundedUp() {
-        setLibrary(List.of(new Shock()));
-        setGraveyard(List.of());
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of());
         harness.setLife(player1, 7);
 
         cast();
 
+        harness.assertLife(player1, 7);
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.assertLife(player1, 3);
     }
 
     @Test
     @DisplayName("Only the controller's library and graveyard are affected")
     void onlyAffectsController() {
-        setLibrary(List.of(new Shock()));
-        setGraveyard(List.of());
+        Card ownLibrary = new Shock();
+        harness.setLibrary(player1, List.of(ownLibrary));
+        harness.setGraveyard(player1, List.of());
 
         Card oppLibrary = new GrizzlyBears();
         Card oppGraveyard = new LlanowarElves();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(oppLibrary);
-        gd.playerGraveyards.get(player2.getId()).clear();
-        gd.playerGraveyards.get(player2.getId()).add(oppGraveyard);
+        harness.setLibrary(player2, List.of(oppLibrary));
+        harness.setGraveyard(player2, List.of(oppGraveyard));
 
         cast();
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(ownLibrary.getId()));
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oppLibrary);
-        assertThat(gd.playerGraveyards.get(player2.getId())).contains(oppGraveyard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(oppGraveyard);
+    }
+
+    @Test
+    @DisplayName("An empty library and graveyard still cause the life loss without a choice")
+    void emptyZonesStillLoseHalfLifeWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLife(player1, 20);
+
+        cast();
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolving combines library and graveyard into a mandatory choice")
+    void promptsChoiceOverLibraryAndGraveyard() {
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(shock, bears));
+        harness.setGraveyard(player1, List.of(elves));
+
+        cast();
+
+        PendingInteraction.DoomsdayChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(shock.getId(), bears.getId(), elves.getId());
+        assertThat(choice.legalOptions())
+                .isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 3, 3));
+    }
+
+    @Test
+    @DisplayName("Keeping the only available card puts it on top without exiling it")
+    void keepSingleCard() {
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of());
+
+        cast();
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .doesNotContain(shock);
     }
 }

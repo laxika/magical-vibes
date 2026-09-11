@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "29")
 @CardRegistration(set = "FEM", collectorNumber = "178")
+@CardRegistration(set = "ME1", collectorNumber = "55")
 public class VodalianKnights extends Card {
 
     public VodalianKnights() {

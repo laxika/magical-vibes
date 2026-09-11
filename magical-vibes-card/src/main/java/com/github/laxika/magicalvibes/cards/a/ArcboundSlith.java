@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "102")
+@CardRegistration(set = "HOP", collectorNumber = "106")
 public class ArcboundSlith extends Card {
 
     public ArcboundSlith() {

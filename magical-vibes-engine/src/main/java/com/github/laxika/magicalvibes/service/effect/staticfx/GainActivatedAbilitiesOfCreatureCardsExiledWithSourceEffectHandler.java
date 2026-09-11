@@ -36,7 +36,7 @@ public class GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffectHandler
     }
 
     void addAbilities(StaticEffectContext context, StaticBonusAccumulator accumulator) {
-        List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.source().getId());
+        List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.sourceId());
         for (Card card : exiledCards) {
             if (!card.hasType(CardType.CREATURE)) {
                 continue;

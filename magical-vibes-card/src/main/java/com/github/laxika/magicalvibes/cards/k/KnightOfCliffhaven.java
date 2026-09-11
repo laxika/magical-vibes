@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "29")
+@CardRegistration(set = "DDG", collectorNumber = "4")
+@CardRegistration(set = "DDP", collectorNumber = "5")
 public class KnightOfCliffhaven extends Card {
 
     public KnightOfCliffhaven() {

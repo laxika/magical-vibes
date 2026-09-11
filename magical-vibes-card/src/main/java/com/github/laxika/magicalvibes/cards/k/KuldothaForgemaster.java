@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "169")
+@CardRegistration(set = "TD2", collectorNumber = "14")
 public class KuldothaForgemaster extends Card {
 
     public KuldothaForgemaster() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "202")
+@CardRegistration(set = "ME2", collectorNumber = "135")
 public class MeteorShower extends Card {
 
     public MeteorShower() {

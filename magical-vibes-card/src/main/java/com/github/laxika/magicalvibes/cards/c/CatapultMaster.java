@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "10")
+@CardRegistration(set = "DDF", collectorNumber = "18")
 public class CatapultMaster extends Card {
 
     public CatapultMaster() {

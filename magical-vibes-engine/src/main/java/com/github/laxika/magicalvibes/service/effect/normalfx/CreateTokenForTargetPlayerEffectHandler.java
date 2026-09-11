@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ public class CreateTokenForTargetPlayerEffectHandler implements NormalEffectHand
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,6 +50,9 @@ public class CreateTokenForTargetPlayerEffectHandler implements NormalEffectHand
         int amount = amountEvaluationService.evaluate(gameData, e.tokenEffect().amount(), context);
         if (amount <= 0) {
             return;
+        }
+        if (e.tokenEffect().subtypes().contains(CardSubtype.CLUE)) {
+            triggerCollectionService.checkInvestigateTriggers(gameData, targetPlayerId);
         }
         int power = amountEvaluationService.evaluate(gameData, e.tokenEffect().power(), context);
         int toughness = amountEvaluationService.evaluate(gameData, e.tokenEffect().toughness(), context);

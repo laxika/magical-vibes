@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DawnToDusk.class, GloriousAnthem.class, GrizzlyBears.class, Pacifism.class})
 class DawnToDuskTest extends BaseCardTest {
 
     @Test
@@ -76,7 +78,7 @@ class DawnToDuskTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DawnToDusk()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gs.playCard(gd, player1, 0, 2, pacifism.getId(), null,
+        gs.playCard(gd, player1, 0, 2, null, null,
                 List.of(pacifism.getId(), harness.getPermanentId(player2, "Glorious Anthem")), List.of());
         harness.passBothPriorities();
 

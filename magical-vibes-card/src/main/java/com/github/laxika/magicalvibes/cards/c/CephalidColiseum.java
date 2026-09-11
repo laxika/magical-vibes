@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "317")
+@CardRegistration(set = "V12", collectorNumber = "3")
 public class CephalidColiseum extends Card {
 
     public CephalidColiseum() {

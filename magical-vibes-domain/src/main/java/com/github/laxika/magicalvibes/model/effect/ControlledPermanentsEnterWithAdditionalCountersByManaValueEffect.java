@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -15,7 +16,7 @@ public record ControlledPermanentsEnterWithAdditionalCountersByManaValueEffect(
 ) implements ControlledPermanentEntryReplacementEffect {
 
     @Override
-    public int additionalCounterCount(Permanent enteringPermanent) {
+    public int additionalCounterCount(GameData gameData, Permanent enteringPermanent) {
         return enteringPermanent.getCard().getManaValue() <= maximumManaValue
                 ? atMostMaximumManaValueCount
                 : aboveMaximumManaValueCount;

@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OdylicWraith;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,23 +16,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BenalishKnight.class, OdylicWraith.class})
 class BenalishKnightTest extends BaseCardTest {
-
-    // ===== Casting during main phase =====
 
     @Test
     @DisplayName("Can cast during main phase like a normal creature")
     void canCastDuringMainPhase() {
-        harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        BenalishKnight knight = new BenalishKnight();
+        harness.castFromHand(player1, knight, "{2}{W}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Benalish Knight");
+        assertThat(entry.getCard()).isSameAs(knight);
     }
 
     @Test
@@ -47,8 +42,6 @@ class BenalishKnightTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Flash — casting at instant speed =====
-
     @Test
     @DisplayName("Can cast during opponent's turn thanks to Flash")
     void canCastDuringOpponentsTurn() {
@@ -56,154 +49,110 @@ class BenalishKnightTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        // Player2 passes priority, giving player1 priority
+        // Player2 passes priority, giving player1 priority.
         harness.getGameService().passPriority(harness.getGameData(), player2);
 
-        // Player1 can cast with Flash even though it's not their turn
-        harness.castCreature(player1, 0);
+        // Player1 can cast with Flash even though it is not their turn.
+        BenalishKnight knight = new BenalishKnight();
+        harness.castFromHand(player1, knight, "{2}{W}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Benalish Knight");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(knight);
     }
 
     @Test
     @DisplayName("Can cast during combat step thanks to Flash")
     void canCastDuringCombat() {
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        BenalishKnight knight = new BenalishKnight();
+        harness.castFromHand(player1, knight, "{2}{W}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Benalish Knight");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(knight);
     }
 
     @Test
     @DisplayName("Non-flash creature cannot be cast during combat step")
     void nonFlashCreatureCannotCastDuringCombat() {
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new OdylicWraith()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving puts Benalish Knight onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BenalishKnight(), "{2}{W}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Benalish Knight");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof BenalishKnight);
     }
-
-    @Test
-    @DisplayName("Benalish Knight has first strike and flash on the battlefield")
-    void hasKeywordsOnBattlefield() {
-        harness.addToBattlefield(player1, new BenalishKnight());
-
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(perm.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(perm.hasKeyword(Keyword.FLASH)).isTrue();
-    }
-
-    // ===== First strike in combat =====
 
     @Test
     @DisplayName("First strike kills a 2/2 before it deals regular damage")
     void firstStrikeKillsBeforeRegularDamage() {
-        // Benalish Knight (2/2 first strike) attacks, blocked by Grizzly Bears (2/2)
-        BenalishKnight knight = new BenalishKnight();
-        Permanent attacker = new Permanent(knight);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent blocker = new Permanent(bears);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new OdylicWraith());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Benalish Knight deals 2 first strike damage → kills Grizzly Bears before it can deal damage
-        // Benalish Knight survives with 0 damage
-        harness.assertOnBattlefield(player1, "Benalish Knight");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof BenalishKnight);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof OdylicWraith);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof OdylicWraith);
     }
 
     @Test
     @DisplayName("First strike creature still dies if blocker survives first strike")
     void firstStrikeCreatureDiesIfBlockerSurvives() {
-        // Benalish Knight (2/2 first strike) attacks, blocked by Angel of Mercy (3/3)
-        // First strike deals 2 damage → Angel survives (2 < 3)
-        // Regular damage: Angel deals 3 → Benalish Knight dies (3 >= 2)
-        BenalishKnight knight = new BenalishKnight();
-        Permanent attacker = new Permanent(knight);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        // Use a 3/3 creature to survive first strike
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blocker = new Permanent(bigBear);
-        blocker.setSummoningSick(false);
+        OdylicWraith blockerCard = new OdylicWraith();
+        blockerCard.setPower(3);
+        blockerCard.setToughness(3);
+        Permanent blocker = addCreatureReady(player2, blockerCard);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Blocker survives first strike (2 < 3 toughness), then deals 3 damage → knight dies
-        harness.assertNotOnBattlefield(player1, "Benalish Knight");
-        harness.assertInGraveyard(player1, "Benalish Knight");
-        // Blocker survives
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof BenalishKnight);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof BenalishKnight);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof OdylicWraith);
     }
 
     @Test
     @DisplayName("Benalish Knight enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        BenalishKnight knight = new BenalishKnight();
+        harness.castFromHand(player1, knight, "{2}{W}");
         harness.passBothPriorities();
 
-        Permanent perm = findPermanent(player1, "Benalish Knight");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(perm.getCard()).isSameAs(knight);
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }
-

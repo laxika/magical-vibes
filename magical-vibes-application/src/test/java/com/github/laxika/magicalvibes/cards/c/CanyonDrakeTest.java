@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CanyonDrake.class, Forest.class, Mountain.class})
 class CanyonDrakeTest extends BaseCardTest {
 
     @Test
@@ -31,9 +33,27 @@ class CanyonDrakeTest extends BaseCardTest {
         assertThat(drake.getEffectivePower()).isEqualTo(3);
         assertThat(drake.getEffectiveToughness()).isEqualTo(2);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Pays exactly one random discard before the ability resolves")
+    void paysExactlyOneRandomDiscardBeforeResolution() {
+        harness.addToBattlefield(player1, new CanyonDrake());
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Canyon Drake"), null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Canyon Drake").getEffectivePower()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Canyon Drake").getEffectivePower()).isEqualTo(3);
     }
 
     @Test
@@ -67,6 +87,18 @@ class CanyonDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate without paying the generic mana cost")
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new CanyonDrake());
+        harness.setHand(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(player1, "Canyon Drake"), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Ability can be activated repeatedly, stacking the boost")
     void boostsStack() {
         harness.addToBattlefield(player1, new CanyonDrake());
@@ -86,12 +118,6 @@ class CanyonDrakeTest extends BaseCardTest {
     }
 
     private int battlefieldIndex(Player player, String cardName) {
-        List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals(cardName)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("Permanent not found: " + cardName);
+        return gd.playerBattlefields.get(player.getId()).indexOf(findPermanent(player, cardName));
     }
 }

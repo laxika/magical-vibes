@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "166")
+@CardRegistration(set = "LGN", collectorNumber = "78")
 public class PhageTheUntouchable extends Card {
 
     public PhageTheUntouchable() {

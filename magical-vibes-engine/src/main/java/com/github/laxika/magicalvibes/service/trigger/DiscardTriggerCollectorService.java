@@ -241,7 +241,9 @@ public class DiscardTriggerCollectorService {
                     gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
             if (damage <= 0) return true;
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    gameData, discardingPlayerId, effectiveDamage, cardName, false,
+                    match.permanent().getId(), sourceCard);
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                     gameData, discardingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
@@ -258,8 +260,12 @@ public class DiscardTriggerCollectorService {
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        match.permanent().getId(), discardingPlayerId, effectiveDamage);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, discardingPlayerId, match.permanent().getId(), effectiveDamage);
+                triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
+                        gameData, match.permanent(), match.controllerId(), discardingPlayerId, effectiveDamage);
             }
         }
 
@@ -430,10 +436,10 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
     private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn." Cycling
-        // discards the card (CR 702.29e), so this single controller-discard trigger fires for both. Queue
-        // it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
+        // Cycling discards the card, so this controller-discard trigger handles both cycling and discard.
+        // Queue it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
         // (Hekma Sentinels)
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
@@ -486,6 +492,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
     private boolean handleGrantKeywordOnDiscard(TriggerMatchContext match, GrantKeywordEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, target creature gains [keyword] until end of turn."
         // Cycling discards the card (CR 702.29e), so this single controller-discard trigger fires for

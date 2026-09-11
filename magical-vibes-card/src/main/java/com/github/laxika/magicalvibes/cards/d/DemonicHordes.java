@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "104")
+@CardRegistration(set = "3ED", collectorNumber = "104")
 public class DemonicHordes extends Card {
 
     public DemonicHordes() {

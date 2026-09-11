@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentT
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FUT", collectorNumber = "46")
+@CardRegistration(set = "V13", collectorNumber = "15")
 public class VenserShaperSavant extends Card {
 
     public VenserShaperSavant() {

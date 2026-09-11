@@ -19,6 +19,6 @@ public class EmptyCityRuse extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.SPELL,
-                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER));
+                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, true));
     }
 }

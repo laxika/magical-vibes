@@ -8,9 +8,18 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * When {@code skipUntapStep} is true, each granted extra turn skips its untap step (Savor the Moment).
  * When {@code damageCantBePrevented} is true, damage can't be prevented during each granted turn
  * (Alchemist's Gambit).
+ * Power-up abilities are prohibited when {@code powerUpAbilitiesDisabled} is true.
  */
 public record ControllerExtraTurnEffect(DynamicAmount count, boolean skipUntapStep,
-                                        boolean damageCantBePrevented) implements CardEffect {
+                                        boolean damageCantBePrevented, boolean powerUpAbilitiesDisabled) implements CardEffect {
+
+    public ControllerExtraTurnEffect(DynamicAmount count, boolean skipUntapStep, boolean damageCantBePrevented) {
+        this(count, skipUntapStep, damageCantBePrevented, false);
+    }
+
+    public ControllerExtraTurnEffect(int count, boolean skipUntapStep, boolean damageCantBePrevented, boolean powerUpAbilitiesDisabled) {
+        this(new Fixed(count), skipUntapStep, damageCantBePrevented, powerUpAbilitiesDisabled);
+    }
 
     public ControllerExtraTurnEffect(int count) {
         this(new Fixed(count), false, false);
@@ -26,5 +35,9 @@ public record ControllerExtraTurnEffect(DynamicAmount count, boolean skipUntapSt
 
     public ControllerExtraTurnEffect(DynamicAmount count) {
         this(count, false, false);
+    }
+
+    public ControllerExtraTurnEffect(DynamicAmount count, boolean skipUntapStep) {
+        this(count, skipUntapStep, false);
     }
 }

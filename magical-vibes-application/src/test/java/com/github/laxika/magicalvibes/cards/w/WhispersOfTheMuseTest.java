@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,26 +15,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WhispersOfTheMuse.class, HornedTurtle.class, Counterspell.class})
 class WhispersOfTheMuseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving without buyback draws a card and goes to the graveyard")
     void drawsWithoutBuyback() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.setHand(player1, List.of(new WhispersOfTheMuse()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        assertThat(handNames(player1)).containsExactly("Grizzly Bears");
+        assertThat(handNames(player1)).containsExactly("Horned Turtle");
         assertThat(graveyardNames(player1)).containsExactly("Whispers of the Muse");
     }
 
     @Test
     @DisplayName("Paying buyback draws a card and returns the spell to hand")
     void buybackReturnsToHand() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.setHand(player1, List.of(new WhispersOfTheMuse()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -42,14 +44,36 @@ class WhispersOfTheMuseTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(handNames(player1)).containsExactlyInAnyOrder("Grizzly Bears", "Whispers of the Muse");
+        assertThat(handNames(player1)).containsExactlyInAnyOrder("Horned Turtle", "Whispers of the Muse");
         assertThat(graveyardNames(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A countered buyback spell goes to the graveyard")
+    void counteredBuybackGoesToGraveyard() {
+        WhispersOfTheMuse whispers = new WhispersOfTheMuse();
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
+        harness.setHand(player1, List.of(whispers));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player2, List.of(counterspell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstantWithBuyback(player1, 0, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, whispers.getId());
+        harness.passBothPriorities();
+
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).containsExactly("Whispers of the Muse");
     }
 
     @Test
     @DisplayName("Paying buyback with insufficient mana rewinds the cast")
     void buybackWithoutManaRewinds() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.setHand(player1, List.of(new WhispersOfTheMuse()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "138")
+@CardRegistration(set = "PHUK", collectorNumber = "18")
 public class DirgeOfDread extends Card {
 
     public DirgeOfDread() {

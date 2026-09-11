@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "182")
+@CardRegistration(set = "TMT", collectorNumber = "279")
 public class WeatherMaker extends Card {
 
     public WeatherMaker() {

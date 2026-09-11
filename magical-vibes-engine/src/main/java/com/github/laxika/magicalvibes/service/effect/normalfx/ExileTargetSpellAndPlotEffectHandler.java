@@ -38,7 +38,7 @@ public class ExileTargetSpellAndPlotEffectHandler implements NormalEffectHandler
         if (targetCardId == null) return;
 
         StackEntry target = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard().getId().equals(targetCardId))
+                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (target == null) {

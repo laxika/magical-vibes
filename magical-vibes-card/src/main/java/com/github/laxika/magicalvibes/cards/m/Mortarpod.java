@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "115")
+@CardRegistration(set = "TD2", collectorNumber = "68")
+@CardRegistration(set = "MM2", collectorNumber = "222")
 public class Mortarpod extends Card {
 
     public Mortarpod() {

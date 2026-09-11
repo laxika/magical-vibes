@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ARB", collectorNumber = "16")
+@CardRegistration(set = "DDI", collectorNumber = "11")
 public class WallOfDenial extends Card {
 }

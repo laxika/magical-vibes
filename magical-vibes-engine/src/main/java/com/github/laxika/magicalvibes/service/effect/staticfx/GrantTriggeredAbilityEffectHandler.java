@@ -30,10 +30,10 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
         boolean scopeMatch = switch (grant.scope()) {
             case OWN_PERMANENTS -> context.targetOnSameBattlefield()
                     && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case SELF -> context.target().getId().equals(context.source().getId());
+            case SELF -> context.target().getId().equals(context.sourceId());
             case SELF_AND_PAIRED -> {
                 UUID targetId = context.target().getId();
-                UUID sourceId = context.source().getId();
+                UUID sourceId = context.sourceId();
                 UUID pairedId = context.source().getPairedWithId();
                 yield targetId.equals(sourceId) || (pairedId != null && targetId.equals(pairedId));
             }

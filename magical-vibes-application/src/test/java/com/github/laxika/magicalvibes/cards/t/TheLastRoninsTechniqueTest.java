@@ -48,6 +48,7 @@ class TheLastRoninsTechniqueTest extends BaseCardTest {
     void sneaksAndCreatesAttackingTokens() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         harness.setHand(player1, List.of(new TheLastRoninsTechnique()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

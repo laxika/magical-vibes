@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "43")
+@CardRegistration(set = "TMT", collectorNumber = "230")
 public class KrangMasterMind extends Card {
 
     public KrangMasterMind() {

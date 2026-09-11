@@ -30,7 +30,7 @@ public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffect
         if (targetCardId == null && entry.getTriggeringPermanentControllerId() == null) return;
 
         for (StackEntry se : gameData.stack) {
-            if (targetCardId != null && se.getCard().getId().equals(targetCardId)) {
+            if (targetCardId != null && se.getTargetableId().equals(targetCardId)) {
                 lifeSupport.applyLifeLoss(gameData, se.getControllerId(), e.amount(), entry.getCard().getName());
                 return;
             }

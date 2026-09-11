@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "57")
+@CardRegistration(set = "DD2", collectorNumber = "26")
+@CardRegistration(set = "JVC", collectorNumber = "26")
+@CardRegistration(set = "V13", collectorNumber = "9")
 public class FactOrFiction extends Card {
 
     public FactOrFiction() {

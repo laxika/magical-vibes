@@ -10,6 +10,8 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "294")
 @CardRegistration(set = "TPR", collectorNumber = "225")
+@CardRegistration(set = "V09", collectorNumber = "7")
+@CardRegistration(set = "MPS", collectorNumber = "15")
 public class LotusPetal extends Card {
 
     public LotusPetal() {

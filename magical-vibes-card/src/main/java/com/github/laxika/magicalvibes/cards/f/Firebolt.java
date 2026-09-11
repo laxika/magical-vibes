@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "193")
+@CardRegistration(set = "DD2", collectorNumber = "49")
+@CardRegistration(set = "JVC", collectorNumber = "49")
+@CardRegistration(set = "DDS", collectorNumber = "37")
 public class Firebolt extends Card {
 
     public Firebolt() {

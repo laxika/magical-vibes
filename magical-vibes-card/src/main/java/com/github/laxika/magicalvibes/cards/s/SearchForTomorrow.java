@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "216")
+@CardRegistration(set = "HOP", collectorNumber = "77")
+@CardRegistration(set = "MMA", collectorNumber = "161")
 public class SearchForTomorrow extends Card {
 
     public SearchForTomorrow() {

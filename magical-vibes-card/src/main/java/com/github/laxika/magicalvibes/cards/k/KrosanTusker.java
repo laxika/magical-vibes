@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "272")
+@CardRegistration(set = "DDD", collectorNumber = "11")
+@CardRegistration(set = "GVL", collectorNumber = "11")
+@CardRegistration(set = "DDL", collectorNumber = "59")
 public class KrosanTusker extends Card {
 
     public KrosanTusker() {

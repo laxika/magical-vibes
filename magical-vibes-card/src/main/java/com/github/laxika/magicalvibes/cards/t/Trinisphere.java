@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "154")
+@CardRegistration(set = "V09", collectorNumber = "15")
+@CardRegistration(set = "MPS", collectorNumber = "52")
 public class Trinisphere extends Card {
 
     public Trinisphere() {

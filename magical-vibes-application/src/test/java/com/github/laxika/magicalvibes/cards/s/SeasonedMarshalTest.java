@@ -87,4 +87,16 @@ class SeasonedMarshalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
     }
+
+    @Test
+    @DisplayName("Accepting attack may leaves an already tapped target tapped")
+    void acceptingMayLeavesAlreadyTappedTargetTapped() {
+        addCreatureReady(player1, new SeasonedMarshal());
+        Permanent bears = addCreatureReady(player2, new PouncingJaguar());
+        bears.tap();
+
+        attackChooseTargetAndAccept(bears);
+
+        assertThat(bears.isTapped()).isTrue();
+    }
 }

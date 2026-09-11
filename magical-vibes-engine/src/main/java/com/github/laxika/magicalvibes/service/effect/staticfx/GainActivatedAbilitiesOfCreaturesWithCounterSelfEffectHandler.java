@@ -43,7 +43,7 @@ public class GainActivatedAbilitiesOfCreaturesWithCounterSelfEffectHandler
 
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                if (permanent.getId().equals(context.source().getId())
+                if (permanent.getId().equals(context.sourceId())
                         || permanent.getCounterCount(gainEffect.counterType()) == 0
                         || (!support.isEffectivelyCreature(gameData, permanent, hasAnimateArtifacts)
                         && !gameQueryService.isCreature(gameData, permanent))) {

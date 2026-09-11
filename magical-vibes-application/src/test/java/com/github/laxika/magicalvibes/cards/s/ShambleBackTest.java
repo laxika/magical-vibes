@@ -23,7 +23,7 @@ class ShambleBackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShambleBack()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, creature.getId());
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
         harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -41,7 +41,7 @@ class ShambleBackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShambleBack()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, cancel.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(cancel.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -53,7 +53,7 @@ class ShambleBackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShambleBack()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, creature.getId());
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
         gd.playerGraveyards.get(player2.getId()).clear();
         harness.passBothPriorities();
 

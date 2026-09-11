@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "120")
+@CardRegistration(set = "DDS", collectorNumber = "47")
 public class IncreasingSavagery extends Card {
 
     public IncreasingSavagery() {

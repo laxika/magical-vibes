@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -89,6 +90,136 @@ public class PermanentCounterSupport {
                 fireSelfReachesLevelTwoTriggers(gameData, target, previousCount);
                 fireSelfReachesLevelThreeTriggers(gameData, target, previousCount);
             }
+        }
+    }
+
+    public void firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+            GameData gameData, Permanent target, int count, UUID placingPlayerId) {
+        if (target == null || count <= 0 || placingPlayerId == null
+                || !placingPlayerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))
+                || !gameQueryService.isCreature(gameData, target)
+                || !gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.HERO)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.getId().equals(target.getId())) {
+                continue;
+            }
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> effectsToResolve = new ArrayList<>();
+            boolean markOnAcceptance = false;
+            boolean markImmediately = false;
+            for (CardEffect effect : effects) {
+                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+                        continue;
+                    }
+                    if (oncePerTurnTrigger.markOnAcceptance()) {
+                        markOnAcceptance = true;
+                    } else {
+                        markImmediately = true;
+                    }
+                    effectsToResolve.add(oncePerTurnTrigger.wrapped());
+                } else {
+                    effectsToResolve.add(effect);
+                }
+            }
+            if (effectsToResolve.isEmpty()) {
+                continue;
+            }
+
+            StackEntry triggerEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    placingPlayerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    effectsToResolve,
+                    null,
+                    source.getId());
+            triggerEntry.setEventValue(count);
+            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+            gameData.stack.add(triggerEntry);
+            if (markImmediately) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            }
+            gameLogService.append(gameData, GameLog.cardThen(
+                    source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} +1/+1 counter-on-other-Hero trigger fires", gameData.id,
+                    source.getCard().getName());
+        }
+    }
+
+    public void firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(
+            GameData gameData, Permanent target, int count, UUID placingPlayerId) {
+        if (target == null || count <= 0 || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.getId().equals(target.getId())) {
+                continue;
+            }
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> effectsToResolve = new ArrayList<>();
+            boolean markOnAcceptance = false;
+            boolean markImmediately = false;
+            for (CardEffect effect : effects) {
+                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+                        continue;
+                    }
+                    if (oncePerTurnTrigger.markOnAcceptance()) {
+                        markOnAcceptance = true;
+                    } else {
+                        markImmediately = true;
+                    }
+                    effectsToResolve.add(oncePerTurnTrigger.wrapped());
+                } else {
+                    effectsToResolve.add(effect);
+                }
+            }
+            if (effectsToResolve.isEmpty()) {
+                continue;
+            }
+
+            StackEntry triggerEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    placingPlayerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    effectsToResolve,
+                    null,
+                    source.getId());
+            triggerEntry.setEventValue(count);
+            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+            gameData.stack.add(triggerEntry);
+            if (markImmediately) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            }
+            gameLogService.append(gameData, GameLog.cardThen(
+                    source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} +1/+1 counter-on-another-creature trigger fires", gameData.id,
+                    source.getCard().getName());
         }
     }
 
@@ -176,6 +307,10 @@ public class PermanentCounterSupport {
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId);
         recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                 gameData, target, counters, placingPlayerId);
+        firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+                gameData, target, counters, placingPlayerId);
+        firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(
+                gameData, target, counters, placingPlayerId);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
@@ -200,10 +335,11 @@ public class PermanentCounterSupport {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
                     case HOUR -> perm.setCounterCount(CounterType.HOUR, perm.getCounterCount(CounterType.HOUR) + placed);
+                    case HONE -> perm.setCounterCount(CounterType.HONE, perm.getCounterCount(CounterType.HONE) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
-                    case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
-                         MENACE, REACH, TRAMPLE, VIGILANCE -> {
+                    case HASTE, DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF,
+                         INDESTRUCTIBLE, LIFELINK, REACH, TRAMPLE, MENACE, VIGILANCE -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
                     }
@@ -460,8 +596,8 @@ public class PermanentCounterSupport {
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
             case TIDE -> { target.setCounterCount(CounterType.TIDE, target.getCounterCount(CounterType.TIDE) + count); yield "tide"; }
-            case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
-                 MENACE, REACH, TRAMPLE, VIGILANCE -> {
+            case HASTE, DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF,
+                 INDESTRUCTIBLE, LIFELINK, REACH, TRAMPLE, MENACE, VIGILANCE -> {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
                 if (count > 0) {
                     target.setCounterTimestamp(counterType, gameData.nextTimestamp());
@@ -481,6 +617,10 @@ public class PermanentCounterSupport {
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
             recordPlusOnePlusOneCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
             recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, target, count, counterPlacingPlayerId);
+            firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+                    gameData, target, count, counterPlacingPlayerId);
+            firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(
                     gameData, target, count, counterPlacingPlayerId);
         }
 
@@ -1006,6 +1146,13 @@ public class PermanentCounterSupport {
                         }
                         resolved = youPut.wrapped();
                     }
+                    if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
+                        if (!predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, creature, conditional.predicate())) {
+                            continue;
+                        }
+                        resolved = conditional.wrapped();
+                    }
                     if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(source, controllerId))) {
@@ -1042,19 +1189,31 @@ public class PermanentCounterSupport {
                             .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
                             .add(creature.getId());
                 }
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        controllerId,
-                        card.getName() + "'s triggered ability",
-                        effectsToResolve,
-                        null,
-                        source.getId()
-                );
-                trigger.setTriggeringPermanentId(creature.getId());
-                trigger.setTriggeringPermanentControllerId(controllerId);
-                gameData.stack.add(trigger);
-                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                boolean targetsPermanent = effectsToResolve.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                boolean targetsPlayer = effectsToResolve.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                if (targetsPermanent || targetsPlayer) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            card, controllerId, effectsToResolve, !targetsPermanent,
+                            card.getTargetFilter(), 0, source.getId(), creature.getId()));
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
+                } else {
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s triggered ability",
+                            effectsToResolve,
+                            null,
+                            source.getId()
+                    );
+                    trigger.setTriggeringPermanentId(creature.getId());
+                    trigger.setTriggeringPermanentControllerId(controllerId);
+                    gameData.stack.add(trigger);
+                    gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                }
                 log.info("Game {} - {} generic counter watcher fires", gameData.id, card.getName());
             }
         }
@@ -1351,8 +1510,40 @@ public class PermanentCounterSupport {
     }
 
     public void recordCounterPlacedOnCreature(GameData gameData, Permanent target, UUID placingPlayerId) {
-        if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
+        if (placingPlayerId == null || target == null) {
+            return;
+        }
+        gameData.permanentsWithCountersPutByPlayerThisTurn
+                .computeIfAbsent(placingPlayerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(target.getId());
+        if (gameQueryService.isCreature(gameData, target)) {
             gameData.playersWhoPutCountersOnCreaturesThisTurn.add(placingPlayerId);
+        }
+    }
+
+    public void recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+            GameData gameData, Permanent target, int count, UUID placingPlayerId) {
+        if (target == null) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                gameData, target, controllerId, count, placingPlayerId);
+    }
+
+    public void recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+            GameData gameData, Permanent target, UUID controllerId, int count, UUID placingPlayerId) {
+        if (count <= 0 || target == null || controllerId == null
+                || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkGraveyardAllyPlusOnePlusOneCountersPutOnCreatureTriggers(
+                    gameData, target, controllerId, count);
+        }
+        if (controllerId.equals(placingPlayerId)) {
+            gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.merge(
+                    controllerId, count, Integer::sum);
         }
     }
 
@@ -1402,6 +1593,8 @@ public class PermanentCounterSupport {
     private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent target, UUID controllerId, int count, UUID placingPlayerId) {
         if (target != null && controllerId != null) {
+            recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                    gameData, target, controllerId, count, placingPlayerId);
             boolean firstPlacementOnThisPermanent =
                     gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.add(target.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);

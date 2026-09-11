@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "MIR", collectorNumber = "310")
 @CardRegistration(set = "7ED", collectorNumber = "306")
 @CardRegistration(set = "6ED", collectorNumber = "298")
+@CardRegistration(set = "DDC", collectorNumber = "24")
+@CardRegistration(set = "DVD", collectorNumber = "24")
 public class MarbleDiamond extends Card {
 
     public MarbleDiamond() {

@@ -36,7 +36,7 @@ public class ExileEachTargetSpellEffectHandler implements NormalEffectHandlerBea
         List<UUID> targetIds = new ArrayList<>(entry.targetsForEffect(effect));
         for (UUID targetId : targetIds) {
             StackEntry target = gameData.stack.stream()
-                    .filter(stackEntry -> stackEntry.getCard().getId().equals(targetId))
+                    .filter(stackEntry -> stackEntry.getTargetableId().equals(targetId))
                     .findFirst()
                     .orElse(null);
             if (target == null) continue;

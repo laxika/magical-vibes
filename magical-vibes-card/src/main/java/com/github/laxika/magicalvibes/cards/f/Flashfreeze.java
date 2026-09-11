@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "53")
 @CardRegistration(set = "M12", collectorNumber = "52")
 @CardRegistration(set = "CSP", collectorNumber = "33")
+@CardRegistration(set = "CST", collectorNumber = "33")
+@CardRegistration(set = "MM2", collectorNumber = "45")
 public class Flashfreeze extends Card {
 
     public Flashfreeze() {

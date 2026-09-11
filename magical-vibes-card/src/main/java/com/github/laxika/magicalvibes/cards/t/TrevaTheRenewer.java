@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerPermanentOfChosenC
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "280")
+@CardRegistration(set = "DDE", collectorNumber = "49")
 public class TrevaTheRenewer extends Card {
 
     public TrevaTheRenewer() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "134")
+@CardRegistration(set = "FDN", collectorNumber = "528")
 public class UndyingMalice extends Card {
 
     public UndyingMalice() {

@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "54")
+@CardRegistration(set = "FDN", collectorNumber = "316")
+@CardRegistration(set = "FDN", collectorNumber = "381")
+@CardRegistration(set = "FDN", collectorNumber = "458")
 public class AbyssalHarvester extends Card {
 
     public AbyssalHarvester() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "12")
+@CardRegistration(set = "BFZ", collectorNumber = "26")
 public class FelidarSovereign extends Card {
 
     public FelidarSovereign() {

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Phasing (CR 702.26), the first turn-based action of the untap step (CR 502.1): before the active
@@ -73,6 +74,7 @@ public class PhasingService {
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
+        clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
         movePhasedOut(gameData, phasingOut);
 
         logPhasing(gameData, activePlayerId, phasingIn.keySet(), phasingOut);
@@ -103,6 +105,7 @@ public class PhasingService {
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
+        clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
         movePhasedOut(gameData, phasingOut);
 
         if (!phasingOut.isEmpty()) {
@@ -151,6 +154,47 @@ public class PhasingService {
         log.info("Game {} - {} phases out", gameData.id, names);
     }
 
+    /** Phases a creature out and prevents its normal untap-step phase-in until the source leaves. */
+    public void phaseOutUntilSourceLeaves(GameData gameData, Permanent source, Permanent target) {
+        if (source == null || target == null || source.getId() == null || target.getId() == null) {
+            return;
+        }
+
+        phaseOut(gameData, List.of(target));
+        if (findPhasedOutPermanent(gameData, target.getId()) != null) {
+            gameData.phasedOutUntilSourceLeaves
+                    .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                    .add(target.getId());
+        }
+    }
+
+    /** Phases in every creature held by a source-leave phase-out and taps each creature. */
+    public void phaseInWhenSourceLeaves(GameData gameData, UUID sourcePermanentId) {
+        Set<UUID> targetIds = gameData.phasedOutUntilSourceLeaves.remove(sourcePermanentId);
+        if (targetIds == null || targetIds.isEmpty()) {
+            return;
+        }
+
+        Map<Permanent, UUID> phasingIn = collectSpecificPhasingIn(gameData, targetIds);
+        phasingIn.forEach((permanent, controllerId) -> {
+            phasedOutList(gameData, controllerId).remove(permanent);
+            permanent.setPhasedOutIndirectly(false);
+            gameData.playerBattlefields
+                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
+                    .add(permanent);
+            if (targetIds.contains(permanent.getId())) {
+                permanent.tap();
+            }
+            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
+        });
+
+        if (!phasingIn.isEmpty()) {
+            String names = names(phasingIn.keySet());
+            gameLogService.append(gameData, GameLog.text(names + " phases in."));
+            log.info("Game {} - {} phases in when source leaves", gameData.id, names);
+        }
+    }
+
     /**
      * Moves each permanent off its controller's battlefield into {@link GameData#phasedOutPermanents},
      * clearing its combat state on the way out (CR 506.4 — a permanent that phases out is removed
@@ -180,6 +224,7 @@ public class PhasingService {
         Deque<Permanent> pending = new ArrayDeque<>();
         phasedOutList(gameData, activePlayerId).stream()
                 .filter(permanent -> !permanent.isPhasedOutIndirectly())
+                .filter(permanent -> !isHeldUntilSourceLeaves(gameData, permanent))
                 .forEach(permanent -> {
                     phasingIn.put(permanent, activePlayerId);
                     pending.add(permanent);
@@ -196,6 +241,53 @@ public class PhasingService {
                     }));
         }
         return phasingIn;
+    }
+
+    private Map<Permanent, UUID> collectSpecificPhasingIn(GameData gameData, Set<UUID> targetIds) {
+        Map<Permanent, UUID> phasingIn = new LinkedHashMap<>();
+        Deque<Permanent> pending = new ArrayDeque<>();
+        gameData.phasedOutPermanents.forEach((controllerId, permanents) ->
+                List.copyOf(permanents).stream()
+                        .filter(permanent -> targetIds.contains(permanent.getId()))
+                        .forEach(permanent -> {
+                            phasingIn.put(permanent, controllerId);
+                            pending.add(permanent);
+                        }));
+
+        while (!pending.isEmpty()) {
+            Permanent host = pending.poll();
+            gameData.phasedOutPermanents.forEach((controllerId, permanents) ->
+                    List.copyOf(permanents).stream()
+                            .filter(permanent -> host.getId().equals(permanent.getAttachedTo()))
+                            .filter(permanent -> !phasingIn.containsKey(permanent))
+                            .forEach(permanent -> {
+                                phasingIn.put(permanent, controllerId);
+                                pending.add(permanent);
+                            }));
+        }
+        return phasingIn;
+    }
+
+    private boolean isHeldUntilSourceLeaves(GameData gameData, Permanent permanent) {
+        return gameData.phasedOutUntilSourceLeaves.values().stream()
+                .anyMatch(targetIds -> targetIds.contains(permanent.getId()));
+    }
+
+    private void clearSourceLeavePhaseOuts(GameData gameData, Collection<Permanent> permanents) {
+        Set<UUID> phasedInIds = permanents.stream().map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        gameData.phasedOutUntilSourceLeaves.values()
+                .forEach(targetIds -> targetIds.removeAll(phasedInIds));
+        gameData.phasedOutUntilSourceLeaves.entrySet()
+                .removeIf(entry -> entry.getValue().isEmpty());
+    }
+
+    private Permanent findPhasedOutPermanent(GameData gameData, UUID permanentId) {
+        return gameData.phasedOutPermanents.values().stream()
+                .flatMap(Collection::stream)
+                .filter(permanent -> permanent.getId().equals(permanentId))
+                .findFirst()
+                .orElse(null);
     }
 
     /**

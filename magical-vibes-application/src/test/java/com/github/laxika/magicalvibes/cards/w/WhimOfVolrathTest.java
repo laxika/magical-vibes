@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
-import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FlickeringWard;
+import com.github.laxika.magicalvibes.cards.s.SoltariPriest;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,62 +20,94 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WhimOfVolrath.class, SoltariPriest.class, Forest.class, FlickeringWard.class})
 class WhimOfVolrathTest extends BaseCardTest {
 
     @Test
     @DisplayName("Replacing a color word records the change on the target permanent")
     void replacesColorWord() {
-        harness.addToBattlefield(player2, new PaladinEnVec());
+        harness.addToBattlefield(player2, new SoltariPriest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Soltari Priest");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent perm = findPermanent(player2, "Paladin en-Vec");
+        Permanent perm = findPermanent(player2, "Soltari Priest");
         assertThat(perm.getTextReplacements())
                 .containsExactly(new TextReplacement("black", "green", true));
         assertThat(graveyardNames(player1)).containsExactly("Whim of Volrath");
     }
 
     @Test
-    @DisplayName("Replacing a basic land type records the change on the target permanent")
-    void replacesLandType() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+    @DisplayName("Changing red to green changes Soltari Priest's printed protection")
+    void changesPrintedColorWord() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player2, new SoltariPriest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, priest.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, priest, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Replacing a basic land type records the change on the target permanent")
+    void replacesLandType() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new WhimOfVolrath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "SWAMP");
         harness.handleListChoice(player1, "FOREST");
 
-        Permanent perm = findPermanent(player2, "Grizzly Bears");
+        Permanent perm = findPermanent(player2, "Forest");
         assertThat(perm.getTextReplacements())
                 .containsExactly(new TextReplacement("Swamp", "Forest", true));
     }
 
     @Test
-    @DisplayName("The text change wears off at end of turn")
-    void textChangeWearsOff() {
-        harness.addToBattlefield(player2, new PaladinEnVec());
+    @DisplayName("Changing a basic land type changes a basic land's effective type and mana")
+    void changesBasicLandTypeAndMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleListChoice(player1, "FOREST");
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("The text change wears off at end of turn")
+    void textChangeWearsOff() {
+        harness.addToBattlefield(player2, new SoltariPriest());
+        harness.setHand(player1, List.of(new WhimOfVolrath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Soltari Priest");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent perm = findPermanent(player2, "Paladin en-Vec");
+        Permanent perm = findPermanent(player2, "Soltari Priest");
         assertThat(perm.getTextReplacements()).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -86,37 +120,37 @@ class WhimOfVolrathTest extends BaseCardTest {
     @Test
     @DisplayName("A color-word change does not change a color chosen as the permanent entered")
     void textChangeDoesNotChangeChosenColor() {
-        harness.addToBattlefield(player2, new VoiceOfAll());
-        Permanent voiceOfAll = findPermanent(player2, "Voice of All");
-        voiceOfAll.setChosenColor(CardColor.BLACK);
+        Permanent priest = harness.addToBattlefieldAndReturn(player2, new SoltariPriest());
+        Permanent flickeringWard = harness.addToBattlefieldAndReturn(player2, new FlickeringWard());
+        flickeringWard.setAttachedTo(priest.getId());
+        flickeringWard.setChosenColor(CardColor.BLACK);
 
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Voice of All");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Flickering Ward");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "RED");
-        assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.BLACK);
+        assertThat(flickeringWard.getChosenColor()).isEqualTo(CardColor.BLACK);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.BLACK);
+        assertThat(flickeringWard.getChosenColor()).isEqualTo(CardColor.BLACK);
     }
 
     @Test
     @DisplayName("Paying buyback returns Whim of Volrath to its owner's hand as it resolves")
     void buybackReturnsToHand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
         harness.setHand(player1, List.of(new WhimOfVolrath()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Forest");
         harness.castInstantWithBuyback(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -125,6 +159,22 @@ class WhimOfVolrathTest extends BaseCardTest {
 
         assertThat(handNames(player1)).containsExactly("Whim of Volrath");
         assertThat(graveyardNames(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A buyback spell that fizzles goes to the graveyard")
+    void buybackFizzleGoesToGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new WhimOfVolrath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithBuyback(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).containsExactly("Whim of Volrath");
     }
 
     private List<String> handNames(Player player) {

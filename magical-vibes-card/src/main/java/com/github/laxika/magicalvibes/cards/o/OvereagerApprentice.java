@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "154")
+@CardRegistration(set = "DDC", collectorNumber = "35")
+@CardRegistration(set = "DVD", collectorNumber = "35")
 public class OvereagerApprentice extends Card {
 
     public OvereagerApprentice() {

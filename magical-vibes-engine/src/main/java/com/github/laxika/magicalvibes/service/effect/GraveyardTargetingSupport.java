@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -9,12 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditi
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -22,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
@@ -61,6 +66,16 @@ public class GraveyardTargetingSupport {
                 if (nested != null) {
                     return nested;
                 }
+            }
+            if (targetEffect instanceof RollD20Effect rollD20) {
+                Target nested = findTarget(java.util.stream.Stream.of(
+                                rollD20.zeroOrLess(), rollD20.oneToNine(), rollD20.tenToNineteen(), rollD20.twenty())
+                        .filter(java.util.Objects::nonNull)
+                        .toList());
+                if (nested != null) {
+                    return nested;
+                }
+                continue;
             }
             Target target = targetOf(targetEffect);
             if (target != null) {
@@ -117,6 +132,10 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileTargetCardFromGraveyardWithConditionalEffectsEffect) {
             return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
         }
+        if (effect instanceof ExileTargetCardFromGraveyardThenEffect exileThen) {
+            return new Target(exileThen.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,
+                    "to exile", 1, 1);
+        }
         if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
             GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
             return new Target(copy.filter(), scope, "to exile and copy", 1, 1);
@@ -129,6 +148,9 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ExileTargetCardFromGraveyardPutCounterOnSourceEffect) {
             return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
+        }
+        if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect exile) {
+            return new Target(exile.targetFilter(), exile.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof GrantTargetGraveyardCardCastEffect grantCast) {
             return new Target(grantCast.filter(), grantCast.scope(), "to cast", 1, 1);
@@ -170,7 +192,7 @@ public class GraveyardTargetingSupport {
                 case MAY_ABILITY_TARGET, COPY_ON_ENTER -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
-                    returnEffect.upTo() ? 0 : 1);
+                    returnEffect.upTo() ? 0 : 1, returnEffect.dynamicMaxManaValue());
         }
         return null;
     }
@@ -183,10 +205,15 @@ public class GraveyardTargetingSupport {
      * @param minTargets how many graveyard targets the step requires
      */
     public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
-                         int maxTargets, int minTargets) {
+                         int maxTargets, int minTargets, DynamicAmount maximumManaValue) {
+
+        public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
+                int maxTargets, int minTargets) {
+            this(filter, scope, destination, maxTargets, minTargets, null);
+        }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination, int maxTargets) {
-            this(filter, scope, destination, maxTargets, Math.min(1, maxTargets));
+            this(filter, scope, destination, maxTargets, Math.min(1, maxTargets), null);
         }
     }
 }

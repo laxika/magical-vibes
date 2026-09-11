@@ -23,6 +23,12 @@ class FaceOracleMapperTest {
     private static final boolean BACK = true;
 
     @Test
+    void abilityWordWithSpacedDashSurvivesCommaSeparatedRulesText() {
+        assertThat(map(face().text("Converge \u2014 Draw X cards, then gain X life.")
+                .keywords(List.of("Converge")), FRONT).keywords()).containsExactly(Keyword.CONVERGE);
+    }
+
+    @Test
     void aFaceIsNamedByItsHalfOfADoubleFacedName() {
         OracleData data = map(face().name("Thing in the Ice // Awoken Horror"), FRONT);
 

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SosukesSummons.class, SkeletalSnake.class})
 class SosukesSummonsTest extends BaseCardTest {
 
     private void prepareMain(Player active) {
@@ -26,11 +27,8 @@ class SosukesSummonsTest extends BaseCardTest {
     @DisplayName("Casting creates two 1/1 green Snake creature tokens")
     void createsTwoSnakeTokens() {
         prepareMain(player1);
-        harness.setHand(player1, List.of(new SosukesSummons()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new SosukesSummons(), "{2}{G}");
 
-        harness.castSorcery(player1, 0, List.of());
         harness.passBothPriorities();
 
         List<Permanent> snakes = findPermanents(player1, "Snake");
@@ -50,10 +48,7 @@ class SosukesSummonsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(summons));
         prepareMain(player1);
 
-        harness.setHand(player1, List.of(new SkeletalSnake()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkeletalSnake(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -71,10 +66,7 @@ class SosukesSummonsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(summonsInGraveyard));
         prepareMain(player1);
 
-        harness.setHand(player1, List.of(new SosukesSummons()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, List.of());
+        harness.castFromHand(player1, new SosukesSummons(), "{2}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

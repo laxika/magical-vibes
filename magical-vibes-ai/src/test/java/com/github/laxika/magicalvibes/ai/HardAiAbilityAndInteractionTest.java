@@ -217,7 +217,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates Prodigal Pyromancer targeting opponent face when no killable creature")
     void activatesPyromancerTargetingOpponentFace() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 25);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
@@ -954,6 +955,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI may pump Killer Bees when it is blocking")
     void pumpsBlockingKillerBeesDuringCombat() {
+        pinLibrariesAndHands();
         HardAiDecisionEngine ai = createHardAi(player1);
         giveCombatPriority(player2);
         gd.priorityPassedBy.add(player2.getId());
@@ -978,7 +980,10 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI pumps Killer Bees only enough to survive targeted damage")
     void pumpsKillerBeesOnlyEnoughToSurviveTargetedDamage() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        // This checks the cap on repeated activations, not search convergence. Keep each of the
+        // three decisions bounded while retaining the real seeded search and the stack assertions.
+        HardAiDecisionEngine ai = createHardAi(player1, 25);
         giveAiPriority(player1);
         Permanent bees = addKillerBees(player1);
         givePlayerForests(player1, 3);
@@ -1074,6 +1079,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI skips variable loyalty cost abilities (-X)")
     void skipsVariableLoyaltyCostAbility() {
+        pinLibrariesAndHands();
         HardAiDecisionEngine ai = createHardAi(player1);
         giveAiPriority(player1);
 
@@ -1225,7 +1231,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI sacs fodder to Viscera Seer for Scry before Wrath of God resolves")
     void sacrificesToVisceraSeerBeforeBoardWipe() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        pinLibrariesAndHands();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -1248,8 +1255,6 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
         gd.playerBattlefields.get(player1.getId()).add(ornithopter);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        harness.setHand(player1, List.of());
-
         ai.handleEvent(AiDecisionKind.GAME_STATE);
         if (gd.interaction.isAwaitingInput()) {
             ai.handleEvent(AiDecisionKind.INTERACTION);
@@ -1270,7 +1275,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI does not sac a healthy flyer to Viscera Seer for Scry with empty stack")
     void doesNotSacrificeToVisceraSeerWithEmptyStack() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        pinLibrariesAndHands();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
@@ -1286,8 +1292,6 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
         ornithopter.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(seer);
         gd.playerBattlefields.get(player1.getId()).add(ornithopter);
-
-        harness.setHand(player1, List.of());
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 

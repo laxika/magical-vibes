@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "224")
+@CardRegistration(set = "DDS", collectorNumber = "57")
 public class RubblebeltRaiders extends Card {
 
     public RubblebeltRaiders() {

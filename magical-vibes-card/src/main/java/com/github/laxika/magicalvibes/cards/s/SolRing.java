@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "274")
+@CardRegistration(set = "3ED", collectorNumber = "274")
+@CardRegistration(set = "V10", collectorNumber = "12")
+@CardRegistration(set = "MPS", collectorNumber = "24")
 public class SolRing extends Card {
 
     public SolRing() {

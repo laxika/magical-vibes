@@ -10,6 +10,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "53")
 @CardRegistration(set = "LEG", collectorNumber = "159")
+@CardRegistration(set = "ME1", collectorNumber = "105")
 public class MountainYeti extends Card {
 
     public MountainYeti() {

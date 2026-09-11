@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "262")
+@CardRegistration(set = "3ED", collectorNumber = "262")
 public class LivingWall extends Card {
 
     public LivingWall() {

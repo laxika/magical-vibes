@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "RIX", collectorNumber = "41")
+@CardRegistration(set = "FDN", collectorNumber = "510")
 public class KitesailCorsair extends Card {
 
     public KitesailCorsair() {

@@ -28,7 +28,7 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         GainKeywordsOfCreatureCardsExiledWithSourceEffect keywordEffect =
                 (GainKeywordsOfCreatureCardsExiledWithSourceEffect) effect;
-        for (Card card : context.gameData().getCardsExiledByPermanent(context.source().getId())) {
+        for (Card card : context.gameData().getCardsExiledByPermanent(context.sourceId())) {
             if (!card.hasType(CardType.CREATURE)) {
                 continue;
             }

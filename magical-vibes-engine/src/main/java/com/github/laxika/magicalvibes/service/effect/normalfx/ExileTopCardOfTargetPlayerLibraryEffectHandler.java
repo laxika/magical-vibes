@@ -45,9 +45,19 @@ public class ExileTopCardOfTargetPlayerLibraryEffectHandler implements NormalEff
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, targetPlayerId, topCard);
 
-        if (e.lifeGainIfLand() > 0 && topCard.hasType(CardType.LAND)) {
-            lifeSupport.applyGainLife(gameData, controllerId, e.lifeGainIfLand(),
-                    entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+        if (topCard.hasType(CardType.LAND)) {
+            if (e.lifeGainIfLand() > 0) {
+                lifeSupport.applyGainLife(gameData, controllerId, e.lifeGainIfLand(),
+                        entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+            }
+            if (e.effectIfLand() != null) {
+                int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+                if (effectIndex < 0) {
+                    throw new IllegalStateException(
+                            "Could not locate top-card exile effect on stack entry");
+                }
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(e.effectIfLand()));
+            }
         }
 
         gameLogService.append(gameData, GameLog.textCardText(targetName + " exiles ", topCard,

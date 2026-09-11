@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "85")
+@CardRegistration(set = "DDG", collectorNumber = "58")
 public class MordantDragon extends Card {
 
     public MordantDragon() {

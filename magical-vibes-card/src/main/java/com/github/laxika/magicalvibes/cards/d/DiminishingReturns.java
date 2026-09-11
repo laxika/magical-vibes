@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffec
 
 @CardRegistration(set = "6ED", collectorNumber = "65")
 @CardRegistration(set = "ALL", collectorNumber = "26")
+@CardRegistration(set = "ME1", collectorNumber = "32")
 public class DiminishingReturns extends Card {
 
     public DiminishingReturns() {

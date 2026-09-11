@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "10")
+@CardRegistration(set = "DDF", collectorNumber = "16")
+@CardRegistration(set = "MM2", collectorNumber = "12")
 public class ConclavePhalanx extends Card {
 
     public ConclavePhalanx() {

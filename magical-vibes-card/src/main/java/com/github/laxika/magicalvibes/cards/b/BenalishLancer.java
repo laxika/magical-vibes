@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "7")
+@CardRegistration(set = "DDG", collectorNumber = "12")
 public class BenalishLancer extends Card {
 
     public BenalishLancer() {

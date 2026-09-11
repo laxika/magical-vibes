@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "152")
+@CardRegistration(set = "MM2", collectorNumber = "105")
 public class BladesOfVelisVel extends Card {
 
     public BladesOfVelisVel() {

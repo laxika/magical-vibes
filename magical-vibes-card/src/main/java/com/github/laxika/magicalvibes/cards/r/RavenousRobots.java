@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "106")
+@CardRegistration(set = "TMT", collectorNumber = "271")
 public class RavenousRobots extends Card {
 
     public RavenousRobots() {
