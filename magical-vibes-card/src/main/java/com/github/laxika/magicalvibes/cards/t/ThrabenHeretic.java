@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "26")
+@CardRegistration(set = "DDQ", collectorNumber = "20")
 public class ThrabenHeretic extends Card {
 
     public ThrabenHeretic() {
