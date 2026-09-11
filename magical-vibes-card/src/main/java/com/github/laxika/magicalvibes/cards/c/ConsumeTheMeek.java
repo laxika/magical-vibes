@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "100")
+@CardRegistration(set = "DDP", collectorNumber = "49")
 public class ConsumeTheMeek extends Card {
 
     public ConsumeTheMeek() {

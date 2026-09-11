@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "2")
+@CardRegistration(set = "MM2", collectorNumber = "8")
 public class ApostlesBlessing extends Card {
 
     public ApostlesBlessing() {

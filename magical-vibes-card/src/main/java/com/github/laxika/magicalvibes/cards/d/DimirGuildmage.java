@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "245")
+@CardRegistration(set = "MM2", collectorNumber = "192")
 public class DimirGuildmage extends Card {
 
     public DimirGuildmage() {

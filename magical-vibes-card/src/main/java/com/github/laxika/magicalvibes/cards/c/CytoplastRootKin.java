@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "81")
+@CardRegistration(set = "MM2", collectorNumber = "143")
 public class CytoplastRootKin extends Card {
 
     public CytoplastRootKin() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 
 @CardRegistration(set = "NPH", collectorNumber = "129")
+@CardRegistration(set = "MM2", collectorNumber = "201")
 public class AlloyMyr extends Card {
 
     public AlloyMyr() {

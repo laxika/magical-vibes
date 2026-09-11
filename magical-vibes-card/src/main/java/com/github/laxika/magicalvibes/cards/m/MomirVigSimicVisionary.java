@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "118")
+@CardRegistration(set = "V16", collectorNumber = "9")
 public class MomirVigSimicVisionary extends Card {
 
     public MomirVigSimicVisionary() {
