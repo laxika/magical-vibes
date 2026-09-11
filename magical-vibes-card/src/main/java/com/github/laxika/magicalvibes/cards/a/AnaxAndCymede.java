@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "186")
+@CardRegistration(set = "DDL", collectorNumber = "11")
 public class AnaxAndCymede extends Card {
 
     public AnaxAndCymede() {

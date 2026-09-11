@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "243")
+@CardRegistration(set = "V13", collectorNumber = "20")
 public class KessigWolfRun extends Card {
 
     public KessigWolfRun() {

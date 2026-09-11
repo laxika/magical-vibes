@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "EMN", collectorNumber = "166")
 @CardRegistration(set = "GRN", collectorNumber = "143")
 @CardRegistration(set = "AER", collectorNumber = "120")
+@CardRegistration(set = "DDL", collectorNumber = "62")
 public class PreyUpon extends Card {
 
     public PreyUpon() {

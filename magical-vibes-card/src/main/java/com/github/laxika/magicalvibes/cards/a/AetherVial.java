@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "91")
 @CardRegistration(set = "V10", collectorNumber = "1")
+@CardRegistration(set = "MMA", collectorNumber = "197")
 public class AetherVial extends Card {
 
     public AetherVial() {

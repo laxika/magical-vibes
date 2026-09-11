@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "211")
+@CardRegistration(set = "MMA", collectorNumber = "147")
 public class HanaKami extends Card {
 
     public HanaKami() {

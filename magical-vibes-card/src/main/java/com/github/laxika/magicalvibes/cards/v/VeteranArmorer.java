@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "34")
+@CardRegistration(set = "MMA", collectorNumber = "34")
 public class VeteranArmorer extends Card {
 
     public VeteranArmorer() {

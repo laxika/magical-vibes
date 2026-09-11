@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "116")
+@CardRegistration(set = "DDM", collectorNumber = "71")
 public class LastKiss extends Card {
 
     public LastKiss() {

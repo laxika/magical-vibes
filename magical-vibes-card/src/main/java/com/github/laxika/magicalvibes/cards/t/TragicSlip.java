@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "76")
+@CardRegistration(set = "DDM", collectorNumber = "66")
 @CardRegistration(set = "INR", collectorNumber = "134")
 @CardRegistration(set = "INR", collectorNumber = "390")
 public class TragicSlip extends Card {

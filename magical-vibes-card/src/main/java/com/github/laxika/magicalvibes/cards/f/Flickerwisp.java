@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "EVE", collectorNumber = "6")
+@CardRegistration(set = "MMA", collectorNumber = "16")
 public class Flickerwisp extends Card {
 
     public Flickerwisp() {
