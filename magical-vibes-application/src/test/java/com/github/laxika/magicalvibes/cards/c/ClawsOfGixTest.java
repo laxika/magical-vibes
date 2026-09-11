@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ClawsOfGix.class, Forest.class})
 class ClawsOfGixTest extends BaseCardTest {
 
     @Test
@@ -51,5 +54,45 @@ class ClawsOfGixTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         harness.assertInGraveyard(player1, "Claws of Gix");
+    }
+
+    @Test
+    @DisplayName("Cannot be activated without generic mana")
+    void cannotActivateWithoutGenericMana() {
+        Permanent claws = harness.addToBattlefieldAndReturn(player1, new ClawsOfGix());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(claws);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .doesNotContain(claws.getCard());
+    }
+
+    @Test
+    @DisplayName("Only the controller's permanents can be sacrificed")
+    void onlyControllerPermanentsCanBeSacrificed() {
+        harness.addToBattlefield(player1, new ClawsOfGix());
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds())
+                .contains(ownForest.getId())
+                .doesNotContain(opponentForest.getId());
+
+        harness.handlePermanentChosen(player1, ownForest.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 }

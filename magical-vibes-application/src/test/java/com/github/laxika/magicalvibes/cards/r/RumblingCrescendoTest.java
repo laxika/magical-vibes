@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RumblingCrescendo.class, GorillaWarrior.class, Island.class, Mountain.class})
 class RumblingCrescendoTest extends BaseCardTest {
 
     @Test
@@ -28,11 +30,22 @@ class RumblingCrescendoTest extends BaseCardTest {
     }
 
     @Test
+    void upkeepMayDeclineVerseCounter() {
+        Permanent crescendo = addCrescendo(0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(crescendo.getCounterCount(CounterType.VERSE)).isZero();
+    }
+
+    @Test
     void destroysUpToVerseCounterLandsAndSacrificesCrescendo() {
         addCrescendo(2);
         Permanent first = harness.addToBattlefieldAndReturn(player2, new Island());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GorillaWarrior());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
@@ -40,7 +53,20 @@ class RumblingCrescendoTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Island");
         harness.assertInGraveyard(player2, "Mountain");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Gorilla Warrior");
+        harness.assertInGraveyard(player1, "Rumbling Crescendo");
+    }
+
+    @Test
+    void mayChooseFewerLandsThanVerseCounters() {
+        addCrescendo(2);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(land.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Island");
         harness.assertInGraveyard(player1, "Rumbling Crescendo");
     }
 
@@ -60,7 +86,7 @@ class RumblingCrescendoTest extends BaseCardTest {
     @Test
     void cannotTargetNonlandPermanent() {
         addCrescendo(1);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(

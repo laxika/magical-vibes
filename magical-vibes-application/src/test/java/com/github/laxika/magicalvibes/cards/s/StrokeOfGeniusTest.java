@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StrokeOfGenius.class, CoralMerfolk.class})
 class StrokeOfGeniusTest extends BaseCardTest {
 
     @Test
@@ -56,13 +58,12 @@ class StrokeOfGeniusTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent merfolk = addCreatureReady(player2, new CoralMerfolk());
 
         harness.setHand(player1, List.of(new StrokeOfGenius()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, bear.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, merfolk.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -59,9 +59,8 @@ class PitScorpionTest extends BaseCardTest {
     void noncombatDamageGivesPoisonCounter() {
         harness.setLife(player2, 20);
         Permanent scorpion = addReadyScorpion();
-        Permanent aura = new Permanent(new HermeticStudy());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         aura.setAttachedTo(scorpion.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

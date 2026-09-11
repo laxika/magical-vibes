@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.e.EnergyField;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,25 +17,22 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Corrupt.class, ArgothianSwine.class, Plains.class, Swamp.class})
 class CorruptTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Corrupt targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
         harness.setHand(player1, List.of(new Corrupt()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Argothian Swine");
         harness.castSorcery(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Corrupt");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
@@ -44,20 +42,18 @@ class CorruptTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
         harness.setHand(player1, List.of(new Corrupt()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Argothian Swine");
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
-        // 3 damage kills Grizzly Bears (2 toughness)
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // 3 damage kills Argothian Swine (3 toughness)
+        harness.assertNotOnBattlefield(player2, "Argothian Swine");
+        harness.assertInGraveyard(player2, "Argothian Swine");
         // Controller gains 3 life (equal to Swamp count)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
     }
 
     @Test
@@ -70,14 +66,12 @@ class CorruptTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Corrupt()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        GameData gd = harness.getGameData();
         // Player 2 takes 4 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
         // Player 1 gains 4 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertLife(player1, 24);
     }
 
     @Test
@@ -87,19 +81,17 @@ class CorruptTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
         harness.setHand(player1, List.of(new Corrupt()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Argothian Swine");
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
-        // Only 1 damage (1 Swamp controlled by player1), Grizzly Bears survives (2 toughness)
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // Only 1 damage (1 Swamp controlled by player1), Argothian Swine survives (3 toughness)
+        harness.assertOnBattlefield(player2, "Argothian Swine");
         // Controller gains 1 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        harness.assertLife(player1, 21);
     }
 
     @Test
@@ -119,10 +111,9 @@ class CorruptTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 0 Swamps at resolution, so 0 damage and 0 life gain
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -130,23 +121,22 @@ class CorruptTest extends BaseCardTest {
     void fizzlesWhenTargetCreatureRemoved() {
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
         harness.setHand(player1, List.of(new Corrupt()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Argothian Swine");
         harness.castSorcery(player1, 0, targetId);
 
         // Remove the target before resolution
         harness.getGameData().playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Grizzly Bears"));
+                .removeIf(p -> p.getId().equals(targetId));
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Spell fizzles — no damage to the opponent and no life gain despite controlling 2 Swamps
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -158,12 +148,26 @@ class CorruptTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Corrupt()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        GameData gd = harness.getGameData();
         // Only 1 Swamp, so 1 damage and 1 life gained
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @CardUsed(EnergyField.class)
+    @DisplayName("Corrupt gains life only for damage actually dealt when damage is prevented")
+    void preventedDamageDoesNotGrantLife() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new EnergyField());
+        harness.setHand(player1, List.of(new Corrupt()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 }

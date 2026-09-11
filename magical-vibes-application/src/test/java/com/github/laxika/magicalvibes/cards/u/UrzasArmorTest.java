@@ -2,18 +2,15 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({UrzasArmor.class, Shock.class, HillGiant.class})
 class UrzasArmorTest extends BaseCardTest {
 
     @Test
@@ -24,11 +21,10 @@ class UrzasArmorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Shock deals 2; 1 is prevented, so player1 takes 1.
-        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -40,11 +36,10 @@ class UrzasArmorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Shock deals 2; both copies prevent 1 each, so all of it is prevented.
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -55,11 +50,10 @@ class UrzasArmorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // player2 controls no Urza's Armor, so the full 2 damage lands.
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -68,23 +62,26 @@ class UrzasArmorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrzasArmor());
         harness.setLife(player1, 20);
 
-        Permanent giant = new Permanent(new HillGiant());
-        giant.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.<BlockerAssignment>of());
-        harness.passBothPriorities();
+        addCreatureReady(player2, new HillGiant());
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
 
         // Hill Giant deals 3; 1 is prevented, so player1 takes 2.
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Prevents 1 separately from each combat damage source")
+    void preventsOneFromEachCombatSource() {
+        harness.addToBattlefield(player1, new UrzasArmor());
+        harness.setLife(player1, 20);
+
+        addCreatureReady(player2, new HillGiant());
+        addCreatureReady(player2, new HillGiant());
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+
+        // Each Hill Giant deals 3; 1 is prevented from each source, so player1 takes 4 total.
+        harness.assertLife(player1, 16);
     }
 }
