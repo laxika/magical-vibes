@@ -179,6 +179,10 @@ public class GraveyardTargetOperationState {
     public UUID scroungeChosenCardId;
     /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */
     public boolean resolutionTimeScroungeResume;
+    /** Card chosen by the defending player for a resolution-time attack-trigger graveyard choice. */
+    public UUID defendingPlayerChoosesCardFromGraveyardChosenCardId;
+    /** Whether a resolution-time attack-trigger graveyard choice is awaiting an answer. */
+    public boolean resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume;
     /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
     public boolean resolutionTimeOpponentChoosesCardToHandResume;
     /** Opponent selected by the controller for the resolution-time graveyard choice. */

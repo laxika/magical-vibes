@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.c.Castle;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Nightmare.class, Swamp.class, Plains.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({Nightmare.class, Swamp.class, Plains.class, Castle.class, GiantSpider.class, GrizzlyBears.class})
 class NightmareTest extends BaseCardTest {
 
     @Test
@@ -110,15 +111,15 @@ class NightmareTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Nightmare characteristic-defining P/T stacks with other static bonuses")
+    @DisplayName("Nightmare characteristic-defining P/T stacks with a static toughness bonus")
     void ptStacksWithOtherStaticBonuses() {
         Permanent nightmare = addCreatureReady(player1, new Nightmare());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new Castle());
 
-        assertThat(gqs.getEffectivePower(gd, nightmare)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, nightmare)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nightmare)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nightmare)).isEqualTo(4);
     }
 
     @Test
@@ -138,5 +139,23 @@ class NightmareTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("A creature with reach can block Nightmare")
+    void reachAllowsBlocking() {
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        Permanent nightmare = addCreatureReady(player1, new Nightmare());
+        harness.addToBattlefield(player1, new Swamp());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(nightmare);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(nightmare.getId());
     }
 }

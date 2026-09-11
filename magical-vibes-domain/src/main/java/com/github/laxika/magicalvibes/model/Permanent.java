@@ -43,6 +43,8 @@ public class Permanent {
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
+    /** Number of times this permanent has been declared as an attacker this turn. */
+    @Setter private int attacksThisTurn;
     private boolean attackedThisCombat;
     /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
     private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
@@ -665,6 +667,7 @@ public class Permanent {
         this.tapped = false;
         this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
+        this.attacksThisTurn = 0;
         this.attackedThisCombat = false;
         this.summoningSick = true;
     }
@@ -693,6 +696,7 @@ public class Permanent {
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
+        this.attacksThisTurn = source.attacksThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
@@ -1027,6 +1031,7 @@ public class Permanent {
         this.attacking = attacking;
         if (attacking) {
             this.attackedThisTurn = true;
+            this.attacksThisTurn++;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
         }

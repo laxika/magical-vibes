@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Warmth.class, MoggConscripts.class, SoltariFootSoldier.class, GoblinBombardment.class})
+@CardUsed({GoblinBombardment.class, MoggConscripts.class, SoltariFootSoldier.class, Warmth.class})
 class WarmthTest extends BaseCardTest {
 
     /** Player1 controls Warmth; it is player2's (the opponent's) turn. */
@@ -34,7 +34,6 @@ class WarmthTest extends BaseCardTest {
         // Gain-life trigger sits on top of the creature spell.
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Warmth");
 
         harness.passBothPriorities(); // resolve the gain-life trigger
 

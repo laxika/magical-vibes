@@ -56,6 +56,22 @@ class PsychicTransferTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Checks the life total difference when the spell resolves")
+    void checksDifferenceOnResolution() {
+        harness.setLife(player1, 14);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PsychicTransfer()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setLife(player1, 15);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
     @DisplayName("Equal life totals produce no change")
     void equalLifeTotalsNoChange() {
         harness.setLife(player1, 20);
@@ -112,5 +128,21 @@ class PsychicTransferTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 10);
+    }
+
+    @Test
+    @CardUsed(PlatinumEmperion.class)
+    @DisplayName("Does not exchange life totals when a player's life total cannot change")
+    void doesNotExchangeWhenLifeTotalCannotChange() {
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PsychicTransfer()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
     }
 }

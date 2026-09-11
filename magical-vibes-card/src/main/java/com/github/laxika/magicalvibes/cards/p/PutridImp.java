@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "77")
+@CardRegistration(set = "PD3", collectorNumber = "1")
 public class PutridImp extends Card {
 
     public PutridImp() {

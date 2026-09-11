@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.Brushland;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.t.Taiga;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Armageddon.class, Forest.class, Mountain.class, Island.class, GrizzlyBears.class, Taiga.class})
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({Armageddon.class, Forest.class, Mountain.class, Island.class, GrizzlyBears.class, Brushland.class})
 class ArmageddonTest extends BaseCardTest {
 
     @Test
@@ -32,15 +34,15 @@ class ArmageddonTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Taiga.class)
+    @CardUsed(Brushland.class)
     @DisplayName("Destroys nonbasic lands")
     void destroysNonbasicLands() {
-        harness.addToBattlefield(player1, new Taiga());
+        harness.addToBattlefield(player1, new Brushland());
         harness.castFromHand(player1, new Armageddon(), "{3}{W}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Taiga");
-        harness.assertInGraveyard(player1, "Taiga");
+        harness.assertNotOnBattlefield(player1, "Brushland");
+        harness.assertInGraveyard(player1, "Brushland");
     }
 
     @Test
@@ -52,5 +54,15 @@ class ArmageddonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Resolves when there are no lands")
+    void resolvesWithoutLands() {
+        harness.castFromHand(player1, new Armageddon(), "{3}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Armageddon");
     }
 }

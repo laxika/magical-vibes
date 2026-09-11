@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WaitingInTheWeeds.class, Forest.class})
+@CardUsed({WaitingInTheWeeds.class, Forest.class, Island.class})
 class WaitingInTheWeedsTest extends BaseCardTest {
 
     @Test
@@ -48,6 +49,20 @@ class WaitingInTheWeedsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Cat")).isZero();
+        assertThat(countPermanents(player2, "Cat")).isZero();
+    }
+
+    @Test
+    @DisplayName("Ignores untapped lands that are not Forests")
+    void ignoresUntappedNonForestLands() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.castFromHand(player1, new WaitingInTheWeeds(), "{1}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cat")).isEqualTo(1);
         assertThat(countPermanents(player2, "Cat")).isZero();
     }
 

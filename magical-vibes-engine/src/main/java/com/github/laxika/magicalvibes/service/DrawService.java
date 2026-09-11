@@ -201,6 +201,13 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
+        if (drawChoicePending(gameData)) {
+            for (int i = 0; i < drawAmount; i++) {
+                gameData.pendingCardDraws.addLast(playerId);
+            }
+            return;
+        }
+
         List<UUID> laterDraws = new ArrayList<>(gameData.pendingCardDraws);
         gameData.pendingCardDraws.clear();
         try {
@@ -1601,7 +1608,8 @@ public class DrawService {
             }
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
-            if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
+            if (!gameData.deferPlayerLossCheck
+                    && gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameLogService.append(gameData, GameLog.text(lossLog));

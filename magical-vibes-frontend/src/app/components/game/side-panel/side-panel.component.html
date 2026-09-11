@@ -425,6 +425,16 @@
       </div>
     }
 
+    @if (choice.targeting.choosingAdditionalSacrifice) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Select a creature to sacrifice for {{ choice.targeting.additionalSacrificeCardName }}</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmAdditionalSacrifice()" [disabled]="choice.targeting.additionalSacrificeSelectedId() == null">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelAdditionalSacrifice()">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (choice.targeting.choosingKicker) {
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">Cast {{ choice.targeting.kickerCardName }} &mdash; pay kicker {{ choice.targeting.kickerCost }}?</span>

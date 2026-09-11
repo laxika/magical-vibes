@@ -87,6 +87,8 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
             UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
             if (controllerId != null) {
                 gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                        gameData, source, toAdd, entry.getControllerId());
             }
         }
         

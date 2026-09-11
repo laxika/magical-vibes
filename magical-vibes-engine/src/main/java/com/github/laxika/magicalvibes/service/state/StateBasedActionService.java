@@ -207,6 +207,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithCroakCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
@@ -609,6 +610,7 @@ public class StateBasedActionService {
 
     // CR 704.5b — player who attempted to draw from an empty library loses the game
     private void checkEmptyLibraryLoss(GameData gameData) {
+        if (gameData.deferPlayerLossCheck) return;
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
 
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {

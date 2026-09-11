@@ -1125,6 +1125,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY` | This permanent becomes target of an opponent's spell, but not an ability |
 | `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | This permanent becomes target of any spell or ability |
 | `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a creature you control becomes target of opponent's spell/ability. Used by Shapers' Sanctuary |
+| `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL` | Global monitor: a creature you control becomes target of an opponent's spell; abilities do not trigger it. Used by Swarm Shambler |
 | `ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a permanent you control becomes target of opponent's spell/ability. Player targets do not count. Used by Battle Mammoth |
 | `ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a creature or creature spell you control becomes target of opponent's spell/ability. Used by Surrak, Elusive Hunter |
 | `ON_EQUIPPED_CREATURE_DIES` | Equipped creature dies |

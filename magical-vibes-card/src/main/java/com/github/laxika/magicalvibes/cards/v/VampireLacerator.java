@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "115")
+@CardRegistration(set = "DDK", collectorNumber = "3")
 public class VampireLacerator extends Card {
 
     public VampireLacerator() {

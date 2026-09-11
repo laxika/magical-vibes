@@ -162,11 +162,15 @@ public final class AnyColorManaChoiceSupport {
         if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
+            } else if (choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+                choiceContext = subtypeChoice.withSourcePermanentId(sourcePermanentId);
             }
         }
         if (recipientPlayerId != null) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withRecipientPlayerId(recipientPlayerId);
+            } else if (choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+                choiceContext = subtypeChoice.withRecipientPlayerId(recipientPlayerId);
             } else if (choiceContext instanceof ChoiceContext.CreatureAbilityManaColorChoice creatureAbilityChoice) {
                 choiceContext = creatureAbilityChoice.withRecipientPlayerId(recipientPlayerId);
             } else if (choiceContext instanceof ChoiceContext.SpellOnlyManaColorChoice spellOnlyChoice) {
@@ -178,6 +182,9 @@ public final class AnyColorManaChoiceSupport {
         if (fromSnowSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withSnowSource(true);
         } else if (fromSnowSource
+                && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+            choiceContext = subtypeChoice.withSnowSource(true);
+        } else if (fromSnowSource
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withSnowSource(true);
         }
@@ -186,6 +193,9 @@ public final class AnyColorManaChoiceSupport {
         }
         if (fromCaveSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withCaveSource(true);
+        } else if (fromCaveSource
+                && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+            choiceContext = subtypeChoice.withCaveSource(true);
         } else if (fromCaveSource
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
@@ -201,6 +211,7 @@ public final class AnyColorManaChoiceSupport {
                 || effect.restriction() == ManaSpendRestriction.EXILED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES
+                || effect.restriction() == ManaSpendRestriction.KICKED_SPELLS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_ABILITIES)) {
             UUID manaRecipientId = recipientPlayerId != null ? recipientPlayerId : playerId;
             ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
@@ -208,6 +219,8 @@ public final class AnyColorManaChoiceSupport {
             if (effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES
                     || effect.restriction() == ManaSpendRestriction.CREATURE_ABILITIES) {
                 manaPool.addCreatureAbilityOnlyMana(effectiveColor, amount);
+            } else if (effect.restriction() == ManaSpendRestriction.KICKED_SPELLS) {
+                manaPool.addKickedOnlyMana(effectiveColor, amount);
             } else {
                 manaPool.add(effectiveColor, amount);
                 if (fromSnowSource) {
@@ -257,6 +270,10 @@ public final class AnyColorManaChoiceSupport {
                     && !effect.spellOnlySubtypes().isEmpty()) {
                 return ChoiceContext.ManaColorSpellChoice.anyColorCombination(
                         playerId, amount, effect.spellOnlySubtypes());
+            }
+            if (effect.restriction() == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY) {
+                return ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        playerId, amount, effect.subtype());
             }
             if (effect.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY) {
                 return ChoiceContext.ManaColorChoice.creatureSpellOnlyColorCombination(
@@ -355,13 +372,15 @@ public final class AnyColorManaChoiceSupport {
                     ? null
                     : ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(playerId, amount, chosenSubtype);
             case SUBTYPE_SPELL_OR_ABILITY ->
-                    ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
+                    new ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice(
+                            playerId, amount, effect.subtype(), fromCreature);
             case MANA_VALUE_AT_LEAST_FOUR ->
                     ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->
                     ChoiceContext.ManaColorChoice.creatureSpellManaValueAtLeastFourOrXOnly(playerId, amount);
             case PARTY_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.partySpellOrAbility(playerId, amount);
+            case KICKED_SPELLS -> new ChoiceContext.KickedSpellManaColorChoice(playerId, amount);
         };
         return effect.grantsAdditionalPlusOneCounter() && choice instanceof ChoiceContext.ManaColorChoice manaChoice
                 ? manaChoice.withAdditionalPlusOneCounter() : choice;
@@ -421,6 +440,7 @@ public final class AnyColorManaChoiceSupport {
                     "Choose a color of mana to add (qualifying creature spells only).";
             case SOURCE_PERMANENT_COLORS -> "Choose a color of mana to add from this creature's colors.";
             case PLANESWALKER_SPELLS -> "Choose a color of mana to add (planeswalker spells only).";
+            case KICKED_SPELLS -> "Choose a color of mana to add (kicked spells only).";
             default -> "Choose a color of mana to add.";
         };
     }

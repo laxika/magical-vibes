@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "46")
+@CardRegistration(set = "TD2", collectorNumber = "34")
 public class StoicRebuttal extends Card {
 
     public StoicRebuttal() {

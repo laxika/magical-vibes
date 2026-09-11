@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.cards.v.VitoThornOfTheDuskRose;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Exile.class, GrizzlyBears.class, TundraWolves.class, VitoThornOfTheDuskRose.class})
+@CardUsed({Exile.class, GrizzlyBears.class, HowlingMine.class, TundraWolves.class})
 class ExileTest extends BaseCardTest {
 
     private void castExile(UUID targetId) {
@@ -29,7 +30,7 @@ class ExileTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Exile()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, targetId);
     }
@@ -52,12 +53,14 @@ class ExileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        // Grizzly Bears (2/2) exiled -> not on battlefield, not in graveyard, in exile
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        // The target is exiled rather than put onto the battlefield or into the graveyard.
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(attacker.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(attacker.getCard().getId()));
         assertThat(gd.exiledCards)
-                .anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
-        // Caster gains life equal to toughness (2): 15 + 2 = 17
+                .anyMatch(e -> e.card().getId().equals(attacker.getCard().getId()));
+        // Caster gains life equal to the target's toughness (2): 15 + 2 = 17
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
@@ -76,6 +79,7 @@ class ExileTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(VitoThornOfTheDuskRose.class)
     void exilesTargetBeforeLifeGainTriggers() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 10);
@@ -86,7 +90,7 @@ class ExileTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof VitoThornOfTheDuskRose);
+                .noneMatch(permanent -> permanent.getId().equals(attacker.getId()));
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(13);
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
@@ -97,14 +101,17 @@ class ExileTest extends BaseCardTest {
         addAttacker(player2, new GrizzlyBears()); // valid nonwhite target elsewhere so spell is playable
         Permanent whiteAttacker = addAttacker(player1, new TundraWolves());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Exile()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.passPriority(player1);
+        assertThatThrownBy(() -> castExile(whiteAttacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonwhite attacking creature");
+    }
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, whiteAttacker.getId()))
+    @Test
+    @DisplayName("Cannot target an attacking noncreature permanent")
+    void cannotTargetAttackingNoncreaturePermanent() {
+        Permanent artifact = addAttacker(player1, new HowlingMine());
+
+        assertThatThrownBy(() -> castExile(artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonwhite attacking creature");
     }
@@ -113,17 +120,9 @@ class ExileTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addAttacker(player2, new GrizzlyBears()); // valid target elsewhere so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Exile()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.passPriority(player1);
-
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
+        assertThatThrownBy(() -> castExile(nonAttacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking creature");
     }

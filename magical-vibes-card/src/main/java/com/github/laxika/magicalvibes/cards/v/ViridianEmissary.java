@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "95")
 @CardRegistration(set = "PC2", collectorNumber = "80")
+@CardRegistration(set = "TD2", collectorNumber = "52")
 public class ViridianEmissary extends Card {
 
     public ViridianEmissary() {

@@ -56,6 +56,25 @@ class UktabiWildcatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing the only Forest leaves no creature to regenerate")
+    void cannotRegenerateAfterSacrificingOnlyForest() {
+        Permanent wildcats = addWildcatsReady(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, wildcatsIndex(player1), null, null);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Uktabi Wildcats");
+        harness.assertInGraveyard(player1, "Uktabi Wildcats");
+
+        harness.passBothPriorities();
+
+        assertThat(wildcats.getRegenerationShield()).isZero();
+    }
+
+    @Test
     @DisplayName("{G}, Sacrifice a Forest grants a regeneration shield")
     void regenerationSacrificesForestAndGrantsShield() {
         Permanent wildcats = addWildcatsReady(player1);

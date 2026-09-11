@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "74")
+@CardRegistration(set = "DDK", collectorNumber = "43")
 public class ScorchedRusalka extends Card {
 
     public ScorchedRusalka() {

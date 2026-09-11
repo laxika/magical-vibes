@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MistDragon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicDragon.class, MistDragon.class, IronTuskElephant.class})
+@CardUsed({GrizzlyBears.class, MistDragon.class, VolcanicDragon.class})
 class VolcanicDragonTest extends BaseCardTest {
 
     @Test
@@ -38,7 +38,7 @@ class VolcanicDragonTest extends BaseCardTest {
     @DisplayName("Flying prevents a non-flying creature from blocking")
     void flyingPreventsNonFlyingCreatureBlocking() {
         Permanent attacker = addCreatureReady(player1, new VolcanicDragon());
-        Permanent blocker = addCreatureReady(player2, new IronTuskElephant());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();

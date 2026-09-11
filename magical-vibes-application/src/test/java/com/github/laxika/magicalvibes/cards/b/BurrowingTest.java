@@ -31,7 +31,7 @@ class BurrowingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Burrowing()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -45,13 +45,12 @@ class BurrowingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Burrowing()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Burrowing")
-                        && p.isAttached()
+                .anyMatch(p -> p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -62,9 +61,8 @@ class BurrowingTest extends BaseCardTest {
     void enchantedCreatureHasMountainwalk() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Burrowing());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Burrowing());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.MOUNTAINWALK)).isTrue();
     }
@@ -76,9 +74,8 @@ class BurrowingTest extends BaseCardTest {
     void effectsStopWhenRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Burrowing());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Burrowing());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.MOUNTAINWALK)).isTrue();
 
@@ -96,9 +93,8 @@ class BurrowingTest extends BaseCardTest {
 
         Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Burrowing());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Burrowing());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.MOUNTAINWALK)).isFalse();
     }
@@ -111,10 +107,13 @@ class BurrowingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Burrowing()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, opponentBears.getId(), null);
+        harness.castEnchantment(player1, 0, opponentBears.getId());
         harness.passBothPriorities();
 
-        Permanent aura = findPermanent(player1, "Burrowing");
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isAttached)
+                .findFirst()
+                .orElseThrow();
         assertThat(aura.isAttached()).isTrue();
         assertThat(aura.getAttachedTo()).isEqualTo(opponentBears.getId());
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.MOUNTAINWALK)).isTrue();
@@ -124,9 +123,8 @@ class BurrowingTest extends BaseCardTest {
     @DisplayName("Mountainwalk prevents blocking while the defending player controls a Mountain")
     void mountainwalkPreventsBlockingWithMountain() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new Burrowing());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Burrowing());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         attacker.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -146,9 +144,27 @@ class BurrowingTest extends BaseCardTest {
     @DisplayName("Mountainwalk still allows blocking when the defending player controls no Mountain")
     void mountainwalkAllowsBlockingWithoutMountain() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new Burrowing());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Burrowing());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers(player1);
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mountainwalk checks the defending player's Mountains")
+    void mountainwalkChecksDefendingPlayer() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Burrowing());
+        aura.setAttachedTo(attacker.getId());
+        harness.addToBattlefield(player1, new Mountain());
         attacker.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -166,11 +182,9 @@ class BurrowingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Burrowing")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new CrystalRod());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CrystalRod());
         harness.setHand(player1, List.of(new Burrowing()));
         harness.addMana(player1, ManaColor.RED, 1);
-
-        Permanent artifact = findPermanent(player1, "Crystal Rod");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

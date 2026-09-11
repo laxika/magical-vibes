@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "45")
+@CardRegistration(set = "TD2", collectorNumber = "57")
 public class DesecrationElemental extends Card {
 
     public DesecrationElemental() {

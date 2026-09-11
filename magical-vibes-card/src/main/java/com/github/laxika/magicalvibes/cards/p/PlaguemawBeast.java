@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "87")
+@CardRegistration(set = "TD2", collectorNumber = "62")
 public class PlaguemawBeast extends Card {
 
     public PlaguemawBeast() {
