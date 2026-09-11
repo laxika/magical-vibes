@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeU
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "307")
+@CardRegistration(set = "ME3", collectorNumber = "212")
 public class TheTabernacleAtPendrellVale extends Card {
 
     public TheTabernacleAtPendrellVale() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "13")
+@CardRegistration(set = "ME3", collectorNumber = "21")
 public class MisfortunesGain extends Card {
 
     public MisfortunesGain() {

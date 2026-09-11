@@ -2242,6 +2242,35 @@ public class SpellCastingService {
                 revealedHandCardIndex);
     }
 
+    /** Casts a creature card from hand as a face-down 2/2 without paying its mana cost. */
+    public void castCreatureFromHandFaceDown(GameData gameData, Player player, Card card) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null) {
+            return;
+        }
+        int cardIndex = -1;
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getId().equals(card.getId())) {
+                cardIndex = i;
+                break;
+            }
+        }
+        if (cardIndex < 0 || !card.hasType(CardType.CREATURE)) {
+            return;
+        }
+
+        hand.remove(cardIndex);
+        StackEntry entry = new StackEntry(
+                StackEntryType.CREATURE_SPELL, card, playerId, card.getName(), List.of(), 0);
+        entry.setCastFaceDown(true);
+        entry.setFaceDownTurnsFaceUpOnDamageOrTap(true);
+        entry.setAlternateCost(true);
+        entry.setSourceZone(Zone.HAND);
+        gameData.stack.add(entry);
+        finishSpellCast(gameData, playerId, player, hand, card);
+    }
+
     /** Validates the permanent choices for a morph face-up return cost before any cost is paid. */
     public void validateMorphAdditionalCost(GameData gameData, Player player, ReturnPermanentsCost cost,
                                              List<UUID> permanentIds) {

@@ -118,6 +118,8 @@ public class StackEntry {
     @Setter private boolean castTransformed;
     /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
     @Setter private boolean castFaceDown;
+    /** Whether this face-down creature turns face up when it would deal or receive damage or become tapped. */
+    @Setter private boolean faceDownTurnsFaceUpOnDamageOrTap;
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
     @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
@@ -677,6 +679,7 @@ public class StackEntry {
         this.castWithWarp = source.castWithWarp;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
+        this.faceDownTurnsFaceUpOnDamageOrTap = source.faceDownTurnsFaceUpOnDamageOrTap;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
         this.cyclingAbility = source.cyclingAbility;

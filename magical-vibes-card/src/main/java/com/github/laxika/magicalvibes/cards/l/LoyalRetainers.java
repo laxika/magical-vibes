@@ -16,6 +16,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "12")
+@CardRegistration(set = "ME3", collectorNumber = "20")
 public class LoyalRetainers extends Card {
 
     public LoyalRetainers() {

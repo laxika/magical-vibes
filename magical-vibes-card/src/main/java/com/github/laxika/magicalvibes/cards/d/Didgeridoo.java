@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "105")
+@CardRegistration(set = "ME3", collectorNumber = "194")
 public class Didgeridoo extends Card {
 
     public Didgeridoo() {
