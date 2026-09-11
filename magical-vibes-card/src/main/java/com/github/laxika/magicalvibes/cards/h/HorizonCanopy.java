@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "177")
+@CardRegistration(set = "EXP", collectorNumber = "40")
 public class HorizonCanopy extends Card {
 
     public HorizonCanopy() {

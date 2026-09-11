@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "280")
+@CardRegistration(set = "EXP", collectorNumber = "27")
 public class SunkenRuins extends Card {
 
     public SunkenRuins() {

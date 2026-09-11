@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "176")
+@CardRegistration(set = "EXP", collectorNumber = "31")
 public class FetidHeath extends Card {
 
     public FetidHeath() {
