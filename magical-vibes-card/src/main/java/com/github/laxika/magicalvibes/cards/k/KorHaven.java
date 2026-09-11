@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "141")
+@CardRegistration(set = "EXP", collectorNumber = "41")
 public class KorHaven extends Card {
 
     public KorHaven() {
