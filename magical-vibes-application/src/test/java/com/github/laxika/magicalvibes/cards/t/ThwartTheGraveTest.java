@@ -55,7 +55,6 @@ class ThwartTheGraveTest extends BaseCardTest {
         castThwartTheGrave(6);
 
         choose(creature);
-        chooseNothing();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

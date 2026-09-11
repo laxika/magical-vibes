@@ -86,6 +86,6 @@ class AcquisitionsExpertTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castCreature(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

@@ -35,7 +35,7 @@ class GlasspoolMimicTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearId);
 
         Permanent mimic = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof GlasspoolMimic)
+                .filter(permanent -> permanent.getOriginalCard().getName().equals("Glasspool Mimic"))
                 .findFirst()
                 .orElseThrow();
         assertThat(mimic.getCard().getPower()).isEqualTo(2);
@@ -56,7 +56,7 @@ class GlasspoolMimicTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getOriginalCard() instanceof GlasspoolMimic);
+                .noneMatch(permanent -> permanent.getOriginalCard().getName().equals("Glasspool Mimic"));
         harness.assertInGraveyard(player1, "Glasspool Mimic");
     }
 

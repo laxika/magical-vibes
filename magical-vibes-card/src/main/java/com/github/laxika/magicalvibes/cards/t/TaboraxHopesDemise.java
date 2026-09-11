@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "129")
 public class TaboraxHopesDemise extends Card {
@@ -26,12 +27,15 @@ public class TaboraxHopesDemise extends Card {
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, SequenceEffect.of(
-                new PutCountersOnSourceEffect(1, 1, 1),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.CLERIC),
+        var cleric = new CardSubtypePredicate(CardSubtype.CLERIC);
+        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+                new TriggeringCardConditionalEffect(cleric, SequenceEffect.of(
+                        new PutCountersOnSourceEffect(1, 1, 1),
                         new MayEffect(
                                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)),
                                 "Draw a card?"))));
+        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+                new TriggeringCardConditionalEffect(new CardNotPredicate(cleric),
+                        new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

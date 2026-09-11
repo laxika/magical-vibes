@@ -20,7 +20,7 @@ class ScourgeOfTheSkyclavesTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 9);
         harness.setHand(player1, List.of(new ScourgeOfTheSkyclaves()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();

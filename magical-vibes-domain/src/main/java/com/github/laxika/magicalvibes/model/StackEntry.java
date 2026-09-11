@@ -935,7 +935,7 @@ public class StackEntry {
                 if (!(targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
                     continue;
                 }
-                int groupSize = Math.min(targetGroup.getMaxTargets(),
+                int groupSize = Math.min(wasKicked() ? targetGroup.getKickedMaxTargets() : targetGroup.getMaxTargets(),
                         declaredTargetCardIds.size() - graveyardTargetOffset);
                 if (targetGroup.getIndex() == group) {
                     if (groupSize <= 0) {

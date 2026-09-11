@@ -274,7 +274,7 @@ class AbilityActivationServiceTest {
 
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
             assertThat(perm.isTapped()).isTrue();
-            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId());
+            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId(), Set.of(ManaColor.BLUE));
             verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
             verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
@@ -1626,6 +1626,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
             when(gameQueryService.findPermanentById(gameData, husk.getId())).thenReturn(husk);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -1654,6 +1655,8 @@ class AbilityActivationServiceTest {
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, bears)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
