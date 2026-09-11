@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "12")
 @CardRegistration(set = "ORI", collectorNumber = "8")
+@CardRegistration(set = "DDO", collectorNumber = "4")
 public class CelestialFlare extends Card {
 
     public CelestialFlare() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "OGW", collectorNumber = "28")
 @CardRegistration(set = "DDG", collectorNumber = "26")
 @CardRegistration(set = "DDF", collectorNumber = "24")
+@CardRegistration(set = "DDO", collectorNumber = "18")
 public class MightyLeap extends Card {
 
     public MightyLeap() {

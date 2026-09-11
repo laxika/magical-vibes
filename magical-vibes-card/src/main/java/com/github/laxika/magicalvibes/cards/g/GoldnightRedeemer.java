@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "23")
+@CardRegistration(set = "DDQ", collectorNumber = "13")
 public class GoldnightRedeemer extends Card {
 
     public GoldnightRedeemer() {

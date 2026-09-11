@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaEqualToTargetSpellManaValueEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "91")
+@CardRegistration(set = "DDO", collectorNumber = "55")
 public class PlasmCapture extends Card {
 
     public PlasmCapture() {

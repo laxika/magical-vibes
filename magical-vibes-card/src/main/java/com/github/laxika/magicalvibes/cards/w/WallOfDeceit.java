@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "55")
 @CardRegistration(set = "DD2", collectorNumber = "5")
+@CardRegistration(set = "JVC", collectorNumber = "5")
 public class WallOfDeceit extends Card {
 
     public WallOfDeceit() {

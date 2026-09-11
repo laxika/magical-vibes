@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "SHM", collectorNumber = "92")
 @CardRegistration(set = "DD2", collectorNumber = "53")
 @CardRegistration(set = "DDK", collectorNumber = "70")
+@CardRegistration(set = "JVC", collectorNumber = "53")
 public class FlameJavelin extends Card {
 
     public FlameJavelin() {
