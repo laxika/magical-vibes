@@ -34,6 +34,7 @@ public enum CardSet {
     SET_V12("V12"),
     SET_V13("V13"),
     SET_V14("V14"),
+    SET_V16("V16"),
     SET_M11("M11"),
     SET_M12("M12"),
     SET_M13("M13"),
