@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYo
 import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledSourceCreatureDamagePreventionEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageSourceExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
@@ -149,6 +150,7 @@ import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFrom
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
@@ -201,6 +203,7 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfAllZoneSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
@@ -223,6 +226,8 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -261,6 +266,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -343,6 +349,10 @@ public class GameQueryService {
     @Autowired
     @Lazy
     private StaticEffectConditionResolver staticEffectConditionResolver;
+
+    @Autowired
+    @Lazy
+    private LandPlayPermissionService landPlayPermissionService;
 
     /**
      * Evaluates dynamic amounts used by static effects that are queried outside the layered pass,
@@ -853,7 +863,8 @@ public class GameQueryService {
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
         if (card.getSubtypes().contains(subtype)) return true;
         if (card.hasType(CardType.CREATURE) && isCreatureSubtype(subtype)
-                && hasSelfAllCreatureTypesEffect(card)) return true;
+                && (hasSelfAllCreatureTypesEffect(card)
+                || selfAllZoneGrantedSubtypes(card).contains(subtype))) return true;
         if (gameData == null || cardOwnerId == null) return false;
         if (!card.hasType(CardType.CREATURE)) return false;
         if (computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype)) {
@@ -927,6 +938,9 @@ public class GameQueryService {
                 if (isCreatureSubtype(subtype)) subtypes.add(subtype);
             }
         }
+        if (card.hasType(CardType.CREATURE)) {
+            subtypes.addAll(selfAllZoneGrantedSubtypes(card));
+        }
         if (gameData != null && cardOwnerId != null && card.hasType(CardType.CREATURE)) {
             subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
             if (isCardInGraveyard(gameData, cardOwnerId, card)) {
@@ -940,6 +954,16 @@ public class GameQueryService {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
                         && grant.scope() == GrantScope.SELF);
+    }
+
+    private List<CardSubtype> selfAllZoneGrantedSubtypes(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(SelfAllZoneSubtypeGrantingEffect.class::isInstance)
+                .map(SelfAllZoneSubtypeGrantingEffect.class::cast)
+                .flatMap(effect -> effect.grantedSubtypes().stream())
+                .filter(this::isCreatureSubtype)
+                .distinct()
+                .toList();
     }
 
     /**
@@ -1189,11 +1213,39 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if players may pay life or sacrifice creatures as a cost of casting a
-     * spell or activating an ability (i.e. no {@link PlayersCantPayLifeOrSacrificeCreaturesEffect}
-     * is present on any battlefield). Costs demanded by a resolving effect are never restricted.
+     * spell or activating an ability (i.e. neither the creature-only nor the nonland-permanent
+     * restriction is present on any battlefield). Costs demanded by a resolving effect are never
+     * restricted.
      */
     public boolean canPayLifeOrSacrificeCreaturesForCosts(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
+    }
+
+    /**
+     * Returns whether a creature sacrifice is allowed by the creature-only cost restriction.
+     * This deliberately does not include Yasharn's nonland-permanent restriction, because a land
+     * creature remains a legal sacrifice under Yasharn.
+     */
+    public boolean canSacrificeCreaturesForCosts(GameData gameData) {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class);
+    }
+
+    /**
+     * Returns whether {@code permanent} may be sacrificed as a cost. The permanent's current
+     * characteristics are used, so a land creature is still permitted by Yasharn while a nonland
+     * creature is not.
+     */
+    public boolean canSacrificePermanentForCosts(GameData gameData, Permanent permanent) {
+        if (permanent == null) {
+            return false;
+        }
+        if (anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class)
+                && !isLand(gameData, permanent)) {
+            return false;
+        }
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+                || !isCreature(gameData, permanent);
     }
 
     /** Returns whether the player controls a static effect that replaces life payments. */
@@ -2325,17 +2377,36 @@ public class GameQueryService {
 
     public boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card,
                                                 Keyword ability, Zone sourceZone) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                CardEffect activeEffect = staticEffectConditionResolver.resolve(
-                        gameData, permanent, playerId, effect);
-                if (activeEffect instanceof SpellCastingAbilityGrantingEffect grant
-                        && grant.grantedAbility() == ability
-                        && grant.appliesToSourceZone(sourceZone)
-                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
-                    return true;
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                            gameData, permanent, sourceControllerId, effect);
+                    if (activeEffect instanceof SpellCastingAbilityGrantingEffect grant
+                            && (grant.appliesToAllPlayers() || Objects.equals(sourceControllerId, playerId))
+                            && grant.grantedAbility() == ability
+                            && grant.appliesToSourceZone(sourceZone)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null) {
+            UUID planarControllerId = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                            && (grant.appliesToAllPlayers() || Objects.equals(planarControllerId, playerId))
+                            && grant.grantedAbility() == ability
+                            && grant.appliesToSourceZone(sourceZone)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -3111,6 +3182,8 @@ public class GameQueryService {
                 }
             }
         }
+        result = applyPlanarCounterReplacements(gameData, controllerId, counterType, result,
+                affectedPermanentIsCreature, affectedPermanentIsArtifact);
         if (affectedPermanentIsEntering) {
             result = applyEnteringPermanentReplacements(counterType, result, affectedPermanent);
         }
@@ -3175,6 +3248,8 @@ public class GameQueryService {
                 }
             }
         }
+        result = applyPlanarCounterReplacements(gameData, controllerId,
+                CounterType.PLUS_ONE_PLUS_ONE, result, false, true);
         if (affectedPermanentIsEntering) {
             result = applyEnteringPermanentReplacements(CounterType.PLUS_ONE_PLUS_ONE, result,
                     affectedPermanent);
@@ -3252,6 +3327,8 @@ public class GameQueryService {
                 }
             }
         });
+        result[0] = applyPlanarCounterReplacements(gameData, affectedControllerId, counterType,
+                result[0], creature, artifact);
         return limitCounters(gameData, permanent, affectedControllerId, counterType, result[0]);
     }
 
@@ -3269,6 +3346,27 @@ public class GameQueryService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ProliferateReplacementEffect replacement) {
                     result = replacement.replace(result);
+                }
+            }
+        }
+        return result;
+    }
+
+    private int applyPlanarCounterReplacements(GameData gameData, UUID affectedControllerId,
+                                               CounterType counterType, int count,
+                                               boolean affectedPermanentIsCreature,
+                                               boolean affectedPermanentIsArtifact) {
+        if (count <= 0 || gameData.planechase == null || affectedControllerId == null) {
+            return count;
+        }
+        int result = count;
+        UUID planarControllerId = gameData.planechase.controllerId;
+        for (var planar : gameData.planechase.faceUp) {
+            for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CounterReplacementEffect replacement
+                        && replacement.appliesTo(counterType, affectedPermanentIsCreature,
+                        Objects.equals(planarControllerId, affectedControllerId), false, false)) {
+                    result = replacement.replace(counterType, result);
                 }
             }
         }
@@ -3319,6 +3417,8 @@ public class GameQueryService {
                 }
             }
         });
+        result[0] = applyPlanarCounterReplacements(gameData, controllerId, counterType,
+                result[0], creature, artifact);
         return limitCounters(gameData, permanent, controllerId, counterType, result[0]);
     }
 
@@ -4562,6 +4662,14 @@ public class GameQueryService {
                     accumulator, explainEffects);
         }
 
+        int honePower = honeCounterPowerBonus(gameData, target);
+        if (honePower > 0 && (isNaturalCreature
+                || isCreatureInStaticPass(board, target)
+                || accumulator.isAnimatedCreature()
+                || accumulator.isSelfBecomeCreature())) {
+            accumulator.addPower(honePower);
+        }
+
         // Sublayer 7b: the timestamp-resolved base P/T from the layered pass overrides the base
         // decided so far (the 7a CDA applied just above, or the intrinsic base). CR 613.4:
         // 7a applies before 7b, so the latest-timestamp setter beats the CDA regardless of when
@@ -4721,6 +4829,22 @@ public class GameQueryService {
                 accumulator.isTurnFaceUpPrevented());
     }
 
+    /** Hone counters grant their power bonus independently of any ability on the Equipment. */
+    private int honeCounterPowerBonus(GameData gameData, Permanent target) {
+        int powerBonus = 0;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) continue;
+            for (Permanent equipment : battlefield) {
+                if (equipment.isAttached()
+                        && target.getId().equals(equipment.getAttachedTo())
+                        && permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)) {
+                    powerBonus += equipment.getCounterCount(CounterType.HONE);
+                }
+            }
+        }
+        return powerBonus;
+    }
+
     private void applyFloatingStaticGrantsFromSource(GameData gameData, StaticSource sourceSlot,
                                                        Permanent target, StaticBonusAccumulator accumulator,
                                                        List<TextReplacement> globalWordChange) {
@@ -4734,7 +4858,12 @@ public class GameQueryService {
                         || !source.getId().equals(floating.affectedPermanentId())) {
                     continue;
                 }
-                StaticEffectHandler handler = staticEffectRegistry.getHandler(grant.staticEffect());
+                StaticEffectHandler handler = source.getId().equals(target.getId())
+                        ? staticEffectRegistry.getSelfHandler(grant.staticEffect())
+                        : staticEffectRegistry.getHandler(grant.staticEffect());
+                if (handler == null) {
+                    handler = staticEffectRegistry.getHandler(grant.staticEffect());
+                }
                 if (handler != null) {
                     handler.apply(context,
                             TextChangeTransformer.transform(grant.staticEffect(), source.getTextReplacements(),
@@ -6683,34 +6812,8 @@ public class GameQueryService {
 
     /** Returns conditional additional land plays from static abilities, capped to avoid overflow. */
     public int getConditionalAdditionalLandPlays(GameData gameData, UUID playerId) {
-        long additional = 0;
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!(effect instanceof ConditionalEffect)) continue;
-                    List<ConditionalEffect> conditions = new ArrayList<>();
-                    CardEffect active = effect;
-                    while (active instanceof ConditionalEffect conditional) {
-                        conditions.add(conditional);
-                        active = conditional.wrapped();
-                    }
-                    int amount;
-                    if (active instanceof com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect) {
-                        amount = 1;
-                    } else if (controllerId.equals(playerId)
-                            && active instanceof com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect extra) {
-                        amount = extra.amount();
-                    } else {
-                        continue;
-                    }
-                    if (conditions.stream().allMatch(conditional -> conditionEvaluationService.isMet(
-                            gameData, conditional.condition(), ConditionContext.forStaticEffect(permanent, controllerId)))) {
-                        additional += amount;
-                    }
-                }
-            }
-        }
-        return (int) Math.min(Integer.MAX_VALUE - (long) gameData.getMaxLandsThisTurn(playerId), additional);
+        return landPlayPermissionService.getMaxLandsThisTurn(gameData, playerId)
+                - gameData.getMaxLandsThisTurn(playerId);
     }
 
     /**
@@ -7987,6 +8090,18 @@ public class GameQueryService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof TokenCreationReplacementEffect replacement
+                            && replacement.appliesTo(tokenSubtypes)
+                            && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
+                            || !multiply.creatureTokensOnly() || creatureToken)) {
+                        replacements.add(replacement);
+                    }
+                }
+            }
+        }
         for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
                 .getOrDefault(effectiveControllerId, List.of())) {
             if (effect instanceof TokenCreationReplacementEffect replacement
@@ -8513,6 +8628,7 @@ public class GameQueryService {
                 || hasAuraWithEffect(gameData, creature,
                 effect -> effect instanceof PreventAllDamageDealtByEnchantedCreatureEffect prevented
                         && (!prevented.combatOnly() || isCombatDamage))
+                || hasTargetCreatureDamagePrevention(gameData, creature)
                 || gameData.isPreventedFromDealingDamage(creature.getId())) {
             return true;
         }
@@ -8526,6 +8642,9 @@ public class GameQueryService {
             return true;
         }
         if (isCombatDamage && hasActiveStaticEffect(gameData, creature, PreventAllCombatDamageBySelfEffect.class)) {
+            return true;
+        }
+        if (isCombatDamage && isPreventedByCombatDamageSourceExemption(gameData, creature)) {
             return true;
         }
         if (isCombatDamage && gameData.preventAllCombatDamageByAttackingCreatures && creature.isAttacking()) {
@@ -8547,6 +8666,63 @@ public class GameQueryService {
         return false;
     }
 
+    /** Returns whether a named face-up plane's damage is prevented to a player's permanents for the game. */
+    public boolean isDamageFromNamedPlanePreventedForControlledPermanent(
+            GameData gameData, StackEntry entry, UUID recipientControllerId) {
+        if (!isDamagePreventable(gameData) || entry == null || recipientControllerId == null
+                || entry.getSourcePlanarObject() == null) {
+            return false;
+        }
+        Set<String> planeNames = gameData.playersWithDamageFromNamedPlanesPrevented.get(recipientControllerId);
+        return planeNames != null
+                && planeNames.contains(entry.getSourcePlanarObject().getCard().getName());
+    }
+
+    private boolean isPreventedByCombatDamageSourceExemption(GameData gameData, Permanent creature) {
+        FilterContext filterContext = FilterContext.of(gameData);
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                if (hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (source.isStaticEffectSuppressed(effect.getClass())) {
+                        continue;
+                    }
+                    CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                            gameData, source, controllerId, effect);
+                    if (activeEffect instanceof CombatDamageSourceExemptionEffect exemption
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            creature, exemption.exemptSourcePredicate(), filterContext)) {
+                        continue;
+                    }
+                    if (activeEffect instanceof CombatDamageSourceExemptionEffect) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CombatDamageSourceExemptionEffect exemption
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            creature, exemption.exemptSourcePredicate(), filterContext)) {
+                        continue;
+                    }
+                    if (effect instanceof CombatDamageSourceExemptionEffect) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /** Returns whether a permanent's own static slot currently carries the requested effect. */
     public boolean hasActiveStaticEffect(GameData gameData, Permanent source,
                                          Class<? extends CardEffect> effectType) {
@@ -8557,6 +8733,11 @@ public class GameQueryService {
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
                 .filter(effect -> effect != null && !source.isStaticEffectSuppressed(effect.getClass()))
                 .anyMatch(effectType::isInstance);
+    }
+
+    /** Returns the current land-play allowance, including conditional static permissions. */
+    public int getMaxLandsThisTurn(GameData gameData, UUID playerId) {
+        return landPlayPermissionService.getMaxLandsThisTurn(gameData, playerId);
     }
 
     /** Returns whether Ethereal Haze-style prevention applies to damage from this source. */
@@ -8729,12 +8910,24 @@ public class GameQueryService {
     /** Returns whether damage from the given permanent is prevented by an active source-based effect. */
     public boolean isDamageFromPermanentSourcePrevented(GameData gameData, Permanent source) {
         if (!isDamagePreventable(gameData) || source == null) return false;
+        if (hasTargetCreatureDamagePrevention(gameData, source)) {
+            return true;
+        }
         if (gameData.preventAllDamageFromNonHumanSources
                 && !effectiveCreatureSubtypes(gameData, source).contains(CardSubtype.HUMAN)) {
             return true;
         }
         return getEffectiveColors(gameData, source).stream()
                 .anyMatch(color -> isDamageFromSourcePrevented(gameData, color));
+    }
+
+    private boolean hasTargetCreatureDamagePrevention(GameData gameData, Permanent creature) {
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream()
+                    .anyMatch(floating -> creature.getId().equals(floating.affectedPermanentId())
+                            && floating.effect() instanceof PreventDamageEffect prevention
+                            && prevention.scope() == PreventionScope.ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS);
+        }
     }
 
     /** Returns whether damage from the given non-permanent source card is prevented. */

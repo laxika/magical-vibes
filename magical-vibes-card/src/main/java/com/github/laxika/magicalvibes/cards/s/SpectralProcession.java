@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "23")
 @CardRegistration(set = "MD1", collectorNumber = "12")
+@CardRegistration(set = "DDK", collectorNumber = "26")
 public class SpectralProcession extends Card {
 
     public SpectralProcession() {

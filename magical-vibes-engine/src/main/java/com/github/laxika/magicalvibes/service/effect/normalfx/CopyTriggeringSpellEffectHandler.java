@@ -46,10 +46,13 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        Card copyCard = copySupport.createCopyCard(spellCard);
+        var copyCard = effect instanceof CopyTriggeringSpellEffect triggeringSpellEffect
+                && triggeringSpellEffect.tokenCopy()
+                ? copySupport.createTokenCopyCard(spellCard)
+                : copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 spell, copyCard, spell.getControllerId(), spell.getTargetId());
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created", gameData.id, spellCard.getName());

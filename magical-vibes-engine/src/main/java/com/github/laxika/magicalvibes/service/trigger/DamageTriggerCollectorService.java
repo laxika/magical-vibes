@@ -130,7 +130,8 @@ public class DamageTriggerCollectorService {
                 (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
         Permanent watcher = match.permanent();
         if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
-                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())) return false;
+                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())
+                || (trigger.combatDamageOnly() && !damageContext.combatDamage())) return false;
         if (trigger.predicate() != null
                 && !predicateEvaluationService.matchesPermanentPredicate(
                 damageContext.damageSource(), trigger.predicate(), FilterContext.of(match.gameData())
@@ -392,21 +393,62 @@ public class DamageTriggerCollectorService {
         if (damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) return false;
 
         Permanent watcher = match.permanent();
+        Card watcherCard = watcher != null ? watcher.getCard() : match.sourceCard();
+        if (watcherCard == null) return false;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
+                watcherCard,
                 match.controllerId(),
-                watcher.getCard().getName() + "'s ability",
+                watcherCard.getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
-                watcher.getId());
+                watcher == null ? null : watcher.getId());
         entry.setTriggeringPermanentId(damageSource.getId());
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        }
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
 
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcherCard));
         log.info("Game {} - {} triggers to put a counter on the creature that dealt damage",
-                gameData.id, watcher.getCard().getName());
+                gameData.id, watcherCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealsDamageToOpponentPutCounter(TriggerMatchContext match,
+            PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
+        if (effect.reference() != PermanentReference.TRIGGERING) return false;
+
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent damageSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
+        if (damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) return false;
+
+        Permanent watcher = match.permanent();
+        Card watcherCard = watcher != null ? watcher.getCard() : match.sourceCard();
+        if (watcherCard == null) return false;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcherCard,
+                match.controllerId(),
+                watcherCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                watcher == null ? null : watcher.getId());
+        entry.setTriggeringPermanentId(damageSource.getId());
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        }
+        entry.setEventValue(dc.amount());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcherCard));
+        log.info("Game {} - {} triggers after a creature dealt damage to an opponent",
+                gameData.id, watcherCard.getName());
         return true;
     }
 

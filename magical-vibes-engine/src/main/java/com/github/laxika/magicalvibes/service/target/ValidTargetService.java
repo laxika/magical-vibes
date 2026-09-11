@@ -414,6 +414,18 @@ public class ValidTargetService {
                     return candidate != null && selectedNames.contains(candidate.getName());
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                    && !excludeIds.isEmpty()) {
+                Set<Integer> selectedManaValues = excludeIds.stream()
+                        .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .map(Card::getManaValue)
+                        .collect(Collectors.toSet());
+                validGraveyardCardIds.removeIf(id -> {
+                    Card candidate = gameQueryService.findCardInGraveyardById(gameData, id);
+                    return candidate != null && selectedManaValues.contains(candidate.getManaValue());
+                });
+            }
         }
 
         if (allowedTargets.contains(TargetType.EXILE)) {
@@ -1590,15 +1602,12 @@ public class ValidTargetService {
                         && !isValidCreatureAndLandTarget(gameData, c, excludeIds)) {
                     continue;
                 }
-                if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES
-                        && excludeIds.stream()
-                        .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
-                        .filter(java.util.Objects::nonNull)
-                        .anyMatch(selected -> selected.getManaValue() == c.getManaValue())) {
-                    continue;
-                }
                 if (constraint == MultiTargetConstraint.DIFFERENT_NAMES
                         && !hasDifferentNameFromSelected(gameData, c, excludeIds)) {
+                    continue;
+                }
+                if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                        && !hasDifferentManaValueFromSelected(gameData, c, excludeIds)) {
                     continue;
                 }
                 validIds.add(c.getId());
@@ -1612,6 +1621,13 @@ public class ValidTargetService {
                 .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
                 .filter(java.util.Objects::nonNull)
                 .noneMatch(selected -> selected.getName().equals(candidate.getName()));
+    }
+
+    private boolean hasDifferentManaValueFromSelected(GameData gameData, Card candidate, Set<UUID> excludeIds) {
+        return excludeIds.stream()
+                .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .noneMatch(selected -> selected.getManaValue() == candidate.getManaValue());
     }
 
     private boolean isValidInstantAndSorceryTarget(GameData gameData, Card candidate, Set<UUID> excludeIds) {

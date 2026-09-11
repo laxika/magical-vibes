@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,5 +77,17 @@ class CrusadeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
+    }
+    @Test
+    void bonusAppliesWhenCrusadeResolves() {
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new WhiteKnight());
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
+        harness.setHand(player1, List.of(new Crusade()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(3);
     }
 }

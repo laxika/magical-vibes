@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaEqualToTargetSpellManaValueEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "65")
+@CardRegistration(set = "ME3", collectorNumber = "43")
 public class ManaDrain extends Card {
 
     public ManaDrain() {

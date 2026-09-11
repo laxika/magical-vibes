@@ -104,6 +104,17 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Raise Dead cannot be cast without a graveyard target")
+    void cannotCastWithoutGraveyardTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new RaiseDead()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Prepared Raise Dead copy cannot target a creature in the opponent's graveyard")
     void preparedRaiseDeadCannotTargetOpponentGraveyard() {
         Permanent osteomancer = castCheerfulOsteomancer();

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchan
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "95")
+@CardRegistration(set = "ME3", collectorNumber = "62")
 public class DemonicTorment extends Card {
 
     public DemonicTorment() {

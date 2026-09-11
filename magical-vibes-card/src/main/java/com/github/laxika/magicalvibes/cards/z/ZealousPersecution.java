@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "85")
 @CardRegistration(set = "MD1", collectorNumber = "9")
+@CardRegistration(set = "DDK", collectorNumber = "23")
 public class ZealousPersecution extends Card {
 
     public ZealousPersecution() {

@@ -320,6 +320,39 @@ class LibraryChoiceHandlerServiceTest {
     }
 
     @Test
+    void playableCardFromOpponentsLibraryKeepsOwnerAndSearcherVisibility() {
+        Card chosen = createCard("Chosen card", CardType.SORCERY);
+        gd.playerDecks.get(player2Id).add(chosen);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(chosen))
+                .targetPlayerId(player2Id)
+                .destination(LibrarySearchDestination.EXILE_PLAYABLE)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCardFaceDown(gd, player2Id, chosen, null, player1Id);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+        assertThat(gd.playerDecks.get(player2Id)).doesNotContain(chosen);
+    }
+
+    @Test
+    void playableUntilNextUpkeepCardIsExiledFaceUpUnderItsOwner() {
+        Card chosen = createCard("Chosen card", CardType.SORCERY);
+        gd.playerDecks.get(player2Id).add(chosen);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(chosen))
+                .targetPlayerId(player2Id)
+                .destination(LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCard(gd, player2Id, chosen);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+    }
+
+    @Test
     @DisplayName("Puts the requested counter on a card entering from a library")
     void putsCounterOnLibraryCardEnteringBattlefield() {
         Card forest = createBasicLand("Forest");

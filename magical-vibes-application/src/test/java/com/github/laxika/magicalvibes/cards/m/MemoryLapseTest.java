@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.DreamTwist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -101,6 +102,29 @@ class MemoryLapseTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Memory Lapse");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @CardUsed(DreamTwist.class)
+    @Test
+    @DisplayName("Exiles a spell cast with flashback instead of putting it on top of its owner's library")
+    void exilesFlashbackSpellInsteadOfPuttingItOnTopOfLibrary() {
+        DreamTwist twist = new DreamTwist();
+        harness.setGraveyard(player1, List.of(twist));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0, player2.getId());
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new MemoryLapse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, twist.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(twist);
+        harness.assertNotInGraveyard(player1, "Dream Twist");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(twist.getId()));
         assertThat(gd.stack).isEmpty();
     }
 

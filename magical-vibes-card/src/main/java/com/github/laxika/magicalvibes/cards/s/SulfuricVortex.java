@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "106")
+@CardRegistration(set = "DDK", collectorNumber = "68")
 public class SulfuricVortex extends Card {
 
     public SulfuricVortex() {

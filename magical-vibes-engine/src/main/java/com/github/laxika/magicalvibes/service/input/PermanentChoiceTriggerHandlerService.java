@@ -135,7 +135,9 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
         entry.setSourcePlanarObject(stt.planarSource());
-        entry.setEventValue(stt.spellManaSpentX());
+        entry.setEventValue(stt.triggeringSpellManaValue() != null
+                ? stt.triggeringSpellManaValue()
+                : stt.spellManaSpentX());
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
         }
@@ -926,6 +928,10 @@ public class PermanentChoiceTriggerHandlerService {
             }
             entry.setAttackedTargetId(mat.attackedTargetId());
             entry.setEventValue(mat.eventValue());
+            entry.setSacrificedPermanentSnapshot(mat.sacrificedPermanentSnapshot());
+            entry.setSacrificedPower(mat.sacrificedPower());
+            entry.setSacrificedColorCount(mat.sacrificedColorCount());
+            entry.setSacrificedToughness(mat.sacrificedToughness());
             pushTriggeredEntry(gameData, entry);
 
             if (isPlayerTarget) {
@@ -1967,6 +1973,24 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleEtbPlayerTargetGroup(GameData gameData, List<UUID> targets,
             MultiPermanentChoiceContext.EtbPlayerTargetGroup context) {
         var pending = context.pending();
+        List<UUID> chosen = new ArrayList<>(pending.chosenTargetsSoFar());
+        chosen.addAll(targets);
+        var completedGroup = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                pending.sourceCard(), pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
+                chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
+                pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
+                pending.resumePendingMayResolution(), pending.triggeringCardId(),
+                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource());
+        handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
+    }
+
+    public void handleEtbGraveyardCardTargetGroup(GameData gameData, List<UUID> targets,
+            MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup context) {
+        var pending = context.pending();
+        if (targets.isEmpty()) {
+            handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), pending);
+            return;
+        }
         List<UUID> chosen = new ArrayList<>(pending.chosenTargetsSoFar());
         chosen.addAll(targets);
         var completedGroup = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

@@ -1,0 +1,7 @@
+allprojects {
+    if (project.path == ':magical-vibes-application') {
+        plugins.withId('java') {
+            sourceSets.test.java.exclude('**/magical-vibes/**')
+        }
+    }
+}

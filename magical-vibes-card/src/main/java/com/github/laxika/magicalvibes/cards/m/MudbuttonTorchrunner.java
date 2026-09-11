@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "185")
 @CardRegistration(set = "DD1", collectorNumber = "46")
+@CardRegistration(set = "PC2", collectorNumber = "49")
 @CardRegistration(set = "DDG", collectorNumber = "52")
 public class MudbuttonTorchrunner extends Card {
 

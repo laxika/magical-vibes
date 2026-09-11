@@ -6,4 +6,12 @@ import java.util.UUID;
 public interface ActivationCostCardReferenceEffect extends CardEffect {
 
     CardEffect bindToCard(UUID cardId);
+
+    /**
+     * Binds the paid card and, when needed, snapshots a value derived from that card at activation
+     * time. Effects with no such value can keep the ordinary binding behavior.
+     */
+    default CardEffect bindToCard(UUID cardId, int paidCardManaValue) {
+        return bindToCard(cardId);
+    }
 }

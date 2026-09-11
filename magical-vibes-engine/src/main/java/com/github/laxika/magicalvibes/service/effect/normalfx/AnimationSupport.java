@@ -539,8 +539,10 @@ public class AnimationSupport {
             }
 
             AmountContext ctx = AmountContext.forStackEntry(entry, target);
-            int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-            int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+            int power = effect.power() == null ? printedPower(target) :
+                    amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+            int toughness = effect.toughness() == null ? printedToughness(target) :
+                    amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
@@ -575,14 +577,16 @@ public class AnimationSupport {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
-        boolean dynamicPowerToughness = effect.power() != null && effect.toughness() != null
-                && (!(effect.power() instanceof Fixed) || !(effect.toughness() instanceof Fixed));
-        CardEffect basePowerToughnessEffect = !dynamicPowerToughness
-                ? new SetBasePowerToughnessEffect(power, toughness)
-                : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                sourcePermanentId, controllerId, basePowerToughnessEffect, target.getId(), null, null,
-                EffectDuration.PERMANENT, 0));
+        if (effect.power() != null || effect.toughness() != null) {
+            boolean dynamicPowerToughness = effect.power() != null && effect.toughness() != null
+                    && (!(effect.power() instanceof Fixed) || !(effect.toughness() instanceof Fixed));
+            CardEffect basePowerToughnessEffect = !dynamicPowerToughness
+                    ? new SetBasePowerToughnessEffect(power, toughness)
+                    : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId, basePowerToughnessEffect, target.getId(), null, null,
+                    EffectDuration.PERMANENT, 0));
+        }
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {
@@ -626,6 +630,14 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature."));
 
         log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), power, toughness);
+    }
+
+    private int printedPower(Permanent permanent) {
+        return permanent.getCard().getPower() == null ? 0 : permanent.getCard().getPower();
+    }
+
+    private int printedToughness(Permanent permanent) {
+        return permanent.getCard().getToughness() == null ? 0 : permanent.getCard().getToughness();
     }
 
     /**

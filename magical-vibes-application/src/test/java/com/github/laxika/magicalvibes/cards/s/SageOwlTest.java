@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SageOwl.class, BenalishInfantry.class})
+@CardUsed({BenalishInfantry.class, GrizzlyBears.class, SageOwl.class})
 class SageOwlTest extends BaseCardTest {
 
     @Test
@@ -28,6 +29,7 @@ class SageOwlTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(entry.getCard()).isInstanceOf(SageOwl.class);
     }
 
     @Test
@@ -51,6 +53,7 @@ class SageOwlTest extends BaseCardTest {
     @DisplayName("Resolving ETB enters library reorder state")
     void resolvingEtbEntersLibraryReorderState() {
         harness.castFromHand(player1, new SageOwl(), "{1}{U}");
+        // Resolve creature spell
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -70,8 +73,8 @@ class SageOwlTest extends BaseCardTest {
         Card originalTop2 = deck.get(2);
         Card originalTop3 = deck.get(3);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
@@ -86,8 +89,9 @@ class SageOwlTest extends BaseCardTest {
     void libraryReorderClearsAwaitingState() {
         harness.castFromHand(player1, new SageOwl(), "{1}{U}");
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        // Resolve the creature spell and its ETB trigger.
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
@@ -98,15 +102,14 @@ class SageOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Library with fewer than 4 cards reorders available cards")
     void libraryWithFewerThanFourCards() {
-        harness.castFromHand(player1, new SageOwl(), "{1}{U}");
-
-        Card cardA = new SageOwl();
-        Card cardB = new SageOwl();
+        Card cardA = new GrizzlyBears();
+        Card cardB = new GrizzlyBears();
         harness.setLibrary(player1, List.of(cardA, cardB));
         List<Card> deck = gd.playerDecks.get(player1.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SageOwl(), "{1}{U}");
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
@@ -120,12 +123,11 @@ class SageOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Library with exactly 1 card skips reorder prompt")
     void libraryWithOneCardSkipsReorder() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
         harness.castFromHand(player1, new SageOwl(), "{1}{U}");
-
-        harness.setLibrary(player1, List.of(new SageOwl()));
-
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gameLogContains("looks at the top card")).isTrue();
@@ -134,12 +136,11 @@ class SageOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Empty library skips reorder entirely")
     void emptyLibrarySkipsReorder() {
-        harness.castFromHand(player1, new SageOwl(), "{1}{U}");
-
         harness.setLibrary(player1, List.of());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SageOwl(), "{1}{U}");
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gameLogContains("library is empty")).isTrue();

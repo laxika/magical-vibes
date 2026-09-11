@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Tremor.class, RagingGoblin.class, WildGriffin.class, GoldenBear.class, Mountain.class})
+@CardUsed({GoldenBear.class, Mountain.class, RagingGoblin.class, Tremor.class, WildGriffin.class})
 class TremorTest extends BaseCardTest {
 
     @Test

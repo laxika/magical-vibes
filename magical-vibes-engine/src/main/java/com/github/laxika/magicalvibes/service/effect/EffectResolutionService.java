@@ -167,6 +167,10 @@ public class EffectResolutionService {
                         conditionContext)
                         ? replacement.upgradedEffect()
                         : replacement.baseEffect();
+                if (effectToResolve != null) {
+                    entry.replaceEffectToResolve(i, effectToResolve);
+                    effects = entry.getEffectsToResolve();
+                }
             }
 
             // CR 603.5 — resolution-time "you may" re-entry after player responded

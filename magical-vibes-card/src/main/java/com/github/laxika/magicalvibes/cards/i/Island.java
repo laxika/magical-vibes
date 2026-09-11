@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "HOU", collectorNumber = "186")
 @CardRegistration(set = "HOU", collectorNumber = "192")
 @CardRegistration(set = "HOU", collectorNumber = "193")
+@CardRegistration(set = "HOB", collectorNumber = "190")
 @CardRegistration(set = "ALA", collectorNumber = "237")
 @CardRegistration(set = "5ED", collectorNumber = "434")
 @CardRegistration(set = "5ED", collectorNumber = "435")
@@ -338,6 +339,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DTK", collectorNumber = "253")
 @CardRegistration(set = "DTK", collectorNumber = "254")
 @CardRegistration(set = "DTK", collectorNumber = "255")
+
+@CardRegistration(set = "ZNR", collectorNumber = "270")
+@CardRegistration(set = "ZNR", collectorNumber = "271")
 @CardRegistration(set = "ME1", collectorNumber = "184")
 @CardRegistration(set = "ME1", collectorNumber = "185")
 @CardRegistration(set = "ME1", collectorNumber = "186")
@@ -361,6 +365,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "HOP", collectorNumber = "147")
 @CardRegistration(set = "HOP", collectorNumber = "148")
 @CardRegistration(set = "HOP", collectorNumber = "150")
+@CardRegistration(set = "PC2", collectorNumber = "137")
+@CardRegistration(set = "PC2", collectorNumber = "138")
+@CardRegistration(set = "PC2", collectorNumber = "139")
+@CardRegistration(set = "PC2", collectorNumber = "140")
+@CardRegistration(set = "PC2", collectorNumber = "141")
+@CardRegistration(set = "ME3", collectorNumber = "219")
+@CardRegistration(set = "ME3", collectorNumber = "220")
+@CardRegistration(set = "ME3", collectorNumber = "221")
 public class Island extends Card {
 
     public Island() {
