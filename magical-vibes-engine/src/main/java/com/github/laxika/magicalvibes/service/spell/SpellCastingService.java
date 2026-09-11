@@ -9697,13 +9697,6 @@ public class SpellCastingService {
                 card.getName() + " from the top of their library");
     }
 
-    private void payLifeForExileAlternative(GameData gameData, Player player, Card card) {
-        int amount = card.getManaValue();
-        if (amount <= 0) return;
-        lifeSupport.applyLifePayment(gameData, player.getId(), amount,
-                card.getName() + " from exile");
-    }
-
     /**
      * Pays escalate's mana-per-extra-mode cost when the spell's mana cost itself was waived
      * (alternate / free cast). Cost reducers still apply to this payment.
