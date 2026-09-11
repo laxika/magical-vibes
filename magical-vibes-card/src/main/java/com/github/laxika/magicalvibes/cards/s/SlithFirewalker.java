@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "107")
 @CardRegistration(set = "DD2", collectorNumber = "39")
+@CardRegistration(set = "JVC", collectorNumber = "39")
 public class SlithFirewalker extends Card {
 
     public SlithFirewalker() {
