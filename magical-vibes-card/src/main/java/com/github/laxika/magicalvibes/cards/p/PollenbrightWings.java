@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "219")
+@CardRegistration(set = "PC2", collectorNumber = "103")
 public class PollenbrightWings extends Card {
 
     public PollenbrightWings() {

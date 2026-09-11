@@ -1,4 +1,5 @@
 # ORACLE_TEXT_EFFECT_MAP
+| "Devour X, where X is the number of creatures devoured this way" | `DevourEffect(new CreaturesDevoured())` | `ON_ENTER_BATTLEFIELD` | Thromok the Insatiable (PC2 106); the dynamic multiplier is evaluated after the as-enters sacrifice choice, so devouring N creatures gives N×N +1/+1 counters |
 | "At the beginning of your upkeep, put a flame counter on [this plane], then [this plane] deals damage to you equal to the number of flame counters on it." | `UPKEEP_TRIGGERED` + `SequenceEffect.of(PutCountersOnSelfEffect(FLAME), DealDamageToPlayersEffect(CountersOnSource(FLAME), CONTROLLER))` | planar upkeep trigger | Naar Isle. Planar sources use the live `PlanarObject` for counter placement and counter-scaled damage. |
 | "Whenever this creature attacks, defending player exiles the top N cards of their library" | `ExileTopCardsOfDefendingPlayerLibraryEffect(N)` | `ON_ATTACK` | Ulamog, the Ceaseless Hunger (N=20). Non-targeting: the handler reads the attacked player or attacked planeswalker's controller from the attack trigger's `attackedTargetId` and exiles cards normally, without tracking them with the source |
 | "Whenever this creature deals combat damage to a player, that player exiles the top card of their library" | `ExileTopCardsOfDefendingPlayerLibraryEffect(1)` | `ON_COMBAT_DAMAGE_TO_PLAYER` | Benthic Infiltrator. The combat-damage trigger binds the damaged player as context; cards are exiled normally, without tracking them with the source |
@@ -321,6 +322,7 @@ CounterType.STUN)`; the target filter restricts the ETB to a nonbasic land an op
 
 | "activated abilities of Equipment you control that target this creature cost {N} less to activate" | `ReduceActivatedAbilityCostForTargetingSourceEffect(N)` | STATIC | Bladegraft Aspirant; matches Equipment ability sources controlled by the source's controller and checks the chosen target IDs |
 | "Spells that target this creature cost {N} less to cast." | `ReduceOpponentCostForTargetingControlledPermanentEffect(PermanentIsSourcePermanentPredicate(), N, true)` | STATIC | Spellwild Ouphe; the `true` form includes spells cast by the source's controller, and each source permanent contributes once even if it is targeted repeatedly |
+| "Spells you cast that target this creature cost {N} less to cast." | `ReduceOwnCastCostIfTargetingPermanentEffect(PermanentIsSourcePermanentPredicate(), N, true)` | STATIC | Elderwood Scion; when carried by a battlefield permanent, the target predicate receives that permanent as its source snapshot and only the source controller's spells are reduced |
 
 Target-gated spell-self cost increases use `IncreaseOwnCastCostIfTargetingPermanentEffect` and
 are evaluated against the chosen first permanent target by

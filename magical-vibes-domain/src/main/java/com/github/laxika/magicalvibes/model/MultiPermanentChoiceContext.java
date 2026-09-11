@@ -720,7 +720,7 @@ public sealed interface MultiPermanentChoiceContext {
      * creature's ETB triggers proceed. Carries the entry context needed to resume
      * {@code processCreatureETBEffects} for the discard trigger.
      */
-    record DevourSacrifice(UUID enteringPermanentId, int multiplier, UUID controllerId, Card card,
+    record DevourSacrifice(UUID enteringPermanentId, DynamicAmount multiplier, UUID controllerId, Card card,
                            UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {
     }

@@ -2529,7 +2529,9 @@ public class MultiPermanentChoiceHandlerService {
 
         if (entering != null && devoured > 0) {
             if (!gameQueryService.cantHaveCounters(gameData, entering)) {
-                int added = context.multiplier() * devoured;
+                int multiplier = amountEvaluationService.evaluate(gameData, context.multiplier(),
+                        new AmountContext(playerId, entering, null, 0, 0));
+                int added = multiplier * devoured;
                 added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);

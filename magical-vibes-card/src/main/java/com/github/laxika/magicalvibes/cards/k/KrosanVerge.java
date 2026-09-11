@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "141")
+@CardRegistration(set = "PC2", collectorNumber = "123")
 public class KrosanVerge extends Card {
 
     public KrosanVerge() {

@@ -1,6 +1,8 @@
 # EFFECTS_QUICK_REFERENCE
 Planar source note: `PutCountersOnSelfEffect(CounterType)` can place the counter on a planar source, and `CountersOnSource(CounterType)` reads the face-up `PlanarObject` for a counter-scaled planar ability (Naar Isle).
 
+`DevourEffect` also accepts a `DynamicAmount` multiplier in addition to its fixed-integer constructor. `new DevourEffect(new CreaturesDevoured())` implements Thromok the Insatiable's Devour X, where X is the number of creatures devoured, so devouring N creatures gives N×N +1/+1 counters.
+
 - `SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(CardPredicate[, ManaValueBound[, EnterWithCountersEffect]])` — choose one matching card from the controller's library and/or graveyard and put it onto the battlefield; optional mana-value bounds and as-enters counters are evaluated before the choice, and the library shuffles when searched (Vision Quest)
 
 - `ReduceActivatedAbilityCostEffect(PermanentPredicate, int, true)` - controller-scoped reduction of the generic activation cost for matching permanents' Power-up abilities; use a creature/controlled-by-source-controller/source-excluded predicate for "Power-up abilities of other creatures you control" (Hulk, Gamma Goliath).

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "37")
+@CardRegistration(set = "PC2", collectorNumber = "10")
 public class MammothUmbra extends Card {
 
     public MammothUmbra() {

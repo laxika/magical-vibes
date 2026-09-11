@@ -366,6 +366,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDH", collectorNumber = "38")
 @CardRegistration(set = "DDH", collectorNumber = "39")
 @CardRegistration(set = "HOP", collectorNumber = "168")
+@CardRegistration(set = "PC2", collectorNumber = "151")
+@CardRegistration(set = "PC2", collectorNumber = "152")
+@CardRegistration(set = "PC2", collectorNumber = "153")
+@CardRegistration(set = "PC2", collectorNumber = "154")
+@CardRegistration(set = "PC2", collectorNumber = "155")
+@CardRegistration(set = "PC2", collectorNumber = "156")
 public class Forest extends Card {
 
     public Forest() {
