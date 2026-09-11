@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vitalize.class, BenalishInfantry.class, MindStone.class})
+@CardUsed({BenalishInfantry.class, MindStone.class, Vitalize.class})
 class VitalizeTest extends BaseCardTest {
 
     @Test

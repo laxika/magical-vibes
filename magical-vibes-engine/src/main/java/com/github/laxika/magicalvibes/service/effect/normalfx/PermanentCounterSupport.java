@@ -1521,6 +1521,32 @@ public class PermanentCounterSupport {
         }
     }
 
+    public void recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+            GameData gameData, Permanent target, int count, UUID placingPlayerId) {
+        if (target == null) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                gameData, target, controllerId, count, placingPlayerId);
+    }
+
+    public void recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+            GameData gameData, Permanent target, UUID controllerId, int count, UUID placingPlayerId) {
+        if (count <= 0 || target == null || controllerId == null
+                || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkGraveyardAllyPlusOnePlusOneCountersPutOnCreatureTriggers(
+                    gameData, target, controllerId, count);
+        }
+        if (controllerId.equals(placingPlayerId)) {
+            gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.merge(
+                    controllerId, count, Integer::sum);
+        }
+    }
+
     public void recordPlusOnePlusOneCounterPlacedOnCreature(GameData gameData, Permanent target,
                                                             UUID placingPlayerId) {
         if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
@@ -1567,6 +1593,8 @@ public class PermanentCounterSupport {
     private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent target, UUID controllerId, int count, UUID placingPlayerId) {
         if (target != null && controllerId != null) {
+            recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                    gameData, target, controllerId, count, placingPlayerId);
             boolean firstPlacementOnThisPermanent =
                     gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.add(target.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);

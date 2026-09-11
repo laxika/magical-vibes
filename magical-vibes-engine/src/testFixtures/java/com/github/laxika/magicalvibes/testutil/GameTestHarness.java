@@ -845,6 +845,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, xValue, null, null);
     }
 
+    public void castSorcery(Player player, int cardIndex) {
+        castSorcery(player, cardIndex, 0);
+    }
+
     public void castSorceryWithBehold(Player player, int cardIndex, int xValue, CardSubtype chosenType,
                                       List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
         ensurePriority(player);
@@ -1204,6 +1208,16 @@ public class GameTestHarness {
         gameService.playModalXCard(gameData, player, cardIndex,
                 ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
                 xValue, targetId, targetIds);
+    }
+
+    public void castModalSorceryWithModesForXAndDamageAssignments(Player player, int cardIndex,
+                                                                  int choicesRequired,
+                                                                  int[] modeIndices, int xValue,
+                                                                  Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playModalXCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                xValue, null, List.of(), damageAssignments);
     }
 
     /**

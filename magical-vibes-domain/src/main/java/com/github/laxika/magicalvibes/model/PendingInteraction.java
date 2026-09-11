@@ -43,6 +43,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
+        PendingInteraction.PlanarCardChoice,
+        PendingInteraction.SpatialMergingCardOrder,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
@@ -123,6 +125,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ImprintFromHandChoice,
         PendingInteraction.ExileFromHandWithRefineCountersChoice,
         PendingInteraction.DiscardCostChoice,
+        PendingInteraction.PlanarAbilityHandCardChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.NivMizzetColorPairChoice,
@@ -539,6 +542,48 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                               UUID deckOwnerId, String prompt, java.util.List<UUID> topCardIds) {
             this(playerId, cards, toBottom, deckOwnerId, prompt, 0, topCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
+    }
+
+    /** Choose one of the plane cards revealed by a planar effect. */
+    record PlanarCardChoice(UUID playerId, java.util.List<Card> revealedCards,
+                            java.util.List<UUID> validPlaneCardIds, String prompt)
+            implements PendingInteraction {
+
+        public PlanarCardChoice {
+            revealedCards = java.util.List.copyOf(revealedCards);
+            validPlaneCardIds = java.util.List.copyOf(validPlaneCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validPlaneCardIds, 1, 1);
+        }
+    }
+
+    /** Orders the non-plane cards revealed by Spatial Merging before they are bottomed. */
+    record SpatialMergingCardOrder(UUID playerId, java.util.List<Card> planes,
+                                   java.util.List<Card> cardsToBottom, String prompt)
+            implements PendingInteraction {
+
+        public SpatialMergingCardOrder {
+            planes = java.util.List.copyOf(planes);
+            cardsToBottom = java.util.List.copyOf(cardsToBottom);
         }
 
         @Override
@@ -3560,6 +3605,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Choose the nonland card to exile for a planar ability's activation cost. */
+    record PlanarAbilityHandCardChoice(UUID playerId, UUID sourceId, int abilityIndex, int xValue,
+                                       UUID targetId, Zone targetZone,
+                                       java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PlanarAbilityHandCardChoice {
+            validIndices = validIndices != null ? java.util.List.copyOf(validIndices) : java.util.List.of();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
     /**
      * Select zero or more of the revealed/looked-at library cards (Lead the Stampede /
      * Genesis Wave battlefield picks, choose-N-to-hand looks, punisher reveals, Karn Scion
@@ -4560,19 +4626,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                             String label, String cardName,
-                                             CounterType enterWithCounter, boolean grantHaste,
-                                             boolean returnToHandAtEndStep)
+                                               String label, String cardName,
+                                               CounterType enterWithCounter, int enterWithCounterCount,
+                                               boolean grantHaste,
+                                               boolean returnToHandAtEndStep)
             implements PendingInteraction {
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String label, String cardName) {
-            this(playerId, validCardIds, label, cardName, null, false, false);
+                                                 String label, String cardName) {
+            this(playerId, validCardIds, label, cardName, null, 0, false, false);
         }
 
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String label, String cardName,
-                                                CounterType enterWithCounter) {
-            this(playerId, validCardIds, label, cardName, enterWithCounter, false, false);
+                                                 String label, String cardName,
+                                                 CounterType enterWithCounter) {
+            this(playerId, validCardIds, label, cardName, enterWithCounter,
+                    enterWithCounter == null ? 0 : 1, false, false);
         }
 
         public PutCardFromHandOrGraveyardChoice {

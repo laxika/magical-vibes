@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.m.MorningtidesLight;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrimalClay.class, MorningtidesLight.class})
+@CardUsed({PrimalClay.class, Unsummon.class})
 class PrimalClayTest extends BaseCardTest {
 
     private Permanent castAndReturn(String chosenForm) {
@@ -60,6 +59,7 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, clay)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, clay, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, clay, Keyword.DEFENDER)).isFalse();
+        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isFalse();
     }
 
     @Test
@@ -97,19 +97,18 @@ class PrimalClayTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Returning from exile asks for a new shape")
-    void returningFromExileAsksForNewShape() {
+    @DisplayName("Casting it again after returning to hand asks for a new shape")
+    void returningToHandAsksForNewShape() {
         Permanent clay = castAndReturn("TWO_TWO_FLYING");
 
-        harness.setHand(player1, List.of(new MorningtidesLight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, List.of(clay.getId()));
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, clay.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.assertNotOnBattlefield(player1, "Primal Clay");
+        harness.assertInHand(player1, "Primal Clay");
+
+        harness.castFromHand(player1, new PrimalClay(), "{4}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);

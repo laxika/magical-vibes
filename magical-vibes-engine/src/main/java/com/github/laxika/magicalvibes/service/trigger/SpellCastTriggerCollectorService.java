@@ -1426,6 +1426,7 @@ public class SpellCastTriggerCollectorService {
                     null,
                     null,
                     null,
+                    sc.spellCard().getId(),
                     kickCount));
             return true;
         }
@@ -1434,6 +1435,7 @@ public class SpellCastTriggerCollectorService {
         // effects (put counters on source, damage equal to counters on source) need it.
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId());
+        entry.setTriggeringCardId(sc.spellCard().getId());
         entry.setEventValue(kickCount);
         match.gameData().stack.add(entry);
 

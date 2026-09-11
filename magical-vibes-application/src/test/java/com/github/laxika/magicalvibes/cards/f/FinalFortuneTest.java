@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.cards.u.UginsNexus;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FinalFortune.class, PlatinumAngel.class, UginsNexus.class})
+@CardUsed({FinalFortune.class, Counterspell.class, PlatinumAngel.class, UginsNexus.class})
 class FinalFortuneTest extends BaseCardTest {
 
     /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
@@ -32,11 +33,9 @@ class FinalFortuneTest extends BaseCardTest {
     }
 
     private void castFinalFortune() {
-        harness.setHand(player1, List.of(new FinalFortune()));
-        harness.addMana(player1, ManaColor.RED, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new FinalFortune(), "{R}{R}");
         harness.passBothPriorities();
     }
 
@@ -62,6 +61,50 @@ class FinalFortuneTest extends BaseCardTest {
         assertThat(pending.getFirst().playerId()).isEqualTo(player1.getId());
         assertThat(pending.getFirst().registeredTurnNumber()).isEqualTo(turnBefore);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Casting during an opponent's turn gives you the extra turn after it")
+    void castingDuringOpponentsTurnGivesControllerTheExtraTurn() {
+        enableAutoStop();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new FinalFortune(), "{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+
+        advanceToEndStep();
+        assertThat(gd.stack).isNotEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Countering it prevents both the extra turn and delayed loss")
+    void counteredFinalFortuneDoesNotCreateExtraTurnOrDelayedLoss() {
+        FinalFortune finalFortune = new FinalFortune();
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player1, List.of(finalFortune));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(counterspell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstant(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, finalFortune.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(finalFortune.getId()));
     }
 
     @Test

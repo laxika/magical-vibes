@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "81")
+@CardRegistration(set = "DDK", collectorNumber = "67")
 public class BreakingPoint extends Card {
 
     public BreakingPoint() {

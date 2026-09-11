@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "64")
+@CardRegistration(set = "ME3", collectorNumber = "56")
 public class WuWarship extends Card {
 
     public WuWarship() {

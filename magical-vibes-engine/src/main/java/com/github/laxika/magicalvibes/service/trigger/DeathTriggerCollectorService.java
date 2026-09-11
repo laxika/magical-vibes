@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCounterPTEffect;
@@ -343,7 +344,7 @@ public class DeathTriggerCollectorService {
                 selfDeath.dyingCard(),
                 selfDeath.controllerId(),
                 selfDeath.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)));
+                new ArrayList<>(List.of(effect.boundToDyingCreatureCounters(dyingPermanent.getCounters()))));
         entry.setEventValue(counters);
         entry.setSourcePermanentSnapshot(new Permanent(dyingPermanent));
         match.gameData().stack.add(entry);
@@ -515,28 +516,50 @@ public class DeathTriggerCollectorService {
 
     @CollectsTrigger(value = DistributeCountersAmongCreaturesOnDeathEffect.class,
             slot = EffectSlot.ON_DEATH)
+    @CollectsTrigger(value = DistributeCountersAmongCreaturesOnDeathEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleDistributeCountersAmongCreaturesOnDeath(TriggerMatchContext match,
             DistributeCountersAmongCreaturesOnDeathEffect effect, TriggerContext ctx) {
-        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        Permanent dyingPermanent = sd.dyingPermanent();
-        if (dyingPermanent == null) {
+        Card dyingCard;
+        java.util.UUID controllerId;
+        int counters;
+        if (ctx instanceof TriggerContext.SelfDeath sd) {
+            Permanent dyingPermanent = sd.dyingPermanent();
+            if (dyingPermanent == null) {
+                return false;
+            }
+            dyingCard = sd.dyingCard();
+            controllerId = sd.controllerId();
+            counters = effect.countFromSourcePower()
+                    ? Math.max(0, dyingPermanent.getEffectivePower())
+                    : effect.countFromSourceCounters()
+                            ? dyingPermanent.getCounterCount(effect.counterType())
+                            : effect.count();
+        } else if (ctx instanceof TriggerContext.CreatureDeath cd) {
+            if (!effect.countFromSourcePower()) {
+                return false;
+            }
+            dyingCard = cd.dyingCard();
+            controllerId = cd.dyingCreatureControllerId();
+            counters = Math.max(0, cd.dyingCreaturePower());
+        } else {
             return false;
         }
         // The dying-source form snapshots at death — the permanent is gone by resolution. The "you
         // may" and the division (pendingETBDamageAssignments) both happen when the trigger resolves.
-        int counters = effect.countFromSourceCounters()
-                ? dyingPermanent.getCounterCount(effect.counterType())
-                : effect.count();
         CardEffect baked = new DistributeCountersAmongCreaturesOnDeathEffect(
-                effect.counterType(), counters, effect.countFromSourceCounters(), effect.anyCreature());
-        MayEffect may = new MayEffect(baked, "distribute " + counters + " counter(s) among "
-                + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"));
+                effect.counterType(), counters, effect.countFromSourceCounters(), effect.anyCreature(),
+                false, effect.optional());
+        CardEffect queued = effect.optional()
+                ? new MayEffect(baked, "distribute " + counters + " counter(s) among "
+                        + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"))
+                : baked;
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                sd.dyingCard(),
-                sd.controllerId(),
-                sd.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(may))
+                dyingCard,
+                controllerId,
+                dyingCard.getName() + "'s ability",
+                new ArrayList<>(List.of(queued))
         ));
         return true;
     }
@@ -3402,6 +3425,37 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new CreateTokenForImprintedCardOwnerEffect(frozen))),
+                match.permanent().getId(),
+                List.of()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokensForExiledCardsWithSourceEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesCreateTokensForExiledCardsWithSource(TriggerMatchContext match,
+            CreateTokensForExiledCardsWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        boolean hasExiledCard;
+        synchronized (match.gameData().exiledCards) {
+            hasExiledCard = match.gameData().exiledCards.stream()
+                    .anyMatch(exiled -> match.permanent().getId().equals(exiled.sourcePermanentId()));
+        }
+        if (!hasExiledCard) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CreateTokensForExiledCardsWithSourceEffect(
+                        effect.tokenEffect(), match.permanent().getId()))),
                 match.permanent().getId(),
                 List.of()
         );

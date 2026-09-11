@@ -647,13 +647,24 @@ public class GameService {
      */
     public void playModalXCard(GameData gameData, Player player, int cardIndex, int modeIndex, int modalXValue,
                                UUID targetId, List<UUID> targetIds) {
+        playModalXCard(gameData, player, cardIndex, modeIndex, modalXValue, targetId, targetIds, null);
+    }
+
+    /**
+     * Casts a modal {@code {X}} spell with divided-damage assignments in addition to its ordinary
+     * permanent/player target list.
+     */
+    public void playModalXCard(GameData gameData, Player player, int cardIndex, int modeIndex, int modalXValue,
+                               UUID targetId, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> playModalXCard(gameData, actionPlayer, cardIndex, modeIndex, modalXValue, targetId, targetIds))) return;
+                () -> playModalXCard(gameData, actionPlayer, cardIndex, modeIndex, modalXValue, targetId,
+                        targetIds, damageAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playCard(gameData, player, cardIndex, modeIndex, targetId, null, targetIds, List.of(),
+            spellCastingService.playCard(gameData, player, cardIndex, modeIndex, targetId, damageAssignments,
+                    targetIds, List.of(),
                     false, null, null, List.of(), null, null, false, null, modalXValue);
         }
     }

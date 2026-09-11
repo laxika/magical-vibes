@@ -309,6 +309,18 @@ public class CombatAttackService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CombatCreatureLimitEffect limit
+                            && (!filterByAttackTarget
+                            || limit.appliesToAttackTarget(gameData.planechase.controllerId,
+                            planar.getId(), attackTargetId))) {
+                        maximum[0] = Math.min(maximum[0], limit.maxAttackers());
+                    }
+                }
+            }
+        }
         return maximum[0];
     }
 
@@ -1631,6 +1643,10 @@ public class CombatAttackService {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
+        }
+
+        for (int idx : attackerIndices) {
+            triggerCollectionService.checkPlanarAllyCreatureAttackTriggers(gameData, battlefield.get(idx));
         }
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers

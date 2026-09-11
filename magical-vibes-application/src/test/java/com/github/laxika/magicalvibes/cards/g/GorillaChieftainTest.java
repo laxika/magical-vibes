@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GorillaChieftain.class)
+@CardUsed({GorillaChieftain.class})
 class GorillaChieftainTest extends BaseCardTest {
 
     @Test
@@ -37,6 +37,21 @@ class GorillaChieftainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each resolved activation creates an additional regeneration shield")
+    void multipleActivationsCreateMultipleShields() {
+        Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chieftain.getRegenerationShield()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Gorilla Chieftain from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
@@ -47,10 +62,7 @@ class GorillaChieftainTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Gorilla Chieftain");
         assertThat(chieftain.isTapped()).isTrue();
@@ -67,10 +79,7 @@ class GorillaChieftainTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Gorilla Chieftain");
         harness.assertInGraveyard(player1, "Gorilla Chieftain");

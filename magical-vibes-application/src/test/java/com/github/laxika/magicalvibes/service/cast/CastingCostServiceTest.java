@@ -149,6 +149,8 @@ class CastingCostServiceTest {
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
     }
 
     /**
@@ -1281,6 +1283,39 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Battlefield source-relative reduction applies only to the source permanent")
+        void battlefieldSourceRelativeReductionAppliesOnlyToSource() {
+            var predicate = new PermanentIsSourcePermanentPredicate();
+            Card sourceCard = new Card();
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 2, true));
+            Permanent source = new Permanent(sourceCard);
+            Permanent other = new Permanent(new Card());
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(other);
+
+            Card spell = new Card();
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.findPermanentById(gd, other.getId())).thenReturn(other);
+            when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(gd, other.getId())).thenReturn(player1Id);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), eq(predicate), any(FilterContext.class)))
+                    .thenAnswer(invocation -> {
+                        Permanent candidate = invocation.getArgument(0);
+                        FilterContext context = invocation.getArgument(2);
+                        return context.sourcePermanentSnapshot() != null
+                                && context.sourcePermanentSnapshot().getId().equals(candidate.getId());
+                    });
+
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(source.getId())))
+                    .isEqualTo(2);
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(other.getId())))
+                    .isZero();
+        }
+
+        @Test
         @DisplayName("Stack-entry reduction applies when first target is a matching spell on the stack")
         void stackEntryReductionApplies() {
             var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate(
@@ -1707,8 +1742,25 @@ class CastingCostServiceTest {
             Card spell = spellWith(new SacrificeCreatureCost());
             Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
             gd.playerBattlefields.get(player1Id).add(creature);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(false);
 
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+        }
+
+        @Test
+        void sacrificePermanentUsesSpecificRestrictionWhenLifePaymentsAreProhibited() {
+            var filter = new PermanentIsCreaturePredicate();
+            Card spell = spellWith(new SacrificePermanentCost(filter, "a creature"));
+            Permanent creature = new Permanent(graveyardCard("Land creature", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(true);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(false);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
         }
 

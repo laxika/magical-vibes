@@ -49,6 +49,7 @@ public class CreatureSacrificeCostHandler implements PermanentChoiceCostHandler 
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
                 .filter(p -> !cost.excludeSelf() || !p.getId().equals(sourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
@@ -58,6 +59,9 @@ public class CreatureSacrificeCostHandler implements PermanentChoiceCostHandler 
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must sacrifice a creature");
+        }
+        if (!gameQueryService.canSacrificePermanentForCosts(gameData, chosen)) {
+            throw new IllegalStateException("This creature cannot be sacrificed as a cost");
         }
         if (cost.excludeSelf() && chosen.getId().equals(sourcePermanentId)) {
             throw new IllegalStateException("Cannot sacrifice this permanent to its own ability");

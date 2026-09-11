@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "71")
+@CardRegistration(set = "PC2", collectorNumber = "33")
 @CardRegistration(set = "V13", collectorNumber = "13")
 public class InkEyesServantOfOni extends Card {
 

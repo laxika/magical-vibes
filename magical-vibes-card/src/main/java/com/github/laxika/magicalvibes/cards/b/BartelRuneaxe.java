@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "222")
+@CardRegistration(set = "ME3", collectorNumber = "145")
 public class BartelRuneaxe extends Card {
 
     public BartelRuneaxe() {

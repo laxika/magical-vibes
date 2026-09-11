@@ -147,8 +147,10 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
+import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
+import com.github.laxika.magicalvibes.model.amount.PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
@@ -192,6 +194,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -215,6 +218,9 @@ public class AmountEvaluationService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final ConditionEvaluationService conditionEvaluationService;
+
+    private static final List<CardSubtype> PARTY_ROLES = List.of(
+            CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD);
 
     @Autowired
     public AmountEvaluationService(PredicateEvaluationService predicateEvaluationService,
@@ -307,6 +313,10 @@ public class AmountEvaluationService {
                     countUnlockedRoomDoors(gameData, c, ctx);
             case PermanentCounterSum s ->
                     sumPermanentCounters(gameData, s, ctx);
+            case PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn
+                                    .getOrDefault(ctx.controllerId(), 0);
             case DistinctPermanentNamesCount c ->
                     countDistinctPermanentNames(gameData, c, ctx);
             case PermanentManaValueSum s ->
@@ -485,6 +495,8 @@ public class AmountEvaluationService {
                     countOpponentPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
+            case PartySize ignored ->
+                    partySize(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
             case CreaturesPutIntoOwnGraveyardThisTurn ignored ->
@@ -1779,6 +1791,56 @@ public class AmountEvaluationService {
             }
         }
         return greatest;
+    }
+
+    private int partySize(GameData gameData, AmountContext ctx) {
+        return partySize(gameData, ctx.controllerId(), gameQueryService);
+    }
+
+    static int partySize(GameData gameData, UUID controllerId, GameQueryService gameQueryService) {
+        if (controllerId == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+
+        List<Set<CardSubtype>> creatureTypes = new ArrayList<>();
+        for (Permanent permanent : battlefield) {
+            // Party can define power in layer 7. Read the already applied type and
+            // ability layers instead of recursively assembling that power again.
+            var state = LayerSystemService.activeStateFor(permanent.getId());
+            if (!(state != null ? state.getCardTypes().contains(CardType.CREATURE)
+                    : gameQueryService.isCreature(gameData, permanent))) {
+                continue;
+            }
+            Set<CardSubtype> types = new HashSet<>(state != null ? state.getSubtypes()
+                    : gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
+            if (state != null ? state.getKeywords().contains(Keyword.CHANGELING)
+                    : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+                types.addAll(PARTY_ROLES);
+            }
+            creatureTypes.add(types);
+        }
+        return maximumPartySize(creatureTypes, 0, new HashSet<>());
+    }
+
+    private static int maximumPartySize(List<Set<CardSubtype>> creatureTypes, int roleIndex,
+                                        Set<Integer> usedCreatureIndices) {
+        if (roleIndex == PARTY_ROLES.size()) {
+            return 0;
+        }
+
+        int maximum = maximumPartySize(creatureTypes, roleIndex + 1, usedCreatureIndices);
+        CardSubtype role = PARTY_ROLES.get(roleIndex);
+        for (int creatureIndex = 0; creatureIndex < creatureTypes.size(); creatureIndex++) {
+            if (usedCreatureIndices.contains(creatureIndex)
+                    || !creatureTypes.get(creatureIndex).contains(role)) {
+                continue;
+            }
+            usedCreatureIndices.add(creatureIndex);
+            maximum = Math.max(maximum,
+                    1 + maximumPartySize(creatureTypes, roleIndex + 1, usedCreatureIndices));
+            usedCreatureIndices.remove(creatureIndex);
+        }
+        return maximum;
     }
 
     private int greatestManaValueAmongControlled(

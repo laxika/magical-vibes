@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSB", collectorNumber = "118")
+@CardRegistration(set = "V12", collectorNumber = "4")
 public class Desert extends Card {
 
     public Desert() {

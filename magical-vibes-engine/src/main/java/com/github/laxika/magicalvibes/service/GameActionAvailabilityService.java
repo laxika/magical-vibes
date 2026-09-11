@@ -580,6 +580,7 @@ public class GameActionAvailabilityService {
         }
         if (kicker.hasSacrificeCost()
                 && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
                 .noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, kicker.sacrificePredicate()))) {
             return false;
@@ -623,7 +624,7 @@ public class GameActionAvailabilityService {
         boolean powerstoneContext = isArtifact && paymentPool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
-        boolean kickedOnlyGreen = pool.getKickedOnlyGreen() > 0;
+        boolean kickedOnlyGreen = pool.getKickedOnlyManaTotal() > 0;
         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
@@ -823,7 +824,7 @@ public class GameActionAvailabilityService {
         for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
             if (e instanceof KickerEffect) { hasKicker = true; break; }
         }
-        boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
+        boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyManaTotal() > 0;
         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
@@ -1550,8 +1551,7 @@ public class GameActionAvailabilityService {
                 long matchingPermanents = gameData.playerBattlefields
                         .getOrDefault(playerId, List.of())
                         .stream()
-                        .filter(permanent -> gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
-                                || !gameQueryService.isCreature(gameData, permanent))
+                        .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
                         .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sacrificeCost.filter(),
                                 FilterContext.of(gameData).withSourceControllerId(playerId)))

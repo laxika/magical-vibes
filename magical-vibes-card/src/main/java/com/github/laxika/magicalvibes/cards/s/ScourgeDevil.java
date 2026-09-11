@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "113")
+@CardRegistration(set = "DDK", collectorNumber = "55")
 public class ScourgeDevil extends Card {
 
     public ScourgeDevil() {

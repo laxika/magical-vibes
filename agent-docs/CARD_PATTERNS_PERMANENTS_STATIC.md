@@ -10,6 +10,7 @@ Non-Human creature-type-count anthem: `d/DiligentZookeeper.java` uses `BoostNonH
 | Aura that forces creatures to attack its enchanted creature's controller | `p/PublicEnemy.java` | target(`TargetFilters.creature()`) + STATIC `CreaturesMustAttackEnchantedCreatureControllerEffect()` + ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD `DrawCardEffect()` — the static requirement follows the Aura's current attachment and applies only when a matching creature can attack that player |
 
 All paths relative to `cards/`.
+| Nonland-permanent cost lock | `y/YasharnImplacableEarth.java` | STATIC `PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect` — no player may pay life or sacrifice a nonland permanent to cast a spell or activate an ability; lands remain legal sacrifices |
 
 | Aura lets enchanted creature block landwalk creatures | `s/StreetSavvy.java` | `target(TargetFilters.creature())` + STATIC `StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE)` + STATIC `CanBlockCreaturesWithLandwalkEffect` |
 
@@ -40,6 +41,7 @@ All paths relative to `cards/`.
 | Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) â€” +1/+1 and indestructible to other Knights you control |
 | Legendary-creature count lord (own) | `h/HeroesPodium.java` | STATIC BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1) â€” each legendary creature you control gets +1/+1 for each other legendary creature you control; a legendary source creature also receives the bonus |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
+| Per-attack creature boost | `m/MoraugFuryOfAkoum.java` | STATIC `BoostByAttackCountEffect(1, 0, GrantScope.ALL_OWN_CREATURES)` — each creature gets +1/+0 for each time it attacked this turn |
 | Mana-retaining self boost | `o/OmnathLocusOfMana.java` | STATIC `PreventManaDrainEffect(ManaColor.GREEN)` + `BoostSelfEffect(new UnspentMana(ManaColor.GREEN), same)` |
 | Dynamic anthem from creatures entering this turn + combat token | `k/Kinbinding.java` | STATIC DynamicStaticBoostEffect(CreaturesEnteredBattlefieldThisTurn(CONTROLLER), same, OWN_CREATURES) + BEGINNING_OF_COMBAT_TRIGGERED green and white Kithkin token |
 | Graveyard-count self boost | `m/MastersCouncillors.java` | STATIC `DynamicStaticBoostEffect(new Scaled(new GraveyardsAtLeast(7), 2), new Fixed(0), SELF)` — count each player's graveyard with seven or more cards once |

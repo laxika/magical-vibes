@@ -171,6 +171,7 @@ class ForbiddenCryptTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, tokenId);
 
         harness.assertNotOnBattlefield(player1, "Wood");
+        assertThat(gd.creatureDeathCountThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Wood"));
     }

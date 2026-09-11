@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Malignus;
-import com.github.laxika.magicalvibes.cards.m.MonssGoblinRaiders;
+import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,8 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GaseousForm.class, GrizzlyBears.class, Island.class, LightningBolt.class,
-        Malignus.class, MonssGoblinRaiders.class, ProdigalSorcerer.class})
+@CardUsed({GaseousForm.class, GrizzlyBears.class, Island.class, Malignus.class, MerfolkOfThePearlTrident.class, ProdigalSorcerer.class, Shock.class})
 class GaseousFormTest extends BaseCardTest {
 
     // ===== Targeting restriction =====
@@ -113,14 +112,14 @@ class GaseousFormTest extends BaseCardTest {
         aura.setAttachedTo(attacker.getId());
 
         // 1/1 blocker — would die to 2 damage but attacker's combat damage is prevented
-        Permanent blocker = addCreatureReady(player2, new MonssGoblinRaiders());
+        Permanent blocker = addCreatureReady(player2, new MerfolkOfThePearlTrident());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
         // Blocker survives because the enchanted attacker's combat damage is prevented
-        harness.assertOnBattlefield(player2, "Mons's Goblin Raiders");
+        harness.assertOnBattlefield(player2, "Merfolk of the Pearl Trident");
     }
 
     // ===== Combat damage prevention — enchanted creature takes no combat damage =====
@@ -132,7 +131,7 @@ class GaseousFormTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         // 1/1 blocker enchanted with Gaseous Form — should survive combat
-        Permanent blocker = addCreatureReady(player2, new MonssGoblinRaiders());
+        Permanent blocker = addCreatureReady(player2, new MerfolkOfThePearlTrident());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -142,7 +141,7 @@ class GaseousFormTest extends BaseCardTest {
         resolveCombat();
 
         // Blocker survives because combat damage to it is prevented
-        harness.assertOnBattlefield(player2, "Mons's Goblin Raiders");
+        harness.assertOnBattlefield(player2, "Merfolk of the Pearl Trident");
     }
 
     // ===== Non-combat damage is NOT prevented =====
@@ -156,8 +155,8 @@ class GaseousFormTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new GaseousForm());
         aura.setAttachedTo(bears.getId());
 
-        // Lightning Bolt deals 3 non-combat damage — should kill the 2/2
-        harness.setHand(player1, List.of(new LightningBolt()));
+        // Shock deals 2 non-combat damage — should kill the 2/2
+        harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, bears.getId());

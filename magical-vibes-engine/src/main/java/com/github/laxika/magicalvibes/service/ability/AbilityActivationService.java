@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLock
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
@@ -160,6 +161,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -509,7 +512,8 @@ public class AbilityActivationService {
         int stackBeforeTriggers = gameData.stack.size();
         boolean manaTypeChoicePending = isAwaitingOwnManaColorChoice(gameData, playerId);
         if (permanent.getCard().hasType(CardType.LAND)) {
-            triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
+            triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
+                    newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
         }
         if (isCreatureSource) {
             triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
@@ -544,6 +548,17 @@ public class AbilityActivationService {
         }
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
+                                                           Map<ManaColor, Integer> after) {
+        Set<ManaColor> produced = new HashSet<>();
+        for (ManaColor color : ManaColor.values()) {
+            if (after.getOrDefault(color, 0) > before.getOrDefault(color, 0)) {
+                produced.add(color);
+            }
+        }
+        return produced;
     }
 
     /**
@@ -775,6 +790,7 @@ public class AbilityActivationService {
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         boolean caveSource = isCaveSource(gameData, permanent);
         boolean basicLandSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
@@ -906,7 +922,8 @@ public class AbilityActivationService {
         log.info("Game {} - {} taps foreign land {} for mana", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         int stackBeforeTriggers = gameData.stack.size();
-        triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
+        triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
+                newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
         if (gameData.stack.size() > stackBeforeTriggers) {
             List<StackEntry> deferred = new ArrayList<>(
                     gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
@@ -2278,8 +2295,10 @@ public class AbilityActivationService {
                 .filter(p -> p.getId().equals(ninjaTargetId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Ninjutsu requires an unblocked attacker you control"));
-        if (!predicateEvaluationService.matchesPermanentPredicate(
-                gameData, attacker, new PermanentIsUnblockedAttackingPredicate())) {
+        PermanentPredicate attackerPredicate = ability.getNinjutsuAttackerPredicate() != null
+                ? ability.getNinjutsuAttackerPredicate()
+                : new PermanentIsUnblockedAttackingPredicate();
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, attackerPredicate)) {
             throw new IllegalStateException("Ninjutsu requires an unblocked attacker you control");
         }
 
@@ -4459,6 +4478,8 @@ public class AbilityActivationService {
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                         gameData, permanent, playerId);
                 gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
+                permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                        gameData, permanent, placedCount, playerId);
             }
             String counterLabel = c.counterType().name().toLowerCase().replace('_', ' ');
             String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
@@ -4758,19 +4779,19 @@ public class AbilityActivationService {
         PermanentExileAction exileAction = this::exilePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
-        if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
+        if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof ExilePermanentCost c) return new MultiplePermanentExileCostHandler(c, predicateEvaluationService, exileAction, sourcePermanentId);
-        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
-        if (effect instanceof SacrificeDistinctNamePermanentsCost c) return new DistinctNamePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar);
-        if (effect instanceof SacrificeAllMatchingPermanentsCost c) return new AllMatchingPermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
-        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar, sourcePermanentId);
+        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
+        if (effect instanceof SacrificeDistinctNamePermanentsCost c) return new DistinctNamePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar);
+        if (effect instanceof SacrificeAllMatchingPermanentsCost c) return new AllMatchingPermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
+        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(
                 c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(
-                c, xValue, predicateEvaluationService, sacAction, sourcePermanentId);
+                c, xValue, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof PowerBasedTapCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(
@@ -5212,6 +5233,7 @@ public class AbilityActivationService {
             if (chosen == null
                     || !context.playerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
                     || (cost.excludeSource() && permanentId.equals(source.getId()))
+                    || !gameQueryService.canSacrificePermanentForCosts(gameData, chosen)
                     || !predicateEvaluationService.matchesPermanentPredicate(chosen, cost.filter(), filterContext)) {
                 throw new IllegalStateException("A selected permanent is no longer a matching permanent you control");
             }
@@ -5273,6 +5295,7 @@ public class AbilityActivationService {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
         if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || gameQueryService.hasLostAllAbilities(gameData, permanent)
                 || permanent.isFaceDown()) {
             // Permanent has lost all its own abilities; only static-granted abilities remain
             abilities = permanent.getCard().getActivatedAbilities().stream()
@@ -5663,10 +5686,16 @@ public class AbilityActivationService {
                         || effect instanceof PayXLifeCost) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
                 }
-                if (effect instanceof SacrificeCreatureCost) {
+                if (effect instanceof SacrificeCreatureCost
+                        && !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
                     throw new IllegalStateException("Players can't sacrifice creatures to activate abilities");
                 }
             }
+        }
+
+        if (abilityEffects.stream().anyMatch(SacrificeSelfCost.class::isInstance)
+                && !gameQueryService.canSacrificePermanentForCosts(gameData, permanent)) {
+            throw new IllegalStateException("Players can't sacrifice this permanent to activate abilities");
         }
 
         // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
@@ -5688,6 +5717,18 @@ public class AbilityActivationService {
                     : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
             if (equipment == null) {
                 throw new IllegalStateException("The granting Equipment is not on the battlefield");
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(SacrificeSourceEquipmentCost.class::isInstance)) {
+            Permanent equipment = ability.getGrantSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment == null) {
+                throw new IllegalStateException("The granting Equipment is not on the battlefield");
+            }
+            if (!gameQueryService.canSacrificePermanentForCosts(gameData, equipment)) {
+                throw new IllegalStateException("Players can't sacrifice this Equipment to activate abilities");
             }
         }
 
@@ -6471,6 +6512,7 @@ public class AbilityActivationService {
                 .filter(candidate -> !cost.excludeSource() || !candidate.getId().equals(source.getId()))
                 .filter(candidate -> predicateEvaluationService.matchesPermanentPredicate(
                         candidate, cost.filter(), filterContext))
+                .filter(candidate -> gameQueryService.canSacrificePermanentForCosts(gameData, candidate))
                 .map(Permanent::getId)
                 .toList();
     }

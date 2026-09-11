@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -43,6 +44,8 @@ public class Permanent {
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
+    /** Number of times this permanent has been declared as an attacker this turn. */
+    @Setter private int attacksThisTurn;
     private boolean attackedThisCombat;
     /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
     private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
@@ -577,6 +580,8 @@ public class Permanent {
      *  (Bloodlord of Vaasgoth). Read as an as-enters replacement alongside the card's printed
      *  bloodthirst; per CR 702.54c each instance applies separately, so grants simply add up. */
     @Setter private int grantedBloodthirst;
+    /** Numeric devour grant carried from the spell that produced this permanent. */
+    @Setter private int grantedDevour;
     /** Cards of the creatures sacrificed to this permanent's devour ability as it entered (CR 702.82).
      *  Read by {@code CreaturesDevoured} ("for each creature it devoured" — Tar Fiend) via its size and by
      *  {@code DevouredCreaturesOfSubtype} ("twice the number of Goblins it devoured" — Voracious Dragon). */
@@ -665,6 +670,7 @@ public class Permanent {
         this.tapped = false;
         this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
+        this.attacksThisTurn = 0;
         this.attackedThisCombat = false;
         this.summoningSick = true;
     }
@@ -693,6 +699,7 @@ public class Permanent {
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
+        this.attacksThisTurn = source.attacksThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
@@ -893,6 +900,7 @@ public class Permanent {
         this.timesMutated = source.timesMutated;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.grantedDevour = source.grantedDevour;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
@@ -977,6 +985,9 @@ public class Permanent {
         if (amount <= 0) {
             return;
         }
+        if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
+            turnFaceUp();
+        }
         this.markedDamage += amount;
         if (sourceId != null) {
             this.markedDamageBySource.merge(sourceId, amount, Integer::sum);
@@ -997,7 +1008,15 @@ public class Permanent {
     }
 
     public void tap() {
+        if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
+            turnFaceUp();
+        }
         this.tapped = true;
+    }
+
+    private boolean hasTemporaryStaticEffect(Class<? extends CardEffect> effectType) {
+        return temporaryTriggeredEffects.getOrDefault(EffectSlot.STATIC, List.of()).stream()
+                .anyMatch(effectType::isInstance);
     }
 
     /** Sets the permanent's status for an entry replacement without applying untap effects. */
@@ -1027,6 +1046,7 @@ public class Permanent {
         this.attacking = attacking;
         if (attacking) {
             this.attackedThisTurn = true;
+            this.attacksThisTurn++;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
         }

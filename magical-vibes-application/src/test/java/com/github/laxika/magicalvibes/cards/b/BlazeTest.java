@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
+
+import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SouthernElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blaze.class, ForestBear.class, SouthernElephant.class, Plains.class})
+@CardUsed({Blaze.class, ChandraHopesBeacon.class, ChandraNalaar.class, ForestBear.class, HowlingMine.class, InvasionOfRegatha.class, Mountain.class, Plains.class, SouthernElephant.class})
 class BlazeTest extends BaseCardTest {
 
     @Test
@@ -77,7 +80,7 @@ class BlazeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -89,7 +92,7 @@ class BlazeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -101,7 +104,7 @@ class BlazeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -113,7 +116,32 @@ class BlazeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Deals X damage to target planeswalker")
+    void dealsXDamageToPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -149,7 +177,7 @@ class BlazeTest extends BaseCardTest {
     @CardUsed({ChandraHopesBeacon.class})
     @Test
     @DisplayName("Deals X damage to target planeswalker")
-    void dealsXDamageToPlaneswalker() {
+    void dealsXDamageToChandraHopesBeacon() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new Blaze()));

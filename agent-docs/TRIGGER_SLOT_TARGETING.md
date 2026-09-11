@@ -154,6 +154,7 @@ combat damage step is processed.
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
 | `ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (spell controller's battlefield; targeted creature stored as non-targeting `targetId`, listener as `sourcePermanentId`) | Becomes-target |
 | `ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (controller's battlefield; handles both creature permanents and creature spells targeted by an opponent) | Becomes-target |
+| `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (controller's battlefield; opponent spells only, not activated or triggered abilities) | Becomes-target |
 | `ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted creature's controller's battlefield; spell path only; the triggered ability uses the shared ETB multi-target picker so optional targets can be declined) | Becomes-target |
 | `ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (one trigger per other permanent, opponent-only; targeted permanent stored as non-targeting `triggeringPermanentId`) | Becomes-target |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`; `TriggeringAbilityFromNamedLandConditionalEffect` can retain its wrapped effect only for an ability from a named land controlled by the watcher and targeting another creature) | Becomes-target |
@@ -360,6 +361,8 @@ one or more +1/+1 counters are put on another creature the controller controls),
 `ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE` (Terrasymbiosis; fires once when the
 controller puts one or more +1/+1 counters on a creature they control and carries the number of
 counters placed as the trigger event value),
+`GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE` (Moss-Pit Skeleton; fires once for
+each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
@@ -700,7 +703,7 @@ Controller end-step effects bound to multiple declared target groups are queued 
 
 ## Planar event slots
 
-`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Targeted payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).
+`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Single-target payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot; optional or multi-target groups use the slot-by-slot target walker. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).
 
 `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY` is collected by `GraveyardService` when the
 source zone is the library. It includes non-mill moves such as Call of the Wild; use
@@ -709,3 +712,11 @@ source zone is the library. It includes non-mill moves such as Call of the Wild;
 Optional multi-target groups consisting of player targets use
 `MultiPermanentChoiceContext.EtbPlayerTargetGroup` when the controller is a legal target.
 An empty selection ends the group, leaving the controller available as an actual target.
+
+End-of-combat planar abilities with multiple declared target groups use the same slot-by-slot
+walker as ETB token triggers. A dependent constraint can filter later groups from the first
+target's combat-damage recipients; `GameData.combatDamageToPlayersThisCombat` supplies the
+current-combat relationship and the legality check must be repeated when the ability resolves.
+When a planar slot contains one standalone single-target effect bound to a later declared group,
+the planar trigger path uses that group's filter directly rather than walking unrelated groups
+belonging to the plane's other abilities.

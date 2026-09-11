@@ -43,6 +43,17 @@ class DerelorTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Each Derelor adds its own colored tax")
+        void multipleDerelorsStackTheirTaxes() {
+            harness.addToBattlefield(player1, new Derelor());
+            harness.addToBattlefield(player1, new Derelor());
+            harness.castFromHand(player1, new BloodPet(), "{B}{B}{B}");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+        }
+
+        @Test
         @DisplayName("Colored tax cannot be paid with colorless mana")
         void blackSpellCannotUseColorlessManaForTax() {
             harness.addToBattlefield(player1, new Derelor());

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FyndhornBrownie.class, SnowCoveredForest.class})
+@CardUsed({FyndhornBrownie.class, Forest.class})
 class FyndhornBrownieTest extends BaseCardTest {
 
     @Test
@@ -58,10 +57,33 @@ class FyndhornBrownieTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can untap itself")
+    void canUntapItself() {
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        addBrownieMana(player1);
+
+        harness.activateAbility(player1, 0, null, brownie.getId());
+        harness.passBothPriorities();
+
+        assertThat(brownie.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new FyndhornBrownie());
         Permanent target = addCreatureReady(player2, new FyndhornBrownie());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without green mana")
+    void cannotActivateWithoutGreenMana() {
+        addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -84,8 +106,7 @@ class FyndhornBrownieTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new FyndhornBrownie());
-        Permanent land = new Permanent(new SnowCoveredForest());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         addBrownieMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))

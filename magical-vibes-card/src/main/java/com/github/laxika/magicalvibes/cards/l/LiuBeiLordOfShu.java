@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "11")
+@CardRegistration(set = "ME3", collectorNumber = "19")
 public class LiuBeiLordOfShu extends Card {
 
     public LiuBeiLordOfShu() {
