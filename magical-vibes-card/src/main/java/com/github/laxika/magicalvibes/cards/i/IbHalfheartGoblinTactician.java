@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "163")
 @CardRegistration(set = "DD1", collectorNumber = "43")
+@CardRegistration(set = "EVG", collectorNumber = "43")
 public class IbHalfheartGoblinTactician extends Card {
 
     public IbHalfheartGoblinTactician() {

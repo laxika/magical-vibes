@@ -51,6 +51,7 @@ public sealed interface CardPredicate permits
         CardManaValueAtMostSourcePowerPredicate,
         CardManaValueLessThanSourcePowerPredicate,
         CardManaValueLessThanSourceLoyaltyPredicate,
+        CardManaValueLessThanXPredicate,
         CardMaxManaValuePredicate,
         CardMaxManaValueXPredicate,
         CardMinManaValuePredicate,

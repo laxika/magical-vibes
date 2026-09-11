@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "37")
+@CardRegistration(set = "NEO", collectorNumber = "52")
 public class EssenceCapture extends Card {
 
     public EssenceCapture() {

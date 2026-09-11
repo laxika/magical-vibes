@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "195")
+@CardRegistration(set = "W16", collectorNumber = "16")
 public class SoulOfTheHarvest extends Card {
 
     public SoulOfTheHarvest() {
