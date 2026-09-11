@@ -103,6 +103,7 @@ class PacifismTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
 
         assertThat(bearsPerm.isAttacking()).isFalse();
+        assertThat(freeBears.isAttacking()).isTrue();
     }
 
     // ===== Prevents blocking =====
@@ -119,7 +120,7 @@ class PacifismTest extends BaseCardTest {
 
         prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
     }
@@ -140,7 +141,7 @@ class PacifismTest extends BaseCardTest {
 
         prepareDeclareBlockers();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 1)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
 
         assertThat(freePerm.isBlocking()).isTrue();
         assertThat(pacifiedPerm.isBlocking()).isFalse();

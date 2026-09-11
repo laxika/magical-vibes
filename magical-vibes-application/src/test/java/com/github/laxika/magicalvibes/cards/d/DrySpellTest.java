@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.ApocalypseChime;
-import com.github.laxika.magicalvibes.cards.a.AysenBureaucrats;
-import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JadeMonolith;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,16 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrySpell.class, AysenBureaucrats.class, BeastWalkers.class, ApocalypseChime.class})
+@CardUsed({DrySpell.class, LlanowarElves.class, GrizzlyBears.class, JadeMonolith.class})
 class DrySpellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Dry Spell puts it on the stack as a sorcery")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -37,12 +34,10 @@ class DrySpellTest extends BaseCardTest {
     @Test
     @DisplayName("Dry Spell deals 1 damage to each creature on both sides")
     void dealsOneDamageToEachCreature() {
-        var dyingCreature = harness.addToBattlefieldAndReturn(player1, new AysenBureaucrats());
-        var survivingCreature = harness.addToBattlefieldAndReturn(player2, new BeastWalkers());
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        var dyingCreature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        var survivingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -57,10 +52,8 @@ class DrySpellTest extends BaseCardTest {
     void dealsOneDamageToEachPlayer() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -70,11 +63,9 @@ class DrySpellTest extends BaseCardTest {
 
     @Test
     void doesNotDamageNoncreaturePermanents() {
-        var artifact = harness.addToBattlefieldAndReturn(player1, new ApocalypseChime());
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        var artifact = harness.addToBattlefieldAndReturn(player1, new JadeMonolith());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);

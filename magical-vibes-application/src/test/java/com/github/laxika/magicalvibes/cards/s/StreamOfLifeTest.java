@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StreamOfLife.class, GrizzlyBears.class})
@@ -25,7 +24,7 @@ class StreamOfLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+        harness.assertLife(player2, 24);
     }
 
     @Test
@@ -37,7 +36,7 @@ class StreamOfLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
     }
 
     @Test
@@ -49,7 +48,7 @@ class StreamOfLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test

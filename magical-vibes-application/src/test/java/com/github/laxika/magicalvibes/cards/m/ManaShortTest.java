@@ -107,6 +107,18 @@ class ManaShortTest extends BaseCardTest {
     }
 
     @Test
+    void clearsCreatureOrEnchantmentRestrictedMana() {
+        ManaPool targetPool = gd.playerManaPools.get(player2.getId());
+        targetPool.addCreatureOrEnchantmentSpellOnlyMana(ManaColor.GREEN, 2);
+        assertThat(targetPool.getTotalAllMana()).isEqualTo(2);
+
+        castAndResolve(player2.getId());
+
+        assertThat(targetPool.getTotalAllMana()).isZero();
+        assertThat(targetPool.getCreatureOrEnchantmentSpellOnlyManaTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
         Permanent nonPlayerTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

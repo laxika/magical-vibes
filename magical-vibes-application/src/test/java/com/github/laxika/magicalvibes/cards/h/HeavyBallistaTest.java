@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeavyBallista.class, GrizzlyBears.class})
 class HeavyBallistaTest extends BaseCardTest {
 
     @Test
@@ -48,37 +48,51 @@ class HeavyBallistaTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addReadyBallista(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent nonCombat = addCreatureReady(player2, new GrizzlyBears());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonCombat.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Does not deal damage if the target stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        addReadyBallista(player1);
+        Permanent attacker = addAttacker(player2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while it has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new HeavyBallista());
+        Permanent attacker = addAttacker(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sick");
+    }
+
     private Permanent addReadyBallista(Player player) {
-        HeavyBallista card = new HeavyBallista();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HeavyBallista());
     }
 
     private Permanent addAttacker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent attacker = findPermanent(owner, "Grizzly Bears");
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new GrizzlyBears());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
     }
 
     private Permanent addBlocker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent blocker = findPermanent(owner, "Grizzly Bears");
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(owner, new GrizzlyBears());
         blocker.setBlocking(true);
-        blocker.addBlockingTargetId(UUID.randomUUID());
         return blocker;
     }
 }

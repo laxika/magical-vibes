@@ -69,6 +69,20 @@ class SpittingEarthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spitting Earth can target a creature you control")
+    void canTargetYourOwnCreature() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        harness.setHand(player1, List.of(new SpittingEarth()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
+    }
+
+    @Test
     @DisplayName("Spitting Earth counts only your Mountains, not opponent Mountains")
     void countsOnlyControllersMountains() {
         harness.addToBattlefield(player1, new Mountain());

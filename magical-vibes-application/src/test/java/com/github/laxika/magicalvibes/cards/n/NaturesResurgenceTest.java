@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NaturesResurgence.class, GrizzlyBears.class, GiantGrowth.class})
 class NaturesResurgenceTest extends BaseCardTest {
 
     @Test
@@ -32,11 +33,8 @@ class NaturesResurgenceTest extends BaseCardTest {
         int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 
-        harness.setHand(player1, List.of(new NaturesResurgence()));
         harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NaturesResurgence(), "{2}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -56,10 +54,7 @@ class NaturesResurgenceTest extends BaseCardTest {
 
         int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new NaturesResurgence()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NaturesResurgence(), "{2}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -74,11 +69,8 @@ class NaturesResurgenceTest extends BaseCardTest {
 
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 
-        harness.setHand(player1, List.of(new NaturesResurgence()));
         harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NaturesResurgence(), "{2}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

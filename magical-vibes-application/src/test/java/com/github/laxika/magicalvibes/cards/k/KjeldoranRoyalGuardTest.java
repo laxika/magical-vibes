@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
+import com.github.laxika.magicalvibes.cards.i.InfantryVeteran;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,22 +15,18 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KjeldoranRoyalGuard.class, GrizzlyBears.class, ScrybSprites.class})
+@CardUsed({KjeldoranRoyalGuard.class, GrizzlyBears.class, InfantryVeteran.class})
 class KjeldoranRoyalGuardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting puts it on the stack as creature spell")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new KjeldoranRoyalGuard()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KjeldoranRoyalGuard(), "{3}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -41,10 +36,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new KjeldoranRoyalGuard()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KjeldoranRoyalGuard(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -93,6 +85,28 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         harness.passBothPriorities(); // resolves ability
 
         assertThat(gd.combatDamageRedirectTarget).isEqualTo(guard.getId());
+    }
+
+    @Test
+    @DisplayName("Ability still uses the Guard if it changes controller before resolution")
+    void abilityStillUsesGuardAfterControllerChangesBeforeResolution() {
+        Permanent guard = addGuardReady(player2);
+        addUnblockedAttacker(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+
+        gd.playerBattlefields.get(player2.getId()).remove(guard);
+        gd.playerBattlefields.get(player1.getId()).add(guard);
+
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(guard);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(guard.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -260,7 +274,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Blocked creatures deal damage normally, not redirected")
     void blockedCreatureDamageNotRedirected() {
-        Permanent guard = addGuardReady(player2);
+        addGuardReady(player2);
 
         // Add a creature that will be blocked
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -329,7 +343,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, attackerCard);
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new ScrybSprites());
+        Permanent blocker = addCreatureReady(player2, new InfantryVeteran());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -396,6 +410,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
 
         // Set redirect directly (as if ability had resolved), then remove the guard
         gd.combatDamageRedirectTarget = guard.getId();
+        gd.combatDamageRedirectPlayer = player2.getId();
         gd.playerBattlefields.get(player2.getId()).remove(guard);
 
         resolveCombat();

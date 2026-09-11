@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.r.Regeneration;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@CardUsed({Perish.class, GrizzlyBears.class, AirElemental.class, Ornithopter.class, Regeneration.class})
 class PerishTest extends BaseCardTest {
 
     @Test
@@ -17,10 +21,7 @@ class PerishTest extends BaseCardTest {
     void destroysGreenCreaturesFromBothPlayers() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Perish()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -32,27 +33,53 @@ class PerishTest extends BaseCardTest {
     @Test
     @DisplayName("Leaves non-green creatures on the battlefield")
     void leavesNonGreenCreatures() {
-        harness.addToBattlefield(player1, new SuntailHawk());
-        harness.addToBattlefield(player1, new HillGiant());
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new Ornithopter());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Perish()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Suntail Hawk");
-        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Leaves green noncreature permanents on the battlefield")
+    void leavesGreenNoncreaturePermanents() {
+        Permanent airElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new Regeneration()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, airElemental.getId());
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Regeneration");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Green creatures with regeneration shields are destroyed")
+    void destroysGreenCreaturesDespiteRegenerationShield() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setRegenerationShield(1);
+
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Perish goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Perish()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Perish");

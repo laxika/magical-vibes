@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.Conversion;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -59,6 +61,28 @@ class MountainGoatTest extends BaseCardTest {
     @DisplayName("Mountain Goat can be blocked when only the attacking player controls a Mountain")
     void canBeBlockedWhenOnlyAttackerControlsMountain() {
         harness.addToBattlefield(player1, new SnowCoveredMountain());
+
+        Permanent blockerPerm = addCreatureReady(player2, new BalduvianBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new MountainGoat());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @CardUsed({Conversion.class, Mountain.class})
+    @DisplayName("Mountain Goat can be blocked when a defending Mountain has become a Plains")
+    void canBeBlockedWhenDefendingMountainHasBecomePlains() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Conversion());
 
         Permanent blockerPerm = addCreatureReady(player2, new BalduvianBears());
 

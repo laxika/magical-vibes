@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpellBlast.class, Disintegrate.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({SpellBlast.class, Disintegrate.class, GrizzlyBears.class, LlanowarElves.class, Ornithopter.class})
 class SpellBlastTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a spell whose mana value equals X")
@@ -38,6 +39,23 @@ class SpellBlastTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry blastEntry = gd.stack.getLast();
         assertThat(blastEntry.getTargetId()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Can target a zero-mana spell when X is zero")
+    void canTargetZeroManaSpellWithZeroX() {
+        Ornithopter ornithopter = new Ornithopter();
+        harness.setHand(player1, List.of(ornithopter));
+
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 1); // X=0 + {U}
+
+        harness.castArtifact(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, ornithopter.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(ornithopter.getId());
     }
 
     @Test

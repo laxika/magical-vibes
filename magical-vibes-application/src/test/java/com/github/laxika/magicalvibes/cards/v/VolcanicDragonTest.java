@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
-import com.github.laxika.magicalvibes.cards.m.MistDragon;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicDragon.class, MistDragon.class, IronTuskElephant.class})
+@CardUsed({VolcanicDragon.class, GrizzlyBears.class})
 class VolcanicDragonTest extends BaseCardTest {
 
     @Test
@@ -25,12 +23,9 @@ class VolcanicDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addToBattlefield(player2, new MistDragon());
-        harness.setHand(player1, List.of(new VolcanicDragon()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VolcanicDragon(), "{4}{R}{R}");
         harness.passBothPriorities();
 
         Permanent dragon = findPermanent(player1, "Volcanic Dragon");
@@ -43,7 +38,7 @@ class VolcanicDragonTest extends BaseCardTest {
     @DisplayName("Flying prevents a non-flying creature from blocking")
     void flyingPreventsNonFlyingCreatureBlocking() {
         Permanent attacker = addCreatureReady(player1, new VolcanicDragon());
-        Permanent blocker = addCreatureReady(player2, new IronTuskElephant());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();

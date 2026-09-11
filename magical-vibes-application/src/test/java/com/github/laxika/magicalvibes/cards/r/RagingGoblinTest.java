@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,21 +14,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(RagingGoblin.class)
 class RagingGoblinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new RagingGoblin()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Raging Goblin");
+        assertThat(entry.getCard()).isInstanceOf(RagingGoblin.class);
     }
 
     @Test
@@ -47,39 +41,24 @@ class RagingGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Raging Goblin onto the battlefield with haste")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new RagingGoblin()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        Permanent goblin = findPermanent(player1, "Raging Goblin");
+        Permanent goblin = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
     @Test
     @DisplayName("Can attack the turn it enters the battlefield due to haste")
     void canAttackWithSummoningSicknessDueToHaste() {
-        harness.setHand(player1, List.of(new RagingGoblin()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        GameService gs = harness.getGameService();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         Permanent goblin = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(goblin.getCard().getName()).isEqualTo("Raging Goblin");
         assertThat(goblin.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

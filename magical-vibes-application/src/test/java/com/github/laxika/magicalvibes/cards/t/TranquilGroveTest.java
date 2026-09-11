@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.f.Fervor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({TranquilGrove.class, Fervor.class, GrizzlyBears.class})
 class TranquilGroveTest extends BaseCardTest {
 
     private void payCost() {
@@ -19,14 +22,14 @@ class TranquilGroveTest extends BaseCardTest {
     @DisplayName("Destroys other enchantments but not itself")
     void destroysOtherEnchantmentsButNotItself() {
         harness.addToBattlefield(player1, new TranquilGrove());
-        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new Fervor());
         payCost();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Rule of Law");
-        harness.assertInGraveyard(player1, "Rule of Law");
+        harness.assertNotOnBattlefield(player1, "Fervor");
+        harness.assertInGraveyard(player1, "Fervor");
         harness.assertOnBattlefield(player1, "Tranquil Grove");
     }
 
@@ -34,15 +37,30 @@ class TranquilGroveTest extends BaseCardTest {
     @DisplayName("Destroys enchantments controlled by both players")
     void destroysEnchantmentsFromBothPlayers() {
         harness.addToBattlefield(player1, new TranquilGrove());
-        harness.addToBattlefield(player1, new RuleOfLaw());
-        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player1, new Fervor());
+        harness.addToBattlefield(player2, new Fervor());
         payCost();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Rule of Law");
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player1, "Fervor");
+        harness.assertNotOnBattlefield(player2, "Fervor");
+    }
+
+    @Test
+    @DisplayName("Destroys another Tranquil Grove but not the activating copy")
+    void destroysAnotherCopyButNotActivatingCopy() {
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addToBattlefield(player1, new Fervor());
+        payCost();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Tranquil Grove")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Tranquil Grove");
     }
 
     @Test

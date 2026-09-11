@@ -105,6 +105,22 @@ class AncestralMemoriesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With only one card in library, that card goes directly to hand")
+    void oneCardInLibraryGoesToHand() {
+        GameData gd = harness.getGameData();
+        Card card = new Island();
+        harness.setLibrary(player1, List.of(card));
+
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("With empty library, nothing is drawn")
     void emptyLibrary() {
         GameData gd = harness.getGameData();

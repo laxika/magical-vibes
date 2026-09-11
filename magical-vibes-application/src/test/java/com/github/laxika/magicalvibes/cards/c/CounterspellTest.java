@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
-import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -22,13 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Counterspell.class, BalduvianBears.class, SwordsToPlowshares.class, Commandeer.class, GrizzlyBears.class, LightningBolt.class, ProdigalSorcerer.class})
+@CardUsed({Counterspell.class, GrizzlyBears.class, Unsummon.class, ProdigalSorcerer.class})
 class CounterspellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting puts it on the stack targeting a spell")
     void castingTargetsSpell() {
-        BalduvianBears bears = new BalduvianBears();
+        GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -50,7 +48,7 @@ class CounterspellTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving counters a creature spell")
     void countersCreatureSpell() {
-        BalduvianBears bears = new BalduvianBears();
+        GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -72,12 +70,12 @@ class CounterspellTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving counters a non-creature spell")
     void countersNonCreatureSpell() {
-        BalduvianBears bears = new BalduvianBears();
+        GrizzlyBears bears = new GrizzlyBears();
         var bearPermanent = harness.addToBattlefieldAndReturn(player1, bears);
 
-        SwordsToPlowshares swords = new SwordsToPlowshares();
-        harness.setHand(player1, List.of(swords));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        Unsummon unsummon = new Unsummon();
+        harness.setHand(player1, List.of(unsummon));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         Counterspell counterspell = new Counterspell();
         harness.setHand(player2, List.of(counterspell));
@@ -85,50 +83,50 @@ class CounterspellTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearPermanent.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, swords.getId());
+        harness.castInstant(player2, 0, unsummon.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(swords.getId()));
+                .anyMatch(card -> card.getId().equals(unsummon.getId()));
         assertThat(gd.stack)
-                .noneMatch(se -> se.getCard().getId().equals(swords.getId()));
+                .noneMatch(se -> se.getCard().getId().equals(unsummon.getId()));
     }
 
     @Test
     @DisplayName("Puts a spell controlled by another player into its owner's graveyard")
+    @CardUsed(Commandeer.class)
     void putsControlledSpellIntoOwnersGraveyard() {
-        BalduvianBears bears = new BalduvianBears();
+        GrizzlyBears bears = new GrizzlyBears();
         var bearPermanent = harness.addToBattlefieldAndReturn(player1, bears);
 
-        SwordsToPlowshares swords = new SwordsToPlowshares();
+        Unsummon unsummon = new Unsummon();
         Counterspell counterspell = new Counterspell();
-        harness.setHand(player1, List.of(swords, counterspell));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(unsummon, counterspell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         Commandeer commandeer = new Commandeer();
         harness.setHand(player2, List.of(commandeer, new Counterspell(), new Counterspell()));
 
         harness.castInstant(player1, 0, bearPermanent.getId());
         harness.passPriority(player1);
-        harness.castInstantWithAlternateExileFromHand(player2, 0, swords.getId(), List.of(1, 2));
+        harness.castInstantWithAlternateExileFromHand(player2, 0, unsummon.getId(), List.of(1, 2));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.castInstant(player1, 0, swords.getId());
+        harness.castInstant(player1, 0, unsummon.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(swords.getId()));
+                .anyMatch(card -> card.getId().equals(unsummon.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(card -> card.getId().equals(swords.getId()));
+                .noneMatch(card -> card.getId().equals(unsummon.getId()));
     }
 
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
     void fizzlesIfTargetRemoved() {
-        BalduvianBears bears = new BalduvianBears();
+        GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -153,7 +151,7 @@ class CounterspellTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        var bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Counterspell counterspell = new Counterspell();
         harness.setHand(player2, List.of(counterspell));
         harness.addMana(player2, ManaColor.BLUE, 2);

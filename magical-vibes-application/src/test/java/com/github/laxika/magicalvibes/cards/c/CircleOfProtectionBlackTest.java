@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrovikanHorror;
 import com.github.laxika.magicalvibes.cards.p.Pestilence;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.a.AdarkarUnicorn;
 import com.github.laxika.magicalvibes.cards.m.MoorFiend;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
@@ -24,7 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionBlack.class, AdarkarUnicorn.class, MoorFiend.class, TouchOfDeath.class, WitheringWisps.class, SnowCoveredSwamp.class, GrizzlyBears.class, KrovikanHorror.class, Pestilence.class, ScatheZombies.class})
+@CardUsed({CircleOfProtectionBlack.class, AdarkarUnicorn.class, MoorFiend.class, TouchOfDeath.class, WitheringWisps.class, SnowCoveredSwamp.class, GrizzlyBears.class, KrovikanHorror.class, Pestilence.class})
 class CircleOfProtectionBlackTest extends BaseCardTest {
 
     private static final String PESTILENCE_MANA_COST = "{2}{B}{B}";
@@ -242,8 +241,38 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
-    private Permanent addReadyBlackCreature(Player player) {
-        return addCreatureReady(player, new ScatheZombies());
+    @Test
+    @DisplayName("Damage from the chosen source to another player does not consume the shield")
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent horror = addReadyBlackDamageSource(player2);
+        Permanent firstFodder = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondFodder = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, horror.getId());
+
+        int horrorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(horror);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.activateAbility(player2, horrorIndex, null, player2.getId());
+        harness.handlePermanentChosen(player2, firstFodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(horror.getId()));
+
+        harness.activateAbility(player2, horrorIndex, null, player1.getId());
+        harness.handlePermanentChosen(player2, secondFodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     private Permanent addReadyBlackDamageSource(Player player) {

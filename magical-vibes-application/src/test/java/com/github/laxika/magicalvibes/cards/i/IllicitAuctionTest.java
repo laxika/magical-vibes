@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IllicitAuction.class, GrizzlyBears.class, Forest.class})
+@CardUsed({IllicitAuction.class, GrizzlyBears.class, Forest.class, IvoryGuardians.class})
 class IllicitAuctionTest extends BaseCardTest {
 
     private void cast(Player caster, Permanent target) {
@@ -87,6 +87,21 @@ class IllicitAuctionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A player can bid more life than they have")
+    void allowsBidAboveLifeTotal() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        cast(player1, creature);
+        harness.handleXValueChosen(player2, 21);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(controls(player2, creature)).isTrue();
+        harness.assertLife(player2, -1);
+    }
+
+    @Test
     @DisplayName("A non-caster can win the auction; control transfers to them and only the winner loses life")
     void opponentWinsControlTransfersAway() {
         harness.setLife(player1, 20);
@@ -132,6 +147,19 @@ class IllicitAuctionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature with protection from red")
+    void cannotTargetCreatureWithProtectionFromRed() {
+        Permanent protectedCreature = addCreatureReady(player2, new IvoryGuardians());
+        harness.setHand(player1, List.of(new IllicitAuction()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, protectedCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
     }
 
     @Test

@@ -1,49 +1,46 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StaunchDefenders.class})
 class StaunchDefendersTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Entering the battlefield triggers a life-gain ability")
+    @DisplayName("Entering the battlefield puts the life-gain trigger on the stack")
     void entryTriggersLifeGain() {
-        harness.setHand(player1, List.of(new StaunchDefenders()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
+        harness.assertOnBattlefield(player1, "Staunch Defenders");
         assertThat(gd.stack).hasSize(1);
-        StackEntry trigger = gd.stack.getFirst();
-        assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
+        harness.assertLife(player1, 20);
     }
 
     @Test
     @DisplayName("Resolving the ETB trigger gains 4 life")
     void entryGainsFourLife() {
-        harness.setHand(player1, List.of(new StaunchDefenders()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
+        resolveAllTriggers();
 
         harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("The entering creature's controller gains the life")
+    void controllerGainsLife() {
+        harness.setLife(player1, 7);
+        harness.setLife(player2, 13);
+
+        harness.castFromHand(player2, new StaunchDefenders(), "{3}{W}{W}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 7);
+        harness.assertLife(player2, 17);
     }
 }

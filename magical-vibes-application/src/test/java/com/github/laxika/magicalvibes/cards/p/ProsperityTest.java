@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,6 +40,21 @@ class ProsperityTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1Before);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(p2Before);
+    }
+
+    @Test
+    @DisplayName("X=0 does not make a player lose with an empty library")
+    void xZeroDoesNotAttemptAnEmptyLibraryDraw() {
+        harness.setHand(player1, List.of(new Prosperity()));
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1); // X=0: {0}{U} = 1
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test

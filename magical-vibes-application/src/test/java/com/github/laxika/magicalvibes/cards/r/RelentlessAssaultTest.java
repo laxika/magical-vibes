@@ -92,6 +92,31 @@ class RelentlessAssaultTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A precombat cast leaves the normal combat after the additional main phase")
+    void precombatCastLeavesNormalCombatAfterAdditionalMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Attacked-this-turn status resets on turn change")
     void attackedThisTurnResetsOnTurnChange() {
         Permanent bear = addCreatureReady(player1, new Warthog());

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
+import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Earthquake.class, GrizzlyBears.class, ScrybSprites.class})
+@CardUsed({Earthquake.class, GrizzlyBears.class, MesaFalcon.class})
 class EarthquakeTest extends BaseCardTest {
 
     @Test
@@ -45,9 +46,7 @@ class EarthquakeTest extends BaseCardTest {
     void earthquakeResolvesDealsXDamageToPlayers() {
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 
@@ -63,25 +62,36 @@ class EarthquakeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, 2);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
+    @DisplayName("Earthquake damages non-flying creatures controlled by either player")
+    void earthquakeDamagesNonFlyingCreaturesControlledByEitherPlayer() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Earthquake does not damage flying creatures")
     void earthquakeDoesNotDamageFlyingCreatures() {
-        harness.addToBattlefield(player2, new ScrybSprites());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new MesaFalcon());
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
+        harness.castAndResolveSorcery(player1, 0, 3);
 
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player2, "Scryb Sprites");
+        harness.assertOnBattlefield(player2, "Mesa Falcon");
+        assertThat(flyer.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -89,11 +99,7 @@ class EarthquakeTest extends BaseCardTest {
     void earthquakeWithXZeroDealsNoDamage() {
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -116,9 +122,7 @@ class EarthquakeTest extends BaseCardTest {
         harness.setLife(player1, 3);
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 

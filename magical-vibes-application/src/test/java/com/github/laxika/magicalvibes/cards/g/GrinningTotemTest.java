@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrinningTotem.class, Swamp.class})
+@CardUsed({GrinningTotem.class, Swamp.class, GrizzlyBears.class, Fog.class})
 class GrinningTotemTest extends BaseCardTest {
 
     private StepTriggerService stepTriggerService() {
@@ -58,10 +59,10 @@ class GrinningTotemTest extends BaseCardTest {
         activateGrinningTotem();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        // Card is exiled under the caster's zone, face down, with play permission.
+        // Card is exiled under the caster's zone, face up, with play permission.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
-        assertThat(gd.findExiledCard(swamp.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(swamp.getId()).faceDown()).isFalse();
         assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));
@@ -143,5 +144,63 @@ class GrinningTotemTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Swamp");
         assertThat(gd.playerGraveyards.getOrDefault(player2.getId(), List.of()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));
+    }
+
+    @Test
+    @DisplayName("A nonland exiled card can be cast before the caster's next upkeep")
+    void castsNonlandCardBeforeCleanup() {
+        Card grizzlyBears = new GrizzlyBears();
+        gd.playerDecks.get(player2.getId()).clear();
+        gd.playerDecks.get(player2.getId()).add(grizzlyBears);
+
+        activateGrinningTotem();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, grizzlyBears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(grizzlyBears.getId());
+
+        gd.activePlayerId = player1.getId();
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.getOrDefault(player2.getId(), List.of()))
+                .noneMatch(c -> c.getId().equals(grizzlyBears.getId()));
+    }
+
+    @Test
+    @DisplayName("A cast spell returns to its owner's graveyard")
+    void castSpellReturnsToOwnerGraveyard() {
+        Card fog = new Fog();
+        gd.playerDecks.get(player2.getId()).clear();
+        gd.playerDecks.get(player2.getId()).add(fog);
+
+        activateGrinningTotem();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromExile(player1, fog.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getId().equals(fog.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getId().equals(fog.getId()));
+    }
+
+    @Test
+    @DisplayName("An empty target library produces no exiled card or cleanup")
+    void emptyTargetLibraryProducesNoCleanup() {
+        gd.playerDecks.get(player2.getId()).clear();
+
+        activateGrinningTotem();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grinning Totem");
+        harness.assertInGraveyard(player1, "Grinning Totem");
     }
 }

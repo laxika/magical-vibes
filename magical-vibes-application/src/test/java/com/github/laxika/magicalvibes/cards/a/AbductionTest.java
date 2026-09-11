@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Abduction.class, GrizzlyBears.class, Terror.class})
 class AbductionTest extends BaseCardTest {
 
     // ===== Gaining control =====
@@ -64,10 +66,9 @@ class AbductionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Doom Blade — creature dies, trigger goes on stack
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities(); // resolve the return trigger
 
         // The creature returns to its owner (player2), not the aura's controller (player1)
@@ -89,10 +90,9 @@ class AbductionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Doom Blade
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities(); // resolve trigger
 
         harness.assertInGraveyard(player1, "Abduction");

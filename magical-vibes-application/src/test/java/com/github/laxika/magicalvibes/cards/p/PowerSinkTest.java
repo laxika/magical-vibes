@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
-import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
@@ -19,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PowerSink.class, BalduvianBears.class, Forest.class, GlacialChasm.class, BirdsOfParadise.class, EvolvingWilds.class})
+@CardUsed({PowerSink.class, BalduvianBears.class, Forest.class, GlacialChasm.class, BirdsOfParadise.class})
 class PowerSinkTest extends BaseCardTest {
 
     private BalduvianBears prepareCounterTarget() {
@@ -197,6 +196,32 @@ class PowerSinkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed(SavageSummoning.class)
+    void appliesNotPaidRiderWhenUncounterableSpellControllerDeclines() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        SavageSummoning summoning = new SavageSummoning();
+        harness.setHand(player1, List.of(summoning));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2); // {G} to cast Savage Summoning, {1} remains for X
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
+
+        harness.castInstant(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, summoning.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     @Test

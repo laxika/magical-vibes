@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RazorGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StormCauldron.class, Forest.class, Plains.class, RazorGolem.class})
 class StormCauldronTest extends BaseCardTest {
@@ -23,6 +25,21 @@ class StormCauldronTest extends BaseCardTest {
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
         assertThat(gd.getMaxLandsThisTurn(player2.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each player can actually play the additional land")
+    void allowsAdditionalLandPlay() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -46,7 +63,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInHand(player1, "Forest");
@@ -59,7 +76,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         harness.tapPermanent(player1, 1);
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
@@ -83,10 +100,28 @@ class StormCauldronTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         harness.tapPermanent(player2, 0);
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A tapped land returns to its owner's hand even when another player controls it")
+    void returnsTappedLandToItsOwnerHand() {
+        harness.addToBattlefield(player1, new StormCauldron());
+
+        Forest forest = new Forest();
+        forest.setOwnerId(player1.getId());
+        Permanent stolenForest = harness.addToBattlefieldAndReturn(player2, forest);
+        gd.stolenCreatures.put(stolenForest.getId(), player1.getId());
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(forest);
     }
 
     @Test
@@ -106,7 +141,7 @@ class StormCauldronTest extends BaseCardTest {
         assertThat(gd.stack).anySatisfy(entry ->
                 assertThat(entry.getCard().getName()).isEqualTo("Razor Golem"));
 
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Razor Golem");
         assertThat(gd.playerHands.get(player1.getId()))
@@ -124,9 +159,4 @@ class StormCauldronTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
     }
 
-    private void resolveDeferredTriggers() {
-        for (int i = 0; i < 10 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
-    }
 }

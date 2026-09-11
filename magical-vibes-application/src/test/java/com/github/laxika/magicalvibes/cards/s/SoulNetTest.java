@@ -23,7 +23,7 @@ class SoulNetTest extends BaseCardTest {
     @DisplayName("When a creature dies, controller may pay {1} to gain 1 life")
     void creatureDiesPayGainLife() {
         harness.addToBattlefield(player1, new SoulNet());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setLife(player1, 20);
 
         // Destroy the opponent's creature with Terror.
@@ -31,7 +31,6 @@ class SoulNetTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2); // to pay {1} after casting Terror
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities(); // Resolve Terror; bears die; death trigger placed
         harness.passBothPriorities(); // Resolve Soul Net trigger → may-pay prompt
@@ -48,14 +47,13 @@ class SoulNetTest extends BaseCardTest {
     @DisplayName("Declining the may-pay gains no life")
     void declineNoLife() {
         harness.addToBattlefield(player1, new SoulNet());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setLife(player1, 20);
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -69,7 +67,7 @@ class SoulNetTest extends BaseCardTest {
     @DisplayName("Accepting without enough mana gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new SoulNet());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setLife(player1, 20);
 
         harness.setHand(player1, List.of(new Terror()));
@@ -77,7 +75,6 @@ class SoulNetTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         // No spare mana to pay {1}.
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -91,7 +88,7 @@ class SoulNetTest extends BaseCardTest {
     @DisplayName("Triggers when the controller's own creature dies")
     void ownCreatureDiesTriggers() {
         harness.addToBattlefield(player1, new SoulNet());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 1); // to pay {1}
 
@@ -103,7 +100,6 @@ class SoulNetTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -114,6 +110,32 @@ class SoulNetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Each Soul Net triggers independently for one creature death")
+    void multipleSoulNetsTriggerIndependently() {
+        harness.addToBattlefield(player1, new SoulNet());
+        harness.addToBattlefield(player1, new SoulNet());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.setLife(player1, 20);
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 22);
     }
 
     @Test

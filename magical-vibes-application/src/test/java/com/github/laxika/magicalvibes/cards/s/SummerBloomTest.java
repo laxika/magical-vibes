@@ -20,10 +20,7 @@ class SummerBloomTest extends BaseCardTest {
     void grantsThreeAdditionalLandPlays() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SummerBloom()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(4);
@@ -34,10 +31,7 @@ class SummerBloomTest extends BaseCardTest {
     void grantsAdditionalLandPlaysOnlyToController() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SummerBloom()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(4);
@@ -49,10 +43,7 @@ class SummerBloomTest extends BaseCardTest {
     void additionalLandPlaysExpireAtEndOfTurn() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SummerBloom()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
         harness.passBothPriorities();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
