@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "SOI", collectorNumber = "124")
+@CardRegistration(set = "DDQ", collectorNumber = "41")
 public class MindwrackDemon extends Card {
 
     public MindwrackDemon() {

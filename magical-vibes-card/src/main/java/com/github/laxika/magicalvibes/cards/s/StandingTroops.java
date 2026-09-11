@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "6ED", collectorNumber = "44")
 @CardRegistration(set = "EXO", collectorNumber = "22")
 @CardRegistration(set = "TPR", collectorNumber = "36")
+@CardRegistration(set = "DDO", collectorNumber = "25")
 public class StandingTroops extends Card {
 
     public StandingTroops() {

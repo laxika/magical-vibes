@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "143")
+@CardRegistration(set = "DDO", collectorNumber = "59")
 public class TempleOfTheFalseGod extends Card {
 
     public TempleOfTheFalseGod() {
