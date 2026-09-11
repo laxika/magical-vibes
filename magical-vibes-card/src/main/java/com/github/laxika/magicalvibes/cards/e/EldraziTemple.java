@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "227")
+@CardRegistration(set = "DDP", collectorNumber = "68")
 public class EldraziTemple extends Card {
 
     public EldraziTemple() {

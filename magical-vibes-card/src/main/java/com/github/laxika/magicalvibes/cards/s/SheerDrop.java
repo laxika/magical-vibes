@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "48")
+@CardRegistration(set = "DDP", collectorNumber = "9")
 public class SheerDrop extends Card {
 
     @Override
