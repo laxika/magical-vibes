@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M11", collectorNumber = "189")
+@CardRegistration(set = "MM2", collectorNumber = "153")
 public class OverwhelmingStampede extends Card {
 
     public OverwhelmingStampede() {

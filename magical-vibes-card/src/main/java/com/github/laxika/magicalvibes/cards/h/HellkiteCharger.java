@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "131")
+@CardRegistration(set = "MM2", collectorNumber = "118")
 public class HellkiteCharger extends Card {
 
     public HellkiteCharger() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "M13", collectorNumber = "208")
 @CardRegistration(set = "WWK", collectorNumber = "126")
 @CardRegistration(set = "MOM", collectorNumber = "261")
+@CardRegistration(set = "MM2", collectorNumber = "218")
 public class Kitesail extends Card {
 
     public Kitesail() {

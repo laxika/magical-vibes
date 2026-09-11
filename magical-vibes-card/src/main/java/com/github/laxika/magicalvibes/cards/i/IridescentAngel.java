@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "288")
+@CardRegistration(set = "V15", collectorNumber = "10")
 public class IridescentAngel extends Card {
 
     public IridescentAngel() {

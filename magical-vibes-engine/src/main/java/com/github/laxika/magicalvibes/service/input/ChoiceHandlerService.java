@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfT
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
@@ -1906,7 +1907,9 @@ public class ChoiceHandlerService {
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
@@ -2731,6 +2734,16 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        ChooseModeOnEnterEffect modeChoice = ctx.sourceCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseModeOnEnterEffect.class::isInstance)
+                .map(ChooseModeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (modeChoice != null && modeChoice.eachPlayer()) {
+            handleEachPlayerAsEntersModeChoice(gameData, player, chosen, ctx, modeChoice);
+            return;
+        }
+
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (source != null) {
             source.getChosenModeLabels().add(chosen.label());
@@ -2742,6 +2755,36 @@ public class ChoiceHandlerService {
                     gameData, player.getId(), source.getCard(), null, false);
         }
 
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerAsEntersModeChoice(GameData gameData, Player player,
+            ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx,
+            ChooseModeOnEnterEffect modeChoice) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null) {
+            stateBasedActionService.performStateBasedActions(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        source.getChosenModeByPlayer().put(player.getId(), chosen.label());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses as-enters mode \"{}\" for {}", gameData.id,
+                player.getUsername(), chosen.label(), ctx.sourceCard().getName());
+
+        if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                gameData, ctx.sourceCard(), source.getId(), modeChoice.modes())) {
+            return;
+        }
+
+        UUID sourceControllerId = gameData.findControllerOf(source);
+        if (sourceControllerId != null) {
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, sourceControllerId, source.getCard(), null, false);
+        }
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

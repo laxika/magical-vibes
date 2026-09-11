@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "5DN", collectorNumber = "35")
 @CardRegistration(set = "DDF", collectorNumber = "59")
 @CardRegistration(set = "HOP", collectorNumber = "12")
+@CardRegistration(set = "MM2", collectorNumber = "54")
 public class Qumulox extends Card {
 
     public Qumulox() {

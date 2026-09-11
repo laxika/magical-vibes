@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "EVE", collectorNumber = "94")
+@CardRegistration(set = "MM2", collectorNumber = "196")
 public class RestlessApparition extends Card {
 
     public RestlessApparition() {

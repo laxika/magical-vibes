@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "122")
+@CardRegistration(set = "DDP", collectorNumber = "55")
 public class PawnOfUlamog extends Card {
 
     private static final CreateTokenEffect SPAWN_TOKEN = new CreateTokenEffect(

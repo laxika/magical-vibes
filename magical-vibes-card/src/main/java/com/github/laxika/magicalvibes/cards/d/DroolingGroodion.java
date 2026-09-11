@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "RAV", collectorNumber = "204")
 @CardRegistration(set = "TD2", collectorNumber = "64")
 @CardRegistration(set = "DDM", collectorNumber = "65")
+@CardRegistration(set = "MM2", collectorNumber = "173")
 public class DroolingGroodion extends Card {
 
     public DroolingGroodion() {
