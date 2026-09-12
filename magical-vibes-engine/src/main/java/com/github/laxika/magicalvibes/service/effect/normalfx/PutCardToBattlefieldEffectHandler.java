@@ -27,7 +27,7 @@ public class PutCardToBattlefieldEffectHandler implements NormalEffectHandlerBea
         playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(), e, entry.getXValue(),
                 entry.getEventValue(), sourceEquipmentCardId, entry.getCard() == null ? null : entry.getCard().getId(),
                 null, null, e.enterBlocking() ? entry.getTargetId() : null,
-                ignored -> true, entry.getSourcePermanentId());
+                ignored -> true, entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot());
 
     }
 }

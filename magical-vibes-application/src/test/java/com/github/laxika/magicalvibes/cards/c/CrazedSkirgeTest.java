@@ -19,6 +19,7 @@ class CrazedSkirgeTest extends BaseCardTest {
     @DisplayName("Haste lets Crazed Skirge attack immediately")
     void hasteLetsItAttackImmediately() {
         Permanent skirge = harness.addToBattlefieldAndReturn(player1, new CrazedSkirge());
+        addCreatureReady(player2, new CrazedSkirge());
 
         declareAttackers(player1, List.of(0));
 
@@ -28,10 +29,11 @@ class CrazedSkirgeTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a ground creature from blocking Crazed Skirge")
     void flyingPreventsGroundCreatureFromBlocking() {
-        addCreatureReady(player1, new CrazedSkirge());
+        Permanent attacker = addCreatureReady(player1, new CrazedSkirge());
         addCreatureReady(player2, new CoralMerfolk());
 
-        declareAttackers(List.of(0));
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))

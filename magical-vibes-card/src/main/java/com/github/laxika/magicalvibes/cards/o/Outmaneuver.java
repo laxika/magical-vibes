@@ -16,7 +16,7 @@ import java.util.List;
 public class Outmaneuver extends Card {
 
     public Outmaneuver() {
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsBlockedPredicate()

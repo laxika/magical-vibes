@@ -154,6 +154,13 @@ public class StrongholdGambitEffectHandler implements NormalEffectHandlerBean {
                     gameData, controllerId, permanent, enterTappedTypes, List.copyOf(alreadyEntered));
             alreadyEntered.add(permanent);
         }
+        for (Permanent permanent : alreadyEntered) {
+            UUID controllerId = gameData.findControllerOf(permanent);
+            if (controllerId != null) {
+                battlefieldEntryService.processCreatureETBEffects(
+                        gameData, controllerId, permanent.getCard(), null, false);
+            }
+        }
     }
 
     private static Card findCard(List<Card> hand, UUID cardId) {

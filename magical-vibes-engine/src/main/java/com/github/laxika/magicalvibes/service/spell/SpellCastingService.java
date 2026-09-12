@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.spell;
+
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -513,7 +514,6 @@ public class SpellCastingService {
                 .build());
     }
 
-
     /**
      * Pays a spell's "as an additional cost to cast this spell, discard a card" cost
      * (e.g. Seize the Spoils). {@code discardHandCardIndex} is the index into the caster's hand
@@ -755,7 +755,6 @@ public class SpellCastingService {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
         }
     }
-
 
     /**
      * True when casting this card writes mode-dependent state onto it: modal spells
@@ -3203,6 +3202,12 @@ public class SpellCastingService {
             AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
                     .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
 
+            if (altCast.getCost(EachOpponentGainsLifeCastingCost.class).isPresent()
+                    && gameData.orderedPlayerIds.stream().anyMatch(opponentId ->
+                    !opponentId.equals(playerId) && !gameQueryService.canPlayerGainLife(gameData, opponentId))) {
+                throw new IllegalStateException("Each opponent must be able to gain life to pay the alternate cost");
+            }
+
             // Prowl: the alternate cost may only be used if the caster dealt combat damage to a
             // player this turn with a creature of the required subtype.
             if (!altCast.prowlDamageSubtypes().isEmpty()
@@ -3291,6 +3296,9 @@ public class SpellCastingService {
                 }
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 List<UUID> returnIds = alternateCostSacrificePermanentIds.subList(sacCount + tapCount, alternateCostSacrificePermanentIds.size());
+                if (new HashSet<>(returnIds).size() != returnIds.size()) {
+                    throw new IllegalStateException("Cannot return the same permanent more than once");
+                }
                 for (UUID returnId : returnIds) {
                     Permanent toReturn = battlefield == null ? null : battlefield.stream()
                             .filter(p -> p.getId().equals(returnId))
@@ -7602,6 +7610,7 @@ public class SpellCastingService {
         // Aftermath splits: FlashbackCast lives on the back face; effects/type come from that half,
         // but the physical parent card stays on the stack so exile disposition moves the whole card.
         var flashbackOpt = graveyardAbilitiesSuppressed
+                || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
                 ? Optional.<FlashbackCast>empty()
                 : card.effectiveFlashbackCast();
         if (flashbackOpt.isPresent()
@@ -12790,7 +12799,6 @@ public class SpellCastingService {
             }
         }
     }
-
 
     public void playCardWithCasualty(GameData gameData, Player player, int cardIndex, Integer xValue,
                                      UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds,

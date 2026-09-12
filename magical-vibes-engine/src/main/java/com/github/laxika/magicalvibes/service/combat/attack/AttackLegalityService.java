@@ -190,6 +190,9 @@ public class AttackLegalityService {
      * is routed through {@link ConditionEvaluationService} with the attacker as source.
      */
     private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
+        if (gameQueryService.hasLostAllAbilities(gameData, creature)) {
+            return false;
+        }
         ConditionContext ctx = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
             Condition condition = null;

@@ -47,8 +47,27 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
                                           boolean onlyIfSacrificed,
                                           boolean cantBeRedirectedWhenUnpreventable,
                                           boolean preventRegenerationWithoutDamage,
-                                          boolean sourceIsTriggeringPermanent)
+                                          boolean sourceIsTriggeringPermanent,
+                                          boolean recordDamageDealt)
         implements DamageDealingEffect, TriggeringPermanentSourceEffect {
+
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
+                                       boolean exileInsteadOfDie, int targetGroup,
+                                       Condition unpreventableWhen, boolean onlyIfSacrificed,
+                                       boolean cantBeRedirectedWhenUnpreventable,
+                                       boolean preventRegenerationWithoutDamage,
+                                       boolean sourceIsTriggeringPermanent) {
+        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
+                onlyIfSacrificed, cantBeRedirectedWhenUnpreventable,
+                preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, false);
+    }
+
+    /** Stores the damage actually dealt in the stack entry for subsequent effects. */
+    public DealDamageToAnyTargetEffect recordingDamageDealt() {
+        return new DealDamageToAnyTargetEffect(damage, cantRegenerate, exileInsteadOfDie, targetGroup,
+                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable,
+                preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, true);
+    }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -79,7 +98,7 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     public DealDamageToAnyTargetEffect withUnconditionalRegenerationPrevention() {
         return new DealDamageToAnyTargetEffect(damage, true, exileInsteadOfDie, targetGroup,
                 unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, true,
-                sourceIsTriggeringPermanent);
+                sourceIsTriggeringPermanent, recordDamageDealt);
     }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,

@@ -42,7 +42,7 @@ public class ExileUnlessDiscardCardTypeEffectHandler implements NormalEffectHand
 
         List<Card> hand = gameData.playerHands.get(controllerId);
         boolean hasValidCard = hand != null && hand.stream()
-                .anyMatch(card -> e.requiredType() == null || card.getType() == e.requiredType());
+                .anyMatch(card -> e.requiredType() == null || card.hasType(e.requiredType()));
         String typeName = e.requiredType() == null
                 ? "card"
                 : e.requiredType().name().toLowerCase() + " card";

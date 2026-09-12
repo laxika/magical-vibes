@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 @Slf4j
 @Component
@@ -22,6 +24,7 @@ public class TapAndLockOtherPermanentsEffectHandler implements NormalEffectHandl
     private final PredicateEvaluationService predicateEvaluationService;
     private final TapUntapSupport tapUntapSupport;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +35,8 @@ public class TapAndLockOtherPermanentsEffectHandler implements NormalEffectHandl
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         TapAndLockOtherPermanentsEffect tapAndLock = (TapAndLockOtherPermanentsEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        boolean sourceRemainsTapped = source != null && source.isTapped();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
@@ -50,7 +55,7 @@ public class TapAndLockOtherPermanentsEffectHandler implements NormalEffectHandl
             if (tapUntapSupport.tapPermanent(gameData, permanent)) {
                 newlyTappedCount[0]++;
             }
-            if (sourcePermanentId != null) {
+            if (sourceRemainsTapped) {
                 permanent.getUntapPreventedByPermanentIds().add(sourcePermanentId);
                 lockedCount[0]++;
             }

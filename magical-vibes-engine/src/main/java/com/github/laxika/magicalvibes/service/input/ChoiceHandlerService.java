@@ -808,6 +808,12 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
+        if (perm == null && gameData.pendingEffectResolutionEntry != null) {
+            Permanent snapshot = gameData.pendingEffectResolutionEntry.getSourcePermanentSnapshot();
+            if (snapshot != null && snapshot.getId().equals(permanentId)) {
+                snapshot.setChosenColor(color);
+            }
+        }
         if (perm != null) {
             perm.setChosenColor(color);
 
@@ -3212,13 +3218,9 @@ public class ChoiceHandlerService {
                             .build());
         }
 
-        // A card is "of that color" per its actual color (Scryfall colors array, honouring
-        // hybrid/multicolor). Lands are excluded: the oracle loader derives a colorless land's
-        // "colors" from its color identity (e.g. Forest -> green), but a Forest is a colorless card
-        // and must not be discarded. Genuinely colored lands (color indicator) don't exist this era.
         List<Card> toDiscard = hand == null ? List.of()
                 : new ArrayList<>(hand.stream()
-                        .filter(c -> !c.hasType(CardType.LAND) && c.getColors().contains(color))
+                        .filter(c -> gameQueryService.getEffectiveCardColors(gameData, c).contains(color))
                         .toList());
         if (!toDiscard.isEmpty()) {
             gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
@@ -6025,5 +6027,4 @@ public class ChoiceHandlerService {
         return builder;
     }
 }
-
 

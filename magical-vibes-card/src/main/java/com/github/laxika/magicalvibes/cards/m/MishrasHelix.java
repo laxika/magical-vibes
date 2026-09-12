@@ -21,7 +21,7 @@ public class MishrasHelix extends Card {
                         new PermanentIsLandPredicate(),
                         "Targets must be lands"
                 ),
-                null, null, null, List.of(), 0, 100)
+                null, null, null, List.of(), 100, 100)
                 .withXScaledTargets());
     }
 }

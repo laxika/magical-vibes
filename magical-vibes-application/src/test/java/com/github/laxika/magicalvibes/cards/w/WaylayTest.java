@@ -92,10 +92,11 @@ class WaylayTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Knight")).hasSize(3);
 
         harness.passUntil(TurnStep.CLEANUP);
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Knight")).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(Card::isToken)
-                .count()).isEqualTo(3);
+                .count()).isZero();
     }
 }

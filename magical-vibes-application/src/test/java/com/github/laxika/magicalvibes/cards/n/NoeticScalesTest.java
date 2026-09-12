@@ -67,8 +67,9 @@ class NoeticScalesTest extends BaseCardTest {
     @DisplayName("Returns a controlled creature to its owner's hand")
     void returnsControlledCreatureToOwnersHand() {
         harness.addToBattlefield(player1, new NoeticScales());
-        Permanent stolenBullHippo = harness.addToBattlefieldAndReturn(player2, new BullHippo());
-        gd.stolenCreatures.put(stolenBullHippo.getId(), player1.getId());
+        BullHippo bullHippo = new BullHippo();
+        bullHippo.setOwnerId(player1.getId());
+        Permanent stolenBullHippo = harness.addToBattlefieldAndReturn(player2, bullHippo);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
 

@@ -125,7 +125,6 @@ public class GraveyardService {
         this.triggerCollectionService = triggerCollectionService;
     }
 
-
     /**
      * Mills {@code count} cards from the target player's library, returning the cards that actually
      * reached the graveyard (a replacement effect can divert one). Callers that need to act on the
@@ -633,7 +632,8 @@ public class GraveyardService {
         if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed
                 && !creatureDeathTriggersSuppressed) {
             collectPutIntoGraveyardFromBattlefieldTriggers(
-                    gameData, ownerId, card, battlefieldPermanentId, battlefieldSnapshot);
+                    gameData, battlefieldControllerId != null ? battlefieldControllerId : ownerId,
+                    card, battlefieldPermanentId, battlefieldSnapshot);
         }
         if (!card.isToken() && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -863,7 +863,6 @@ public class GraveyardService {
             log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
         }
     }
-
 
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
         return tryReplaceDestruction(gameData, perm, true, false);
@@ -1185,7 +1184,6 @@ public class GraveyardService {
         log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
     }
 
-
     public void recordCreatureDamagedByPermanent(GameData gameData, UUID sourcePermanentId, Permanent damagedCreature, int damage) {
         if (sourcePermanentId == null || damagedCreature == null || damage <= 0) {
             return;
@@ -1198,7 +1196,6 @@ public class GraveyardService {
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());
     }
-
 
     private boolean hasExileWithEggCountersReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
@@ -1667,7 +1664,6 @@ public class GraveyardService {
         }
         return null;
     }
-
 
     /**
      * Begins a batch of graveyard removals that should produce a single

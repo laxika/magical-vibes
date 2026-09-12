@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "131")
 @CardRegistration(set = "USG", collectorNumber = "132")
@@ -29,6 +32,8 @@ import java.util.List;
 public class Duress extends Card {
 
     public Duress() {
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"));
         addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(1, List.of(CardType.CREATURE, CardType.LAND), HandChoiceDestination.DISCARD));
     }
 }

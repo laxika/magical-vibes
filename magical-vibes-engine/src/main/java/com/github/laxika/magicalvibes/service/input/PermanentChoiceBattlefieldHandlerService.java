@@ -105,6 +105,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 
 /**
  * Handles permanent choice contexts related to battlefield manipulation.
@@ -136,6 +137,13 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+
+    public void handleAuraEntryBatchChoice(GameData gameData, UUID permanentId,
+                                           PermanentChoiceContext.AuraEntryBatchChoice choice) {
+        battlefieldEntryBatchSupport.completeChoice(gameData, permanentId, choice);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
     private final AuspiciousStarrixSupport auspiciousStarrixSupport;
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
@@ -1666,7 +1674,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
                 controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary(),
                 ctx.damageSourceControllerCard(), ctx.preventHalfDamage(), ctx.drawCards(),
-                findDamageSourceController(gameData, permanentId), ctx.requiredDamageColors()));
+                findDamageSourceController(gameData, permanentId), ctx.requiredDamageColors(),
+                false, false, false, ctx.requiredSourceFilter()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenSource.getName();

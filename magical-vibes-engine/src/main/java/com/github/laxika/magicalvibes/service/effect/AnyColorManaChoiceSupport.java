@@ -238,14 +238,24 @@ public final class AnyColorManaChoiceSupport {
             }
             return false;
         }
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext,
-                allowedColors.stream().map(Enum::name).toList(), prompt(effect.restriction())));
+                allowedColors.stream().map(Enum::name).toList(), prompt(effect.restriction()));
+        beginOrQueueChoice(interactionHandlerRegistry, gameData, choice);
         if (effect.restriction() == ManaSpendRestriction.INSTANT_SORCERY_COPY) {
             // Delayed trigger: copy the next instant/sorcery spell this mana is spent on.
             gameData.pendingNextInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
         }
         return true;
+    }
+
+    public static void beginOrQueueChoice(InteractionHandlerRegistry registry, GameData gameData,
+                                           PendingInteraction.ColorChoice choice) {
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.pendingInteractions.addLast(choice);
+        } else {
+            registry.begin(gameData, choice);
+        }
     }
 
     private static ChoiceContext choiceContext(GameData gameData,

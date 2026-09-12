@@ -681,7 +681,7 @@ Implementation note: `ExileTargetPermanentUntilSourceLeavesEffect` accepts an op
 
 `BecomeEnchantmentEffect()` is a non-targeting source effect that restores the source permanent's original card form, including its enchantment type and abilities. Use it to reverse a permanent self-change created by `BecomeCreatureEffect`.
 
-`GrantProtectionFromTriggeringSpellColorsEffect()` is a non-targeting source effect for spell-cast triggers. It reads the triggering spell still on the stack at resolution and adds a permanent floating `ProtectionFromColorsEffect` to the source.
+`GrantProtectionFromTriggeringSpellColorsEffect()` is a non-targeting source effect for spell-cast triggers. The spell-cast collector snapshots the triggering spell's colors into the effect, including through conditional, sequence, and may wrappers, so it still grants a permanent floating `ProtectionFromColorsEffect` if that spell has left the stack. While the spell remains on the stack, resolution uses its current effective colors.
 
 ## Marker interfaces
 
@@ -5335,3 +5335,15 @@ See [PLANECHASE.md](PLANECHASE.md) for trigger slots and command-zone source han
 - `PendingInteraction.LibraryRevealChoice.withRevealSelected(false)` keeps a looked-at selection private in public logs. Use the default public selection for effects that explicitly reveal the chosen cards.
 
 Spell-cast triggers that refer to the spell that triggered them carry its identity as context and mark the stack entry non-targeting. Other effects in the ability still resolve if that spell leaves the stack (Speedball, New Warrior).
+
+`DealDamageToAnyTargetEffect.recordingDamageDealt()` stores actual damage dealt by its source in the stack entry's `eventValue`, after prevention and redirection. Follow it with `GainLifeEffect(new EventValue())` for Corrupt-style life gain.
+
+`EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect` gathers every player's graveyard choice before placing the returned cards in one battlefield-entry batch. `underOwnersControl=true` uses card ownership instead of the graveyard owner (Planar Birth).
+
+`ReturnCardFromGraveyardEffect` with `returnAll=true` and `chooseAuraAttachment=true` uses `BattlefieldEntryBatchSupport` to choose Aura attachments before the entire batch enters (Replenish). The same helper handles simultaneous hand entries (Show and Tell). Auras with no legal existing attachment remain in their original zone; creatures entering in the same batch are not attachment choices.
+
+`ExileCreatedPermanentsAtNextCleanupEffect` schedules one `DelayedCleanupTrigger` per resolving effect. That trigger uses an `ExileAllPermanentsEffect` restricted to the created permanent IDs, giving players priority before those permanents are exiled (Waylay).
+
+`TapChosenPermanentEffect.forDamagedPlayer(UUID)` binds the damaged player and produces a targeted tap/untap-lock sequence. Damage-trigger collectors choose this target when the trigger is put on the stack (Somnophore).
+
+`SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER` resolves to the entering creature's current controller, falling back to its last known controller if it has left. The trigger does not target that player (Tainted Aether).

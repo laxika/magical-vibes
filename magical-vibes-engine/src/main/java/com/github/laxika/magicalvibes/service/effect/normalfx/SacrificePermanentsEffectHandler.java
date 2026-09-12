@@ -66,6 +66,15 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 && !e.simultaneousChoices();
 
         switch (e.recipient()) {
+            case TRIGGERING_PERMANENT_CONTROLLER -> {
+                UUID playerId = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+                if (playerId == null) {
+                    playerId = entry.getTriggeringPermanentControllerId();
+                }
+                if (playerId != null) {
+                    resolveSinglePlayer(gameData, entry, e, playerId, creatureSingleSac);
+                }
+            }
             case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
             case TARGET_PLAYER -> {
                 UUID targetPlayerId = entry.getTargetId();

@@ -53,6 +53,23 @@ import static org.mockito.Mockito.verify;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class CreatureControlServiceTest {
 
+    @Test
+    void changingControlSchedulesEchoAgain() {
+        Card card = createCreatureCard("Echo creature");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect("{2}{R}"));
+        Permanent creature = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(creature);
+
+        applySteal(player2Id, creature, EffectDuration.PERMANENT, null);
+
+        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep.class))
+                .singleElement().satisfies(echo -> {
+                    assertThat(echo.permanentId()).isEqualTo(creature.getId());
+                    assertThat(echo.manaCost()).isEqualTo("{2}{R}");
+                });
+    }
+
     @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;

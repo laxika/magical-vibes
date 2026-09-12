@@ -15,6 +15,6 @@ public class AbsoluteLaw extends Card {
 
     public AbsoluteLaw() {
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
-                new ProtectionFromColorsEffect(Set.of(CardColor.RED)), GrantScope.ALL_CREATURES));
+                new ProtectionFromColorsEffect(Set.of(CardColor.RED)), GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

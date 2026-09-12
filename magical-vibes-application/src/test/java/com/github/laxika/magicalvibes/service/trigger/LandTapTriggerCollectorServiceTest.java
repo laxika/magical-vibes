@@ -65,6 +65,27 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LandTapTriggerCollectorServiceTest {
 
+    @Test
+    void additionalManaChoiceDoesNotReplaceAnEarlierChoice() {
+        when(amountEvaluationService.evaluate(any(), any(), any())).thenReturn(1);
+        Permanent aura = createPermanent("Mana Aura");
+        Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+        aura.setAttachedTo(forest.getId());
+        when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
+        var originalChoice = new PendingInteraction.ColorChoice(player1Id, null, null,
+                new com.github.laxika.magicalvibes.model.ChoiceContext.ManaColorChoice(player1Id, false, 1),
+                List.of("BLUE", "RED"), "Choose mana");
+        gd.interaction.beginInteraction(originalChoice);
+        var effect = new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect());
+
+        assertThat(registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                effect, new TriggerContext.LandTap(player1Id, forest.getId()))).isTrue();
+
+        assertThat(gd.interaction.activeInteraction()).isSameAs(originalChoice);
+        assertThat(gd.pendingInteractions).hasSize(1);
+        verify(interactionHandlerRegistry, org.mockito.Mockito.never()).begin(any(), any());
+    }
+
     @Mock
     private GameQueryService gameQueryService;
 
@@ -669,6 +690,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player1Id, swamp.getId());
 
             when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+            when(gameQueryService.hasEffectiveSubtype(gd, swamp, CardSubtype.SWAMP)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
@@ -690,6 +712,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, swamp.getId());
 
             when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+            when(gameQueryService.hasEffectiveSubtype(gd, swamp, CardSubtype.SWAMP)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
@@ -711,6 +734,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, swamp.getId());
 
             when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+            when(gameQueryService.hasEffectiveSubtype(gd, swamp, CardSubtype.SWAMP)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),

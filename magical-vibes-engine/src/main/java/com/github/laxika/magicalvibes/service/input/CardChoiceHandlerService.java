@@ -242,6 +242,10 @@ public class CardChoiceHandlerService {
         // only thing that would resume the entry parked in pendingEffectResolutionEntry, wedging
         // the game (and with it deferPlayerLossCheck) on a stale client answer. The copy below
         // stays as defence.
+        if (cardIndex == -1 && active instanceof PendingInteraction.TargetedHandCardChoice choice
+                && !choice.declinable()) {
+            return;
+        }
         if (cardIndex == -1 && cloaked) {
             throw new IllegalStateException("This card choice cannot be declined");
         }
@@ -2294,5 +2298,4 @@ public class CardChoiceHandlerService {
         graveyardService.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
     }
 }
-
 

@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
 
 /**
  * Handles end-of-turn cleanup, mana pool draining, and hand-size calculations.
@@ -84,6 +87,15 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
+        for (var delayed : gameData.drainDelayedActions(
+                DelayedCleanupTrigger.class)) {
+            var entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(), delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s cleanup trigger", List.of(delayed.effect()));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         permanentRemovalService.processDelayedPermanentActions(
                 gameData, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         sacrificePermanentsFlaggedForCleanup(gameData);
@@ -189,8 +201,6 @@ public class TurnCleanupService {
             gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
         }
     }
-
-
 
     /**
      * Resets all "until end of turn" modifiers on permanents (power/toughness

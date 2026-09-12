@@ -136,6 +136,7 @@ class TaintedAetherTest extends BaseCardTest {
     @Test
     @DisplayName("The creature's controller at resolution chooses what to sacrifice")
     void usesCreatureControllerAtResolution() {
+        harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player1, new TaintedAether());
         Permanent gorilla = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
 
@@ -157,6 +158,7 @@ class TaintedAetherTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
-                harness.getPermanentId(player2, "Gilded Drake"));
+                harness.getPermanentId(player2, "Gilded Drake"),
+                harness.getPermanentId(player2, "Forest"));
     }
 }

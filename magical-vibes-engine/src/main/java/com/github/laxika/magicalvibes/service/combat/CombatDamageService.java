@@ -108,6 +108,8 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 
 /**
  * Resolves combat damage: first strike / double strike phases, damage distribution (trample,
@@ -796,7 +798,6 @@ public class CombatDamageService {
         return blockerMap;
     }
 
-
     private void resolveDamagePhase(GameData gameData, CombatDamageState state,
                                      Map<Integer, List<Integer>> blockerMap,
                                      List<Permanent> atkBf, List<Permanent> defBf,
@@ -838,8 +839,7 @@ public class CombatDamageService {
 
             Map<UUID, Integer> playerAssignment = gameData.combatDamagePlayerAssignments.get(atkIdx);
 
-            boolean assignAsUnblocked = !blkIndices.isEmpty()
-                    && assignsCombatDamageAsThoughUnblocked(gameData, atk);
+            boolean assignAsUnblocked = assignsCombatDamageAsThoughUnblocked(gameData, atk);
             Permanent unblockedDamageRedirectTarget = blkIndices.isEmpty()
                     && !atk.isBlockedWithoutBlockers() ? redirectTarget : null;
 
@@ -855,7 +855,7 @@ public class CombatDamageService {
                 // A creature made blocked without a creature blocking it deals no damage unless it
                 // has trample, which can assign all its damage to the defending player.
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()
-                        && (!atk.isBlockedWithoutBlockers() || atkStats.trample())) {
+                        && (!atk.isBlockedWithoutBlockers() || atkStats.trample() || assignAsUnblocked)) {
                     int power = gameQueryService.applyCombatDamageMultiplier(gameData, atkStats.combatDamage(), atk, null);
                     accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId,
                             unblockedDamageRedirectTarget, state, !atk.isBlockedWithoutBlockers());
@@ -1138,7 +1138,6 @@ public class CombatDamageService {
         }
     }
 
-
     private void processLifelink(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
         for (var entry : combatDamageDealt.entrySet()) {
             Permanent creature = entry.getKey();
@@ -1168,7 +1167,6 @@ public class CombatDamageService {
             });
         }
     }
-
 
     private void processGainLifeEqualToControlledCreatureCombatDamage(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
         for (var entry : combatDamageDealt.entrySet()) {
@@ -1466,6 +1464,17 @@ public class CombatDamageService {
 
                 CardEffect specialEffect = effect instanceof ConditionalEffect conditional
                         ? conditional.wrapped() : effect;
+                if (specialEffect instanceof TapChosenPermanentEffect tap
+                        && tap.chooseFromDamagedPlayer()) {
+                    CardEffect targeted = tap.forDamagedPlayer(defenderId);
+                    if (effect instanceof ConditionalEffect conditional) {
+                        targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
+                    }
+                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                            creature.getCard(), attackerId, List.of(targeted),
+                            creature.getId(), attackerId, defenderId));
+                    continue;
+                }
                 if (specialEffect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
                     if (damageDealt >= destroyEffect.minimumDamage()) {
                         CardEffect targeted = destroyEffect.forDamagedPlayer(defenderId);
@@ -2730,7 +2739,6 @@ public class CombatDamageService {
         }
     }
 
-
     private void captureCombatDamageBaselines(GameData gameData, CombatDamageState state,
                                               List<Permanent> atkBf, List<Permanent> defBf) {
         for (Permanent permanent : atkBf) {
@@ -2952,7 +2960,6 @@ public class CombatDamageService {
             }
         }
     }
-
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         int artifactDamage = state.combatDamageDealtToPlayer.entrySet().stream()
@@ -3296,7 +3303,6 @@ public class CombatDamageService {
         }
     }
 
-
     /**
      * Processes pending Eye for an Eye reflected damage during combat: deals the reflected amount to
      * the chosen source's controller (a player). Mirrors {@link #processSourceRedirectDamage}'s direct
@@ -3564,6 +3570,11 @@ public class CombatDamageService {
                     gameData, defenderId, atk.getId());
             Permanent sourceCombatRedirectTarget = sourceCombatRedirectTargetId == null
                     ? null : gameQueryService.findPermanentById(gameData, sourceCombatRedirectTargetId);
+            if (sourceCombatRedirectTarget == null) {
+                sourceCombatRedirectTarget = gameQueryService.findEnchantedCreatureByAuraEffect(
+                        gameData, defenderId,
+                        RedirectPlayerDamageToEnchantedCreatureEffect.class);
+            }
             if (damage > 0 && sourceCombatRedirectTarget != null) {
                 List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
                 boolean targetIsAttacker = attackingBattlefield != null
@@ -4006,7 +4017,6 @@ public class CombatDamageService {
                 gameData, source, target, damage);
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);
     }
-
 
     private boolean hasFirstOrDoubleStrike(GameData gameData, Permanent creature) {
         return gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE)

@@ -22,6 +22,7 @@ public final class LibraryShuffleHelper {
     private LibraryShuffleHelper() {}
 
     public static void shuffleLibrary(GameData gameData, UUID playerId) {
+        gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
         List<Card> deck = gameData.playerDecks.get(playerId);
         Collections.shuffle(deck);
         checkOpponentShuffleTriggers(gameData, playerId);

@@ -29,7 +29,7 @@ public class ParallaxTide extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.FADE),
-                        new ExileTargetPermanentUntilSourceLeavesEffect()
+                        ExileTargetPermanentUntilSourceLeavesEffect.evenIfSourceAlreadyLeft()
                 ),
                 "Remove a fade counter from this enchantment: Exile target land.",
                 TargetFilters.land()

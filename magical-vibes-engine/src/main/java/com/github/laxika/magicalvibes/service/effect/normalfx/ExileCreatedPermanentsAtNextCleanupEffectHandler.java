@@ -2,13 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtNextCleanupEffect;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
+import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Resolves {@link ExileCreatedPermanentsAtNextCleanupEffect} by scheduling each permanent created
@@ -24,9 +26,14 @@ public class ExileCreatedPermanentsAtNextCleanupEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        for (UUID createdId : entry.getCreatedPermanentIds()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    createdId, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP));
-        }
+        if (entry.getCreatedPermanentIds().isEmpty()) return;
+        var filter = new PermanentAnyOfPredicate(
+                entry.getCreatedPermanentIds().stream()
+                        .<PermanentPredicate>map(
+                                PermanentIsSpecificPermanentPredicate::new)
+                        .toList());
+        gameData.queueDelayedAction(new DelayedCleanupTrigger(
+                entry.getControllerId(), entry.getCard(),
+                new ExileAllPermanentsEffect(filter)));
     }
 }

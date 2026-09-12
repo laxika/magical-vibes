@@ -37,6 +37,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToAnyTargetEffect) effect;
+        if (e.recordDamageDealt()) {
+            entry.setEventValue(0);
+        }
 
         // Group-aimed damage (e.g. Goblin Barrage's kicked "4 damage to target player or
         // planeswalker"): resolve against the declared target group's chosen target rather
@@ -130,6 +133,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         boolean unpreventable = e.unpreventableWhen() != null
                 && conditionEvaluationService.isMet(gameData, e.unpreventableWhen(), ConditionContext.forStackEntry(entry));
         int damageDealt;
+        UUID damageSourceId = damageEntry.getSourcePermanentId() != null
+                ? damageEntry.getSourcePermanentId() : damageEntry.getEffectiveDamageSourceCard().getId();
+        int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
         if (unpreventable) {
             boolean previous = gameData.damageCantBePreventedThisTurn;
             gameData.damageCantBePreventedThisTurn = true;
@@ -141,6 +147,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             }
         } else {
             damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
+        }
+        if (e.recordDamageDealt()) {
+            entry.setEventValue(gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0) - damageBefore);
         }
         if (tracksExcess) {
             entry.setEventValue(excessTarget == null

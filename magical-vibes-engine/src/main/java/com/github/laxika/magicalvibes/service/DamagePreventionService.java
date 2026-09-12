@@ -484,11 +484,11 @@ public class DamagePreventionService {
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAttachedCreatureEffect.class)) return 0;
             // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
-            if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) return 0;
+            if (isCombatDamage && gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                    PreventAllCombatDamageToAndBySelfEffect.class)) return 0;
             // Seraph of the Sword: "Prevent all combat damage that would be dealt to this creature."
-            if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(PreventAllCombatDamageToSelfEffect.class::isInstance)) return 0;
+            if (isCombatDamage && gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                    PreventAllCombatDamageToSelfEffect.class)) return 0;
             // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
             // Mark of Asylum / Inner Sanctum: "Prevent all [noncombat] damage that would be dealt to creatures you control."
@@ -1199,6 +1199,13 @@ public class DamagePreventionService {
 
     private boolean shieldMatchesSource(GameData gameData, PlayerSourceNextDamageShield shield,
                                         UUID sourceId, Card sourceCard) {
+        if (shield.requiredSourceFilter() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+            if (!gameQueryService.matchesDamageSourcePredicate(gameData, null, sourceCard, source,
+                    shield.requiredSourceFilter())) {
+                return false;
+            }
+        }
         if (shield.requiredDamageColors() != null) {
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourceId);
             Set<CardColor> sourceColors = sourcePermanent != null

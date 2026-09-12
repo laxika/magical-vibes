@@ -15,6 +15,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 
 @Slf4j
 @Component
@@ -23,6 +24,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,46 +33,46 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                UUID controllerId = entry.getControllerId();
+        UUID controllerId = entry.getControllerId();
 
-                Permanent self = null;
-                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getCard().getId().equals(entry.getCard().getId())) {
-                            self = p;
-                            break;
-                        }
-                    }
+        Permanent self = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(entry.getCard().getId())) {
+                    self = p;
+                    break;
                 }
+            }
+        }
 
-                if (self == null) {
-                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));
-                    log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
-                    return;
+        if (self == null) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));
+            log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        List<Integer> auraIndices = new ArrayList<>();
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).isAura()
+                        && auraAttachmentService.canEnchant(gameData, hand.get(i), controllerId, self)) {
+                    auraIndices.add(i);
                 }
+            }
+        }
 
-                List<Card> hand = gameData.playerHands.get(controllerId);
-                List<Integer> auraIndices = new ArrayList<>();
-                if (hand != null) {
-                    for (int i = 0; i < hand.size(); i++) {
-                        if (hand.get(i).isAura()) {
-                            auraIndices.add(i);
-                        }
-                    }
-                }
+        if (auraIndices.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " has no Aura cards in hand.";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
+            return;
+        }
 
-                if (auraIndices.isEmpty()) {
-                    String playerName = gameData.playerIdToName.get(controllerId);
-                    String logEntry = playerName + " has no Aura cards in hand.";
-                    gameLogService.append(gameData, GameLog.text(logEntry));
-                    log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
-                    return;
-                }
+        String prompt = "Choose an Aura card from your hand to put onto the battlefield attached to " + entry.getCard().getName() + ".";
+        playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId(), false);
 
-                String prompt = "You may put an Aura card from your hand onto the battlefield attached to " + entry.getCard().getName() + ".";
-                playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId());
-    
     }
 }

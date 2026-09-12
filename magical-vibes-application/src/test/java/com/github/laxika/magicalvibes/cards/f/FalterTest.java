@@ -63,9 +63,12 @@ class FalterTest extends BaseCardTest {
 
         castFalter();
 
-        assertThat(ownGroundCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opponentGroundCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(attacker.isCantBlockThisTurn()).isTrue();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, ownGroundCreature,
+                opponentGroundCreature, gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, opponentGroundCreature,
+                attacker, gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, attacker,
+                opponentGroundCreature, gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 
     @Test
@@ -125,16 +128,19 @@ class FalterTest extends BaseCardTest {
     @Test
     @DisplayName("The restriction wears off at the end of the turn")
     void restrictionWearsOffAtEndOfTurn() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
         Permanent creature = addCreatureReady(player2, new GorillaWarrior());
 
         castFalter();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, creature, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, creature, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     private void castFalter() {
