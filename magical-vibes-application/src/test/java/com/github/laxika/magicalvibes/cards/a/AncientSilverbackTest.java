@@ -3,23 +3,23 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(AncientSilverback.class)
 class AncientSilverbackTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating {G} regeneration ability puts it on the stack targeting itself")
     void activatingAbilityPutsOnStack() {
-        Permanent apePerm = addSilverbackReady(player1);
+        Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -34,7 +34,7 @@ class AncientSilverbackTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the regeneration ability grants a regeneration shield")
     void resolvingGrantsRegenerationShield() {
-        addSilverbackReady(player1);
+        addCreatureReady(player1, new AncientSilverback());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -47,7 +47,7 @@ class AncientSilverbackTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate regeneration ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addSilverbackReady(player1);
+        addCreatureReady(player1, new AncientSilverback());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -57,24 +57,15 @@ class AncientSilverbackTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration shield saves it from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        // Silverback (6/5) blocks a Hill Giant (3/3) but takes an extra lethal blocker;
-        // simpler: give it a shield and block an attacker whose power exceeds 5.
-        Permanent apePerm = addSilverbackReady(player1);
+        Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
         apePerm.setRegenerationShield(1);
         apePerm.setBlocking(true);
         apePerm.addBlockingTarget(0);
 
-        AncientSilverback attackerCard = new AncientSilverback();
-        Permanent attacker = new Permanent(attackerCard);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new AncientSilverback());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         Permanent ape = findPermanent(player1, "Ancient Silverback");
         assertThat(ape.isTapped()).isTrue();
@@ -83,33 +74,34 @@ class AncientSilverbackTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Dies without a regeneration shield from lethal combat damage")
-    void diesWithoutRegenerationShield() {
-        Permanent apePerm = addSilverbackReady(player1);
+    @DisplayName("Regeneration heals all marked damage when its shield is used")
+    void regenerationClearsMarkedDamage() {
+        Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
+        apePerm.setMarkedDamage(4);
+        apePerm.setRegenerationShield(1);
         apePerm.setBlocking(true);
         apePerm.addBlockingTarget(0);
 
-        AncientSilverback attackerCard = new AncientSilverback();
-        Permanent attacker = new Permanent(attackerCard);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new AncientSilverback());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
+        resolveCombat(player2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        Permanent ape = findPermanent(player1, "Ancient Silverback");
+        assertThat(ape.getMarkedDamage()).isZero();
+    }
 
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Dies without a regeneration shield from lethal combat damage")
+    void diesWithoutRegenerationShield() {
+        Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
+        apePerm.setBlocking(true);
+        apePerm.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player2, new AncientSilverback());
+        attacker.setAttacking(true);
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Ancient Silverback");
         harness.assertInGraveyard(player1, "Ancient Silverback");
-    }
-
-    private Permanent addSilverbackReady(Player player) {
-        AncientSilverback card = new AncientSilverback();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

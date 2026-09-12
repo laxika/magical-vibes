@@ -1,27 +1,25 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.ArmorOfFaith;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CapashenKnight;
+import com.github.laxika.magicalvibes.cards.p.PatternOfRebirth;
+import com.github.laxika.magicalvibes.cards.s.Sanctimony;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Replenish.class, Sanctimony.class, CapashenKnight.class, PatternOfRebirth.class})
 class ReplenishTest extends BaseCardTest {
 
     private void castReplenish() {
-        harness.setHand(player1, new ArrayList<>(List.of(new Replenish())));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Replenish(), "{3}{W}");
         harness.passBothPriorities();
     }
 
@@ -31,13 +29,13 @@ class ReplenishTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card enchantment = new GloriousAnthem();
-        Card creature = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(enchantment, creature));
+        Card enchantment = new Sanctimony();
+        Card creature = new CapashenKnight();
+        harness.setGraveyard(player1, List.of(enchantment, creature));
 
         castReplenish();
 
-        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Sanctimony");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(creature)
                 .doesNotContain(enchantment);
@@ -49,13 +47,31 @@ class ReplenishTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card aura = new ArmorOfFaith();
-        gd.playerGraveyards.get(player1.getId()).add(aura);
+        Card aura = new PatternOfRebirth();
+        harness.setGraveyard(player1, List.of(aura));
 
         castReplenish();
 
-        harness.assertNotOnBattlefield(player1, "Armor of Faith");
+        harness.assertNotOnBattlefield(player1, "Pattern of Rebirth");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    @DisplayName("Returns an Aura attached to an opponent's legal creature")
+    void returnsAuraAttachedToOpponentsCreature() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new CapashenKnight());
+        Card aura = new PatternOfRebirth();
+        harness.setGraveyard(player1, List.of(aura));
+
+        castReplenish();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(aura.getId())
+                        && opponentCreature.getId().equals(permanent.getAttachedTo()));
+        harness.assertNotInGraveyard(player1, "Pattern of Rebirth");
     }
 
     @Test
@@ -64,12 +80,12 @@ class ReplenishTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card opponentEnchantment = new GloriousAnthem();
-        gd.playerGraveyards.get(player2.getId()).add(opponentEnchantment);
+        Card opponentEnchantment = new Sanctimony();
+        harness.setGraveyard(player2, List.of(opponentEnchantment));
 
         castReplenish();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentEnchantment);
-        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player1, "Sanctimony");
     }
 }
