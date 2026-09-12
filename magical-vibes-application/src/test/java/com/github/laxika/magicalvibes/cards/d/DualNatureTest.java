@@ -1,31 +1,30 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DualNature.class, PygmyRazorback.class})
 class DualNatureTest extends BaseCardTest {
 
     @Test
     @DisplayName("A nontoken creature entering creates a copy for its controller")
     void nontokenCreatureEnteringCreatesCopyForItsController() {
         harness.addToBattlefield(player1, new DualNature());
-        Permanent creature = castGrizzlyBears(player2);
+        Permanent creature = castPygmyRazorback(player2);
 
-        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(permanent ->
-                permanent.getCard().isToken() && permanent.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent ->
-                permanent.getCard().isToken() && permanent.getCard().getName().equals("Grizzly Bears"));
+        assertThat(countPermanents(player2, "Pygmy Razorback")).isEqualTo(2);
+        assertThat(findPermanents(player2, "Pygmy Razorback")).anyMatch(permanent ->
+                permanent.getCard().isToken());
+        assertThat(findPermanents(player1, "Pygmy Razorback")).noneMatch(permanent ->
+                permanent.getCard().isToken());
         assertThat(creature.getCard().isToken()).isFalse();
     }
 
@@ -33,8 +32,8 @@ class DualNatureTest extends BaseCardTest {
     @DisplayName("A nontoken creature leaving exiles all same-name tokens")
     void nontokenCreatureLeavingExilesSameNameTokens() {
         harness.addToBattlefield(player1, new DualNature());
-        Permanent creature = castGrizzlyBears(player2);
-        Permanent token = gd.playerBattlefields.get(player2.getId()).stream()
+        Permanent creature = castPygmyRazorback(player2);
+        Permanent token = findPermanents(player2, "Pygmy Razorback").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
@@ -44,15 +43,15 @@ class DualNatureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
-        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+        assertThat(findPermanents(player2, "Pygmy Razorback")).isEmpty();
     }
 
     @Test
-    @DisplayName("Leaving Dual Nature exiles the tokens it created")
+    @DisplayName("Leaving Dual Nature exiles its created tokens even when another player controls them")
     void leavingDualNatureExilesCreatedTokens() {
         Permanent dualNature = harness.addToBattlefieldAndReturn(player1, new DualNature());
-        castGrizzlyBears(player1);
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+        castPygmyRazorback(player2);
+        Permanent token = findPermanents(player2, "Pygmy Razorback").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
@@ -61,7 +60,7 @@ class DualNatureTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, dualNature));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
         assertThat(findPermanents(player1, "Dual Nature")).isEmpty();
     }
 
@@ -70,10 +69,7 @@ class DualNatureTest extends BaseCardTest {
     void copyTriggerStillCreatesUnlinkedTokenAfterDualNatureLeaves() {
         Permanent dualNature = harness.addToBattlefieldAndReturn(player1, new DualNature());
         preparePlayer1MainPhase();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PygmyRazorback(), "{1}{G}");
         harness.passBothPriorities();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -82,20 +78,63 @@ class DualNatureTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
+        assertThat(findPermanents(player1, "Pygmy Razorback")).hasSize(2);
     }
 
-    private Permanent castGrizzlyBears(Player player) {
+    @Test
+    @DisplayName("A nontoken creature leaving exiles same-name tokens controlled by any player")
+    void nontokenCreatureLeavingExilesSameNameTokensAcrossControllers() {
+        harness.addToBattlefield(player1, new DualNature());
+        Permanent leavingCreature = castPygmyRazorback(player1);
+        Permanent remainingCreature = castPygmyRazorback(player2);
+        Permanent remainingToken = findPermanents(player2, "Pygmy Razorback").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).hasSize(2);
+        assertThat(findPermanents(player2, "Pygmy Razorback")).hasSize(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, leavingCreature));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(remainingToken);
+        assertThat(findPermanents(player2, "Pygmy Razorback")).containsExactly(remainingCreature);
+    }
+
+    @Test
+    @DisplayName("A token leaving does not exile other tokens with the same name")
+    void tokenLeavingDoesNotExileOtherSameNameTokens() {
+        harness.addToBattlefield(player1, new DualNature());
+        castPygmyRazorback(player1);
+        castPygmyRazorback(player1);
+
+        Permanent tokenLeaving = findPermanents(player1, "Pygmy Razorback").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst()
+                .orElseThrow();
+        Permanent remainingToken = findPermanents(player1, "Pygmy Razorback").stream()
+                .filter(permanent -> permanent.getCard().isToken() && !permanent.equals(tokenLeaving))
+                .findFirst()
+                .orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, tokenLeaving));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).contains(remainingToken);
+        assertThat(findPermanents(player1, "Pygmy Razorback")).hasSize(3);
+    }
+
+    private Permanent castPygmyRazorback(Player player) {
         prepareMainPhase(player);
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new PygmyRazorback(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears")
-                        && !permanent.getCard().isToken())
+        return findPermanents(player, "Pygmy Razorback").stream()
+                .filter(permanent -> !permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
     }

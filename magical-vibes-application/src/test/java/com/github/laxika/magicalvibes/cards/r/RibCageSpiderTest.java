@@ -1,59 +1,44 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
+import com.github.laxika.magicalvibes.cards.v.VintaraElephant;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RibCageSpider.class, DivingGriffin.class, VintaraElephant.class})
 class RibCageSpiderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Rib Cage Spider can block a creature with flying")
     void canBlockFlyingCreature() {
-        Permanent spider = new Permanent(new RibCageSpider());
-        spider.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(spider);
+        Permanent spider = addCreatureReady(player2, new RibCageSpider());
+        addCreatureReady(player1, new DivingGriffin());
 
-        Permanent flyer = new Permanent(new AirElemental());
-        flyer.setSummoningSick(false);
-        flyer.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(flyer);
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
+        assertThat(spider.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Rib Cage Spider can also block a non-flying creature")
     void canBlockNonFlyingCreature() {
-        Permanent spider = new Permanent(new RibCageSpider());
-        spider.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(spider);
+        Permanent spider = addCreatureReady(player2, new RibCageSpider());
+        addCreatureReady(player1, new VintaraElephant());
 
-        Permanent groundAttacker = new Permanent(new GrizzlyBears());
-        groundAttacker.setSummoningSick(false);
-        groundAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(groundAttacker);
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
+        assertThat(spider.isBlocking()).isTrue();
     }
 }

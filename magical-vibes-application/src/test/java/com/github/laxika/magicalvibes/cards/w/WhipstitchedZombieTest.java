@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(WhipstitchedZombie.class)
 class WhipstitchedZombieTest extends BaseCardTest {
 
     @Test
@@ -49,6 +52,25 @@ class WhipstitchedZombieTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Whipstitched Zombie");
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger does not sacrifice a new Whipstitched Zombie after the original leaves")
+    void triggerDoesNotAffectNewPermanent() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new WhipstitchedZombie());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, original));
+        harness.addToBattlefield(player1, new WhipstitchedZombie());
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Whipstitched Zombie");
+        harness.assertInGraveyard(player1, "Whipstitched Zombie");
     }
 
     @Test

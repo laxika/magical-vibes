@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.g.GulfSquid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,20 +12,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GulfSquid.class, HazyHomunculus.class, HeightenedAwareness.class})
 class HeightenedAwarenessTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Entering the battlefield discards the controller's hand")
     void enteringDiscardsControllerHand() {
-        harness.setHand(player1, List.of(new HeightenedAwareness(), new Forest(), new Mountain()));
+        harness.setHand(player1, List.of(new HeightenedAwareness(), new HazyHomunculus(), new GulfSquid()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -36,8 +34,21 @@ class HeightenedAwarenessTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof Forest);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof Mountain);
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof HazyHomunculus);
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof GulfSquid);
+    }
+
+    @Test
+    @DisplayName("Discards the controller's hand as the enchantment enters")
+    void discardsHandBeforePlayersReceivePriority() {
+        harness.setHand(player1, List.of(new HeightenedAwareness(), new HazyHomunculus(), new GulfSquid()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -45,6 +56,7 @@ class HeightenedAwarenessTest extends BaseCardTest {
     void controllerDrawsAdditionalCard() {
         harness.addToBattlefield(player1, new HeightenedAwareness());
         harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HazyHomunculus(), new GulfSquid()));
 
         advanceToDraw(player1);
         harness.passBothPriorities();
@@ -57,6 +69,7 @@ class HeightenedAwarenessTest extends BaseCardTest {
     void additionalDrawDoesNotApplyToOpponent() {
         harness.addToBattlefield(player1, new HeightenedAwareness());
         harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new HazyHomunculus()));
 
         advanceToDraw(player2);
 

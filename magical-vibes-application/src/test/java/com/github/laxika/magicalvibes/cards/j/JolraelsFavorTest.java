@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JolraelsFavor.class, GrizzlyBears.class, Mountain.class})
 class JolraelsFavorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Jolrael's Favor attaches it to the target creature")
     void resolvingAttachesToTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new JolraelsFavor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -34,10 +36,27 @@ class JolraelsFavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Jolrael's Favor can be cast during an opponent's turn because it has flash")
+    void canBeCastDuringOpponentsTurn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new JolraelsFavor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passPriority(player2);
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Activating Jolrael's Favor grants a regeneration shield to the enchanted creature")
     void activatingAbilityGrantsShieldToEnchantedCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         Permanent aura = new Permanent(new JolraelsFavor());
         aura.setAttachedTo(bears.getId());
@@ -56,13 +75,10 @@ class JolraelsFavorTest extends BaseCardTest {
     @Test
     @DisplayName("Jolrael's Favor cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new JolraelsFavor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent mountain = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

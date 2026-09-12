@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RhysticStudy.class, PygmyRazorback.class, RhysticDeluge.class})
 class RhysticStudyTest extends BaseCardTest {
 
     @Test
@@ -22,9 +21,7 @@ class RhysticStudyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RhysticStudy());
         prepareOpponentTurn();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PygmyRazorback(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -34,13 +31,10 @@ class RhysticStudyTest extends BaseCardTest {
     @DisplayName("Does not trigger when the controller casts a spell")
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new RhysticStudy());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castFromHand(player1, new RhysticDeluge(), "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
     }
 
     @Test
@@ -74,14 +68,51 @@ class RhysticStudyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
+    @Test
+    @DisplayName("If the opponent cannot pay, the controller may draw")
+    void controllerMayDrawWhenOpponentCannotPay() {
+        castOpponentSpellWithoutManaToPay();
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The controller may decline the draw after the opponent declines to pay")
+    void controllerMayDeclineDraw() {
+        castOpponentSpellWithManaToPay();
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
     private void castOpponentSpellWithManaToPay() {
         harness.addToBattlefield(player1, new RhysticStudy());
         prepareOpponentTurn();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castFromHand(player2, new RhysticDeluge(), "{2}{U}");
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    private void castOpponentSpellWithoutManaToPay() {
+        harness.addToBattlefield(player1, new RhysticStudy());
+        prepareOpponentTurn();
+
+        harness.castFromHand(player2, new PygmyRazorback(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MagetaTheLion.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class, Mountain.class})
 class MagetaTheLionTest extends BaseCardTest {
 
     @Test
@@ -42,6 +44,31 @@ class MagetaTheLionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(mageta.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroys creatures but leaves noncreature permanents on both battlefields")
+    void leavesNoncreaturePermanents() {
+        Permanent mageta = harness.addToBattlefieldAndReturn(player1, new MagetaTheLion());
+        mageta.setSummoningSick(false);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(mageta, forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mountain);
     }
 
     @Test

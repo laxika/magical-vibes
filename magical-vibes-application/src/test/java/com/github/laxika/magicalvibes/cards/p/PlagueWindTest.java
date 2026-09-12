@@ -1,48 +1,27 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PlagueWind.class, GrizzlyBears.class, HowlingMine.class, DarksteelSentinel.class})
 class PlagueWindTest extends BaseCardTest {
-
-    private static Card indestructibleCreature() {
-        Card card = new Card();
-        card.setName("Darksteel Bear");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}");
-        card.setColor(null);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
-        return card;
-    }
-
-    
 
     @Test
     @DisplayName("Casting Plague Wind puts it on the stack as a sorcery")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new PlagueWind()));
-        harness.addMana(player1, ManaColor.BLACK, 9);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -56,10 +35,7 @@ class PlagueWindTest extends BaseCardTest {
     void destroysOnlyOpponentsCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new PlagueWind()));
-        harness.addMana(player1, ManaColor.BLACK, 9);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -71,10 +47,7 @@ class PlagueWindTest extends BaseCardTest {
     @DisplayName("Plague Wind does not destroy noncreature permanents you do not control")
     void doesNotDestroyOpponentsNonCreatures() {
         harness.addToBattlefield(player2, new HowlingMine());
-        harness.setHand(player1, List.of(new PlagueWind()));
-        harness.addMana(player1, ManaColor.BLACK, 9);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Howling Mine");
@@ -88,13 +61,11 @@ class PlagueWindTest extends BaseCardTest {
         Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
         opposingBears.setRegenerationShield(2);
 
-        harness.setHand(player1, List.of(new PlagueWind()));
-        harness.addMana(player1, ManaColor.BLACK, 9);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -105,13 +76,11 @@ class PlagueWindTest extends BaseCardTest {
     @Test
     @DisplayName("Indestructible creatures you do not control survive Plague Wind")
     void indestructibleOpponentCreaturesSurvive() {
-        harness.addToBattlefield(player2, indestructibleCreature());
-        harness.setHand(player1, List.of(new PlagueWind()));
-        harness.addMana(player1, ManaColor.BLACK, 9);
+        harness.addToBattlefield(player2, new DarksteelSentinel());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Darksteel Bear");
+        harness.assertOnBattlefield(player2, "Darksteel Sentinel");
     }
 }

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PanicAttack.class, GrizzlyBears.class, FountainOfYouth.class})
 class PanicAttackTest extends BaseCardTest {
 
     @Test
@@ -67,6 +68,36 @@ class PanicAttackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can resolve with no targets")
+    void canResolveWithNoTargets() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target your own creature without affecting untargeted creatures")
+    void canTargetOwnCreatureWithoutAffectingUntargetedCreature() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent untargetedCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(untargetedCreature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target more than three creatures")
     void cannotTargetMoreThanThree() {
         Permanent c1 = addCreatureReady(player2, new GrizzlyBears());
@@ -113,10 +144,7 @@ class PanicAttackTest extends BaseCardTest {
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);

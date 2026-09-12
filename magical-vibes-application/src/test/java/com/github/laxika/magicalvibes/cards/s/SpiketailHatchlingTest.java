@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.i.Inflame;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,23 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiketailHatchling.class, Inflame.class, SiltCrawler.class})
 class SpiketailHatchlingTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Spiketail Hatchling puts it on the stack and resolves to battlefield")
     void castAndResolve() {
-        harness.setHand(player1, List.of(new SpiketailHatchling()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        SpiketailHatchling hatchling = new SpiketailHatchling();
+        harness.castFromHand(player1, hatchling, "{1}{U}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Spiketail Hatchling");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(hatchling);
 
         harness.passBothPriorities();
 
@@ -41,38 +35,25 @@ class SpiketailHatchlingTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spiketail Hatchling");
     }
 
-    // ===== Activating ability =====
-
     @Test
     @DisplayName("Activating ability sacrifices Spiketail Hatchling and puts ability on the stack")
     void activatingAbilitySacrificesAndPutsOnStack() {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        // Player 1 (active player) casts a creature spell
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
         harness.passPriority(player1);
 
-        // Player 2 activates Spiketail Hatchling's ability targeting the spell
-        harness.activateAbility(player2, 0, null, elves.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
-        GameData gd = harness.getGameData();
-
-        // Spiketail Hatchling should be sacrificed (not on battlefield, in graveyard)
         harness.assertNotOnBattlefield(player2, "Spiketail Hatchling");
         harness.assertInGraveyard(player2, "Spiketail Hatchling");
 
-        // Ability should be on the stack above the creature spell
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Spiketail Hatchling");
+        assertThat(gd.stack.getLast().getCard()).isSameAs(hatchling);
     }
-
-    // ===== Counter-unless-pays: opponent cannot pay =====
 
     @Test
     @DisplayName("Counters spell when opponent has no mana to pay")
@@ -80,28 +61,17 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
         harness.passPriority(player1);
-        harness.activateAbility(player2, 0, null, elves.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
-        // Resolve the ability — player1 has no mana left, spell is countered immediately
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        // Elves should be countered (in player1's graveyard, not on battlefield)
-        harness.assertInGraveyard(player1, "Llanowar Elves");
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-
-        // Stack should be empty
+        harness.assertInGraveyard(player1, "Spiketail Hatchling");
+        harness.assertNotOnBattlefield(player1, "Spiketail Hatchling");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Counter-unless-pays: opponent pays =====
 
     @Test
     @DisplayName("Spell is not countered when opponent pays {1}")
@@ -109,35 +79,25 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast, 1 to pay
-
-        harness.castCreature(player1, 0);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.activateAbility(player2, 0, null, elves.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
-        // Resolve the ability — player1 has mana, gets prompted
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
-        // Player1 pays
         harness.handleMayAbilityChosen(player1, true);
 
-        // Elves should still be on the stack (it hasn't resolved yet), not countered
-        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Spiketail Hatchling");
 
-        // Resolve the elves spell
         harness.passBothPriorities();
 
-        // Elves should be on the battlefield
-        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Spiketail Hatchling");
     }
-
-    // ===== Counter-unless-pays: opponent declines to pay =====
 
     @Test
     @DisplayName("Spell is countered when opponent declines to pay")
@@ -145,29 +105,22 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast, 1 available
-
-        harness.castCreature(player1, 0);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.activateAbility(player2, 0, null, elves.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
-        // Player1 declines
         harness.handleMayAbilityChosen(player1, false);
 
-        // Spell should be countered
-        harness.assertInGraveyard(player1, "Llanowar Elves");
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Spiketail Hatchling");
+        harness.assertNotOnBattlefield(player1, "Spiketail Hatchling");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Ability fizzles if target spell is removed from the stack")
@@ -175,26 +128,18 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        Inflame targetSpell = new Inflame();
+        harness.castFromHand(player1, targetSpell, "{R}");
         harness.passPriority(player1);
-        harness.activateAbility(player2, 0, null, elves.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
-        // Remove target spell from the stack before ability resolves
-        GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getName().equals("Llanowar Elves"));
+        gd.stack.removeIf(se -> se.getCard().getId().equals(targetSpell.getId()));
 
         harness.passBothPriorities();
 
-        // Ability fizzles
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability without a spell on the stack")
@@ -215,31 +160,21 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling2 = new SpiketailHatchling();
         harness.addToBattlefield(player1, hatchling2);
 
-        // Player1 casts a creature to put a spell on the stack
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
         harness.passPriority(player1);
 
-        // Player2 activates their hatchling's ability targeting the bears spell
-        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
-        GameData gd = harness.getGameData();
-        // Now there's an activated ability on the stack
         assertThat(gd.stack).anyMatch(se -> se.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 
-        // Get the activated ability's card ID
         var abilityEntry = gd.stack.stream()
                 .filter(se -> se.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                 .findFirst().orElseThrow();
 
-        // Player1 tries to target the activated ability with their hatchling — should fail
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityEntry.getCard().getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Mana payment confirmation =====
 
     @Test
     @DisplayName("Opponent's mana pool is reduced after paying {1}")
@@ -247,29 +182,22 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.activateAbility(player2, 0, null, elves.getId());
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Player1 should have 1 green mana left (2 added - 1 to cast)
         int manaBefore = gd.playerManaPools.get(player1.getId()).getTotal();
         assertThat(manaBefore).isEqualTo(1);
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // After paying, player1 should have 0 mana
         int manaAfter = gd.playerManaPools.get(player1.getId()).getTotal();
         assertThat(manaAfter).isEqualTo(0);
     }
-
-    // ===== Counter own spell =====
 
     @Test
     @DisplayName("Can counter own controller's spell on the stack")
@@ -277,20 +205,48 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player1, hatchling);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        SpiketailHatchling targetSpell = new SpiketailHatchling();
+        harness.castFromHand(player1, targetSpell, "{1}{U}");
 
-        harness.castCreature(player1, 0);
+        harness.activateAbility(player1, 0, null, targetSpell.getId());
 
-        // Player 1 activates hatchling targeting their own spell
-        harness.activateAbility(player1, 0, null, bears.getId());
-
-        // Resolve — player 1 has 0 mana left, cannot pay
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Spiketail Hatchling");
+        harness.assertNotOnBattlefield(player1, "Spiketail Hatchling");
+    }
+
+    @Test
+    @DisplayName("Can counter a noncreature spell")
+    void countersNonCreatureSpell() {
+        SpiketailHatchling hatchling = new SpiketailHatchling();
+        harness.addToBattlefield(player2, hatchling);
+
+        Inflame targetSpell = new Inflame();
+        harness.castFromHand(player1, targetSpell, "{R}");
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, targetSpell.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Inflame");
+        harness.assertNotOnBattlefield(player1, "Inflame");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flying prevents a creature without flying or reach from blocking")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        addCreatureReady(player1, new SpiketailHatchling());
+        addCreatureReady(player2, new SiltCrawler());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
     }
 }
 

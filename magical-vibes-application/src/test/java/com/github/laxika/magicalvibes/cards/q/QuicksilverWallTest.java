@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(QuicksilverWall.class)
 class QuicksilverWallTest extends BaseCardTest {
 
     @Test
@@ -34,6 +36,22 @@ class QuicksilverWallTest extends BaseCardTest {
         harness.assertInHand(player1, "Quicksilver Wall");
         harness.assertNotInHand(player2, "Quicksilver Wall");
         harness.assertNotOnBattlefield(player1, "Quicksilver Wall");
+    }
+
+    @Test
+    @DisplayName("A controlled Quicksilver Wall returns to its owner's hand")
+    void controlledWallReturnsToItsOwnersHand() {
+        QuicksilverWall wall = new QuicksilverWall();
+        wall.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, wall);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Quicksilver Wall");
+        harness.assertNotInHand(player2, "Quicksilver Wall");
+        harness.assertNotOnBattlefield(player2, "Quicksilver Wall");
     }
 
     @Test

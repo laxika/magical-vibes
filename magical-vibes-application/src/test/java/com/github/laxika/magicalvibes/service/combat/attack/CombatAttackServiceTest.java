@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
@@ -95,10 +96,11 @@ class CombatAttackServiceTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({KeldonBerserker.class, RhysticCave.class})
     @DisplayName("An attack trigger gated by at most zero matching permanents is skipped when not met")
     void skipsAtMostPermanentAttackTriggerWhenConditionIsNotMet() {
         addCreatureReady(player1, new KeldonBerserker());
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new RhysticCave());
         enterDeclareAttackers();
 
         gs.declareAttackers(gd, player1, List.of(0));

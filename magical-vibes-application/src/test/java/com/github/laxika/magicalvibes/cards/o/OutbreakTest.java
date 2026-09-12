@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PlagueFiend;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +18,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Outbreak.class, GrizzlyBears.class, HillGiant.class, Mountain.class, PlagueFiend.class, Swamp.class})
 class OutbreakTest extends BaseCardTest {
 
     private void castOutbreak(Player caster) {
-        harness.setHand(caster, List.of(new Outbreak()));
-        harness.addMana(caster, ManaColor.BLACK, 1);
-        harness.addMana(caster, ManaColor.COLORLESS, 3);
-        harness.castSorcery(caster, 0, 0);
+        harness.castFromHand(caster, new Outbreak(), "{3}{B}");
         harness.passBothPriorities();
     }
 
@@ -40,6 +39,18 @@ class OutbreakTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(-1);
         assertThat(findPermanent(player2, "Grizzly Bears").getPowerModifier()).isEqualTo(-1);
         assertThat(findPermanent(player1, "Hill Giant").getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature reduced to 0 toughness is put into its owner's graveyard")
+    void putsCreatureWithZeroToughnessIntoGraveyard() {
+        harness.addToBattlefield(player2, new PlagueFiend());
+
+        castOutbreak(player1);
+        harness.handleListChoice(player1, "INSECT");
+
+        harness.assertNotOnBattlefield(player2, "Plague Fiend");
+        harness.assertInGraveyard(player2, "Plague Fiend");
     }
 
     @Test

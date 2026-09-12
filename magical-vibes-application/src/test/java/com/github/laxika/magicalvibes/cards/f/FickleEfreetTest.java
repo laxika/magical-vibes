@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.SporeFrog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +14,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FickleEfreet.class, SporeFrog.class})
 class FickleEfreetTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking flips at end of combat and transfers control only on a loss")
     void attackingFlipsAtEndOfCombat() {
-        Permanent efreet = addReady(player1);
+        Permanent efreet = addCreatureReady(player1, new FickleEfreet());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(coinFlipLogs()).isEmpty();
 
-        declareNoBlockers();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(coinFlipLogs()).hasSize(1);
         assertControlMatchesFlip(efreet, player1);
@@ -38,60 +39,48 @@ class FickleEfreetTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking creates the same end-of-combat flip")
     void blockingFlipsAtEndOfCombat() {
-        Permanent attacker = addReady(player1, harmlessAttacker());
+        Permanent attacker = addCreatureReady(player1, new SporeFrog());
         attacker.setAttacking(true);
-        Permanent efreet = addReady(player2);
+        Permanent efreet = addCreatureReady(player2, new FickleEfreet());
 
-        declareNoBlockers(new BlockerAssignment(0, 0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        resolveCombat();
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(coinFlipLogs()).hasSize(1);
         assertControlMatchesFlip(efreet, player2);
     }
 
     @Test
+    @DisplayName("A creature that neither attacks nor blocks does not flip a coin")
+    void uninvolvedCreatureDoesNotFlip() {
+        Permanent efreet = addCreatureReady(player1, new FickleEfreet());
+
+        declareAttackers(List.of());
+        resolveAllTriggers();
+
+        assertThat(coinFlipLogs()).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+    }
+
+    @Test
     @DisplayName("The delayed flip still happens if the Efreet leaves before end of combat")
     void delayedFlipSurvivesSourceLeaving() {
-        Permanent efreet = addReady(player1);
+        Permanent efreet = addCreatureReady(player1, new FickleEfreet());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(efreet);
 
-        declareNoBlockers();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(coinFlipLogs()).hasSize(1);
-    }
-
-    private void declareNoBlockers(BlockerAssignment... assignments) {
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player2, List.of(assignments));
-    }
-
-    private Permanent addReady(Player player) {
-        return addReady(player, new FickleEfreet());
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private static Card harmlessAttacker() {
-        Card card = new Card();
-        card.setName("Harmless Attacker");
-        card.setType(CardType.CREATURE);
-        card.setPower(0);
-        card.setToughness(1);
-        return card;
     }
 
     private List<String> coinFlipLogs() {

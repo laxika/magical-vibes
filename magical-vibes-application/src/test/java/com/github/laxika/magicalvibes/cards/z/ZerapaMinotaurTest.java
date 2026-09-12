@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ZerapaMinotaur.class)
 class ZerapaMinotaurTest extends BaseCardTest {
 
     @Test
@@ -29,6 +31,8 @@ class ZerapaMinotaurTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, minotaur, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

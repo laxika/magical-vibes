@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Foil.class, GrizzlyBears.class, Island.class, Shock.class})
 class FoilTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counters the target spell when cast for its mana cost")
+    void countersTargetSpellWithNormalCost() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Foil()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Foil");
+    }
 
     @Test
     @DisplayName("Counters the target spell when cast by discarding an Island and another card")

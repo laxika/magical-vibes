@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CoffinPuppets.class, Forest.class, GrizzlyBears.class, Swamp.class})
 class CoffinPuppetsTest extends BaseCardTest {
 
     @Test
@@ -26,7 +28,7 @@ class CoffinPuppetsTest extends BaseCardTest {
         Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent secondForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        setupUpkeep();
+        advanceToUpkeep(player1);
 
         harness.activateGraveyardAbility(player1, 0);
 
@@ -54,7 +56,7 @@ class CoffinPuppetsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new CoffinPuppets()));
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        setupUpkeep();
+        advanceToUpkeep(player1);
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -78,18 +80,29 @@ class CoffinPuppetsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Coffin Puppets cannot be activated during an opponent's upkeep")
+    void onlyDuringYourUpkeepMeansControllersUpkeep() {
+        harness.setGraveyard(player1, List.of(new CoffinPuppets()));
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your upkeep");
+    }
+
+    @Test
     @DisplayName("Coffin Puppets cannot be activated without two lands to sacrifice")
     void requiresTwoLandsToSacrifice() {
         harness.setGraveyard(player1, List.of(new CoffinPuppets()));
         harness.addToBattlefield(player1, new Swamp());
-        setupUpkeep();
+        advanceToUpkeep(player1);
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void setupUpkeep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-    }
 }

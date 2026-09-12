@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TroubledHealer.class, Forest.class, LlanowarElves.class, MoggFanatic.class})
 class TroubledHealerTest extends BaseCardTest {
 
     @Test
@@ -67,5 +70,39 @@ class TroubledHealerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Mogg Fanatic");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a land to sacrifice")
+    void requiresLandToSacrifice() {
+        harness.addToBattlefield(player1, new TroubledHealer());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Prevention shield expires at the end of the turn")
+    void preventionShieldExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new TroubledHealer());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 }

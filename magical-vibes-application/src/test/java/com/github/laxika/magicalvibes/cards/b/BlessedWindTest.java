@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlessedWind.class, PygmyRazorback.class})
 class BlessedWindTest extends BaseCardTest {
 
     @Test
@@ -35,18 +38,28 @@ class BlessedWindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new PygmyRazorback());
+        Permanent boar = findPermanent(player2, "Pygmy Razorback");
         prepareCard();
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, boar.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castTargeting(com.github.laxika.magicalvibes.model.Player target) {
+    @Test
+    @DisplayName("Does not change the other player's life total")
+    void doesNotChangeOtherPlayersLifeTotal() {
+        harness.setLife(player1, 11);
+        harness.setLife(player2, 7);
+        castTargeting(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    private void castTargeting(Player target) {
         prepareCard();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void prepareCard() {

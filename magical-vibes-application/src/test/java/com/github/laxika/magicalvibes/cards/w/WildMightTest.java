@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
+import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,11 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WildMight.class, DivingGriffin.class, RhysticCave.class})
 class WildMightTest extends BaseCardTest {
 
     @Test
     void addsBothPowerAndToughnessBonusesWhenNoPlayerPays() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DivingGriffin());
 
         castWildMight(creature);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -31,7 +33,7 @@ class WildMightTest extends BaseCardTest {
 
     @Test
     void anyPlayerCanPayToPreventAdditionalBonus() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DivingGriffin());
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         castWildMight(creature);
@@ -44,8 +46,22 @@ class WildMightTest extends BaseCardTest {
     }
 
     @Test
+    void controllerCanPayToPreventAdditionalBonus() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DivingGriffin());
+
+        castWildMight(creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     void bonusesWearOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DivingGriffin());
 
         castWildMight(creature);
         harness.handleMayAbilityChosen(player1, false);
@@ -61,8 +77,7 @@ class WildMightTest extends BaseCardTest {
 
     @Test
     void cannotTargetNonCreaturePermanent() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
         harness.setHand(player1, List.of(new WildMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -76,7 +91,6 @@ class WildMightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WildMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
