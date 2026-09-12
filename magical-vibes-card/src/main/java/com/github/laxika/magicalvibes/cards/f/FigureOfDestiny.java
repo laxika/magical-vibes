@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "139")
 @CardRegistration(set = "PD2", collectorNumber = "5")
+@CardRegistration(set = "DDL", collectorNumber = "3")
+@CardRegistration(set = "MMA", collectorNumber = "189")
 public class FigureOfDestiny extends Card {
 
     public FigureOfDestiny() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "RTR", collectorNumber = "134")
 @CardRegistration(set = "KTK", collectorNumber = "150")
 @CardRegistration(set = "SOK", collectorNumber = "147")
+@CardRegistration(set = "DDR", collectorNumber = "20")
 public class SeekTheHorizon extends Card {
 
     public SeekTheHorizon() {

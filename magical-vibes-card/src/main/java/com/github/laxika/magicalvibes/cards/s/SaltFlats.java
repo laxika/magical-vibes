@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "324")
 @CardRegistration(set = "TPR", collectorNumber = "242")
+@CardRegistration(set = "VMA", collectorNumber = "310")
 public class SaltFlats extends Card {
 
     public SaltFlats() {

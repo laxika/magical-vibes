@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "38")
+@CardRegistration(set = "V16", collectorNumber = "10")
 public class NearDeathExperience extends Card {
 
     public NearDeathExperience() {

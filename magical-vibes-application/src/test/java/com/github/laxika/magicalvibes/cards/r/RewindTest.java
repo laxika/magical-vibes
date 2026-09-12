@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,11 +17,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Rewind.class, GrizzlyBears.class, Island.class})
 class RewindTest extends BaseCardTest {
 
     private List<UUID> tappedIslandIds(Player player, int limit) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
+        return findPermanents(player, "Island").stream()
                 .filter(Permanent::isTapped)
                 .limit(limit)
                 .map(Permanent::getId)
@@ -28,8 +29,7 @@ class RewindTest extends BaseCardTest {
     }
 
     private long untappedIslands(Player player) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
+        return findPermanents(player, "Island").stream()
                 .filter(p -> !p.isTapped())
                 .count();
     }
@@ -38,9 +38,7 @@ class RewindTest extends BaseCardTest {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Island());
         }
-        harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .forEach(Permanent::tap);
+        findPermanents(player, "Island").forEach(Permanent::tap);
     }
 
     private void castRewindCounteringBears(GrizzlyBears bears) {
@@ -110,6 +108,25 @@ class RewindTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of());
 
         assertThat(untappedIslands(player2)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can choose tapped lands controlled by either player")
+    void canUntapLandsControlledByEitherPlayer() {
+        Permanent player1Island = harness.addToBattlefieldAndReturn(player1, new Island());
+        player1Island.tap();
+        addTappedIslands(player2, 1);
+
+        castRewindCounteringBears(new GrizzlyBears());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                harness.getGameData().interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(player1Island.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(player1Island.getId()));
+
+        assertThat(player1Island.isTapped()).isFalse();
     }
 
     @Test

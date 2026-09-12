@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "101")
+@CardRegistration(set = "MP2", collectorNumber = "36")
 public class Sunder extends Card {
 
     public Sunder() {

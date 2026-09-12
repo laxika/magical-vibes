@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePowerToughnessFormEffec
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "33")
+@CardRegistration(set = "DDN", collectorNumber = "54")
 public class AquamorphEntity extends Card {
 
     public AquamorphEntity() {

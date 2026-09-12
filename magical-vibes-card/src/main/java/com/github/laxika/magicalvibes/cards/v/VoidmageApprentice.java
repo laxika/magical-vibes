@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 
 @CardRegistration(set = "LGN", collectorNumber = "54")
 @CardRegistration(set = "DD2", collectorNumber = "4")
+@CardRegistration(set = "JVC", collectorNumber = "4")
 public class VoidmageApprentice extends Card {
 
     public VoidmageApprentice() {

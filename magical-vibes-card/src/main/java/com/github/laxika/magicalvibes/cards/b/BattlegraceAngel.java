@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ALA", collectorNumber = "6")
+@CardRegistration(set = "MM2", collectorNumber = "10")
 public class BattlegraceAngel extends Card {
 
     public BattlegraceAngel() {

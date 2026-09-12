@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.c.CursedTotem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +18,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pyrotechnics.class, GrizzlyBears.class, HillGiant.class, ChandraNalaar.class})
+@CardUsed({Pyrotechnics.class, GrizzlyBears.class, CursedTotem.class})
 class PyrotechnicsTest extends BaseCardTest {
 
     @Test
@@ -27,15 +27,15 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pyrotechnics()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, Map.of(giant.getId(), 4));
+        harness.castSorcery(player1, 0, Map.of(bear.getId(), 4));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        // HillGiant is 3/3, 4 damage kills it
+        // Grizzly Bears is 2/2, 4 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(giant.getId()));
+                .noneMatch(p -> p.getId().equals(bear.getId()));
     }
 
     @Test
@@ -55,6 +55,34 @@ class PyrotechnicsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bears1.getId()))
                 .noneMatch(p -> p.getId().equals(bears2.getId()));
+    }
+
+    @Test
+    void canDivideOneDamageAmongFourCreatures() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent thirdBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent fourthBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, Map.of(
+                firstBear.getId(), 1,
+                secondBear.getId(), 1,
+                thirdBear.getId(), 1,
+                fourthBear.getId(), 1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .containsExactlyInAnyOrder(
+                        firstBear.getId(), secondBear.getId(), thirdBear.getId(), fourthBear.getId());
+        assertThat(firstBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(secondBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(thirdBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(fourthBear.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -97,14 +125,14 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         Permanent protectedBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, Map.of(protectedBears.getId(), 2, giant.getId(), 2));
+        harness.castSorcery(player1, 0, Map.of(protectedBears.getId(), 2, otherBears.getId(), 2));
         protectedBears.getGrantedKeywords().add(Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(protectedBears.getMarkedDamage()).isZero();
-        assertThat(giant.getMarkedDamage()).isEqualTo(2);
+        assertThat(otherBears.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -113,15 +141,15 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pyrotechnics()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, Map.of(giant.getId(), 4));
-        giant.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.castSorcery(player1, 0, Map.of(bear.getId(), 4));
+        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
         harness.passBothPriorities();
 
-        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(bear.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(giant.getId()));
+                .anyMatch(p -> p.getId().equals(bear.getId()));
     }
 
     @Test
@@ -154,6 +182,7 @@ class PyrotechnicsTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ChandraNalaar.class)
     void canTargetPlaneswalker() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new Pyrotechnics()));
@@ -166,6 +195,19 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotTargetNoncreatureArtifact() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent totem = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
+
+        assertThatThrownBy(() ->
+                harness.castSorcery(player1, 0, Map.of(totem.getId(), 4))
+        ).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

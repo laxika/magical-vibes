@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "59")
 @CardRegistration(set = "AKR", collectorNumber = "66")
+@CardRegistration(set = "MP2", collectorNumber = "15")
 public class KefnetTheMindful extends Card {
 
     public KefnetTheMindful() {

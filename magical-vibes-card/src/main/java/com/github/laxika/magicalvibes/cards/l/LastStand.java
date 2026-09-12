@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "107")
+@CardRegistration(set = "PC2", collectorNumber = "100")
 public class LastStand extends Card {
 
     public LastStand() {

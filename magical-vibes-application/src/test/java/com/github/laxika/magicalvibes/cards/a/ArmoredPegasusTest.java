@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArmoredPegasus.class, GrizzlyBears.class})
@@ -16,7 +17,7 @@ class ArmoredPegasusTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a nonflying creature from blocking Armored Pegasus")
-    void flyingPreventsNonflyingCreatureFromBlocking() {
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new ArmoredPegasus());
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -26,6 +27,19 @@ class ArmoredPegasusTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("flying");
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("A creature with flying can block Armored Pegasus")
+    void flyingCreatureCanBlockArmoredPegasus() {
+        addCreatureReady(player1, new ArmoredPegasus());
+        addCreatureReady(player2, new ArmoredPegasus());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "193")
+@CardRegistration(set = "MM2", collectorNumber = "168")
 public class VinesOfVastwood extends Card {
 
     public VinesOfVastwood() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "184")
+@CardRegistration(set = "VMA", collectorNumber = "158")
 public class Falter extends Card {
 
     public Falter() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "63")
+@CardRegistration(set = "VMA", collectorNumber = "115")
 public class DeathsHeadBuzzard extends Card {
 
     public DeathsHeadBuzzard() {

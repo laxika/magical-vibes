@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "48")
 @CardRegistration(set = "TPR", collectorNumber = "35")
+@CardRegistration(set = "VMA", collectorNumber = "49")
 public class SpiritMirror extends Card {
 
     public SpiritMirror() {

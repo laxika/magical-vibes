@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "261")
+@CardRegistration(set = "NEO", collectorNumber = "281")
 public class UnchartedHaven extends Card {
 
     public UnchartedHaven() {

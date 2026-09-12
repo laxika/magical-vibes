@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "282")
+@CardRegistration(set = "VMA", collectorNumber = "231")
 public class SilvosRogueElemental extends Card {
 
     public SilvosRogueElemental() {

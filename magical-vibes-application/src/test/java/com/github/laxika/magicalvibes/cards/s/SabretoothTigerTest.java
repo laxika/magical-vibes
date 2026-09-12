@@ -27,13 +27,12 @@ class SabretoothTigerTest extends BaseCardTest {
     @Test
     @DisplayName("First strike kills a 2/2 blocker before regular combat damage")
     void firstStrikeKillsBlockerBeforeRegularDamage() {
-        Permanent attacker = addCreatureReady(player1, new SabretoothTiger());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new SabretoothTiger());
         addCreatureReady(player2, new BalduvianBears());
 
-        prepareDeclareBlockers();
+        declareAttackers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Sabretooth Tiger");
         harness.assertInGraveyard(player2, "Balduvian Bears");

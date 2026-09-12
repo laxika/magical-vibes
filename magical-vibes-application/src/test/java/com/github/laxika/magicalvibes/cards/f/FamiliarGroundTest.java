@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FamiliarGround.class, BenalishKnight.class})
+@CardUsed({BenalishKnight.class, FamiliarGround.class})
 class FamiliarGroundTest extends BaseCardTest {
 
     @Test
@@ -25,14 +25,17 @@ class FamiliarGroundTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         Permanent blockerOne = addCreatureReady(player2, new BenalishKnight());
-
         Permanent blockerTwo = addCreatureReady(player2, new BenalishKnight());
 
         prepareDeclareBlockers();
 
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerOneIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blockerOne);
+        int blockerTwoIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blockerTwo);
+
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(0, 1),
-                new BlockerAssignment(1, 1)
+                new BlockerAssignment(blockerOneIndex, attackerIndex),
+                new BlockerAssignment(blockerTwoIndex, attackerIndex)
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked by more than 1 creature");
@@ -50,7 +53,9 @@ class FamiliarGroundTest extends BaseCardTest {
 
         prepareDeclareBlockers();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
     }

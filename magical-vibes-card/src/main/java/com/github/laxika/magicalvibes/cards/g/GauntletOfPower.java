@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "255")
+@CardRegistration(set = "MPS", collectorNumber = "12")
 public class GauntletOfPower extends Card {
 
     public GauntletOfPower() {

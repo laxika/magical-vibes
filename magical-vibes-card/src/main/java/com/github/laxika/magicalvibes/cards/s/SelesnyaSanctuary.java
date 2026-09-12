@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "281")
+@CardRegistration(set = "PC2", collectorNumber = "125")
 @CardRegistration(set = "DDG", collectorNumber = "37")
+@CardRegistration(set = "MM2", collectorNumber = "248")
 public class SelesnyaSanctuary extends Card {
 
     public SelesnyaSanctuary() {

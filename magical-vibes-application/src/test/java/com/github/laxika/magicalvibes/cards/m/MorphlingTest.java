@@ -1,22 +1,27 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({Morphling.class, Humble.class})
 class MorphlingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untap ability untaps Morphling, including when it is tapped")
     void untapAbilityUntapsMorphling() {
-        Permanent morphling = addMorphlingReady(player1);
+        Permanent morphling = addCreatureReady(player1, new Morphling());
         morphling.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -29,7 +34,7 @@ class MorphlingTest extends BaseCardTest {
     @Test
     @DisplayName("Flying and shroud abilities grant their keywords until end of turn")
     void keywordAbilitiesGrantKeywordsUntilEndOfTurn() {
-        Permanent morphling = addMorphlingReady(player1);
+        Permanent morphling = addCreatureReady(player1, new Morphling());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -49,9 +54,35 @@ class MorphlingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Shroud blocks targeted spells but not Morphling's own abilities")
+    void shroudBlocksTargetedSpellsButNotOwnAbilities() {
+        Permanent morphling = addCreatureReady(player1, new Morphling());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, morphling, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, morphling)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, morphling)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, morphling.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
     @DisplayName("Power and toughness abilities apply their respective temporary modifiers")
     void powerAndToughnessAbilitiesModifyMorphling() {
-        Permanent morphling = addMorphlingReady(player1);
+        Permanent morphling = addCreatureReady(player1, new Morphling());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 3, null, null);
@@ -68,7 +99,7 @@ class MorphlingTest extends BaseCardTest {
     @Test
     @DisplayName("Power and toughness modifiers wear off at end of turn")
     void powerAndToughnessModifiersWearOff() {
-        Permanent morphling = addMorphlingReady(player1);
+        Permanent morphling = addCreatureReady(player1, new Morphling());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 3, null, null);
@@ -82,12 +113,5 @@ class MorphlingTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, morphling)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, morphling)).isEqualTo(3);
-    }
-
-    private Permanent addMorphlingReady(Player player) {
-        Permanent morphling = new Permanent(new Morphling());
-        morphling.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(morphling);
-        return morphling;
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "324")
+@CardRegistration(set = "VMA", collectorNumber = "290")
 public class BadRiver extends Card {
 
     public BadRiver() {

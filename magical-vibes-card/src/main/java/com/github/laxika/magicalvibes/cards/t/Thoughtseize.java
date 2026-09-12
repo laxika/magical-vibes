@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "145")
 @CardRegistration(set = "THS", collectorNumber = "107")
 @CardRegistration(set = "AKR", collectorNumber = "127")
+@CardRegistration(set = "MP2", collectorNumber = "45")
 public class Thoughtseize extends Card {
 
     public Thoughtseize() {

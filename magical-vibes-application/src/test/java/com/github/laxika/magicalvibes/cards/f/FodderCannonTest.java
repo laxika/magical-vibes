@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FodderCannon.class, GrizzlyBears.class, AirElemental.class})
 class FodderCannonTest extends BaseCardTest {
 
     @Test
@@ -63,5 +65,39 @@ class FodderCannonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a creature to sacrifice")
+    void cannotActivateWithoutCreatureToSacrifice() {
+        harness.addToBattlefield(player1, new FodderCannon());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, victim.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must choose a creature to sacrifice");
+
+        assertThat(findPermanent(player1, "Fodder Cannon").isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new FodderCannon());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = findPermanent(player1, "Fodder Cannon");
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
     }
 }

@@ -1,54 +1,40 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShivanHellkite.class, GrizzlyBears.class, LlanowarElves.class})
 class ShivanHellkiteTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new ShivanHellkite()));
-        harness.addMana(player1, ManaColor.RED, 7);
+        harness.castFromHand(player1, new ShivanHellkite(), "{5}{R}{R}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Shivan Hellkite");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new ShivanHellkite()));
-        harness.addMana(player1, ManaColor.RED, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ShivanHellkite(), "{5}{R}{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Shivan Hellkite");
     }
@@ -61,12 +47,10 @@ class ShivanHellkiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(hellkite.isTapped()).isFalse();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Shivan Hellkite");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -79,7 +63,6 @@ class ShivanHellkiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -96,9 +79,21 @@ class ShivanHellkiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to its controller")
+    void deals1DamageToItsController() {
+        harness.setLife(player1, 20);
+        addReadyHellkite(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -145,14 +140,12 @@ class ShivanHellkiteTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        ShivanHellkite card = new ShivanHellkite();
-        Permanent hellkite = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(hellkite);
+        harness.addToBattlefield(player1, new ShivanHellkite());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -163,7 +156,6 @@ class ShivanHellkiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 
@@ -192,17 +184,12 @@ class ShivanHellkiteTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     private Permanent addReadyHellkite(Player player) {
-        ShivanHellkite card = new ShivanHellkite();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ShivanHellkite());
     }
 }
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "131")
+@CardRegistration(set = "MM2", collectorNumber = "202")
 public class BlindingSouleater extends Card {
 
     public BlindingSouleater() {

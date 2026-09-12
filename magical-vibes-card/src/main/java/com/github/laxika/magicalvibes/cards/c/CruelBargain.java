@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "86")
+@CardRegistration(set = "VMA", collectorNumber = "111")
 public class CruelBargain extends Card {
 
     public CruelBargain() {

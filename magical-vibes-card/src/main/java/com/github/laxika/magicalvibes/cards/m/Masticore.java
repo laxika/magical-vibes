@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "134")
 @CardRegistration(set = "V10", collectorNumber = "7")
+@CardRegistration(set = "VMA", collectorNumber = "275")
 public class Masticore extends Card {
 
     public Masticore() {

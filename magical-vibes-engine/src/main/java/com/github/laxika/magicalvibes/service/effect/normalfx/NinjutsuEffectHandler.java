@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.List;
@@ -33,6 +35,7 @@ import org.springframework.stereotype.Component;
 public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CloneService cloneService;
     private final GameLogService gameLogService;
 
     @Override
@@ -50,7 +53,11 @@ public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Permanent permanent = new Permanent(card);
+        if (cloneService.prepareNinjutsuCloneReplacementEffect(gameData, controllerId, card, e.attackTargetId())) {
+            return;
+        }
+
+        Permanent permanent = new Permanent(card, Zone.HAND);
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         permanent.setAttacking(true);

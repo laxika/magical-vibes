@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "247")
+@CardRegistration(set = "DDJ", collectorNumber = "64")
 public class Gleancrawler extends Card {
 
     public Gleancrawler() {

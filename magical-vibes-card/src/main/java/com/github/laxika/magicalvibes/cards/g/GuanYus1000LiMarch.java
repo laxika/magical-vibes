@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "7")
+@CardRegistration(set = "ME3", collectorNumber = "13")
 public class GuanYus1000LiMarch extends Card {
 
     public GuanYus1000LiMarch() {

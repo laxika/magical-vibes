@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "289")
+@CardRegistration(set = "ME3", collectorNumber = "200")
 public class NovaPentacle extends Card {
 
     public NovaPentacle() {

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "106")
+@CardRegistration(set = "MM2", collectorNumber = "82")
 public class EndrekSahrMasterBreeder extends Card {
 
     public EndrekSahrMasterBreeder() {

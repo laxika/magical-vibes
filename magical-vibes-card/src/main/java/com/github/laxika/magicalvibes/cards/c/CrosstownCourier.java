@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "RTR", collectorNumber = "34")
+@CardRegistration(set = "DDM", collectorNumber = "6")
 public class CrosstownCourier extends Card {
 
     public CrosstownCourier() {

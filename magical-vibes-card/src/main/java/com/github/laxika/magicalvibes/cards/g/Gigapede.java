@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "264")
+@CardRegistration(set = "VMA", collectorNumber = "214")
 public class Gigapede extends Card {
 
     public Gigapede() {

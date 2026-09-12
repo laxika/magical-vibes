@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "6")
+@CardRegistration(set = "ME3", collectorNumber = "12")
 public class GuanYuSaintedWarrior extends Card {
 
     public GuanYuSaintedWarrior() {

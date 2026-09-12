@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "98")
+@CardRegistration(set = "VMA", collectorNumber = "89")
 public class Repel extends Card {
 
     public Repel() {

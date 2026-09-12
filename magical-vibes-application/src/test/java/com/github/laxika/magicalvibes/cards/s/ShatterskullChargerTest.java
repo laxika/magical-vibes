@@ -29,9 +29,9 @@ class ShatterskullChargerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Shatterskull Charger");
         assertThat(findCharger().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Shatterskull Charger");
         harness.assertInHand(player1, "Shatterskull Charger");
@@ -50,9 +50,9 @@ class ShatterskullChargerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Shatterskull Charger");
         assertThat(findCharger().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Shatterskull Charger");
         harness.assertNotInHand(player1, "Shatterskull Charger");

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +19,7 @@ class GlassesOfUrzaTest extends BaseCardTest {
     @Test
     @DisplayName("Activating taps the glasses and puts the ability on the stack")
     void activatingTapsAndPutsOnStack() {
-        Permanent glasses = addReadyGlasses(player1);
+        Permanent glasses = addCreatureReady(player1, new GlassesOfUrza());
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -33,7 +32,7 @@ class GlassesOfUrzaTest extends BaseCardTest {
     @DisplayName("Ability looks at target player's hand")
     void looksAtTargetHand() {
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        addReadyGlasses(player1);
+        addCreatureReady(player1, new GlassesOfUrza());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -50,7 +49,7 @@ class GlassesOfUrzaTest extends BaseCardTest {
     @DisplayName("Ability against empty hand logs that hand is empty")
     void emptyHandLogged() {
         harness.setHand(player2, List.of());
-        addReadyGlasses(player1);
+        addCreatureReady(player1, new GlassesOfUrza());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -61,7 +60,7 @@ class GlassesOfUrzaTest extends BaseCardTest {
     @Test
     @DisplayName("Can target self to look at own hand")
     void canTargetSelf() {
-        addReadyGlasses(player1);
+        addCreatureReady(player1, new GlassesOfUrza());
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -84,7 +83,7 @@ class GlassesOfUrzaTest extends BaseCardTest {
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent glasses = addReadyGlasses(player1);
+        Permanent glasses = addCreatureReady(player1, new GlassesOfUrza());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -96,17 +95,11 @@ class GlassesOfUrzaTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent glasses = addReadyGlasses(player1);
+        Permanent glasses = addCreatureReady(player1, new GlassesOfUrza());
         glasses.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
-    }
-
-    private Permanent addReadyGlasses(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new GlassesOfUrza());
-        perm.setSummoningSick(false);
-        return perm;
     }
 }

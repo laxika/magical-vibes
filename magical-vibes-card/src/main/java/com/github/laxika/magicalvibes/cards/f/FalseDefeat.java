@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "4")
+@CardRegistration(set = "ME3", collectorNumber = "11")
 public class FalseDefeat extends Card {
 
     public FalseDefeat() {

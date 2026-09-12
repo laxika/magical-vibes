@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CON", collectorNumber = "73")
+@CardRegistration(set = "MM2", collectorNumber = "133")
 public class ViashinoSlaughtermaster extends Card {
 
     public ViashinoSlaughtermaster() {

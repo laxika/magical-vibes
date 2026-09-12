@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "107")
+@CardRegistration(set = "MMA", collectorNumber = "131")
 public class Stingscourger extends Card {
 
     public Stingscourger() {

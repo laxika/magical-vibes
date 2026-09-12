@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "103")
+@CardRegistration(set = "DDN", collectorNumber = "10")
 public class HellsThunder extends Card {
 
     public HellsThunder() {

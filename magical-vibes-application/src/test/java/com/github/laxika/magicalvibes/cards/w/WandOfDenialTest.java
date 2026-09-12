@@ -38,6 +38,24 @@ class WandOfDenialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target the controller's library and graveyard")
+    void canTargetController() {
+        harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
+
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
     @DisplayName("Declining leaves the nonland card on top and pays no life")
     void decliningLeavesCardAndPaysNoLife() {
         harness.addToBattlefieldAndReturn(player1, new WandOfDenial());

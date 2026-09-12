@@ -33,8 +33,11 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
+        ExileTargetGraveyardCardAndSameNameFromZonesEffect exileEffect =
+                (ExileTargetGraveyardCardAndSameNameFromZonesEffect) effect;
         UUID controllerId = entry.getControllerId();
-        UUID targetCardId = entry.getTargetId();
+        UUID targetCardId = !entry.getTargetCardIds().isEmpty()
+                ? entry.getTargetCardIds().getFirst() : entry.getTargetId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         Card targetedCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
@@ -79,7 +82,14 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
         }
 
         // Present matching cards for "any number" selection
-        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
+        UUID sourcePermanentId = exileEffect.trackWithSource() ? entry.getSourcePermanentId() : null;
+        if (sourcePermanentId == null) {
+            playerInputService.beginMultiZoneExileChoice(
+                    gameData, controllerId, matchingCards, targetPlayerId, cardName);
+        } else {
+            playerInputService.beginMultiZoneExileChoice(
+                    gameData, controllerId, matchingCards, targetPlayerId, cardName, false, sourcePermanentId);
+        }
     
     }
 }

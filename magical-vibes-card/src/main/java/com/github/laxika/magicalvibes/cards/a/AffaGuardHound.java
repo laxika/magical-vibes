@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "14")
+@CardRegistration(set = "DDP", collectorNumber = "2")
 public class AffaGuardHound extends Card {
 
     public AffaGuardHound() {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "MIR", collectorNumber = "218")
 @CardRegistration(set = "BFZ", collectorNumber = "173")
+@CardRegistration(set = "VMA", collectorNumber = "213")
 public class GiantMantis extends Card {
 
     public GiantMantis() {

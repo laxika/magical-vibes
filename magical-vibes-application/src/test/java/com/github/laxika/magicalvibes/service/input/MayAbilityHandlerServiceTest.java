@@ -4,16 +4,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -195,6 +198,39 @@ class MayAbilityHandlerServiceTest {
 
         verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
         verify(mayEffectHandlerRegistry, org.mockito.Mockito.never()).getHandler(any());
+    }
+
+    @Test
+    @DisplayName("An accepted graveyard-cast may ability offers only matching cards")
+    void graveyardCastMayAbilityOffersOnlyMatchingCards() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        Card enchantment = new Card();
+        enchantment.setName("Enchantment");
+        enchantment.setType(CardType.ENCHANTMENT);
+        Card creature = new Card();
+        creature.setName("Creature");
+        creature.setType(CardType.CREATURE);
+        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(enchantment, creature)));
+        when(gameQueryService.cardHasType(enchantment, CardType.ENCHANTMENT, null, null)).thenReturn(true);
+
+        CardEffect effect = new AllowCastTargetCardFromGraveyardThisTurnEffect(
+                new CardTypePredicate(CardType.ENCHANTMENT),
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                false);
+        StackEntry pendingEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Cast it?")));
+        gd.pendingEffectResolutionEntry = pendingEntry;
+        gd.pendingEffectResolutionIndex = 0;
+        gd.resolvingMayEffectFromStack = true;
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect), "Cast it?"));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(PLAYER1_ID, "Cast it?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(pendingEntry.getTargetId()).isEqualTo(enchantment.getId());
+        verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
     }
 
     @Test

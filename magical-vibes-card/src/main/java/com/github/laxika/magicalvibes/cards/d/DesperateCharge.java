@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "74")
+@CardRegistration(set = "ME3", collectorNumber = "63")
 public class DesperateCharge extends Card {
 
     public DesperateCharge() {

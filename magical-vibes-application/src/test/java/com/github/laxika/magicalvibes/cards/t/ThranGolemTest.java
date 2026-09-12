@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.PatternOfRebirth;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThranGolem.class, PatternOfRebirth.class})
 class ThranGolemTest extends BaseCardTest {
 
     // ===== Without an aura =====
@@ -56,6 +58,20 @@ class ThranGolemTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("An Aura controlled by an opponent still enchants the Golem")
+    void auraControlledByOpponentStillEnchants() {
+        Permanent golem = addGolem(player1);
+        Permanent aura = addAura(player2);
+        aura.setAttachedTo(golem.getId());
+
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
+    }
+
     // ===== Aura removed loses the bonus =====
 
     @Test
@@ -79,15 +95,10 @@ class ThranGolemTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addGolem(Player player) {
-        Permanent perm = new Permanent(new ThranGolem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ThranGolem());
     }
 
     private Permanent addAura(Player player) {
-        Permanent perm = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new PatternOfRebirth());
     }
 }

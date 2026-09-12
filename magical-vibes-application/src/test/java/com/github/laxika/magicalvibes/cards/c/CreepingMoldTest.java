@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.cards.s.SisaysRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -50,8 +51,7 @@ class CreepingMoldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Sisay's Ring");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Sisay's Ring");
         harness.assertInGraveyard(player2, "Sisay's Ring");
@@ -65,8 +65,7 @@ class CreepingMoldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Phyrexian Walker");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Phyrexian Walker");
         harness.assertInGraveyard(player2, "Phyrexian Walker");
@@ -80,8 +79,7 @@ class CreepingMoldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Gossamer Chains");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Gossamer Chains");
         harness.assertInGraveyard(player2, "Gossamer Chains");
@@ -95,8 +93,7 @@ class CreepingMoldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Quicksand");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Quicksand");
         harness.assertInGraveyard(player2, "Quicksand");
@@ -110,11 +107,26 @@ class CreepingMoldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Quicksand");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Quicksand");
         harness.assertInGraveyard(player1, "Quicksand");
+    }
+
+    @Test
+    @DisplayName("Regeneration prevents Creeping Mold from destroying the target")
+    void regenerationPreventsDestruction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianWalker());
+        target.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new CreepingMold()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Phyrexian Walker");
+        harness.assertNotInGraveyard(player2, "Phyrexian Walker");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test

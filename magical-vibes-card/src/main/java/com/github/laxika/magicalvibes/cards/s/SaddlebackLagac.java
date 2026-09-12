@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "142")
+@CardRegistration(set = "DDR", collectorNumber = "18")
 public class SaddlebackLagac extends Card {
 
     public SaddlebackLagac() {

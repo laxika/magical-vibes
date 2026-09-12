@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.Zone;
 public record EnteredFromZone(Zone sourceZone) implements Condition {
 
     @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
+
+    @Override
     public String conditionName() {
         return "entered from " + sourceZone.name().toLowerCase();
     }

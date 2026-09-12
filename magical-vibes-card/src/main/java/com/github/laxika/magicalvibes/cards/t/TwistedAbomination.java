@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "DDD", collectorNumber = "45")
 @CardRegistration(set = "SCG", collectorNumber = "76")
 @CardRegistration(set = "PD3", collectorNumber = "4")
+@CardRegistration(set = "GVL", collectorNumber = "45")
 public class TwistedAbomination extends Card {
 
     public TwistedAbomination() {

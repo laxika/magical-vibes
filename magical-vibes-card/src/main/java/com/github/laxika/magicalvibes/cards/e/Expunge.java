@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "135")
+@CardRegistration(set = "VMA", collectorNumber = "118")
 public class Expunge extends Card {
 
     public Expunge() {

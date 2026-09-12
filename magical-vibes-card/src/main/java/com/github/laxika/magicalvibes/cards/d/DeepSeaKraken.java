@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponent
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "56")
+@CardRegistration(set = "DDS", collectorNumber = "3")
 public class DeepSeaKraken extends Card {
 
     public DeepSeaKraken() {

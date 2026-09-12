@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,18 +45,26 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect auraSearch =
+                (SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect) effect;
 
-        // The host is the lone attacker recorded on the trigger. When wrapped in MayEffect (Sovereigns)
-        // the combat trigger records it as the source permanent (CR 603.5 resolution-time may path);
-        // a mandatory (non-may) use would instead record it as the non-targeting targetId.
+        // The host is the recorded source permanent when wrapped in MayEffect (Sovereigns and
+        // Light-Paws); a mandatory (non-may) use would instead record it as the non-targeting targetId.
         UUID hostId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent host = hostId == null ? null : gameQueryService.findPermanentById(gameData, hostId);
-        if (host == null || !gameQueryService.isCreature(gameData, host)) return;
+        if (host == null
+                || (!auraSearch.restrictToTriggeringAura() && !gameQueryService.isCreature(gameData, host))) return;
 
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
+        int maxManaValue = auraSearch.restrictToTriggeringAura()
+                ? triggeringAuraManaValue(gameData, entry)
+                : Integer.MAX_VALUE;
+        Set<String> controlledAuraNames = auraSearch.restrictToTriggeringAura()
+                ? controlledAuraNames(gameData, controllerId)
+                : Set.of();
 
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
@@ -63,6 +73,8 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
 
         List<Card> matchingCards = deck.stream()
                 .filter(card -> couldEnchant(gameData, card, host, controllerId))
+                .filter(card -> card.getManaValue() <= maxManaValue)
+                .filter(card -> !controlledAuraNames.contains(card.getName()))
                 .toList();
 
         if (matchingCards.isEmpty()) {
@@ -72,7 +84,11 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
             return;
         }
 
-        String prompt = "Search your library for an Aura card and put it onto the battlefield attached to " + host.getCard().getName() + ".";
+        String prompt = maxManaValue == Integer.MAX_VALUE
+                ? "Search your library for an Aura card and put it onto the battlefield attached to " + host.getCard().getName() + "."
+                : "Search your library for an Aura card with mana value " + maxManaValue
+                + " or less and a different name than each Aura you control, then put it onto the battlefield attached to "
+                + host.getCard().getName() + ".";
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                 LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                         .canFailToFind(true)
@@ -81,6 +97,27 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
                         .build(), prompt, true);
 
         log.info("Game {} - {} searches library for an Aura card ({} matches)", gameData.id, playerName, matchingCards.size());
+    }
+
+    private int triggeringAuraManaValue(GameData gameData, StackEntry entry) {
+        if (entry.getEventValue() > 0) return entry.getEventValue();
+        UUID triggeringPermanentId = entry.getTriggeringPermanentId();
+        Permanent triggeringPermanent = triggeringPermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, triggeringPermanentId);
+        return triggeringPermanent == null ? entry.getEventValue() : triggeringPermanent.getCard().getManaValue();
+    }
+
+    private Set<String> controlledAuraNames(GameData gameData, UUID controllerId) {
+        Set<String> names = new HashSet<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            battlefield.stream()
+                    .map(Permanent::getCard)
+                    .filter(Card::isAura)
+                    .map(Card::getName)
+                    .forEach(names::add);
+        }
+        return names;
     }
 
     /**

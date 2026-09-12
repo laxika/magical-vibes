@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "8ED", collectorNumber = "171")
 @CardRegistration(set = "NEM", collectorNumber = "74")
 @CardRegistration(set = "DDD", collectorNumber = "50")
+@CardRegistration(set = "GVL", collectorNumber = "50")
 public class ViciousHunger extends Card {
 
     public ViciousHunger() {

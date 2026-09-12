@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "93")
+@CardRegistration(set = "DDR", collectorNumber = "45")
 public class DespoilerOfSouls extends Card {
 
     public DespoilerOfSouls() {

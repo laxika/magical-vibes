@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "60")
+@CardRegistration(set = "MMA", collectorNumber = "82")
 public class EarwigSquad extends Card {
 
     public EarwigSquad() {

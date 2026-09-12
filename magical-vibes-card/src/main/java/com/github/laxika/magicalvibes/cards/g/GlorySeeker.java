@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ROE", collectorNumber = "22")
 @CardRegistration(set = "ONS", collectorNumber = "31")
 @CardRegistration(set = "DDF", collectorNumber = "7")
+@CardRegistration(set = "W17", collectorNumber = "2")
 public class GlorySeeker extends Card {
 }

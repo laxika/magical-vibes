@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "116")
+@CardRegistration(set = "MM2", collectorNumber = "83")
 public class GhostlyChangeling extends Card {
 
     public GhostlyChangeling() {

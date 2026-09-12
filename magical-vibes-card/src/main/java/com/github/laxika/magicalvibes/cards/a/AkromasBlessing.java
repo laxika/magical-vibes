@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ONS", collectorNumber = "1")
+@CardRegistration(set = "VMA", collectorNumber = "11")
 public class AkromasBlessing extends Card {
 
     public AkromasBlessing() {

@@ -80,6 +80,35 @@ class OrcishArtilleryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
 
+    @Test
+    @DisplayName("Ability still resolves after Orcish Artillery leaves the battlefield")
+    void abilityStillResolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new OrcishArtillery());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Resolves both damage effects before checking a player's loss")
+    void resolvesBothEffectsBeforeCheckingPlayerLoss() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 2);
+        addCreatureReady(player1, new OrcishArtillery());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 0);
+        harness.assertLife(player1, 17);
+    }
+
     // ===== Dealing damage to creature =====
 
     @Test

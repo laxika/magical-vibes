@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "EOE", collectorNumber = "124")
+@CardRegistration(set = "NEO", collectorNumber = "128")
 public class VirusBeetle extends Card {
 
     public VirusBeetle() {

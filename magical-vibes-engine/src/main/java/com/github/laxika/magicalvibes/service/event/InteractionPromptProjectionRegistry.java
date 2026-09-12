@@ -67,11 +67,15 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.Scry.class, this::projectScry);
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
+        register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
+        register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.InvokeCalamityCastChoice.class,
+                this::projectInvokeCalamityCastChoice);
         register(PendingInteraction.PlarggAndNassariOpponentChoice.class,
                 this::projectPlarggAndNassariOpponentChoice);
         register(PendingInteraction.PlarggAndNassariCardChoice.class,
@@ -205,6 +209,8 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.DiscardCostChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PlanarAbilityHandCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class,
                 this::projectPutCardsFromHandOnLibraryCardChoice);
         register(PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.class,
@@ -335,6 +341,24 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()), interaction.prompt());
     }
 
+    private InteractionPromptMessage projectPlanarCardChoice(
+            GameData gameData, PendingInteraction.PlanarCardChoice interaction) {
+        Map<UUID, Card> cardsById = interaction.revealedCards().stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<CardView> cardViews = interaction.validPlaneCardIds().stream()
+                .map(cardsById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validPlaneCardIds()), cardViews, 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectSpatialMergingCardOrder(
+            GameData gameData, PendingInteraction.SpatialMergingCardOrder interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cardsToBottom()), interaction.prompt());
+    }
+
     private InteractionPromptMessage projectMayAbilityChoice(
             GameData gameData, PendingInteraction.MayAbilityChoice interaction) {
         boolean canPay = true;
@@ -372,6 +396,24 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 interaction.maxCount(),
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectInvokeCalamityCastChoice(
+            GameData gameData, PendingInteraction.InvokeCalamityCastChoice interaction) {
+        Map<UUID, Card> cardsById = new LinkedHashMap<>();
+        for (Card card : gameData.playerHands.getOrDefault(interaction.playerId(), List.of())) {
+            cardsById.put(card.getId(), card);
+        }
+        for (Card card : gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of())) {
+            cardsById.put(card.getId(), card);
+        }
+        List<Card> cards = interaction.validCardIds().stream()
+                .map(cardsById::get)
+                .filter(card -> card != null)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(cards), 2,
+                "You may cast up to two instant and/or sorcery spells with total mana value 6 or less.");
     }
 
     private InteractionPromptMessage projectPlarggAndNassariOpponentChoice(

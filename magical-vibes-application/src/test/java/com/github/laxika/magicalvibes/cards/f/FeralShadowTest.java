@@ -30,6 +30,18 @@ class FeralShadowTest extends BaseCardTest {
     }
 
     @Test
+    void flyingCreatureCanBlockNonFlyingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new FeralShadow());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("A creature with flying can block Feral Shadow")
     void flyingCreatureCanBlock() {
         addCreatureReady(player1, new FeralShadow());

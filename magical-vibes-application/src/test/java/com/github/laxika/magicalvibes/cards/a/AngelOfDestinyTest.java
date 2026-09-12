@@ -27,7 +27,7 @@ class AngelOfDestinyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test
@@ -40,9 +40,8 @@ class AngelOfDestinyTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
@@ -58,9 +57,8 @@ class AngelOfDestinyTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
@@ -69,16 +67,16 @@ class AngelOfDestinyTest extends BaseCardTest {
     @DisplayName("The end-step loss is prevented by Platinum Angel")
     void cantLoseEffectPreventsEndStepLoss() {
         addCreatureReady(player1, new AngelOfDestiny());
-        addCreatureReady(player1, new PlatinumAngel());
+        addCreatureReady(player2, new PlatinumAngel());
         harness.setLife(player1, 35);
 
         declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }

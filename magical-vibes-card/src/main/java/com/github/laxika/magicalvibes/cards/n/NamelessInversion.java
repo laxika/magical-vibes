@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "128")
 @CardRegistration(set = "ECL", collectorNumber = "113")
+@CardRegistration(set = "MM2", collectorNumber = "87")
 public class NamelessInversion extends Card {
 
     public NamelessInversion() {

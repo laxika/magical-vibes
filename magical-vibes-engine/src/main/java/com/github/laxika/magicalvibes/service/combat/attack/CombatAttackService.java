@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
@@ -109,9 +110,11 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -309,6 +312,18 @@ public class CombatAttackService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CombatCreatureLimitEffect limit
+                            && (!filterByAttackTarget
+                            || limit.appliesToAttackTarget(gameData.planechase.controllerId,
+                            planar.getId(), attackTargetId))) {
+                        maximum[0] = Math.min(maximum[0], limit.maxAttackers());
+                    }
+                }
+            }
+        }
         return maximum[0];
     }
 
@@ -876,14 +891,14 @@ public class CombatAttackService {
 
                 // "Whenever this creature attacks for the first time each turn" (Aurelia, the
                 // Warleader): drop the wrapped effects entirely once this permanent has already
-                // fired them this turn, otherwise unwrap and mark it after the trigger is queued.
+                // attacked this turn, otherwise consume the first-attack marker before any
+                // intervening-if or trigger-subject filters can remove the wrapped effect.
                 // The gate is per permanent, so an extra combat phase it grants can't loop.
-                boolean firesOnceEachTurn = false;
                 if (allEffects.stream().anyMatch(e -> e instanceof OncePerTurnTriggerEffect)) {
                     if (gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
                         allEffects.removeIf(e -> e instanceof OncePerTurnTriggerEffect);
                     } else {
-                        firesOnceEachTurn = true;
+                        gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
                         allEffects.replaceAll(e -> e instanceof OncePerTurnTriggerEffect once ? once.wrapped() : e);
                     }
                 }
@@ -1027,10 +1042,6 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(
                                 gameData, ce.condition(), ConditionContext.forPermanent(attacker, playerId)));
 
-                if (firesOnceEachTurn && !allEffects.isEmpty()) {
-                    gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
-                }
-
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
                     // effects that need the normal resolution path (mandatory effects and targeting may effects
@@ -1067,6 +1078,8 @@ public class CombatAttackService {
                         // Two-target "remove a counter from a creature you control, then put one on up
                         // to one creature the defending player controls" (Decimator Beetle). The normal
                         // pipeline collects only one target, so route to the bespoke two-step flow.
+                        boolean isTriggerTimeModal = otherEffects.size() == 1
+                                && otherEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect;
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
                                 .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
@@ -1080,7 +1093,11 @@ public class CombatAttackService {
                                 : gameData.playerIds.contains(attackedTargetId)
                                         ? attackedTargetId
                                         : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                        if (isCounterMove) {
+                        if (isTriggerTimeModal) {
+                            ChooseOneAtTriggerTimeEffect modal = (ChooseOneAtTriggerTimeEffect) otherEffects.getFirst();
+                            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                    attacker.getCard(), playerId, modal.choice(), attacker.getId()));
+                        } else if (isCounterMove) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackCounterMoveFirstTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId(), defendingPlayerId));
@@ -1139,7 +1156,7 @@ public class CombatAttackService {
                                     gameData, attacker, attackTrigger);
                         }
 
-                        if (!needsGraveyardTarget) {
+                        if (!needsGraveyardTarget && !isTriggerTimeModal) {
                             gameLogService.append(gameData,
                                     GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                             log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
@@ -1187,6 +1204,38 @@ public class CombatAttackService {
                         GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
                 log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        }
+
+        // Engine-level dethrone triggers: attack the player with the most life (including ties)
+        // to put a +1/+1 counter on the attacking creature.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DETHRONE)
+                    || !predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, attacker, new PermanentAttacksPlayerWithMostLifePredicate())) {
+                continue;
+            }
+            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+            try {
+                List<CardEffect> dethroneEffects = List.of(new PutCountersOnSourceEffect(1, 1, 1));
+                StackEntry dethroneTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        playerId,
+                        attacker.getCard().getName() + "'s dethrone",
+                        dethroneEffects,
+                        null,
+                        attacker.getId()
+                );
+                gameData.stack.add(dethroneTrigger);
+                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                        gameData, attacker, dethroneTrigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(attacker.getCard()).text("'s dethrone triggers.").build());
+                log.info("Game {} - {} dethrone trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
@@ -1631,6 +1680,10 @@ public class CombatAttackService {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
+        }
+
+        for (int idx : attackerIndices) {
+            triggerCollectionService.checkPlanarAllyCreatureAttackTriggers(gameData, battlefield.get(idx));
         }
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers
