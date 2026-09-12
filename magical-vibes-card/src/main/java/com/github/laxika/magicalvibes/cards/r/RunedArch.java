@@ -22,7 +22,7 @@ public class RunedArch extends Card {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
         // {X}, {T}, Sacrifice this artifact: X target creatures with power 2 or less can't be
-        // blocked this turn. The target count scales with the paid X (withXScaledTargets); the
+        // blocked this turn. The target count equals the paid X (withExactXTargets); the
         // unblockable handler fans over the whole chosen target group.
         addActivatedAbility(new ActivatedAbility(true, "{X}",
                 List.of(new SacrificeSelfCost(), new MakeCreatureUnblockableEffect()),
@@ -33,8 +33,7 @@ public class RunedArch extends Card {
                                 new PermanentPowerAtMostPredicate(2)
                         )),
                         "Targets must be creatures with power 2 or less"
-                ),
-                null, null, null, List.of(), 100, 100)
-                .withXScaledTargets());
+                ))
+                .withExactXTargets());
     }
 }

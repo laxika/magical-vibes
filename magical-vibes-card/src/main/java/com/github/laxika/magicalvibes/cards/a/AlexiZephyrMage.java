@@ -18,13 +18,7 @@ public class AlexiZephyrMage extends Card {
                 "{X}{U}",
                 List.of(new DiscardCardTypeCost(null, null, 2), ReturnToHandEffect.target()),
                 "{X}{U}, {T}, Discard two cards: Return X target creatures to their owners' hands.",
-                TargetFilters.creature(),
-                null,
-                null,
-                null,
-                List.of(),
-                100,
-                100
-        ).withXScaledTargets());
+                TargetFilters.creature()
+        ).withExactXTargets());
     }
 }

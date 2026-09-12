@@ -123,14 +123,13 @@ public class ActivatedAbility {
     /** Human-readable description of the dynamic cap, used in the activation error message. */
     private String maxActivationsPerTurnDescription;
     /**
-     * When true the number of targets scales with the X paid for this ability's {@code {X}} mana
-     * cost ("{X}, {T}, Sacrifice this artifact: X target creatures … " — Runed Arch). The ability
-     * declares {@code minTargets = 0} and {@code maxTargets} as a sanity cap; the effective bounds
-     * are computed from the paid X by {@link #getEffectiveMinTargets(int)} /
-     * {@link #getEffectiveMaxTargets(int)}. The ability-side counterpart of {@code Card.targetX}.
-     * Set via {@link #withXScaledTargets()}.
+     * Bounded X scaling: clamps both configured target bounds to the paid X.
+     * A configured minimum of zero allows fewer than X targets. For exactly X targets without
+     * a fixed cap, use {@link #withExactXTargets()} instead.
      */
     private boolean xScaledTargets;
+    /** Whether both target bounds equal the announced X, independently of fixed target limits. */
+    private boolean exactXTargets;
     /** Counter type that supplies the target limit instead of a paid X value. */
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
@@ -334,6 +333,7 @@ public class ActivatedAbility {
         copy.suspendTimeCounters = this.suspendTimeCounters;
         copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
         copy.xScaledTargets = this.xScaledTargets;
+        copy.exactXTargets = this.exactXTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
         copy.minimumXValue = this.minimumXValue;
@@ -666,13 +666,20 @@ public class ActivatedAbility {
     }
 
     /**
-     * Fluent setter marking this ability's target count as scaling with the paid X (Runed Arch's
-     * "X target creatures with power 2 or less"). Pair with an {@code {X}} mana cost, a single
-     * {@code targetFilter}, {@code minTargets = 0} and a sanity {@code maxTargets} cap. Returns this
-     * ability for chaining in card constructors.
+     * Clamps the configured minimum and maximum target counts to the paid X.
+     * For an uncapped "X target" requirement, use {@link #withExactXTargets()}.
      */
     public ActivatedAbility withXScaledTargets() {
         this.xScaledTargets = true;
+        return this;
+    }
+
+    /**
+     * Requires exactly X targets, including zero when X is zero. Fixed constructor target bounds
+     * do not apply; use the constructor taking a single target filter without numeric limits.
+     */
+    public ActivatedAbility withExactXTargets() {
+        this.exactXTargets = true;
         return this;
     }
 
@@ -683,7 +690,7 @@ public class ActivatedAbility {
     }
 
     public boolean isXScaledTargets() {
-        return xScaledTargets || sourceCounterScaledTargetsType != null;
+        return exactXTargets || xScaledTargets || sourceCounterScaledTargetsType != null;
     }
 
     /** Marks the ability as requiring a player-chosen xValue for a dynamic non-mana cost. */
@@ -734,16 +741,21 @@ public class ActivatedAbility {
     }
 
     /**
-     * Minimum number of targets required for the given paid X. Mirrors {@code Card.getEffectiveMinTargets}:
-     * an X-scaled group is declared with {@code minTargets = 0}, so fewer than X targets stay legal
-     * when not enough legal targets exist.
+     * Minimum number of targets required for the given X. Exact-X abilities require X targets;
+     * bounded X scaling clamps the configured minimum to X (zero permits fewer targets).
      */
     public int getEffectiveMinTargets(int xValue) {
+        if (exactXTargets) {
+            return xValue;
+        }
         return isXScaledTargets() ? Math.min(xValue, minTargets) : minTargets;
     }
 
-    /** Maximum number of targets allowed for the given paid X ({@code min(X, maxTargets)} when X-scaled). */
+    /** Maximum target count: X for exact-X abilities, or the configured bound clamped to X when X-scaled. */
     public int getEffectiveMaxTargets(int xValue) {
+        if (exactXTargets) {
+            return xValue;
+        }
         return isXScaledTargets() ? Math.min(xValue, maxTargets) : maxTargets;
     }
 
