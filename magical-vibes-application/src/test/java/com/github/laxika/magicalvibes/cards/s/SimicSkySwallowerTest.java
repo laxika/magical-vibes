@@ -27,8 +27,7 @@ class SimicSkySwallowerTest extends BaseCardTest {
         Permanent swallower = addReadyCreature(player1, new SimicSkySwallower());
         Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(swallower)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(swallower)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(swallower);

@@ -57,7 +57,7 @@ class AzureBeastbinderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
 
-        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();

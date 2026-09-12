@@ -70,8 +70,7 @@ class VoiceOfGraceTest extends BaseCardTest {
         addCreatureReady(player1, new VoiceOfGrace());
         addCreatureReady(player2, new CrazedSkirge());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -84,8 +83,7 @@ class VoiceOfGraceTest extends BaseCardTest {
         addCreatureReady(player1, new BogRaiders());
         Permanent voice = addCreatureReady(player2, new VoiceOfGrace());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();

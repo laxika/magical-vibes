@@ -22,8 +22,7 @@ class SnappingDrakeTest extends BaseCardTest {
         addCreatureReady(player1, new SnappingDrake());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -36,8 +35,7 @@ class SnappingDrakeTest extends BaseCardTest {
         addCreatureReady(player1, new SnappingDrake());
         Permanent blocker = addCreatureReady(player2, new SnappingDrake());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

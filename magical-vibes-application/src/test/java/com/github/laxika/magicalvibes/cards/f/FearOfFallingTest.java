@@ -59,7 +59,7 @@ class FearOfFallingTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
 
-        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
         endTurn(player1);
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();

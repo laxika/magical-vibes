@@ -22,8 +22,7 @@ class SerraAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new SerraAngel());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

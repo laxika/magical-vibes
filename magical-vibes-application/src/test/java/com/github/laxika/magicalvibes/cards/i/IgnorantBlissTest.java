@@ -39,7 +39,7 @@ class IgnorantBlissTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(replacement)));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(replacement, drawn, first, second);

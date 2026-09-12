@@ -75,7 +75,7 @@ class TowerOfCoireallTest extends BaseCardTest {
                 .declareAttackers(gd, player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)), null));
 
         harness.activateAbility(player1, 0, null, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         prepareDeclareBlockers(player2);
 

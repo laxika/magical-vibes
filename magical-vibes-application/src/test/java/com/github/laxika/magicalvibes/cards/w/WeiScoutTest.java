@@ -21,8 +21,7 @@ class WeiScoutTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WeiInfantry());
         addCreatureReady(player1, new WeiScout());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(
@@ -37,8 +36,7 @@ class WeiScoutTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WeiStrikeForce());
         addCreatureReady(player1, new WeiScout());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

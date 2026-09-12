@@ -23,8 +23,7 @@ class YellowScarvesCavalryTest extends BaseCardTest {
         Permanent cavalry = addCreatureReady(player2, new YellowScarvesCavalry());
         addCreatureReady(player1, new ShuFootSoldiers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(cavalry);
 
@@ -40,8 +39,7 @@ class YellowScarvesCavalryTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent cavalry = addCreatureReady(player1, new YellowScarvesCavalry());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cavalry);
@@ -58,8 +56,7 @@ class YellowScarvesCavalryTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ShuCavalry());
         addCreatureReady(player1, new YellowScarvesCavalry());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

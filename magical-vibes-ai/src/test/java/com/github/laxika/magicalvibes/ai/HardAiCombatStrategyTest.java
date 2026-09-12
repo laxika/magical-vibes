@@ -490,7 +490,8 @@ class HardAiCombatStrategyTest extends HardAiDecisionEngineTestSupport {
             oppCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                    () -> ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION));
 
             assertThat(aiCreature.isAttacking()).isTrue();
             assertThat(weakBears.isAttacking()).isFalse();
@@ -524,7 +525,8 @@ class HardAiCombatStrategyTest extends HardAiDecisionEngineTestSupport {
             TestCards.mutableCard(wall).setToughness(3);
             gd.playerBattlefields.get(player2.getId()).add(wall);
 
-            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                    () -> ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION));
 
             // The flyer connects, so it attacks; the 2/2 would just be given away, so it stays home.
             assertThat(flyer.isAttacking()).isTrue();

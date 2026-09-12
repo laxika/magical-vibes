@@ -53,8 +53,7 @@ class BayouDragonflyTest extends BaseCardTest {
 
     private Permanent addBayouDragonflyAttacker() {
         Permanent attacker = addCreatureReady(player1, new BayouDragonfly());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         return attacker;
     }
 

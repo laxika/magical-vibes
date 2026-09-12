@@ -3,31 +3,18 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.DisplayName;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class VerdantSunsAvatarTest extends BaseCardTest {
 
@@ -108,7 +95,8 @@ class VerdantSunsAvatarTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Verdant Sun's Avatar");
         assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(4));
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
 
     @Test

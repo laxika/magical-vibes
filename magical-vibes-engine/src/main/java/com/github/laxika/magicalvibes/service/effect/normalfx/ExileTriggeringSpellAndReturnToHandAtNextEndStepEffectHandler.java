@@ -36,7 +36,7 @@ public class ExileTriggeringSpellAndReturnToHandAtNextEndStepEffectHandler imple
                         || candidate.getCard().hasType(CardType.SORCERY))
                 .findFirst()
                 .orElse(null);
-        if (spell == null || !entry.getControllerId().equals(spell.getOwnerId())) {
+        if (spell == null || !entry.getControllerId().equals(spell.getControllerId())) {
             return;
         }
 

@@ -44,9 +44,12 @@ class StoneshockGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(giant.isMonstrous()).isTrue();
-        assertThat(ownBears.isCantBlockThisTurn()).isFalse();
-        assertThat(opponentBears.isCantBlockThisTurn()).isTrue();
-        assertThat(opponentAirElemental.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, ownBears, opponentBears,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, opponentBears, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, opponentAirElemental, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test

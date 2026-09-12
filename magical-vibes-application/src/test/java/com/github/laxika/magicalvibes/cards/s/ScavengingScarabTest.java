@@ -19,9 +19,7 @@ class ScavengingScarabTest extends BaseCardTest {
         Permanent scarab = addCreatureReady(player2, new ScavengingScarab());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");

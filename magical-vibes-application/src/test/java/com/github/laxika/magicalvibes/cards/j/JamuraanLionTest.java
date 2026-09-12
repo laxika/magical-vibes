@@ -56,8 +56,7 @@ class JamuraanLionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        declareAttackers(player1, List.of(1));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)

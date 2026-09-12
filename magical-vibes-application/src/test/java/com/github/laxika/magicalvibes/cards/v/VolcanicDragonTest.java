@@ -29,7 +29,8 @@ class VolcanicDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent dragon = findPermanent(player1, "Volcanic Dragon");
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
 
         assertThat(dragon.isAttacking()).isTrue();
     }
@@ -40,8 +41,7 @@ class VolcanicDragonTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new VolcanicDragon());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

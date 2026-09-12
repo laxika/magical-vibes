@@ -86,6 +86,39 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     }
 
     @Test
+    void usesLastKnownControllerWhenTheDamagedCreatureHasDied() {
+        Card card = createCard("Soul Charmer");
+        MayPayManaEffect effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2}?",
+                MayPayPayer.TARGET_PERMANENT_CONTROLLER);
+        UUID damagedCreatureId = UUID.randomUUID();
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), damagedCreatureId);
+        entry.setTriggeringPermanentId(damagedCreatureId);
+        entry.setTriggeringPermanentControllerId(player2Id);
+
+        resolveEffect(gd, entry, effect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
+    void usesCurrentControllerWhenTheDamagedCreatureHasChangedControl() {
+        Card card = createCard("Soul Charmer");
+        MayPayManaEffect effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2}?",
+                MayPayPayer.TARGET_PERMANENT_CONTROLLER);
+        UUID damagedCreatureId = UUID.randomUUID();
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), damagedCreatureId);
+        entry.setTriggeringPermanentId(damagedCreatureId);
+        entry.setTriggeringPermanentControllerId(player2Id);
+        when(gameQueryService.findPermanentController(gd, damagedCreatureId)).thenReturn(player1Id);
+
+        resolveEffect(gd, entry, effect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player1Id);
+    }
+
+    @Test
     @DisplayName("TARGET_PLAYER_OR_PERMANENT_CONTROLLER payer prompts a target player")
     void targetPlayerOrPermanentControllerPayerPromptsTargetPlayer() {
         Card card = createCard("Rhystic Lightning");

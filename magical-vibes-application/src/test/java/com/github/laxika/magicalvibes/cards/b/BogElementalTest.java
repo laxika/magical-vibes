@@ -100,6 +100,7 @@ class BogElementalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BogElemental());
         UUID bogElementalId = findPermanent(player1, "Bog Elemental").getId();
 
+        harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new MagetasBoon()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);

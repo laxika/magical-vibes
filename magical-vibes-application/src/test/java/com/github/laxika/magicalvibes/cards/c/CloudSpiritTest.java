@@ -59,8 +59,7 @@ class CloudSpiritTest extends BaseCardTest {
         addCreatureReady(player2, new CloudSpirit());
 
         addCreatureReady(player1, new SpinedWurm());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,8 +72,7 @@ class CloudSpiritTest extends BaseCardTest {
         addCreatureReady(player1, new CloudSpirit());
         addCreatureReady(player2, new SpinedWurm());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

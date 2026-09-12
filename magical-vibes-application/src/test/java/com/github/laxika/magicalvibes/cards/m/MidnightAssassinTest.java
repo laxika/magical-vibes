@@ -23,8 +23,7 @@ class MidnightAssassinTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent assassin = addCreatureReady(player1, new MidnightAssassin());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(assassin)));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(assassin)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -39,8 +38,7 @@ class MidnightAssassinTest extends BaseCardTest {
         Permanent assassin = addCreatureReady(player1, new MidnightAssassin());
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(assassin)));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(assassin)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(assassin))));

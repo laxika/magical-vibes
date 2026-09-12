@@ -70,6 +70,9 @@ class PsychicTheftTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.END_STEP);
 
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(spell);
+        resolveAllTriggers();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).contains(spell);
     }
@@ -106,8 +109,10 @@ class PsychicTheftTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castFromExile(player1, instant.getId(), artifact.getId());
         resolveAllTriggers();
 

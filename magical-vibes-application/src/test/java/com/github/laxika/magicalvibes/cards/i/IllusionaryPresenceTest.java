@@ -116,8 +116,7 @@ class IllusionaryPresenceTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
         resolveUpkeepChoosing(presence, Keyword.ISLANDWALK);
-        declareAttackers(List.of(indexOf(player1, presence)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, presence)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, presence)))))

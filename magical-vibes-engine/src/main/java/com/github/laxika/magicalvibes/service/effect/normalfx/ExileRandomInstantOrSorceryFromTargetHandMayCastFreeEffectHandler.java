@@ -64,7 +64,7 @@ public class ExileRandomInstantOrSorceryFromTargetHandMayCastFreeEffectHandler
         gameData.exilePlayPermissions.put(revealed.getId(), entry.getControllerId());
         gameData.exilePlayWithoutPayingManaCost.add(revealed.getId());
         gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                revealed.getId(), targetPlayerId, entry.getCard()));
+                revealed.getId(), targetPlayerId, entry.getCard(), entry.getControllerId()));
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " reveals ").card(revealed)

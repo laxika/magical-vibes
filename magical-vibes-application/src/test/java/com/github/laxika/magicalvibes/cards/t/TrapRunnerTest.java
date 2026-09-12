@@ -58,9 +58,7 @@ class TrapRunnerTest extends BaseCardTest {
         Permanent trapRunner = addCreatureReady(player1, new TrapRunner());
         Permanent blockedAttacker = addCreatureReady(player1, new SavannahLions());
         addCreatureReady(player2, new SavannahLions());
-        declareAttackers(List.of(1));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.clearPriorityPassed();
 

@@ -65,8 +65,10 @@ class MagmaticChasmTest extends BaseCardTest {
 
         castMagmaticChasm();
 
-        assertThat(ownBears.isCantBlockThisTurn()).isTrue();
-        assertThat(opponentBears.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, ownBears, opponentBears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, opponentBears, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     private void castMagmaticChasm() {

@@ -47,9 +47,12 @@ class TectonicRiftTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(ownBears.isCantBlockThisTurn()).isTrue();
-        assertThat(oppBears.isCantBlockThisTurn()).isTrue();
-        assertThat(oppHawk.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, ownBears, oppBears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppBears, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppHawk, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test

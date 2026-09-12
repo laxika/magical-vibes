@@ -23,8 +23,7 @@ class SkySpiritTest extends BaseCardTest {
         addCreatureReady(player1, new SkySpirit());
         addCreatureReady(player2, new MoggConscripts());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -37,8 +36,7 @@ class SkySpiritTest extends BaseCardTest {
         Permanent skySpirit = addCreatureReady(player1, new SkySpirit());
         Permanent blocker = addCreatureReady(player2, new WindDrake());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 

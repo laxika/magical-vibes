@@ -25,7 +25,6 @@ class WindSpiritTest extends BaseCardTest {
         addCreatureReady(player2, new KjeldoranWarrior());
 
         declareAttackers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
 
         harness.assertLife(player2, 17);
     }

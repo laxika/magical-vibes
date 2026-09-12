@@ -54,8 +54,10 @@ class OrderChaosTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opposingCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, ownCreature, opposingCreature,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, opposingCreature, ownCreature,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -67,13 +69,17 @@ class OrderChaosTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        Permanent attackerForPlayer1 = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, creature, attackerForPlayer1,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, creature, attackerForPlayer1,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {

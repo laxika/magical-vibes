@@ -63,8 +63,7 @@ class WuScoutTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WuInfantry());
         addCreatureReady(player1, new WuScout());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -79,8 +78,7 @@ class WuScoutTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WuScout());
         addCreatureReady(player1, new WuScout());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

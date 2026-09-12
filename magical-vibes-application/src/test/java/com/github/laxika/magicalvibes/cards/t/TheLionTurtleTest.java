@@ -37,6 +37,7 @@ class TheLionTurtleTest extends BaseCardTest {
         addCreatureReady(player1, new TheLionTurtle());
 
         declareAttackers(List.of(0));
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }

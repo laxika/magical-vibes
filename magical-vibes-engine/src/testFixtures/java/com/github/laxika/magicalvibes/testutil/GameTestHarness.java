@@ -1843,6 +1843,22 @@ public class GameTestHarness {
         passUntil(null, targetStep);
     }
 
+    /** Runs an action with a temporary priority stop, preserving each player's configured stops. */
+    public void withAutoStop(TurnStep step, Runnable action) {
+        Map<UUID, Set<TurnStep>> originalStops = new HashMap<>(gameData.playerAutoStopSteps);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Set<TurnStep> stops = new HashSet<>(originalStops.getOrDefault(playerId, Set.of()));
+            stops.add(step);
+            gameData.playerAutoStopSteps.put(playerId, stops);
+        }
+        try {
+            action.run();
+        } finally {
+            gameData.playerAutoStopSteps.clear();
+            gameData.playerAutoStopSteps.putAll(originalStops);
+        }
+    }
+
     /**
      * Passes priority until {@code targetStep} occurs during {@code activePlayer}'s turn.
      *

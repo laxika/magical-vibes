@@ -62,7 +62,7 @@ class LegionLoyalistTest extends BaseCardTest {
         harness.addToBattlefield(player2, createTokenCreature("Soldier Token", 1, 1));
 
         declareAttackers(player1, List.of(0, 1, 2));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -79,7 +79,7 @@ class LegionLoyalistTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1, 2));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

@@ -116,8 +116,7 @@ class CommanderGrevenIlVecTest extends BaseCardTest {
         Permanent greven = addCreatureReady(player1, new CommanderGrevenIlVec());
         Permanent blocker = addCreatureReady(player2, new LowlandGiant());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

@@ -50,8 +50,7 @@ class KickInTheDoorTest extends BaseCardTest {
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int wallIndex = gd.playerBattlefields.get(player2.getId()).indexOf(wall);
-        declareAttackers(player1, List.of(attackerIndex));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(attackerIndex));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(wallIndex, attackerIndex))))
@@ -68,8 +67,7 @@ class KickInTheDoorTest extends BaseCardTest {
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        declareAttackers(player1, List.of(attackerIndex));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(attackerIndex));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
@@ -89,8 +87,7 @@ class KickInTheDoorTest extends BaseCardTest {
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int wallIndex = gd.playerBattlefields.get(player2.getId()).indexOf(wall);
-        declareAttackers(player1, List.of(attackerIndex));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(attackerIndex));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(wallIndex, attackerIndex)));
 
         assertThat(wall.isBlocking()).isTrue();

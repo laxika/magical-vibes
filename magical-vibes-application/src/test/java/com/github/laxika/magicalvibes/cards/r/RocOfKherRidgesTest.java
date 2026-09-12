@@ -24,8 +24,7 @@ class RocOfKherRidgesTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent roc = addCreatureReady(player1, new RocOfKherRidges());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(roc);
@@ -42,8 +41,7 @@ class RocOfKherRidgesTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new AirElemental());
         Permanent roc = addCreatureReady(player1, new RocOfKherRidges());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(roc);
@@ -59,8 +57,7 @@ class RocOfKherRidgesTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
         Permanent roc = addCreatureReady(player1, new RocOfKherRidges());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(roc);

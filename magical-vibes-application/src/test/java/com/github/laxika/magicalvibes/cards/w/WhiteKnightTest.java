@@ -67,8 +67,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new WhiteKnight());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -85,8 +84,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new WhiteKnight());
         addCreatureReady(player2, new BogWraith());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,8 +97,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new WhiteKnight());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -114,8 +111,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new BogWraith());
         addCreatureReady(player2, new WhiteKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -129,8 +125,7 @@ class WhiteKnightTest extends BaseCardTest {
         addCreatureReady(player1, new CrawWurm());
         addCreatureReady(player2, new WhiteKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 

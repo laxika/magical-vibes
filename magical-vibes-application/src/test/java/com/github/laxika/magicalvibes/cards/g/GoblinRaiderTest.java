@@ -19,8 +19,7 @@ class GoblinRaiderTest extends BaseCardTest {
         addCreatureReady(player2, new GoblinRaider());
         addCreatureReady(player1, new GoblinRaider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

@@ -76,8 +76,7 @@ class SoltariPriestTest extends BaseCardTest {
         addCreatureReady(player1, createCreature("Red Shadow", 3, 3, CardColor.RED, true));
         Permanent priest = addCreatureReady(player2, new SoltariPriest());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
@@ -92,8 +91,7 @@ class SoltariPriestTest extends BaseCardTest {
         addCreatureReady(player1, new SoltariPriest());
         addCreatureReady(player2, createCreature("Red Shadow", 3, 3, CardColor.RED, true));
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -131,8 +129,7 @@ class SoltariPriestTest extends BaseCardTest {
         addCreatureReady(player1, new KnightOfDawn());
         Permanent priest = addCreatureReady(player2, new SoltariPriest());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -146,8 +143,7 @@ class SoltariPriestTest extends BaseCardTest {
         addCreatureReady(player1, new SoltariFootSoldier());
         Permanent priest = addCreatureReady(player2, new SoltariPriest());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(priest.isBlocking()).isTrue();
@@ -159,8 +155,7 @@ class SoltariPriestTest extends BaseCardTest {
         Permanent priest = addCreatureReady(player1, new SoltariPriest());
         Permanent blocker = addCreatureReady(player2, new SoltariFootSoldier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

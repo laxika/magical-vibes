@@ -73,7 +73,7 @@ class SacredKnightTest extends BaseCardTest {
     private Permanent attackWithKnight(Card blockerCard) {
         addCreatureReady(player1, new SacredKnight());
         Permanent blocker = addCreatureReady(player2, blockerCard);
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
         return blocker;
     }
 }

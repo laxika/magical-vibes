@@ -150,6 +150,17 @@ public abstract class BaseCardTest {
         declareAttackers(player1, attackerIndices);
     }
 
+    /** Declares attackers without letting auto-pass finish combat before block validation. */
+    protected void declareAttackersAndPrepareBlockers(Player activePlayer, List<Integer> attackerIndices) {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(activePlayer, attackerIndices));
+        prepareDeclareBlockers(activePlayer);
+    }
+
+    protected void declareAttackersAndPrepareBlockers(List<Integer> attackerIndices) {
+        declareAttackersAndPrepareBlockers(player1, attackerIndices);
+    }
+
     /**
      * Advances from declare-blockers through combat damage with neither player responding. Note that
      * this resolves the damage itself but not any ability it triggers — pass priority again for that.

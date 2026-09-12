@@ -337,6 +337,12 @@ public class CombatDamageService {
                     gameData, source, EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE));
             damageToCreatureEffects.put(source, effects);
         }
+        Map<Permanent, UUID> attachedDamageSources = new LinkedHashMap<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.isAttached()) {
+                attachedDamageSources.put(new Permanent(permanent), controllerId);
+            }
+        });
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
@@ -389,7 +395,7 @@ public class CombatDamageService {
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures,
-                state.combatDamageDealerControllers, damageToCreatureEffects);
+                state.combatDamageDealerControllers, state.combatDamageTargetControllers, damageToCreatureEffects);
         processCombatDamageToBlockingCreatureTriggers(gameData, state);
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
@@ -427,7 +433,8 @@ public class CombatDamageService {
         }
 
         // Process combat damage to player triggers (e.g. Cephalid Constable)
-        processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
+        processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId,
+                attachedDamageSources);
         triggerCollectionService.checkEmblemCombatDamageTriggers(
                 gameData, activeId, defenderId, state.combatDamageDealtToPlayer);
 
@@ -1262,7 +1269,8 @@ public class CombatDamageService {
         }
     }
 
-    private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {
+    private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer,
+                                                     UUID attackerId, UUID defenderId, Map<Permanent, UUID> attachedDamageSources) {
         // Sources of batched ally triggers ("whenever one or more ... deal combat damage to a
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
@@ -1615,7 +1623,8 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
             }
 
-            checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
+            checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
+                    attachedDamageSources);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false);
@@ -1627,8 +1636,9 @@ public class CombatDamageService {
     }
 
     private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
-                                                           UUID defenderId, int damageDealt) {
-        gameData.forEachPermanent((ownerId, perm) -> {
+                                                           UUID defenderId, int damageDealt,
+                                                           Map<Permanent, UUID> attachedDamageSources) {
+        attachedDamageSources.forEach((perm, ownerId) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<CardEffect> rawEffects = new ArrayList<>();
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
@@ -2251,6 +2261,7 @@ public class CombatDamageService {
     private void processCombatDamageToCreatureTriggers(GameData gameData,
                                                         Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
                                                         Map<Permanent, UUID> combatDamageDealerControllers,
+                                                        Map<UUID, UUID> combatDamageTargetControllers,
                                                         Map<Permanent, List<CardEffect>> damageToCreatureEffects) {
         for (var entry : combatDamageDealtToCreatures.entrySet()) {
             Permanent source = entry.getKey();
@@ -2273,6 +2284,8 @@ public class CombatDamageService {
                             source.getId()
                     );
                     trigger.setSourcePermanentSnapshot(new Permanent(source));
+                    trigger.setTriggeringPermanentId(damagedCreatureId);
+                    trigger.setTriggeringPermanentControllerId(combatDamageTargetControllers.get(damagedCreatureId));
                     trigger.setNonTargeting(true);
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));

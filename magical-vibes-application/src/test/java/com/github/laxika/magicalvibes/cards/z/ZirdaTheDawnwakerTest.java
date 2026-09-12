@@ -60,8 +60,7 @@ class ZirdaTheDawnwakerTest extends BaseCardTest {
 
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
-        declareAttackers(player1, List.of(1));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

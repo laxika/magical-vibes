@@ -23,8 +23,7 @@ class PegasusChargerTest extends BaseCardTest {
         Permanent charger = addCreatureReady(player1, new PegasusCharger());
         addCreatureReady(player2, new GorillaWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

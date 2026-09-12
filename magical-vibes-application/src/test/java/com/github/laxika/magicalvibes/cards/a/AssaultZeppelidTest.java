@@ -24,8 +24,7 @@ class AssaultZeppelidTest extends BaseCardTest {
         Permanent zeppelid = addCreatureReady(player1, new AssaultZeppelid());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(zeppelid)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(zeppelid)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(zeppelid);

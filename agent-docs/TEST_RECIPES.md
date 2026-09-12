@@ -31,11 +31,26 @@ boolean   gameLogContains(String substring)
 void advanceToUpkeep(Player activePlayer)              // forces active player, UNTAP -> upkeep
 void declareAttackers(Player player, List<Integer> attackerIndices)
 void declareAttackers(List<Integer> attackerIndices)   // player1 attacks
+void declareAttackersAndPrepareBlockers(Player activePlayer, List<Integer> attackerIndices)
+void declareAttackersAndPrepareBlockers(List<Integer> attackerIndices) // player1 attacks
 void resolveCombat(Player activePlayer)                // declare blockers -> combat damage
 void resolveCombat()                                   // player1 attacks
 void prepareDeclareBlockers()                          // opens blocker input for gs.declareBlockers
 void resolveAllTriggers()                              // passes priority until the stack is empty
 ```
+
+For tests that explicitly declare blocks, use `declareAttackersAndPrepareBlockers(...)`.
+It holds priority during attacker declaration before opening blocker input. Ordinary
+`declareAttackers(...)` can finish combat automatically when no legal blocks exist;
+reopening blocker input afterwards then tests an already-completed combat. This matters
+especially when asserting that flying, protection, landwalk, or another restriction
+rejects a block.
+
+To inspect an attack declaration before combat advances, wrap the action in
+`harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(...))`.
+For blocking restrictions, assert legality through `bls.canBlockAttacker(...)` rather
+than a permanent's internal `cantBlockThisTurn` flag: floating effects may apply the
+restriction without setting that flag.
 
 If you need a variant (an extra priority pass, a different step), delegate to the
 inherited helper rather than re-inlining its body:

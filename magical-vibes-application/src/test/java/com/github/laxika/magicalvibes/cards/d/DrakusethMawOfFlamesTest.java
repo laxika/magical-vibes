@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +48,7 @@ class DrakusethMawOfFlamesTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player1.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }

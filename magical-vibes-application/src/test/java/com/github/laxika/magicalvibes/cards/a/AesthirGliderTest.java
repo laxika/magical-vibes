@@ -38,8 +38,7 @@ class AesthirGliderTest extends BaseCardTest {
 
         addCreatureReady(player1, new SwornDefender());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -52,8 +51,7 @@ class AesthirGliderTest extends BaseCardTest {
         addCreatureReady(player1, new AesthirGlider());
         addCreatureReady(player2, new SwornDefender());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

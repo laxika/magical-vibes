@@ -23,7 +23,7 @@ public class AlexiZephyrMage extends Card {
                 null,
                 null,
                 List.of(),
-                0,
+                100,
                 100
         ).withXScaledTargets());
     }

@@ -48,8 +48,7 @@ class SunQuanLordOfWuTest extends BaseCardTest {
         addCreatureReady(player1, new SunQuanLordOfWu());
         addCreatureReady(player2, new ShuFootSoldiers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -63,8 +62,7 @@ class SunQuanLordOfWuTest extends BaseCardTest {
         addCreatureReady(player1, new SunQuanLordOfWu());
         Permanent blocker = addCreatureReady(player2, new SunQuanLordOfWu());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

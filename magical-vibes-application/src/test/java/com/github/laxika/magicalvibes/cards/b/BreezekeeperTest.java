@@ -23,8 +23,7 @@ class BreezekeeperTest extends BaseCardTest {
         Permanent keeper = addCreatureReady(player1, new Breezekeeper());
         Permanent blocker = addCreatureReady(player2, new Warthog());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(keeper);

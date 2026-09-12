@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -25,6 +27,11 @@ public class SaprazzanBailiff extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileGraveyardCardsEffect(
                 0, GraveyardExileScope.ALL_PLAYERS, artifactOrEnchantment));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new EachPlayerReturnsCardsFromGraveyardToHandEffect(Integer.MAX_VALUE, artifactOrEnchantment));
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                        .filter(artifactOrEnchantment)
+                        .returnAll(true)
+                        .build());
     }
 }

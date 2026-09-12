@@ -103,8 +103,7 @@ class ImposingVisageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(visage);
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

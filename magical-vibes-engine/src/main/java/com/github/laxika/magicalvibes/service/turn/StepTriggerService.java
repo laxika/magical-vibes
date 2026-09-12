@@ -4101,21 +4101,13 @@ public class StepTriggerService {
                             gameData.id, action.cardId());
                     continue;
                 }
-                gameData.removeFromExile(action.cardId());
-                gameData.addCardToHand(action.ownerId(), exiled.card());
-                if (action.sourceCard() != null) {
-                    String sourceName = action.sourceCard().getName();
-                    gameLogService.append(gameData, GameLog.text(
-                            "The card exiled with " + sourceName + " returns to its owner's hand."));
-                    log.info("Game {} - uncast card exiled with {} returns to owner's hand at end step",
-                            gameData.id, sourceName);
-                } else {
-                    String playerName = gameData.playerIdToName.get(action.ownerId());
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(exiled.card(), " returns to " + playerName + "'s hand (delayed trigger)."));
-                    log.info("Game {} - {} returns to {}'s hand from exile (delayed next-end-step trigger)",
-                            gameData.id, exiled.card().getName(), playerName);
-                }
+                Card sourceCard = action.sourceCard() != null ? action.sourceCard() : exiled.card();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                        sourceCard.getName() + "'s delayed ability — return exiled card to hand",
+                        new ArrayList<>(List.of(new ReturnExiledCardToHandEffect(
+                                action.cardId(), action.ownerId())))));
+                gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s delayed ability triggers."));
             }
         }
 

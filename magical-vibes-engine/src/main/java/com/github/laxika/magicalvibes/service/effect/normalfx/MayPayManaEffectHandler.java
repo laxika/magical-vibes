@@ -56,9 +56,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             case CONTROLLER -> entry.getControllerId();
             case ENCHANTED_CONTROLLER -> entry.getTargetId();
             case DEFENDING_PLAYER -> defendingPlayer(gameData, entry);
-            case TARGET_PERMANENT_CONTROLLER -> entry.getTargetId() == null
-                    ? null
-                    : gameQueryService.findPermanentController(gameData, entry.getTargetId());
+            case TARGET_PERMANENT_CONTROLLER -> targetPermanentController(gameData, entry);
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetPlayerOrPermanentController(gameData,
                     entry.getTargetId());
             case TRIGGERING_PLAYER -> entry.getTargetId();
@@ -90,6 +88,18 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 entry.getEventValue()
         ));
 
+    }
+
+    private UUID targetPermanentController(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
+            return null;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
+            controllerId = entry.getTriggeringPermanentControllerId();
+        }
+        return controllerId;
     }
 
     private UUID targetPlayerOrPermanentController(GameData gameData, UUID targetId) {

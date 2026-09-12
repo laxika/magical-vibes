@@ -89,8 +89,7 @@ class GoblinWarDrumsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinWarDrums());
         addCreatureReady(player2, new BirdMaiden());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

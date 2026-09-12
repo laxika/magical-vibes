@@ -56,8 +56,7 @@ class SoltariMonkTest extends BaseCardTest {
         addCreatureReady(player1, new DauthiSlayer());
         Permanent monk = addCreatureReady(player2, new SoltariMonk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -72,8 +71,7 @@ class SoltariMonkTest extends BaseCardTest {
         addCreatureReady(player1, new SoltariMonk());
         addCreatureReady(player2, new DauthiSlayer());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -86,8 +84,7 @@ class SoltariMonkTest extends BaseCardTest {
         addCreatureReady(player1, new SoltariMonk());
         addCreatureReady(player2, new TrainedArmodon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -100,8 +97,7 @@ class SoltariMonkTest extends BaseCardTest {
         addCreatureReady(player1, new SoltariMonk());
         Permanent blocker = addCreatureReady(player2, new SoltariFootSoldier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

@@ -75,6 +75,9 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
 
         activateMischief();
         harness.inMutationScope(() -> stepTriggerService().handleEndStepTriggers(gd));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(shock);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(shock);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(shock);

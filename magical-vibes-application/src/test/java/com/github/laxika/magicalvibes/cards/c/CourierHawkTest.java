@@ -32,8 +32,7 @@ class CourierHawkTest extends BaseCardTest {
         Permanent hawk = addCreatureReady(player1, new CourierHawk());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(hawk)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(hawk)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(hawk);

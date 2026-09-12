@@ -78,8 +78,7 @@ class SkulkingGhostTest extends BaseCardTest {
         Permanent ghost = addCreatureReady(player1, new SkulkingGhost());
         Permanent blocker = addCreatureReady(player2, new MtendaHerder());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

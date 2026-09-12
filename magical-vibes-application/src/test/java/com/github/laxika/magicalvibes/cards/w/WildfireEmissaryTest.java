@@ -130,8 +130,7 @@ class WildfireEmissaryTest extends BaseCardTest {
         Permanent emissary = addCreatureReady(player1, new WildfireEmissary());
         Permanent whiteCreature = addCreatureReady(player2, new EkunduGriffin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(whiteCreature),

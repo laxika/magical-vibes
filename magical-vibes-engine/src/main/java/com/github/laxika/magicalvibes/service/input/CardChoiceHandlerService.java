@@ -1443,7 +1443,9 @@ public class CardChoiceHandlerService {
                 }
                 if (revealedHandChoice.returnAtNextEndStep()) {
                     gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                            exiled.getId(), targetPlayerId));
+                            exiled.getId(), targetPlayerId,
+                            gameData.pendingEffectResolutionEntry == null ? null
+                                    : gameData.pendingEffectResolutionEntry.getCard(), player.getId()));
                 }
             }
 

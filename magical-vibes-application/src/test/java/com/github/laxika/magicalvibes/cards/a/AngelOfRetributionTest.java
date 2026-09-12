@@ -26,8 +26,7 @@ class AngelOfRetributionTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent angel = addCreatureReady(player1, new AngelOfRetribution());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(angel);

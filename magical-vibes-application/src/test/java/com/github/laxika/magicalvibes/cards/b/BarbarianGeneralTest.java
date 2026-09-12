@@ -23,8 +23,7 @@ class BarbarianGeneralTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
         addCreatureReady(player1, new BarbarianGeneral());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(

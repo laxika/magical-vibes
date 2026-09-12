@@ -20,8 +20,7 @@ class StrongholdZeppelinTest extends BaseCardTest {
         Permanent zeppelin = addCreatureReady(player2, new StrongholdZeppelin());
         addCreatureReady(player1, new DefiantFalcon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(zeppelin.isBlocking()).isTrue();
@@ -32,8 +31,7 @@ class StrongholdZeppelinTest extends BaseCardTest {
         addCreatureReady(player2, new StrongholdZeppelin());
         addCreatureReady(player1, new StrongholdBiologist());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

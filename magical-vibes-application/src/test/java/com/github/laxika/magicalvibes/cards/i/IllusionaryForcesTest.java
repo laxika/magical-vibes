@@ -25,8 +25,7 @@ class IllusionaryForcesTest extends BaseCardTest {
         Permanent forces = addCreatureReady(player1, new IllusionaryForces());
         Permanent bears = addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forces);

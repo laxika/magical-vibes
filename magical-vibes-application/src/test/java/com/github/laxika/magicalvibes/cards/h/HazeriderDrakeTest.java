@@ -29,8 +29,7 @@ class HazeriderDrakeTest extends BaseCardTest {
         addCreatureReady(player1, new HazeriderDrake());
         addCreatureReady(player2, new WindreaperFalcon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -57,8 +56,7 @@ class HazeriderDrakeTest extends BaseCardTest {
         addCreatureReady(player1, new HazeriderDrake());
         addCreatureReady(player2, new IronTuskElephant());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

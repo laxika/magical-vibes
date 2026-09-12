@@ -26,13 +26,13 @@ class ManaSkimmerTest extends BaseCardTest {
         skimmer.setAttacking(true);
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(damagedLand.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(damagedLand.getId()));
+        harness.handlePermanentChosen(player1, damagedLand.getId());
+        harness.passBothPriorities();
 
         assertThat(damagedLand.isTapped()).isTrue();
         assertThat(damagedLand.getSkipUntapCount()).isEqualTo(1);
@@ -47,8 +47,8 @@ class ManaSkimmerTest extends BaseCardTest {
         skimmer.setAttacking(true);
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, damagedLand.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(damagedLand.getId()));
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);

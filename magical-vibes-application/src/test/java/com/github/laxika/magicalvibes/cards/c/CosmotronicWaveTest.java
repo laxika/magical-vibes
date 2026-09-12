@@ -33,8 +33,10 @@ class CosmotronicWaveTest extends BaseCardTest {
 
         castCosmotronicWave();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
-        assertThat(opposingCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, ownCreature, opposingCreature,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, opposingCreature, ownCreature,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     private void castCosmotronicWave() {

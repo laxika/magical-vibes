@@ -56,8 +56,7 @@ class MyrPrototypeTest extends BaseCardTest {
         Permanent myr = addCreatureReady(player2, new MyrPrototype());
         myr.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
-        declareAttackers(player1, List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

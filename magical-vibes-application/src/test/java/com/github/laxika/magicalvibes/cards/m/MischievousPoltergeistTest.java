@@ -36,8 +36,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         Permanent poltergeist = addCreatureReady(player1, new MischievousPoltergeist());
         Permanent blocker = addCreatureReady(player2, new StripedBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(poltergeist);

@@ -36,8 +36,7 @@ class VoiceOfTruthTest extends BaseCardTest {
         addCreatureReady(player1, new VoiceOfTruth());
         addCreatureReady(player2, new Mossdog());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -50,8 +49,7 @@ class VoiceOfTruthTest extends BaseCardTest {
         addCreatureReady(player1, new VoiceOfTruth());
         addCreatureReady(player2, new DefiantFalcon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -64,8 +62,7 @@ class VoiceOfTruthTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BlindingAngel());
         Permanent voice = addCreatureReady(player2, new VoiceOfTruth());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 

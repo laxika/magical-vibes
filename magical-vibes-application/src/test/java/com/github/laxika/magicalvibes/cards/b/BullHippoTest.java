@@ -25,8 +25,7 @@ class BullHippoTest extends BaseCardTest {
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new BullHippo());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

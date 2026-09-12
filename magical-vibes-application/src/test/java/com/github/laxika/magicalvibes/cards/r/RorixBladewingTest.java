@@ -47,8 +47,7 @@ class RorixBladewingTest extends BaseCardTest {
         addCreatureReady(player1, new RorixBladewing());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> harness.getGameService().declareBlockers(
                         harness.getGameData(), player2, List.of(new BlockerAssignment(0, 0))))
