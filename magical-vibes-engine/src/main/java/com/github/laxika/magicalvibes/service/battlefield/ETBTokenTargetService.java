@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AggregateManaValueTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -39,6 +41,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -344,6 +347,9 @@ public class ETBTokenTargetService {
                     || groupFilter instanceof OwnedPermanentPredicateTargetFilter;
             boolean canTargetExiledCard = groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+            boolean canTargetGraveyardCard = groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    || groupFilter instanceof GraveyardCardPredicateTargetFilter;
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
@@ -384,6 +390,9 @@ public class ETBTokenTargetService {
                         .toList());
             }
 
+            List<UUID> validGraveyardCardTargets = validGraveyardCardTargets(
+                    gameData, card, pending, groupFilter, canTargetGraveyardCard);
+
             List<UUID> validSpellTargets = validMixedEtbSpellTargets(
                     gameData, groupEffects, pending.controllerId());
             validSpellTargets.stream()
@@ -406,11 +415,13 @@ public class ETBTokenTargetService {
             if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !pending.chosenTargetsSoFar().isEmpty()) {
                 List<UUID> selectedControllers = pending.chosenTargetsSoFar().stream()
-                        .map(id -> gameQueryService.findPermanentController(gameData, id))
+                        .map(id -> targetControllerId(gameData, id))
                         .filter(java.util.Objects::nonNull)
                         .toList();
                 validPermanentTargets.removeIf(id ->
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
+                validGraveyardCardTargets.removeIf(id ->
+                        selectedControllers.contains(gameQueryService.findGraveyardOwnerById(gameData, id)));
             }
 
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
@@ -428,9 +439,34 @@ public class ETBTokenTargetService {
                                 gameQueryService.findPermanentController(gameData, id)));
             }
 
+            if (card.getMultiTargetConstraint()
+                    == MultiTargetConstraint.CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT
+                    && !pending.chosenTargetsSoFar().isEmpty()) {
+                UUID firstTargetId = pending.chosenTargetsSoFar().getFirst();
+                Set<UUID> damagedPlayerIds = gameData.combatDamageToPlayersThisCombat
+                        .getOrDefault(firstTargetId, Set.of());
+                validPermanentTargets.removeIf(id ->
+                        !damagedPlayerIds.contains(gameQueryService.findPermanentController(gameData, id)));
+            }
+
+            int aggregateManaValueLimit = aggregateManaValueLimit(groupEffects);
+            if (aggregateManaValueLimit >= 0) {
+                int selectedManaValue = currentGroupTargetIds(pending).stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .mapToInt(permanent -> permanent.getCard().getManaValue())
+                        .sum();
+                validPermanentTargets.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate != null
+                            && selectedManaValue + candidate.getCard().getManaValue() > aggregateManaValueLimit;
+                });
+            }
+
             boolean noLegalTargets = validPlayerTargets.isEmpty()
                     && validPermanentTargets.isEmpty()
-                    && validExiledCardTargets.isEmpty();
+                    && validExiledCardTargets.isEmpty()
+                    && validGraveyardCardTargets.isEmpty();
 
             if (noLegalTargets) {
                 if (chosenInGroup < effectiveMinTargets) {
@@ -454,6 +490,7 @@ public class ETBTokenTargetService {
             boolean minMet = chosenInGroup >= effectiveMinTargets;
             if (effectiveMinTargets == 0 && group.getMaxTargets() > 1
                     && validPermanentTargets.isEmpty() && validExiledCardTargets.isEmpty()
+                    && validGraveyardCardTargets.isEmpty()
                     && validPlayerTargets.contains(pending.controllerId())) {
                 playerInputService.beginMultiPermanentOrPlayerChoice(gameData, pending.controllerId(),
                         List.of(), validPlayerTargets, Math.min(validPlayerTargets.size(), effectiveMaxTargets - chosenInGroup),
@@ -466,6 +503,19 @@ public class ETBTokenTargetService {
             if (minMet && !mustChooseRemainingController
                     && !validPlayerTargets.contains(pending.controllerId())) {
                 validPlayerTargets.add(pending.controllerId());
+            }
+
+            if (!validGraveyardCardTargets.isEmpty()
+                    && validPermanentTargets.isEmpty()
+                    && validExiledCardTargets.isEmpty()
+                    && validPlayerTargets.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(
+                        gameData, pending.controllerId(), List.of(), validGraveyardCardTargets,
+                        Math.min(validGraveyardCardTargets.size(), effectiveMaxTargets - chosenInGroup),
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext
+                                .EtbGraveyardCardTargetGroup(pending),
+                        card.getName() + "'s ability — Choose target creature card from an opponent's graveyard.");
+                return;
             }
 
             gameData.interaction.setPermanentChoiceContext(pending);
@@ -484,6 +534,77 @@ public class ETBTokenTargetService {
         }
     }
 
+    private List<UUID> validGraveyardCardTargets(
+            GameData gameData,
+            Card card,
+            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+            TargetFilter targetFilter,
+            boolean canTargetGraveyardCard) {
+        if (!canTargetGraveyardCard
+                || !(targetFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter)
+                || !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return new ArrayList<>();
+        }
+
+        Set<UUID> selectedControllers = pending.chosenTargetsSoFar().stream()
+                .map(id -> targetControllerId(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        List<UUID> validIds = new ArrayList<>();
+        for (UUID graveyardOwnerId : graveyardFilter.scope()
+                .graveyardOwners(gameData.orderedPlayerIds, pending.controllerId())) {
+            if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
+                    && selectedControllers.contains(graveyardOwnerId)) {
+                continue;
+            }
+            for (Card graveyardCard : gameData.playerGraveyards
+                    .getOrDefault(graveyardOwnerId, List.of())) {
+                if (targetAlreadyChosen(pending, graveyardCard.getId())
+                        || gameQueryService.isLandCardTargetRestricted(
+                        gameData, graveyardCard, pending.controllerId())) {
+                    continue;
+                }
+                if (graveyardFilter.predicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, graveyardFilter.predicate(), card.getId(), gameData,
+                        graveyardOwnerId, pending.sourcePermanentId(), null, pending.xValue())) {
+                    validIds.add(graveyardCard.getId());
+                }
+            }
+        }
+        return validIds;
+    }
+
+    private UUID targetControllerId(GameData gameData, UUID targetId) {
+        if (gameData.playerIds.contains(targetId)) {
+            return targetId;
+        }
+        UUID permanentController = gameQueryService.findPermanentController(gameData, targetId);
+        return permanentController != null
+                ? permanentController
+                : gameQueryService.findGraveyardOwnerById(gameData, targetId);
+    }
+
+    private List<UUID> graveyardTargetsForEntry(
+            Card card, PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        List<UUID> chosenTargets = pending.chosenTargetsSoFar();
+        List<UUID> graveyardTargets = new ArrayList<>();
+        int offset = 0;
+        List<SpellTarget> groups = card.getSpellTargets();
+        for (int i = 0; i < groups.size() && offset < chosenTargets.size(); i++) {
+            SpellTarget group = groups.get(i);
+            int groupSize = i < pending.groupSizes().size()
+                    ? pending.groupSizes().get(i)
+                    : Math.min(group.getMaxTargets(), chosenTargets.size() - offset);
+            int end = Math.min(chosenTargets.size(), offset + Math.max(groupSize, 0));
+            if (group.getFilter() instanceof GraveyardCardPredicateTargetFilter) {
+                graveyardTargets.addAll(chosenTargets.subList(offset, end));
+            }
+            offset = end;
+        }
+        return graveyardTargets;
+    }
+
     private boolean targetAlreadyChosen(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                         UUID candidateId) {
         List<UUID> chosenTargets = pending.chosenTargetsSoFar();
@@ -496,6 +617,22 @@ public class ETBTokenTargetService {
                 || (!pending.sourceCard().isAllowSharedTargets() && chosenTargets.contains(candidateId));
     }
 
+    private List<UUID> currentGroupTargetIds(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        int currentGroupStart = pending.groupSizes().stream().mapToInt(Integer::intValue).sum();
+        return pending.chosenTargetsSoFar().subList(currentGroupStart, pending.chosenTargetsSoFar().size());
+    }
+
+    private int aggregateManaValueLimit(List<CardEffect> effects) {
+        return effects.stream()
+                .filter(effect -> effect instanceof AggregateManaValueTargetEffect aggregateEffect
+                        && aggregateEffect.hasAggregateManaValueLimit()
+                        && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .map(AggregateManaValueTargetEffect.class::cast)
+                .mapToInt(AggregateManaValueTargetEffect::maxTotalManaValue)
+                .min()
+                .orElse(-1);
+    }
+
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
         return constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
@@ -504,9 +641,10 @@ public class ETBTokenTargetService {
     private int effectiveMaxTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
-        int staticMax = group.isXScaled()
-                ? Math.min(pending.xValue(), group.getMaxTargets())
-                : group.getMaxTargets();
+        Permanent enteringSource = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int maxTargets = enteringSource != null && enteringSource.isKicked()
+                ? group.getKickedMaxTargets() : group.getMaxTargets();
+        int staticMax = group.isXScaled() ? Math.min(pending.xValue(), maxTargets) : maxTargets;
         if (group.getDynamicMaxTargets() == null) {
             return staticMax;
         }
@@ -528,9 +666,10 @@ public class ETBTokenTargetService {
     private int effectiveMinTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
-        int staticMin = group.isXScaled()
-                ? Math.min(pending.xValue(), group.getMinTargets())
-                : group.getMinTargets();
+        Permanent enteringSource = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int minTargets = enteringSource != null && enteringSource.isKicked()
+                ? group.getKickedMinTargets() : group.getMinTargets();
+        int staticMin = group.isXScaled() ? Math.min(pending.xValue(), minTargets) : minTargets;
         if (group.getDynamicMinTargets() == null) {
             return staticMin;
         }
@@ -602,7 +741,7 @@ public class ETBTokenTargetService {
                 pending.sourcePermanentId(),
                 counterAssignments,
                 targetZone,
-                List.of(),
+                graveyardTargetsForEntry(card, pending),
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setMultiTargetConstraint(card.getMultiTargetConstraint());

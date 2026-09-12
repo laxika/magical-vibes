@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "26")
+@CardRegistration(set = "PC2", collectorNumber = "8")
 public class HyenaUmbra extends Card {
 
     public HyenaUmbra() {

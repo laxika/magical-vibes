@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "208")
+@CardRegistration(set = "MMA", collectorNumber = "156")
 public class NantukoShaman extends Card {
 
     public NantukoShaman() {

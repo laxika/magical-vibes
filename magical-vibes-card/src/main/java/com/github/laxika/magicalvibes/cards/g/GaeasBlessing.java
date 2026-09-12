@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveya
 @CardRegistration(set = "DOM", collectorNumber = "161")
 @CardRegistration(set = "WTH", collectorNumber = "129")
 @CardRegistration(set = "TSB", collectorNumber = "77")
+@CardRegistration(set = "DDR", collectorNumber = "10")
 public class GaeasBlessing extends Card {
 
     public GaeasBlessing() {

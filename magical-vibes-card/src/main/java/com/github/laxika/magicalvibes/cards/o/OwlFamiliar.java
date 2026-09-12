@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "63")
 @CardRegistration(set = "S99", collectorNumber = "43")
+@CardRegistration(set = "VMA", collectorNumber = "85")
 public class OwlFamiliar extends Card {
 
     public OwlFamiliar() {

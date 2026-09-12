@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "42")
 @CardRegistration(set = "M14", collectorNumber = "42")
+@CardRegistration(set = "MM2", collectorNumber = "40")
+@CardRegistration(set = "W16", collectorNumber = "4")
 public class AirServant extends Card {
 
     public AirServant() {

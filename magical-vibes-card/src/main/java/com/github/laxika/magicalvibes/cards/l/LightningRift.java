@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "217")
+@CardRegistration(set = "VMA", collectorNumber = "178")
 public class LightningRift extends Card {
 
     public LightningRift() {

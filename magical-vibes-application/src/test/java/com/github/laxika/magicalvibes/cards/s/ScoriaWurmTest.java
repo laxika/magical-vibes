@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ScoriaWurm.class)
 class ScoriaWurmTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Triggers during controller upkeep")
@@ -34,6 +32,19 @@ class ScoriaWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers during the current controller's upkeep even when the owner is another player")
+    void triggersDuringControllerUpkeepWhenOwnerDiffers() {
+        ScoriaWurm wurm = new ScoriaWurm();
+        wurm.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, wurm);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getDescription()).contains("Scoria Wurm's upkeep ability");
+    }
+
+    @Test
     @DisplayName("Upkeep resolution flips a coin and Scoria Wurm ends in exactly one legal zone")
     void upkeepResolutionFlipsCoinAndMovesOrStays() {
         harness.addToBattlefield(player1, new ScoriaWurm());
@@ -42,20 +53,21 @@ class ScoriaWurmTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        boolean onBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Scoria Wurm"));
-        boolean inHand = gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Scoria Wurm"));
+        boolean won = gameLogContains("wins the coin flip for Scoria Wurm");
+        boolean lost = gameLogContains("loses the coin flip for Scoria Wurm");
+        assertThat(won).isNotEqualTo(lost);
 
-        assertThat(onBattlefield != inHand).isTrue();
-        if (inHand) {
+        if (lost) {
+            harness.assertNotOnBattlefield(player1, "Scoria Wurm");
+            harness.assertInHand(player1, "Scoria Wurm");
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("returned to its owner's hand"));
         } else {
+            harness.assertOnBattlefield(player1, "Scoria Wurm");
+            harness.assertNotInHand(player1, "Scoria Wurm");
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         }
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
+        assertThat(gameLogContains("coin flip for Scoria Wurm")).isTrue();
     }
 }
 

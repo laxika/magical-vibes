@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "238")
+@CardRegistration(set = "VMA", collectorNumber = "189")
 public class Starstorm extends Card {
 
     public Starstorm() {

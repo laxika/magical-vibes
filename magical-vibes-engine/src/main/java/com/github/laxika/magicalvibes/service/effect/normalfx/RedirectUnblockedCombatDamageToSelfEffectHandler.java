@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.List;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -26,19 +27,12 @@ public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                List<Permanent> bf = gameData.playerBattlefields.get(entry.getControllerId());
-                if (bf == null) return;
-                for (Permanent p : bf) {
-                    if (p.getCard() == entry.getCard()) {
-                        gameData.combatDamageRedirectTarget = p.getId();
-                        gameData.combatDamageRedirectPlayer = entry.getControllerId();
-
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), "'s ability resolves — unblocked combat damage will be redirected to it this turn."));
-                        log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());
-                        return;
-                    }
-                }
-    
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) return;
+        gameData.combatDamageRedirectTarget = source.getId();
+        gameData.combatDamageRedirectPlayer = entry.getControllerId();
+        gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                "'s ability resolves — unblocked combat damage will be redirected to it this turn."));
+        log.info("Game {} - Combat damage redirect set to {}", gameData.id, source.getCard().getName());
     }
 }

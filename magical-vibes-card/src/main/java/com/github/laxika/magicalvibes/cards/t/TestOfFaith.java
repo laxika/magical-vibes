@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToTargetAndA
 @CardRegistration(set = "DST", collectorNumber = "17")
 @CardRegistration(set = "DDG", collectorNumber = "28")
 @CardRegistration(set = "TD2", collectorNumber = "29")
+@CardRegistration(set = "MMA", collectorNumber = "33")
 public class TestOfFaith extends Card {
 
     public TestOfFaith() {

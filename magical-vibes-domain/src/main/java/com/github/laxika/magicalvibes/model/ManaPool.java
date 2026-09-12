@@ -269,6 +269,7 @@ public class ManaPool {
             exactlyThreeColorSpellOnlyMana.put(color, 0);
             multicoloredSpellOnlyMana.put(color, 0);
             creatureSourceCreatureSpellOnlyMana.put(color, 0);
+            creatureOrEnchantmentSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
             creatureAbilityOnlyMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
@@ -744,6 +745,7 @@ public class ManaPool {
             promotedNonHandSpellOnlyMana.put(color, 0);
         }
         spellCastTriggerMana.clear();
+        creatureOrEnchantmentSpellOnlyMana.clear();
         artifactOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             artifactOnlyMana.put(color, 0);

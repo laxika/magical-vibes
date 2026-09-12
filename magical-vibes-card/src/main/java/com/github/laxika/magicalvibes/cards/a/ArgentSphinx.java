@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "28")
 @CardRegistration(set = "TD2", collectorNumber = "13")
+@CardRegistration(set = "MM2", collectorNumber = "41")
 public class ArgentSphinx extends Card {
 
     public ArgentSphinx() {

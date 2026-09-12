@@ -115,6 +115,28 @@ class CircleOfProtectionRedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage from the chosen source to another player does not consume the shield")
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent redSource = addReadyRedCreature(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, redSource.getId());
+
+        redSource.setAttacking(true);
+        resolveCombat(player1);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(redSource.getId()));
+    }
+
+    @Test
     @DisplayName("Non-red permanents are not valid source choices")
     void nonRedSourceNotValid() {
         addReadyCircle(player1);
@@ -293,13 +315,12 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player2, 0, player1.getId());
-        UUID spellId = gd.stack.get(0).getCard().getId();
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, spellId);
+        harness.handlePermanentChosen(player1, incinerate.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

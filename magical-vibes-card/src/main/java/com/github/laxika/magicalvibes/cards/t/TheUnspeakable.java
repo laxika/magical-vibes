@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "98")
+@CardRegistration(set = "DDS", collectorNumber = "13")
 public class TheUnspeakable extends Card {
 
     public TheUnspeakable() {

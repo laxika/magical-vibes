@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChimericStaff.class, GloriousAnthem.class, MarchOfTheMachines.class})
 class ChimericStaffTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -34,7 +35,7 @@ class ChimericStaffTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chimeric Staff");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(ChimericStaff.class);
     }
 
     @Test
@@ -62,7 +63,7 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Chimeric Staff");
+        assertThat(entry.getCard()).isInstanceOf(ChimericStaff.class);
         assertThat(entry.getXValue()).isEqualTo(3);
         assertThat(entry.getTargetId()).isEqualTo(staffPerm.getId());
     }
@@ -77,10 +78,8 @@ class ChimericStaffTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(staffPerm.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(staffPerm.getAnimatedPower()).isEqualTo(3);
-        assertThat(staffPerm.getAnimatedToughness()).isEqualTo(3);
         assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.isArtifact(gd, staffPerm)).isTrue();
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(3);
     }
@@ -110,6 +109,20 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Resolving ability with X=0 puts the resulting 0/0 Staff into its graveyard")
+    void resolvingAbilityWithX0PutsStaffInGraveyard() {
+        addStaffReady(player1);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .singleElement()
+                .isInstanceOf(ChimericStaff.class);
+    }
+
     // ===== Gains Construct subtype when animated =====
 
     @Test
@@ -118,15 +131,13 @@ class ChimericStaffTest extends BaseCardTest {
         Permanent staffPerm = addStaffReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        // Before animation: no subtypes
-        assertThat(staffPerm.getCard().getSubtypes()).isEmpty();
-        assertThat(staffPerm.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).isEmpty();
 
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
         // After animation: gains Construct
-        assertThat(staffPerm.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).containsExactly(CardSubtype.CONSTRUCT);
     }
 
     @Test
@@ -137,14 +148,14 @@ class ChimericStaffTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
-        assertThat(staffPerm.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).containsExactly(CardSubtype.CONSTRUCT);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(staffPerm.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).isEmpty();
     }
 
     // ===== Does not tap =====
@@ -224,7 +235,6 @@ class ChimericStaffTest extends BaseCardTest {
         Permanent staffPerm = addStaffReady(player1);
 
         assertThat(gqs.isCreature(gd, staffPerm)).isFalse();
-        assertThat(staffPerm.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
 
     // ===== End of turn resets animation =====
@@ -246,7 +256,6 @@ class ChimericStaffTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(staffPerm.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, staffPerm)).isFalse();
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(0);
@@ -275,10 +284,7 @@ class ChimericStaffTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness since it does not tap")
     void canActivateWithSummoningSickness() {
-        ChimericStaff card = new ChimericStaff();
-        Permanent staffPerm = new Permanent(card);
-        // summoningSick is true by default
-        gd.playerBattlefields.get(player1.getId()).add(staffPerm);
+        harness.addToBattlefieldAndReturn(player1, new ChimericStaff());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, 2, null);
@@ -358,10 +364,8 @@ class ChimericStaffTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addStaffReady(Player player) {
-        ChimericStaff card = new ChimericStaff();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChimericStaff());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

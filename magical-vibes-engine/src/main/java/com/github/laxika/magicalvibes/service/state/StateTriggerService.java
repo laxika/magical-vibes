@@ -91,7 +91,7 @@ public class StateTriggerService {
                     }
                 }
             }
-            return true;
+            return matches >= trigger.minimumBattlefieldMatches();
         }
         return trigger.predicate() != null;
     }

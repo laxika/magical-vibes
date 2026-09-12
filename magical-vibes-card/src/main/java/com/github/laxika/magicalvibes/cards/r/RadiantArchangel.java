@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "20")
+@CardRegistration(set = "VMA", collectorNumber = "40")
 public class RadiantArchangel extends Card {
 
     public RadiantArchangel() {

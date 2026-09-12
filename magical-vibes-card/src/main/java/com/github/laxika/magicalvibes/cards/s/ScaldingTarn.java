@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "223")
+@CardRegistration(set = "EXP", collectorNumber = "22")
 public class ScaldingTarn extends Card {
 
     public ScaldingTarn() {

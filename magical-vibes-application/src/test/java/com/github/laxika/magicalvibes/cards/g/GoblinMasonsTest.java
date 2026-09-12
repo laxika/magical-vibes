@@ -1,66 +1,85 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
+import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
+import com.github.laxika.magicalvibes.cards.h.HulkingOgre;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinMasons.class, WallOfGlare.class, HulkingOgre.class, RecklessAbandon.class})
 class GoblinMasonsTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Goblin Masons dies, destroy target Wall")
     void diesDestroysTargetWall() {
-        harness.addToBattlefield(player1, new GoblinMasons());
-        harness.addToBattlefield(player2, new WallOfWood());
+        Permanent masons = addCreatureReady(player1, new GoblinMasons());
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+        Permanent sacrifice = addCreatureReady(player2, new HulkingOgre());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new RecklessAbandon()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        UUID masonsId = harness.getPermanentId(player1, "Goblin Masons");
-        UUID wallId = harness.getPermanentId(player2, "Wall of Wood");
-
-        harness.castInstant(player2, 0, masonsId);
+        harness.castSorceryWithSacrifice(player2, 0, masons.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handlePermanentChosen(player1, wallId);
+        harness.handlePermanentChosen(player1, wall.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wall of Wood");
-        harness.assertInGraveyard(player2, "Wall of Wood");
+        harness.assertNotOnBattlefield(player2, "Wall of Glare");
+        harness.assertInGraveyard(player2, "Wall of Glare");
     }
 
     @Test
     @DisplayName("Death trigger only offers Walls as valid targets")
     void targetFilterOnlyWalls() {
-        harness.addToBattlefield(player1, new GoblinMasons());
-        harness.addToBattlefield(player2, new WallOfWood());
-        harness.addToBattlefield(player2, new GoblinMasons());
+        Permanent masons = addCreatureReady(player1, new GoblinMasons());
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+        Permanent nonWall = addCreatureReady(player2, new HulkingOgre());
+        Permanent sacrifice = addCreatureReady(player2, new WallOfGlare());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new RecklessAbandon()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        UUID masonsId = harness.getPermanentId(player1, "Goblin Masons");
-        UUID wallId = harness.getPermanentId(player2, "Wall of Wood");
-
-        harness.castInstant(player2, 0, masonsId);
+        harness.castSorceryWithSacrifice(player2, 0, masons.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(wallId);
+                .containsExactly(wall.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(nonWall);
+    }
+
+    @Test
+    @DisplayName("Death trigger is skipped when no Wall remains")
+    void noTriggerWhenNoWallIsAvailable() {
+        Permanent masons = addCreatureReady(player1, new GoblinMasons());
+        Permanent sacrifice = addCreatureReady(player2, new HulkingOgre());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new RecklessAbandon()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player2, 0, masons.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Masons");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupPlayer2Active() {

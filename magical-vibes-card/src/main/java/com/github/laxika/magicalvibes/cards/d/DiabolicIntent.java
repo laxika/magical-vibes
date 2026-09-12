@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "BRO", collectorNumber = "89")
 @CardRegistration(set = "PLS", collectorNumber = "42")
+@CardRegistration(set = "MP2", collectorNumber = "22")
 public class DiabolicIntent extends Card {
 
     public DiabolicIntent() {

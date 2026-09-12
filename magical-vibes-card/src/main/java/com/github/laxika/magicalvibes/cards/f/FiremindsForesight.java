@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForInstantsWithManaValuesToHandEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "162")
+@CardRegistration(set = "DDS", collectorNumber = "21")
 public class FiremindsForesight extends Card {
 
     public FiremindsForesight() {

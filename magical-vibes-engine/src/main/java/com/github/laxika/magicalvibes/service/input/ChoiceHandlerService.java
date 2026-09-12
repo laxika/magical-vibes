@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfT
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
@@ -137,6 +138,14 @@ public class ChoiceHandlerService {
             unlockControlledRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LockOrUnlockTargetRoomDoorEffectHandler
             lockOrUnlockTargetRoomDoorEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
+            pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
+            tyrantsChoiceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GraceOrCondemnationEffectHandler
+            graceOrCondemnationEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
+            coercivePortalEffectHandler;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -678,6 +687,10 @@ public class ChoiceHandlerService {
             handleAddAnotherCounterTypeChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.CreateTokenCounterChoice ctx) {
+            handleCreateTokenCounterChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RemoveChosenCountersChoice ctx) {
             handleRemoveChosenCountersChoice(gameData, colorName, ctx);
             return;
@@ -692,6 +705,50 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice ctx) {
             handleTriggeredModalChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.PleaForPowerChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Plea for Power vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.TyrantsChoiceChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Tyrant's Choice vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            tyrantsChoiceEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.GraceOrCondemnationChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid grace-or-condemnation vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            graceOrCondemnationEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CoercivePortalChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Coercive Portal vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            coercivePortalEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.LibraryCastModeChoice ctx) {
@@ -1902,7 +1959,9 @@ public class ChoiceHandlerService {
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
@@ -2356,6 +2415,36 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleCreateTokenCounterChoice(GameData gameData, String choice,
+            ChoiceContext.CreateTokenCounterChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid token counter type: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        CounterType counterType = ctx.counterTypes().stream()
+                .filter(type -> ChoiceContext.CreateTokenCounterChoice.counterLabel(type).equals(choice))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown token counter type: " + choice));
+        Permanent token = gameQueryService.findPermanentById(gameData, ctx.tokenId());
+        if (token != null) {
+            StackEntry entry = gameData.pendingEffectResolutionEntry;
+            if (entry == null) {
+                entry = new StackEntry(ctx.sourceCard(), ctx.controllerId());
+            }
+            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, token, counterType, 1);
+        }
+
+        if (!ctx.remainingTokenIds().isEmpty()) {
+            playerInputService.beginCreateTokenCounterChoice(
+                    gameData, ctx.controllerId(), ctx.sourceCard(), ctx.remainingTokenIds(), ctx.counterTypes());
+            return;
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleRemoveChosenCountersChoice(GameData gameData, String choice,
             ChoiceContext.RemoveChosenCountersChoice ctx) {
         if (!ctx.options().contains(choice)) {
@@ -2697,6 +2786,16 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        ChooseModeOnEnterEffect modeChoice = ctx.sourceCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseModeOnEnterEffect.class::isInstance)
+                .map(ChooseModeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (modeChoice != null && modeChoice.eachPlayer()) {
+            handleEachPlayerAsEntersModeChoice(gameData, player, chosen, ctx, modeChoice);
+            return;
+        }
+
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (source != null) {
             source.getChosenModeLabels().add(chosen.label());
@@ -2708,6 +2807,36 @@ public class ChoiceHandlerService {
                     gameData, player.getId(), source.getCard(), null, false);
         }
 
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerAsEntersModeChoice(GameData gameData, Player player,
+            ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx,
+            ChooseModeOnEnterEffect modeChoice) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null) {
+            stateBasedActionService.performStateBasedActions(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        source.getChosenModeByPlayer().put(player.getId(), chosen.label());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses as-enters mode \"{}\" for {}", gameData.id,
+                player.getUsername(), chosen.label(), ctx.sourceCard().getName());
+
+        if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                gameData, ctx.sourceCard(), source.getId(), modeChoice.modes())) {
+            return;
+        }
+
+        UUID sourceControllerId = gameData.findControllerOf(source);
+        if (sourceControllerId != null) {
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, sourceControllerId, source.getCard(), null, false);
+        }
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -5819,7 +5948,7 @@ public class ChoiceHandlerService {
             List<Card> toExile = hand.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             hand.removeAll(toExile);
             for (Card card : toExile) {
-                gameData.addToExile(targetPlayerId, card);
+                addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             exiledCount += toExile.size();
             handExiledCount = toExile.size();
@@ -5831,7 +5960,7 @@ public class ChoiceHandlerService {
             List<Card> toExile = graveyard.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             graveyard.removeAll(toExile);
             for (Card card : toExile) {
-                gameData.addToExile(targetPlayerId, card);
+                addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             if (!toExile.isEmpty()) {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
@@ -5845,7 +5974,7 @@ public class ChoiceHandlerService {
             List<Card> toExile = library.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             library.removeAll(toExile);
             for (Card card : toExile) {
-                gameData.addToExile(targetPlayerId, card);
+                addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             exiledCount += toExile.size();
         }
@@ -5874,6 +6003,16 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void addSelectedMultiZoneExileCard(GameData gameData,
+                                                PendingInteraction.MultiZoneExileChoice ctx,
+                                                UUID ownerId, Card card) {
+        if (ctx.sourcePermanentId() == null) {
+            gameData.addToExile(ownerId, card);
+        } else {
+            gameData.addToExile(ownerId, card, ctx.sourcePermanentId());
+        }
     }
 
     private static GameLog.Builder appendCards(GameLog.Builder builder, List<Card> cards) {

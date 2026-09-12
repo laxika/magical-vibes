@@ -37,7 +37,8 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
         var e = (SacrificeEachMatchingPermanentEffect) effect;
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId());
 
         List<Permanent> toSacrifice = new ArrayList<>();
         List<UUID> controllerIds = new ArrayList<>();

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "132")
+@CardRegistration(set = "MMA", collectorNumber = "158")
 public class ReachOfBranches extends Card {
 
     public ReachOfBranches() {

@@ -26,6 +26,7 @@ class TangledFlorahedronTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Tangled Florahedron");
 
+        findPermanent(player1, "Tangled Florahedron").setSummoningSick(false);
         harness.activateAbility(player1, 0, 0, null, null);
 
         ManaPool mana = gd.playerManaPools.get(player1.getId());

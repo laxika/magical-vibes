@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureAndAllWith
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DST", collectorNumber = "74")
+@CardRegistration(set = "MMA", collectorNumber = "143")
 public class EchoingCourage extends Card {
 
     public EchoingCourage() {

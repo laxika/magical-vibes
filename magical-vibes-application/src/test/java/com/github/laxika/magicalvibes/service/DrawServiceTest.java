@@ -65,6 +65,35 @@ import static org.mockito.Mockito.when;
 class DrawServiceTest {
 
     @Test
+    void emptyLibraryLossWaitsUntilResolutionFinishes() {
+        gd.playerDecks.put(player1Id, new ArrayList<>());
+        gd.deferPlayerLossCheck = true;
+
+        sut.performDrawCard(gd, player1Id);
+
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).contains(player1Id);
+        verify(gameOutcomeService, never()).resolveLoss(any(), any(), any());
+        verify(gameOutcomeService, never()).declareWinner(any(), any());
+    }
+
+    @Test
+    void anotherPlayersDrawInstructionWaitsBehindCurrentReplacement() {
+        Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
+        abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
+        Card first = createCard("First", CardType.CREATURE);
+        Card second = createCard("Second", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(first, second)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+
+        sut.resolveDrawCards(gd, player1Id, 2);
+        sut.resolveDrawCards(gd, player2Id, 2);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingCardDraws).containsExactly(player1Id, player2Id, player2Id);
+    }
+
+    @Test
     void multipleDrawsWaitForEachReplacementChoice() {
         Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
         abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());

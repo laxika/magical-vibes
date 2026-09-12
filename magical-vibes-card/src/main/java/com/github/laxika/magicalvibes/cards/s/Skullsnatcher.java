@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 @CardRegistration(set = "PHUK", collectorNumber = "4")
 @CardRegistration(set = "PHUK", collectorNumber = "42")
 @CardRegistration(set = "PHUK", collectorNumber = "43")
+@CardRegistration(set = "PC2", collectorNumber = "36")
 public class Skullsnatcher extends Card {
 
     public Skullsnatcher() {

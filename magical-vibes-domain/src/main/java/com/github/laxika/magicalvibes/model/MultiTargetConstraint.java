@@ -32,6 +32,8 @@ public enum MultiTargetConstraint {
      * planeswalker's controller controls").
      */
     CONTROLLED_BY_FIRST_TARGET,
+    /** Every permanent chosen after the first must be controlled by a player the first target dealt combat damage to this combat. */
+    CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT,
     /** Every permanent chosen after the first must be attached to the first target. */
     ATTACHED_TO_FIRST_TARGET,
     /** Every creature chosen after the first target must have been blocked by the first target this turn. */

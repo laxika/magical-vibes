@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostContr
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "51")
+@CardRegistration(set = "DDO", collectorNumber = "41")
 public class ScourgeOfFleets extends Card {
 
     public ScourgeOfFleets() {

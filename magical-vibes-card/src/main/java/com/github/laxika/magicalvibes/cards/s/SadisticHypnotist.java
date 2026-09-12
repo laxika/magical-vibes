@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "159")
+@CardRegistration(set = "DDJ", collectorNumber = "62")
 public class SadisticHypnotist extends Card {
 
     public SadisticHypnotist() {

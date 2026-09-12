@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CarpetOfFlowers.class, Island.class})
 class CarpetOfFlowersTest extends BaseCardTest {
 
     @BeforeEach
@@ -84,6 +86,25 @@ class CarpetOfFlowersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Adding zero mana does not prevent the postcombat trigger")
+    void addingZeroManaDoesNotPreventPostcombatTrigger() {
+        harness.addToBattlefield(player1, new CarpetOfFlowers());
+
+        advanceToPrecombatMain(player1);
+        chooseOpponentAndResolveWithoutColorChoice();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+        chooseOpponentAndResolveWithoutColorChoice();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private void chooseOpponentAndResolve() {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
@@ -101,6 +122,15 @@ class CarpetOfFlowersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
+    }
+
+    private void chooseOpponentAndResolveWithoutColorChoice() {
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private void advanceToPrecombatMain(Player player) {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "12")
+@CardRegistration(set = "VMA", collectorNumber = "23")
 public class DeftbladeElite extends Card {
 
     public DeftbladeElite() {

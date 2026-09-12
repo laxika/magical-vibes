@@ -35,15 +35,15 @@ class CascadeSeerTest extends BaseCardTest {
         castCascadeSeer();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gameData = harness.getGameData();
-        assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gameData.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+        assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactlyElementsOf(library);
 
         harness.getGameService().handleInteractionAnswer(
-                gameData, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+                gameData, player1, new InteractionAnswer.ScryOrder(List.of(3, 2, 1, 0), List.of()));
 
         assertThat(gameData.playerDecks.get(player1.getId()))
                 .containsSubsequence(library.get(3), library.get(2), library.get(1), library.get(0));
@@ -60,9 +60,9 @@ class CascadeSeerTest extends BaseCardTest {
         castCascadeSeer();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactlyElementsOf(library);
     }
 

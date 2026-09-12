@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "298")
 @CardRegistration(set = "V10", collectorNumber = "6")
+@CardRegistration(set = "VMA", collectorNumber = "270")
 public class KarnSilverGolem extends Card {
 
     public KarnSilverGolem() {

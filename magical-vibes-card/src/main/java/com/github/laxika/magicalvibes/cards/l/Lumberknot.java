@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 @CardRegistration(set = "ISD", collectorNumber = "191")
 @CardRegistration(set = "INR", collectorNumber = "206")
 @CardRegistration(set = "INR", collectorNumber = "414")
+@CardRegistration(set = "PC2", collectorNumber = "66")
 public class Lumberknot extends Card {
 
     public Lumberknot() {

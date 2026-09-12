@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "154")
 @CardRegistration(set = "TPR", collectorNumber = "115")
+@CardRegistration(set = "VMA", collectorNumber = "139")
 public class Sarcomancy extends Card {
 
     public Sarcomancy() {

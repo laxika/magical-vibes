@@ -51,6 +51,24 @@ import static org.mockito.Mockito.*;
 class PermanentRemovalServiceTest {
 
     @Test
+    void deferredManaTriggerRemembersControllerWhenPermanentLeaves() {
+        Card card = new Card();
+        card.setName("Leaving land");
+        card.setType(CardType.LAND);
+        Permanent land = addPermanent(player2Id, card);
+        var entry = new com.github.laxika.magicalvibes.model.StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                new Card(), player1Id, "Damage trigger", List.of());
+        entry.setTriggeringPermanentId(land.getId());
+        entry.setTriggeringPermanentControllerId(player1Id);
+        gd.pendingManaAbilityTriggers.add(entry);
+
+        prs.removePermanentToHand(gd, land);
+
+        assertThat(entry.getRemovedPermanentControllers()).containsEntry(land.getId(), player2Id);
+    }
+
+    @Test
     void releasesPhasedOutPermanentsWhenSourceLeavesWithoutExiledCards() {
         Permanent source = addPermanent(player1Id, createEnchantment("Phasing source"));
 
@@ -606,6 +624,8 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, enchantment);
 
+            assertThat(gd.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn)
+                    .containsExactly(player1Id);
             verify(triggerCollectionService).checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
         }
 
@@ -859,7 +879,7 @@ class PermanentRemovalServiceTest {
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
             verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
-            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id, token);
         }
     }
 
@@ -1142,6 +1162,23 @@ class PermanentRemovalServiceTest {
             assertThat(gd.permanentsDealtDamageThisTurn).contains(creature.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Serra Angel") && logEntry.plainText().contains("absorbs") && logEntry.plainText().contains("redirected")));
+        }
+
+        @Test
+        void recordsOnlyUnpreventedRedirectedDamageForSpellSource() {
+            Permanent creature = addPermanent(player1Id, createCreature("Creature"));
+            Card spell = new Card();
+            when(gameQueryService.findEnchantedCreatureByAuraEffect(gd, player1Id,
+                    RedirectPlayerDamageToEnchantedCreatureEffect.class)).thenReturn(creature);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3, false)).thenReturn(2);
+            when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(5);
+
+            int remaining = prs.redirectPlayerDamageToEnchantedCreature(
+                    gd, player1Id, 3, "Spell", false, null, spell);
+
+            assertThat(remaining).isZero();
+            assertThat(creature.getMarkedDamage()).isEqualTo(2);
+            assertThat(gd.damageDealtThisTurnBySource).containsEntry(spell.getId(), 2);
         }
 
         @Test

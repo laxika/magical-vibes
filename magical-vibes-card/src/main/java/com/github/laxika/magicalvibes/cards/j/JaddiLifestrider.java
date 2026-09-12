@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesGainLifePerCreatureEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "189")
+@CardRegistration(set = "DDR", collectorNumber = "12")
 public class JaddiLifestrider extends Card {
 
     public JaddiLifestrider() {

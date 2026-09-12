@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.r.Rescind;
+import com.github.laxika.magicalvibes.cards.t.Telepathy;
+import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HiddenAncients.class, Rescind.class, Telepathy.class, VoltaicKey.class})
 class HiddenAncientsTest extends BaseCardTest {
 
     @Test
@@ -22,10 +24,7 @@ class HiddenAncientsTest extends BaseCardTest {
     void becomesTreefolkCreatureWhenOpponentCastsEnchantment() {
         Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
         prepareOpponentCast();
-        harness.setHand(player2, List.of(createEnchantmentSpell()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new Telepathy(), "{U}");
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
@@ -40,10 +39,7 @@ class HiddenAncientsTest extends BaseCardTest {
     void doesNotTriggerForNonEnchantmentSpell() {
         Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
         prepareOpponentCast();
-        harness.setHand(player2, List.of(createArtifactSpell()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new VoltaicKey(), "{1}");
         harness.passBothPriorities();
 
         assertThat(gqs.isEnchantment(gd, hiddenAncients)).isTrue();
@@ -54,10 +50,7 @@ class HiddenAncientsTest extends BaseCardTest {
     @DisplayName("The ability does not trigger when its controller casts an enchantment spell")
     void doesNotTriggerForControllerEnchantmentSpell() {
         Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
-        harness.setHand(player1, List.of(createEnchantmentSpell()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Telepathy(), "{U}");
         harness.passBothPriorities();
 
         assertThat(gqs.isEnchantment(gd, hiddenAncients)).isTrue();
@@ -69,20 +62,32 @@ class HiddenAncientsTest extends BaseCardTest {
     void doesNotTriggerAfterBecomingCreature() {
         Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
         prepareOpponentCast();
-        harness.setHand(player2, List.of(createEnchantmentSpell()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new Telepathy(), "{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
 
-        harness.setHand(player2, List.of(createEnchantmentSpell()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new Telepathy(), "{U}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A queued trigger does nothing if Hidden Ancients leaves before it resolves")
+    void checksEnchantmentConditionAgainAtResolution() {
+        Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
+        prepareOpponentCast();
+
+        harness.castFromHand(player2, new Telepathy(), "{U}");
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, hiddenAncients.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Hidden Ancients");
+        harness.assertInHand(player1, "Hidden Ancients");
     }
 
     private void prepareOpponentCast() {
@@ -91,20 +96,4 @@ class HiddenAncientsTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    private Card createEnchantmentSpell() {
-        Card card = new Card();
-        card.setName("Test Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        return card;
-    }
-
-    private Card createArtifactSpell() {
-        Card card = new Card();
-        card.setName("Test Artifact");
-        card.setType(CardType.ARTIFACT);
-        card.setManaCost("{1}");
-        return card;
-    }
 }

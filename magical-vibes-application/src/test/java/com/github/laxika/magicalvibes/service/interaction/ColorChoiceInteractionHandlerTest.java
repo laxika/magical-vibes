@@ -73,6 +73,18 @@ class ColorChoiceInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("exile-top reveal-until-named card-name choice is searchable")
+    void exileTopRevealUntilNamedChoiceIsSearchable() {
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
+                PLAYER1_ID, null, null,
+                new ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice(PLAYER1_ID, 6, 0),
+                List.of("Divining Witch", "Mind Slash"), "Choose a card name.");
+
+        InteractionPromptMessage msg = projectionSupport.begin(gd, choice);
+        assertThat(msg.searchable()).isTrue();
+    }
+
+    @Test
     @DisplayName("dispatchAnswer delegates the chosen value to ChoiceHandlerService")
     void dispatchDelegates() {
         projectionSupport.begin(gd, manaColorChoice());

@@ -55,12 +55,13 @@ class SeafloorStalkerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, stalker)).isTrue();
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(stalker)));
+        stalker.setAttacking(true);
         prepareDeclareBlockers();
         assertThatThrownBy(() -> declareBlock(blocker, stalker))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

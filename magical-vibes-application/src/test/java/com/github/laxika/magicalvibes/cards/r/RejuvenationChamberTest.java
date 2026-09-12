@@ -1,25 +1,21 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(RejuvenationChamber.class)
 class RejuvenationChamberTest extends BaseCardTest {
 
     @Test
     @DisplayName("Rejuvenation Chamber enters with two fade counters")
     void entersWithFadeCounters() {
-        harness.setHand(player1, List.of(new RejuvenationChamber()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new RejuvenationChamber(), "{3}");
         harness.passBothPriorities();
 
         Permanent chamber = findPermanent(player1, "Rejuvenation Chamber");
@@ -36,6 +32,32 @@ class RejuvenationChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chamber.getCounterCount(CounterType.FADE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Rejuvenation Chamber");
+    }
+
+    @Test
+    @DisplayName("Fading leaves Rejuvenation Chamber on the battlefield after removing its last fade counter")
+    void remainsAfterRemovingLastFadeCounter() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new RejuvenationChamber());
+        chamber.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(chamber.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Rejuvenation Chamber");
+    }
+
+    @Test
+    @DisplayName("Fading does not trigger during an opponent's upkeep")
+    void doesNotRemoveFadeCounterDuringOpponentsUpkeep() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new RejuvenationChamber());
+        chamber.setCounterCount(CounterType.FADE, 2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(chamber.getCounterCount(CounterType.FADE)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Rejuvenation Chamber");
     }
 

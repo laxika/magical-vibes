@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "120")
+@CardRegistration(set = "DDJ", collectorNumber = "65")
 public class Doomgape extends Card {
 
     public Doomgape() {

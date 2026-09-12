@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "197")
+@CardRegistration(set = "DDJ", collectorNumber = "61")
 public class StingerflingSpider extends Card {
 
     public StingerflingSpider() {

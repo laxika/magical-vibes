@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "147")
+@CardRegistration(set = "V12", collectorNumber = "11")
 public class MurmuringBosk extends Card {
 
     public MurmuringBosk() {

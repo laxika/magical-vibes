@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "109")
+@CardRegistration(set = "PC2", collectorNumber = "102")
 public class NoggleRansacker extends Card {
 
     public NoggleRansacker() {

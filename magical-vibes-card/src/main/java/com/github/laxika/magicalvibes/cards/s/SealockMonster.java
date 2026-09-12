@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "62")
+@CardRegistration(set = "DDO", collectorNumber = "42")
 public class SealockMonster extends Card {
 
     public SealockMonster() {

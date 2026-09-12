@@ -24,7 +24,13 @@ public final class CardUsedExtension implements BeforeAllCallback, BeforeEachCal
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        preload(context.getRequiredTestClass(), context.getRequiredTestMethod());
+        // Class declarations were already preloaded by beforeAll. Most methods add
+        // nothing, so avoid repeating annotation collection and oracle-set selection.
+        if (AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), CardUsed.class).isPresent()) {
+            // Keep the combined group so method-specific cards can share a printing
+            // set with the class's support cards, just as they did before.
+            preload(context.getRequiredTestClass(), context.getRequiredTestMethod());
+        }
     }
 
     private static void preload(AnnotatedElement... elements) {

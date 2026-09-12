@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GPT", collectorNumber = "70")
 @CardRegistration(set = "DDH", collectorNumber = "55")
+@CardRegistration(set = "DDJ", collectorNumber = "9")
 public class OgreSavant extends Card {
 
     public OgreSavant() {

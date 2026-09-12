@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "254")
 @CardRegistration(set = "DDD", collectorNumber = "19")
+@CardRegistration(set = "GVL", collectorNumber = "19")
 public class Invigorate extends Card {
 
     public Invigorate() {

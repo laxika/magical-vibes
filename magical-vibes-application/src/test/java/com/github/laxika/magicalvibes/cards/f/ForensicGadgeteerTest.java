@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JoustingDummy;
 import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,8 +15,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForensicGadgeteer.class, MagnifyingGlass.class, GrizzlyBears.class})
+@CardUsed({ForensicGadgeteer.class, MagnifyingGlass.class, GrizzlyBears.class, JoustingDummy.class})
 class ForensicGadgeteerTest extends BaseCardTest {
+
+    @Test
+    void stackedReductionsKeepOneManaMinimum() {
+        harness.addToBattlefield(player1, new ForensicGadgeteer());
+        harness.addToBattlefield(player1, new ForensicGadgeteer());
+        harness.addToBattlefield(player1, new ForensicGadgeteer());
+        harness.addToBattlefield(player1, new JoustingDummy());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 3, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
 
     @Test
     void investigatesWhenControllerCastsArtifactSpell() {

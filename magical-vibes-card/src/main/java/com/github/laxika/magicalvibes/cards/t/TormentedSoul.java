@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "114")
 @CardRegistration(set = "M13", collectorNumber = "111")
+@CardRegistration(set = "PC2", collectorNumber = "38")
 public class TormentedSoul extends Card {
 
     public TormentedSoul() {

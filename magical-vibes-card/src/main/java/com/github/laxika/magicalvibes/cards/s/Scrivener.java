@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "EXO", collectorNumber = "46")
 @CardRegistration(set = "ODY", collectorNumber = "100")
 @CardRegistration(set = "TPR", collectorNumber = "64")
+@CardRegistration(set = "VMA", collectorNumber = "91")
 public class Scrivener extends Card {
 
     public Scrivener() {

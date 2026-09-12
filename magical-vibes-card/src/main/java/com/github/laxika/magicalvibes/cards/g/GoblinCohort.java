@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "106")
 @CardRegistration(set = "DD1", collectorNumber = "38")
+@CardRegistration(set = "EVG", collectorNumber = "38")
 public class GoblinCohort extends Card {
 
     public GoblinCohort() {

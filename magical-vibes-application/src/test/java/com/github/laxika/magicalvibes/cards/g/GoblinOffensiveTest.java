@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(GoblinOffensive.class)
 class GoblinOffensiveTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,7 @@ class GoblinOffensiveTest extends BaseCardTest {
         assertThat(goblins).hasSize(2);
         assertThat(goblins).allSatisfy(goblin -> {
             assertThat(goblin.getCard().isToken()).isTrue();
+            assertThat(gqs.isCreature(gd, goblin)).isTrue();
             assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(goblin.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
             assertThat(goblin.getEffectivePower()).isEqualTo(1);
@@ -44,14 +47,12 @@ class GoblinOffensiveTest extends BaseCardTest {
         harness.addMana(player, ManaColor.RED, 2);
         harness.addMana(player, ManaColor.COLORLESS, xValue + 1);
 
-        harness.castSorcery(player, 0, xValue);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player, 0, xValue);
     }
 
     private List<Permanent> goblinsOf(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
+        return findPermanents(player, "Goblin").stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> "Goblin".equals(permanent.getCard().getName()))
                 .toList();
     }
 }

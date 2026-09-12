@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "167")
+@CardRegistration(set = "DDP", collectorNumber = "18")
 public class KhalniHeartExpedition extends Card {
 
     public KhalniHeartExpedition() {

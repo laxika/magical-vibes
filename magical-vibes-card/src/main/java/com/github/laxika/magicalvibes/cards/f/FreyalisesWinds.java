@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersInsteadOfUntappingEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "241")
+@CardRegistration(set = "ME3", collectorNumber = "119")
 public class FreyalisesWinds extends Card {
 
     public FreyalisesWinds() {

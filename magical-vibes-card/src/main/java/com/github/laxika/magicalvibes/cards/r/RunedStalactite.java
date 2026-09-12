@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "260")
+@CardRegistration(set = "MMA", collectorNumber = "214")
 public class RunedStalactite extends Card {
 
     public RunedStalactite() {

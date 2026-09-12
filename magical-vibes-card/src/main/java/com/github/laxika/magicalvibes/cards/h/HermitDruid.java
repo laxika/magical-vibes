@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "202")
 @CardRegistration(set = "STH", collectorNumber = "108")
 @CardRegistration(set = "TPR", collectorNumber = "175")
+@CardRegistration(set = "VMA", collectorNumber = "216")
 public class HermitDruid extends Card {
 
     public HermitDruid() {

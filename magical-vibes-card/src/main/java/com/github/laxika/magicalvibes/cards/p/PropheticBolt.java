@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "116")
+@CardRegistration(set = "DDJ", collectorNumber = "27")
+@CardRegistration(set = "VMA", collectorNumber = "257")
 public class PropheticBolt extends Card {
 
     public PropheticBolt() {

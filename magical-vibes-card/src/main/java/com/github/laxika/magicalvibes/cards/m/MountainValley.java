@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "328")
+@CardRegistration(set = "VMA", collectorNumber = "306")
 public class MountainValley extends Card {
 
     public MountainValley() {

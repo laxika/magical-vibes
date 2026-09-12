@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -59,16 +60,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TimeVaultReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -80,7 +83,6 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TurnProgressionService {
 
     private final CombatService combatService;
@@ -91,6 +93,32 @@ public class TurnProgressionService {
     private final StepTriggerService stepTriggerService;
     private final AutoPassService autoPassService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final GameQueryService gameQueryService;
+
+    @Autowired
+    public TurnProgressionService(CombatService combatService, GameLogService gameLogService,
+                                  PlayerInputService playerInputService, TurnCleanupService turnCleanupService,
+                                  UntapStepService untapStepService, StepTriggerService stepTriggerService,
+                                  AutoPassService autoPassService, GameMutationCoordinator mutationCoordinator,
+                                  GameQueryService gameQueryService) {
+        this.combatService = combatService;
+        this.gameLogService = gameLogService;
+        this.playerInputService = playerInputService;
+        this.turnCleanupService = turnCleanupService;
+        this.untapStepService = untapStepService;
+        this.stepTriggerService = stepTriggerService;
+        this.autoPassService = autoPassService;
+        this.mutationCoordinator = mutationCoordinator;
+        this.gameQueryService = gameQueryService;
+    }
+
+    public TurnProgressionService(CombatService combatService, GameLogService gameLogService,
+                                  PlayerInputService playerInputService, TurnCleanupService turnCleanupService,
+                                  UntapStepService untapStepService, StepTriggerService stepTriggerService,
+                                  AutoPassService autoPassService, GameMutationCoordinator mutationCoordinator) {
+        this(combatService, gameLogService, playerInputService, turnCleanupService, untapStepService,
+                stepTriggerService, autoPassService, mutationCoordinator, null);
+    }
 
     public void advanceStep(GameData gameData) {
         // The mana pool drains at step boundaries, so nothing recorded before this point can
@@ -311,6 +339,7 @@ public class TurnProgressionService {
                     p.setBlockedThisCombat(false);
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
+                gameData.combatDamageToPlayersThisCombat.clear();
                 processTargetCreatureMustAttackNextCombat(gameData);
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);
@@ -465,10 +494,26 @@ public class TurnProgressionService {
     }
 
     void advanceTurn(GameData gameData) {
-        advanceTurn(gameData, true);
+        advanceTurn(gameData, true, true, null);
     }
 
     private void advanceTurn(GameData gameData, boolean snapshotEndingPlayer) {
+        advanceTurn(gameData, snapshotEndingPlayer, true, null);
+    }
+
+    /** Completes Time Vault's turn-start replacement choice and resumes turn progression. */
+    public void completeTimeVaultChoice(GameData gameData, UUID controllerId,
+                                         UUID sourcePermanentId, boolean accepted) {
+        if (accepted) {
+            gameData.skipNextTurnCount.merge(controllerId, 1, Integer::sum);
+            advanceTurn(gameData, false, false, null);
+        } else {
+            advanceTurn(gameData, false, true, sourcePermanentId);
+        }
+    }
+
+    private void advanceTurn(GameData gameData, boolean snapshotEndingPlayer,
+                             boolean offerTimeVaultChoice, UUID excludedTimeVaultId) {
         if (snapshotEndingPlayer) {
             gameData.snapshotPlayerActionsForLastTurn(gameData.activePlayerId);
         }
@@ -483,6 +528,16 @@ public class TurnProgressionService {
         boolean skipUntapStep = false;
         boolean powerUpAbilitiesDisabled = false;
         boolean damageCantBePrevented = false;
+        UUID nextTurnPlayer = !gameData.extraTurns.isEmpty()
+                ? gameData.extraTurns.peekFirst()
+                : nextPlayerInTurnOrder(gameData);
+        if (offerTimeVaultChoice) {
+            Permanent timeVault = findTappedTimeVault(gameData, nextTurnPlayer, excludedTimeVaultId);
+            if (timeVault != null) {
+                queueTimeVaultChoice(gameData, nextTurnPlayer, timeVault);
+                return;
+            }
+        }
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
@@ -507,9 +562,7 @@ public class TurnProgressionService {
                 return;
             }
         } else {
-            List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
-            UUID currentActive = gameData.activePlayerId;
-            nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
+            nextActive = nextTurnPlayer;
         }
 
         // Chronatog: skip the turn entirely (CR 500.11 / 614.10). Pending Mindslaver waits (CR 723.1b).
@@ -521,6 +574,11 @@ public class TurnProgressionService {
                 gameData.skipNextTurnCount.put(nextActive, queuedTurnSkips - 1);
             }
             String skippedName = gameData.playerIdToName.get(nextActive);
+            if (currentTurnIsExtraTurn && extraTurnSequence != null) {
+                Long skippedExtraTurnSequence = extraTurnSequence;
+                gameData.drainDelayedActions(LoseGameAtEndStep.class,
+                        action -> skippedExtraTurnSequence.equals(action.extraTurnSequence()));
+            }
             gameLogService.append(gameData, GameLog.text(skippedName + " skips their turn."));
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
             // Advance turn order past the skipped player so the next selection is correct.
@@ -650,6 +708,7 @@ public class TurnProgressionService {
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
+        gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
@@ -711,6 +770,7 @@ public class TurnProgressionService {
         gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
+        gameData.damageDealtToPlayersBySourceThisTurn.clear();
         gameData.sorcerySpellDamageDealtThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
@@ -773,6 +833,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnExileCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
+        gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
@@ -845,6 +906,7 @@ public class TurnProgressionService {
                 shield -> nextActive.equals(shield.protectedPlayerId()));
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
@@ -1080,6 +1142,41 @@ public class TurnProgressionService {
 
     public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
         stepTriggerService.processNextBeginningOfCombatTriggerTarget(gameData);
+    }
+
+    private UUID nextPlayerInTurnOrder(GameData gameData) {
+        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
+        UUID currentActive = gameData.activePlayerId;
+        return ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
+    }
+
+    private Permanent findTappedTimeVault(GameData gameData, UUID controllerId, UUID excludedPermanentId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return null;
+        }
+        return battlefield.stream()
+                .filter(permanent -> excludedPermanentId == null
+                        || !excludedPermanentId.equals(permanent.getId()))
+                .filter(Permanent::isTapped)
+                .filter(permanent -> !permanent.isFaceDown())
+                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
+                .filter(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, TimeVaultReplacementEffect.class))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void queueTimeVaultChoice(GameData gameData, UUID controllerId, Permanent timeVault) {
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                timeVault.getCard(),
+                controllerId,
+                List.of(new TimeVaultReplacementEffect()),
+                "Skip your turn and untap Time Vault?",
+                null,
+                null,
+                timeVault.getId()));
+        playerInputService.processNextMayAbility(gameData);
     }
 
     /**

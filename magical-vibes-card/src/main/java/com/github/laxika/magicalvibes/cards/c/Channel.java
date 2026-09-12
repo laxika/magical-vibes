@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUnt
 @CardRegistration(set = "SUM", collectorNumber = "188")
 @CardRegistration(set = "3ED", collectorNumber = "188")
 @CardRegistration(set = "V09", collectorNumber = "3")
+@CardRegistration(set = "VMA", collectorNumber = "200")
 public class Channel extends Card {
 
     public Channel() {

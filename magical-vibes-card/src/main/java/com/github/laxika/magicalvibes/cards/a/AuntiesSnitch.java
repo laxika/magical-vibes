@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MMA", collectorNumber = "72")
 @CardRegistration(set = "MOR", collectorNumber = "57")
 public class AuntiesSnitch extends Card {
 

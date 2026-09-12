@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "156")
+@CardRegistration(set = "ME3", collectorNumber = "137")
 public class TripWire extends Card {
 
     public TripWire() {

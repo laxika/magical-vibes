@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RainOfSalt.class, Mountain.class, Forest.class, GrizzlyBears.class})
+@CardUsed({RainOfSalt.class, ArgothianSwine.class, Forest.class, Mountain.class})
 class RainOfSaltTest extends BaseCardTest {
 
     @Test
@@ -61,14 +61,28 @@ class RainOfSaltTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         harness.addToBattlefield(player2, new Mountain());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
         harness.setHand(player1, List.of(new RainOfSalt()));
         harness.addMana(player1, ManaColor.RED, 6);
 
         UUID mountainId = harness.getPermanentId(player2, "Mountain");
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Argothian Swine");
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(mountainId, creatureId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target the same land twice")
+    void cannotTargetSameLandTwice() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new RainOfSalt()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        UUID mountainId = harness.getPermanentId(player2, "Mountain");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(mountainId, mountainId)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -86,18 +100,5 @@ class RainOfSaltTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player2, "Mountain");
-    }
-
-    @Test
-    @DisplayName("Cannot choose the same land for both targets")
-    void cannotTargetSameLandTwice() {
-        harness.addToBattlefield(player2, new Mountain());
-        harness.setHand(player1, List.of(new RainOfSalt()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        UUID mountainId = harness.getPermanentId(player2, "Mountain");
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(mountainId, mountainId)))
-                .isInstanceOf(IllegalStateException.class);
     }
 }

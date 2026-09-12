@@ -24,11 +24,11 @@ class MightOfMurasaTest extends BaseCardTest {
         Permanent target = addCreature(player1);
 
         harness.setHand(player1, List.of(new MightOfMurasa()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -37,12 +37,12 @@ class MightOfMurasaTest extends BaseCardTest {
         Permanent target = addCreature(player1);
 
         harness.setHand(player1, List.of(new MightOfMurasa()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.GREEN, 5);
         harness.castKickedInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
     }
 
     @Test
@@ -51,15 +51,15 @@ class MightOfMurasaTest extends BaseCardTest {
         Permanent target = addCreature(player1);
 
         harness.setHand(player1, List.of(new MightOfMurasa()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

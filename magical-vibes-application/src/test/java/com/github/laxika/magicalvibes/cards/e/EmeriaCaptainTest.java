@@ -45,6 +45,6 @@ class EmeriaCaptainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

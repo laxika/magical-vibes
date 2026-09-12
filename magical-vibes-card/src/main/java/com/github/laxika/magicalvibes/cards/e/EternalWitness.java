@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "86")
+@CardRegistration(set = "DDJ", collectorNumber = "55")
+@CardRegistration(set = "MMA", collectorNumber = "144")
 public class EternalWitness extends Card {
 
     public EternalWitness() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "215")
+@CardRegistration(set = "DDR", collectorNumber = "11")
 public class GiltLeafSeer extends Card {
 
     public GiltLeafSeer() {

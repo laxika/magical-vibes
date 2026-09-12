@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "302")
+@CardRegistration(set = "ME3", collectorNumber = "207")
 public class Hammerheim extends Card {
 
     public Hammerheim() {

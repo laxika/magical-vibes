@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "124")
+@CardRegistration(set = "DDM", collectorNumber = "48")
 public class GatecreeperVine extends Card {
 
     public GatecreeperVine() {

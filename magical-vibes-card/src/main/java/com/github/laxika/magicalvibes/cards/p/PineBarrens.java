@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "321")
 @CardRegistration(set = "TPR", collectorNumber = "240")
+@CardRegistration(set = "VMA", collectorNumber = "307")
 public class PineBarrens extends Card {
 
     public PineBarrens() {

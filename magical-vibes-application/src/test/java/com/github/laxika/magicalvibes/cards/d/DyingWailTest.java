@@ -48,6 +48,34 @@ class DyingWailTest extends BaseCardTest {
     }
 
     @Test
+    void canBeCastOnCreatureAndCanMakeItsControllerDiscardTwoCards() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new DyingWail()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, spider.getId());
+        harness.passBothPriorities();
+
+        Permanent dyingWail = findPermanent(player1, "Dying Wail");
+        assertThat(dyingWail.getAttachedTo()).isEqualTo(spider.getId());
+
+        harness.setHand(player1, List.of(new GrizzlyBears(), new FountainOfYouth()));
+        spider.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     void cannotEnchantNoncreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new DyingWail()));

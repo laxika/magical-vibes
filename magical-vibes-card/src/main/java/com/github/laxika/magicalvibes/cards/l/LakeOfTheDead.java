@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "140")
 @CardRegistration(set = "ME1", collectorNumber = "177")
+@CardRegistration(set = "VMA", collectorNumber = "302")
 public class LakeOfTheDead extends Card {
 
     public LakeOfTheDead() {

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SilkenfistFighter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,31 +14,31 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LaccolithGrunt.class, SilkenfistFighter.class})
 class LaccolithGruntTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new LaccolithGrunt());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new LaccolithGrunt());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addBlocker() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        return blocker;
+        return addCreatureReady(player2, new SilkenfistFighter());
     }
 
     private void declareBlock(Permanent attacker, Permanent blocker) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareBlocks(attacker, List.of(blocker));
+    }
+
+    private void declareBlocks(Permanent attacker, List<Permanent> blockers) {
+        prepareDeclareBlockers();
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+        List<BlockerAssignment> assignments = blockers.stream()
+                .map(blocker -> new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker), attackerIdx))
+                .toList();
+        gs.declareBlockers(gd, player2, assignments);
         harness.passBothPriorities();
     }
 
@@ -55,6 +56,11 @@ class LaccolithGruntTest extends BaseCardTest {
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -69,6 +75,51 @@ class LaccolithGruntTest extends BaseCardTest {
 
         assertThat(blocker.getMarkedDamage()).isZero();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage uses the attacker's current power when the trigger resolves")
+    void damageUsesCurrentPowerAtResolution() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        attacker.setPowerModifier(-1);
+
+        declareBlock(attacker, blocker);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, blocker.getId());
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Multiple blockers produce one becomes-blocked trigger")
+    void multipleBlockersProduceOneTrigger() {
+        Permanent attacker = addAttacker();
+        Permanent firstBlocker = addBlocker();
+        Permanent secondBlocker = addBlocker();
+
+        declareBlocks(attacker, List.of(firstBlocker, secondBlocker));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstBlocker.getId());
+
+        assertThat(firstBlocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(secondBlocker.getMarkedDamage()).isZero();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).containsExactly(attacker.getId());
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(firstBlocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(secondBlocker.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -76,10 +127,7 @@ class LaccolithGruntTest extends BaseCardTest {
     void unblockedDoesNotTrigger() {
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 

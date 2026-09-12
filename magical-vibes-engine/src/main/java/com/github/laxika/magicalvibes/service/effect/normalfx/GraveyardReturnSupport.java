@@ -184,11 +184,7 @@ public class GraveyardReturnSupport {
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
         UUID targetOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
 
-        if (targetCard == null
-                || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId,
-                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
-                entry.getXValue()))
+        if (!matchesReturnCardFilter(gameData, entry, effect, targetCard, sourceCardId)
                 || (effect.targetNotPutIntoGraveyardThisCombat()
                 && targetOwnerId != null
                 && gameData.cardsPutIntoGraveyardThisCombat
@@ -373,10 +369,12 @@ public class GraveyardReturnSupport {
         if (card == null) {
             return false;
         }
-        if (effect.requiresManaValueEqualsX() && card.getManaValue() != entry.getXValue()) {
+        if (effect.requiresManaValueEqualsX()
+                && card.getManaValue() != effect.requiredManaValue(entry.getXValue())) {
             return false;
         }
-        if (effect.requiresManaValueAtMostX() && card.getManaValue() > entry.getXValue()) {
+        if (effect.requiresManaValueAtMostX()
+                && card.getManaValue() > effect.requiredManaValue(entry.getXValue())) {
             return false;
         }
         if (effect.dynamicMaxManaValue() != null) {

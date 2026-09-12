@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "178")
+@CardRegistration(set = "MM2", collectorNumber = "119")
 public class IncandescentSoulstoke extends Card {
 
     public IncandescentSoulstoke() {

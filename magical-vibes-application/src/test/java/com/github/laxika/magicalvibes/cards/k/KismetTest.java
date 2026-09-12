@@ -89,6 +89,34 @@ class KismetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Controller's creatures enter untapped")
+    void controllersCreaturesEnterUntapped() {
+        harness.addToBattlefield(player1, new Kismet());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller's artifacts enter untapped")
+    void controllersArtifactsEnterUntapped() {
+        harness.addToBattlefield(player1, new Kismet());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new Ornithopter(), "{0}");
+        harness.passBothPriorities();
+
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+        assertThat(ornithopter.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Opponent enchantments enter untapped")
     void opponentsEnchantmentsEnterUntapped() {
         harness.addToBattlefield(player1, new Kismet());

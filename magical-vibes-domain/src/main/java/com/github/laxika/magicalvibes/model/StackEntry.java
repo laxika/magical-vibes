@@ -118,6 +118,8 @@ public class StackEntry {
     @Setter private boolean castTransformed;
     /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
     @Setter private boolean castFaceDown;
+    /** Whether this face-down creature turns face up when it would deal or receive damage or become tapped. */
+    @Setter private boolean faceDownTurnsFaceUpOnDamageOrTap;
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
     @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
@@ -217,6 +219,8 @@ public class StackEntry {
     @Setter private boolean controlledDragonAsCast;
     /** Whether the spell's controller controlled a Faerie when the spell was finished being cast. */
     @Setter private boolean controlledFaerieAsCast;
+    /** Whether the spell's controller controlled a modified creature when the spell was finished being cast. */
+    @Setter private boolean controlledModifiedCreatureAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -384,6 +388,8 @@ public class StackEntry {
      * {@code StackResolutionService} and turned into +1/+1 counters by the as-enters replacement.
      */
     @Setter private int grantedBloodthirst;
+    /** Numeric devour grant carried by this creature spell while it is on the stack. */
+    @Setter private int grantedDevour;
     /** Triggered abilities granted to the permanent as this spell enters the battlefield. */
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
@@ -677,6 +683,7 @@ public class StackEntry {
         this.castWithWarp = source.castWithWarp;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
+        this.faceDownTurnsFaceUpOnDamageOrTap = source.faceDownTurnsFaceUpOnDamageOrTap;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
         this.cyclingAbility = source.cyclingAbility;
@@ -710,6 +717,7 @@ public class StackEntry {
         this.controlledMountAsCast = source.controlledMountAsCast;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.controlledFaerieAsCast = source.controlledFaerieAsCast;
+        this.controlledModifiedCreatureAsCast = source.controlledModifiedCreatureAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
@@ -780,6 +788,7 @@ public class StackEntry {
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.grantedDevour = source.grantedDevour;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
@@ -935,7 +944,7 @@ public class StackEntry {
                 if (!(targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
                     continue;
                 }
-                int groupSize = Math.min(targetGroup.getMaxTargets(),
+                int groupSize = Math.min(wasKicked() ? targetGroup.getKickedMaxTargets() : targetGroup.getMaxTargets(),
                         declaredTargetCardIds.size() - graveyardTargetOffset);
                 if (targetGroup.getIndex() == group) {
                     if (groupSize <= 0) {

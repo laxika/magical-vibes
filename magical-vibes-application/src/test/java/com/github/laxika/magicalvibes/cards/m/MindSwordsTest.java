@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MindSwords.class, GrizzlyBears.class, Forest.class, Swamp.class})
 class MindSwordsTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,29 @@ class MindSwordsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Players with fewer than two cards exile their entire hands")
+    void exilesEntireShortHands() {
+        harness.setHand(player1, List.of(new MindSwords(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Can be cast for its alternate cost by sacrificing a creature while controlling a Swamp")
     void castsForAlternateCost() {
         harness.addToBattlefield(player1, new Swamp());
@@ -77,5 +102,15 @@ class MindSwordsTest extends BaseCardTest {
                 player1, 0, List.of(paymentCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("condition is not met");
+    }
+
+    @Test
+    @DisplayName("Alternate cost requires a creature to sacrifice")
+    void alternateCostRequiresCreature() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setHand(player1, List.of(new MindSwords()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

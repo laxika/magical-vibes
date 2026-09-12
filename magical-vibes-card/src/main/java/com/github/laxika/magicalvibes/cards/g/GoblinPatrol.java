@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "193")
+@CardRegistration(set = "VMA", collectorNumber = "169")
 public class GoblinPatrol extends Card {
 
     public GoblinPatrol() {

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "329")
+@CardRegistration(set = "VMA", collectorNumber = "309")
+@CardRegistration(set = "DDP", collectorNumber = "69")
 public class RockyTarPit extends Card {
 
     public RockyTarPit() {

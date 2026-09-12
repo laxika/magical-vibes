@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "108")
+@CardRegistration(set = "DDR", collectorNumber = "58")
 public class QuestForTheGravelord extends Card {
 
     public QuestForTheGravelord() {

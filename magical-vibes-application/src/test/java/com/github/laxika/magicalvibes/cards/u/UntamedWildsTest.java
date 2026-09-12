@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.d.DwarvenRuins;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -17,16 +18,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, Island.class, Mountain.class, Plains.class, StripMine.class, UntamedWilds.class})
+@CardUsed({DwarvenRuins.class, Forest.class, Island.class, Mountain.class, Plains.class, UntamedWilds.class})
 class UntamedWildsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Presents basic lands with destination battlefield (untapped)")
     void resolvingPresentsBasicLandsToBattlefield() {
-        setupAndCast();
-        setupLibrary();
-
-        harness.passBothPriorities();
+        castAndOpenLibrarySearch();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -43,10 +41,7 @@ class UntamedWildsTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen basic land enters the battlefield untapped")
     void chosenBasicLandEntersUntapped() {
-        setupAndCast();
-        setupLibrary();
-
-        harness.passBothPriorities();
+        castAndOpenLibrarySearch();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
         harness.handleCardChosen(player1, 0);
@@ -60,14 +55,24 @@ class UntamedWildsTest extends BaseCardTest {
     @Test
     @DisplayName("Player can fail to find")
     void canFailToFind() {
-        setupAndCast();
-        setupLibrary();
-
-        harness.passBothPriorities();
+        castAndOpenLibrarySearch();
 
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Chosen basic land leaves the library and the library is shuffled")
+    void chosenBasicLandLeavesLibraryAndShuffles() {
+        castAndOpenLibrarySearch();
+
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(chosenCard);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -82,16 +87,22 @@ class UntamedWildsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Searches only the controller's library")
-    void onlySearchesControllersLibrary() {
+    @DisplayName("Resolving with an empty library does not prompt and still shuffles")
+    void emptyLibraryNoPrompt() {
         setupAndCast();
-        harness.setLibrary(player1, List.of(new UntamedWilds()));
-        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerDecks.get(player2.getId())).anyMatch(Forest.class::isInstance);
+        assertThat(gameLogContains("it is empty")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    private void castAndOpenLibrarySearch() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
     }
 
     private void setupAndCast() {
@@ -100,7 +111,7 @@ class UntamedWildsTest extends BaseCardTest {
 
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(
-                new Plains(), new Forest(), new Island(), new Mountain(), new StripMine()));
+                new Plains(), new Forest(), new Island(), new Mountain(), new DwarvenRuins()));
     }
 
     @Test
@@ -124,15 +135,15 @@ class UntamedWildsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving with an empty library does not prompt and still shuffles")
-    void emptyLibraryNoPrompt() {
+    @DisplayName("Searches only the controller's library")
+    void onlySearchesControllersLibrary() {
         setupAndCast();
-        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player1, List.of(new UntamedWilds()));
+        harness.setLibrary(player2, List.of(new Forest()));
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gameLogContains("it is empty")).isTrue();
-        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).anyMatch(Forest.class::isInstance);
     }
 }

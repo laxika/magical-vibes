@@ -133,6 +133,7 @@ public sealed interface TriggerContext {
         }
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
+    record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
     /** Context for controller forage triggers. */

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "98")
+@CardRegistration(set = "DDR", collectorNumber = "7")
 public class CropRotation extends Card {
 
     public CropRotation() {

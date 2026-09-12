@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "GTC", collectorNumber = "78")
+@CardRegistration(set = "DDM", collectorNumber = "53")
 public class SlateStreetRuffian extends Card {
 
     public SlateStreetRuffian() {
