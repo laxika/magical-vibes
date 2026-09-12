@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "316")
 @CardRegistration(set = "TPR", collectorNumber = "235")
+@CardRegistration(set = "VMA", collectorNumber = "295")
 public class CalderaLake extends Card {
 
     public CalderaLake() {

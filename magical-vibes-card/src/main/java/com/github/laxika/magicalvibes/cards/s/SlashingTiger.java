@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "145")
+@CardRegistration(set = "ME3", collectorNumber = "133")
 public class SlashingTiger extends Card {
 
     public SlashingTiger() {

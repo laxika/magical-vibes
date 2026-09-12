@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "139")
 @CardRegistration(set = "ME2", collectorNumber = "233")
+@CardRegistration(set = "VMA", collectorNumber = "301")
 public class KjeldoranOutpost extends Card {
 
     public KjeldoranOutpost() {

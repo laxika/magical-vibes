@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiantStrength.class, TrainedArmodon.class, LotusPetal.class})
+@CardUsed({GiantStrength.class, GrizzlyBears.class, TrainedArmodon.class, LotusPetal.class})
 class GiantStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +2/+2")
@@ -63,6 +63,41 @@ class GiantStrengthTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Giant Strength stops boosting its creature when it becomes unattached")
+    void effectsStopWhenUnattached() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new GiantStrength());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+
+        auraPerm.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
+
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Giant Strength");
+    }
+
+    @Test
+    @DisplayName("Giant Strength is put into its owner's graveyard when its creature leaves")
+    void isPutIntoGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new GiantStrength());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(bearsPerm);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Giant Strength");
+        harness.assertInGraveyard(player1, "Giant Strength");
+    }
+
     @Test
     @DisplayName("Giant Strength does not affect other creatures")
     void doesNotAffectOtherCreatures() {

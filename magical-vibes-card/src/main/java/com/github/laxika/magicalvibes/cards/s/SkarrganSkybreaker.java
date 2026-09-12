@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "130")
+@CardRegistration(set = "DDL", collectorNumber = "60")
 public class SkarrganSkybreaker extends Card {
 
     public SkarrganSkybreaker() {

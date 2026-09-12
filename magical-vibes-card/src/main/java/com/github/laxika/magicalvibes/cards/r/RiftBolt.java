@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "176")
+@CardRegistration(set = "MMA", collectorNumber = "126")
+@CardRegistration(set = "DDS", collectorNumber = "17")
 public class RiftBolt extends Card {
 
     public RiftBolt() {

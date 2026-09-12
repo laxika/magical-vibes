@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "57")
+@CardRegistration(set = "DDM", collectorNumber = "3")
 public class JacesPhantasm extends Card {
 
     public JacesPhantasm() {

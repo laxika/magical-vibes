@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantomWarrior.class, DwarvenBerserker.class})
+@CardUsed({DwarvenBerserker.class, PhantomWarrior.class})
 class PhantomWarriorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====

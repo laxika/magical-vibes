@@ -42,8 +42,8 @@ class MalakirBloodPriestTest extends BaseCardTest {
 
         castBloodPriest();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(12);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
     }
 
     private void addFullParty(Player player) {

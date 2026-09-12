@@ -56,4 +56,6 @@ class StormCrowTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
     }
+
+
 }

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "40")
+@CardRegistration(set = "MMA", collectorNumber = "71")
+@CardRegistration(set = "DDK", collectorNumber = "31")
 public class AbsorbVis extends Card {
 
     public AbsorbVis() {

@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "31")
 @CardRegistration(set = "TPR", collectorNumber = "48")
+@CardRegistration(set = "VMA", collectorNumber = "66")
 public class Ephemeron extends Card {
 
     public Ephemeron() {

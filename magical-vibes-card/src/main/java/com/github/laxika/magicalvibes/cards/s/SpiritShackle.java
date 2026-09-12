@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "163")
 @CardRegistration(set = "LEG", collectorNumber = "117")
+@CardRegistration(set = "ME3", collectorNumber = "74")
 public class SpiritShackle extends Card {
 
     public SpiritShackle() {

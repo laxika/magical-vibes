@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "131")
+@CardRegistration(set = "VMA", collectorNumber = "280")
 public class RingOfGix extends Card {
 
     public RingOfGix() {

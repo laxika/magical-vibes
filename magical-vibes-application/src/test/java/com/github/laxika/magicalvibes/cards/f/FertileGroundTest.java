@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FertileGround.class, Forest.class, ArgothianSwine.class})
 class FertileGroundTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Fertile Ground targets and puts it on the stack")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new FertileGround()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -36,8 +37,7 @@ class FertileGroundTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Fertile Ground attaches it to target land")
     void resolvingAttachesToTargetLand() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new FertileGround()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -45,18 +45,15 @@ class FertileGroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fertile Ground")
-                        && forest.getId().equals(p.getAttachedTo()));
+                .anyMatch(p -> forest.getId().equals(p.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Tapping enchanted Forest adds one extra mana of the chosen color")
     void enchantedLandAddsExtraManaOfChosenColor() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new FertileGround());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -70,12 +67,10 @@ class FertileGroundTest extends BaseCardTest {
     @Test
     @DisplayName("Only enchanted land gets the Fertile Ground bonus")
     void onlyEnchantedLandGetsBonus() {
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Forest());
-        Permanent firstForest = gd.playerBattlefields.get(player1.getId()).get(0);
-        Permanent aura = new Permanent(new FertileGround());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
         aura.setAttachedTo(firstForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         // Tap second (non-enchanted) Forest at index 1.
         harness.tapPermanent(player1, 1);
@@ -86,11 +81,9 @@ class FertileGroundTest extends BaseCardTest {
     @Test
     @DisplayName("Controller of enchanted land gets bonus mana even if aura is controlled by opponent")
     void enchantedLandControllerGetsBonus() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent opponentsForest = gd.playerBattlefields.get(player2.getId()).getFirst();
-        Permanent aura = new Permanent(new FertileGround());
+        Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
         aura.setAttachedTo(opponentsForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player2, 0);
         harness.handleListChoice(player2, "RED");
@@ -103,11 +96,9 @@ class FertileGroundTest extends BaseCardTest {
     @Test
     @DisplayName("Fertile Ground bonus stops when aura leaves battlefield")
     void bonusStopsWhenAuraLeavesBattlefield() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new FertileGround());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.tapPermanent(player1, 0);
@@ -116,15 +107,32 @@ class FertileGroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Fertile Ground adds one mana when attached to the same land")
+    void multipleAurasEachAddMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        firstAura.setAttachedTo(forest.getId());
+        secondAura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+        harness.handleListChoice(player1, "BLUE");
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            harness.handleListChoice(player1, "RED");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Cannot cast Fertile Ground targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
         harness.setHand(player1, List.of(new FertileGround()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }

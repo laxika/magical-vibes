@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.s.StoneworkPackbeast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -22,8 +23,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArchpriestOfIona.class, BoggartBrute.class, FaerieMiscreant.class,
-        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class})
+        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class, StoneworkPackbeast.class})
 class ArchpriestOfIonaTest extends BaseCardTest {
+
+    @Test
+    void partyPowerUsesGrantedSubtypesAndAssignsEachCreatureOnlyOnce() {
+        Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+
+        assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new BoggartBrute());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+
+        assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(4);
+    }
 
     @Test
     @DisplayName("Has power equal to party size and boosts a target with a full party")

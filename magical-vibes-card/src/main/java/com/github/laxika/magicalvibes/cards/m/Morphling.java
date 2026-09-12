@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "85")
+@CardRegistration(set = "VMA", collectorNumber = "81")
 public class Morphling extends Card {
 
     public Morphling() {

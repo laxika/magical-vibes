@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,20 +14,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BogRaiders.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({BogRaiders.class, CoralMerfolk.class, Swamp.class})
 class BogRaidersTest extends BaseCardTest {
 
-    // ===== Swampwalk =====
 
     @Test
     @DisplayName("Bog Raiders cannot be blocked when defending player controls a Swamp")
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
-        Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
+        Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
+        Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
         prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
@@ -41,10 +41,11 @@ class BogRaidersTest extends BaseCardTest {
     @Test
     @DisplayName("Bog Raiders can be blocked when defending player does not control a Swamp")
     void canBeBlockedWhenDefenderDoesNotControlSwamp() {
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
-        Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
+        Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
+        Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
         prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
@@ -55,7 +56,26 @@ class BogRaidersTest extends BaseCardTest {
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
 
-    // ===== Combat damage =====
+    @Test
+    @DisplayName("Bog Raiders can be blocked when only the attacking player controls a Swamp")
+    void canBeBlockedWhenOnlyAttackerControlsSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+
+        Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
+
+        Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
 
     @Test
     @DisplayName("Unblocked Bog Raiders deals 2 damage to defending player")
@@ -64,6 +84,7 @@ class BogRaidersTest extends BaseCardTest {
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

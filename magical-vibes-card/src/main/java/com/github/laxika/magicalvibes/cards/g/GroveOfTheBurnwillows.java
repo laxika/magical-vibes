@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "176")
+@CardRegistration(set = "V12", collectorNumber = "8")
 public class GroveOfTheBurnwillows extends Card {
 
     public GroveOfTheBurnwillows() {

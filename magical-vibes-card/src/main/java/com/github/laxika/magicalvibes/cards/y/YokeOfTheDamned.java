@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CON", collectorNumber = "57")
+@CardRegistration(set = "DDJ", collectorNumber = "68")
 public class YokeOfTheDamned extends Card {
 
     public YokeOfTheDamned() {

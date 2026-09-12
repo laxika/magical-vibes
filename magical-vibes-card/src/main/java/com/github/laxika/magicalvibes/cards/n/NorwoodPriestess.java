@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "P02", collectorNumber = "137")
+@CardRegistration(set = "VMA", collectorNumber = "221")
 public class NorwoodPriestess extends Card {
 
     public NorwoodPriestess() {

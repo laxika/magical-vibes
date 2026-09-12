@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "231")
 @CardRegistration(set = "TSB", collectorNumber = "74")
+@CardRegistration(set = "DDS", collectorNumber = "44")
 public class CallOfTheHerd extends Card {
 
     public CallOfTheHerd() {

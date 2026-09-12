@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "167")
+@CardRegistration(set = "DDS", collectorNumber = "19")
 public class VolcanicVision extends Card {
 
     public VolcanicVision() {

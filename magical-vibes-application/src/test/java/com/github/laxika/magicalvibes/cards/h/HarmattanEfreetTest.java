@@ -63,6 +63,19 @@ class HarmattanEfreetTest extends BaseCardTest {
     }
 
     @Test
+    void temporaryGrantDoesNotRemoveIntrinsicFlying() {
+        Permanent efreet = addCreatureReady(player1, new HarmattanEfreet());
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, null, efreet.getId());
+        harness.passBothPriorities();
+        assertThat(efreet.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(efreet.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new HarmattanEfreet());

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "RTR", collectorNumber = "11")
 @CardRegistration(set = "M20", collectorNumber = "16")
+@CardRegistration(set = "DDL", collectorNumber = "5")
 public class FencingAce extends Card {
 
     public FencingAce() {

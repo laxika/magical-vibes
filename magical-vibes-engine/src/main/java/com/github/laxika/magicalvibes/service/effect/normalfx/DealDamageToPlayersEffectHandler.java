@@ -40,13 +40,17 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToPlayersEffect) effect;
+        UUID damageSourceId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : entry.getCard().getId();
+        int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
         boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
         gameData.unpreventableDamageInProgress = previousUnpreventable || e.unpreventable();
         try {
             switch (e.recipient()) {
-                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER,
+                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER,
                      TRIGGERING_PLAYER ->
                         resolveSingleTargetPlayer(gameData, entry, e);
+                case TRIGGERING_PERMANENT_CONTROLLER -> resolveTriggeringPermanentController(gameData, entry, e);
                 case CONTROLLER -> resolveController(gameData, entry, e);
                 case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
                 case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
@@ -54,13 +58,17 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
             }
 
+            if (e.recordDamageDealt()) {
+                entry.setEventValue(gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0)
+                        - damageBefore);
+            }
             gameOutcomeService.checkWinCondition(gameData);
         } finally {
             gameData.unpreventableDamageInProgress = previousUnpreventable;
         }
     }
 
-    /** TARGET_PLAYER / ENCHANTED_PLAYER / ENCHANTED_PERMANENT_CONTROLLER / TRIGGERING_PERMANENT_CONTROLLER / TRIGGERING_PLAYER: victim = the stack entry's target player. */
+    /** Deals damage to the player already identified by the stack entry's target. */
     private void resolveSingleTargetPlayer(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         UUID targetId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetId)) return;
@@ -69,6 +77,27 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             int amount = evaluateAmount(gameData, entry, e, targetId);
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
             damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+        }
+    }
+
+    private void resolveTriggeringPermanentController(GameData gameData, StackEntry entry,
+                                                     DealDamageToPlayersEffect effect) {
+        UUID controllerId = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+        if (controllerId == null) {
+            controllerId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
+        }
+        if (controllerId == null) {
+            controllerId = entry.getTriggeringPermanentControllerId();
+        }
+        if (controllerId == null) {
+            controllerId = entry.getTargetId();
+        }
+        if (controllerId != null && gameData.playerIds.contains(controllerId)
+                && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+            int amount = evaluateAmount(gameData, entry, effect, controllerId);
+            damageSupport.dealDamageToPlayer(gameData, entry, controllerId,
+                    gameQueryService.applyDamageMultiplier(gameData, amount, entry));
         }
     }
 

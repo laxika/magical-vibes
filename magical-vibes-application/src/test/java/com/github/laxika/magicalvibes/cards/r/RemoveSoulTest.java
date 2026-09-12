@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.Atog;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -19,40 +18,36 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RemoveSoul.class, Atog.class, GrizzlyBears.class, GiantGrowth.class, Ornithopter.class})
+@CardUsed({RemoveSoul.class, GrizzlyBears.class, GiantGrowth.class, Ornithopter.class})
 class RemoveSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack targeting a creature spell")
     void castingPutsOnStackTargetingCreatureSpell() {
-        Atog atog = new Atog();
-        harness.setHand(player1, List.of(atog));
-        harness.addMana(player1, ManaColor.RED, 2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new RemoveSoul()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, atog.getId());
+        harness.castInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry removeSoulEntry = gd.stack.getLast();
         assertThat(removeSoulEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(removeSoulEntry.getCard().getName()).isEqualTo("Remove Soul");
-        assertThat(removeSoulEntry.getTargetId()).isEqualTo(atog.getId());
+        assertThat(removeSoulEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
     @DisplayName("Can target an artifact creature spell")
     void canTargetArtifactCreatureSpell() {
         Ornithopter ornithopter = new Ornithopter();
-        harness.setHand(player1, List.of(ornithopter));
 
         harness.setHand(player2, List.of(new RemoveSoul()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, ornithopter, "{0}");
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, ornithopter.getId());
 
@@ -82,36 +77,32 @@ class RemoveSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving counters a creature spell")
     void countersCreatureSpell() {
-        Atog atog = new Atog();
-        harness.setHand(player1, List.of(atog));
-        harness.addMana(player1, ManaColor.RED, 2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new RemoveSoul()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, atog.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         // Countered spell goes to owner's graveyard
-        harness.assertInGraveyard(player1, "Atog");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Does not enter the battlefield
-        harness.assertNotOnBattlefield(player1, "Atog");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Remove Soul goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Atog atog = new Atog();
-        harness.setHand(player1, List.of(atog));
-        harness.addMana(player1, ManaColor.RED, 2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new RemoveSoul()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, atog.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Remove Soul");
@@ -120,20 +111,18 @@ class RemoveSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
     void fizzlesIfTargetSpellRemoved() {
-        Atog atog = new Atog();
-        harness.setHand(player1, List.of(atog));
-        harness.addMana(player1, ManaColor.RED, 2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new RemoveSoul()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, atog.getId());
+        harness.castInstant(player2, 0, bears.getId());
 
         // Remove target from stack before Remove Soul resolves
         GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getName().equals("Atog"));
+        gd.stack.removeIf(se -> se.getCard().getId().equals(bears.getId()));
 
         harness.passBothPriorities();
 

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "81")
+@CardRegistration(set = "MMA", collectorNumber = "61")
+@CardRegistration(set = "DDS", collectorNumber = "7")
 public class ReachThroughMists extends Card {
 
     public ReachThroughMists() {

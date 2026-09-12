@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "5")
+@CardRegistration(set = "VMA", collectorNumber = "19")
 public class BrilliantHalo extends Card {
 
     public BrilliantHalo() {

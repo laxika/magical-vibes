@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "70")
+@CardRegistration(set = "DDK", collectorNumber = "22")
 public class UrgeToFeed extends Card {
 
     public UrgeToFeed() {

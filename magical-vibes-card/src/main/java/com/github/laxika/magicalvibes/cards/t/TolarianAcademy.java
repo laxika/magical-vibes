@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "330")
+@CardRegistration(set = "VMA", collectorNumber = "319")
 public class TolarianAcademy extends Card {
 
     public TolarianAcademy() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "92")
+@CardRegistration(set = "VMA", collectorNumber = "90")
 public class Rescind extends Card {
 
     public Rescind() {

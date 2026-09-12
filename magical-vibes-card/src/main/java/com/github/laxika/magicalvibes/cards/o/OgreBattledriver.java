@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "148")
+@CardRegistration(set = "DDN", collectorNumber = "16")
 public class OgreBattledriver extends Card {
 
     public OgreBattledriver() {

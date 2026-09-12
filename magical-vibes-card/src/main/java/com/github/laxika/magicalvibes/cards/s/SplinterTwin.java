@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "165")
+@CardRegistration(set = "MM2", collectorNumber = "129")
 public class SplinterTwin extends Card {
 
     public SplinterTwin() {

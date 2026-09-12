@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "101")
 @CardRegistration(set = "DD1", collectorNumber = "2")
+@CardRegistration(set = "EVG", collectorNumber = "2")
 public class AllosaurusRider extends Card {
 
     public AllosaurusRider() {

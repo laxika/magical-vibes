@@ -1425,6 +1425,7 @@ public class SpellCastTriggerCollectorService {
                     null,
                     null,
                     null,
+                    null,
                     sc.spellCard().getId(),
                     kickCount));
             return true;

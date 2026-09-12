@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "39")
+@CardRegistration(set = "DDQ", collectorNumber = "44")
 public class HavengulRunebinder extends Card {
 
     public HavengulRunebinder() {

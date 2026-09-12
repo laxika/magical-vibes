@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "72")
+@CardRegistration(set = "MMA", collectorNumber = "48")
 public class KeigaTheTideStar extends Card {
 
     public KeigaTheTideStar() {

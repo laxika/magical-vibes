@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "39")
+@CardRegistration(set = "DDJ", collectorNumber = "19")
 public class TrainOfThought extends Card {
 
     public TrainOfThought() {

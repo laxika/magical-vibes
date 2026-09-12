@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BlueElementalBlast;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SleightOfMind.class, CircleOfProtectionRed.class, WhiteKnight.class, HillGiant.class, BlueElementalBlast.class})
+@CardUsed({SleightOfMind.class, CircleOfProtectionRed.class, WhiteKnight.class})
 class SleightOfMindTest extends BaseCardTest {
 
     @Test

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "JOU", collectorNumber = "84")
+@CardRegistration(set = "DDR", collectorNumber = "62")
 public class SquelchingLeeches extends Card {
 
     public SquelchingLeeches() {

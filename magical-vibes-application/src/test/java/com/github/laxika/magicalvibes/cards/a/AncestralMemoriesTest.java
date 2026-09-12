@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,7 +105,7 @@ class AncestralMemoriesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With only one card in library, it goes directly to hand")
+    @DisplayName("With only one card in library, that card goes directly to hand")
     void oneCardInLibraryGoesToHand() {
         GameData gd = harness.getGameData();
         Card card = new Island();
@@ -115,7 +115,8 @@ class AncestralMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

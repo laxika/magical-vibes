@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "ICE", collectorNumber = "244")
 @CardRegistration(set = "DKM", collectorNumber = "26")
 @CardRegistration(set = "ME1", collectorNumber = "118")
+@CardRegistration(set = "VMA", collectorNumber = "210")
+@CardRegistration(set = "V13", collectorNumber = "4")
 public class FyndhornElves extends Card {
 
     public FyndhornElves() {

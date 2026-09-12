@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "84")
+@CardRegistration(set = "W17", collectorNumber = "16")
 public class CertainDeath extends Card {
 
     public CertainDeath() {

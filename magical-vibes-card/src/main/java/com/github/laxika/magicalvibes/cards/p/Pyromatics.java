@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "72")
+@CardRegistration(set = "DDJ", collectorNumber = "20")
 public class Pyromatics extends Card {
 
     public Pyromatics() {

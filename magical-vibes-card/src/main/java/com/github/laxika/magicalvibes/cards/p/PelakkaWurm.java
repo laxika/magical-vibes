@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "192")
 @CardRegistration(set = "ROE", collectorNumber = "204")
+@CardRegistration(set = "MM2", collectorNumber = "154")
 public class PelakkaWurm extends Card {
 
     public PelakkaWurm() {

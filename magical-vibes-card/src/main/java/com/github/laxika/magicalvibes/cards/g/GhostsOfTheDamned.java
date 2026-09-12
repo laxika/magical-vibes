@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "98")
+@CardRegistration(set = "ME3", collectorNumber = "68")
 public class GhostsOfTheDamned extends Card {
 
     public GhostsOfTheDamned() {

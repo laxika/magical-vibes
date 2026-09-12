@@ -97,8 +97,7 @@ class ReefPiratesTest extends BaseCardTest {
     }
 
     private void attachHermeticStudy(Permanent creature) {
-        Permanent aura = new Permanent(new HermeticStudy());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         aura.setAttachedTo(creature.getId());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(aura);
     }
 }

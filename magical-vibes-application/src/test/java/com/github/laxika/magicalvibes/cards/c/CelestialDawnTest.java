@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.s.StalkingTiger;
 import com.github.laxika.magicalvibes.cards.u.UnyaroGriffin;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -69,6 +70,14 @@ class CelestialDawnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Celestial Dawn itself becomes white")
+    void ownCelestialDawnBecomesWhite() {
+        Permanent dawn = harness.addToBattlefieldAndReturn(player1, new CelestialDawn());
+
+        assertThat(gqs.getEffectiveColors(gd, dawn)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
     @DisplayName("An opponent's green creature keeps its color")
     void opponentCreatureKeepsColor() {
         Permanent tiger = harness.addToBattlefieldAndReturn(player2, new StalkingTiger());
@@ -84,6 +93,21 @@ class CelestialDawnTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CelestialDawn());
 
         assertThat(gqs.getEffectiveColors(gd, forest)).doesNotContain(CardColor.WHITE);
+    }
+
+    @Test
+    @DisplayName("A Mountain you control becomes a Plains and taps for white")
+    void ownNonbasicLandBecomesPlains() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new CelestialDawn());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, mountain, CardSubtype.PLAINS)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mountain, CardSubtype.MOUNTAIN)).isFalse();
+
+        gs.tapPermanent(gd, player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "15")
 @CardRegistration(set = "8ED", collectorNumber = "34")
+@CardRegistration(set = "ME3", collectorNumber = "22")
 public class PeachGardenOath extends Card {
 
     public PeachGardenOath() {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 
 @CardRegistration(set = "TOR", collectorNumber = "120")
+@CardRegistration(set = "VMA", collectorNumber = "195")
 public class ArrogantWurm extends Card {
 
     public ArrogantWurm() {

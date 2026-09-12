@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "1")
+@CardRegistration(set = "MM2", collectorNumber = "4")
 public class KarnLiberated extends Card {
 
     public KarnLiberated() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "32")
+@CardRegistration(set = "DDJ", collectorNumber = "18")
 public class CallToHeel extends Card {
 
     public CallToHeel() {

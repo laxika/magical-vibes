@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ME1", collectorNumber = "114")
 @CardRegistration(set = "V09", collectorNumber = "2")
+@CardRegistration(set = "VMA", collectorNumber = "197")
 public class Berserk extends Card {
 
     public Berserk() {

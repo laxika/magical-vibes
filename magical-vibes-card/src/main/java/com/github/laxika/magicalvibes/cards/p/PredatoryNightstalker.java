@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "82")
+@CardRegistration(set = "VMA", collectorNumber = "134")
 public class PredatoryNightstalker extends Card {
 
     public PredatoryNightstalker() {

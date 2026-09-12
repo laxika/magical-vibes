@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.c.CloakOfMists;
+import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
+import com.github.laxika.magicalvibes.cards.h.HeatRay;
+import com.github.laxika.magicalvibes.cards.w.WizardMentor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,45 +17,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Guma.class, CloakOfMists.class, CoralMerfolk.class, HeatRay.class, WizardMentor.class})
 class GumaTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Blue creature cannot block Guma")
     void blueCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new Guma());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Guma());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Merfolk Scout", 2, 2, CardColor.BLUE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new CoralMerfolk());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -66,58 +38,57 @@ class GumaTest extends BaseCardTest {
     @Test
     @DisplayName("Guma takes no combat damage from a blue creature")
     void takesNoDamageFromBlue() {
-        Permanent attacker = new Permanent(createCreature("Sea Serpent", 3, 3, CardColor.BLUE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new CoralMerfolk());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new Guma());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new Guma());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
+        assertThat(blocker.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Guma");
+        harness.assertInGraveyard(player1, "Coral Merfolk");
     }
 
     @Test
-    @DisplayName("Guma cannot be targeted by a blue instant")
-    void cannotBeTargetedByBlueInstant() {
-        Permanent guma = new Permanent(new Guma());
-        guma.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(guma);
+    @DisplayName("Guma cannot be targeted by a blue Aura")
+    void cannotBeTargetedByBlueAura() {
+        Permanent guma = addCreatureReady(player2, new Guma());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        harness.setHand(player1, List.of(createTargetedInstant("Blue Zap", CardColor.BLUE, "{U}")));
+        harness.setHand(player1, List.of(new CloakOfMists()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, guma.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, guma.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from blue");
     }
 
     @Test
-    @DisplayName("Guma can be targeted by a red instant")
+    @DisplayName("Guma cannot be targeted by a blue activated ability")
+    void cannotBeTargetedByBlueAbility() {
+        addCreatureReady(player2, new WizardMentor());
+        Permanent guma = addCreatureReady(player2, new Guma());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, guma.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("Guma can be targeted and damaged by a red instant")
     void canBeTargetedByRedInstant() {
-        Permanent guma = new Permanent(new Guma());
-        guma.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(guma);
+        Permanent guma = addCreatureReady(player2, new Guma());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Zap", CardColor.RED, "{R}")));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new HeatRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playCard(gd, player1, 0, 0, guma.getId(), null);
+        harness.castInstantForX(player1, 0, 1, List.of(guma.getId()));
+        harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Red Zap");
+        assertThat(guma.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Guma");
     }
 }

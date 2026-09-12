@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "21")
+@CardRegistration(set = "MP2", collectorNumber = "8")
 public class ConsecratedSphinx extends Card {
 
     public ConsecratedSphinx() {

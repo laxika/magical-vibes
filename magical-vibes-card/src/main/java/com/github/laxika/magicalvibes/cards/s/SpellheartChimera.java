@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "204")
+@CardRegistration(set = "DDS", collectorNumber = "25")
 public class SpellheartChimera extends Card {
 
     public SpellheartChimera() {

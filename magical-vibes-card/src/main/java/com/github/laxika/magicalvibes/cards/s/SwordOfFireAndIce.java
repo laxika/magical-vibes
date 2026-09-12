@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "148")
+@CardRegistration(set = "MMA", collectorNumber = "216")
+@CardRegistration(set = "MPS", collectorNumber = "29")
 public class SwordOfFireAndIce extends Card {
 
     public SwordOfFireAndIce() {

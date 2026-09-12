@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RelentlessAssault.class, WuInfantry.class})
+@CardUsed({RelentlessAssault.class, VedalkenOrrery.class, WuInfantry.class})
 class RelentlessAssaultTest extends BaseCardTest {
 
     @Test
@@ -180,5 +180,30 @@ class RelentlessAssaultTest extends BaseCardTest {
 
         assertThat(attackedWuInfantry.isTapped()).isFalse();
         assertThat(gd.additionalCombatMainPhasePairs).isZero();
+    }
+
+    @Test
+    @DisplayName("A precombat cast leaves the normal combat after the additional main phase")
+    void precombatCastLeavesNormalCombatAfterAdditionalMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
     }
 }

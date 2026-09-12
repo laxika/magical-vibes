@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "70")
+@CardRegistration(set = "PC2", collectorNumber = "17")
 public class GuardGomazoa extends Card {
 
     public GuardGomazoa() {

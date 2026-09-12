@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Dromosaur.class, GorillaWarrior.class})
 class DromosaurTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Dromosaur becomes blocked, it gets +2/-2 until end of turn")
     void becomesBlockedGetsBoost() {
-        Permanent dromosaur = addReadyDromosaur(player1);
+        Permanent dromosaur = addCreatureReady(player1, new Dromosaur());
         dromosaur.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GorillaWarrior());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -33,9 +36,9 @@ class DromosaurTest extends BaseCardTest {
     @Test
     @DisplayName("When Dromosaur blocks, it gets +2/-2 until end of turn")
     void blocksGetsBoost() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
         attacker.setAttacking(true);
-        Permanent dromosaur = addReadyDromosaur(player2);
+        Permanent dromosaur = addCreatureReady(player2, new Dromosaur());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -48,7 +51,7 @@ class DromosaurTest extends BaseCardTest {
     @Test
     @DisplayName("When Dromosaur is unblocked, it gets no boost")
     void unblockedNoBoost() {
-        Permanent dromosaur = addReadyDromosaur(player1);
+        Permanent dromosaur = addCreatureReady(player1, new Dromosaur());
         dromosaur.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -62,9 +65,9 @@ class DromosaurTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOff() {
-        Permanent dromosaur = addReadyDromosaur(player1);
+        Permanent dromosaur = addCreatureReady(player1, new Dromosaur());
         dromosaur.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GorillaWarrior());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -78,10 +81,28 @@ class DromosaurTest extends BaseCardTest {
         assertThat(dromosaur.getToughnessModifier()).isZero();
     }
 
-    private Permanent addReadyDromosaur(Player player) {
-        Permanent permanent = new Permanent(new Dromosaur());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("When Dromosaur blocks multiple creatures, it gets +2/-2 only once")
+    void blocksMultipleCreaturesGetsOneBoost() {
+        Dromosaur card = new Dromosaur();
+        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        Permanent dromosaur = addCreatureReady(player2, card);
+
+        Permanent firstAttacker = addCreatureReady(player1, new GorillaWarrior());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new GorillaWarrior());
+        secondAttacker.setAttacking(true);
+
+        int dromosaurIndex = gd.playerBattlefields.get(player2.getId()).indexOf(dromosaur);
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(dromosaurIndex, 0),
+                new BlockerAssignment(dromosaurIndex, 1)
+        ));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(dromosaur);
+        assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
+        assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
     }
 }

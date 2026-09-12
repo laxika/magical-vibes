@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "259")
+@CardRegistration(set = "MPS", collectorNumber = "21")
 public class RingsOfBrighthearth extends Card {
 
     public RingsOfBrighthearth() {

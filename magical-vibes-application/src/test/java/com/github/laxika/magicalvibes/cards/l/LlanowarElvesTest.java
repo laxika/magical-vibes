@@ -25,6 +25,21 @@ class LlanowarElvesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Already-tapped Llanowar Elves cannot produce mana again")
+    void alreadyTappedCannotTapAgain() {
+        Permanent perm = addCreatureReady(player1, new LlanowarElves());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Summoning-sick Llanowar Elves cannot tap for mana")
     void summoningSickCannotTap() {
         Permanent perm = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());

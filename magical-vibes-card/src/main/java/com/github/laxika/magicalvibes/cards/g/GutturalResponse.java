@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "208")
+@CardRegistration(set = "DDS", collectorNumber = "56")
 public class GutturalResponse extends Card {
 
     public GutturalResponse() {

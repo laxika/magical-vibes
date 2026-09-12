@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToHan
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "83")
+@CardRegistration(set = "VMA", collectorNumber = "152")
 public class BurningWish extends Card {
 
     public BurningWish() {

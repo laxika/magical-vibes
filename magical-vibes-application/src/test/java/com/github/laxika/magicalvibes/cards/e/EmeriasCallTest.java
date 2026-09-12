@@ -50,7 +50,9 @@ class EmeriasCallTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nonAngel, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.INDESTRUCTIBLE)).isFalse();
 
-        advanceToUpkeep(player1);
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, nonAngel, Keyword.INDESTRUCTIBLE)).isFalse();
     }

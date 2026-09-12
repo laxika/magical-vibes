@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HoppingAutomaton.class})
 class HoppingAutomatonTest extends BaseCardTest {
 
     @Test
@@ -22,6 +24,17 @@ class HoppingAutomatonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, automaton)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, automaton, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating does not tap the automaton")
+    void activationDoesNotTapAutomaton() {
+        Permanent automaton = harness.addToBattlefieldAndReturn(player1, new HoppingAutomaton());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(automaton.isTapped()).isFalse();
     }
 
     @Test

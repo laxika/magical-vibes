@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "169")
+@CardRegistration(set = "DDJ", collectorNumber = "59")
+@CardRegistration(set = "MMA", collectorNumber = "146")
 public class GreaterMossdog extends Card {
 
     public GreaterMossdog() {

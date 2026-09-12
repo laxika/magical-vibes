@@ -1,22 +1,25 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
+import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HiddenPredators.class, ThunderingGiant.class, ArgothianSwine.class})
 class HiddenPredatorsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Becomes a 4/4 Beast creature when an opponent controls a creature with power 4 or greater")
     void becomesBeastCreatureWhenOpponentControlsCreatureWithPowerAtLeastFour() {
         Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
-        harness.addToBattlefield(player2, new AvatarOfMight());
+        harness.addToBattlefield(player2, new ThunderingGiant());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -32,7 +35,7 @@ class HiddenPredatorsTest extends BaseCardTest {
     @DisplayName("Does not trigger when an opponent controls no creature with power 4 or greater")
     void doesNotTriggerBelowPowerThreshold() {
         Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
 
         harness.passBothPriorities();
 
@@ -45,7 +48,7 @@ class HiddenPredatorsTest extends BaseCardTest {
     @DisplayName("A qualifying creature controlled by this card's controller does not trigger it")
     void doesNotTriggerForControllerCreature() {
         Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
-        harness.addToBattlefield(player1, new AvatarOfMight());
+        harness.addToBattlefield(player1, new ThunderingGiant());
 
         harness.passBothPriorities();
 
@@ -58,7 +61,7 @@ class HiddenPredatorsTest extends BaseCardTest {
     @DisplayName("Does not trigger again after becoming a creature")
     void doesNotTriggerAgainAfterBecomingCreature() {
         Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
-        harness.addToBattlefield(player2, new AvatarOfMight());
+        harness.addToBattlefield(player2, new ThunderingGiant());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -69,5 +72,22 @@ class HiddenPredatorsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, hiddenPredators)).isTrue();
+    }
+
+    @Test
+    @CardUsed(EnchantedEvening.class)
+    @DisplayName("Can trigger again when a continuous effect keeps it an enchantment")
+    void canTriggerAgainWhenContinuousEffectKeepsItAnEnchantment() {
+        Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
+        harness.addToBattlefield(player1, new EnchantedEvening());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, hiddenPredators)).isTrue();
+        assertThat(gqs.isEnchantment(gd, hiddenPredators)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(hiddenPredators.getId());
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "5")
+@CardRegistration(set = "VMA", collectorNumber = "17")
 public class BenevolentBodyguard extends Card {
 
     public BenevolentBodyguard() {

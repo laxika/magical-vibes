@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "114")
+@CardRegistration(set = "VMA", collectorNumber = "201")
 public class ClawsOfWirewood extends Card {
 
     public ClawsOfWirewood() {

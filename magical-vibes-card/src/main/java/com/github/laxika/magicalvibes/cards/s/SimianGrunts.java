@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "113")
+@CardRegistration(set = "VMA", collectorNumber = "232")
 public class SimianGrunts extends Card {
 
     public SimianGrunts() {

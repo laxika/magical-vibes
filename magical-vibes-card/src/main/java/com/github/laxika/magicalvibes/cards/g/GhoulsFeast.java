@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MMQ", collectorNumber = "137")
+@CardRegistration(set = "DDJ", collectorNumber = "67")
 public class GhoulsFeast extends Card {
 
     public GhoulsFeast() {

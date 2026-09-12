@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "210")
+@CardRegistration(set = "MMA", collectorNumber = "157")
+@CardRegistration(set = "PC2", collectorNumber = "73")
 public class PenumbraSpider extends Card {
 
     public PenumbraSpider() {

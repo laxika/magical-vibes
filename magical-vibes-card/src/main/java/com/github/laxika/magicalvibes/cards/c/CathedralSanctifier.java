@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "11")
+@CardRegistration(set = "DDQ", collectorNumber = "3")
 public class CathedralSanctifier extends Card {
 
     public CathedralSanctifier() {

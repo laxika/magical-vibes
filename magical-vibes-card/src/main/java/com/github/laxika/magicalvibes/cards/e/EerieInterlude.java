@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "16")
+@CardRegistration(set = "DDQ", collectorNumber = "8")
 public class EerieInterlude extends Card {
 
     public EerieInterlude() {
