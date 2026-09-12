@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BelbesArmor.class, BelbesPercher.class, BelbesPortal.class})
 class BelbesArmorTest extends BaseCardTest {
 
     @Test
@@ -31,11 +31,24 @@ class BelbesArmorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("X may be zero")
+    void zeroXLeavesCreatureStatsUnchanged() {
+        Permanent armor = addReadyArmor(player1);
+        Permanent creature = addCreature(player1);
+
+        harness.activateAbility(player1, 0, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(armor.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The -X/+X wears off at cleanup")
     void boostWearsOffAtCleanup() {
         addReadyArmor(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent creature = addCreature(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, creature.getId());
@@ -55,26 +68,21 @@ class BelbesArmorTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadyArmor(player1);
-        harness.addToBattlefield(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, forest.getId()))
+        Permanent portal = harness.addToBattlefieldAndReturn(player2, new BelbesPortal());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, portal.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
 
     private Permanent addReadyArmor(Player player) {
-        Permanent perm = new Permanent(new BelbesArmor());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BelbesArmor());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BelbesPercher());
     }
 }

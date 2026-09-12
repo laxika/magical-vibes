@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JoltingMerfolk;
+import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ParallaxInhibitor.class, JoltingMerfolk.class, RootwaterCommando.class})
 class ParallaxInhibitorTest extends BaseCardTest {
 
     @Test
@@ -20,7 +22,7 @@ class ParallaxInhibitorTest extends BaseCardTest {
     void putsFadeCountersOnControlledFadingPermanents() {
         addReadyInhibitor(player1);
         Permanent fadingPermanent = addReadyPermanent(player1, new JoltingMerfolk());
-        Permanent nonFadingPermanent = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonFadingPermanent = addCreatureReady(player1, new RootwaterCommando());
         Permanent opponentFadingPermanent = addReadyPermanent(player2, new JoltingMerfolk());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -38,6 +40,32 @@ class ParallaxInhibitorTest extends BaseCardTest {
     @DisplayName("Requires one generic mana to activate")
     void cannotActivateWithoutMana() {
         addReadyInhibitor(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Puts a fade counter on every fading permanent you control")
+    void putsFadeCounterOnEveryControlledFadingPermanent() {
+        addReadyInhibitor(player1);
+        Permanent firstFadingPermanent = addReadyPermanent(player1, new JoltingMerfolk());
+        Permanent secondFadingPermanent = addReadyPermanent(player1, new JoltingMerfolk());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstFadingPermanent.getCounterCount(CounterType.FADE)).isEqualTo(1);
+        assertThat(secondFadingPermanent.getCounterCount(CounterType.FADE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while the artifact is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent inhibitor = addReadyPermanent(player1, new ParallaxInhibitor());
+        inhibitor.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

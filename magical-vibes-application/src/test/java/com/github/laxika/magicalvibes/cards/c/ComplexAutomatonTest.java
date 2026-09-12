@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ComplexAutomaton.class)
 class ComplexAutomatonTest extends BaseCardTest {
 
     @Test
@@ -74,14 +76,51 @@ class ComplexAutomatonTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() == automaton);
     }
 
+    @Test
+    @DisplayName("Counts noncreature permanents toward the threshold")
+    void countsNoncreaturePermanents() {
+        ComplexAutomaton automaton = new ComplexAutomaton();
+        harness.addToBattlefield(player1, automaton);
+        addFillerPermanents(player1, 5);
+        addFillerPermanent(player1, CardType.ARTIFACT);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(automaton);
+    }
+
+    @Test
+    @DisplayName("Does not count permanents controlled by an opponent")
+    void doesNotCountOpponentsPermanents() {
+        ComplexAutomaton automaton = new ComplexAutomaton();
+        harness.addToBattlefield(player1, automaton);
+        addFillerPermanents(player1, 5);
+        addFillerPermanents(player2, 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == automaton);
+    }
+
     private void addFillerPermanents(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Card filler = new Card();
-            filler.setName("Filler Permanent");
-            filler.setType(CardType.CREATURE);
+            addFillerPermanent(player, CardType.CREATURE);
+        }
+    }
+
+    private void addFillerPermanent(Player player, CardType type) {
+        Card filler = new Card();
+        filler.setName("Filler Permanent");
+        filler.setType(type);
+        if (type == CardType.CREATURE) {
             filler.setPower(1);
             filler.setToughness(1);
-            harness.addToBattlefield(player, filler);
         }
+        harness.addToBattlefield(player, filler);
     }
 }

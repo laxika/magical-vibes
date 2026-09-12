@@ -1,35 +1,42 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.b.BlindingAngel;
+import com.github.laxika.magicalvibes.cards.d.DefiantFalcon;
+import com.github.laxika.magicalvibes.cards.l.Lashknife;
+import com.github.laxika.magicalvibes.cards.m.Mossdog;
+import com.github.laxika.magicalvibes.cards.t.Topple;
+import com.github.laxika.magicalvibes.cards.v.ViciousHunger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        VoiceOfTruth.class,
+        Mossdog.class,
+        DefiantFalcon.class,
+        BlindingAngel.class,
+        Topple.class,
+        Lashknife.class,
+        ViciousHunger.class
+})
 class VoiceOfTruthTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Green creature cannot block Voice of Truth because it has flying")
-    void greenCreatureCannotBlockBecauseOfFlying() {
-        Permanent voice = addReadyCreature(player1, new VoiceOfTruth());
-        voice.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+    @DisplayName("A nonflying creature cannot block Voice of Truth")
+    void nonflyingCreatureCannotBlock() {
+        addCreatureReady(player1, new VoiceOfTruth());
+        addCreatureReady(player2, new Mossdog());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -40,12 +47,10 @@ class VoiceOfTruthTest extends BaseCardTest {
     @Test
     @DisplayName("White creature cannot block Voice of Truth")
     void whiteCreatureCannotBlock() {
-        Permanent voice = addReadyCreature(player1, new VoiceOfTruth());
-        voice.setAttacking(true);
-        Card blockerCard = createCreature("White Knight", 2, 2, CardColor.WHITE);
-        blockerCard.setKeywords(Set.of(Keyword.FLYING));
-        Permanent blocker = addReadyCreature(player2, blockerCard);
+        addCreatureReady(player1, new VoiceOfTruth());
+        addCreatureReady(player2, new DefiantFalcon());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -56,58 +61,54 @@ class VoiceOfTruthTest extends BaseCardTest {
     @Test
     @DisplayName("Protection from white prevents white combat damage")
     void preventsWhiteCombatDamage() {
-        Permanent attacker = addReadyCreature(player1, createCreature("White Knight", 3, 3, CardColor.WHITE));
-        attacker.setAttacking(true);
-        Permanent voice = addReadyCreature(player2, new VoiceOfTruth());
-        voice.setBlocking(true);
-        voice.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player1, new BlindingAngel());
+        Permanent voice = addCreatureReady(player2, new VoiceOfTruth());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
 
+        assertThat(voice.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Voice of Truth");
     }
 
     @Test
-    @DisplayName("Voice of Truth cannot be targeted by a white spell")
+    @DisplayName("Voice of Truth cannot be targeted by the white spell Topple")
     void cannotBeTargetedByWhiteSpell() {
-        Permanent voice = addReadyCreature(player2, new VoiceOfTruth());
-        addReadyCreature(player2, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        harness.setHand(player1, List.of(createTargetedInstant("White Bolt", CardColor.WHITE, "{W}")));
+        Permanent voice = addCreatureReady(player2, new VoiceOfTruth());
+        harness.setHand(player1, List.of(new Topple()));
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, voice.getId(), null))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, voice.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from white");
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Voice of Truth cannot be enchanted by the white Aura Lashknife")
+    void cannotBeEnchantedByWhiteAura() {
+        Permanent voice = addCreatureReady(player2, new VoiceOfTruth());
+        harness.setHand(player1, List.of(new Lashknife()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, voice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
     }
 
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
+    @Test
+    @DisplayName("Voice of Truth can be targeted by a black spell")
+    void canBeTargetedByBlackSpell() {
+        Permanent voice = addCreatureReady(player2, new VoiceOfTruth());
+        harness.setHand(player1, List.of(new ViciousHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
+        harness.castSorcery(player1, 0, 0, voice.getId());
+
+        assertThat(gd.stack).hasSize(1);
     }
 }

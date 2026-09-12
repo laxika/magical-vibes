@@ -3,19 +3,20 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoilingWoodworm.class, Forest.class, Mountain.class})
 class CoilingWoodwormTest extends BaseCardTest {
 
     @Test
     @DisplayName("Power equals the number of Forests on the battlefield; toughness stays 1")
     void powerEqualsForestsOnBattlefield() {
-        Permanent woodworm = addWoodworm(player1);
+        Permanent woodworm = addCreatureReady(player1, new CoilingWoodworm());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new Mountain());
@@ -27,7 +28,7 @@ class CoilingWoodwormTest extends BaseCardTest {
     @Test
     @DisplayName("Power updates as Forests enter and leave the battlefield")
     void powerUpdatesWhenForestsChange() {
-        Permanent woodworm = addWoodworm(player1);
+        Permanent woodworm = addCreatureReady(player1, new CoilingWoodworm());
 
         assertThat(gqs.getEffectivePower(gd, woodworm)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, woodworm)).isEqualTo(1);
@@ -42,10 +43,4 @@ class CoilingWoodwormTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, woodworm)).isEqualTo(1);
     }
 
-    private Permanent addWoodworm(Player player) {
-        Permanent permanent = new Permanent(new CoilingWoodworm());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SealOfFire.class, SpinelessThug.class})
 class SealOfFireTest extends BaseCardTest {
 
     @Test
@@ -40,23 +41,23 @@ class SealOfFireTest extends BaseCardTest {
     @DisplayName("Seal of Fire deals 2 damage to a target creature")
     void dealsDamageToCreature() {
         addSealOfFire();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SpinelessThug());
 
-        var targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        var targetId = harness.getPermanentId(player2, "Spineless Thug");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Spineless Thug");
+        harness.assertInGraveyard(player2, "Spineless Thug");
     }
 
     @Test
     @DisplayName("Seal of Fire's ability fizzles when its target is removed")
     void fizzlesIfTargetRemoved() {
         addSealOfFire();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SpinelessThug());
 
-        var targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        var targetId = harness.getPermanentId(player2, "Spineless Thug");
         harness.activateAbility(player1, 0, null, targetId);
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();

@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.ErebosGodOfTheDead;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkyshroudCutter.class, Forest.class, ErebosGodOfTheDead.class})
 class SkyshroudCutterTest extends BaseCardTest {
 
     @Test
@@ -22,6 +24,7 @@ class SkyshroudCutterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SkyshroudCutter()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife + 5);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Skyshroud Cutter");
@@ -40,13 +43,34 @@ class SkyshroudCutterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot use the alternate cost if an opponent cannot gain life")
+    void alternateCostRequiresOpponentCanGainLife() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new ErebosGodOfTheDead());
+        harness.setHand(player1, List.of(new SkyshroudCutter()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can pay the normal mana cost while controlling a Forest")
+    void castsNormallyWhenAlternateCostIsAvailable() {
+        harness.addToBattlefield(player1, new Forest());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new SkyshroudCutter(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skyshroud Cutter");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Can be cast normally for its mana cost")
     void castsNormally() {
-        harness.setHand(player1, List.of(new SkyshroudCutter()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkyshroudCutter(), "{3}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Skyshroud Cutter");
