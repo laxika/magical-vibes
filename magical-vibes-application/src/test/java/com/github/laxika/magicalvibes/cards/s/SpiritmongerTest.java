@@ -28,10 +28,25 @@ class SpiritmongerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castSorcery(player1, 0, List.of(monger.getId(), target.getId()));
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(monger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger from another Spiritmonger dealing damage to a creature")
+    void doesNotTriggerFromAnotherSpiritmongerDealingDamage() {
+        Permanent watcher = addCreatureReady(player1, new Spiritmonger());
+        Permanent attacker = addCreatureReady(player1, new Spiritmonger());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, List.of(attacker.getId(), target.getId()));
+        resolveAllTriggers();
+
+        assertThat(watcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

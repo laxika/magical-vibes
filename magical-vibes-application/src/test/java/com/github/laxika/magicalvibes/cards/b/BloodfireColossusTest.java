@@ -1,49 +1,29 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
+import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        BloodfireColossus.class,
+        GrizzlyBears.class,
+        EnormousBaloth.class,
+        DarksteelSentinel.class,
+        GloriousAnthem.class
+})
 class BloodfireColossusTest extends BaseCardTest {
-
-    /** A 7/7 creature that survives 6 damage. */
-    private static Card toughCreature() {
-        Card card = new Card();
-        card.setName("Enormous Baloth");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{6}{G}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(7);
-        card.setToughness(7);
-        return card;
-    }
-
-    /** A 2/2 indestructible creature. */
-    private static Card indestructibleCreature() {
-        Card card = new Card();
-        card.setName("Darksteel Sentinel");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{6}");
-        card.setColor(CardColor.WHITE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
-        return card;
-    }
 
     // ===== Activation and sacrifice =====
 
@@ -65,7 +45,7 @@ class BloodfireColossusTest extends BaseCardTest {
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Bloodfire Colossus");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(colossus);
     }
 
     // ===== Damage to all players =====
@@ -83,8 +63,8 @@ class BloodfireColossusTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14); // 20 - 6
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14); // 20 - 6
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
     }
 
     // ===== Damage to creatures =====
@@ -96,6 +76,7 @@ class BloodfireColossusTest extends BaseCardTest {
         harness.addToBattlefield(player1, colossus);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BloodfireColossus());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -104,10 +85,12 @@ class BloodfireColossusTest extends BaseCardTest {
         // Both Grizzly Bears (2/2) should be destroyed
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Bloodfire Colossus");
 
         // Both should be in their owners' graveyards
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Bloodfire Colossus");
     }
 
     @Test
@@ -115,7 +98,7 @@ class BloodfireColossusTest extends BaseCardTest {
     void creaturesWithHighToughnessSurvive() {
         BloodfireColossus colossus = new BloodfireColossus();
         harness.addToBattlefield(player1, colossus);
-        harness.addToBattlefield(player2, toughCreature());
+        harness.addToBattlefield(player2, new EnormousBaloth());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -132,13 +115,13 @@ class BloodfireColossusTest extends BaseCardTest {
     void indestructibleCreaturesSurvive() {
         BloodfireColossus colossus = new BloodfireColossus();
         harness.addToBattlefield(player1, colossus);
-        harness.addToBattlefield(player2, indestructibleCreature());
+        harness.addToBattlefield(player2, new DarksteelSentinel());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Indestructible 2/2 survives even though 6 >= 2
+        // Indestructible 3/3 survives even though 6 damage would be lethal
         harness.assertOnBattlefield(player2, "Darksteel Sentinel");
     }
 
@@ -169,7 +152,7 @@ class BloodfireColossusTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
@@ -181,12 +164,7 @@ class BloodfireColossusTest extends BaseCardTest {
         BloodfireColossus colossus = new BloodfireColossus();
         harness.addToBattlefield(player1, colossus);
 
-        Card enchantment = new Card();
-        enchantment.setName("Test Enchantment");
-        enchantment.setType(CardType.ENCHANTMENT);
-        enchantment.setManaCost("{1}{W}");
-        enchantment.setColor(CardColor.WHITE);
-        harness.addToBattlefield(player2, enchantment);
+        harness.addToBattlefield(player2, new GloriousAnthem());
 
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -194,7 +172,7 @@ class BloodfireColossusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Enchantment should still be on the battlefield
-        harness.assertOnBattlefield(player2, "Test Enchantment");
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
     }
 }
 
