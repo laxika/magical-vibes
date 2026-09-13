@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "211")
+@CardRegistration(set = "SS2", collectorNumber = "8")
 public class BlackbladeReforged extends Card {
 
     public BlackbladeReforged() {
