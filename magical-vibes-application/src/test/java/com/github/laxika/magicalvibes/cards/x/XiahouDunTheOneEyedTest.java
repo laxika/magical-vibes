@@ -108,8 +108,7 @@ class XiahouDunTheOneEyedTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ForestBear());
         addCreatureReady(player1, new XiahouDunTheOneEyed());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -124,8 +123,7 @@ class XiahouDunTheOneEyedTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ShuCavalry());
         addCreatureReady(player1, new XiahouDunTheOneEyed());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

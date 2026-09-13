@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "RAV", collectorNumber = "284")
 @CardRegistration(set = "ECL", collectorNumber = "268")
 @CardRegistration(set = "ECL", collectorNumber = "351")
+@CardRegistration(set = "EXP", collectorNumber = "10")
 public class TempleGarden extends Card {
 
     public TempleGarden() {

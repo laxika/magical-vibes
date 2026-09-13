@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "46")
 @CardRegistration(set = "TD2", collectorNumber = "34")
+@CardRegistration(set = "MM2", collectorNumber = "59")
 public class StoicRebuttal extends Card {
 
     public StoicRebuttal() {

@@ -113,8 +113,7 @@ class IvoryGuardiansTest extends BaseCardTest {
     void redCreatureCannotBlock() {
         addCreatureReady(player1, new IvoryGuardians());
         addCreatureReady(player2, new MonssGoblinRaiders());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "18")
+@CardRegistration(set = "VMA", collectorNumber = "52")
 public class TerohsFaithful extends Card {
 
     public TerohsFaithful() {

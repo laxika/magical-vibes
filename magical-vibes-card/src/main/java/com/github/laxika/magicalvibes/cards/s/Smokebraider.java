@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "189")
 @CardRegistration(set = "HOP", collectorNumber = "66")
+@CardRegistration(set = "MM2", collectorNumber = "125")
 public class Smokebraider extends Card {
 
     public Smokebraider() {

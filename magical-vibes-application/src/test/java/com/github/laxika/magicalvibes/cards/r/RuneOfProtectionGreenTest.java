@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.l.Lull;
+import com.github.laxika.magicalvibes.cards.s.SerraZealot;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RuneOfProtectionGreen.class, ArgothianSwine.class, SerraZealot.class, Lull.class})
 class RuneOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -35,15 +38,15 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
     @DisplayName("Choosing a green source records a one-shot prevention shield")
     void choosingGreenSourceRecordsShield() {
         addReadyRune(player1);
-        Permanent bears = addReadyGreenCreature(player2);
+        Permanent swine = addReadyGreenCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, swine.getId());
 
         assertThat(gd.playerSourceNextDamageShields)
-                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(bears.getId()));
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(swine.getId()));
     }
 
     @Test
@@ -51,14 +54,14 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
     void preventsNextCombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
         addReadyRune(player1);
-        Permanent bears = addReadyGreenCreature(player2);
+        Permanent swine = addReadyGreenCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, swine.getId());
 
-        bears.setAttacking(true);
+        swine.setAttacking(true);
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
@@ -81,8 +84,35 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         other.setAttacking(true);
         resolveCombat(player2);
 
-        harness.assertLife(player1, 18);
+        harness.assertLife(player1, 17);
         assertThat(gd.playerSourceNextDamageShields).anyMatch(s -> s.sourceId().equals(chosen.getId()));
+    }
+
+    @Test
+    @DisplayName("Can choose a green spell on the stack as the source")
+    void canChooseGreenSpellOnStack() {
+        addReadyRune(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        Lull greenSpell = new Lull();
+        harness.castFromHand(player2, greenSpell, "{1}{G}");
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(greenSpell.getId());
+
+        harness.handlePermanentChosen(player1, greenSpell.getId());
+
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(greenSpell.getId()));
     }
 
     @Test
@@ -105,12 +135,12 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyRune(player1);
-        Permanent bears = addReadyGreenCreature(player2);
+        Permanent swine = addReadyGreenCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, swine.getId());
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
@@ -126,7 +156,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
     @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new RuneOfProtectionGreen()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ArgothianSwine()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.forceActivePlayer(player1);
@@ -137,27 +167,18 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rune of Protection: Green");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Argothian Swine");
     }
 
     private Permanent addReadyRune(Player player) {
-        Permanent perm = new Permanent(new RuneOfProtectionGreen());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new RuneOfProtectionGreen());
     }
 
     private Permanent addReadyGreenCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ArgothianSwine());
     }
 
     private Permanent addReadyNonGreenCreature(Player player) {
-        Permanent perm = new Permanent(new FugitiveWizard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SerraZealot());
     }
 }

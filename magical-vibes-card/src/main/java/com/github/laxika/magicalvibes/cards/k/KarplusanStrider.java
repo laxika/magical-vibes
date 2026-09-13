@@ -10,6 +10,7 @@ import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "272")
 @CardRegistration(set = "CSP", collectorNumber = "112")
+@CardRegistration(set = "MM2", collectorNumber = "145")
 public class KarplusanStrider extends Card {
 
     public KarplusanStrider() {

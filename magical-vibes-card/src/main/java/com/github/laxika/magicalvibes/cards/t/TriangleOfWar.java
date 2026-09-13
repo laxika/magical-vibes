@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "158")
+@CardRegistration(set = "VMA", collectorNumber = "288")
 public class TriangleOfWar extends Card {
 
     public TriangleOfWar() {

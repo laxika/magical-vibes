@@ -19,7 +19,7 @@ public class ManaVapors extends Card {
                 "Target must be a player"
         )).addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(
                 TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                new PermanentIsLandPredicate()
+                new PermanentIsLandPredicate(), 1, true
         ));
     }
 }

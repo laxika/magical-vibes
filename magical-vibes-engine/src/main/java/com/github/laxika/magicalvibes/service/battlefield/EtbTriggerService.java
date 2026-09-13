@@ -143,11 +143,17 @@ public class EtbTriggerService {
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
-        if (enteringPermanent != null && modeChoice != null
-                && enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
-            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
-                    enteringPermanent.getId(), modeChoice.modes());
-            return;
+        if (enteringPermanent != null && modeChoice != null) {
+            if (modeChoice.eachPlayer()) {
+                if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                        gameData, card, enteringPermanent.getId(), modeChoice.modes())) {
+                    return;
+                }
+            } else if (enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+                playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                        enteringPermanent.getId(), modeChoice.modes());
+                return;
+            }
         }
         ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseColorEffect)
@@ -223,11 +229,17 @@ public class EtbTriggerService {
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
-        if (enteringPermanent != null && modeChoice != null
-                && enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
-            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
-                    enteringPermanent.getId(), modeChoice.modes());
-            return;
+        if (enteringPermanent != null && modeChoice != null) {
+            if (modeChoice.eachPlayer()) {
+                if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                        gameData, card, enteringPermanent.getId(), modeChoice.modes())) {
+                    return;
+                }
+            } else if (enteringPermanent.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+                playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
+                        enteringPermanent.getId(), modeChoice.modes());
+                return;
+            }
         }
         SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)

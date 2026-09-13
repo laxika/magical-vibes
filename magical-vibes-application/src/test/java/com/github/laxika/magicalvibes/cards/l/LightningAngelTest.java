@@ -37,8 +37,7 @@ class LightningAngelTest extends BaseCardTest {
         addCreatureReady(player1, new LightningAngel());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

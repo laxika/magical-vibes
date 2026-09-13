@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "BFZ", collectorNumber = "11")
+@CardRegistration(set = "DDP", collectorNumber = "41")
 public class OblivionSower extends Card {
 
     public OblivionSower() {

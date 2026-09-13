@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "146")
+@CardRegistration(set = "DDR", collectorNumber = "23")
 public class VinesOfTheRecluse extends Card {
 
     public VinesOfTheRecluse() {

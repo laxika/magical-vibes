@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "156")
+@CardRegistration(set = "MM2", collectorNumber = "216")
 public class GlintHawkIdol extends Card {
 
     public GlintHawkIdol() {

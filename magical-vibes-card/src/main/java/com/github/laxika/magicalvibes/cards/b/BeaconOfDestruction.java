@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "189")
 @CardRegistration(set = "5DN", collectorNumber = "61")
+@CardRegistration(set = "DDS", collectorNumber = "35")
 public class BeaconOfDestruction extends Card {
 
     public BeaconOfDestruction() {

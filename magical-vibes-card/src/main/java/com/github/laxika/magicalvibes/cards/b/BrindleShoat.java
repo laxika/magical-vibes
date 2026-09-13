@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "VMA", collectorNumber = "199")
 @CardRegistration(set = "PC2", collectorNumber = "60")
 @CardRegistration(set = "PCA", collectorNumber = "60")
 public class BrindleShoat extends Card {

@@ -1,85 +1,69 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
+import com.github.laxika.magicalvibes.cards.p.PlatedSpider;
+import com.github.laxika.magicalvibes.cards.y.YavimayaHollow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MarkerBeetles.class, GoliathBeetle.class, PlatedSpider.class, YavimayaHollow.class})
 class MarkerBeetlesTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Marker Beetles dies, target creature gets +1/+1 until end of turn")
     void deathTriggerBoostsTargetCreatureUntilEndOfTurn() {
-        harness.addToBattlefield(player1, new MarkerBeetles());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent beetles = addCreatureReady(player1, new MarkerBeetles());
+        Permanent target = addCreatureReady(player2, new PlatedSpider());
+        Permanent blocker = addCreatureReady(player2, new GoliathBeetle());
+        harness.addToBattlefield(player2, new YavimayaHollow());
 
-        Permanent beetles = findPermanent(player1, "Marker Beetles");
-        beetles.setSummoningSick(false);
         beetles.setAttacking(true);
-
-        GrizzlyBears blockerCard = new GrizzlyBears();
-        blockerCard.setPower(3);
-        blockerCard.setToughness(3);
-        Permanent blocker = new Permanent(blockerCard);
-        blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
-        assertThat(harness.getGameData().interaction.activeInteraction())
+        assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, targetId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        Permanent target = permanentById(player2.getId(), targetId);
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("{2}, Sacrifice Marker Beetles: Draw a card")
     void sacrificeAbilityDrawsACard() {
-        harness.addToBattlefield(player1, new MarkerBeetles());
+        addCreatureReady(player1, new MarkerBeetles());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLibrary(player1, List.of(new PlatedSpider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Marker Beetles");
         harness.assertInGraveyard(player1, "Marker Beetles");
-        assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
-    }
-
-    private Permanent permanentById(UUID ownerId, UUID id) {
-        GameData gd = harness.getGameData();
-        return gd.playerBattlefields.get(ownerId).stream()
-                .filter(permanent -> permanent.getId().equals(id))
-                .findFirst()
-                .orElseThrow();
+        harness.assertInHand(player1, "Plated Spider");
     }
 }

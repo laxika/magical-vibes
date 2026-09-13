@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "185")
+@CardRegistration(set = "MP2", collectorNumber = "25")
 public class AggravatedAssault extends Card {
 
     public AggravatedAssault() {

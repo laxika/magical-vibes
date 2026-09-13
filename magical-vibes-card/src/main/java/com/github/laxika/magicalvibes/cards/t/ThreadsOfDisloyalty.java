@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "56")
+@CardRegistration(set = "MP2", collectorNumber = "37")
 public class ThreadsOfDisloyalty extends Card {
 
     public ThreadsOfDisloyalty() {

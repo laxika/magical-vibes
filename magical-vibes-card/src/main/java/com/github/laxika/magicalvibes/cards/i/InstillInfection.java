@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "68")
+@CardRegistration(set = "MM2", collectorNumber = "85")
 public class InstillInfection extends Card {
 
     public InstillInfection() {

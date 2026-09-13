@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "252")
+@CardRegistration(set = "MM2", collectorNumber = "197")
 public class SelesnyaGuildmage extends Card {
 
     public SelesnyaGuildmage() {

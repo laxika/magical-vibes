@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WWK", collectorNumber = "104")
+@CardRegistration(set = "DDP", collectorNumber = "15")
 public class Groundswell extends Card {
 
     public Groundswell() {

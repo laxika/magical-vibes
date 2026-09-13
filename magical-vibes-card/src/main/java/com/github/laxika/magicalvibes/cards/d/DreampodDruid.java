@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "VMA", collectorNumber = "204")
 @CardRegistration(set = "PC2", collectorNumber = "64")
 @CardRegistration(set = "PCA", collectorNumber = "64")
 public class DreampodDruid extends Card {

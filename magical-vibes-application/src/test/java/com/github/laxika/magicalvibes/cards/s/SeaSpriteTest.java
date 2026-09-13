@@ -71,8 +71,7 @@ class SeaSpriteTest extends BaseCardTest {
         addCreatureReady(player1, new SeaSprite());
         addCreatureReady(player2, new SpectralBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -86,8 +85,7 @@ class SeaSpriteTest extends BaseCardTest {
         addCreatureReady(player1, new SeaSprite());
         addCreatureReady(player2, new DragonWhelp());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

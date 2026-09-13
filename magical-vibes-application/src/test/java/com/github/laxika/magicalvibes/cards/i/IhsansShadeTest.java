@@ -34,8 +34,7 @@ class IhsansShadeTest extends BaseCardTest {
     void whiteCreatureCannotBlock() {
         Permanent attacker = addCreatureReady(player1, new IhsansShade());
         Permanent blocker = addCreatureReady(player2, new BeastWalkers());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSacrificedCardUnderControlEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "7")
+@CardRegistration(set = "DDP", collectorNumber = "43")
 public class ItThatBetrays extends Card {
 
     public ItThatBetrays() {

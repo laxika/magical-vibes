@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "159")
+@CardRegistration(set = "MM2", collectorNumber = "230")
 public class Spellskite extends Card {
 
     public Spellskite() {

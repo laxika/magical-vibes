@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOn
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "202")
+@CardRegistration(set = "DDP", collectorNumber = "28")
 public class ExplorersScope extends Card {
 
     public ExplorersScope() {

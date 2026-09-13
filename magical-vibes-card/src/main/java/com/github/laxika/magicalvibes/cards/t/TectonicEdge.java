@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "145")
+@CardRegistration(set = "EXP", collectorNumber = "44")
 public class TectonicEdge extends Card {
 
     public TectonicEdge() {

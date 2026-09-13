@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "ROE", collectorNumber = "151")
 @CardRegistration(set = "PC2", collectorNumber = "45")
 @CardRegistration(set = "PCA", collectorNumber = "45")
+@CardRegistration(set = "DDP", collectorNumber = "61")
 public class HellionEruption extends Card {
 
     public HellionEruption() {

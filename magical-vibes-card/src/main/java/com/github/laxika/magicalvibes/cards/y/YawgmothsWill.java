@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveya
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "171")
+@CardRegistration(set = "VMA", collectorNumber = "148")
 public class YawgmothsWill extends Card {
 
     public YawgmothsWill() {

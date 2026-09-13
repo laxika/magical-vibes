@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 
 @CardRegistration(set = "LGN", collectorNumber = "99")
+@CardRegistration(set = "VMA", collectorNumber = "166")
 public class GoblinGoon extends Card {
 
     public GoblinGoon() {

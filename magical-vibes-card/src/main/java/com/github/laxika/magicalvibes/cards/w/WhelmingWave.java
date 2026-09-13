@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "57")
+@CardRegistration(set = "DDO", collectorNumber = "44")
 public class WhelmingWave extends Card {
 
     public WhelmingWave() {

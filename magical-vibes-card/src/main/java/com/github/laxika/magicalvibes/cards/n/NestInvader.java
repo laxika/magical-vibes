@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "ROE", collectorNumber = "201")
 @CardRegistration(set = "PC2", collectorNumber = "69")
 @CardRegistration(set = "PCA", collectorNumber = "69")
+@CardRegistration(set = "MM2", collectorNumber = "150")
 public class NestInvader extends Card {
 
     public NestInvader() {

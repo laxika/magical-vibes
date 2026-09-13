@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "140")
+@CardRegistration(set = "VMA", collectorNumber = "127")
 public class LurkingEvil extends Card {
 
     public LurkingEvil() {
