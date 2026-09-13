@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "172")
+@CardRegistration(set = "EMA", collectorNumber = "134")
 public class HondenOfInfiniteRage extends Card {
 
     public HondenOfInfiniteRage() {

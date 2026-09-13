@@ -1927,7 +1927,8 @@ public class PermanentChoiceTriggerHandlerService {
                 updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
                 etbMtt.repeatedAdditionalCosts(),
                 etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId(),
-                etbMtt.triggeringPermanentId(), etbMtt.eventValue(), etbMtt.planarSource()));
+                etbMtt.triggeringPermanentId(), etbMtt.eventValue(), etbMtt.planarSource())
+                .withStateTriggerEffectIndex(etbMtt.stateTriggerEffectIndex()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
@@ -1980,7 +1981,8 @@ public class PermanentChoiceTriggerHandlerService {
                 chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
                 pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
                 pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource());
+                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
         handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
     }
 
@@ -1998,7 +2000,8 @@ public class PermanentChoiceTriggerHandlerService {
                 chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
                 pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
                 pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource());
+                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
         handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.b.BouncingBeebles;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VraskaTheUnseen;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,8 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhituFireEater.class, BouncingBeebles.class})
+@CardUsed({GhituFireEater.class, GrizzlyBears.class})
 class GhituFireEaterTest extends BaseCardTest {
 
     @Test
@@ -44,13 +46,41 @@ class GhituFireEaterTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature, killing a 2/2")
     void dealsPowerDamageToCreature() {
         addReadyFireEater(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BouncingBeebles());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(BouncingBeebles.class::isInstance);
+                .anyMatch(GrizzlyBears.class::isInstance);
+    }
+
+    @Test
+    @CardUsed(VraskaTheUnseen.class)
+    @DisplayName("Deals 2 damage to a target planeswalker")
+    void dealsPowerDamageToPlaneswalker() {
+        addReadyFireEater(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VraskaTheUnseen());
+        target.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability while Ghitu Fire-Eater is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent fireEater = addReadyFireEater(player1);
+        fireEater.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fireEater);
     }
 
     @Test

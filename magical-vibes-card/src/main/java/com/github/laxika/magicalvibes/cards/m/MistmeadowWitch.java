@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "144")
 @CardRegistration(set = "DDI", collectorNumber = "6")
+@CardRegistration(set = "MM3", collectorNumber = "210")
 public class MistmeadowWitch extends Card {
 
     public MistmeadowWitch() {

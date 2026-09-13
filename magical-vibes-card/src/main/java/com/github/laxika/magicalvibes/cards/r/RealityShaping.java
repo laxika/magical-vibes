@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandT
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "6")
+@CardRegistration(set = "OPCA", collectorNumber = "6")
 public class RealityShaping extends Card {
 
     public RealityShaping() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "126")
+@CardRegistration(set = "IMA", collectorNumber = "194")
 public class BlizzardSpecter extends Card {
 
     public BlizzardSpecter() {

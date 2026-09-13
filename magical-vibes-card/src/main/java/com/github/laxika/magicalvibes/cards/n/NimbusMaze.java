@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "178")
+@CardRegistration(set = "IMA", collectorNumber = "242")
 public class NimbusMaze extends Card {
 
     public NimbusMaze() {

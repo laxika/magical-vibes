@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "36")
+@CardRegistration(set = "OPCA", collectorNumber = "77")
 public class TalonGates extends Card {
 
     public TalonGates() {

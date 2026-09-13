@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOU", collectorNumber = "1")
+@CardRegistration(set = "A25", collectorNumber = "1")
 public class ActOfHeroism extends Card {
 
     public ActOfHeroism() {

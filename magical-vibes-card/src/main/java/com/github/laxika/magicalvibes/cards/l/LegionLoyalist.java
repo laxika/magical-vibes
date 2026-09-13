@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "97")
+@CardRegistration(set = "GK1", collectorNumber = "82")
 public class LegionLoyalist extends Card {
 
     public LegionLoyalist() {

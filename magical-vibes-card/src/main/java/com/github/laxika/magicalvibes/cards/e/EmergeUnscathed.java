@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "20")
+@CardRegistration(set = "IMA", collectorNumber = "19")
 public class EmergeUnscathed extends Card {
 
     public EmergeUnscathed() {

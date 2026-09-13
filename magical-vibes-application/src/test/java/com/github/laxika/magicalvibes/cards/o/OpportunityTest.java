@@ -27,6 +27,19 @@ class OpportunityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Draws all four cards when they are the target's entire library")
+    void drawsFourCardsFromFourCardLibrary() {
+        harness.setLibrary(player2, List.of(
+                new GiantCockroach(), new GiantCockroach(), new GiantCockroach(), new GiantCockroach()));
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        castOpportunityTargeting(player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 4);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Can target yourself")
     void canTargetSelf() {
         castOpportunityTargeting(player1.getId());

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "FEM", collectorNumber = "58b")
 @CardRegistration(set = "FEM", collectorNumber = "58c")
 @CardRegistration(set = "FEM", collectorNumber = "120")
+@CardRegistration(set = "A25", collectorNumber = "133")
 public class GoblinWarDrums extends Card {
 
     public GoblinWarDrums() {

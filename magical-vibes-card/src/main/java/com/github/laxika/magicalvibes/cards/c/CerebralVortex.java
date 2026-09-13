@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "107")
+@CardRegistration(set = "GK1", collectorNumber = "35")
 public class CerebralVortex extends Card {
 
     public CerebralVortex() {

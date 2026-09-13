@@ -7,14 +7,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinMatron.class, GoblinPatrol.class, Island.class})
+@CardUsed({GoblinChariot.class, GoblinMatron.class, GoblinPatrol.class, GoblinRaider.class, Island.class})
 class GoblinMatronTest extends BaseCardTest {
 
     @Test
@@ -23,15 +21,15 @@ class GoblinMatronTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards())
-                .containsExactly(gd.playerDecks.get(player1.getId()).getFirst());
+                .containsExactly(gd.playerDecks.get(player1.getId()).get(0),
+                        gd.playerDecks.get(player1.getId()).get(1));
         assertThat(search.params().reveals()).isTrue();
     }
 
@@ -41,8 +39,7 @@ class GoblinMatronTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
@@ -64,8 +61,7 @@ class GoblinMatronTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -79,8 +75,7 @@ class GoblinMatronTest extends BaseCardTest {
         Island island = new Island();
         harness.setLibrary(player1, List.of(island));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -88,6 +83,33 @@ class GoblinMatronTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(island);
         assertThat(gameLogContains("finds no Goblin cards")).isTrue();
         assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing a later matching Goblin puts that selected card into hand")
+    void choosingLaterMatchingGoblinPutsSelectedCardIntoHand() {
+        setupAndCast();
+        setupLibrary();
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards())
+                .extracting(c -> c.getName())
+                .containsExactly("Goblin Raider", "Goblin Chariot");
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .contains("Goblin Chariot")
+                .doesNotContain("Goblin Raider");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Goblin Raider", "Island");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupAndCast() {
@@ -98,6 +120,6 @@ class GoblinMatronTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        harness.setLibrary(player1, List.of(new GoblinPatrol(), new Island()));
+        harness.setLibrary(player1, List.of(new GoblinRaider(), new GoblinChariot(), new Island()));
     }
 }

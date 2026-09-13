@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5DN", collectorNumber = "128")
+@CardRegistration(set = "IMA", collectorNumber = "216")
 public class GuardianIdol extends Card {
 
     public GuardianIdol() {

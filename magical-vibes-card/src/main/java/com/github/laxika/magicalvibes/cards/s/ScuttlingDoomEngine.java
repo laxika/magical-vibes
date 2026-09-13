@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "229")
+@CardRegistration(set = "DDU", collectorNumber = "61")
 public class ScuttlingDoomEngine extends Card {
 
     public ScuttlingDoomEngine() {

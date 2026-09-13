@@ -8,25 +8,38 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Sanctimony.class, Mountain.class, Forest.class, Twiddle.class})
+@CardUsed({Forest.class, Mountain.class, Sanctimony.class, Twiddle.class})
 class SanctimonyTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Opponent tapping a Mountain for mana gains the controller 1 life")
+    @DisplayName("After resolution, an opponent's Mountain tap gains the controller 1 life")
     void opponentTapsMountainGainsLife() {
         harness.addToBattlefield(player1, new Sanctimony());
         harness.addToBattlefield(player2, new Mountain());
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
 
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Sanctimony's life-gain trigger waits for priority and resolution")
+    void lifeGainWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new Sanctimony());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player2, 0);
+
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
         harness.assertLife(player1, 21);
     }
 
@@ -65,6 +78,7 @@ class SanctimonyTest extends BaseCardTest {
 
         harness.tapPermanent(player2, 0);
         harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
     }

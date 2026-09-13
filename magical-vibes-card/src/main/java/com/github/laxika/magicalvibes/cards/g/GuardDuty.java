@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "23")
+@CardRegistration(set = "IMA", collectorNumber = "22")
 public class GuardDuty extends Card {
 
     public GuardDuty() {

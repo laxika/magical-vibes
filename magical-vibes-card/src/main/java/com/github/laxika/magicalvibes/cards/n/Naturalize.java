@@ -30,6 +30,7 @@ import java.util.List;
 @CardRegistration(set = "DTK", collectorNumber = "193")
 @CardRegistration(set = "ONS", collectorNumber = "275")
 @CardRegistration(set = "DPA", collectorNumber = "76")
+@CardRegistration(set = "DDU", collectorNumber = "19")
 public class Naturalize extends Card {
 
     public Naturalize() {

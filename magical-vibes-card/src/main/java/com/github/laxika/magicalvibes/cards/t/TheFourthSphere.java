@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "11")
+@CardRegistration(set = "OPCA", collectorNumber = "25")
 public class TheFourthSphere extends Card {
 
     public TheFourthSphere() {

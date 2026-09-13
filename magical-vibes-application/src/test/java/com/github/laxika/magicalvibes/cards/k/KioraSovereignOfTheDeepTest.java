@@ -91,8 +91,6 @@ class KioraSovereignOfTheDeepTest extends BaseCardTest {
     }
 
     private void castGiantOctopus() {
-        harness.setHand(player1, List.of(new GiantOctopus()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GiantOctopus(), "{3}{U}");
     }
 }

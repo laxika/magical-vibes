@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "17")
+@CardRegistration(set = "OPCA", collectorNumber = "38")
 public class Immersturm extends Card {
 
     public Immersturm() {

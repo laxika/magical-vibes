@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTu
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MOR", collectorNumber = "11")
+@CardRegistration(set = "MM3", collectorNumber = "8")
 public class GracefulReprieve extends Card {
 
     public GracefulReprieve() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "51")
+@CardRegistration(set = "IMA", collectorNumber = "71")
 public class RiverwheelAerialists extends Card {
 
     public RiverwheelAerialists() {

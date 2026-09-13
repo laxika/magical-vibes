@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HighGround;
-import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -9,11 +8,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GoblinEliteInfantry.class, GrizzlyBears.class, HighGround.class})
@@ -126,7 +124,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
 
     @Test
     @DisplayName("An unblocked Goblin Elite Infantry does not trigger")
-    void unblockedGoblinDoesNotTrigger() {
+    void unblockedDoesNotTrigger() {
         Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
         goblinPerm.setAttacking(true);
 
@@ -141,6 +139,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Blocking multiple creatures triggers only once")
+    @CardUsed({HighGround.class})
     void blockTriggerFiresOnlyOnceWhenBlockingMultipleCreatures() {
         harness.addToBattlefield(player2, new HighGround());
         Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
@@ -169,6 +168,34 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
+        var mutableGoblin = TestCards.mutableCard(goblinPerm);
+        mutableGoblin.setPower(4);
+        mutableGoblin.setToughness(4);
+        goblinPerm.setAttacking(true);
+
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        // Should only have one becomes-blocked trigger for Goblin Elite Infantry
+        long goblinTriggerCount = gd.stack.stream()
+                .filter(entry -> entry.getSourcePermanentId().equals(goblinPerm.getId()))
+                .count();
+        assertThat(goblinTriggerCount).isEqualTo(1);
+    }
+
+    // ===== Becomes blocked fires only once with multiple blockers =====
+
+    @Test
+    @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
+    void becomesBlockedFiresOnceWithMultipleBlockersUpstreamReview() {
         Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
         goblinPerm.setAttacking(true);
 
@@ -230,8 +257,9 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     void modifierResetsAtEndOfTurn() {
         Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
         // Increase toughness so goblin survives combat damage from Bears
-        TestCards.mutableCard(goblinPerm).setPower(4);
-        TestCards.mutableCard(goblinPerm).setToughness(4);
+        var mutableGoblin = TestCards.mutableCard(goblinPerm);
+        mutableGoblin.setPower(4);
+        mutableGoblin.setToughness(4);
 
         Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
@@ -311,5 +339,19 @@ class GoblinEliteInfantryTest extends BaseCardTest {
 
         assertThat(gameLogContains("'s block ability triggers.")).isTrue();
     }
-}
 
+    @Test
+    @DisplayName("An unblocked Goblin Elite Infantry does not trigger")
+    void unblockedGoblinDoesNotTrigger() {
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
+        goblinPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblinPerm.getPowerModifier()).isZero();
+        assertThat(goblinPerm.getToughnessModifier()).isZero();
+    }
+}

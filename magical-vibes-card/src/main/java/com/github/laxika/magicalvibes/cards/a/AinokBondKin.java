@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "3")
+@CardRegistration(set = "IMA", collectorNumber = "4")
 public class AinokBondKin extends Card {
 
     public AinokBondKin() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "163")
+@CardRegistration(set = "GK1", collectorNumber = "89")
 public class FiremaneAvenger extends Card {
 
     public FiremaneAvenger() {

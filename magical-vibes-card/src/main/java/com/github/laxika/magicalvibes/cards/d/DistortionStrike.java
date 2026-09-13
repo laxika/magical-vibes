@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "60")
+@CardRegistration(set = "IMA", collectorNumber = "52")
 public class DistortionStrike extends Card {
 
     public DistortionStrike() {

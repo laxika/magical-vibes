@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "GTC", collectorNumber = "54")
 @CardRegistration(set = "M19", collectorNumber = "81")
 @CardRegistration(set = "WAR", collectorNumber = "74")
+@CardRegistration(set = "A25", collectorNumber = "74")
 public class TotallyLost extends Card {
 
     public TotallyLost() {

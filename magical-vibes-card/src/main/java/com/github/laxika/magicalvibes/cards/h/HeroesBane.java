@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "126")
+@CardRegistration(set = "IMA", collectorNumber = "166")
 public class HeroesBane extends Card {
 
     public HeroesBane() {

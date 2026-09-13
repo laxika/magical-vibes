@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "OHOP", collectorNumber = "6")
+@CardRegistration(set = "OPCA", collectorNumber = "19")
 public class TheDarkBarony extends Card {
 
     public TheDarkBarony() {

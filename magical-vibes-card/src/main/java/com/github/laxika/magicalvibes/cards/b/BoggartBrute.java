@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "ORI", collectorNumber = "133")
 @CardRegistration(set = "M19", collectorNumber = "131")
+@CardRegistration(set = "DDT", collectorNumber = "34")
 public class BoggartBrute extends Card {
 
     public BoggartBrute() {

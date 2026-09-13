@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "56")
 @CardRegistration(set = "MP2", collectorNumber = "37")
+@CardRegistration(set = "E02", collectorNumber = "11")
+@CardRegistration(set = "SS1", collectorNumber = "8")
 public class ThreadsOfDisloyalty extends Card {
 
     public ThreadsOfDisloyalty() {
