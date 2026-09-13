@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "116")
 @CardRegistration(set = "PC2", collectorNumber = "52")
+@CardRegistration(set = "PCA", collectorNumber = "52")
 public class ThornThrashViashino extends Card {
 
     public ThornThrashViashino() {

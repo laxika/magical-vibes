@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "PC2", collectorNumber = "113")
+@CardRegistration(set = "PCA", collectorNumber = "113")
 public class SaiOfTheShinobi extends Card {
 
     public SaiOfTheShinobi() {
