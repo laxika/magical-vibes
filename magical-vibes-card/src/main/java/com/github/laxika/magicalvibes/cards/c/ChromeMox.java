@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "152")
 @CardRegistration(set = "EMA", collectorNumber = "219")
+@CardRegistration(set = "MPS", collectorNumber = "9")
 public class ChromeMox extends Card {
 
     public ChromeMox() {

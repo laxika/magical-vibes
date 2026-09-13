@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "77")
+@CardRegistration(set = "MM2", collectorNumber = "135")
 public class WorldheartPhoenix extends Card {
 
     public WorldheartPhoenix() {

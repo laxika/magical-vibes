@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "101")
+@CardRegistration(set = "DDR", collectorNumber = "53")
 public class IndulgentTormentor extends Card {
 
     public IndulgentTormentor() {

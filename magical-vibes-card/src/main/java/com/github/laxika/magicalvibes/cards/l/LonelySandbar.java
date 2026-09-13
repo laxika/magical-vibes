@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "320")
+@CardRegistration(set = "DDJ", collectorNumber = "35")
+@CardRegistration(set = "VMA", collectorNumber = "304")
 public class LonelySandbar extends Card {
 
     public LonelySandbar() {

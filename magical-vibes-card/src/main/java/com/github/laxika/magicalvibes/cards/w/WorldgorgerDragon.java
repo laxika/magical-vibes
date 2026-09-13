@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "103")
 @CardRegistration(set = "EMA", collectorNumber = "154")
+@CardRegistration(set = "VMA", collectorNumber = "193")
 public class WorldgorgerDragon extends Card {
 
     public WorldgorgerDragon() {

@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargeting
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.NinjutsuCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -64,6 +65,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetin
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostReductionEffect;
+import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostIncreaseEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCountCastCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetBasedCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
@@ -769,7 +772,28 @@ public class CastingCostService {
                                              List<UUID> targetIds) {
         return getTargetingSubtypeTax(gameData, casterId, targetId, targetIds, false)
                 - getTargetingControlledPermanentReduction(gameData, casterId, targetId, targetIds)
-                + getOwnTargetingCastCostIncrease(gameData, card, targetId, targetIds);
+                + getOwnTargetingCastCostIncrease(gameData, card, targetId, targetIds)
+                + getOpponentCastCostPerTarget(gameData, casterId, targetCount(targetId, targetIds));
+    }
+
+    private int getOpponentCastCostPerTarget(GameData gameData, UUID casterId, int targetCount) {
+        if (targetCount == 0) {
+            return 0;
+        }
+        return gameData.orderedPlayerIds.stream()
+                .filter(controllerId -> !controllerId.equals(casterId))
+                .flatMap(controllerId -> gameData.playerBattlefields
+                        .getOrDefault(controllerId, List.of()).stream())
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(PerTargetCastCostIncreaseEffect.class::isInstance)
+                .map(PerTargetCastCostIncreaseEffect.class::cast)
+                .mapToInt(effect -> effect.amount() * targetCount)
+                .sum();
+    }
+
+    private static int targetCount(UUID targetId, List<UUID> targetIds) {
+        return targetIds != null && !targetIds.isEmpty()
+                ? targetIds.size() : targetId == null ? 0 : 1;
     }
 
     private int getOwnTargetingCastCostIncrease(GameData gameData, Card card, UUID targetId,
@@ -1068,9 +1092,37 @@ public class CastingCostService {
         return reduction;
     }
 
+    /** Generic mana removed from ninjutsu abilities activated by {@code activatingPlayerId}. */
+    public int getNinjutsuAbilityCostReduction(GameData gameData, UUID activatingPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) return 0;
+
+        int reduction = 0;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof NinjutsuCostReducingEffect reducer) {
+                    reduction += reducer.genericCostReduction();
+                }
+            }
+        }
+        return reduction;
+    }
+
     public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,
                                                           ActivatedAbility ability) {
+        return getActivatedAbilityActivationCostReduction(gameData, sourcePermanent, ability,
+                Integer.MAX_VALUE);
+    }
+
+    /**
+     * Generic mana removed from an activated ability, honoring reducers that explicitly require
+     * at least one mana to remain while allowing other reducers to make an ability free.
+     */
+    public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,
+                                                          ActivatedAbility ability,
+                                                          int maximumReductionForMinimumOneMana) {
         int reduction = 0;
+        boolean preventsReductionBelowOneMana = false;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -1089,11 +1141,14 @@ public class CastingCostService {
                                         .withSourcePermanentId(perm.getId()))) {
                         reduction += evaluateActivatedAbilityCostReduction(
                                 gameData, reducingEffect, perm, pid);
+                        preventsReductionBelowOneMana |= reducingEffect.preventsReductionBelowOneMana();
                     }
                 }
             }
         }
-        return reduction;
+        return preventsReductionBelowOneMana
+                ? Math.min(reduction, maximumReductionForMinimumOneMana)
+                : reduction;
     }
 
     private int evaluateActivatedAbilityCostReduction(
@@ -1820,6 +1875,18 @@ public class CastingCostService {
             return 0;
         }
 
+        int targetCountReduction = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(TargetCountCastCostReductionEffect.class::isInstance)
+                .map(TargetCountCastCostReductionEffect.class::cast)
+                .mapToInt(effect -> targetIds.size() * effect.amount())
+                .sum();
+        targetCountReduction += gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(TargetCountCastCostReductionEffect.class::isInstance)
+                .map(TargetCountCastCostReductionEffect.class::cast)
+                .mapToInt(effect -> targetIds.size() * effect.amount())
+                .sum();
+
         int enchantedPlayerReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .mapToInt(permanent -> {
                     UUID enchantedPlayer = permanent.getAttachedTo();
@@ -1834,7 +1901,7 @@ public class CastingCostService {
                 })
                 .sum();
         if (enchantedPlayerReduction != 0) {
-            return enchantedPlayerReduction;
+            return enchantedPlayerReduction + targetCountReduction;
         }
 
         List<PerTargetCastCostReductionEffect> perTargetEffects = new ArrayList<>();
@@ -1857,6 +1924,7 @@ public class CastingCostService {
                                 gameData, permanent, effect.predicate()))
                         .count() * effect.amount())
                 .sum();
+        perTargetReduction += targetCountReduction;
         if (perTargetReduction != 0) {
             return perTargetReduction;
         }
@@ -1943,6 +2011,7 @@ public class CastingCostService {
                 .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
                         || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect
                         || e instanceof PerTargetCastCostReductionEffect
+                        || e instanceof TargetCountCastCostReductionEffect
                         || e instanceof GraveyardCardTargetCostReductionEffect);
     }
 
@@ -1958,6 +2027,27 @@ public class CastingCostService {
                 || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(PerTargetCastCostReductionEffect.class::isInstance);
+    }
+
+    public boolean hasPerTargetCastCostIncrease(GameData gameData, UUID playerId) {
+        return gameData.orderedPlayerIds.stream()
+                .filter(controllerId -> !controllerId.equals(playerId))
+                .flatMap(controllerId -> gameData.playerBattlefields
+                        .getOrDefault(controllerId, List.of()).stream())
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(PerTargetCastCostIncreaseEffect.class::isInstance);
+    }
+
+    public int getMinimumPerTargetCastCostIncrease(GameData gameData, UUID playerId, int minimumTargetCount) {
+        return getOpponentCastCostPerTarget(gameData, playerId, minimumTargetCount);
+    }
+
+    public boolean hasTargetCountCastCostReduction(GameData gameData, UUID playerId, Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(TargetCountCastCostReductionEffect.class::isInstance)
+                || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(TargetCountCastCostReductionEffect.class::isInstance);
     }
 
     public boolean hasEnchantedPlayerCastCostReduction(GameData gameData, UUID playerId) {

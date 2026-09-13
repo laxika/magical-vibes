@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "190")
+@CardRegistration(set = "DDP", collectorNumber = "25")
 public class TurntimberBasilisk extends Card {
 
     public TurntimberBasilisk() {

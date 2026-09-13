@@ -51,6 +51,21 @@ import static org.mockito.Mockito.*;
 class PermanentRemovalServiceTest {
 
     @Test
+    void illegalAuraAttachmentRetainsItsHostForLeaveTriggers() {
+        Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
+        UUID hostId = UUID.randomUUID();
+        aura.setAttachedTo(hostId);
+        when(auraAttachmentService.enforceAttachmentLegality(gd)).thenReturn(
+                new AuraAttachmentService.AttachmentSweepResult(List.of(
+                        new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id, aura)), false));
+
+        assertThat(prs.enforceAttachmentLegality(gd)).isTrue();
+
+        verify(triggerCollectionService).checkSelfLeavesTriggered(gd, aura, player1Id);
+        assertThat(aura.getAttachedTo()).isEqualTo(hostId);
+    }
+
+    @Test
     void deferredManaTriggerRemembersControllerWhenPermanentLeaves() {
         Card card = new Card();
         card.setName("Leaving land");
@@ -624,6 +639,8 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, enchantment);
 
+            assertThat(gd.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn)
+                    .containsExactly(player1Id);
             verify(triggerCollectionService).checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
         }
 
@@ -877,7 +894,7 @@ class PermanentRemovalServiceTest {
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
             verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
-            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id, token);
         }
     }
 

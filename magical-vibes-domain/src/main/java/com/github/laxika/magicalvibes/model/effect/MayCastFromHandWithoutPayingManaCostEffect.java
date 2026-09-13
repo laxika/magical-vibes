@@ -8,18 +8,32 @@ import java.util.UUID;
  * Used by Counterlash (one PendingMayAbility per eligible hand card).
  *
  * @param revealCardOnDecline whether declining the cast publicly identifies the card
+ * @param exileInsteadOfGraveyard whether the spell is exiled instead of going to a graveyard
+ *                                after this free cast
  */
 public record MayCastFromHandWithoutPayingManaCostEffect(
         boolean revealCardOnDecline,
         UUID choiceGroupId,
-        CardEffect declineEffect
+        CardEffect declineEffect,
+        boolean exileInsteadOfGraveyard
 ) implements CardEffect {
 
     public MayCastFromHandWithoutPayingManaCostEffect() {
-        this(true, null, null);
+        this(true, null, null, false);
     }
 
     public MayCastFromHandWithoutPayingManaCostEffect(boolean revealCardOnDecline) {
-        this(revealCardOnDecline, null, null);
+        this(revealCardOnDecline, null, null, false);
+    }
+
+    public MayCastFromHandWithoutPayingManaCostEffect(boolean revealCardOnDecline,
+                                                       boolean exileInsteadOfGraveyard) {
+        this(revealCardOnDecline, null, null, exileInsteadOfGraveyard);
+    }
+
+    public MayCastFromHandWithoutPayingManaCostEffect(boolean revealCardOnDecline,
+                                                       UUID choiceGroupId,
+                                                       CardEffect declineEffect) {
+        this(revealCardOnDecline, choiceGroupId, declineEffect, false);
     }
 }

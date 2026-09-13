@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "233")
+@CardRegistration(set = "DDP", collectorNumber = "20")
 public class PrimalCommand extends Card {
 
     public PrimalCommand() {

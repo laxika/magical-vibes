@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ISD", collectorNumber = "217")
 @CardRegistration(set = "INR", collectorNumber = "256")
 @CardRegistration(set = "INR", collectorNumber = "440")
+@CardRegistration(set = "DDQ", collectorNumber = "31")
 public class ButchersCleaver extends Card {
 
     public ButchersCleaver() {

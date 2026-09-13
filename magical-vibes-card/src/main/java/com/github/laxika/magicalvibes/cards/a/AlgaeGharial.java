@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "123")
+@CardRegistration(set = "MM2", collectorNumber = "137")
 public class AlgaeGharial extends Card {
 
     public AlgaeGharial() {

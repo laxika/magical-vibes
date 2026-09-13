@@ -16,6 +16,7 @@ public class Replenish extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.ENCHANTMENT))
                 .returnAll(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

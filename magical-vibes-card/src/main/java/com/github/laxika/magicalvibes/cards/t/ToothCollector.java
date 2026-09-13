@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "140")
+@CardRegistration(set = "DDQ", collectorNumber = "64")
 public class ToothCollector extends Card {
 
     public ToothCollector() {

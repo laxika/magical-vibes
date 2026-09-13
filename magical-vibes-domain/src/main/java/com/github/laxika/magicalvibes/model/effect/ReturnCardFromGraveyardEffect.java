@@ -133,8 +133,9 @@ import java.util.Set;
  *                             its owner's hand at the beginning of the next end step (Cauldron Dance)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
- * @param manaValueXOffset     offset added to X when {@link #requiresManaValueEqualsX} is enabled
- *                             (e.g. a target with mana value X plus one)
+ * @param manaValueXOffset     offset added to X when {@link #requiresManaValueEqualsX} or
+ *                             {@link #requiresManaValueAtMostX} is enabled (e.g. a target with
+ *                             mana value X plus one or less than X)
  * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
  *                             less than or equal to the spell's X value (e.g. Profane Command)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
@@ -456,6 +457,11 @@ public record ReturnCardFromGraveyardEffect(
     @Override
     public List<Integer> targetGroups() {
         return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    /** Returns the effective mana-value bound for an X-based target restriction. */
+    public int requiredManaValue(int xValue) {
+        return xValue + ((requiresManaValueEqualsX || requiresManaValueAtMostX) ? manaValueXOffset : 0);
     }
 
     @Override

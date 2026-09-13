@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "173")
+@CardRegistration(set = "V16", collectorNumber = "13")
 public class TolariaWest extends Card {
 
     public TolariaWest() {

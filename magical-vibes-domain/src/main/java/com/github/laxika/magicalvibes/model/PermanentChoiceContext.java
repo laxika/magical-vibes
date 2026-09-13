@@ -26,6 +26,14 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready)
+            implements PermanentChoiceContext {
+        public AuraEntryBatchChoice {
+            remaining = List.copyOf(remaining);
+            ready = List.copyOf(ready);
+        }
+    }
+
     record CloneCopy() implements PermanentChoiceContext {}
 
     record CopyPermanentTargetedBySpell() implements PermanentChoiceContext {}
@@ -751,7 +759,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                              Card damageSourceControllerCard,
                                              boolean preventHalfDamage,
                                              boolean drawCards,
-                                             Set<CardColor> requiredDamageColors) implements PermanentChoiceContext {
+                                             Set<CardColor> requiredDamageColors,
+                                             com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter) implements PermanentChoiceContext {
+        public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
+                                                 boolean exileFromLibrary, Card damageSourceControllerCard,
+                                                 boolean preventHalfDamage, boolean drawCards,
+                                                 Set<CardColor> requiredDamageColors) {
+            this(controllerId, gainLife, exileFromLibrary, damageSourceControllerCard,
+                    preventHalfDamage, drawCards, requiredDamageColors, null);
+        }
+
         public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                                  boolean exileFromLibrary) {
             this(controllerId, gainLife, exileFromLibrary, null, false, false, null);
@@ -1443,16 +1460,34 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * with X=0.
      */
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
-                               StackEntryType spellType, int xValue, boolean castForMadnessCost)
+                               StackEntryType spellType, int xValue, boolean castForMadnessCost,
+                               boolean exileInsteadOfGraveyard)
             implements PermanentChoiceContext {
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, 0, false);
+            this(cardToCast, controllerId, spellEffects, spellType, 0, false, false);
         }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                    StackEntryType spellType, int xValue) {
-            this(cardToCast, controllerId, spellEffects, spellType, xValue, false);
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, false, false);
+        }
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue, boolean castForMadnessCost) {
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost, false);
+        }
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue, boolean castForMadnessCost,
+                                   boolean exileInsteadOfGraveyard) {
+            this.cardToCast = cardToCast;
+            this.controllerId = controllerId;
+            this.spellEffects = spellEffects;
+            this.spellType = spellType;
+            this.xValue = xValue;
+            this.castForMadnessCost = castForMadnessCost;
+            this.exileInsteadOfGraveyard = exileInsteadOfGraveyard;
         }
     }
 

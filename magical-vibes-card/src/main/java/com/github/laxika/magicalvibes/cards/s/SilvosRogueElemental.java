@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "282")
 @CardRegistration(set = "EMA", collectorNumber = "186")
+@CardRegistration(set = "VMA", collectorNumber = "231")
 public class SilvosRogueElemental extends Card {
 
     public SilvosRogueElemental() {

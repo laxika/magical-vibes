@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "65")
 @CardRegistration(set = "EMA", collectorNumber = "93")
+@CardRegistration(set = "VMA", collectorNumber = "123")
 public class Ichorid extends Card {
 
     public Ichorid() {

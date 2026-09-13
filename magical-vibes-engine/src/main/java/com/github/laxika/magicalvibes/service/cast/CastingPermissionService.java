@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGra
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -211,6 +212,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
                     boolean applies = switch (spellLimit.scope()) {
@@ -334,6 +338,14 @@ public class CastingPermissionService {
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
+        }
+        // Basandra, Battle Seraph: during combat no player can cast spells. Lands are excluded
+        // because playing a land is not casting a spell; planar cards are not spells either.
+        if (gameQueryService.isSpellCastingCombatLockActive(gameData)) {
+            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
+            spellTypes.remove(CardType.LAND);
+            spellTypes.removeIf(CardType::isPlanar);
+            restricted.addAll(spellTypes);
         }
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
@@ -553,6 +565,15 @@ public class CastingPermissionService {
             manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
         }
 
+        Set<Integer> exactRestrictedValues = gameData
+                .opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(castingPlayerId))
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(java.util.stream.Collectors.toSet());
+        boolean exactRestricted = chosenX != null
+                ? exactRestrictedValues.contains(manaValue)
+                : !hasX && exactRestrictedValues.contains(manaValue);
+
         int tightestMax = Integer.MAX_VALUE;
         boolean restricted = false;
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -577,7 +598,9 @@ public class CastingPermissionService {
                 }
             }
         }
-        if (!restricted) return false;
+        if (!restricted) return exactRestricted;
+
+        if (exactRestricted) return true;
 
         if (chosenX == null) {
             // Playability: any {X} spell can pick X high enough to exceed the cap.
@@ -832,12 +855,16 @@ public class CastingPermissionService {
                                 || card.getName().equals(perm.getSecondChosenName()))) {
                         return true;
                     }
-                    if (effect instanceof CardNameRestrictionEffect restriction
-                            && !card.getSupertypes().contains(CardSupertype.BASIC)) {
+                    if (effect instanceof CardNameRestrictionEffect restriction) {
                         if (nontokenPermanentNames == null) {
                             nontokenPermanentNames = getNontokenPermanentNames(gameData);
                         }
-                        if (restriction.forbiddenNonbasicLandNames(nontokenPermanentNames).contains(card.getName())) {
+                        boolean nonbasicLandRestricted = !card.getSupertypes().contains(CardSupertype.BASIC)
+                                && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames)
+                                .contains(card.getName());
+                        boolean landRestricted = restriction.forbiddenLandNames(nontokenPermanentNames)
+                                .contains(card.getName());
+                        if (nonbasicLandRestricted || landRestricted) {
                             return true;
                         }
                     }
@@ -1685,6 +1712,12 @@ public class CastingPermissionService {
     /** Returns whether the current top card has a temporary free-play permission from the library. */
     public boolean hasLibraryTopCardFreePlayPermission(GameData gameData, UUID playerId, Card card) {
         List<Card> deck = gameData.playerDecks.get(playerId);
+        UUID permittedId = gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId);
+        if (permittedId != null && (deck == null || deck.isEmpty()
+                || !permittedId.equals(deck.getFirst().getId()))) {
+            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId, permittedId);
+            return false;
+        }
         if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
             return false;
         }
@@ -2038,6 +2071,7 @@ public class CastingPermissionService {
     /** Returns whether the player has an active direct permission to play the exiled card. */
     public boolean hasExilePlayPermission(GameData gameData, UUID playerId, UUID cardId) {
         if (!playerId.equals(gameData.exilePlayPermissions.get(cardId))) return false;
+        if (!gameData.hasExilePlayPermissionRemaining(cardId)) return false;
         Condition condition = gameData.exilePlayPermissionConditions.get(cardId);
         return condition == null || conditionEvaluationService.isMet(
                 gameData, condition, ConditionContext.forCasting(playerId));
@@ -2072,6 +2106,16 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /** Returns whether a temporary exile permission replaces a spell's mana cost with life. */
+    public boolean hasManaValueLifeAlternativeFromExile(GameData gameData, UUID playerId,
+                                                         UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null) return false;
+        GameData.ExileCastPermission permission =
+                findTemporaryExileCastPermission(gameData, playerId, entry, false);
+        return permission != null && permission.payLifeEqualToManaValue();
     }
 
     public boolean hasManaValueLifeAlternativeFromExiledWithSource(GameData gameData,
@@ -2164,9 +2208,9 @@ public class CastingPermissionService {
         return true;
     }
 
-    /** Marks a once-per-turn normal-cost exile-cast permission after a successful spell cast. */
+    /** Marks a once-per-turn or one-shot normal-cost exile-cast permission after a successful spell cast. */
     public void markOncePerTurnExileCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
-        if (card == null || card.hasType(CardType.LAND)) return;
+        if (card == null) return;
         ExiledCardEntry entry = gameData.findExiledCard(card.getId());
         if (entry == null || entry.sourcePermanentId() == null) return;
 
@@ -2179,7 +2223,7 @@ public class CastingPermissionService {
                         activeExileCastPermissions(gameData, source, sourceControllerId).toList();
                 boolean hasUnlimitedPermission = permissions.stream()
                         .filter(permission -> !permission.waterbendManaValue())
-                        .anyMatch(permission -> !permission.oncePerTurn()
+                        .anyMatch(permission -> !permission.oncePerTurn() && !permission.oneShot()
                                 && canAccessExiledEntry(source, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, source, entry));
                 if (hasUnlimitedPermission) return;
@@ -2190,8 +2234,17 @@ public class CastingPermissionService {
                         .anyMatch(permission -> canAccessExiledEntry(
                                 source, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, source, entry));
-                if (hasOncePerTurnPermission) {
+                if (hasOncePerTurnPermission && !card.hasType(CardType.LAND)) {
                     gameData.oncePerTurnExileCastPermissionsUsedThisTurn.add(source.getId());
+                }
+                boolean hasOneShotPermission = permissions.stream()
+                        .filter(AllowCastFromCardsExiledWithSourceEffect::oneShot)
+                        .filter(permission -> !permission.waterbendManaValue())
+                        .anyMatch(permission -> canAccessExiledEntry(
+                                source, sourceControllerId, permission, entry, playerId)
+                                && applies(permission, gameData, playerId, source, entry));
+                if (hasOneShotPermission) {
+                    gameData.oneShotExileCastPermissionsUsed.add(source.getId());
                 }
                 return;
             }
@@ -2259,8 +2312,13 @@ public class CastingPermissionService {
                             || permission.waterbendManaValue()
                             || !canAccessExiledEntry(perm, sourceControllerId, permission, entry, playerId)
                             || !applies(permission, gameData, playerId, perm, entry)) continue;
-                    if (consume && permission.oncePerTurn()) {
-                        gameData.freeCastPermanentUsedThisTurn.add(perm.getId());
+                    if (consume) {
+                        if (permission.oncePerTurn()) {
+                            gameData.freeCastPermanentUsedThisTurn.add(perm.getId());
+                        }
+                        if (permission.oneShot()) {
+                            gameData.oneShotExileCastPermissionsUsed.add(perm.getId());
+                        }
                     }
                     return true;
                 }
@@ -2338,9 +2396,12 @@ public class CastingPermissionService {
         if (permission.controllerTurnOnly() && !playerId.equals(gameData.activePlayerId)) return false;
         if (permission.ownOnly() && !playerId.equals(entry.ownerId())) return false;
         if (permission.thisTurnOnly() && entry.exiledTurnNumber() != gameData.turnNumber) return false;
-        if (permission.oncePerTurn()
+        if (permission.oncePerTurn() && !entry.card().hasType(CardType.LAND)
                 && (gameData.freeCastPermanentUsedThisTurn.contains(source.getId())
                 || gameData.oncePerTurnExileCastPermissionsUsedThisTurn.contains(source.getId()))) return false;
+        if (permission.oneShot()
+                && (gameData.oneShotExileCastPermissionsUsed.contains(source.getId())
+                || source.getControlChangeSequence() > 0)) return false;
         if (permission.filter() != null
                 && !predicateEvaluationService.matchesCardPredicate(entry.card(), permission.filter(), null)) {
             return false;

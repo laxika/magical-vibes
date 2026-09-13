@@ -118,6 +118,7 @@ class PendingInteractionContractTest {
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,
+            PendingInteraction.PlanarAbilityHandCardChoice.class,
             PendingInteraction.DiscardChoice.class,
             PendingInteraction.ExileFromHandChoice.class,
             PendingInteraction.ImprintFromHandChoice.class,

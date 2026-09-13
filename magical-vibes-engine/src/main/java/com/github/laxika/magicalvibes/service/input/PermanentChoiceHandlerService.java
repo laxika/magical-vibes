@@ -88,7 +88,9 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.CloneCopy) {
+        if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice auraEntry) {
+            battlefieldHandler.handleAuraEntryBatchChoice(gameData, permanentId, auraEntry);
+        } else if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.TurnFaceUpCopy turnFaceUpCopy) {
             battlefieldHandler.handleTurnFaceUpCopy(gameData, permanentId, turnFaceUpCopy);

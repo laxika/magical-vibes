@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetedPermanentsOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
@@ -182,7 +181,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -190,6 +188,9 @@ import java.util.Set;
 
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTriggeringSpellColorsEffect;
+
 /**
  * Trigger collectors for spell-cast events (ON_ANY_PLAYER_CASTS_SPELL,
  * ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
@@ -213,52 +214,6 @@ public class SpellCastTriggerCollectorService {
     private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
-    }
-
-    @CollectsEmblemTrigger(GainControlOfTargetedPermanentsOnControllerSpellCastEffect.class)
-    private boolean handleDackFaydenEmblem(EmblemTriggerMatchContext match,
-                                            GainControlOfTargetedPermanentsOnControllerSpellCastEffect trigger,
-                                            TriggerContext ctx) {
-        TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;
-        if (!match.controllerId().equals(spellCast.castingPlayerId())) {
-            return true;
-        }
-
-        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCast.spellCard().getId());
-        if (triggeringSpell == null) {
-            return true;
-        }
-
-        LinkedHashSet<UUID> targetIds = new LinkedHashSet<>(triggeringSpell.getTargetIds());
-        if (triggeringSpell.getTargetId() != null) {
-            targetIds.add(triggeringSpell.getTargetId());
-        }
-        List<UUID> targetedPermanents = targetIds.stream()
-                .filter(targetId -> gameQueryService.findPermanentById(match.gameData(), targetId) != null)
-                .toList();
-        if (targetedPermanents.isEmpty()) {
-            return true;
-        }
-
-        Card source = match.emblem().sourceCard();
-        Card sourceCard = source != null ? source : spellCast.spellCard();
-        String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                description,
-                new ArrayList<>(List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT))),
-                null,
-                targetedPermanents
-        );
-        entry.setTriggeringCardId(spellCast.spellCard().getId());
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.text(description + " triggers."));
-        log.info("Game {} - {} gains control of {} targeted permanents",
-                match.gameData().id, description, targetedPermanents.size());
-        return true;
     }
 
     @CollectsTrigger(value = FirstMulticoloredSpellCastTriggerEffect.class,
@@ -519,7 +474,8 @@ public class SpellCastTriggerCollectorService {
     private boolean handleAnyPlayerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
+        if (!trigger.matchesColor(sc.spellCard().getColor())
+                && sc.spellCard().getColors().stream().noneMatch(trigger::matchesColor)) return false;
         if (trigger.onlyOwnSpells()) return false;
         return addColorCounterTrigger(match, trigger);
     }
@@ -932,7 +888,8 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
+        if (!trigger.matchesColor(sc.spellCard().getColor())
+                && sc.spellCard().getColors().stream().noneMatch(trigger::matchesColor)) return false;
         return addColorCounterTrigger(match, trigger);
     }
 
@@ -1842,13 +1799,14 @@ public class SpellCastTriggerCollectorService {
                 && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                 match.gameData(), sc.castingPlayerId())) return false;
 
-        int manaValue = sc.spellCard().getManaValue();
+        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                List.of(new BecomeCreatureEffect(manaValue, manaValue, CardSubtype.ILLUSION)),
+                List.of(new ConditionalEffect(new SourceIsEnchantment(),
+                        new BecomeCreatureEffect(manaValue, manaValue, CardSubtype.ILLUSION))),
                 null,
                 match.permanent().getId());
         entry.setTriggeringCardId(sc.spellCard().getId());
@@ -2224,7 +2182,8 @@ public class SpellCastTriggerCollectorService {
     private boolean handleOpponentColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
+        if (!trigger.matchesColor(sc.spellCard().getColor())
+                && sc.spellCard().getColors().stream().noneMatch(trigger::matchesColor)) return false;
         return addColorCounterTrigger(match, trigger);
     }
 
@@ -2645,6 +2604,20 @@ public class SpellCastTriggerCollectorService {
 
     private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
                                                UUID castingPlayerId) {
+        if (effect instanceof GrantProtectionFromTriggeringSpellColorsEffect) {
+            return new GrantProtectionFromTriggeringSpellColorsEffect(
+                    Set.copyOf(spellSnapshot.getCard().getColors()));
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return new SequenceEffect(sequence.steps().stream()
+                    .map(step -> snapshotTriggeringSpell(step, spellSnapshot, castingPlayerId)).toList(),
+                    sequence.controllerDrawCount(), sequence.onlyIfSacrificed());
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return new ConditionalEffect(conditional.condition(),
+                    snapshotTriggeringSpell(conditional.wrapped(), spellSnapshot, castingPlayerId),
+                    conditional.interveningIf());
+        }
         if (effect instanceof FlipCoinCopyTriggeringSpellOrDealDamageEffect breechesEffect
                 && breechesEffect.spellSnapshot() == null) {
             return new FlipCoinCopyTriggeringSpellOrDealDamageEffect(

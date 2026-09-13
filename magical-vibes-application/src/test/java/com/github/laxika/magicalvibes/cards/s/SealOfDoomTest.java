@@ -1,23 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
+import com.github.laxika.magicalvibes.cards.m.MoggToady;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SealOfDoom.class, MoggToady.class, SpinelessThug.class})
 class SealOfDoomTest extends BaseCardTest {
 
     @Test
     void activatingAbilitySacrificesSealAndPutsAbilityOnStack() {
-        Permanent seal = addReadySeal(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player2, new MoggToady());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -31,8 +31,8 @@ class SealOfDoomTest extends BaseCardTest {
 
     @Test
     void resolvingAbilityDestroysTargetNonblackCreature() {
-        addReadySeal(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player2, new MoggToady());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -43,8 +43,8 @@ class SealOfDoomTest extends BaseCardTest {
 
     @Test
     void destroysCreatureEvenWithRegenerationShield() {
-        addReadySeal(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player2, new MoggToady());
         target.setRegenerationShield(1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -55,10 +55,8 @@ class SealOfDoomTest extends BaseCardTest {
 
     @Test
     void cannotTargetBlackCreature() {
-        addReadySeal(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = new Permanent(new MassOfGhouls());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player2, new SpinelessThug());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -66,21 +64,13 @@ class SealOfDoomTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetLand() {
-        addReadySeal(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = new Permanent(new Island());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+    void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SealOfDoom());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack creature");
     }
 
-    private Permanent addReadySeal(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent seal = new Permanent(new SealOfDoom());
-        seal.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(seal);
-        return seal;
-    }
 }

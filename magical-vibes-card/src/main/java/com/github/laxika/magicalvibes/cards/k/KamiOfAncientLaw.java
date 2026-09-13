@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "21")
+@CardRegistration(set = "MM2", collectorNumber = "21")
 public class KamiOfAncientLaw extends Card {
 
     public KamiOfAncientLaw() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicat
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "3")
+@CardRegistration(set = "MP2", collectorNumber = "1")
 public class AustereCommand extends Card {
 
     public AustereCommand() {

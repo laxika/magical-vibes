@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
@@ -1203,6 +1204,30 @@ class SpellCastingServiceTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough mana");
         }
+
+        @Test
+        @DisplayName("Applies an optional hand-exile reduction to an X spell")
+        void appliesHandExileReductionToXSpell() {
+            Card xSpell = createInstant("Test X Spell", "{X}{U}");
+            xSpell.addEffect(EffectSlot.SPELL,
+                    new ExileAnyNumberOfCardsFromHandCost(
+                            new CardColorPredicate(CardColor.BLUE), 2));
+            Card blueCard = createInstant("Blue Card", "{U}");
+            blueCard.setColor(CardColor.BLUE);
+            setHand(player1Id, List.of(xSpell, blueCard));
+            addMana(player1Id, ManaColor.BLUE, 1);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any())).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, 2, null, null, null, List.of(), false, null,
+                    null, List.of(), null, List.of(), false, null, List.of(1));
+
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
+                    .containsExactly("Blue Card");
+            assertThat(gd.stack).hasSize(1);
+        }
     }
 
     // =========================================================================
@@ -1627,6 +1652,7 @@ class SpellCastingServiceTest {
             Card land = createLand("Exiled Plains");
             gd.addToExile(player1Id, land);
             gd.exilePlayPermissions.put(land.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, land.getId())).thenReturn(true);
 
             svc.playCardFromExile(gd, player1, land.getId(), 0, null);
 
@@ -1673,6 +1699,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Exiled Bear", "{1}{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 2);
 
             svc.playCardFromExile(gd, player1, creature.getId(), 0, null);
@@ -1697,6 +1724,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Free Bear", "{4}{G}{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             gd.exilePlayWithoutPayingManaCost.add(creature.getId());
             // Player has no mana at all — the play must still succeed.
 
@@ -1716,6 +1744,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Exiled Bear", "{G}");
             gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 1);
             int before = gd.getSpellsCastThisTurnCount(player1Id);
 

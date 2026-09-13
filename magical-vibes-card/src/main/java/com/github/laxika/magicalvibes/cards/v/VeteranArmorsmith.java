@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "38")
+@CardRegistration(set = "DDO", collectorNumber = "27")
 public class VeteranArmorsmith extends Card {
 
     public VeteranArmorsmith() {

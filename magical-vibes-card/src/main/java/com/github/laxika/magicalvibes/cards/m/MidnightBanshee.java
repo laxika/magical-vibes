@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "72")
+@CardRegistration(set = "MM2", collectorNumber = "86")
 public class MidnightBanshee extends Card {
 
     public MidnightBanshee() {

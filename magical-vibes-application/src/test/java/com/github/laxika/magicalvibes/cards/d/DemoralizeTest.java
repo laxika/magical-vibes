@@ -38,8 +38,10 @@ class DemoralizeTest extends BaseCardTest {
 
         castDemoralize();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opposingCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, ownCreature, opposingCreature,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, opposingCreature, ownCreature,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test

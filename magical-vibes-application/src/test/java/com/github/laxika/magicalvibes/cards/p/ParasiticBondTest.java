@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ParasiticBond.class, Forest.class, GorillaWarrior.class})
 class ParasiticBondTest extends BaseCardTest {
 
     @Test
@@ -30,11 +32,28 @@ class ParasiticBondTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving Parasitic Bond attaches it to the target creature")
+    void resolvingAttachesToTargetCreature() {
+        Permanent creature = addCreature(player2);
+        ParasiticBond parasiticBond = new ParasiticBond();
+
+        harness.setHand(player1, List.of(parasiticBond));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(parasiticBond.getId())
+                        && permanent.isAttached()
+                        && permanent.getAttachedTo().equals(creature.getId()));
+    }
+
+    @Test
     @DisplayName("Cannot enchant a non-creature permanent")
     void cannotEnchantNonCreature() {
         addCreature(player2);
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.setHand(player1, List.of(new ParasiticBond()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -90,14 +109,11 @@ class ParasiticBondTest extends BaseCardTest {
     }
 
     private void attachParasiticBond(Permanent creature) {
-        Permanent parasiticBond = new Permanent(new ParasiticBond());
+        Permanent parasiticBond = harness.addToBattlefieldAndReturn(player1, new ParasiticBond());
         parasiticBond.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(parasiticBond);
     }
 
     private Permanent addCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GorillaWarrior());
     }
 }

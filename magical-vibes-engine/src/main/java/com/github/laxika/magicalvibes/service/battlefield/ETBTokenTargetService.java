@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AggregateManaValueTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
@@ -448,6 +449,20 @@ public class ETBTokenTargetService {
                         !damagedPlayerIds.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
+            int aggregateManaValueLimit = aggregateManaValueLimit(groupEffects);
+            if (aggregateManaValueLimit >= 0) {
+                int selectedManaValue = currentGroupTargetIds(pending).stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .mapToInt(permanent -> permanent.getCard().getManaValue())
+                        .sum();
+                validPermanentTargets.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate != null
+                            && selectedManaValue + candidate.getCard().getManaValue() > aggregateManaValueLimit;
+                });
+            }
+
             boolean noLegalTargets = validPlayerTargets.isEmpty()
                     && validPermanentTargets.isEmpty()
                     && validExiledCardTargets.isEmpty()
@@ -600,6 +615,22 @@ public class ETBTokenTargetService {
                 .contains(candidateId);
         return chosenInCurrentGroup
                 || (!pending.sourceCard().isAllowSharedTargets() && chosenTargets.contains(candidateId));
+    }
+
+    private List<UUID> currentGroupTargetIds(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        int currentGroupStart = pending.groupSizes().stream().mapToInt(Integer::intValue).sum();
+        return pending.chosenTargetsSoFar().subList(currentGroupStart, pending.chosenTargetsSoFar().size());
+    }
+
+    private int aggregateManaValueLimit(List<CardEffect> effects) {
+        return effects.stream()
+                .filter(effect -> effect instanceof AggregateManaValueTargetEffect aggregateEffect
+                        && aggregateEffect.hasAggregateManaValueLimit()
+                        && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .map(AggregateManaValueTargetEffect.class::cast)
+                .mapToInt(AggregateManaValueTargetEffect::maxTotalManaValue)
+                .min()
+                .orElse(-1);
     }
 
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {

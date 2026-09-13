@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ULG", collectorNumber = "43")
+@CardRegistration(set = "DDS", collectorNumber = "10")
 public class Snap extends Card {
 
     public Snap() {

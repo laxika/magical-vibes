@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "135")
+@CardRegistration(set = "DDQ", collectorNumber = "68")
 public class DiregrafCaptain extends Card {
 
     public DiregrafCaptain() {

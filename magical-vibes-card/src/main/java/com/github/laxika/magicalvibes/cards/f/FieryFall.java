@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "CON", collectorNumber = "63")
 @CardRegistration(set = "PC2", collectorNumber = "43")
 @CardRegistration(set = "DDG", collectorNumber = "76")
+@CardRegistration(set = "MM2", collectorNumber = "113")
 @CardRegistration(set = "DDN", collectorNumber = "29")
 @CardRegistration(set = "MMA", collectorNumber = "113")
 public class FieryFall extends Card {

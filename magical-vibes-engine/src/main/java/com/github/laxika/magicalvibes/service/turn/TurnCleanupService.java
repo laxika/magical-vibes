@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
 
 /**
  * Handles end-of-turn cleanup, mana pool draining, and hand-size calculations.
@@ -84,6 +87,15 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
+        for (var delayed : gameData.drainDelayedActions(
+                DelayedCleanupTrigger.class)) {
+            var entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(), delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s cleanup trigger", List.of(delayed.effect()));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         permanentRemovalService.processDelayedPermanentActions(
                 gameData, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         sacrificePermanentsFlaggedForCleanup(gameData);
@@ -190,8 +202,6 @@ public class TurnCleanupService {
         }
     }
 
-
-
     /**
      * Resets all "until end of turn" modifiers on permanents (power/toughness
      * modifiers, granted keywords, damage-prevention and regeneration shields,
@@ -271,6 +281,8 @@ public class TurnCleanupService {
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.permanentEnterTappedFiltersThisTurn.clear();
         gameData.additionalEnterCountersThisTurn.clear();
+        gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.clear();
+        gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.matchingCreatureBlockRestrictionsThisTurn.clear();
         gameData.preventDamageFromColors.clear();
@@ -463,6 +475,7 @@ public class TurnCleanupService {
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.clearExilePlayPermissionGroup(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
@@ -481,6 +494,7 @@ public class TurnCleanupService {
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
             if (entry.getValue() <= currentTurn) {
                 gameData.exilePlayPermissions.remove(entry.getKey());
+                gameData.clearExilePlayPermissionGroup(entry.getKey());
                 gameData.exilePlayCostModifiers.remove(entry.getKey());
                 gameData.exilePlayWithoutPayingManaCost.remove(entry.getKey());
                 gameData.exilePlayAnyManaType.remove(entry.getKey());

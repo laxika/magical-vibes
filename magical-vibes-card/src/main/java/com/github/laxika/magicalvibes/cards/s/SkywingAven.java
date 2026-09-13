@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "47")
+@CardRegistration(set = "VMA", collectorNumber = "94")
 public class SkywingAven extends Card {
 
     public SkywingAven() {

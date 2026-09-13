@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "96")
 @CardRegistration(set = "ICE", collectorNumber = "81")
 @CardRegistration(set = "ME2", collectorNumber = "51")
+@CardRegistration(set = "VMA", collectorNumber = "77")
 public class KrovikanSorcerer extends Card {
 
     public KrovikanSorcerer() {

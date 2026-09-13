@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SivvisValor.class, GrizzlyBears.class, Plains.class, ProdigalPyromancer.class})
 class SivvisValorTest extends BaseCardTest {
 
     @Test
@@ -23,8 +26,8 @@ class SivvisValorTest extends BaseCardTest {
     void redirectsAllDamageToController() {
         harness.setLife(player1, 20);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent pyromancer1 = addReady(player1, new ProdigalPyromancer());
-        Permanent pyromancer2 = addReady(player1, new ProdigalPyromancer());
+        Permanent pyromancer1 = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent pyromancer2 = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.setHand(player1, List.of(new SivvisValor()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -42,11 +45,33 @@ class SivvisValorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Redirects combat damage dealt to the target creature to the spell's controller")
+    void redirectsCombatDamageToController() {
+        harness.setLife(player1, 20);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new SivvisValor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
     @DisplayName("The redirect expires at the end of the turn")
     void redirectExpiresAtEndOfTurn() {
         harness.setLife(player1, 20);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent pyromancer = addReady(player1, new ProdigalPyromancer());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.setHand(player1, List.of(new SivvisValor()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -69,9 +94,9 @@ class SivvisValorTest extends BaseCardTest {
     @DisplayName("Can be cast for its alternate cost by tapping a creature while controlling a Plains")
     void castsForAlternateCost() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        Permanent paymentCreature = addReady(player1, new GrizzlyBears());
+        Permanent paymentCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent pyromancer = addReady(player1, new ProdigalPyromancer());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.setHand(player1, List.of(new SivvisValor()));
         harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(paymentCreature.getId()));
@@ -96,12 +121,6 @@ class SivvisValorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
     }
 
     private int indexOf(Player player, Permanent permanent) {

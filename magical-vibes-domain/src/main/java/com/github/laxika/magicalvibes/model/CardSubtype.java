@@ -274,6 +274,7 @@ public enum CardSubtype {
     PLANET("Planet"),
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),
+    BOOK("Book"),
     CITIZEN("Citizen"),
     SCARECROW("Scarecrow"),
     CARIBOU("Caribou"),

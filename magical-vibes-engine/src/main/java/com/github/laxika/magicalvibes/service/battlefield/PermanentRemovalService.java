@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
@@ -493,7 +494,7 @@ public class PermanentRemovalService {
         gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(ownerId);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
-        triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
+        triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId, target);
         target.setAttachedTo(null);
         return true;
     }
@@ -881,6 +882,7 @@ public class PermanentRemovalService {
     public boolean removeOrphanedAuras(GameData gameData) {
         var result = auraAttachmentService.removeOrphanedAuras(gameData);
         for (var removal : result.removals()) {
+            triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
@@ -896,6 +898,7 @@ public class PermanentRemovalService {
     public boolean enforceAttachmentLegality(GameData gameData) {
         var result = auraAttachmentService.enforceAttachmentLegality(gameData);
         for (var removal : result.removals()) {
+            triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
@@ -1486,12 +1489,38 @@ public class PermanentRemovalService {
                 }
             }
         }
+        if (controlledSourceExilesDyingCreature(gameData, cardId)) {
+            return true;
+        }
         for (Permanent source : gameData.simultaneousDyingCreatures.values()) {
             if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
                     .getOrDefault(source.getId(), Set.of()).contains(cardId)
                     && (hasExileDamagedCreaturesInsteadOfDying(source)
                     || auraOnSourceExilesDamagedCreatures(gameData, source.getId()))) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean controlledSourceExilesDyingCreature(GameData gameData, UUID dyingCardId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent effectSource : battlefield) {
+                if (effectSource.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .noneMatch(ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect.class::isInstance)) {
+                    continue;
+                }
+                UUID controllerId = gameQueryService.findPermanentController(gameData, effectSource.getId());
+                if (controllerId == null) {
+                    continue;
+                }
+                for (UUID sourceId : gameData.damageSourcesControlledByPlayerThisTurn
+                        .getOrDefault(controllerId, Set.of())) {
+                    if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                            .getOrDefault(sourceId, Set.of()).contains(dyingCardId)) {
+                        return true;
+                    }
+                }
             }
         }
         return false;
@@ -1573,6 +1602,9 @@ public class PermanentRemovalService {
                         selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed);
                 if (enteredGraveyard) {
                     wentToGraveyard = true;
+                    if (wasEnchantment) {
+                        gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.add(ownerId);
+                    }
                 } else if (gameData.findExiledCard(leaving.getId()) != null) {
                     exiledFromBattlefield++;
                     if (!leaving.isToken() && leaving.hasType(CardType.CREATURE)) {

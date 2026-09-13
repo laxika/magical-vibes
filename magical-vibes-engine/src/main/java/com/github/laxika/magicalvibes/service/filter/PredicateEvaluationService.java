@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlled
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
@@ -155,6 +156,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColor
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
@@ -218,6 +220,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourc
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
@@ -423,6 +426,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (source == null) {
+                    source = sourcePermanentSnapshot;
+                }
                 if (source == null || source.getChosenSubtype() == null
                         || p.creatureOnly() && !card.hasType(CardType.CREATURE)) {
                     yield false;
@@ -583,6 +589,8 @@ public class PredicateEvaluationService {
                         ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
                         : sourcePowerAtTrigger != null
                         ? sourcePowerAtTrigger
+                        : sourcePermanentSnapshot != null
+                        ? sourcePermanentSnapshot.getEffectivePower()
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getManaValue() <= sourcePower;
             }
@@ -625,6 +633,8 @@ public class PredicateEvaluationService {
                     card.getManaValue() <= p.maxManaValue();
             case CardMaxManaValueXPredicate ignored ->
                     xValue == null || card.getManaValue() <= xValue;
+            case CardManaValueLessThanXPredicate ignored ->
+                    xValue != null && card.getManaValue() < xValue;
             case CardMinManaValuePredicate p ->
                     card.getManaValue() + (p.includeXValue() && xValue != null ? xValue : 0)
                             >= p.minManaValue();
@@ -1013,6 +1023,8 @@ public class PredicateEvaluationService {
             }
             case PermanentSharesCardTypeWithSourcePermanentPredicate ignored ->
                     sharesCardTypeWithSourcePermanent(permanent, filterContext);
+            case PermanentSharesCardTypeWithTargetCardPredicate ignored ->
+                    sharesCardTypeWithTargetCard(permanent, filterContext);
             case PermanentSharesMostCommonColorPredicate ignored -> {
                 if (gameData == null) {
                     yield false;
@@ -1356,6 +1368,12 @@ public class PredicateEvaluationService {
                     yield true;
                 }
                 yield permanent.getCard().getManaValue() == filterContext.xValue();
+            }
+            case PermanentManaValueLessThanXPredicate ignored -> {
+                if (filterContext == null || filterContext.xValue() == null) {
+                    yield true;
+                }
+                yield permanent.getCard().getManaValue() < filterContext.xValue();
             }
             case PermanentMaxManaValueXPredicate ignored -> {
                 // Same permissive fallback as the equals-X sibling: with no X chosen yet, every
@@ -2201,6 +2219,27 @@ public class PredicateEvaluationService {
                 .anyMatch(permanentTypes::contains);
     }
 
+    private boolean sharesCardTypeWithTargetCard(Permanent permanent, FilterContext filterContext) {
+        if (filterContext == null || filterContext.gameData() == null
+                || filterContext.targetCardId() == null) {
+            return false;
+        }
+        Card targetCard = gameQueryService.findCardInGraveyardById(
+                filterContext.gameData(), filterContext.targetCardId());
+        if (targetCard == null) {
+            return false;
+        }
+        Set<CardType> permanentTypes = gameQueryService.getEffectiveCardTypes(
+                filterContext.gameData(), permanent);
+        return targetCard.hasType(CardType.LAND) && permanentTypes.contains(CardType.LAND)
+                || targetCard.hasType(CardType.CREATURE) && permanentTypes.contains(CardType.CREATURE)
+                || targetCard.hasType(CardType.ENCHANTMENT) && permanentTypes.contains(CardType.ENCHANTMENT)
+                || targetCard.hasType(CardType.ARTIFACT) && permanentTypes.contains(CardType.ARTIFACT)
+                || targetCard.hasType(CardType.PLANESWALKER) && permanentTypes.contains(CardType.PLANESWALKER)
+                || targetCard.hasType(CardType.BATTLE) && permanentTypes.contains(CardType.BATTLE)
+                || targetCard.hasType(CardType.KINDRED) && permanentTypes.contains(CardType.KINDRED);
+    }
+
     private Set<CardType> cardTypesWithoutGameData(Permanent permanent) {
         Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
         if (permanent.isFaceDown()) {
@@ -2951,7 +2990,8 @@ public class PredicateEvaluationService {
     }
 
     private boolean hasManaAbility(GameData gameData, Permanent permanent) {
-        return PotentialManaService.hasOnTapManaEffects(permanent.getCard())
+        return ((gameData == null || !gameQueryService.hasLostAllAbilities(gameData, permanent))
+                && PotentialManaService.hasOnTapManaEffects(permanent.getCard()))
                 || effectiveActivatedAbilities(gameData, permanent).stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
     }

@@ -44,8 +44,7 @@ class ElementalUprisingTest extends BaseCardTest {
         addCreatureReady(player2);
 
         castOn(player1, land);
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)

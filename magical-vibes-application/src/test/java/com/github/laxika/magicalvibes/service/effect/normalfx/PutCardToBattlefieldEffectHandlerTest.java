@@ -8,14 +8,38 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
+
+    @Test
+    void retainsSourceSnapshotForTheHandFilterAfterSourceLeaves() {
+        Card source = createCard("Subtype source");
+        var snapshot = new com.github.laxika.magicalvibes.model.Permanent(source);
+        CardPredicate predicate = new CardNamedPredicate("Test Filter");
+        var effect = new PutCardToBattlefieldEffect(predicate, "creature");
+        StackEntry entry = new StackEntry(com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY,
+                source, player1Id, "Source ability", List.of(effect), null, snapshot.getId());
+        entry.setSourcePermanentSnapshot(snapshot);
+        Card creature = createCard("Chosen creature");
+        gd.playerHands.get(player1Id).add(creature);
+        when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(predicate), any(), eq(gd),
+                eq(player1Id), eq(snapshot.getId()), isNull(), anyInt(), eq(snapshot))).thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), eq(List.of(0)), any(),
+                anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(),
+                eq(false), eq(false), eq(0), eq(0), anySet(), isNull(), eq(false), eq(false),
+                isNull(), isNull(), isNull(), isNull(), eq(snapshot.getId()), eq(Set.of()));
+    }
 
     @Test
     @DisplayName("Presents card choice when matching cards exist in hand")
@@ -77,6 +101,34 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
                 anySet(), isNull(), eq(true), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()));
+    }
+
+    @Test
+    @DisplayName("Filters the hand choice by the triggering event value")
+    void filtersByEventValue() {
+        Card card = createCard("Covert Technician");
+        CardPredicate predicate = new CardNamedPredicate("artifact");
+        PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "artifact")
+                .boundedByEventValue();
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        entry.setEventValue(2);
+        Card eligibleCard = createCard("Mind Stone");
+        eligibleCard.setManaCost("{2}");
+        Card ineligibleCard = createCard("Solemn Simulacrum");
+        ineligibleCard.setManaCost("{4}");
+        gd.playerHands.get(player1Id).addAll(List.of(eligibleCard, ineligibleCard));
+
+        when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        ArgumentCaptor<List<Integer>> validIndices = ArgumentCaptor.forClass(List.class);
+        verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), validIndices.capture(), any(), anyBoolean(),
+                anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false),
+                eq(0), eq(0), anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(),
+                isNull(), anySet());
+        assertThat(validIndices.getValue()).containsExactly(0);
     }
 
     @Test

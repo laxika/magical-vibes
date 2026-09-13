@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "79")
+@CardRegistration(set = "MM2", collectorNumber = "52")
 public class Narcolepsy extends Card {
 
     public Narcolepsy() {

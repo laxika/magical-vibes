@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "17")
+@CardRegistration(set = "DDO", collectorNumber = "22")
 public class PrecinctCaptain extends Card {
 
     public PrecinctCaptain() {

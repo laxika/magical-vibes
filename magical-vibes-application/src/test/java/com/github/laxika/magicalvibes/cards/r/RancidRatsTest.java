@@ -22,8 +22,7 @@ class RancidRatsTest extends BaseCardTest {
         Permanent rats = addCreatureReady(player1, new RancidRats());
         Permanent blocker = addCreatureReady(player2, new HillGiant());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(rats)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(rats)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(

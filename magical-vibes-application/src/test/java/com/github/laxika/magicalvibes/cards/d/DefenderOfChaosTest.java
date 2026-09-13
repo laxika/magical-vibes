@@ -69,8 +69,7 @@ class DefenderOfChaosTest extends BaseCardTest {
     void protectionFromWhitePreventsWhiteBlocking() {
         addCreatureReady(player1, new DefenderOfChaos());
         addCreatureReady(player2, new ExpendableTroops());
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

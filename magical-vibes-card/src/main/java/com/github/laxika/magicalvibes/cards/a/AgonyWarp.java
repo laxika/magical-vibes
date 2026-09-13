@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ALA", collectorNumber = "153")
+@CardRegistration(set = "MM2", collectorNumber = "170")
 public class AgonyWarp extends Card {
 
     public AgonyWarp() {

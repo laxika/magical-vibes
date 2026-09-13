@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -57,7 +59,9 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         String originalName = sourcePermanent.getCard().getName();
         BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect =
                 (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
-        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm,
+                copyEffect.powerOverride(), copyEffect.toughnessOverride(),
+                copyEffect.additionalTypesOverride());
         if (copyEffect.nameOverride() != null) {
             sourcePermanent.getCard().setName(copyEffect.nameOverride());
         }
@@ -66,6 +70,22 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             supertypes.addAll(sourcePermanent.getCard().getSupertypes());
             supertypes.addAll(copyEffect.additionalSupertypesOverride());
             sourcePermanent.getCard().setSupertypes(supertypes);
+        }
+        if (!copyEffect.additionalSubtypesOverride().isEmpty()) {
+            java.util.ArrayList<CardSubtype> subtypes = new java.util.ArrayList<>(
+                    sourcePermanent.getCard().getSubtypes());
+            for (CardSubtype subtype : copyEffect.additionalSubtypesOverride()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+            sourcePermanent.getCard().setSubtypes(subtypes);
+        }
+        if (!copyEffect.additionalKeywordsOverride().isEmpty()) {
+            EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(sourcePermanent.getCard().getKeywords());
+            keywords.addAll(copyEffect.additionalKeywordsOverride());
+            sourcePermanent.getCard().setKeywords(keywords);
         }
         sourcePermanent.setCopyUntilEndOfTurn(true);
         // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDG", collectorNumber = "75")
 @CardRegistration(set = "WTH", collectorNumber = "95")
 @CardRegistration(set = "HOP", collectorNumber = "52")
+@CardRegistration(set = "JVC", collectorNumber = "54")
 @CardRegistration(set = "W16", collectorNumber = "12")
 public class ConeOfFlame extends Card {
 

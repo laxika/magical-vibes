@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "105")
+@CardRegistration(set = "VMA", collectorNumber = "188")
 public class SparkSpray extends Card {
 
     public SparkSpray() {

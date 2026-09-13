@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "118")
+@CardRegistration(set = "DDR", collectorNumber = "60")
 public class ShadowsOfThePast extends Card {
 
     public ShadowsOfThePast() {
