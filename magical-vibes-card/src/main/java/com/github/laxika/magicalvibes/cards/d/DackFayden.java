@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "247")
+@CardRegistration(set = "EMA", collectorNumber = "199")
 public class DackFayden extends Card {
 
     public DackFayden() {
@@ -27,7 +28,7 @@ public class DackFayden extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new DrawCardForTargetPlayerEffect(2),
+                        new DrawCardForTargetPlayerEffect(2, false, true),
                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)
                 ),
                 "+1: Target player draws two cards, then discards two cards.",

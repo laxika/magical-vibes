@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "PLC", collectorNumber = "22")
 @CardRegistration(set = "DDI", collectorNumber = "2")
 @CardRegistration(set = "A25", collectorNumber = "39")
+@CardRegistration(set = "EMA", collectorNumber = "37")
 public class WhitemaneLion extends Card {
 
     public WhitemaneLion() {

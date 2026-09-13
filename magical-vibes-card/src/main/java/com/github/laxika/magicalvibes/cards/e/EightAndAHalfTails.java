@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "8")
+@CardRegistration(set = "EMA", collectorNumber = "7")
 public class EightAndAHalfTails extends Card {
 
     public EightAndAHalfTails() {

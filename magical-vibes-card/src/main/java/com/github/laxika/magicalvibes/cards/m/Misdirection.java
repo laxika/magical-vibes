@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "87")
+@CardRegistration(set = "DDT", collectorNumber = "15")
 public class Misdirection extends Card {
 
     public Misdirection() {

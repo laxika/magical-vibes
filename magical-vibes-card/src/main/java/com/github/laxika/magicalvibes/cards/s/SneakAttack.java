@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "218")
+@CardRegistration(set = "EMA", collectorNumber = "148")
 public class SneakAttack extends Card {
 
     public SneakAttack() {

@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "51")
 @CardRegistration(set = "A25", collectorNumber = "72")
+@CardRegistration(set = "EMA", collectorNumber = "71")
 public class ShorelineRanger extends Card {
 
     public ShorelineRanger() {

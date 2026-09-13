@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "115")
+@CardRegistration(set = "EMA", collectorNumber = "184")
 public class SealOfStrength extends Card {
 
     public SealOfStrength() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ISD", collectorNumber = "54")
+@CardRegistration(set = "EMA", collectorNumber = "47")
 public class DreamTwist extends Card {
 
     public DreamTwist() {

@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "111")
 @CardRegistration(set = "A25", collectorNumber = "134")
+@CardRegistration(set = "DDT", collectorNumber = "51")
 public class HordelingOutburst extends Card {
 
     public HordelingOutburst() {
