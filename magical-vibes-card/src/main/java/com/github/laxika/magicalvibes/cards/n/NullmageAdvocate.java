@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "126")
 @CardRegistration(set = "PC2", collectorNumber = "70")
+@CardRegistration(set = "PCA", collectorNumber = "70")
 public class NullmageAdvocate extends Card {
 
     public NullmageAdvocate() {

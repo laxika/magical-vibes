@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PC2", collectorNumber = "96")
+@CardRegistration(set = "PCA", collectorNumber = "96")
 public class IndrikUmbra extends Card {
 
     public IndrikUmbra() {

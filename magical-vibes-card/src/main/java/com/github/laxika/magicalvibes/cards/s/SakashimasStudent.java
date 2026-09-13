@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "PC2", collectorNumber = "24")
+@CardRegistration(set = "PCA", collectorNumber = "24")
 public class SakashimasStudent extends Card {
 
     public SakashimasStudent() {

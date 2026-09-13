@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "168")
 @CardRegistration(set = "PC2", collectorNumber = "97")
+@CardRegistration(set = "PCA", collectorNumber = "97")
 public class InkfathomWitch extends Card {
 
     public InkfathomWitch() {

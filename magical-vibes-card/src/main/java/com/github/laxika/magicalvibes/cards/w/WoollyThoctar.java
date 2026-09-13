@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ALA", collectorNumber = "209")
 @CardRegistration(set = "DDH", collectorNumber = "13")
+@CardRegistration(set = "MM3", collectorNumber = "203")
 public class WoollyThoctar extends Card {
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "99")
+@CardRegistration(set = "MM3", collectorNumber = "71")
 public class GnawingZombie extends Card {
 
     public GnawingZombie() {

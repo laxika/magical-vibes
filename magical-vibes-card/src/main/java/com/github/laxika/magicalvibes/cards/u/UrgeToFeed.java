@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "70")
 @CardRegistration(set = "DDK", collectorNumber = "22")
+@CardRegistration(set = "E02", collectorNumber = "21")
 public class UrgeToFeed extends Card {
 
     public UrgeToFeed() {

@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "74")
 @CardRegistration(set = "EMA", collectorNumber = "181")
+@CardRegistration(set = "DDU", collectorNumber = "22")
 public class RegalForce extends Card {
 
     public RegalForce() {

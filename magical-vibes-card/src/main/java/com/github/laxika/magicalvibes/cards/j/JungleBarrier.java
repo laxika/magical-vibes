@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "106")
+@CardRegistration(set = "E02", collectorNumber = "38")
 public class JungleBarrier extends Card {
 
     public JungleBarrier() {

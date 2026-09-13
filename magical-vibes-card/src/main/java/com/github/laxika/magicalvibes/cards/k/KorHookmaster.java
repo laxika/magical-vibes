@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDF", collectorNumber = "12")
 @CardRegistration(set = "DDN", collectorNumber = "52")
 @CardRegistration(set = "EMA", collectorNumber = "18")
+@CardRegistration(set = "MM3", collectorNumber = "10")
 public class KorHookmaster extends Card {
 
     public KorHookmaster() {
