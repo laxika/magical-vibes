@@ -135,6 +135,7 @@ public enum CardSet {
     SET_RIX("RIX"),
     SET_DOM("DOM"),
     SET_GRN("GRN"),
+    SET_GK1("GK1"),
     SET_WAR("WAR"),
     SET_ELD("ELD"),
     SET_WOE("WOE"),

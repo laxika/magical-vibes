@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "148")
+@CardRegistration(set = "GK1", collectorNumber = "84")
 @CardRegistration(set = "A25", collectorNumber = "199")
 public class BorosCharm extends Card {
 
