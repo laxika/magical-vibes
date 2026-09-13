@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "218")
+@CardRegistration(set = "GNT", collectorNumber = "53")
 public class HowlingGolem extends Card {
 
     public HowlingGolem() {

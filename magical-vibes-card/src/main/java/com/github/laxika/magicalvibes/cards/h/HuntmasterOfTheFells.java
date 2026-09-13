@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "241")
 @CardRegistration(set = "INR", collectorNumber = "325")
 @CardRegistration(set = "INR", collectorNumber = "470")
+@CardRegistration(set = "V17", collectorNumber = "11")
 public class HuntmasterOfTheFells extends Card {
 
     public HuntmasterOfTheFells() {

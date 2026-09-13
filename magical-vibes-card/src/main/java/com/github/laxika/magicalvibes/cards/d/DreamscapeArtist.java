@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "40")
+@CardRegistration(set = "UMA", collectorNumber = "52")
 public class DreamscapeArtist extends Card {
 
     public DreamscapeArtist() {

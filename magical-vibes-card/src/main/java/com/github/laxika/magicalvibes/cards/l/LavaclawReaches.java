@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "139")
+@CardRegistration(set = "UMA", collectorNumber = "245")
 public class LavaclawReaches extends Card {
 
     public LavaclawReaches() {

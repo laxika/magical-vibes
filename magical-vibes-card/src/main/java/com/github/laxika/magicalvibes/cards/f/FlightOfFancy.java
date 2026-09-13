@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "49")
+@CardRegistration(set = "UMA", collectorNumber = "54")
 public class FlightOfFancy extends Card {
 
     public FlightOfFancy() {

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "109")
+@CardRegistration(set = "UMA", collectorNumber = "149")
 public class Sparkspitter extends Card {
 
     public Sparkspitter() {

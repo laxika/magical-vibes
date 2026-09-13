@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
 @CardRegistration(set = "TSP", collectorNumber = "272")
+@CardRegistration(set = "UMA", collectorNumber = "243")
 public class FlagstonesOfTrokair extends Card {
 
     public FlagstonesOfTrokair() {

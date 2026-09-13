@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "ORI", collectorNumber = "88")
 @CardRegistration(set = "ONS", collectorNumber = "135")
 @CardRegistration(set = "HOP", collectorNumber = "23")
+@CardRegistration(set = "GNT", collectorNumber = "28")
 public class CruelRevival extends Card {
 
     public CruelRevival() {

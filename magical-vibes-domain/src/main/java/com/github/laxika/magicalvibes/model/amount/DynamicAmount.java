@@ -134,6 +134,7 @@ public sealed interface DynamicAmount permits
         Min,
         OpponentPoisonCounters,
         OpponentsWithMoreCardsInHandThanController,
+        OpponentsAttackedThisTurn,
         OpponentsWhoLostLifeThisTurn,
         OtherAttackersSharingCreatureTypeWithTarget,
         PartySize,
