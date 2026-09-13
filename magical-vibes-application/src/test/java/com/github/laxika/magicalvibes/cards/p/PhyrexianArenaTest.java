@@ -1,29 +1,30 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(PhyrexianArena.class)
 class PhyrexianArenaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Controller draws a card and loses 1 life at upkeep")
     void drawsAndLosesLifeAtUpkeep() {
         harness.addToBattlefield(player1, new PhyrexianArena());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new PhyrexianArena()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve draw
-        harness.passBothPriorities(); // resolve life loss
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Phyrexian Arena");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 

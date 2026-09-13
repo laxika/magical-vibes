@@ -17,7 +17,7 @@ class KavuGliderTest extends BaseCardTest {
     @Test
     @DisplayName("White ability gives Kavu Glider +0/+1 until end of turn")
     void whiteAbilityBoostsToughness() {
-        Permanent glider = addReadyGlider();
+        Permanent glider = addCreatureReady(player1, new KavuGlider());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -30,7 +30,7 @@ class KavuGliderTest extends BaseCardTest {
     @Test
     @DisplayName("Blue ability grants flying until end of turn")
     void blueAbilityGrantsFlying() {
-        Permanent glider = addReadyGlider();
+        Permanent glider = addCreatureReady(player1, new KavuGlider());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -42,7 +42,7 @@ class KavuGliderTest extends BaseCardTest {
     @Test
     @DisplayName("Both abilities wear off at end of turn")
     void abilitiesWearOffAtEndOfTurn() {
-        Permanent glider = addReadyGlider();
+        Permanent glider = addCreatureReady(player1, new KavuGlider());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -60,10 +60,39 @@ class KavuGliderTest extends BaseCardTest {
         assertThat(glider.hasKeyword(Keyword.FLYING)).isFalse();
     }
 
-    private Permanent addReadyGlider() {
-        Permanent glider = new Permanent(new KavuGlider());
-        glider.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(glider);
-        return glider;
+    @Test
+    @DisplayName("Each ability affects only the Kavu Glider whose ability was activated")
+    void abilitiesAffectOnlyTheirSource() {
+        Permanent glider = addCreatureReady(player1, new KavuGlider());
+        Permanent otherGlider = addCreatureReady(player1, new KavuGlider());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(glider.getEffectivePower()).isEqualTo(2);
+        assertThat(glider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(glider.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(otherGlider.getEffectivePower()).isEqualTo(2);
+        assertThat(otherGlider.getEffectiveToughness()).isEqualTo(1);
+        assertThat(otherGlider.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("White ability can be activated multiple times and its boosts stack")
+    void whiteAbilityStacks() {
+        Permanent glider = addCreatureReady(player1, new KavuGlider());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(glider.getEffectivePower()).isEqualTo(2);
+        assertThat(glider.getEffectiveToughness()).isEqualTo(3);
     }
 }

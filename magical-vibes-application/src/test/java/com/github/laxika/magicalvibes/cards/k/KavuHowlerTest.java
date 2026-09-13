@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.i.Index;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,14 +16,14 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(KavuHowler.class)
+@CardUsed({KavuHowler.class, KavuGlider.class, KavuMauler.class, Index.class})
 class KavuHowlerTest extends BaseCardTest {
 
-    private static Card createCard(String name, CardType type, CardSubtype... subtypes) {
+    private static Card createNoncreatureKavu() {
         Card card = new Card();
-        card.setName(name);
-        card.setType(type);
-        card.setSubtypes(List.of(subtypes));
+        card.setName("Kavu Research");
+        card.setType(CardType.SORCERY);
+        card.setSubtypes(List.of(CardSubtype.KAVU));
         return card;
     }
 
@@ -36,9 +36,7 @@ class KavuHowlerTest extends BaseCardTest {
     }
 
     private void castHowler() {
-        harness.setHand(player1, List.of(new KavuHowler()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KavuHowler(), "{4}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -46,36 +44,47 @@ class KavuHowlerTest extends BaseCardTest {
     @Test
     @DisplayName("Kavu cards among the top four go to hand and the rest go to the bottom")
     void kavuCardsGoToHand() {
-        Card kavu1 = createCard("Kavu Climber", CardType.CREATURE, CardSubtype.KAVU);
-        Card forest = createCard("Forest", CardType.LAND);
-        Card kavu2 = createCard("Kavu Titan", CardType.CREATURE, CardSubtype.KAVU);
-        Card shock = createCard("Shock", CardType.INSTANT);
-        Card deepKavu = createCard("Kavu Scout", CardType.CREATURE, CardSubtype.KAVU);
+        KavuGlider kavu1 = new KavuGlider();
+        Index nonKavu1 = new Index();
+        KavuMauler kavu2 = new KavuMauler();
+        Index nonKavu2 = new Index();
+        KavuGlider deepKavu = new KavuGlider();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
-        deck.addAll(List.of(kavu1, forest, kavu2, shock, deepKavu));
+        deck.addAll(List.of(kavu1, nonKavu1, kavu2, nonKavu2, deepKavu));
 
         castHowler();
         finishAnyReorder();
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(kavu1, kavu2);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest, shock, deepKavu);
-        assertThat(deck).contains(forest, shock, deepKavu);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(kavu1, kavu2);
+        assertThat(deck).containsExactly(deepKavu, nonKavu1, nonKavu2);
     }
 
     @Test
     @DisplayName("Noncreature Kavu cards also go to hand")
     void noncreatureKavuCardsGoToHand() {
-        Card kavuSpell = createCard("Kavu Research", CardType.SORCERY, CardSubtype.KAVU);
-        Card forest = createCard("Forest", CardType.LAND);
+        Card kavuSpell = createNoncreatureKavu();
+        Index nonKavu = new Index();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
-        deck.addAll(List.of(kavuSpell, forest));
+        deck.addAll(List.of(kavuSpell, nonKavu));
 
         castHowler();
         finishAnyReorder();
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(kavuSpell);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kavuSpell);
+        assertThat(deck).containsExactly(nonKavu);
+    }
+
+    @Test
+    @DisplayName("An empty library produces no cards and no reorder interaction")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+
+        castHowler();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

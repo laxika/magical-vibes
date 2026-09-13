@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.v.Vindicate;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HauntedAngel.class, WrathOfGod.class})
+@CardUsed({HauntedAngel.class, Vindicate.class})
 class HauntedAngelTest extends BaseCardTest {
 
     @Test
@@ -25,9 +25,11 @@ class HauntedAngelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HauntedAngel());
         Permanent hauntedAngel = findPermanent(player1, "Haunted Angel");
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.setHand(player1, List.of(new Vindicate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0, hauntedAngel.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Haunted Angel");

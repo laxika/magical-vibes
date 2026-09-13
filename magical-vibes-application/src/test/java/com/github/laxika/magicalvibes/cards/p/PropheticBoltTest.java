@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AetherMutation;
+import com.github.laxika.magicalvibes.cards.b.BloodfireKavu;
+import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,16 +17,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PropheticBolt.class, GrizzlyBears.class, Shock.class, Forest.class})
+@CardUsed({PropheticBolt.class, BloodfireKavu.class, AetherMutation.class, YavimayaCoast.class})
 class PropheticBoltTest extends BaseCardTest {
 
     private Card[] setTopFour() {
-        Card top1 = new GrizzlyBears();
-        Card top2 = new Shock();
-        Card top3 = new GrizzlyBears();
-        Card top4 = new Shock();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(top1, top2, top3, top4));
+        Card top1 = new BloodfireKavu();
+        Card top2 = new AetherMutation();
+        Card top3 = new BloodfireKavu();
+        Card top4 = new AetherMutation();
+        harness.setLibrary(player1, List.of(top1, top2, top3, top4));
         return new Card[]{top1, top2, top3, top4};
     }
 
@@ -66,12 +65,12 @@ class PropheticBoltTest extends BaseCardTest {
 
     @Test
     void dealsFourDamageToTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BloodfireKavu());
         harness.setHand(player1, List.of(new PropheticBolt()));
         Card[] top = setTopFour();
         addPropheticBoltMana();
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Bloodfire Kavu"));
         harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of(top[0].getId()));
@@ -82,18 +81,33 @@ class PropheticBoltTest extends BaseCardTest {
                         reorderInteraction.cards().indexOf(top[1]),
                         reorderInteraction.cards().indexOf(top[2]),
                         reorderInteraction.cards().indexOf(top[3]))));
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Bloodfire Kavu");
     }
 
     @Test
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new YavimayaCoast());
         harness.setHand(player1, List.of(new PropheticBolt()));
         addPropheticBoltMana();
-        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID coastId = harness.getPermanentId(player2, "Yavimaya Coast");
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, forestId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, coastId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature, planeswalker, battle, or player");
+    }
+
+    @Test
+    void stillDealsDamageWhenLibraryIsEmpty() {
+        harness.setHand(player1, List.of(new PropheticBolt()));
+        harness.setLibrary(player1, List.of());
+        addPropheticBoltMana();
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Prophetic Bolt");
     }
 }

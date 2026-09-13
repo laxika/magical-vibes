@@ -44,6 +44,24 @@ class EmblazonedGolemTest extends BaseCardTest {
     }
 
     @Test
+    void entersWithFiveCountersWhenUsingEachColorOnce() {
+        harness.setHand(player1, List.of(new EmblazonedGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        castWithKickerX(5);
+        harness.passBothPriorities();
+
+        Permanent golem = findPermanent(player1, "Emblazoned Golem");
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
     void kickerXCannotUseColorlessMana() {
         harness.setHand(player1, List.of(new EmblazonedGolem()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);

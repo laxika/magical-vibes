@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Index;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TahngarthsGlare.class, GrizzlyBears.class})
+@CardUsed({TahngarthsGlare.class, Index.class})
 class TahngarthsGlareTest extends BaseCardTest {
 
     @Test
@@ -61,9 +61,36 @@ class TahngarthsGlareTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    void reordersAllAvailableCardsWhenLibrariesHaveFewerThanThree() {
+        List<Card> ownTopCards = cards(1);
+        List<Card> opponentTopCards = cards(2);
+        harness.setLibrary(player1, ownTopCards);
+        harness.setLibrary(player2, opponentTopCards);
+        harness.setHand(player1, List.of(new TahngarthsGlare()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.playerId()).isEqualTo(player1.getId());
+        assertThat(reorder.deckOwnerId()).isEqualTo(player2.getId());
+        assertThat(reorder.cards()).containsExactlyElementsOf(opponentTopCards);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(
+                opponentTopCards.get(1), opponentTopCards.get(0));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(ownTopCards);
+        harness.assertInGraveyard(player1, "Tahngarth's Glare");
+    }
+
     private List<Card> cards(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(index -> (Card) new GrizzlyBears())
+                .mapToObj(index -> (Card) new Index())
                 .toList();
     }
 }
