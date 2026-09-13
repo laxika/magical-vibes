@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "162")
+@CardRegistration(set = "DDS", collectorNumber = "53")
 public class RadhaHeirToKeld extends Card {
 
     public RadhaHeirToKeld() {

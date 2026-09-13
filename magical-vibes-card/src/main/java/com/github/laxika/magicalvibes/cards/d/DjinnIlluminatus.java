@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "142")
+@CardRegistration(set = "DDJ", collectorNumber = "12")
 public class DjinnIlluminatus extends Card {
 
     public DjinnIlluminatus() {

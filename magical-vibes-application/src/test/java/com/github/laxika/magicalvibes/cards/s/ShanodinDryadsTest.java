@@ -25,8 +25,7 @@ class ShanodinDryadsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new ShanodinDryads());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -45,8 +44,7 @@ class ShanodinDryadsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new ShanodinDryads());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -62,8 +60,7 @@ class ShanodinDryadsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new ShanodinDryads());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -80,8 +77,7 @@ class ShanodinDryadsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new ShanodinDryads());
 
-        declareAttackers(List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

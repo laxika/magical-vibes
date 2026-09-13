@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "155")
+@CardRegistration(set = "DDS", collectorNumber = "23")
 public class JoriEnRuinDiver extends Card {
 
     public JoriEnRuinDiver() {

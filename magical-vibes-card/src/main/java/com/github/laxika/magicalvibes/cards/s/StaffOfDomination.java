@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "156")
+@CardRegistration(set = "MPS", collectorNumber = "48")
 public class StaffOfDomination extends Card {
 
     public StaffOfDomination() {

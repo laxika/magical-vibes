@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RollPlanarDieEffect;
 import java.util.List;
 
 @CardRegistration(set = "PC2", collectorNumber = "111")
+@CardRegistration(set = "PCA", collectorNumber = "111")
 public class FracturedPowerstone extends Card {
 
     public FracturedPowerstone() {

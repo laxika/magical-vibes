@@ -72,7 +72,7 @@ class KinscaerHarpoonistTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isFalse();
 
         // Clear the pending blocker declaration so the turn can advance to cleanup.
-        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

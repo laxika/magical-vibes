@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(CelestialConvergence.class)
 class CelestialConvergenceTest extends BaseCardTest {
 
     @Test
@@ -83,6 +85,21 @@ class CelestialConvergenceTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+    }
+
+    @Test
+    @DisplayName("A zero-counter upkeep still checks the highest life total")
+    void zeroCounterUpkeepStillChecksHighestLifeTotal() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        addWithOmenCounters(0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.WIN);
+        assertThat(gameLogContains("Alice wins the game")).isTrue();
     }
 
     private Permanent addWithOmenCounters(int count) {

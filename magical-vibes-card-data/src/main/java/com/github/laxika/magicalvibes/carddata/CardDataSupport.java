@@ -79,6 +79,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
+        KEYWORD_MAP.put("Dethrone", Keyword.DETHRONE);
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);

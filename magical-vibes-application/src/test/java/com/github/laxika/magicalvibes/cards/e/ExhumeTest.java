@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.s.SandbarMerfolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Exhume.class, SandbarMerfolk.class, DarkRitual.class})
 class ExhumeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Each player returns one creature card from their graveyard")
     void eachPlayerReturnsOneCreatureCard() {
-        Card player1Creature = new GrizzlyBears();
-        Card player2Creature = new GrizzlyBears();
+        Card player1Creature = new SandbarMerfolk();
+        Card player2Creature = new SandbarMerfolk();
         harness.setGraveyard(player1, List.of(player1Creature));
         harness.setGraveyard(player2, List.of(player2Creature));
 
@@ -33,9 +35,9 @@ class ExhumeTest extends BaseCardTest {
     @Test
     @DisplayName("Leaves noncreature cards and additional creature cards in graveyards")
     void returnsOnlyOneCreaturePerPlayer() {
-        Card returned = new GrizzlyBears();
-        Card remainingCreature = new GrizzlyBears();
-        Card instant = new HolyDay();
+        Card returned = new SandbarMerfolk();
+        Card remainingCreature = new SandbarMerfolk();
+        Card instant = new DarkRitual();
         harness.setGraveyard(player1, List.of(returned, remainingCreature, instant));
 
         castExhume();
@@ -45,6 +47,53 @@ class ExhumeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(remainingCreature, instant)
                 .doesNotContain(returned);
+    }
+
+    @Test
+    @DisplayName("Waits for every player to choose before returning any creatures")
+    void waitsForEveryPlayerToChooseBeforeReturningCreatures() {
+        Card player1First = new SandbarMerfolk();
+        Card player1Second = new SandbarMerfolk();
+        Card player2Creature = new SandbarMerfolk();
+        harness.setGraveyard(player1, List.of(player1First, player1Second));
+        harness.setGraveyard(player2, List.of(player2Creature));
+
+        castExhume();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).isEmpty();
+
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(battlefieldCards(player1)).containsExactly(player1First);
+        assertThat(battlefieldCards(player2)).containsExactly(player2Creature);
+    }
+
+    @Test
+    @DisplayName("Puts chosen creatures onto the battlefield simultaneously")
+    void putsChosenCreaturesOntoBattlefieldSimultaneously() {
+        Card player1First = new SandbarMerfolk();
+        Card player1Second = new SandbarMerfolk();
+        Card player2First = new SandbarMerfolk();
+        Card player2Second = new SandbarMerfolk();
+        harness.setGraveyard(player1, List.of(player1First, player1Second));
+        harness.setGraveyard(player2, List.of(player2First, player2Second));
+
+        castExhume();
+
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).isEmpty();
+
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).isEmpty();
+
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(battlefieldCards(player1)).containsExactly(player1First);
+        assertThat(battlefieldCards(player2)).containsExactly(player2First);
     }
 
     private void castExhume() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "77")
 @CardRegistration(set = "PD3", collectorNumber = "1")
+@CardRegistration(set = "VMA", collectorNumber = "135")
 public class PutridImp extends Card {
 
     public PutridImp() {

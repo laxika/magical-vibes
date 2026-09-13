@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "47")
 @CardRegistration(set = "TPR", collectorNumber = "70")
+@CardRegistration(set = "VMA", collectorNumber = "97")
 public class ThalakosDrifters extends Card {
 
     public ThalakosDrifters() {

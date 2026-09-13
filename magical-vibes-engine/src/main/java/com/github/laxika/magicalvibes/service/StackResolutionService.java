@@ -1286,7 +1286,7 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    physicalCard.getId(), ownerId));
+                    physicalCard.getId(), ownerId, entry.getCard(), entry.getControllerId()));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.isCastWithFlashback()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());

@@ -21,7 +21,7 @@ public class SpittingSpider extends Card {
                 false,
                 null,
                 List.of(
-                        new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
+                        new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land", false),
                         new MassDamageEffect(1, false, false, new PermanentHasKeywordPredicate(Keyword.FLYING))
                 ),
                 "Sacrifice a land: This creature deals 1 damage to each creature with flying."

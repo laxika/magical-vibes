@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "IMA", collectorNumber = "55")
+@CardRegistration(set = "VMA", collectorNumber = "68")
 public class Flusterstorm extends Card {
 
     public Flusterstorm() {

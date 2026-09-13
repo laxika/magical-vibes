@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ARB", collectorNumber = "91")
 @CardRegistration(set = "AKR", collectorNumber = "244")
+@CardRegistration(set = "MP2", collectorNumber = "52")
 public class LordOfExtinction extends Card {
 
     public LordOfExtinction() {

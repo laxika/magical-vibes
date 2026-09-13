@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "202")
+@CardRegistration(set = "DDR", collectorNumber = "6")
 public class Cloudthresher extends Card {
 
     public Cloudthresher() {

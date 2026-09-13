@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "55")
 @CardRegistration(set = "TPR", collectorNumber = "90")
+@CardRegistration(set = "VMA", collectorNumber = "110")
 public class CrovaxTheCursed extends Card {
 
     public CrovaxTheCursed() {

@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NestingWurm.class})
 class NestingWurmTest extends BaseCardTest {
 
     @Test
@@ -45,12 +46,30 @@ class NestingWurmTest extends BaseCardTest {
                 .isTrue();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Accepting may can find fewer than three Nesting Wurms")
+    void acceptingMayCanFindFewerThanThreeNestingWurms() {
+        setupAndCast();
+        setupLibraryWithNestingWurms(4);
+
+        resolveMayPrompt(true);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
     @Test
@@ -71,12 +90,11 @@ class NestingWurmTest extends BaseCardTest {
     }
 
     private void setupLibraryWithNestingWurms(int count) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
+        List<Card> deck = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             deck.add(new NestingWurm());
         }
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player1, deck);
     }
 
     private void resolveMayPrompt(boolean accept) {
