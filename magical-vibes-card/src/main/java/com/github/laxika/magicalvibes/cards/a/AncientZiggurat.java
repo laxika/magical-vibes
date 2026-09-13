@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "141")
 @CardRegistration(set = "H09", collectorNumber = "31")
+@CardRegistration(set = "HA3", collectorNumber = "26")
 public class AncientZiggurat extends Card {
 
     public AncientZiggurat() {
