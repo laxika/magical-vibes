@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "233")
 @CardRegistration(set = "DDP", collectorNumber = "20")
+@CardRegistration(set = "MM3", collectorNumber = "132")
 public class PrimalCommand extends Card {
 
     public PrimalCommand() {

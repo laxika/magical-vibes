@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "V09", collectorNumber = "9")
 @CardRegistration(set = "ME2", collectorNumber = "107")
 @CardRegistration(set = "IMA", collectorNumber = "98")
+@CardRegistration(set = "EMA", collectorNumber = "98")
 @CardRegistration(set = "VMA", collectorNumber = "130")
 public class Necropotence extends Card {
 

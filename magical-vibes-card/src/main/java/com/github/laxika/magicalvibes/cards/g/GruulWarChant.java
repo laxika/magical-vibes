@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "DGM", collectorNumber = "75")
+@CardRegistration(set = "MM3", collectorNumber = "170")
 public class GruulWarChant extends Card {
 
     public GruulWarChant() {

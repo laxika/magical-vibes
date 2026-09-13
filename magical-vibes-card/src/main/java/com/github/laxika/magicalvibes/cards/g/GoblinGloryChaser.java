@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "150")
+@CardRegistration(set = "DDT", collectorNumber = "43")
 public class GoblinGloryChaser extends Card {
 
     public GoblinGloryChaser() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "108")
 @CardRegistration(set = "IMA", collectorNumber = "177")
+@CardRegistration(set = "EMA", collectorNumber = "178")
 public class NaturesClaim extends Card {
 
     public NaturesClaim() {

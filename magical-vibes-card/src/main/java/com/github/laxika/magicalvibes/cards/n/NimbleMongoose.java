@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "258")
+@CardRegistration(set = "EMA", collectorNumber = "179")
 public class NimbleMongoose extends Card {
 
     public NimbleMongoose() {

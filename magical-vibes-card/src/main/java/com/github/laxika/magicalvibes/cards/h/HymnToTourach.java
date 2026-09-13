@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "ME1", collectorNumber = "73")
 @CardRegistration(set = "VMA", collectorNumber = "122")
 @CardRegistration(set = "V13", collectorNumber = "3")
+@CardRegistration(set = "EMA", collectorNumber = "92")
 public class HymnToTourach extends Card {
 
     public HymnToTourach() {

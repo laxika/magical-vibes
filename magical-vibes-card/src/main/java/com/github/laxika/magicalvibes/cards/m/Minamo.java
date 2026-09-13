@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "OHOP", collectorNumber = "24")
+@CardRegistration(set = "OPCA", collectorNumber = "50")
 public class Minamo extends Card {
 
     public Minamo() {

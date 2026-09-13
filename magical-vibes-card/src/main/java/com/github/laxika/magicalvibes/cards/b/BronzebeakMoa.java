@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "60")
+@CardRegistration(set = "MM3", collectorNumber = "152")
 public class BronzebeakMoa extends Card {
 
     public BronzebeakMoa() {

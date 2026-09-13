@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "DIS", collectorNumber = "41")
+@CardRegistration(set = "MM3", collectorNumber = "65")
 public class DeliriumSkeins extends Card {
 
     public DeliriumSkeins() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUnti
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "33")
+@CardRegistration(set = "OPCA", collectorNumber = "69")
 public class SelesnyaLoftGardens extends Card {
 
     public SelesnyaLoftGardens() {

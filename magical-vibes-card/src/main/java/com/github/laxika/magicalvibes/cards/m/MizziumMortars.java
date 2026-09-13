@@ -23,6 +23,7 @@ import java.util.List;
  * CR 702.96b, chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "101")
+@CardRegistration(set = "MM3", collectorNumber = "101")
 public class MizziumMortars extends Card {
 
     public MizziumMortars() {

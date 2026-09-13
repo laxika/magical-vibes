@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "155")
+@CardRegistration(set = "EMA", collectorNumber = "162")
 public class CommuneWithTheGods extends Card {
 
     public CommuneWithTheGods() {

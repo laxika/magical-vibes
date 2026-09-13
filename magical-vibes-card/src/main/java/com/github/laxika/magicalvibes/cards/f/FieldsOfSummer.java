@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "OHOP", collectorNumber = "10")
+@CardRegistration(set = "OPCA", collectorNumber = "24")
 public class FieldsOfSummer extends Card {
 
     public FieldsOfSummer() {

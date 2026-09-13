@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "11")
+@CardRegistration(set = "OPCA", collectorNumber = "14")
 public class AstralArena extends Card {
 
     public AstralArena() {

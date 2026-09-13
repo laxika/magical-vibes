@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "143")
+@CardRegistration(set = "EMA", collectorNumber = "107")
 public class SkulkingGhost extends Card {
 
     public SkulkingGhost() {
