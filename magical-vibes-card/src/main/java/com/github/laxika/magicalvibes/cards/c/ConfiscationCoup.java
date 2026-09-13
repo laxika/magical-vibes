@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "41")
+@CardRegistration(set = "KLR", collectorNumber = "45")
 public class ConfiscationCoup extends Card {
 
     public ConfiscationCoup() {

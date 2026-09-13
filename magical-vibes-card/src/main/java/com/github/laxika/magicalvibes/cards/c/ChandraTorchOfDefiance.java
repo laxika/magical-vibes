@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastOrDealDama
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "110")
+@CardRegistration(set = "KLR", collectorNumber = "117")
 @CardRegistration(set = "SS3", collectorNumber = "1")
 public class ChandraTorchOfDefiance extends Card {
 

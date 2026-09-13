@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "6")
+@CardRegistration(set = "KLR", collectorNumber = "10")
 public class AviaryMechanic extends Card {
 
     public AviaryMechanic() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "32")
+@CardRegistration(set = "KLR", collectorNumber = "35")
 public class ToolcraftExemplar extends Card {
 
     public ToolcraftExemplar() {

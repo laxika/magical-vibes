@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "45")
+@CardRegistration(set = "KLR", collectorNumber = "65")
 public class ShipwreckMoray extends Card {
 
     public ShipwreckMoray() {

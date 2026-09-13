@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "KLD", collectorNumber = "145")
+@CardRegistration(set = "KLR", collectorNumber = "154")
 public class AttuneWithAether extends Card {
 
     public AttuneWithAether() {

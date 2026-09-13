@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AER", collectorNumber = "14")
+@CardRegistration(set = "KLR", collectorNumber = "15")
 public class DawnfeatherEagle extends Card {
 
     public DawnfeatherEagle() {

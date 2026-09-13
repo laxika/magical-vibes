@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "167")
+@CardRegistration(set = "KLR", collectorNumber = "178")
 public class RiparianTiger extends Card {
 
     public RiparianTiger() {

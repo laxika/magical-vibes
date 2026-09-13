@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "45")
+@CardRegistration(set = "KLR", collectorNumber = "47")
 public class EraOfInnovation extends Card {
 
     public EraOfInnovation() {

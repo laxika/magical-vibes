@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "80")
+@CardRegistration(set = "KLR", collectorNumber = "83")
 public class EssenceExtraction extends Card {
 
     public EssenceExtraction() {

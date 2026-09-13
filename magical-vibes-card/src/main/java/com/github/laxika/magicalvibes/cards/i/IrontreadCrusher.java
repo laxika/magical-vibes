@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "161")
+@CardRegistration(set = "KLR", collectorNumber = "247")
 public class IrontreadCrusher extends Card {
 
     public IrontreadCrusher() {
