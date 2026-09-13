@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "193")
+@CardRegistration(set = "MM3", collectorNumber = "143")
 public class Thragtusk extends Card {
 
     public Thragtusk() {

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "120")
 @CardRegistration(set = "DDK", collectorNumber = "47")
+@CardRegistration(set = "MM3", collectorNumber = "115")
 public class VithianStinger extends Card {
 
     public VithianStinger() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "134")
+@CardRegistration(set = "MM3", collectorNumber = "136")
 public class Slaughterhorn extends Card {
 
     public Slaughterhorn() {

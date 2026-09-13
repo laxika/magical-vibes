@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "120")
+@CardRegistration(set = "MM3", collectorNumber = "129")
 public class HungrySpriggan extends Card {
 
     public HungrySpriggan() {

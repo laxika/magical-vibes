@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "38")
+@CardRegistration(set = "MM3", collectorNumber = "109")
 public class RubblebeltMaaka extends Card {
 
     public RubblebeltMaaka() {

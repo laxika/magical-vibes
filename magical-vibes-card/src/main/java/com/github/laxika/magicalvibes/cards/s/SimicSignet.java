@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "166")
+@CardRegistration(set = "MM3", collectorNumber = "227")
 public class SimicSignet extends Card {
 
     public SimicSignet() {
