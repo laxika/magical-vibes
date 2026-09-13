@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "MMA", collectorNumber = "175")
 @CardRegistration(set = "GK1", collectorNumber = "37")
 @CardRegistration(set = "IMA", collectorNumber = "198")
+@CardRegistration(set = "STA", collectorNumber = "60")
 public class Electrolyze extends Card {
 
     public Electrolyze() {

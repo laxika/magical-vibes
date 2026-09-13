@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "DPA", collectorNumber = "54")
 @CardRegistration(set = "DDN", collectorNumber = "21")
 @CardRegistration(set = "ANB", collectorNumber = "84")
+@CardRegistration(set = "STA", collectorNumber = "44")
 public class Shock extends Card {
 
     public Shock() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TaintedPactEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "164")
+@CardRegistration(set = "STA", collectorNumber = "33")
 public class TaintedPact extends Card {
 
     public TaintedPact() {
