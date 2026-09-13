@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 @CardRegistration(set = "FUT", collectorNumber = "153")
 @CardRegistration(set = "MM2", collectorNumber = "165")
 @CardRegistration(set = "MMA", collectorNumber = "166")
+@CardRegistration(set = "UMA", collectorNumber = "187")
 public class Tarmogoyf extends Card {
 
     public Tarmogoyf() {

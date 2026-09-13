@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "53")
+@CardRegistration(set = "UMA", collectorNumber = "74")
 public class StreamOfConsciousness extends Card {
 
     public StreamOfConsciousness() {

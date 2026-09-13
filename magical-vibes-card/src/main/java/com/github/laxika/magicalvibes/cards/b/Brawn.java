@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "107")
+@CardRegistration(set = "UMA", collectorNumber = "160")
 public class Brawn extends Card {
 
     public Brawn() {

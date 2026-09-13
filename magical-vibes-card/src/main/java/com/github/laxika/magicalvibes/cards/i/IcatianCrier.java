@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "23")
+@CardRegistration(set = "UMA", collectorNumber = "22")
 public class IcatianCrier extends Card {
 
     public IcatianCrier() {

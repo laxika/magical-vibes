@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "89")
+@CardRegistration(set = "UMA", collectorNumber = "91")
 public class DarkDabbling extends Card {
 
     public DarkDabbling() {

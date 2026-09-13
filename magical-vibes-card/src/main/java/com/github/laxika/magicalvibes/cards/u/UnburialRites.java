@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "122")
+@CardRegistration(set = "UMA", collectorNumber = "119")
 public class UnburialRites extends Card {
 
     public UnburialRites() {

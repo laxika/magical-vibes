@@ -176,6 +176,7 @@ public enum CardSet {
     SET_FIN("FIN"),
     SET_EOE("EOE"),
     SET_ULG("ULG"),
+    SET_UMA("UMA"),
     SET_DFT("DFT"),
     SET_OTJ("OTJ"),
     SET_PLS("PLS"),
