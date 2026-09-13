@@ -24,13 +24,11 @@ class MemoryLapseTest extends BaseCardTest {
     @DisplayName("Casting puts it on the stack targeting a spell")
     void castingPutsOnStackTargetingSpell() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new MemoryLapse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
 
@@ -45,13 +43,11 @@ class MemoryLapseTest extends BaseCardTest {
     @DisplayName("Counters a spell and puts it on top of its owner's library instead of the graveyard")
     void countersAndPutsOnTopOfLibrary() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new MemoryLapse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
@@ -68,14 +64,12 @@ class MemoryLapseTest extends BaseCardTest {
     @DisplayName("Counters a noncreature spell and puts it on top of its owner's library")
     void countersNonCreatureSpellAndPutsOnTopOfLibrary() {
         DarkRitual ritual = new DarkRitual();
-        harness.setHand(player1, List.of(ritual));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromHand(player1, ritual, "{B}");
 
         harness.setHand(player2, List.of(new MemoryLapse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, ritual.getId());
 
@@ -89,13 +83,11 @@ class MemoryLapseTest extends BaseCardTest {
     @DisplayName("Memory Lapse itself goes to its caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new MemoryLapse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
@@ -108,13 +100,11 @@ class MemoryLapseTest extends BaseCardTest {
     @DisplayName("Fizzles if target spell is no longer on the stack")
     void fizzlesIfTargetSpellRemoved() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new MemoryLapse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
 

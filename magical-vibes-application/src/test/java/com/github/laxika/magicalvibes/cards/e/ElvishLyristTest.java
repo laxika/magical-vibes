@@ -1,21 +1,21 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.c.Caltrops;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishLyrist.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, Caltrops.class})
 class ElvishLyristTest extends BaseCardTest {
 
     @Test
@@ -60,8 +60,7 @@ class ElvishLyristTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness (tap cost)")
     void cannotActivateWithSummoningSickness() {
-        ElvishLyrist card = new ElvishLyrist();
-        harness.addToBattlefield(player1, card);
+        harness.addToBattlefield(player1, new ElvishLyrist());
         Permanent target = addReadyEnchantment(player2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -84,7 +83,7 @@ class ElvishLyristTest extends BaseCardTest {
     @DisplayName("Cannot target an artifact")
     void cannotTargetArtifact() {
         addReadyLyrist(player1);
-        Permanent artifact = addReadyArtifact(player2);
+        Permanent artifact = addArtifact(player2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
@@ -111,42 +110,27 @@ class ElvishLyristTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     private Permanent addReadyLyrist(Player player) {
-        ElvishLyrist card = new ElvishLyrist();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ElvishLyrist());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 
-    private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private Permanent addArtifact(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new Caltrops());
     }
 
     private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }

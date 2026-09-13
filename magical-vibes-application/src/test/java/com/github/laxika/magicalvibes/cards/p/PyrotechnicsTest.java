@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pyrotechnics.class, GrizzlyBears.class, HillGiant.class, ChandraNalaar.class})
+@CardUsed({Pyrotechnics.class, GrizzlyBears.class, HillGiant.class, ChandraNalaar.class, Mountain.class})
 class PyrotechnicsTest extends BaseCardTest {
 
     @Test
@@ -69,6 +70,20 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    void canDealAllDamageToItsController() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castSorcery(player1, 0, Map.of(player1.getId(), 4));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 4);
     }
 
     @Test
@@ -179,6 +194,19 @@ class PyrotechnicsTest extends BaseCardTest {
 
         assertThatThrownBy(() ->
                 harness.castSorcery(player1, 0, Map.of(bears.getId(), 4))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetNonCreaturePermanentWhenCasting() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        assertThatThrownBy(() ->
+                harness.castSorcery(player1, 0, Map.of(mountain.getId(), 4))
         ).isInstanceOf(IllegalStateException.class);
     }
 }

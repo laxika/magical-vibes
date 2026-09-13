@@ -145,6 +145,33 @@ class SoulNetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Soul Net triggers independently when one creature dies")
+    void multipleSoulNetsTriggerIndependently() {
+        harness.addToBattlefield(player1, new SoulNet());
+        harness.addToBattlefield(player1, new SoulNet());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
     void noncreatureArtifactDoesNotTrigger() {
         harness.addToBattlefield(player1, new SoulNet());
         var ring = harness.addToBattlefieldAndReturn(player2, new SolRing());

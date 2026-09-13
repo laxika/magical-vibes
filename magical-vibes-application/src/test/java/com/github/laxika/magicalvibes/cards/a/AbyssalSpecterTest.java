@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,13 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbyssalSpecter.class, Counterspell.class, Island.class, KjeldoranSkyknight.class})
+@CardUsed({AbyssalSpecter.class, Counterspell.class, Island.class, WindDrake.class})
 class AbyssalSpecterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage to a player makes that player discard a card of their choice")
     void combatDamageMakesDamagedPlayerDiscard() {
-        addAttackingSpecter(player1);
+        addCreatureReady(player1, new AbyssalSpecter());
         harness.setHand(player2, List.of(new Counterspell(), new Island()));
 
         resolveCombatAndTrigger();
@@ -43,9 +42,10 @@ class AbyssalSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
-        addAttackingSpecter(player1);
-        addCreatureReady(player2, new KjeldoranSkyknight());
+        addCreatureReady(player1, new AbyssalSpecter());
+        addCreatureReady(player2, new WindDrake());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -59,7 +59,7 @@ class AbyssalSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("A damaged player with an empty hand has no card to discard")
     void emptyHandDoesNotCreateDiscardChoice() {
-        addAttackingSpecter(player1);
+        addCreatureReady(player1, new AbyssalSpecter());
         harness.setHand(player2, List.of());
         int graveyardSizeBefore = gd.playerGraveyards.get(player2.getId()).size();
 
@@ -72,10 +72,7 @@ class AbyssalSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage to a player also makes that player discard a card")
     void noncombatDamageMakesDamagedPlayerDiscard() {
-        AbyssalSpecter card = new AbyssalSpecter();
-        card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
-        Permanent specter = addCreatureReady(player1, card);
+        Permanent specter = addPingingSpecter();
         harness.setHand(player2, List.of(new Counterspell()));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
@@ -85,13 +82,36 @@ class AbyssalSpecterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
     }
 
-    private Permanent addAttackingSpecter(Player player) {
-        Permanent specter = addCreatureReady(player, new AbyssalSpecter());
-        specter.setAttacking(true);
-        return specter;
+    @Test
+    @DisplayName("Noncombat damage to its controller makes that player discard a card")
+    void noncombatDamageToControllerMakesControllerDiscard() {
+        Permanent specter = addPingingSpecter();
+        Island island = new Island();
+        harness.setHand(player1, List.of(island));
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
+                null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(island);
+    }
+
+    private Permanent addPingingSpecter() {
+        AbyssalSpecter card = new AbyssalSpecter();
+        card.addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+        return addCreatureReady(player1, card);
     }
 
     private void resolveCombatAndTrigger() {
+        declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities(); // resolve what combat damage triggered
     }

@@ -159,6 +159,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -1926,6 +1927,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @CardUsed({HillGiant.class, Okk.class, Hipparion.class})
     @DisplayName("Hard AI drops Okk when its greater-power partner is unaffordable")
     void dropsOkkWhenGreaterPowerPartnerIsUnaffordable() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new HillGiant());

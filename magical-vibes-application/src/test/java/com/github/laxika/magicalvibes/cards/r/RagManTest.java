@@ -112,6 +112,25 @@ class RagManTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(RielleTheEverwise.class)
+    @DisplayName("Triggers the target opponent's first discard event")
+    void triggersTargetOpponentsDiscardEvent() {
+        harness.setLibrary(player2, List.of(new DarkRitual()));
+        harness.setHand(player2, List.of(new BogRats()));
+        harness.addToBattlefield(player2, new RielleTheEverwise());
+        readyRagMan();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Dark Ritual");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot be activated during the opponent's turn")
     void cannotActivateOnOpponentTurn() {
         harness.setHand(player2, List.of(new BogRats()));

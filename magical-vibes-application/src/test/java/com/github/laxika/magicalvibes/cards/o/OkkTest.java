@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Okk.class, FireElemental.class, GrizzlyBears.class, HillGiant.class})
 class OkkTest extends BaseCardTest {
 
     // --- Attacking ---
@@ -44,9 +46,29 @@ class OkkTest extends BaseCardTest {
     @DisplayName("Okk can attack when a creature with greater power also attacks")
     void canAttackWithStrongerAlly() {
         addCreatureReady(player1, new Okk());
-        addCreatureReady(player1, new AvatarOfMight()); // 8/8 > 4/4
+        addCreatureReady(player1, new FireElemental()); // 5/4 > 4/4
 
         assertThatCode(() -> declareAttackers(player1, List.of(0, 1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Okk's attack restriction disappears when it loses all abilities")
+    void attackRestrictionDisappearsWhenItLosesAllAbilities() {
+        Permanent okk = addCreatureReady(player1, new Okk());
+        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Okk can't attack with a creature of equal power")
+    void cannotAttackWithEqualPowerAlly() {
+        addCreatureReady(player1, new Okk());
+        addCreatureReady(player1, new Okk());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("greater power also attacks");
     }
 
     // --- Blocking ---
@@ -54,7 +76,7 @@ class OkkTest extends BaseCardTest {
     @Test
     @DisplayName("Okk can't block alone")
     void cannotBlockAlone() {
-        Permanent attacker = addReadyAttacker(player1);
+        addReadyAttacker(player1);
         addCreatureReady(player2, new Okk());
         prepareDeclareBlockers();
 
@@ -82,12 +104,39 @@ class OkkTest extends BaseCardTest {
     void canBlockWithStrongerAlly() {
         addReadyAttacker(player1);
         addCreatureReady(player2, new Okk());
-        addCreatureReady(player2, new AvatarOfMight()); // 8/8 > 4/4
+        addCreatureReady(player2, new FireElemental()); // 5/4 > 4/4
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Okk's block restriction disappears when it loses all abilities")
+    void blockRestrictionDisappearsWhenItLosesAllAbilities() {
+        addReadyAttacker(player1);
+        Permanent okk = addCreatureReady(player2, new Okk());
+        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Okk can't block with a creature of equal power")
+    void cannotBlockWithEqualPowerAlly() {
+        addReadyAttacker(player1);
+        addCreatureReady(player2, new Okk());
+        addCreatureReady(player2, new Okk());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("greater power also blocks");
     }
 
     private Permanent addReadyAttacker(Player player) {

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
-import com.github.laxika.magicalvibes.cards.l.LotusPetal;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pacifism.class, HornedTurtle.class, LotusPetal.class})
+@CardUsed({Pacifism.class, HornedTurtle.class, JayemdaeTome.class})
 class PacifismTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -248,7 +248,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Pacifism")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LotusPetal());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JayemdaeTome());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

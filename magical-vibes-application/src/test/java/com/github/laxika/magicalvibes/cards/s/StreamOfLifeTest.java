@@ -29,6 +29,20 @@ class StreamOfLifeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the targeted player gains life")
+    void onlyTargetedPlayerGainsLife() {
+        harness.setHand(player1, List.of(new StreamOfLife()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
     @DisplayName("Can target yourself")
     void canTargetSelf() {
         harness.setHand(player1, List.of(new StreamOfLife()));

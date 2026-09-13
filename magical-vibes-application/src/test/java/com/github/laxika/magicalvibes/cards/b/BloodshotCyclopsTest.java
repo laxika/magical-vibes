@@ -1,17 +1,21 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BloodshotCyclops.class, GrizzlyBears.class, Forest.class})
 class BloodshotCyclopsTest extends BaseCardTest {
 
     @Test
@@ -87,6 +91,22 @@ class BloodshotCyclopsTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         harness.assertInGraveyard(player1, "Bloodshot Cyclops");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature, nonplaneswalker permanent")
+    void rejectsNonAnyTargetPermanent() {
+        Permanent cyclops = addReadyCyclops(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(cyclops.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .containsExactly(cyclops, bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private Permanent addReadyCyclops(Player player) {

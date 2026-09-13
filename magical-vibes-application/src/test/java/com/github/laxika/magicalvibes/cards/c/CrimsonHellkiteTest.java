@@ -50,6 +50,40 @@ class CrimsonHellkiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spends red mana on X and leaves other colors unspent")
+    void spendsOnlyRedManaOnX() {
+        addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X=0 taps the source, preserves mana, and deals no damage")
+    void zeroXDealsNoDamage() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(hellkite.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Iron Tusk Elephant");
+    }
+
+    @Test
     @DisplayName("Resolving deals X damage and destroys creature when X >= toughness")
     void resolvingDestroysWhenLethal() {
         addHellkiteReady(player1);
@@ -122,6 +156,38 @@ class CrimsonHellkiteTest extends BaseCardTest {
 
         assertThat(hellkite.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        Permanent hellkite = addHellkiteReady(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hellkite.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate when Crimson Hellkite is already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        hellkite.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

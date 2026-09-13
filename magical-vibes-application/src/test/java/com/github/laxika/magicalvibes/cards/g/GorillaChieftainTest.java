@@ -37,6 +37,28 @@ class GorillaChieftainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate with only green mana")
+    void requiresGenericMana() {
+        addCreatureReady(player1, new GorillaChieftain());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only generic mana")
+    void requiresGreenMana() {
+        addCreatureReady(player1, new GorillaChieftain());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Gorilla Chieftain from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
@@ -47,10 +69,7 @@ class GorillaChieftainTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Gorilla Chieftain");
         assertThat(chieftain.isTapped()).isTrue();
@@ -67,10 +86,7 @@ class GorillaChieftainTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Gorilla Chieftain");
         harness.assertInGraveyard(player1, "Gorilla Chieftain");

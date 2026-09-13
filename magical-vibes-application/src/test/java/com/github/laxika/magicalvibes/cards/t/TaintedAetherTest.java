@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TaintedAether.class, Forest.class, GrizzlyBears.class})
 class TaintedAetherTest extends BaseCardTest {
 
     @Test
@@ -97,5 +100,32 @@ class TaintedAetherTest extends BaseCardTest {
         // The entering creature's controller (player2), not Tainted Aether's controller, sacrifices.
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Tainted Aether");
+    }
+
+    @Test
+    @DisplayName("A noncreature permanent entering does not trigger Tainted Aether")
+    void doesNotTriggerForNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new TaintedAether());
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Tainted Aether triggers when it enters as a creature")
+    void triggersWhenEnteringAsCreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+
+        harness.enterBattlefieldAndReturn(player1, new TaintedAether());
+
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Tainted Aether"))).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Tainted Aether");
     }
 }

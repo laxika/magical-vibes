@@ -62,13 +62,30 @@ class CityOfBrassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "RED");
 
-        // The "becomes tapped" trigger is deferred (CR 603.3) until a player next receives
-        // priority; passing priority puts it on the stack and resolves it.
-        for (int i = 0; i < 4 && gd.playerLifeTotals.get(player1.getId()) != 19; i++) {
-            harness.passBothPriorities();
-        }
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Tapping an opponent's City of Brass damages that land's controller")
+    void tappingOpponentsCityDamagesItsController() {
+        Permanent city = harness.addToBattlefieldAndReturn(player2, new CityOfBrass());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, city.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
     }
 
     @Test

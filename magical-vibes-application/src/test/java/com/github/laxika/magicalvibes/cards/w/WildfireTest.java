@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
-import com.github.laxika.magicalvibes.cards.d.DeathcoilWurm;
+import com.github.laxika.magicalvibes.cards.a.AncientSilverback;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Wildfire.class, AlabornTrooper.class, DeathcoilWurm.class, Forest.class, Mountain.class})
+@CardUsed({Wildfire.class, GrizzlyBears.class, AncientSilverback.class, Forest.class, Mountain.class})
 class WildfireTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -100,15 +100,34 @@ class WildfireTest extends BaseCardTest {
     @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
     void dealsFourDamageToEachCreature() {
         addLands(4);
-        harness.addToBattlefield(player1, new AlabornTrooper());
-        harness.addToBattlefield(player2, new AlabornTrooper());
-        harness.addToBattlefield(player2, new DeathcoilWurm());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientSilverback());
 
         castWildfire();
 
-        harness.assertNotOnBattlefield(player1, "Alaborn Trooper");
-        harness.assertNotOnBattlefield(player2, "Alaborn Trooper");
-        harness.assertOnBattlefield(player2, "Deathcoil Wurm");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Still deals damage when no player has lands to sacrifice")
+    void dealsDamageWhenNoLandsAreAvailable() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AncientSilverback());
+        harness.addToBattlefield(player2, new AncientSilverback());
+
+        castWildfire();
+
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ancient Silverback");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }

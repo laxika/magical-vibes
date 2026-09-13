@@ -2,10 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +12,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TolarianWinds.class, GrizzlyBears.class, Island.class})
 class TolarianWindsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting discards remaining hand then draws that many cards")
     void discardsHandThenDrawsThatMany() {
-        setDeck(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setHand(player1, List.of(
                 new TolarianWinds(),
                 new GrizzlyBears(),
@@ -26,8 +26,7 @@ class TolarianWindsTest extends BaseCardTest {
                 new Island()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         // After casting, hand had 3 cards (spell left hand). Discard 3, draw 3.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -41,20 +40,14 @@ class TolarianWindsTest extends BaseCardTest {
     @Test
     @DisplayName("With empty hand after casting, discards nothing and draws nothing")
     void emptyHandDoesNothing() {
-        setDeck(player1, List.of(new Island()));
+        harness.setLibrary(player1, List.of(new Island()));
         harness.setHand(player1, List.of(new TolarianWinds()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Tolarian Winds");
-    }
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }

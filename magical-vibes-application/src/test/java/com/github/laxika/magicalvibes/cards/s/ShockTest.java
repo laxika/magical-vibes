@@ -70,8 +70,7 @@ class ShockTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -84,8 +83,7 @@ class ShockTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -104,8 +102,7 @@ class ShockTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
@@ -120,8 +117,7 @@ class ShockTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();

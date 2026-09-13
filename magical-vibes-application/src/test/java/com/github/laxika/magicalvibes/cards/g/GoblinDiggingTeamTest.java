@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GoblinDiggingTeam.class, WallOfAir.class})
@@ -28,6 +29,44 @@ class GoblinDiggingTeamTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Wall of Air");
         harness.assertInGraveyard(player2, "Wall of Air");
+        harness.assertNotOnBattlefield(player1, "Goblin Digging Team");
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
+    }
+
+    @Test
+    @DisplayName("Ability can destroy a Wall controlled by its controller")
+    void destroysOwnWall() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent wall = addCreatureReady(player1, new WallOfAir());
+
+        int teamIdx = gd.playerBattlefields.get(player1.getId()).indexOf(team);
+        harness.activateAbility(player1, teamIdx, 0, null, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wall of Air");
+        harness.assertInGraveyard(player1, "Wall of Air");
+        harness.assertNotOnBattlefield(player1, "Goblin Digging Team");
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
+    }
+
+    @Test
+    @DisplayName("Source is sacrificed even if the target leaves before resolution")
+    void sacrificesSourceWhenTargetLeavesBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
+
+        int teamIdx = gd.playerBattlefields.get(player1.getId()).indexOf(team);
+        harness.activateAbility(player1, teamIdx, 0, null, wall.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(wall);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Goblin Digging Team");
         harness.assertInGraveyard(player1, "Goblin Digging Team");
     }

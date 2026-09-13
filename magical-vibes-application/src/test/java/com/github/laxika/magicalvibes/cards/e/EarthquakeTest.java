@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Earthquake.class, GrizzlyBears.class, ScrybSprites.class})
+@CardUsed({Earthquake.class, Forest.class, GrizzlyBears.class, SerraAngel.class})
 class EarthquakeTest extends BaseCardTest {
 
     @Test
@@ -86,13 +87,27 @@ class EarthquakeTest extends BaseCardTest {
     @Test
     @DisplayName("Earthquake does not damage flying creatures")
     void earthquakeDoesNotDamageFlyingCreatures() {
-        harness.addToBattlefield(player2, new ScrybSprites());
+        Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castAndResolveSorcery(player1, 0, 4);
+
+        assertThat(flyingCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Earthquake does not damage noncreature permanents")
+    void earthquakeDoesNotDamageNoncreaturePermanents() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castAndResolveSorcery(player1, 0, 3);
 
-        harness.assertOnBattlefield(player2, "Scryb Sprites");
+        assertThat(forest.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test

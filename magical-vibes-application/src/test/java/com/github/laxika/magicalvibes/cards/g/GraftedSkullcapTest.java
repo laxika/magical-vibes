@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,22 +12,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GraftedSkullcap.class, LlanowarElves.class})
 class GraftedSkullcapTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance from UPKEEP to DRAW, trigger onto stack
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     private void advanceToEndStepTrigger(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP, trigger onto stack
-        harness.passBothPriorities(); // resolve trigger
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 
     @Test
@@ -40,6 +40,20 @@ class GraftedSkullcapTest extends BaseCardTest {
 
         // Normal draw (1) + additional draw (1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Each Grafted Skullcap draws an additional card")
+    void eachCopyDrawsAnAdditionalCard() {
+        harness.addToBattlefield(player1, new GraftedSkullcap());
+        harness.addToBattlefield(player1, new GraftedSkullcap());
+        harness.setHand(player1, List.of());
+
+        advanceToDraw(player1);
+        resolveAllTriggers();
+
+        // Normal draw (1) + one draw for each Skullcap (2)
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
     @Test

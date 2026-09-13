@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -49,6 +50,20 @@ class FemerefArchersTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(attacker.getCard().getId()));
         assertThat(gameLogContains("deals 4 damage")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability deals exactly 4 damage to a larger attacking flying creature")
+    void abilityDealsExactlyFourDamage() {
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
     }
 
     @Test

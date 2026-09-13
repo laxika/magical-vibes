@@ -18,8 +18,7 @@ class DaringApprenticeTest extends BaseCardTest {
     @Test
     @DisplayName("Counters target spell, sacrificing itself as a cost")
     void countersTargetSpell() {
-        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new DaringApprentice());
-        apprentice.setSummoningSick(false);
+        addCreatureReady(player1, new DaringApprentice());
 
         GrizzlyBears bears = new GrizzlyBears();
 
@@ -63,8 +62,7 @@ class DaringApprenticeTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target spell leaves the stack, but the sacrifice still happens")
     void fizzlesIfTargetRemoved() {
-        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new DaringApprentice());
-        apprentice.setSummoningSick(false);
+        addCreatureReady(player1, new DaringApprentice());
 
         GrizzlyBears bears = new GrizzlyBears();
 
@@ -88,8 +86,7 @@ class DaringApprenticeTest extends BaseCardTest {
     @Test
     @DisplayName("Counters a noncreature spell")
     void countersNoncreatureSpell() {
-        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new DaringApprentice());
-        apprentice.setSummoningSick(false);
+        addCreatureReady(player1, new DaringApprentice());
 
         Fog fog = new Fog();
         harness.forceActivePlayer(player2);
@@ -103,5 +100,33 @@ class DaringApprenticeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Fog");
         harness.assertInGraveyard(player1, "Daring Apprentice");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        addCreatureReady(player1, new DaringApprentice());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                        player1, 0, null, harness.getPermanentId(player2, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Daring Apprentice");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent apprentice = addCreatureReady(player1, new DaringApprentice());
+        apprentice.tap();
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, bears, "{1}{G}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

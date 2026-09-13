@@ -108,6 +108,30 @@ class AgonizingMemoriesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing cards in a different order preserves that order on top of the library")
+    void choosingTwoCardsInDifferentOrder() {
+        Card card1 = new Abeyance();
+        Card card2 = new AlabasterDragon();
+        Card card3 = new AgonizingMemories();
+        harness.setHand(player2, new ArrayList<>(List.of(card1, card2, card3)));
+
+        harness.setHand(player1, List.of(new AgonizingMemories()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        // Choose card2 first, then card1 after card2 is removed from the hand.
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        List<Card> deck = gd.playerDecks.get(player2.getId());
+        assertThat(deck.get(0).getId()).isEqualTo(card2.getId());
+        assertThat(deck.get(1).getId()).isEqualTo(card1.getId());
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(card3.getId());
+    }
+
+    @Test
     @DisplayName("Resolving against empty hand does nothing")
     void emptyHandDoesNothing() {
         harness.setHand(player2, List.of());

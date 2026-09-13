@@ -74,9 +74,8 @@ class FearTest extends BaseCardTest {
     void enchantedCreatureHasFear() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
     }
@@ -87,9 +86,8 @@ class FearTest extends BaseCardTest {
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Blocker: GrizzlyBears (green, non-artifact) on player2
         addCreatureReady(player2, new GrizzlyBears());
@@ -109,9 +107,8 @@ class FearTest extends BaseCardTest {
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Blocker: BlackKnight (black creature) on player2
         addCreatureReady(player2, new BlackKnight());
@@ -129,9 +126,8 @@ class FearTest extends BaseCardTest {
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Blocker: ClockworkBeast (artifact creature) on player2
         addCreatureReady(player2, new ClockworkBeast());
@@ -148,11 +144,10 @@ class FearTest extends BaseCardTest {
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new HowlingMine()));
+        harness.addToBattlefield(player2, new HowlingMine());
 
         prepareDeclareBlockers();
 
@@ -165,9 +160,8 @@ class FearTest extends BaseCardTest {
     void effectsStopWhenRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Verify fear is active
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
@@ -185,9 +179,8 @@ class FearTest extends BaseCardTest {
 
         Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent fearPerm = new Permanent(new Fear());
+        Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Other creature should not have fear
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FEAR)).isFalse();

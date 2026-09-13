@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TelepathicSpies.class, GrizzlyBears.class})
 class TelepathicSpiesTest extends BaseCardTest {
 
     @Test
@@ -60,9 +63,17 @@ class TelepathicSpiesTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
     }
 
+    @Test
+    @DisplayName("The ETB trigger cannot target its controller")
+    void cannotTargetItsController() {
+        assertThatThrownBy(() -> castTelepathicSpies(player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("opponent");
+    }
+
     private void castTelepathicSpies(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new TelepathicSpies()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
     }
 }

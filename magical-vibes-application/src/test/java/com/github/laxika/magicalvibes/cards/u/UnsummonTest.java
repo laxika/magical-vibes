@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.b.BadMoon;
-import com.github.laxika.magicalvibes.cards.c.ControlMagic;
+import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Unsummon.class, GrizzlyBears.class, BadMoon.class, Island.class, ControlMagic.class})
+@CardUsed({Unsummon.class, GrizzlyBears.class, GloriousAnthem.class, Island.class, Confiscate.class})
 class UnsummonTest extends BaseCardTest {
 
     @Test
@@ -43,11 +43,11 @@ class UnsummonTest extends BaseCardTest {
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
         harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new BadMoon());
+        harness.addToBattlefield(player2, new GloriousAnthem());
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Bad Moon");
+        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -101,8 +101,8 @@ class UnsummonTest extends BaseCardTest {
     @DisplayName("Returns a stolen creature to its owner's hand")
     void returnsStolenCreatureToOwnersHand() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ControlMagic()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setHand(player1, List.of(new Confiscate()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();

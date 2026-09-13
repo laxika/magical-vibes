@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.EtherealChampion;
 import com.github.laxika.magicalvibes.cards.k.KarooMeerkat;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sunweb.class, PearlDragon.class, KarooMeerkat.class})
+@CardUsed({Sunweb.class, PearlDragon.class, KarooMeerkat.class, EtherealChampion.class})
 class SunwebTest extends BaseCardTest {
 
     @Test
@@ -38,6 +39,21 @@ class SunwebTest extends BaseCardTest {
         Permanent sunweb = addCreatureReady(player2, new Sunweb());
 
         Permanent atkPerm = addCreatureReady(player1, new PearlDragon()); // 4/4 flying
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sunweb.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sunweb can block a creature with power exactly 3")
+    void canBlockPowerExactlyThree() {
+        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+
+        Permanent atkPerm = addCreatureReady(player1, new EtherealChampion()); // 3/4
         atkPerm.setAttacking(true);
 
         prepareDeclareBlockers();

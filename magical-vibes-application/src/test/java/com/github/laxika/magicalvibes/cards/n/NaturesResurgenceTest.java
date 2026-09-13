@@ -1,34 +1,26 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GaeasBlessing;
+import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NaturesResurgence.class, RedwoodTreefolk.class, GaeasBlessing.class})
+@CardUsed({NaturesResurgence.class, RedwoodTreefolk.class, Fog.class})
 class NaturesResurgenceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Each player draws a card for each creature card in their own graveyard")
     void eachPlayerDrawsForOwnGraveyard() {
-        List<Card> p1Graveyard = new ArrayList<>();
-        p1Graveyard.add(new RedwoodTreefolk());
-        p1Graveyard.add(new RedwoodTreefolk());
-        harness.setGraveyard(player1, p1Graveyard);
+        harness.setGraveyard(player1, List.of(new RedwoodTreefolk(), new RedwoodTreefolk()));
 
-        List<Card> p2Graveyard = new ArrayList<>();
-        p2Graveyard.add(new RedwoodTreefolk());
-        p2Graveyard.add(new RedwoodTreefolk());
-        p2Graveyard.add(new RedwoodTreefolk());
-        harness.setGraveyard(player2, p2Graveyard);
+        harness.setGraveyard(player2, List.of(
+                new RedwoodTreefolk(), new RedwoodTreefolk(), new RedwoodTreefolk()));
 
         int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
@@ -46,11 +38,7 @@ class NaturesResurgenceTest extends BaseCardTest {
     @Test
     @DisplayName("Only creature cards count; non-creature cards are ignored")
     void onlyCreatureCardsCount() {
-        List<Card> p1Graveyard = new ArrayList<>();
-        p1Graveyard.add(new RedwoodTreefolk());
-        p1Graveyard.add(new GaeasBlessing());
-        p1Graveyard.add(new GaeasBlessing());
-        harness.setGraveyard(player1, p1Graveyard);
+        harness.setGraveyard(player1, List.of(new RedwoodTreefolk(), new Fog(), new Fog()));
 
         int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -65,7 +53,7 @@ class NaturesResurgenceTest extends BaseCardTest {
     @DisplayName("A player with no creature cards in their graveyard draws nothing")
     void playerWithoutCreatureCardsDrawsNothing() {
         harness.setGraveyard(player1, List.of(new RedwoodTreefolk()));
-        harness.setGraveyard(player2, List.of(new GaeasBlessing()));
+        harness.setGraveyard(player2, List.of(new Fog()));
 
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 

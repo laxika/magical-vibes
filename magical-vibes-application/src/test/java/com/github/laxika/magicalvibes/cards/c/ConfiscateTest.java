@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Confiscate.class, Disenchant.class, Forest.class, GrizzlyBears.class})
 class ConfiscateTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -23,8 +25,7 @@ class ConfiscateTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Confiscate targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Confiscate()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
@@ -41,8 +42,7 @@ class ConfiscateTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Confiscate steals opponent's creature")
     void resolvingStealsCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Confiscate()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
@@ -65,8 +65,7 @@ class ConfiscateTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Confiscate steals a noncreature permanent (a land)")
     void resolvingStealsLand() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Confiscate()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
@@ -81,8 +80,7 @@ class ConfiscateTest extends BaseCardTest {
     @Test
     @DisplayName("Confiscate fizzles if target is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Confiscate()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
@@ -98,8 +96,7 @@ class ConfiscateTest extends BaseCardTest {
     @Test
     @DisplayName("Permanent returns to owner when Confiscate is destroyed")
     void permanentReturnsWhenConfiscateDestroyed() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Confiscate()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
@@ -110,12 +107,12 @@ class ConfiscateTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Demystify()));
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, confiscatePerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, confiscatePerm.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(bears.getId()));

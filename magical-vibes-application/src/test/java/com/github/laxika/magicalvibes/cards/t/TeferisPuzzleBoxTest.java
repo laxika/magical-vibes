@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,7 +23,7 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     private void advanceToDraw(Player activePlayer) {
         gd.turnNumber = 2; // avoid the starting player's first-turn draw skip
         advanceToUpkeep(activePlayer);
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW (fires the normal draw + trigger)
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     private List<Card> impulses(int count) {
@@ -93,6 +94,25 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exchanges the single card drawn when the hand was initially empty")
+    void exchangesSingleCardAfterNormalDraw() {
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+
+        Card firstLibraryCard = new Impulse();
+        Card secondLibraryCard = new Impulse();
+        Card thirdLibraryCard = new Impulse();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstLibraryCard, secondLibraryCard, thirdLibraryCard));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve the Puzzle Box trigger without a reorder prompt
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondLibraryCard);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(thirdLibraryCard, firstLibraryCard);
+    }
+
+    @Test
     @DisplayName("Lets the player choose the order of cards put on the bottom of their library")
     void choosesOrderForCardsPutOnBottom() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
@@ -121,6 +141,27 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(remainingLibraryCard, normalDraw, secondHandCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstHandCard);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the starting player's skipped first draw step")
+    void doesNotTriggerOnStartingPlayersFirstDrawStep() {
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+
+        Card handCard = new JamuraanLion();
+        Card topLibraryCard = new Impulse();
+        harness.setHand(player1, List.of(handCard));
+        harness.setLibrary(player1, List.of(topLibraryCard));
+
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 1;
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLibraryCard);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void chooseCurrentOrder(Player player) {

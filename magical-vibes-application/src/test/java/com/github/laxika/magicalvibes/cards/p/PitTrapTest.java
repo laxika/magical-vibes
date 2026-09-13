@@ -91,4 +91,34 @@ class PitTrapTest extends BaseCardTest {
                 harness.activateAbility(player1, idxOf(player1, trap), 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate without paying the generic mana cost")
+    void cannotActivateWithoutMana() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addAttacker(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Does not destroy the target if it stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addAttacker(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+    }
 }

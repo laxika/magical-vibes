@@ -66,6 +66,16 @@ class SeasonedMarshalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting attack may can target the attacking Marshal itself")
+    void acceptingMayCanTargetSelf() {
+        Permanent marshal = addCreatureReady(player1, new SeasonedMarshal());
+
+        attackChooseTargetAndAccept(marshal);
+
+        assertThat(marshal.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Declining attack may leaves target creature untapped")
     void decliningMayLeavesTargetUntapped() {
         addCreatureReady(player1, new SeasonedMarshal());

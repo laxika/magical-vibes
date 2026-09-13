@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BullHippo;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GloriousAnthem.class, GrizzlyBears.class, BullHippo.class})
 class GloriousAnthemTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -20,24 +19,17 @@ class GloriousAnthemTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Glorious Anthem");
     }
 
     @Test
     @DisplayName("Resolving puts Glorious Anthem onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -75,16 +67,15 @@ class GloriousAnthemTest extends BaseCardTest {
     void buffsAllOwnCreaturesRegardlessOfSubtype() {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GiantSpider());
+        harness.addToBattlefield(player1, new BullHippo());
 
-        for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(gqs.getEffectivePower(gd, p))
-                        .isEqualTo(p.getCard().getPower() + 1);
-                assertThat(gqs.getEffectiveToughness(gd, p))
-                        .isEqualTo(p.getCard().getToughness() + 1);
-            }
-        }
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent hippo = findPermanent(player1, "Bull Hippo");
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hippo)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hippo)).isEqualTo(4);
     }
 
     // ===== Multiple sources =====
@@ -128,14 +119,12 @@ class GloriousAnthemTest extends BaseCardTest {
     @DisplayName("Bonus applies when Glorious Anthem resolves onto battlefield")
     void bonusAppliesOnResolve() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);

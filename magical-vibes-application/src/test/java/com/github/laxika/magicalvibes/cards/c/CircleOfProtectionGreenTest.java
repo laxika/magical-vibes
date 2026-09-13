@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CircleOfProtectionGreen.class, BalduvianBears.class, ZuranSpellcaster.class, Hurricane.class,
-        CentaurArcher.class})
+        CentaurArcher.class, GiantGrowth.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -168,6 +169,29 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A green spell need not be capable of dealing damage to be a legal source choice")
+    void greenSpellNeedNotDealDamage() {
+        addReadyCircle(player1);
+        Permanent bears = addReadyGreenCreature(player2);
+        GiantGrowth giantGrowth = new GiantGrowth();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(giantGrowth));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(giantGrowth.getId());
+    }
+
+    @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyCircle(player1);
@@ -180,9 +204,7 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();

@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CardUsed(SacredNectar.class)
 class SacredNectarTest extends BaseCardTest {
 
@@ -17,6 +15,6 @@ class SacredNectarTest extends BaseCardTest {
         harness.castFromHand(player1, new SacredNectar(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertLife(player1, 24);
     }
 }

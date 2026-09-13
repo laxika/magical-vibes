@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SerraAdvocate.class, GrizzlyBears.class})
 class SerraAdvocateTest extends BaseCardTest {
 
     @Test
@@ -79,17 +81,14 @@ class SerraAdvocateTest extends BaseCardTest {
     }
 
     private void addSerraAdvocate() {
-        harness.addToBattlefield(player1, new SerraAdvocate());
-        findPermanent(player1, "Serra Advocate").setSummoningSick(false);
+        addCreatureReady(player1, new SerraAdvocate());
     }
 
     private Permanent addSerraAdvocateAndCombatCreature(boolean attacking, boolean blocking, Player controller) {
         addSerraAdvocate();
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
-        harness.getGameData().playerBattlefields.get(controller.getId()).add(creature);
         harness.forceActivePlayer(player1);
         harness.forceStep(attacking ? TurnStep.DECLARE_ATTACKERS : TurnStep.DECLARE_BLOCKERS);
         return creature;

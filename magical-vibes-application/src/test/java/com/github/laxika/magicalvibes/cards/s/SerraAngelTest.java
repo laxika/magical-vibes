@@ -33,6 +33,19 @@ class SerraAngelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature with flying can block Serra Angel")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new SerraAngel());
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Vigilance keeps Serra Angel untapped after attacking")
     void vigilanceKeepsAngelUntappedAfterAttacking() {
         Permanent angel = addCreatureReady(player1, new SerraAngel());

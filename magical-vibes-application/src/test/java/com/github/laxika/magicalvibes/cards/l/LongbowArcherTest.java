@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.c.CloudElemental;
 import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -58,10 +57,7 @@ class LongbowArcherTest extends BaseCardTest {
         python.setBlocking(true);
         python.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Longbow Archer");
         harness.assertInGraveyard(player2, "Python");

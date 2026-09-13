@@ -467,6 +467,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({Okk.class, HillGiant.class, CrawWurm.class})
         @DisplayName("CR 508.1a: Okk needs a strictly greater-power attacker beside it")
         void greaterPowerRestrictionNeedsABiggerAttacker() {
             // Okk is 4/4; Hill Giant (3/3) is not enough, Craw Wurm (6/4) is.

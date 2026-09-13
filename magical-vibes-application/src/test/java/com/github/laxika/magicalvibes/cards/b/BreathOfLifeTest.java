@@ -16,19 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BearCub.class, BreathOfLife.class, GrizzlyBears.class, MindRot.class})
+@CardUsed({BreathOfLife.class, GrizzlyBears.class, MindRot.class})
 class BreathOfLifeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns target creature card from your graveyard to the battlefield")
     void returnsCreatureFromGraveyardToBattlefield() {
-        Card creature = new BearCub();
+        Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new BreathOfLife()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
@@ -51,7 +50,7 @@ class BreathOfLifeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target card in opponent's graveyard")
     void cannotTargetOpponentGraveyard() {
-        Card creature = new BearCub();
+        Card creature = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(creature));
         harness.setHand(player1, List.of(new BreathOfLife()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -64,7 +63,7 @@ class BreathOfLifeTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target creature leaves graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyard() {
-        Card creature = new BearCub();
+        Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new BreathOfLife()));
         harness.addMana(player1, ManaColor.WHITE, 4);

@@ -68,4 +68,22 @@ class AnacondaTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Anaconda cannot be blocked when defending player controls a tapped Swamp")
+    void cannotBeBlockedWhenDefenderControlsTappedSwamp() {
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).tap();
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new Anaconda());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }

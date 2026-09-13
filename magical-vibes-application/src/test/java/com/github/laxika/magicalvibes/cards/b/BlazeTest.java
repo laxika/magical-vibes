@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
-import com.github.laxika.magicalvibes.cards.f.ForestBear;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SouthernElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +23,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blaze.class, ForestBear.class, SouthernElephant.class, Plains.class})
+@CardUsed({Blaze.class, GrizzlyBears.class, GiantSpider.class, Plains.class,
+        ChandraHopesBeacon.class, InvasionOfRegatha.class, DisciplesOfTheInferno.class,
+        HowlingMine.class})
 class BlazeTest extends BaseCardTest {
 
     @Test
@@ -44,7 +46,7 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Blaze targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -119,22 +121,22 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreatureDestroysIt() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = creature.getId();
         harness.castAndResolveSorcery(player1, 0, 2, targetId);
 
-        // Forest Bear (2/2) should be destroyed by 2 damage
-        harness.assertNotOnBattlefield(player2, "Forest Bear");
-        harness.assertInGraveyard(player2, "Forest Bear");
+        // Grizzly Bears (2/2) should be destroyed by 2 damage
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Does not destroy creature with toughness greater than X")
     void doesNotDestroyCreatureWithHigherToughness() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SouthernElephant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -142,8 +144,8 @@ class BlazeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 3, targetId);
 
         assertThat(creature.getMarkedDamage()).isEqualTo(3);
-        // Southern Elephant (3/4) should survive 3 damage
-        harness.assertOnBattlefield(player2, "Southern Elephant");
+        // Giant Spider (2/4) should survive 3 damage
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @CardUsed({ChandraHopesBeacon.class})

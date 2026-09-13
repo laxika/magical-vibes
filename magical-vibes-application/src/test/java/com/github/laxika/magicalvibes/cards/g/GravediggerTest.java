@@ -113,6 +113,23 @@ class GravediggerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A targeted creature removed from the graveyard before resolution makes the ability fizzle")
+    void targetRemovedBeforeResolutionFizzesAbility() {
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castGravedigger();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Gravedigger");
+    }
+
+    @Test
     @DisplayName("Declining the may ability leaves the targeted creature in the graveyard")
     void decliningMaySkipsAbility() {
         TrainedArmodon target = new TrainedArmodon();

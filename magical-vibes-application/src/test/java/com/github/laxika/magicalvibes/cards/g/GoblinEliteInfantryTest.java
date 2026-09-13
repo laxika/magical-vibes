@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinEliteInfantry.class, GrizzlyBears.class, HighGround.class})
+@CardUsed({GoblinEliteInfantry.class, GrizzlyBears.class})
 class GoblinEliteInfantryTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -132,7 +132,23 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An unblocked Goblin Elite Infantry does not trigger")
+    void unblockedDoesNotTrigger() {
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
+        goblinPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblinPerm.getPowerModifier()).isZero();
+        assertThat(goblinPerm.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Blocking multiple creatures triggers only once")
+    @CardUsed({HighGround.class})
     void blockTriggerFiresOnlyOnceWhenBlockingMultipleCreatures() {
         harness.addToBattlefield(player2, new HighGround());
         Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
@@ -162,8 +178,9 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
-        TestCards.mutableCard(goblinPerm).setPower(4);
-        TestCards.mutableCard(goblinPerm).setToughness(4);
+        var mutableGoblin = TestCards.mutableCard(goblinPerm);
+        mutableGoblin.setPower(4);
+        mutableGoblin.setToughness(4);
         goblinPerm.setAttacking(true);
 
         addCreatureReady(player2, new GrizzlyBears());
@@ -216,8 +233,9 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     void modifierResetsAtEndOfTurn() {
         Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
         // Increase toughness so goblin survives combat damage from Bears
-        TestCards.mutableCard(goblinPerm).setPower(4);
-        TestCards.mutableCard(goblinPerm).setToughness(4);
+        var mutableGoblin = TestCards.mutableCard(goblinPerm);
+        mutableGoblin.setPower(4);
+        mutableGoblin.setToughness(4);
 
         Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);

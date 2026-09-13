@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AngelicPage.class, GrizzlyBears.class})
 class AngelicPageTest extends BaseCardTest {
 
     @Test
@@ -40,16 +40,40 @@ class AngelicPageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not boost a creature that stops attacking before resolution")
+    void doesNotBoostTargetThatStopsAttackingBeforeResolution() {
+        Permanent attacker = addAngelicPageAndCombatCreature(true, false, player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(0);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is neither attacking nor blocking")
     void cannotTargetNonCombatCreature() {
         addAngelicPage();
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a target")
+    void cannotActivateWithoutTarget() {
+        addAngelicPage();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("requires a target");
     }
 
     @Test
@@ -60,6 +84,31 @@ class AngelicPageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
 
         assertThat(findPermanent(player1, "Angelic Page").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate when Angelic Page is already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent attacker = addAngelicPageAndCombatCreature(true, false, player1);
+        findPermanent(player1, "Angelic Page").tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot activate before Angelic Page has lost summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new AngelicPage());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 
     @Test
@@ -79,17 +128,14 @@ class AngelicPageTest extends BaseCardTest {
     }
 
     private void addAngelicPage() {
-        harness.addToBattlefield(player1, new AngelicPage());
-        findPermanent(player1, "Angelic Page").setSummoningSick(false);
+        addCreatureReady(player1, new AngelicPage());
     }
 
     private Permanent addAngelicPageAndCombatCreature(boolean attacking, boolean blocking, Player controller) {
         addAngelicPage();
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
-        harness.getGameData().playerBattlefields.get(controller.getId()).add(creature);
         harness.forceActivePlayer(player1);
         harness.forceStep(attacking ? TurnStep.DECLARE_ATTACKERS : TurnStep.DECLARE_BLOCKERS);
         return creature;

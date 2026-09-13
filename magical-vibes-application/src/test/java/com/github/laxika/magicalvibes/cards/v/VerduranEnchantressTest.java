@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.Fastbond;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VerduranEnchantress.class, Fastbond.class, Forest.class, GrizzlyBears.class})
+@CardUsed({VerduranEnchantress.class, GloriousAnthem.class, Forest.class, GrizzlyBears.class})
 class VerduranEnchantressTest extends BaseCardTest {
 
     // ===== Trigger fires on enchantment cast =====
@@ -25,7 +26,7 @@ class VerduranEnchantressTest extends BaseCardTest {
     @DisplayName("Casting an enchantment spell triggers may ability prompt")
     void enchantmentCastTriggersMayPrompt() {
         harness.addToBattlefield(player1, new VerduranEnchantress());
-        harness.castFromHand(player1, new Fastbond(), "{G}");
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -39,7 +40,7 @@ class VerduranEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VerduranEnchantress());
         harness.setLibrary(player1, List.of(new Forest()));
 
-        harness.castFromHand(player1, new Fastbond(), "{G}");
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
@@ -61,13 +62,27 @@ class VerduranEnchantressTest extends BaseCardTest {
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castFromHand(player1, new Fastbond(), "{G}");
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Verduran Enchantress"));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Triggered draw still resolves if Verduran Enchantress leaves before resolution")
+    void triggerResolvesIfEnchantressLeavesBeforeResolution() {
+        Permanent enchantress = harness.addToBattlefieldAndReturn(player1, new VerduranEnchantress());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+        gd.playerBattlefields.get(player1.getId()).remove(enchantress);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
     }
 
     // ===== Non-enchantment does not trigger =====
@@ -95,7 +110,7 @@ class VerduranEnchantressTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castFromHand(player2, new Fastbond(), "{G}");
+        harness.castFromHand(player2, new GloriousAnthem(), "{1}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

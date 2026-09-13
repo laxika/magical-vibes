@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinMatron.class, GoblinRaider.class, Island.class})
+@CardUsed({GoblinMatron.class, GoblinRaider.class, GoblinChariot.class, Island.class})
 class GoblinMatronTest extends BaseCardTest {
 
     @Test
@@ -22,8 +22,7 @@ class GoblinMatronTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
@@ -39,8 +38,7 @@ class GoblinMatronTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
@@ -62,8 +60,7 @@ class GoblinMatronTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -77,8 +74,7 @@ class GoblinMatronTest extends BaseCardTest {
         Island island = new Island();
         harness.setLibrary(player1, List.of(island));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -88,11 +84,38 @@ class GoblinMatronTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
+    @Test
+    @DisplayName("Choosing a later matching Goblin puts that selected card into hand")
+    void choosingLaterMatchingGoblinPutsSelectedCardIntoHand() {
+        setupAndCast();
+        setupLibrary();
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards())
+                .extracting(c -> c.getName())
+                .containsExactly("Goblin Raider", "Goblin Chariot");
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .contains("Goblin Chariot")
+                .doesNotContain("Goblin Raider");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Goblin Raider", "Island");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new GoblinMatron(), "{2}{R}");
     }
 
     private void setupLibrary() {
-        harness.setLibrary(player1, List.of(new GoblinRaider(), new Island()));
+        harness.setLibrary(player1, List.of(new GoblinRaider(), new GoblinChariot(), new Island()));
     }
 }

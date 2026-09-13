@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.y;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.g.Greed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({YavimayaEnchantress.class, Greed.class, GrizzlyBears.class, UnholyStrength.class})
 class YavimayaEnchantressTest extends BaseCardTest {
 
     // ===== Static boost =====
@@ -28,7 +30,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 for own enchantment on battlefield")
     void boostedByOwnEnchantment() {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
-        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.addToBattlefield(player1, new Greed());
 
         Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
@@ -39,7 +41,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 for opponent's enchantment on battlefield")
     void boostedByOpponentEnchantment() {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
-        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player2, new Greed());
 
         Permanent enchantress = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
@@ -50,8 +52,8 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 for each enchantment, stacks with multiple")
     void boostedByMultipleEnchantments() {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
-        harness.addToBattlefield(player1, new AngelicChorus());
-        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player1, new Greed());
+        harness.addToBattlefield(player2, new Greed());
 
         Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(4);
@@ -62,7 +64,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
     @DisplayName("Boost updates when enchantment is removed")
     void boostUpdatesWhenEnchantmentRemoved() {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
-        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.addToBattlefield(player1, new Greed());
 
         Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
@@ -70,7 +72,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
 
         // Remove the enchantment
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Angelic Chorus"));
+                .removeIf(p -> p.getCard().getName().equals("Greed"));
 
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);

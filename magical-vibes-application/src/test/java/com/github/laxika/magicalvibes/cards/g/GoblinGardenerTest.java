@@ -4,37 +4,35 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinGardener.class, Forest.class, GrizzlyBears.class, Shock.class})
 class GoblinGardenerTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Goblin Gardener dies, destroy target land")
     void diesDestroysTargetLand() {
-        harness.addToBattlefield(player1, new GoblinGardener());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent gardener = harness.addToBattlefieldAndReturn(player1, new GoblinGardener());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         setupPlayer2Active();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        UUID gardenerId = harness.getPermanentId(player1, "Goblin Gardener");
-        UUID forestId = harness.getPermanentId(player2, "Forest");
-
-        harness.castInstant(player2, 0, gardenerId);
-        harness.passBothPriorities(); // Shock resolves → gardener dies → death trigger awaits target
+        harness.castAndResolveInstant(player2, 0, gardener.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handlePermanentChosen(player1, forestId);
+        harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Forest");
@@ -44,23 +42,39 @@ class GoblinGardenerTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger only offers lands as valid targets")
     void targetFilterOnlyLands() {
-        harness.addToBattlefield(player1, new GoblinGardener());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent gardener = harness.addToBattlefieldAndReturn(player1, new GoblinGardener());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         setupPlayer2Active();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        UUID gardenerId = harness.getPermanentId(player1, "Goblin Gardener");
-        UUID forestId = harness.getPermanentId(player2, "Forest");
-
-        harness.castInstant(player2, 0, gardenerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, gardener.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(forestId);
+                .containsExactly(forest.getId());
+    }
+
+    @Test
+    @DisplayName("Death trigger can destroy a land controlled by Goblin Gardener's controller")
+    void canDestroyOwnLand() {
+        Permanent gardener = harness.addToBattlefieldAndReturn(player1, new GoblinGardener());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, gardener.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     private void setupPlayer2Active() {

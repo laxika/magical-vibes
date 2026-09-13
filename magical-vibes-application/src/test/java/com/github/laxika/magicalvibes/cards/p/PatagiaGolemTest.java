@@ -30,6 +30,20 @@ class PatagiaGolemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving the ability grants flying only to the source creature")
+    void resolvingGrantsFlyingOnlyToSource() {
+        Permanent golem = addCreatureReady(player1, new PatagiaGolem());
+        Permanent otherGolem = addCreatureReady(player1, new PatagiaGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherGolem, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Can activate without tapping the summoning-sick creature")
     void canActivateWithoutTappingOrHaste() {
         Permanent golem = addCreatureReady(player1, new PatagiaGolem());

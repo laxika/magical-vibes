@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,9 +60,7 @@ class FlashOfDefianceTest extends BaseCardTest {
     }
 
     private void castFromHand() {
-        harness.setHand(player1, List.of(new FlashOfDefiance()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.castSorcery(player1, 0, Map.of());
+        harness.castFromHand(player1, new FlashOfDefiance(), "{1}{R}");
         harness.passBothPriorities();
     }
 }

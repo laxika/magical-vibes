@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.k.KarplusanForest;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WildGrowth.class, Forest.class, BalduvianBears.class, IcyManipulator.class, GrizzlyBears.class})
+@CardUsed({WildGrowth.class, Forest.class, GrizzlyBears.class, Twiddle.class, KarplusanForest.class})
 class WildGrowthTest extends BaseCardTest {
 
     @Test
@@ -104,13 +104,13 @@ class WildGrowthTest extends BaseCardTest {
     @DisplayName("Wild Growth does not trigger when the enchanted land is tapped without producing mana")
     void doesNotTriggerOnNonManaTap() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.addToBattlefield(player1, new IcyManipulator());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         aura.setAttachedTo(forest.getId());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateAbility(player1, 1, null, forest.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(forest.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
@@ -120,7 +120,7 @@ class WildGrowthTest extends BaseCardTest {
     @DisplayName("Cannot cast Wild Growth targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new WildGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -133,15 +133,28 @@ class WildGrowthTest extends BaseCardTest {
     @DisplayName("Each Wild Growth on the same land adds its own bonus")
     void multipleAurasEachAddBonus() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent firstAura = new Permanent(new WildGrowth());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         firstAura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(firstAura);
-        Permanent secondAura = new Permanent(new WildGrowth());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         secondAura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(secondAura);
 
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Adds green mana even when the enchanted land produces red mana")
+    void addsGreenInAdditionToAnotherProducedColor() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KarplusanForest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
+        aura.setAttachedTo(land.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 }

@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RazorGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StormCauldron.class, Forest.class, Plains.class, RazorGolem.class})
+@CardUsed({StormCauldron.class, AshayaSoulOfTheWild.class, GrizzlyBears.class, Forest.class, Plains.class, RazorGolem.class})
 class StormCauldronTest extends BaseCardTest {
 
     @Test
@@ -46,7 +49,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInHand(player1, "Forest");
@@ -59,7 +62,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         harness.tapPermanent(player1, 1);
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
@@ -83,10 +86,30 @@ class StormCauldronTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         harness.tapPermanent(player2, 0);
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A creature that becomes a Forest land also returns after producing mana")
+    void effectiveLandReturnsToHandAfterProducingMana() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        addCreatureReady(player1, new AshayaSoulOfTheWild());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.isLand(gd, bears)).isTrue();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bears), null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -106,7 +129,7 @@ class StormCauldronTest extends BaseCardTest {
         assertThat(gd.stack).anySatisfy(entry ->
                 assertThat(entry.getCard().getName()).isEqualTo("Razor Golem"));
 
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Razor Golem");
         assertThat(gd.playerHands.get(player1.getId()))
@@ -124,9 +147,4 @@ class StormCauldronTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
     }
 
-    private void resolveDeferredTriggers() {
-        for (int i = 0; i < 10 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
-    }
 }

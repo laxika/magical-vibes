@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,14 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishPiper.class, Forest.class, GrizzlyBears.class})
 class ElvishPiperTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activated ability taps Piper, spends mana, and goes on stack")
     void activatingAbilityUsesTapAndMana() {
-        Permanent piper = addReadyPiper();
+        Permanent piper = addCreatureReady(player1, new ElvishPiper());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -43,7 +42,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability prompts may choice first")
     void resolvingPromptsMayChoiceFirst() {
-        addReadyPiper();
+        addCreatureReady(player1, new ElvishPiper());
         harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -58,7 +57,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may then resolving prompts card choice with only creature indices")
     void resolvingPromptsOnlyCreatureChoices() {
-        addReadyPiper();
+        addCreatureReady(player1, new ElvishPiper());
         harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -76,7 +75,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a creature puts it onto the battlefield")
     void choosingCreaturePutsItOntoBattlefield() {
-        addReadyPiper();
+        addCreatureReady(player1, new ElvishPiper());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -94,7 +93,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Declining may leaves hand unchanged")
     void decliningMayLeavesHandUnchanged() {
-        addReadyPiper();
+        addCreatureReady(player1, new ElvishPiper());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -113,7 +112,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Ability does not prompt when controller has no creature cards in hand")
     void noCreaturesInHandSkipsChoice() {
-        addReadyPiper();
+        addCreatureReady(player1, new ElvishPiper());
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -142,7 +141,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability while tapped")
     void cannotActivateWhileTapped() {
-        Permanent piper = addReadyPiper();
+        Permanent piper = addCreatureReady(player1, new ElvishPiper());
         piper.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -154,17 +153,10 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without green mana")
     void cannotActivateWithoutMana() {
-        addReadyPiper();
+        addCreatureReady(player1, new ElvishPiper());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addReadyPiper() {
-        Permanent piper = new Permanent(new ElvishPiper());
-        piper.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(piper);
-        return piper;
     }
 }

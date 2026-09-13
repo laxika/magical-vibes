@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
-import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RecklessEmbermage.class, FemerefArchers.class, FeralShadow.class})
+@CardUsed({RecklessEmbermage.class, FemerefArchers.class, RagingGoblin.class})
 class RecklessEmbermageTest extends BaseCardTest {
 
     @Test
@@ -47,17 +46,31 @@ class RecklessEmbermageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target itself and takes 2 damage total")
+    void canTargetItself() {
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
+        addRedMana(player1);
+
+        harness.activateAbility(player1, 0, null, embermage.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(embermage.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Reckless Embermage");
+    }
+
+    @Test
     @DisplayName("Lethal damage to the target creature does not stop the self-damage")
     void lethalTargetDoesNotStopSelfDamage() {
         Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
         addRedMana(player1);
 
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Feral Shadow");
+        harness.assertInGraveyard(player2, "Raging Goblin");
         assertThat(embermage.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Reckless Embermage");
     }

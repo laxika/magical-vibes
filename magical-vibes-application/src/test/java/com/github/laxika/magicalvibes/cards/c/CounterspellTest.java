@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.r.RootwaterHunter;
-import com.github.laxika.magicalvibes.cards.c.Capsize;
-import com.github.laxika.magicalvibes.cards.c.Commandeer;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Counterspell.class, HornedTurtle.class, Capsize.class, Commandeer.class, RootwaterHunter.class})
+@CardUsed({Counterspell.class, HornedTurtle.class, Unsummon.class, Commandeer.class, ProdigalSorcerer.class})
 class CounterspellTest extends BaseCardTest {
 
     @Test
@@ -38,7 +36,6 @@ class CounterspellTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, turtle.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry entry = gd.stack.getLast();
         assertThat(entry.getCard()).isSameAs(counterspell);
@@ -61,10 +58,8 @@ class CounterspellTest extends BaseCardTest {
         harness.castInstant(player2, 0, turtle.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(turtle.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(turtle.getId()));
+        harness.assertInGraveyard(player1, "Horned Turtle");
+        harness.assertNotOnBattlefield(player1, "Horned Turtle");
     }
 
     @Test
@@ -73,8 +68,8 @@ class CounterspellTest extends BaseCardTest {
         HornedTurtle turtle = new HornedTurtle();
         var turtlePermanent = harness.addToBattlefieldAndReturn(player1, turtle);
 
-        Capsize capsize = new Capsize();
-        harness.setHand(player1, List.of(capsize));
+        Unsummon unsummon = new Unsummon();
+        harness.setHand(player1, List.of(unsummon));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         Counterspell counterspell = new Counterspell();
@@ -83,14 +78,13 @@ class CounterspellTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, turtlePermanent.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, capsize.getId());
+        harness.castInstant(player2, 0, unsummon.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(capsize.getId()));
+        harness.assertInGraveyard(player1, "Unsummon");
+        harness.assertOnBattlefield(player1, "Horned Turtle");
         assertThat(gd.stack)
-                .noneMatch(se -> se.getCard().getId().equals(capsize.getId()));
+                .noneMatch(se -> se.getCard().getId().equals(unsummon.getId()));
     }
 
     @Test
@@ -99,9 +93,9 @@ class CounterspellTest extends BaseCardTest {
         HornedTurtle turtle = new HornedTurtle();
         var turtlePermanent = harness.addToBattlefieldAndReturn(player1, turtle);
 
-        Capsize capsize = new Capsize();
+        Unsummon unsummon = new Unsummon();
         Counterspell counterspell = new Counterspell();
-        harness.setHand(player1, List.of(capsize, counterspell));
+        harness.setHand(player1, List.of(unsummon, counterspell));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         Commandeer commandeer = new Commandeer();
@@ -109,17 +103,15 @@ class CounterspellTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, turtlePermanent.getId());
         harness.passPriority(player1);
-        harness.castInstantWithAlternateExileFromHand(player2, 0, capsize.getId(), List.of(1, 2));
+        harness.castInstantWithAlternateExileFromHand(player2, 0, unsummon.getId(), List.of(1, 2));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.castInstant(player1, 0, capsize.getId());
+        harness.castInstant(player1, 0, unsummon.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(capsize.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(card -> card.getId().equals(capsize.getId()));
+        harness.assertInGraveyard(player1, "Unsummon");
+        harness.assertNotInGraveyard(player2, "Unsummon");
     }
 
     @Test
@@ -137,14 +129,12 @@ class CounterspellTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, turtle.getId());
 
-        GameData gd = harness.getGameData();
         gd.stack.removeIf(se -> se.getCard().getId().equals(turtle.getId()));
 
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getId().equals(counterspell.getId()));
+        harness.assertInGraveyard(player2, "Counterspell");
     }
 
     @Test
@@ -166,7 +156,7 @@ class CounterspellTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an activated ability")
     void cannotTargetActivatedAbility() {
-        Permanent hunter = addCreatureReady(player1, new RootwaterHunter());
+        Permanent hunter = addCreatureReady(player1, new ProdigalSorcerer());
         harness.activateAbility(player1, 0, null, player2.getId());
 
         Counterspell counterspell = new Counterspell();

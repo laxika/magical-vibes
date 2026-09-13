@@ -17,8 +17,7 @@ class HowlingMineTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     // ===== Triggering =====
@@ -185,4 +184,3 @@ class HowlingMineTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
     }
 }
-
