@@ -10,11 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AbyssalSpecter.class, Counterspell.class, Island.class, WindDrake.class})
@@ -46,6 +44,23 @@ class AbyssalSpecterTest extends BaseCardTest {
         addCreatureReady(player2, new WindDrake());
 
         declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        // No combat damage reached the player, so no discard was prompted.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
+    void noTriggerWhenBlockedUpstreamReview() {
+        Permanent specter = addCreatureReady(player1, new AbyssalSpecter());
+        specter.setAttacking(true);
+        addCreatureReady(player2, new WindDrake());
+
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -114,5 +129,22 @@ class AbyssalSpecterTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities(); // resolve what combat damage triggered
+    }
+
+    @Test
+    @DisplayName("Damage to its controller also makes that player discard a card")
+    void damageToControllerMakesControllerDiscard() {
+        AbyssalSpecter card = new AbyssalSpecter();
+        card.addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+        Permanent specter = addCreatureReady(player1, card);
+        harness.setHand(player1, List.of(new Counterspell()));
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
+                null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 }

@@ -6,11 +6,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GorillaChieftain.class)
+@CardUsed({GorillaChieftain.class})
 class GorillaChieftainTest extends BaseCardTest {
 
     @Test
@@ -90,5 +89,20 @@ class GorillaChieftainTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Gorilla Chieftain");
         harness.assertInGraveyard(player1, "Gorilla Chieftain");
+    }
+
+    @Test
+    @DisplayName("Each resolved activation creates an additional regeneration shield")
+    void multipleActivationsCreateMultipleShields() {
+        Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chieftain.getRegenerationShield()).isEqualTo(2);
     }
 }

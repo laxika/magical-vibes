@@ -59,6 +59,18 @@ class PearlDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate the ability with summoning sickness because it has no tap cost")
+    void canActivateWithSummoningSickness() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new PearlDragon());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         Permanent dragon = addCreatureReady(player1, new PearlDragon());

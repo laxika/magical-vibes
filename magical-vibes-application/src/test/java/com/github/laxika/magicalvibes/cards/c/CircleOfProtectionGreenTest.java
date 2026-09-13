@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,15 +15,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionGreen.class, BalduvianBears.class, ZuranSpellcaster.class, Hurricane.class,
-        CentaurArcher.class, GiantGrowth.class})
+@CardUsed({AirElemental.class, BalduvianBears.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GiantGrowth.class, GrizzlyBears.class, Hurricane.class, MerfolkOfThePearlTrident.class, ZuranSpellcaster.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -215,11 +216,11 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
     }
 
     private Permanent addReadyGreenCreature(Player player) {
-        return addCreatureReady(player, new BalduvianBears());
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent addReadyNonGreenCreature(Player player) {
-        return addCreatureReady(player, new ZuranSpellcaster());
+        return addCreatureReady(player, new MerfolkOfThePearlTrident());
     }
 
     @Test
@@ -248,5 +249,26 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    void chosenSourceDamageToControlledCreatureIsNotPrevented() {
+        addReadyCircle(player1);
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        target.setAttacking(true);
+        Permanent archers = addCreatureReady(player2, new FemerefArchers());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, archers.getId());
+
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerSourceNextDamageShields)
+                .filteredOn(s -> s.playerId().equals(player1.getId()))
+                .anyMatch(s -> s.sourceId().equals(archers.getId()));
     }
 }

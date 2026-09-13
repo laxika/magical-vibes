@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "2")
+@CardRegistration(set = "MM2", collectorNumber = "2")
+@CardRegistration(set = "DDP", collectorNumber = "42")
 public class ArtisanOfKozilek extends Card {
 
     public ArtisanOfKozilek() {

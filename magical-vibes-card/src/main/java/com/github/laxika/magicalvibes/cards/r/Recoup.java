@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "216")
+@CardRegistration(set = "DDK", collectorNumber = "63")
 public class Recoup extends Card {
 
     public Recoup() {

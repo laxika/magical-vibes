@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "3")
+@CardRegistration(set = "MMA", collectorNumber = "4")
 public class AngelsGrace extends Card {
 
     public AngelsGrace() {

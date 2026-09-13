@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "147")
+@CardRegistration(set = "ME3", collectorNumber = "134")
 public class SpoilsOfVictory extends Card {
 
     public SpoilsOfVictory() {

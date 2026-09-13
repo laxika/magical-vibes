@@ -9,19 +9,33 @@ package com.github.laxika.magicalvibes.model.effect;
  *                       card with the triggering permanent
  * @param addStashCounter whether the exiled card receives a stash counter instead of being tracked
  *                         with the triggering permanent
+ * @param grantPlayPermissionUntilEndOfTurn whether the controller may play the exiled card until
+ *                                           end of turn
  */
-public record ExileDiscardedCardFromGraveyardEffect(boolean trackWithSource, boolean addStashCounter)
+public record ExileDiscardedCardFromGraveyardEffect(
+        boolean trackWithSource,
+        boolean addStashCounter,
+        boolean grantPlayPermissionUntilEndOfTurn
+)
         implements CardEffect {
 
     public ExileDiscardedCardFromGraveyardEffect() {
-        this(false, false);
+        this(false, false, false);
     }
 
     public ExileDiscardedCardFromGraveyardEffect(boolean trackWithSource) {
-        this(trackWithSource, false);
+        this(trackWithSource, false, false);
+    }
+
+    public ExileDiscardedCardFromGraveyardEffect(boolean trackWithSource, boolean addStashCounter) {
+        this(trackWithSource, addStashCounter, false);
     }
 
     public static ExileDiscardedCardFromGraveyardEffect withStashCounter() {
-        return new ExileDiscardedCardFromGraveyardEffect(true, true);
+        return new ExileDiscardedCardFromGraveyardEffect(true, true, false);
+    }
+
+    public static ExileDiscardedCardFromGraveyardEffect withPlayPermission() {
+        return new ExileDiscardedCardFromGraveyardEffect(false, false, true);
     }
 }

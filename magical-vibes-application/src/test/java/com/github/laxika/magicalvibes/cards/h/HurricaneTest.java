@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,15 +13,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hurricane.class, ChandraNalaar.class, GrizzlyBears.class, WindDrake.class})
+@CardUsed({ArmoredPegasus.class, ChandraNalaar.class, GrizzlyBears.class, Hurricane.class, WindDrake.class, WindSpirit.class})
 class HurricaneTest extends BaseCardTest {
 
     @Test
@@ -103,6 +103,20 @@ class HurricaneTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Hurricane does not kill non-flying creatures")
+    void hurricaneDoesNotKillNonFlyingCreaturesUpstreamReview() {
+        // Put a non-flying creature on opponent's battlefield
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        // Non-flying creature survives
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Hurricane with X=0 deals no damage")
     void hurricaneWithXZeroDealsNoDamage() {
         Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new WindDrake());
@@ -170,5 +184,18 @@ class HurricaneTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Wind Drake");
         assertThat(flyingCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Hurricane deals exactly X damage to a flying creature")
+    void hurricaneDealsExactlyXDamageToFlyingCreatures() {
+        harness.addToBattlefield(player2, new WindSpirit());
+
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertOnBattlefield(player2, "Wind Spirit");
+        assertThat(findPermanent(player2, "Wind Spirit").getMarkedDamage()).isEqualTo(1);
     }
 }

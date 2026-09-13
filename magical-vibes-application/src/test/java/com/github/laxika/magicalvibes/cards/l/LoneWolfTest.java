@@ -135,8 +135,6 @@ class LoneWolfTest extends BaseCardTest {
 
         resolveCombat();
 
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 2));
-
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }

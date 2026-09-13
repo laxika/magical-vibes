@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "165")
+@CardRegistration(set = "DDU", collectorNumber = "68")
 public class PhyrexiasCore extends Card {
 
     public PhyrexiasCore() {

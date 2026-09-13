@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEf
  */
 @CardRegistration(set = "TMP", collectorNumber = "211")
 @CardRegistration(set = "TPR", collectorNumber = "164")
+@CardRegistration(set = "VMA", collectorNumber = "191")
 public class WallOfDiffusion extends Card {
 
     public WallOfDiffusion() {

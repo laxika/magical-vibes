@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "304")
 @CardRegistration(set = "DDD", collectorNumber = "6")
+@CardRegistration(set = "GVL", collectorNumber = "6")
 public class WirewoodSavage extends Card {
 
     public WirewoodSavage() {

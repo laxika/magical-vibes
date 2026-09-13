@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "90")
+@CardRegistration(set = "MM2", collectorNumber = "60")
 public class SurrakarSpellblade extends Card {
 
     public SurrakarSpellblade() {

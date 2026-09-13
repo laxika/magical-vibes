@@ -38,6 +38,24 @@ class HowlingMineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Extra draw waits for the trigger to resolve after the normal draw")
+    void extraDrawWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new HowlingMine());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToDraw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
+    }
+
+    @Test
     @DisplayName("Opponent draws an additional card during their draw step")
     void triggersDrawForOpponent() {
         harness.addToBattlefield(player1, new HowlingMine());
@@ -73,8 +91,7 @@ class HowlingMineTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when tapped")
     void doesNotTriggerWhenTapped() {
-        harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = findPermanent(player1, "Howling Mine");
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
         howlingMine.tap();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -90,8 +107,7 @@ class HowlingMineTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping after trigger but before resolution prevents the extra draw (intervening-if)")
     void interveningIfPreventsDrawWhenTappedBeforeResolution() {
-        harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = findPermanent(player1, "Howling Mine");
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -109,8 +125,7 @@ class HowlingMineTest extends BaseCardTest {
     @Test
     @DisplayName("Removing source from battlefield after trigger still allows the draw (last known state was untapped)")
     void triggerStillResolvesWhenSourceLeavesTheBattlefield() {
-        harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = findPermanent(player1, "Howling Mine");
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -128,8 +143,7 @@ class HowlingMineTest extends BaseCardTest {
 
     @Test
     void triggerUsesLastKnownTappedStateWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = gd.playerBattlefields.get(player1.getId()).get(0);
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -176,8 +190,7 @@ class HowlingMineTest extends BaseCardTest {
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToDraw(player1);
-        harness.passBothPriorities(); // resolve first trigger
-        harness.passBothPriorities(); // resolve second trigger
+        resolveAllTriggers();
 
         // Normal draw + 2 Howling Mine draws = 3 total
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);

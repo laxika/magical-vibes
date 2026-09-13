@@ -29,8 +29,7 @@ class DarkRitualTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(5);
     }
@@ -38,10 +37,11 @@ class DarkRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        DarkRitual ritual = new DarkRitual();
+        harness.castFromHand(player1, ritual, "{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Dark Ritual");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ritual);
     }
 }

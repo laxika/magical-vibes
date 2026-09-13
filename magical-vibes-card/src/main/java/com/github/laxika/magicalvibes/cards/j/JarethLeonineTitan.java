@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "43")
+@CardRegistration(set = "EMA", collectorNumber = "16")
+@CardRegistration(set = "VMA", collectorNumber = "31")
 public class JarethLeonineTitan extends Card {
 
     public JarethLeonineTitan() {

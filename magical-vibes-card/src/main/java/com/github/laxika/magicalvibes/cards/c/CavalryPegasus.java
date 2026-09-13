@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "2")
+@CardRegistration(set = "DDL", collectorNumber = "4")
 public class CavalryPegasus extends Card {
 
     public CavalryPegasus() {

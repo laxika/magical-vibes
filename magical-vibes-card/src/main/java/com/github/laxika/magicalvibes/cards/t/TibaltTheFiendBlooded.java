@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "161")
+@CardRegistration(set = "DDK", collectorNumber = "41")
 public class TibaltTheFiendBlooded extends Card {
 
     public TibaltTheFiendBlooded() {

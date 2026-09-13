@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "106")
+@CardRegistration(set = "DDS", collectorNumber = "18")
 public class ShivanMeteor extends Card {
 
     public ShivanMeteor() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "121")
+@CardRegistration(set = "DDQ", collectorNumber = "66")
 public class UnbreathingHorde extends Card {
 
     public UnbreathingHorde() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "89")
+@CardRegistration(set = "DDK", collectorNumber = "8")
 public class GatekeeperOfMalakir extends Card {
 
     public GatekeeperOfMalakir() {

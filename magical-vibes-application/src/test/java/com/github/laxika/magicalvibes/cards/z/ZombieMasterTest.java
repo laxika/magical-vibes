@@ -21,15 +21,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ZombieMaster.class, Gravedigger.class, GrizzlyBears.class, Swamp.class})
 class ZombieMasterTest extends BaseCardTest {
 
-    // ===== Swampwalk grant =====
-
     @Test
     @DisplayName("Other Zombie creatures have swampwalk")
     void grantsSwampwalkToOtherZombies() {
         harness.addToBattlefield(player1, new Gravedigger());
         harness.addToBattlefield(player1, new ZombieMaster());
 
-        Permanent zombie = zombieNamed(player1, "Gravedigger");
+        Permanent zombie = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.SWAMPWALK)).isTrue();
     }
@@ -39,7 +37,7 @@ class ZombieMasterTest extends BaseCardTest {
     void doesNotGrantSwampwalkToItself() {
         harness.addToBattlefield(player1, new ZombieMaster());
 
-        Permanent master = zombieNamed(player1, "Zombie Master");
+        Permanent master = findPermanent(player1, "Zombie Master");
 
         assertThat(gqs.hasKeyword(gd, master, Keyword.SWAMPWALK)).isFalse();
     }
@@ -50,7 +48,7 @@ class ZombieMasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new ZombieMaster());
 
-        Permanent bears = zombieNamed(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.SWAMPWALK)).isFalse();
     }
@@ -61,9 +59,31 @@ class ZombieMasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZombieMaster());
         harness.addToBattlefield(player2, new Gravedigger());
 
-        Permanent opponentZombie = zombieNamed(player2, "Gravedigger");
+        Permanent opponentZombie = findPermanent(player2, "Gravedigger");
 
         assertThat(gqs.hasKeyword(gd, opponentZombie, Keyword.SWAMPWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Zombie Master grants its abilities to the other")
+    void zombieMastersGrantToEachOther() {
+        Permanent first = addCreatureReady(player1, new ZombieMaster());
+        Permanent second = addCreatureReady(player1, new ZombieMaster());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.SWAMPWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.SWAMPWALK)).isTrue();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int firstIndex = gd.playerBattlefields.get(player1.getId()).indexOf(first);
+        harness.activateAbility(player1, firstIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        int secondIndex = gd.playerBattlefields.get(player1.getId()).indexOf(second);
+        harness.activateAbility(player1, secondIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getRegenerationShield()).isEqualTo(1);
+        assertThat(second.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
@@ -72,7 +92,7 @@ class ZombieMasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Gravedigger());
         harness.addToBattlefield(player1, new ZombieMaster());
 
-        Permanent zombie = zombieNamed(player1, "Gravedigger");
+        Permanent zombie = findPermanent(player1, "Gravedigger");
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.SWAMPWALK)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
@@ -109,8 +129,6 @@ class ZombieMasterTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
-
-    // ===== Granted regenerate ability =====
 
     @Test
     @DisplayName("Other Zombies gain \"{B}: Regenerate this permanent.\"")
@@ -170,7 +188,7 @@ class ZombieMasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Gravedigger());
         harness.addToBattlefield(player1, new ZombieMaster());
 
-        Permanent zombie = zombieNamed(player1, "Gravedigger");
+        Permanent zombie = findPermanent(player1, "Gravedigger");
         assertThat(gs.getEffectiveActivatedAbilities(gd, zombie)).isNotEmpty();
 
         gd.playerBattlefields.get(player1.getId())
@@ -185,9 +203,4 @@ class ZombieMasterTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 
-    // ===== Helpers =====
-
-    private Permanent zombieNamed(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return findPermanent(player, name);
-    }
 }

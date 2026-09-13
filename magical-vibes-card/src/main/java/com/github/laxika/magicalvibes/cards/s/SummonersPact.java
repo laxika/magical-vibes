@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "139")
+@CardRegistration(set = "MMA", collectorNumber = "164")
+@CardRegistration(set = "A25", collectorNumber = "189")
 public class SummonersPact extends Card {
 
     public SummonersPact() {

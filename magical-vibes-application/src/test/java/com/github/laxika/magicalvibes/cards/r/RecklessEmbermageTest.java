@@ -46,20 +46,6 @@ class RecklessEmbermageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can target itself and takes 2 damage total")
-    void canTargetItself() {
-        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
-        addRedMana(player1);
-
-        harness.activateAbility(player1, 0, null, embermage.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(embermage.getMarkedDamage()).isEqualTo(2);
-        harness.assertInGraveyard(player1, "Reckless Embermage");
-    }
-
-    @Test
     @DisplayName("Lethal damage to the target creature does not stop the self-damage")
     void lethalTargetDoesNotStopSelfDamage() {
         Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
@@ -73,6 +59,21 @@ class RecklessEmbermageTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Raging Goblin");
         assertThat(embermage.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Reckless Embermage");
+    }
+
+    @Test
+    @DisplayName("Can target itself and takes both points of damage")
+    void canTargetItself() {
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
+        addRedMana(player1);
+
+        harness.activateAbility(player1, 0, null, embermage.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(embermage.getMarkedDamage()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Reckless Embermage");
+        harness.assertInGraveyard(player1, "Reckless Embermage");
     }
 
     @Test

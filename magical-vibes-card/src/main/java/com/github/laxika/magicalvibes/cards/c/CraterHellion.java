@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "179")
+@CardRegistration(set = "VMA", collectorNumber = "157")
+@CardRegistration(set = "DDL", collectorNumber = "56")
+@CardRegistration(set = "EMA", collectorNumber = "124")
 public class CraterHellion extends Card {
 
     public CraterHellion() {

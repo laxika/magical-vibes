@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "71")
+@CardRegistration(set = "IMA", collectorNumber = "44")
 public class CephalidBroker extends Card {
 
     public CephalidBroker() {

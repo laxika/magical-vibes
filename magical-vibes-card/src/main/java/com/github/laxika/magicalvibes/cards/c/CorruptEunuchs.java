@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "106")
+@CardRegistration(set = "ME3", collectorNumber = "92")
 public class CorruptEunuchs extends Card {
 
     public CorruptEunuchs() {

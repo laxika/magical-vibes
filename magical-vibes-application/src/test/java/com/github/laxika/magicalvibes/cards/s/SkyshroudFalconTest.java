@@ -22,8 +22,7 @@ class SkyshroudFalconTest extends BaseCardTest {
         addCreatureReady(player1, new SkyshroudFalcon());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -47,8 +46,7 @@ class SkyshroudFalconTest extends BaseCardTest {
         addCreatureReady(player1, new SkyshroudFalcon());
         Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

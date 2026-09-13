@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "5DN", collectorNumber = "142")
+@CardRegistration(set = "MMA", collectorNumber = "211")
 public class ParadiseMantle extends Card {
 
     public ParadiseMantle() {

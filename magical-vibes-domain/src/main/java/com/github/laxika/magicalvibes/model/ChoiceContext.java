@@ -1517,6 +1517,25 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Invoke the Ancients: choose a keyword counter for the next created Spirit token. */
+    record CreateTokenCounterChoice(Card sourceCard, UUID controllerId, UUID tokenId,
+                                   List<UUID> remainingTokenIds, List<CounterType> counterTypes)
+            implements ChoiceContext {
+
+        public CreateTokenCounterChoice {
+            remainingTokenIds = List.copyOf(remainingTokenIds);
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream().map(CreateTokenCounterChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return counterType.name().toLowerCase().replace('_', ' ');
+        }
+    }
+
     record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                       int remainingSelections, List<CounterType> counterTypes)
             implements ChoiceContext {
@@ -1605,6 +1624,58 @@ public sealed interface ChoiceContext {
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 UUID sourcePermanentId, boolean asEnters) {
             this(sourceCard, controllerId, effect, false, sourcePermanentId, false, List.of(), asEnters);
+        }
+    }
+
+    /** Plea for Power: the current player voted for time or knowledge. */
+    record PleaForPowerChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                              Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String TIME = "Time";
+        public static final String KNOWLEDGE = "Knowledge";
+        public static final List<String> OPTIONS = List.of(TIME, KNOWLEDGE);
+
+        public PleaForPowerChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Tyrant's Choice: the current player voted for death or torture. */
+    record TyrantsChoiceChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                               Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DEATH = "Death";
+        public static final String TORTURE = "Torture";
+        public static final List<String> OPTIONS = List.of(DEATH, TORTURE);
+
+        public TyrantsChoiceChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Magister of Worth: the current player voted for grace or condemnation. */
+    record GraceOrCondemnationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                     Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String GRACE = "Grace";
+        public static final String CONDEMNATION = "Condemnation";
+        public static final List<String> OPTIONS = List.of(GRACE, CONDEMNATION);
+
+        public GraceOrCondemnationChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Coercive Portal: the current player voted for carnage or homage. */
+    record CoercivePortalChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String CARNAGE = "Carnage";
+        public static final String HOMAGE = "Homage";
+        public static final List<String> OPTIONS = List.of(CARNAGE, HOMAGE);
+
+        public CoercivePortalChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
         }
     }
 

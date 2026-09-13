@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "261")
+@CardRegistration(set = "MM2", collectorNumber = "221")
 public class LongForgottenGohei extends Card {
 
     public LongForgottenGohei() {

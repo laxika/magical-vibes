@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "104")
+@CardRegistration(set = "VMA", collectorNumber = "151")
+@CardRegistration(set = "V14", collectorNumber = "2")
+@CardRegistration(set = "ME3", collectorNumber = "89")
 public class BurningOfXinye extends Card {
 
     public BurningOfXinye() {

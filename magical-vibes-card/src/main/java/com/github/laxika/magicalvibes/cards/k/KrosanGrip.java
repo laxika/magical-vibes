@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "202")
+@CardRegistration(set = "MMA", collectorNumber = "152")
 public class KrosanGrip extends Card {
 
     public KrosanGrip() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "255")
+@CardRegistration(set = "ME3", collectorNumber = "172")
 public class RohgahhOfKherKeep extends Card {
 
     private static final String KOBOLDS_OF_KHER_KEEP = "Kobolds of Kher Keep";

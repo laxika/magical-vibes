@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -1102,7 +1103,8 @@ public class TriggeredAbilityQueueService {
         }
         if (needsTarget) {
             Card targetingCard = prepareTriggeredModalTargeting(sourceCard, chosenModes);
-            if (targetingCard.getSpellTargets().size() > 1) {
+            if (targetingCard.getSpellTargets().size() > 1
+                    || etbTokenTargetService.needsSlotBySlotTargetSelection(targetingCard)) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         targetingCard, controllerId, effects, sourcePermanentId,
                         List.of(), 0, 0));
@@ -1920,6 +1922,13 @@ public class TriggeredAbilityQueueService {
                     scope = returnEffect.targetSpec().graveyardScope()
                             .orElse(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
                     break;
+                } else if (effect instanceof TargetedGraveyardCardsEffect targetEffect) {
+                    filter = targetEffect.filter();
+                    maxTargets = targetEffect.maxTargets() == 0
+                            ? Integer.MAX_VALUE : targetEffect.maxTargets();
+                    minTargets = 0;
+                    scope = targetEffect.source();
+                    break;
                 }
             }
 
@@ -2092,7 +2101,7 @@ public class TriggeredAbilityQueueService {
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
             int maxManaValue = lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId())
-                    : manaValueAtMostX ? pending.xValue() : Integer.MAX_VALUE;
+                    : manaValueAtMostX ? pending.xValue() + manaValueXOffset : Integer.MAX_VALUE;
 
             List<UUID> searchPlayerIds = pending.graveyardOwnerId() != null
                     ? List.of(pending.graveyardOwnerId())

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "119")
+@CardRegistration(set = "ME3", collectorNumber = "211")
 public class SorrowsPath extends Card {
 
     public SorrowsPath() {

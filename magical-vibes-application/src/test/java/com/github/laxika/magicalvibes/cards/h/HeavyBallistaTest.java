@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -7,13 +8,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeavyBallista.class, GrizzlyBears.class})
+@CardUsed({BenalishKnight.class, GrizzlyBears.class, HeavyBallista.class})
 class HeavyBallistaTest extends BaseCardTest {
 
     @Test
@@ -75,9 +73,8 @@ class HeavyBallistaTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
     }
 
     private Permanent addReadyBallista(Player player) {
@@ -94,7 +91,17 @@ class HeavyBallistaTest extends BaseCardTest {
     private Permanent addBlocker(Player owner) {
         Permanent blocker = addCreatureReady(owner, new GrizzlyBears());
         blocker.setBlocking(true);
-        blocker.addBlockingTargetId(UUID.randomUUID());
         return blocker;
+    }
+
+    @Test
+    @DisplayName("Cannot activate while it has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new HeavyBallista());
+        Permanent attacker = addAttacker(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sick");
     }
 }

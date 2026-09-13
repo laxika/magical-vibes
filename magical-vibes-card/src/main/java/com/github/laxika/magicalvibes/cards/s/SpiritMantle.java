@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "35")
+@CardRegistration(set = "PC2", collectorNumber = "12")
+@CardRegistration(set = "PCA", collectorNumber = "12")
 public class SpiritMantle extends Card {
 
     public SpiritMantle() {

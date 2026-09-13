@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "LEG", collectorNumber = "43")
+@CardRegistration(set = "ME3", collectorNumber = "27")
 public class WallOfLight extends Card {
 
     public WallOfLight() {

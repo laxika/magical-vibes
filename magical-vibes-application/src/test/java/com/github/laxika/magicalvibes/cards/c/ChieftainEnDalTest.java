@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DefiantFalcon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,15 +13,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChieftainEnDal.class, DefiantFalcon.class})
 class ChieftainEnDalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking with Chieftain en-Dal grants first strike to all attacking creatures")
     void attackGrantsFirstStrikeToAttackingCreatures() {
         Permanent chieftain = addCreatureReady(player1, new ChieftainEnDal());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DefiantFalcon());
+        Permanent nonAttacker = addCreatureReady(player1, new DefiantFalcon());
+        Permanent opponentCreature = addCreatureReady(player2, new DefiantFalcon());
 
         attackWithChieftainAndCreature();
 
@@ -34,7 +36,7 @@ class ChieftainEnDalTest extends BaseCardTest {
     @DisplayName("First strike granted by Chieftain en-Dal wears off at end of turn")
     void firstStrikeWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new ChieftainEnDal());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DefiantFalcon());
 
         attackWithChieftainAndCreature();
 
@@ -47,13 +49,21 @@ class ChieftainEnDalTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
-    private void attackWithChieftainAndCreature() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    @Test
+    @DisplayName("Does not grant first strike when Chieftain en-Dal does not attack")
+    void doesNotGrantFirstStrikeWhenChieftainDoesNotAttack() {
+        Permanent chieftain = addCreatureReady(player1, new ChieftainEnDal());
+        Permanent attacker = addCreatureReady(player1, new DefiantFalcon());
 
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, chieftain, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    private void attackWithChieftainAndCreature() {
+        declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
     }
 }

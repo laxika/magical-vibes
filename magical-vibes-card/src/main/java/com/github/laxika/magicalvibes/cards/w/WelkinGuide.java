@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "30")
+@CardRegistration(set = "EMA", collectorNumber = "36")
 public class WelkinGuide extends Card {
 
     public WelkinGuide() {

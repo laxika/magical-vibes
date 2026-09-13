@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "320")
+@CardRegistration(set = "V12", collectorNumber = "9")
 public class HighMarket extends Card {
 
     public HighMarket() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "WTH", collectorNumber = "154")
+@CardRegistration(set = "VMA", collectorNumber = "278")
 public class NullRod extends Card {
 
     public NullRod() {

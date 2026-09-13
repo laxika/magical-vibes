@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "54")
+@CardRegistration(set = "DDN", collectorNumber = "44")
 public class CoralTrickster extends Card {
 
     public CoralTrickster() {

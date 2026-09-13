@@ -27,8 +27,7 @@ class WindreaperFalconTest extends BaseCardTest {
         addCreatureReady(player1, new WindreaperFalcon());
         addCreatureReady(player2, new BayFalcon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -41,8 +40,7 @@ class WindreaperFalconTest extends BaseCardTest {
         addCreatureReady(player1, new WindreaperFalcon());
         Permanent blocker = addCreatureReady(player2, new EkunduGriffin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -83,8 +81,7 @@ class WindreaperFalconTest extends BaseCardTest {
         Permanent falcon = addCreatureReady(player1, new WindreaperFalcon());
         Permanent blueAttacker = addCreatureReady(player2, new BayFalcon());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 

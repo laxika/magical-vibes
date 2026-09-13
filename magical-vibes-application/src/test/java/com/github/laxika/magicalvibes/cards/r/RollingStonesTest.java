@@ -35,7 +35,7 @@ class RollingStonesTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
-        declareAttackers(List.of(wallIndex));
+        declareAttackersAndPrepareBlockers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
     }
@@ -48,7 +48,7 @@ class RollingStonesTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
-        declareAttackers(List.of(wallIndex));
+        declareAttackersAndPrepareBlockers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
     }

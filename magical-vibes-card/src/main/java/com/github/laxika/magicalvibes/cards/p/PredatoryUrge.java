@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "175")
+@CardRegistration(set = "PC2", collectorNumber = "74")
+@CardRegistration(set = "PCA", collectorNumber = "74")
 public class PredatoryUrge extends Card {
 
     public PredatoryUrge() {

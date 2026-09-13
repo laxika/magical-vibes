@@ -106,6 +106,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.amount.SourceToughness;
+
 /**
  * Trigger collectors for enter-the-battlefield events. Mirrors the other {@code *CollectorService}
  * beans: each {@link CollectsTrigger}-annotated method handles one (slot, effect class) pair and the
@@ -1035,7 +1037,23 @@ public class EnterTriggerCollectorService {
     private boolean handleAllyCreatureGainLifeEqualToToughness(TriggerMatchContext match,
             GainLifeEqualToToughnessEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        return enqueueGainLife(match, ctx, pe.enteringCard().getToughness());
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        Permanent enteringPermanent = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(), match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new GainLifeEffect(
+                            new SourceToughness()))),
+                    null, enteringPermanentId);
+            entry.setNonTargeting(true);
+            if (enteringPermanent != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(enteringPermanent));
+            }
+            match.gameData().enqueueTrigger(entry);
+        }
+        logTriggered(match);
+        return true;
     }
 
     private boolean enqueueGainLife(TriggerMatchContext match, TriggerContext ctx, int amount) {
@@ -1090,8 +1108,17 @@ public class EnterTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
         UUID targetPlayerId = pe.enteringControllerId();
-        enqueue(match, new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER), targetPlayerId,
-                pe.perEffectTriggerCount());
+        DealDamageToPlayersEffect resolvedDamage = damageEffect.recipient() == DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER
+                ? damageEffect : new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER);
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
+                    match.controllerId(), cardName + "'s ability", new ArrayList<>(List.of(resolvedDamage)),
+                    targetPlayerId, match.permanent().getId());
+            entry.setTriggeringPermanentId(findEnteringPermanentId(match, pe.enteringCard()));
+            entry.setTriggeringPermanentControllerId(targetPlayerId);
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
@@ -1124,7 +1151,16 @@ public class EnterTriggerCollectorService {
     private boolean handleAnyCreatureSacrifice(TriggerMatchContext match,
             SacrificePermanentsEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        enqueue(match, effect, pe.enteringControllerId(), pe.perEffectTriggerCount());
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(), match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)), pe.enteringControllerId(), match.permanent().getId());
+            entry.setTriggeringPermanentId(findEnteringPermanentId(match, pe.enteringCard()));
+            entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
+            entry.setNonTargeting(true);
+            match.gameData().enqueueTrigger(entry);
+        }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (controller sacrifices)",
                 match.gameData().id, match.permanent().getCard().getName(), pe.enteringCard().getName());
@@ -1797,13 +1833,17 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * Resolves an Aura attachment to the creature that caused the opponent-creature enter trigger.
-     * Optional markers queue the existing may-attach flow; mandatory markers queue a non-targeting
-     * stack entry with the entering permanent already identified.
+     * Resolves an Aura attachment to the creature that caused the enter trigger. Optional markers
+     * queue the existing may-attach flow; mandatory markers queue a non-targeting stack entry with
+     * the entering permanent already identified.
      */
-    @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleOpponentCreatureAttachAura(TriggerMatchContext match,
+    @CollectsTriggers({
+            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleCreatureAttachAura(TriggerMatchContext match,
             AttachSourceAuraToEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();

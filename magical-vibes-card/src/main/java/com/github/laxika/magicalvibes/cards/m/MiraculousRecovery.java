@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VIS", collectorNumber = "13")
+@CardRegistration(set = "DDL", collectorNumber = "30")
 public class MiraculousRecovery extends Card {
 
     public MiraculousRecovery() {

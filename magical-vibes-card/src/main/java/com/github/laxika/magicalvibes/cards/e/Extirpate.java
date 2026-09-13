@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "71")
+@CardRegistration(set = "MMA", collectorNumber = "84")
 public class Extirpate extends Card {
 
     public Extirpate() {

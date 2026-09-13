@@ -271,6 +271,12 @@ public class PlayerInputService {
         beginTargetedCardChoice(gameData, playerId, validIndices, prompt, targetId, null);
     }
 
+    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                        String prompt, UUID targetId, boolean declinable) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
+                playerId, new ArrayList<>(validIndices), targetId, prompt, null, null, declinable));
+    }
+
     /**
      * Variant where declining the choice exiles the given permanent (e.g. Evershrike: "You may put an
      * Aura ... onto the battlefield attached to it. If you don't, exile this creature.").
@@ -829,6 +835,42 @@ public class PlayerInputService {
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose an as-enters mode for {}", gameData.id, playerName,
                 sourceCard.getName());
+    }
+
+    /** Begins the next active-player-ordered choice for an entering permanent. */
+    public boolean beginChooseModeOnEnterChoiceForEachPlayer(GameData gameData, Card sourceCard,
+            UUID sourcePermanentId, List<String> modes) {
+        Permanent source = findPermanentById(gameData, sourcePermanentId);
+        if (source == null) return false;
+
+        UUID nextPlayer = apnapPlayerOrder(gameData).stream()
+                .filter(gameData.playerIds::contains)
+                .filter(playerId -> !source.getChosenModeByPlayer().containsKey(playerId))
+                .findFirst()
+                .orElse(null);
+        if (nextPlayer == null) return false;
+
+        beginChooseModeOnEnterChoice(gameData, nextPlayer, sourceCard, sourcePermanentId, modes);
+        return true;
+    }
+
+    private static Permanent findPermanentById(GameData gameData, UUID permanentId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(permanentId)) return permanent;
+            }
+        }
+        return null;
+    }
+
+    private static List<UUID> apnapPlayerOrder(GameData gameData) {
+        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = ordered.indexOf(gameData.activePlayerId);
+        if (activeIndex <= 0) return ordered;
+        List<UUID> rotated = new ArrayList<>(ordered.size());
+        rotated.addAll(ordered.subList(activeIndex, ordered.size()));
+        rotated.addAll(ordered.subList(0, activeIndex));
+        return rotated;
     }
 
     public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
@@ -1440,6 +1482,18 @@ public class PlayerInputService {
                 playerId, null, null, context, options,
                 sourceCardName + " — Choose a counter to add another of."));
         log.info("Game {} - Awaiting {} to choose a counter kind for {}", gameData.id, playerId, targetId);
+    }
+
+    /** Invoke the Ancients: choose a keyword counter for one created token. */
+    public void beginCreateTokenCounterChoice(GameData gameData, UUID playerId, Card sourceCard,
+                                              List<UUID> tokenIds, List<CounterType> counterTypes) {
+        ChoiceContext.CreateTokenCounterChoice context = new ChoiceContext.CreateTokenCounterChoice(
+                sourceCard, playerId, tokenIds.getFirst(), tokenIds.subList(1, tokenIds.size()), counterTypes);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCard.getName() + " — Choose a counter type for the token."));
+        log.info("Game {} - Awaiting {} to choose a counter for created token {}",
+                gameData.id, playerId, tokenIds.getFirst());
     }
 
     public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
@@ -2212,6 +2266,13 @@ public class PlayerInputService {
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          UUID targetPlayerId, String cardName, boolean drawForHandExiled,
+                                          UUID sourcePermanentId) {
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, matchingCards.size(), targetPlayerId,
+                cardName, drawForHandExiled, null, null, sourcePermanentId);
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled) {
         beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId,
@@ -2226,7 +2287,18 @@ public class PlayerInputService {
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
-                choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode));
+                choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, null));
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          int maxCount, UUID targetPlayerId, String cardName,
+                                          boolean drawForHandExiled, CreateTokenEffect tokenTemplate,
+                                          String sourceSetCode, UUID sourcePermanentId) {
+        List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
+                choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
@@ -2437,5 +2509,4 @@ public class PlayerInputService {
                 next.description(), next.manaCost()));
     }
 }
-
 

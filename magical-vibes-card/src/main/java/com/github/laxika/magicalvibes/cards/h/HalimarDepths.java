@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "137")
+@CardRegistration(set = "DDM", collectorNumber = "36")
 public class HalimarDepths extends Card {
 
     public HalimarDepths() {

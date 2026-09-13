@@ -26,6 +26,9 @@ public class ChooseColorForSourceEffectHandler implements NormalEffectHandlerBea
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source == null) {
             return;
         }
 

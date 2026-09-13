@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "130")
+@CardRegistration(set = "A25", collectorNumber = "174")
 public class IwamoriOfTheOpenFist extends Card {
 
     public IwamoriOfTheOpenFist() {

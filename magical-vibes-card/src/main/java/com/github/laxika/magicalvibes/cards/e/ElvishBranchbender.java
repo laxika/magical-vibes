@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "204")
+@CardRegistration(set = "DDU", collectorNumber = "6")
 public class ElvishBranchbender extends Card {
 
     public ElvishBranchbender() {

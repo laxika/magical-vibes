@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "192")
+@CardRegistration(set = "MMA", collectorNumber = "192")
 public class MurderousRedcap extends Card {
 
     public MurderousRedcap() {

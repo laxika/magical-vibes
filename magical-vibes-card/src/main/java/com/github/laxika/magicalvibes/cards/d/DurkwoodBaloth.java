@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "193")
+@CardRegistration(set = "MMA", collectorNumber = "142")
+@CardRegistration(set = "IMA", collectorNumber = "160")
 public class DurkwoodBaloth extends Card {
 
     public DurkwoodBaloth() {

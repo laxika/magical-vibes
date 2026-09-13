@@ -17,6 +17,8 @@ import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "90")
 @CardRegistration(set = "DD1", collectorNumber = "34")
+@CardRegistration(set = "VMA", collectorNumber = "156")
+@CardRegistration(set = "EVG", collectorNumber = "34")
 public class Clickslither extends Card {
 
     public Clickslither() {

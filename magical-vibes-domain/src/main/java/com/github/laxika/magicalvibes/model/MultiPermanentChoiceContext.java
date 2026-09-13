@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -23,6 +24,10 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Selects an optional group of player targets without reserving the controller as a decline sentinel. */
     record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
+    /** Selects an optional graveyard-card target while walking an ETB or planar target group. */
+    record EtbGraveyardCardTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
     record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
@@ -439,6 +444,19 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Each player chooses a creature; all chosen creatures are then sacrificed together. */
+    record EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            CreateTokenEffect tokenTemplate,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /**
      * "Choose a matching permanent to keep, the rest are destroyed" (destroy-rest flow).
      * {@code remainingChoosers} and {@code protectedIds} advance across re-begins exactly as
@@ -736,7 +754,7 @@ public sealed interface MultiPermanentChoiceContext {
      * creature's ETB triggers proceed. Carries the entry context needed to resume
      * {@code processCreatureETBEffects} for the discard trigger.
      */
-    record DevourSacrifice(UUID enteringPermanentId, int multiplier, UUID controllerId, Card card,
+    record DevourSacrifice(UUID enteringPermanentId, DynamicAmount multiplier, UUID controllerId, Card card,
                            UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {
     }
@@ -957,6 +975,18 @@ public sealed interface MultiPermanentChoiceContext {
         public EachPlayerChoosesNonlandPermanentThenReturnRestChoice {
             playerIds = java.util.List.copyOf(playerIds);
             keptIds = java.util.List.copyOf(keptIds);
+        }
+    }
+
+    /** Will of the Council: the current player voted for a nonland permanent. */
+    record WillOfTheCouncilChoice(UUID effectControllerId,
+                                  java.util.List<UUID> remainingPlayerIds,
+                                  java.util.Map<UUID, Integer> votes,
+                                  String sourceName)
+            implements MultiPermanentChoiceContext {
+        public WillOfTheCouncilChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            votes = java.util.Map.copyOf(votes);
         }
     }
 

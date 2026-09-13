@@ -2,17 +2,17 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.CharcoalDiamond;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FallenAngel.class, GrizzlyBears.class, CharcoalDiamond.class})
+@CardUsed({CharcoalDiamond.class, FallenAngel.class, GrizzlyBears.class, HowlingMine.class})
 class FallenAngelTest extends BaseCardTest {
 
     @Test
@@ -31,8 +31,7 @@ class FallenAngelTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(angel.getId()));
+        harness.assertOnBattlefield(player1, "Fallen Angel");
         assertThat(angel.getPowerModifier()).isEqualTo(2);
         assertThat(angel.getToughnessModifier()).isEqualTo(1);
     }
@@ -65,10 +64,8 @@ class FallenAngelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(angel.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(angel.getCard().getId()));
+        harness.assertNotOnBattlefield(player1, "Fallen Angel");
+        harness.assertInGraveyard(player1, "Fallen Angel");
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -124,6 +121,28 @@ class FallenAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Charcoal Diamond");
+        assertThat(angel.getPowerModifier()).isEqualTo(2);
+        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice only a creature, not another permanent")
+    void cannotSacrificeNoncreaturePermanentUpstreamReview() {
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, mine.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Howling Mine");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(angel.getPowerModifier()).isEqualTo(2);
         assertThat(angel.getToughnessModifier()).isEqualTo(1);
     }

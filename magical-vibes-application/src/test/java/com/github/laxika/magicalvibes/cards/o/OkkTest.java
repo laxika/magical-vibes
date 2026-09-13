@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -8,15 +9,13 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Okk.class, FireElemental.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({AvatarOfMight.class, FireElemental.class, GrizzlyBears.class, HillGiant.class, Okk.class})
 class OkkTest extends BaseCardTest {
 
     // --- Attacking ---
@@ -65,6 +64,17 @@ class OkkTest extends BaseCardTest {
     void cannotAttackWithEqualPowerAlly() {
         addCreatureReady(player1, new Okk());
         addCreatureReady(player1, new Okk());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("greater power also attacks");
+    }
+
+    @Test
+    @DisplayName("Okk can't attack when the other attacker has equal power")
+    void cannotAttackWithEqualPowerAllyUpstreamReview() {
+        addCreatureReady(player1, new Okk());
+        addCreatureReady(player1, new Okk()); // 4/4 is not greater than 4/4
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
                 .isInstanceOf(IllegalStateException.class)
@@ -131,6 +141,20 @@ class OkkTest extends BaseCardTest {
         addReadyAttacker(player1);
         addCreatureReady(player2, new Okk());
         addCreatureReady(player2, new Okk());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("greater power also blocks");
+    }
+
+    @Test
+    @DisplayName("Okk can't block when the other blocker has equal power")
+    void cannotBlockWithEqualPowerAllyUpstreamReview() {
+        addReadyAttacker(player1);
+        addCreatureReady(player2, new Okk());
+        addCreatureReady(player2, new Okk()); // 4/4 is not greater than 4/4
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,

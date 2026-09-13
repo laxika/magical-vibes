@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "58")
+@CardRegistration(set = "DDM", collectorNumber = "7")
 public class DreamStalker extends Card {
 
     public DreamStalker() {

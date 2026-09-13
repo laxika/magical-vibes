@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "188")
 @CardRegistration(set = "BFZ", collectorNumber = "196")
+@CardRegistration(set = "DDP", collectorNumber = "24")
 public class TerritorialBaloth extends Card {
 
     public TerritorialBaloth() {

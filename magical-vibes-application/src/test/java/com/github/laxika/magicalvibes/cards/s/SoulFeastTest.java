@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulFeast.class, GrizzlyBears.class})
+@CardUsed({GrizzlyBears.class, MetathranSoldier.class, SoulFeast.class})
 class SoulFeastTest extends BaseCardTest {
 
     
@@ -32,6 +31,20 @@ class SoulFeastTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard()).isInstanceOf(SoulFeast.class);
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Casting Soul Feast targeting a player puts it on the stack")
+    void castingTargetingPlayerPutsOnStackUpstreamReview() {
+        harness.setHand(player1, List.of(new SoulFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -77,6 +90,18 @@ class SoulFeastTest extends BaseCardTest {
     @DisplayName("Soul Feast cannot target a creature")
     void cannotTargetCreature() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new SoulFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Soul Feast cannot target a creature")
+    void cannotTargetCreatureUpstreamReview() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());
 
         harness.setHand(player1, List.of(new SoulFeast()));
         harness.addMana(player1, ManaColor.BLACK, 5);

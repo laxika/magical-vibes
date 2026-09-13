@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.g.GaeasBlessing;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NaturesResurgence.class, RedwoodTreefolk.class, Fog.class})
+@CardUsed({Fog.class, GaeasBlessing.class, NaturesResurgence.class, RedwoodTreefolk.class})
 class NaturesResurgenceTest extends BaseCardTest {
 
     @Test

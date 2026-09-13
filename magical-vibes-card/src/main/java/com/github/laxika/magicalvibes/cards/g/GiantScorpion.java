@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "94")
 @CardRegistration(set = "ZEN", collectorNumber = "90")
+@CardRegistration(set = "DDR", collectorNumber = "50")
 public class GiantScorpion extends Card {
 }

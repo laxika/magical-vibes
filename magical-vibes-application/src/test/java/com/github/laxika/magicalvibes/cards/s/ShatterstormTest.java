@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,8 +14,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Shatterstorm.class, HowlingMine.class, Ornithopter.class, GrizzlyBears.class})
@@ -25,10 +22,7 @@ class ShatterstormTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Shatterstorm puts it on the stack as a sorcery")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Shatterstorm()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -41,10 +35,8 @@ class ShatterstormTest extends BaseCardTest {
     void destroysArtifactsFromBothPlayers() {
         harness.addToBattlefield(player1, new HowlingMine());
         harness.addToBattlefield(player2, new Ornithopter());
-        harness.setHand(player1, List.of(new Shatterstorm()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Howling Mine");
         harness.assertNotOnBattlefield(player2, "Ornithopter");
@@ -56,10 +48,8 @@ class ShatterstormTest extends BaseCardTest {
     @DisplayName("Shatterstorm does not destroy nonartifact permanents")
     void doesNotDestroyNonArtifacts() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Shatterstorm()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -71,13 +61,12 @@ class ShatterstormTest extends BaseCardTest {
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
         ornithopter.setRegenerationShield(2);
 
-        harness.setHand(player2, List.of(new Shatterstorm()));
-        harness.addMana(player2, ManaColor.RED, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new Shatterstorm(), "{2}{R}{R}");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Ornithopter");
@@ -88,10 +77,8 @@ class ShatterstormTest extends BaseCardTest {
     void indestructibleArtifactsSurvive() {
         Permanent ornithopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         ornithopter.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
-        harness.setHand(player1, List.of(new Shatterstorm()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ornithopter");
     }

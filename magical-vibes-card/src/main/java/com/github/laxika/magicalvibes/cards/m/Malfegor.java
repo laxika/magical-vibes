@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "117")
+@CardRegistration(set = "IMA", collectorNumber = "205")
 public class Malfegor extends Card {
 
     public Malfegor() {

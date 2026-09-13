@@ -17,6 +17,7 @@ import java.util.List;
 public class VeiledSerpent extends Card {
 
     public VeiledSerpent() {
+        addCycling("{2}");
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
                 null,
                 List.of(new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT)),

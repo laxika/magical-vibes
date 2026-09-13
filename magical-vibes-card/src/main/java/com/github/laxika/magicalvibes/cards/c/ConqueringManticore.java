@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "139")
+@CardRegistration(set = "DDL", collectorNumber = "55")
 public class ConqueringManticore extends Card {
 
     public ConqueringManticore() {

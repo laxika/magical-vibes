@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "HML", collectorNumber = "68")
+@CardRegistration(set = "ME3", collectorNumber = "87")
 public class AnabaSpiritCrafter extends Card {
 
     public AnabaSpiritCrafter() {

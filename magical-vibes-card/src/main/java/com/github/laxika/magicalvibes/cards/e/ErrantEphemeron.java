@@ -9,6 +9,9 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "60")
 @CardRegistration(set = "DD2", collectorNumber = "20")
+@CardRegistration(set = "JVC", collectorNumber = "20")
+@CardRegistration(set = "MMA", collectorNumber = "41")
+@CardRegistration(set = "DDM", collectorNumber = "20")
 public class ErrantEphemeron extends Card {
 
     public ErrantEphemeron() {

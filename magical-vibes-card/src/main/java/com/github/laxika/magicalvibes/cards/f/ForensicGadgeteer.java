@@ -27,6 +27,6 @@ public class ForensicGadgeteer extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentControlledBySourceControllerPredicate())),
-                1));
+                1, true, true));
     }
 }

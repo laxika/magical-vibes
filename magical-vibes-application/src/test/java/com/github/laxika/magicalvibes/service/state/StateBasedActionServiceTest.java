@@ -929,6 +929,17 @@ class StateBasedActionServiceTest {
     class DrawFromEmptyLibrary {
 
         @Test
+        void emptyLibraryLossRemainsPendingUntilResolutionCompletes() {
+            gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
+            gd.deferPlayerLossCheck = true;
+
+            sut.performStateBasedActions(gd);
+
+            assertThat(gd.playersAttemptedDrawFromEmptyLibrary).containsExactly(player1Id);
+            verify(gameOutcomeService, never()).resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY);
+        }
+
+        @Test
         @DisplayName("Player who drew from empty library loses the game")
         void playerLosesWhenDrawingFromEmptyLibrary() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);

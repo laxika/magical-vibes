@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 @CardRegistration(set = "ISD", collectorNumber = "28")
 @CardRegistration(set = "INR", collectorNumber = "37")
 @CardRegistration(set = "INR", collectorNumber = "347")
+@CardRegistration(set = "EMA", collectorNumber = "25")
 public class RallyThePeasants extends Card {
 
     public RallyThePeasants() {

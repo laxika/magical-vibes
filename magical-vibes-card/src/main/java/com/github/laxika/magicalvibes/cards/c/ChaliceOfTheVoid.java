@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEquals
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "150")
+@CardRegistration(set = "MMA", collectorNumber = "203")
+@CardRegistration(set = "MPS", collectorNumber = "33")
+@CardRegistration(set = "A25", collectorNumber = "222")
 public class ChaliceOfTheVoid extends Card {
 
     public ChaliceOfTheVoid() {

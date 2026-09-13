@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Impulse;
 import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,15 +10,13 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TeferisPuzzleBox.class, JamuraanLion.class, Impulse.class})
+@CardUsed({GrizzlyBears.class, Impulse.class, JamuraanLion.class, TeferisPuzzleBox.class})
 class TeferisPuzzleBoxTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -26,21 +25,13 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
         harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
-    private List<Card> impulses(int count) {
-        List<Card> cards = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            cards.add(new Impulse());
-        }
-        return cards;
-    }
-
     @Test
     @DisplayName("Active player cycles their hand into the bottom of their library and draws that many")
     void activePlayerCyclesHand() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card handMarker = new JamuraanLion();
-        List<Card> library = impulses(5);
+        Card handMarker = new GrizzlyBears();
+        List<Card> library = libraryCards(5);
         harness.setHand(player1, List.of(handMarker));
         harness.setLibrary(player1, library); // enough to survive the normal draw + re-draw
 
@@ -59,8 +50,8 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void triggersOnOpponentDrawStep() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card handMarker = new JamuraanLion();
-        List<Card> library = impulses(5);
+        Card handMarker = new GrizzlyBears();
+        List<Card> library = libraryCards(5);
         harness.setHand(player2, List.of(handMarker));
         harness.setLibrary(player2, library);
 
@@ -79,9 +70,9 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void handSizeIsPreserved() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card firstHandCard = new JamuraanLion();
-        Card secondHandCard = new JamuraanLion();
-        List<Card> library = impulses(6);
+        Card firstHandCard = new GrizzlyBears();
+        Card secondHandCard = new GrizzlyBears();
+        List<Card> library = libraryCards(6);
         harness.setHand(player1, List.of(firstHandCard, secondHandCard));
         harness.setLibrary(player1, library);
 
@@ -117,10 +108,10 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void choosesOrderForCardsPutOnBottom() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card firstHandCard = new JamuraanLion();
+        Card firstHandCard = new GrizzlyBears();
         Card secondHandCard = new TeferisPuzzleBox();
-        Card normalDraw = new Impulse();
-        Card remainingLibraryCard = new Impulse();
+        Card normalDraw = new GrizzlyBears();
+        Card remainingLibraryCard = new GrizzlyBears();
         harness.setHand(player1, List.of(firstHandCard, secondHandCard));
         harness.setLibrary(player1, List.of(normalDraw, remainingLibraryCard));
 
@@ -170,5 +161,57 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player,
                 new InteractionAnswer.CardOrder(java.util.stream.IntStream.range(0, reorder.cards().size())
                         .boxed().toList()));
+    }
+
+    private List<Card> libraryCards(int count) {
+        List<Card> cards = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            cards.add(new GrizzlyBears());
+        }
+        return cards;
+    }
+
+    @Test
+    @DisplayName("Each Puzzle Box creates an independent draw-step trigger")
+    void eachPuzzleBoxTriggersIndependently() {
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+
+        Card handMarker = new GrizzlyBears();
+        List<Card> library = libraryCards(5);
+        harness.setHand(player1, List.of(handMarker));
+        harness.setLibrary(player1, library);
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        chooseCurrentOrder(player1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
+
+        harness.passBothPriorities();
+        chooseCurrentOrder(player1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(3), library.get(4));
+    }
+
+    @Test
+    @DisplayName("A draw-step trigger still resolves after the Puzzle Box leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        var puzzleBox = harness.addToBattlefieldAndReturn(player1, new TeferisPuzzleBox());
+        Card handMarker = new GrizzlyBears();
+        List<Card> library = libraryCards(5);
+        harness.setHand(player1, List.of(handMarker));
+        harness.setLibrary(player1, library);
+
+        advanceToDraw(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, puzzleBox));
+        harness.passBothPriorities();
+        chooseCurrentOrder(player1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "131")
+@CardRegistration(set = "ME3", collectorNumber = "112")
 public class ZodiacDragon extends Card {
 
     public ZodiacDragon() {

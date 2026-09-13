@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "45")
+@CardRegistration(set = "MM2", collectorNumber = "58")
 public class SteadyProgress extends Card {
 
     public SteadyProgress() {

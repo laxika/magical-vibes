@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "24")
+@CardRegistration(set = "MMA", collectorNumber = "19")
 public class IvoryGiant extends Card {
 
     public IvoryGiant() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "38")
+@CardRegistration(set = "DDM", collectorNumber = "8")
 public class KrovikanMist extends Card {
 
     public KrovikanMist() {

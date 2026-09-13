@@ -4,23 +4,25 @@ import com.github.laxika.magicalvibes.cards.c.Crusade;
 import com.github.laxika.magicalvibes.cards.f.FleetwheelCruiser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.cards.v.Vitalize;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Meekstone.class, GrizzlyBears.class, HillGiant.class, Crusade.class, WhiteKnight.class})
+@CardUsed({Crusade.class, GrizzlyBears.class, HillGiant.class, LongbowArcher.class, Meekstone.class, TrainedArmodon.class, Vitalize.class, WhiteKnight.class})
 class MeekstoneTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapped creature with power 3+ does not untap while Meekstone is out")
     void power3CreatureStaysTapped() {
         harness.addToBattlefield(player1, new Meekstone());
-        Permanent giant = addCreatureReady(player1, new HillGiant()); // 3/3
+        Permanent giant = addCreatureReady(player1, new TrainedArmodon()); // 3/3
         giant.tap();
 
         advanceToUpkeep(player1);
@@ -57,7 +59,7 @@ class MeekstoneTest extends BaseCardTest {
     @DisplayName("Affects opponents' creatures during their untap step")
     void affectsOpponentCreatures() {
         harness.addToBattlefield(player1, new Meekstone());
-        Permanent opponentGiant = addCreatureReady(player2, new HillGiant()); // 3/3
+        Permanent opponentGiant = addCreatureReady(player2, new TrainedArmodon()); // 3/3
         opponentGiant.tap();
 
         advanceToUpkeep(player2);
@@ -70,7 +72,7 @@ class MeekstoneTest extends BaseCardTest {
     void remainsEffectiveWhileTapped() {
         Permanent meekstone = harness.addToBattlefieldAndReturn(player1, new Meekstone());
         meekstone.tap();
-        Permanent giant = addCreatureReady(player1, new HillGiant()); // 3/3
+        Permanent giant = addCreatureReady(player1, new TrainedArmodon()); // 3/3
         giant.tap();
 
         advanceToUpkeep(player1);
@@ -83,7 +85,7 @@ class MeekstoneTest extends BaseCardTest {
     void affectsCreatureWithPowerBoost() {
         harness.addToBattlefield(player1, new Meekstone());
         harness.addToBattlefield(player1, new Crusade());
-        Permanent knight = addCreatureReady(player1, new WhiteKnight()); // 2/2, 3/3 with Crusade
+        Permanent knight = addCreatureReady(player1, new LongbowArcher()); // 2/2, 3/3 with Crusade
         knight.tap();
 
         advanceToUpkeep(player1);
@@ -95,12 +97,25 @@ class MeekstoneTest extends BaseCardTest {
     @DisplayName("Once Meekstone leaves, power 3+ creatures untap again")
     void untapsAfterMeekstoneLeaves() {
         Permanent meekstone = harness.addToBattlefieldAndReturn(player1, new Meekstone());
-        Permanent giant = addCreatureReady(player1, new HillGiant()); // 3/3
+        Permanent giant = addCreatureReady(player1, new TrainedArmodon()); // 3/3
         giant.tap();
 
         gd.playerBattlefields.get(player1.getId()).remove(meekstone);
 
         advanceToUpkeep(player1);
+
+        assertThat(giant.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A power 3+ creature can be untapped outside the untap step")
+    void canBeUntappedOutsideUntapStep() {
+        harness.addToBattlefield(player1, new Meekstone());
+        Permanent giant = addCreatureReady(player1, new TrainedArmodon());
+        giant.tap();
+
+        harness.castFromHand(player1, new Vitalize(), "{G}");
+        harness.passBothPriorities();
 
         assertThat(giant.isTapped()).isFalse();
     }

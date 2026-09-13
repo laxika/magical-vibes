@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "172")
+@CardRegistration(set = "DDN", collectorNumber = "28")
 public class OrcishCannonade extends Card {
 
     public OrcishCannonade() {

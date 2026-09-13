@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
@@ -12,7 +13,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Boil.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class, VolcanicIsland.class})
+@CardUsed({Boil.class, GrizzlyBears.class, Island.class, LowlandGiant.class, Mountain.class, Plains.class, VolcanicIsland.class})
 class BoilTest extends BaseCardTest {
 
     @Test
@@ -20,8 +21,7 @@ class BoilTest extends BaseCardTest {
     void destroysAllIslands() {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Island());
-        harness.castFromHand(player1, new Boil(), "{3}{R}");
-        harness.passBothPriorities();
+        castBoilAndResolve();
 
         harness.assertNotOnBattlefield(player1, "Island");
         harness.assertNotOnBattlefield(player2, "Island");
@@ -76,5 +76,22 @@ class BoilTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Island");
         harness.assertNotInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Indestructible Islands survive Boil")
+    void indestructibleIslandSurvives() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        castBoilAndResolve();
+
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertNotInGraveyard(player2, "Island");
+    }
+
+    private void castBoilAndResolve() {
+        harness.castFromHand(player1, new Boil(), "{3}{R}");
+        harness.passBothPriorities();
     }
 }

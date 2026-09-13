@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "71")
+@CardRegistration(set = "E02", collectorNumber = "20")
 public class NecropolisRegent extends Card {
 
     public NecropolisRegent() {

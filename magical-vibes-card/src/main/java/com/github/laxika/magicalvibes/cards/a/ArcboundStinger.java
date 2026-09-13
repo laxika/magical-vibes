@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "103")
+@CardRegistration(set = "MMA", collectorNumber = "199")
 public class ArcboundStinger extends Card {
 
     public ArcboundStinger() {

@@ -28,6 +28,19 @@ class SpittingDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate the non-tap ability while summoning sick")
+    void canActivateWithoutHasteOrTapCost() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new SpittingDrake());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(drake.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot activate ability more than once each turn")
     void cannotActivateMoreThanOncePerTurn() {
         addCreatureReady(player1, new SpittingDrake());
@@ -88,5 +101,21 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(drake.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Spitting Drake can activate its ability once each turn")
+    void activationLimitIsPerPermanent() {
+        Permanent firstDrake = addCreatureReady(player1, new SpittingDrake());
+        Permanent secondDrake = addCreatureReady(player1, new SpittingDrake());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstDrake.getPowerModifier()).isEqualTo(1);
+        assertThat(secondDrake.getPowerModifier()).isEqualTo(1);
     }
 }

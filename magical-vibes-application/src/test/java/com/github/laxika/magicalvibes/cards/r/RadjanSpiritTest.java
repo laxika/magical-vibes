@@ -48,7 +48,22 @@ class RadjanSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target creature leaves before resolution")
+    void fizzlesWhenTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new RadjanSpirit());
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
+
+        harness.activateAbility(player1, 0, null, elemental.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, elemental));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(elemental.getCard());
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
     }
 
     @Test

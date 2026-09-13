@@ -60,6 +60,20 @@ class WallOfFireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving the ability does not boost another Wall of Fire")
+    void resolvingAbilityOnlyBoostsSource() {
+        Permanent sourceWall = addCreatureReady(player1, new WallOfFire());
+        Permanent otherWall = addCreatureReady(player1, new WallOfFire());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sourceWall.getEffectivePower()).isEqualTo(1);
+        assertThat(otherWall.getEffectivePower()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         Permanent wall = addCreatureReady(player1, new WallOfFire());

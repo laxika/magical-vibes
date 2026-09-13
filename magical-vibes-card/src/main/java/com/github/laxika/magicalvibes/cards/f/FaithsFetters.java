@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M21", collectorNumber = "17")
 @CardRegistration(set = "RAV", collectorNumber = "16")
 @CardRegistration(set = "DDC", collectorNumber = "20")
+@CardRegistration(set = "DVD", collectorNumber = "20")
+@CardRegistration(set = "EMA", collectorNumber = "10")
 public class FaithsFetters extends Card {
 
     public FaithsFetters() {

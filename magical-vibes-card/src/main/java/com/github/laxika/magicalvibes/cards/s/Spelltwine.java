@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "68")
+@CardRegistration(set = "DDM", collectorNumber = "34")
 public class Spelltwine extends Card {
 
     public Spelltwine() {

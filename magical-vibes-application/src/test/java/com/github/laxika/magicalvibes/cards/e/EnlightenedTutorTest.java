@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnlightenedTutor.class, GrizzlyBears.class, Island.class, Ornithopter.class, Pacifism.class})
+@CardUsed({EnlightenedTutor.class, GrizzlyBears.class, Ornithopter.class, Pacifism.class})
 class EnlightenedTutorTest extends BaseCardTest {
 
     @Test
@@ -73,7 +72,7 @@ class EnlightenedTutorTest extends BaseCardTest {
     @Test
     @DisplayName("No interaction when the library has no artifacts or enchantments")
     void noMatchNoInteraction() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         cast();
         harness.passBothPriorities();
@@ -87,6 +86,6 @@ class EnlightenedTutorTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        harness.setLibrary(player1, List.of(new Ornithopter(), new Pacifism(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new Ornithopter(), new Pacifism(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }

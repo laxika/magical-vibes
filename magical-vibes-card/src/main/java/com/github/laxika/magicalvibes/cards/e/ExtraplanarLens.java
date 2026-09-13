@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MRD", collectorNumber = "169")
+@CardRegistration(set = "MPS", collectorNumber = "38")
 public class ExtraplanarLens extends Card {
 
     public ExtraplanarLens() {

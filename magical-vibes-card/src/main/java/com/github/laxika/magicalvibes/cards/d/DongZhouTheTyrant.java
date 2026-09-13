@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "PTK", collectorNumber = "109")
+@CardRegistration(set = "ME3", collectorNumber = "96")
 public class DongZhouTheTyrant extends Card {
 
     public DongZhouTheTyrant() {

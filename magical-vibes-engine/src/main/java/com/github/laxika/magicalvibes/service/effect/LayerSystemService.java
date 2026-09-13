@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -613,6 +614,7 @@ public class LayerSystemService {
      *     stats/types/keywords and relevant ability-slot counts as insurance for tests that mutate an
      *     unfrozen card in place ({@code TestCards.mutableCard});</li>
      * <li>the floating continuous effects (immutable records — identity suffices);</li>
+     * <li>recorded ownership of permanents that changed control, read by ownership filters;</li>
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
      *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
      *     (cheap insurance — no L4-L6 input reads hands today);</li>
@@ -635,6 +637,8 @@ public class LayerSystemService {
     private static long computeBoardFingerprint(GameData gameData) {
         long h = 0x9E3779B97F4A7C15L;
         h = mix(h, gameData.timestampCounter);
+        h = mix(h, gameData.stolenCreatures.hashCode());
+        h = mix(h, gameData.stolenCreatures.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
         if (gameData.planechase != null) {
@@ -742,6 +746,13 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getSecondChosenSubtype()));
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
+        long chosenModeByPlayerSum = 0;
+        for (Map.Entry<UUID, String> choice : p.getChosenModeByPlayer().entrySet()) {
+            chosenModeByPlayerSum += mix64(choice.getKey().hashCode()
+                    ^ (31L * (choice.getValue() == null ? 0 : choice.getValue().hashCode())));
+        }
+        h = mix(h, chosenModeByPlayerSum);
+        h = mix(h, p.getChosenModeByPlayer().size());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
         h = mix(h, p.getLastChosenExiledCard() == null
                 ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));
@@ -1499,6 +1510,15 @@ public class LayerSystemService {
                             landSubtypeOverride, null, null));
                 }
             }
+            case GrantSubtypesToSelfEffect grant -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                CharacteristicState state = states.get(source.permanent().getId());
+                grant.grantedSubtypes().forEach(state::addSubtype);
+                record(board, instance, source,
+                        new L4Contribution(grant.grantedSubtypes(), false, false));
+            }
             case GrantAllCreatureTypesToOwnCreaturesEffect grant -> {
                 manage(board, instance);
                 List<CardSubtype> allCreatureTypes = new ArrayList<>();
@@ -1562,6 +1582,11 @@ public class LayerSystemService {
             }
             case SetCardTypesEffect set -> {
                 manage(board, instance);
+                if (set.scope() == GrantScope.SELF
+                        && set.duration() == EffectDuration.WHILE_ATTACHED
+                        && (instance.source() == null || !instance.source().permanent().isAttached())) {
+                    return;
+                }
                 for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(set.cardTypes());
                     record(board, instance, target, new L4Contribution(

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSame
 
 @CardRegistration(set = "M13", collectorNumber = "194")
 @CardRegistration(set = "ORI", collectorNumber = "200")
+@CardRegistration(set = "A25", collectorNumber = "190")
 public class TimberpackWolf extends Card {
 
     public TimberpackWolf() {

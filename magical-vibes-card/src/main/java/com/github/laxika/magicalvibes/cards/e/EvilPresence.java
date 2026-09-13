@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "4ED", collectorNumber = "136")
 @CardRegistration(set = "SUM", collectorNumber = "110")
 @CardRegistration(set = "3ED", collectorNumber = "110")
+@CardRegistration(set = "ME3", collectorNumber = "64")
 public class EvilPresence extends Card {
 
     public EvilPresence() {

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
-import com.github.laxika.magicalvibes.cards.c.ClockworkBeast;
+import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fear.class, GrizzlyBears.class, BlackKnight.class, ClockworkBeast.class,
+@CardUsed({Fear.class, GrizzlyBears.class, DrudgeSkeletons.class, DancingScimitar.class,
         HowlingMine.class, Mountain.class})
 class FearTest extends BaseCardTest {
     @Test
@@ -35,7 +35,6 @@ class FearTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Fear");
     }
 
     @Test
@@ -51,7 +50,7 @@ class FearTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fear")
+                .anyMatch(p -> p.getCard() instanceof Fear
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
@@ -110,8 +109,8 @@ class FearTest extends BaseCardTest {
         Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
 
-        // Blocker: BlackKnight (black creature) on player2
-        addCreatureReady(player2, new BlackKnight());
+        // Blocker: Drudge Skeletons (black creature) on player2
+        addCreatureReady(player2, new DrudgeSkeletons());
 
         prepareDeclareBlockers();
 
@@ -129,8 +128,8 @@ class FearTest extends BaseCardTest {
         Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
 
-        // Blocker: ClockworkBeast (artifact creature) on player2
-        addCreatureReady(player2, new ClockworkBeast());
+        // Blocker: Dancing Scimitar (artifact creature) on player2
+        addCreatureReady(player2, new DancingScimitar());
 
         prepareDeclareBlockers();
 

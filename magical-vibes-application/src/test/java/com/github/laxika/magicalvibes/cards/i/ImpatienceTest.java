@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Impatience.class, GrizzlyBears.class})
+@CardUsed({GrizzlyBears.class, Impatience.class})
 class ImpatienceTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
@@ -74,6 +75,24 @@ class ImpatienceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No damage if the end-step player casts a spell before the trigger resolves")
+    void noDamageWhenSpellCastAfterTriggerUpstreamReview() {
+        harness.addToBattlefield(player1, new Impatience());
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        // A spell cast after the intervening-if trigger is put on the stack still counts as cast.
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Each player's end step can trigger Impatience")
     void triggersDuringOpponentEndStep() {
         harness.addToBattlefield(player1, new Impatience());
@@ -85,4 +104,12 @@ class ImpatienceTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
     }
+
+    private void advanceToEndStepTrigger(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        harness.passBothPriorities(); // resolve trigger
+    }
+
 }

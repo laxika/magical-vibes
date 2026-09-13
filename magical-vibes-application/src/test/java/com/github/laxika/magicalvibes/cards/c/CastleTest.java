@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -31,6 +32,17 @@ class CastleTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    void buffsItselfWhenItBecomesACreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new Castle());
+
+        assertThat(gqs.isCreature(gd, castle)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, castle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, castle)).isEqualTo(6);
     }
 
     @Test

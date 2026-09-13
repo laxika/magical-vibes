@@ -23,4 +23,9 @@ public interface SpellCastingAbilityGrantingEffect extends CardEffect {
     default boolean appliesToSourceZone(Zone sourceZone) {
         return sourceZone() == null || sourceZone() == sourceZone;
     }
+
+    /** Whether the grant also applies to spells cast by players other than the source controller. */
+    default boolean appliesToAllPlayers() {
+        return false;
+    }
 }

@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,9 +28,12 @@ class DaringApprenticeTest extends BaseCardTest {
 
         // Player1 activates Daring Apprentice targeting Grizzly Bears
         harness.activateAbility(player1, 0, null, bears.getId());
-        harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
+        // The sacrifice is paid before the ability is put on the stack
+        harness.assertInGraveyard(player1, "Daring Apprentice");
+        harness.assertNotOnBattlefield(player1, "Daring Apprentice");
+
+        harness.passBothPriorities();
 
         // Grizzly Bears is countered (into player2's graveyard, not on battlefield)
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -72,7 +74,6 @@ class DaringApprenticeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
 
         // Remove the target spell before the ability resolves
-        GameData gd = harness.getGameData();
         gd.stack.removeIf(se -> se.getCard().getName().equals("Grizzly Bears"));
 
         harness.passBothPriorities();
@@ -81,6 +82,23 @@ class DaringApprenticeTest extends BaseCardTest {
 
         // Daring Apprentice is still sacrificed (cost was already paid)
         harness.assertInGraveyard(player1, "Daring Apprentice");
+    }
+
+    @Test
+    @DisplayName("Can counter a spell cast by its own controller")
+    void countersOwnSpell() {
+        addCreatureReady(player1, new DaringApprentice());
+
+        Fog fog = new Fog();
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, fog, "{G}");
+
+        harness.activateAbility(player1, 0, null, fog.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fog");
+        harness.assertInGraveyard(player1, "Daring Apprentice");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

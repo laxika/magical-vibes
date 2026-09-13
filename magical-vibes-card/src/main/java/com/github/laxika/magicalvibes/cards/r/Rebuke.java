@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "29")
+@CardRegistration(set = "DDQ", collectorNumber = "17")
 public class Rebuke extends Card {
 
     public Rebuke() {

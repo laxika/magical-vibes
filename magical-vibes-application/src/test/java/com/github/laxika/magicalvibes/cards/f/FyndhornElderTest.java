@@ -25,6 +25,20 @@ class FyndhornElderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An already tapped Fyndhorn Elder cannot tap for mana again")
+    void alreadyTappedCannotTapAgain() {
+        Permanent perm = addCreatureReady(player1, new FyndhornElder());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Summoning-sick Fyndhorn Elder cannot tap for mana")
     void summoningSickCannotTap() {
         Permanent perm = addCreatureReady(player1, new FyndhornElder());

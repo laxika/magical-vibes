@@ -95,11 +95,9 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UnderworldDreams());
         harness.setLife(player2, 20);
 
-        Permanent enchantedCreature = new Permanent(new GrizzlyBears());
-        enchantedCreature.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(enchantedCreature);
+        Permanent enchantedCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent pariah = new Permanent(new Pariah());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariah.setAttachedTo(enchantedCreature.getId());
         gd.playerBattlefields.get(player2.getId()).add(pariah);
 

@@ -40,6 +40,7 @@ class TauntingArbormageTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
 
@@ -77,6 +78,7 @@ class TauntingArbormageTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

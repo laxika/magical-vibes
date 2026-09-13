@@ -1,56 +1,33 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
+@CardUsed({AngelicChorus.class, GiantGrowth.class, GiantSpider.class, GrizzlyBears.class,
+        HuntedWumpus.class, Mobilization.class})
 class AngelicChorusTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Angelic Chorus puts it on the stack as an enchantment spell")
     void castingAngelicChorusPutsItOnStack() {
-        harness.setHand(player1, List.of(new AngelicChorus()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castEnchantment(player1, 0);
-
-        GameData gd = harness.getGameData();
+        harness.castFromHand(player1, new AngelicChorus(), "{3}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Angelic Chorus");
-        assertThat(entry.getControllerId()).isEqualTo(player1.getId());
-
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
     }
@@ -58,105 +35,57 @@ class AngelicChorusTest extends BaseCardTest {
     @Test
     @DisplayName("Angelic Chorus resolves onto the battlefield")
     void angelicChorusResolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new AngelicChorus()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AngelicChorus(), "{3}{W}{W}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Angelic Chorus");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     @Test
     @DisplayName("Creature entering triggers Angelic Chorus life gain ability on the stack")
     void creatureEnteringTriggersLifeGainAbility() {
         harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell → Angelic Chorus trigger goes on stack
         harness.passBothPriorities();
+        harness.assertLife(player1, 20);
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.stack).hasSize(1);
-        StackEntry trigger = gd.stack.getFirst();
-        assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Angelic Chorus");
-        assertThat(trigger.getEffectsToResolve()).hasSize(1);
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(2));
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
     }
 
     @Test
     @DisplayName("Angelic Chorus resolves and increases life total by creature's toughness")
     void angelicChorusLifeGainResolvesCorrectly() {
         harness.addToBattlefield(player1, new AngelicChorus());
-
-        // Cast Grizzly Bears (2/2)
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell → triggered ability on stack
-        harness.passBothPriorities();
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        // Started at 20, gained 2 life (Grizzly Bears toughness = 2)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
     }
 
     @Test
     @DisplayName("Life gain equals the entering creature's toughness")
     void lifeGainEqualsCreatureToughness() {
         harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GiantSpider(), "{3}{G}");
+        resolveAllTriggers();
 
-        // Cast Giant Spider (2/4)
-        harness.setHand(player1, List.of(new GiantSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell → triggered ability
-        harness.passBothPriorities();
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-
-        // Started at 20, gained 4 life (Giant Spider toughness = 4)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertLife(player1, 24);
     }
 
     @Test
     @DisplayName("Angelic Chorus does not trigger for opponent's creatures")
     void doesNotTriggerForOpponentCreatures() {
-        // Angelic Chorus on player2's battlefield (not player1's)
         harness.addToBattlefield(player2, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
 
-        // Player1 casts a creature — player2's Angelic Chorus should not trigger
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-
-        // No triggered ability on stack
         assertThat(gd.stack).isEmpty();
-        // Both players' life unchanged
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -164,58 +93,52 @@ class AngelicChorusTest extends BaseCardTest {
     void twoChorusesTriggerSeparately() {
         harness.addToBattlefield(player1, new AngelicChorus());
         harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
 
-        // Cast Grizzly Bears (2/2)
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell → two triggered abilities on stack
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        assertThat(gd.stack).hasSize(2);
-        assertThat(gd.stack).allMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-
-        // Resolve first triggered ability
-        harness.passBothPriorities();
-        // Resolve second triggered ability
-        harness.passBothPriorities();
-
-        // Started at 20, gained 2 + 2 = 4 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertLife(player1, 24);
     }
 
     @Test
-    @DisplayName("Angelic Chorus triggers alongside Hunted Wumpus ETB when Wumpus enters")
+    @DisplayName("Angelic Chorus triggers alongside Hunted Wumpus's enter-the-battlefield ability")
     void triggersAlongsideWumpusEtb() {
         harness.addToBattlefield(player1, new AngelicChorus());
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new HuntedWumpus(), "{3}{G}");
+        resolveAllTriggers();
 
-        // Cast Hunted Wumpus (6/4)
-        harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.assertLife(player1, 26);
+    }
 
-        // Resolve creature spell → Wumpus enters → both ETB and Angelic Chorus trigger
+    @Test
+    @DisplayName("Angelic Chorus triggers for a creature token entering")
+    void triggersForCreatureToken() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.addToBattlefield(player1, new Mobilization());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Angelic Chorus uses the creature's toughness when its trigger resolves")
+    void usesCurrentToughnessWhenTriggerResolves() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
+        Permanent enteringCreature = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, enteringCreature.getId());
 
-        // Stack has both: Wumpus ETB ability and Angelic Chorus trigger
-        assertThat(gd.stack).hasSize(2);
-        assertThat(gd.stack).anyMatch(e ->
-                e.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.stack).anyMatch(e ->
-                e.getCard().getName().equals("Hunted Wumpus"));
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, enteringCreature)).isEqualTo(5);
 
-        // Angelic Chorus trigger should grant 6 life (Wumpus toughness = 6)
-        StackEntry chorusTrigger = gd.stack.stream()
-                .filter(e -> e.getCard().getName().equals("Angelic Chorus"))
-                .findFirst().orElseThrow();
-        assertThat(chorusTrigger.getEffectsToResolve().getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) chorusTrigger.getEffectsToResolve().getFirst()).amount())
-                .isEqualTo(new Fixed(6));
+        harness.passBothPriorities();
+        harness.assertLife(player1, 25);
     }
 }
-

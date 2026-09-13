@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pestilence.class, MerfolkOfThePearlTrident.class, GrizzlyBears.class})
+@CardUsed({Pestilence.class, MerfolkOfThePearlTrident.class, GrizzlyBears.class, DrudgeSkeletons.class})
 class PestilenceTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,52 @@ class PestilenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals damage to creatures controlled by both players")
+    void activatedAbilityDamagesCreaturesControlledByBothPlayers() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Pestilence());
+        harness.addToBattlefield(player1, new MerfolkOfThePearlTrident());
+        harness.addToBattlefield(player2, new MerfolkOfThePearlTrident());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pestilence");
+        harness.assertNotOnBattlefield(player1, "Merfolk of the Pearl Trident");
+        harness.assertNotOnBattlefield(player2, "Merfolk of the Pearl Trident");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Lethal damage can be prevented by regeneration")
+    void lethalDamageCanBePreventedByRegeneration() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Pestilence());
+        Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pestilence");
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertNotInGraveyard(player2, "Drudge Skeletons");
+        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(skeleton.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     @DisplayName("Can be activated more than once without tapping")
     void canBeActivatedMoreThanOnceWithoutTapping() {
         harness.setLife(player1, 20);
@@ -47,8 +95,7 @@ class PestilenceTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Pestilence");
         harness.assertNotOnBattlefield(player2, "Merfolk of the Pearl Trident");

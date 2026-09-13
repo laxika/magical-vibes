@@ -14,6 +14,6 @@ public class DenseFoliage extends Card {
     public DenseFoliage() {
         // Creatures can't be the targets of spells (abilities can still target them).
         addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(TargetingRestrictionEffect.spells(), GrantScope.ALL_CREATURES));
+                new GrantEffectEffect(TargetingRestrictionEffect.spells(), GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

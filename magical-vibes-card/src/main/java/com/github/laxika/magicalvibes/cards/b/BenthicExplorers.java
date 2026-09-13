@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "24a")
 @CardRegistration(set = "ALL", collectorNumber = "24b")
+@CardRegistration(set = "ME3", collectorNumber = "29")
 public class BenthicExplorers extends Card {
 
     public BenthicExplorers() {

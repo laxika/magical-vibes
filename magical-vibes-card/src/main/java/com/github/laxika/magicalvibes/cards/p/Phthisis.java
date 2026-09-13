@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "122")
+@CardRegistration(set = "MMA", collectorNumber = "93")
 public class Phthisis extends Card {
 
     public Phthisis() {

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "107")
+@CardRegistration(set = "PC2", collectorNumber = "110")
+@CardRegistration(set = "PCA", collectorNumber = "110")
+@CardRegistration(set = "MM2", collectorNumber = "214")
 public class FlayerHusk extends Card {
 
     public FlayerHusk() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "201")
+@CardRegistration(set = "DDM", collectorNumber = "2")
 public class Chronomaton extends Card {
 
     public Chronomaton() {

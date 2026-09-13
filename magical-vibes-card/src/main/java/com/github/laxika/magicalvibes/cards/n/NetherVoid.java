@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "113")
+@CardRegistration(set = "ME3", collectorNumber = "73")
 public class NetherVoid extends Card {
 
     public NetherVoid() {

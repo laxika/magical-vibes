@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "278")
+@CardRegistration(set = "MMA", collectorNumber = "228")
 public class VividMarsh extends Card {
 
     public VividMarsh() {

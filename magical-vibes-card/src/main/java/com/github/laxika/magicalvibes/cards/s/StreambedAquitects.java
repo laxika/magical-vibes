@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "91")
+@CardRegistration(set = "DDT", collectorNumber = "18")
 public class StreambedAquitects extends Card {
 
     public StreambedAquitects() {

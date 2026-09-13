@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -11,15 +12,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Earthquake.class, Forest.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({Earthquake.class, Forest.class, GrizzlyBears.class, MesaFalcon.class, SerraAngel.class})
 class EarthquakeTest extends BaseCardTest {
 
     @Test
@@ -71,20 +70,6 @@ class EarthquakeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Earthquake deals X damage to each non-flying creature")
-    void earthquakeDealsXDamageToEachNonFlyingCreature() {
-        var ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        var opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-
-        harness.setHand(player1, List.of(new Earthquake()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.castAndResolveSorcery(player1, 0, 1);
-
-        assertThat(ownBears.getMarkedDamage()).isEqualTo(1);
-        assertThat(opposingBears.getMarkedDamage()).isEqualTo(1);
-    }
-
-    @Test
     @DisplayName("Earthquake does not damage flying creatures")
     void earthquakeDoesNotDamageFlyingCreatures() {
         Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
@@ -95,6 +80,19 @@ class EarthquakeTest extends BaseCardTest {
 
         assertThat(flyingCreature.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Earthquake does not damage flying creatures")
+    void earthquakeDoesNotDamageFlyingCreaturesUpstreamReview() {
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new MesaFalcon());
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        harness.assertOnBattlefield(player2, "Mesa Falcon");
+        assertThat(flyer.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -162,5 +160,19 @@ class EarthquakeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Earthquake damages non-flying creatures controlled by either player")
+    void earthquakeDamagesNonFlyingCreaturesControlledByEitherPlayer() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
     }
 }

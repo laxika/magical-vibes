@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "207")
 @CardRegistration(set = "DD1", collectorNumber = "4")
+@CardRegistration(set = "EVG", collectorNumber = "4")
 public class ElvishHarbinger extends Card {
 
     public ElvishHarbinger() {

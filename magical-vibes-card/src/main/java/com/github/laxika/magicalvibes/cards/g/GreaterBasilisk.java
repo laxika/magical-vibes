@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "180")
 @CardRegistration(set = "M12", collectorNumber = "179")
+@CardRegistration(set = "IMA", collectorNumber = "165")
 public class GreaterBasilisk extends Card {
 }

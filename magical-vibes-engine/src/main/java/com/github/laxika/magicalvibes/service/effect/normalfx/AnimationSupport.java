@@ -259,6 +259,10 @@ public class AnimationSupport {
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
+        if (effect.equals(AnimatePermanentsEffect.crew())) {
+            triggerCollectionService.checkBecomesCrewedTriggers(gameData, self, entry.getControllerId());
+        }
+
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
     }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MinionOfLeshrac;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
@@ -8,15 +10,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HowlFromBeyond.class, WindSpirit.class, ZuranOrb.class, MinionOfLeshrac.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HowlFromBeyond.class, MinionOfLeshrac.class, WindSpirit.class, ZuranOrb.class})
 class HowlFromBeyondTest extends BaseCardTest {
 
     @Test
@@ -57,11 +57,11 @@ class HowlFromBeyondTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new WindSpirit()); // legal creature target so the spell is castable (CR 601.2c)
-        Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new HowlFromBeyond()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, orb.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

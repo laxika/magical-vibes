@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameLogSegment;
@@ -10,16 +12,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AgonizingMemories.class, Abeyance.class, AlabasterDragon.class})
+@CardUsed({Abeyance.class, AgonizingMemories.class, AlabasterDragon.class, GrizzlyBears.class, Peek.class})
 class AgonizingMemoriesTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -327,5 +327,26 @@ class AgonizingMemoriesTest extends BaseCardTest {
                     && cardSegment.card().getId().equals(card1.getId()));
         });
     }
-}
 
+    @Test
+    @DisplayName("Places exactly two selected cards on top in selection order")
+    void placesExactlyTwoCardsOnTopInSelectionOrder() {
+        Card firstHandCard = new GrizzlyBears();
+        Card secondHandCard = new Peek();
+        Card existingLibraryTop = new AgonizingMemories();
+        harness.setHand(player2, List.of(firstHandCard, secondHandCard));
+        harness.setLibrary(player2, List.of(existingLibraryTop));
+
+        harness.setHand(player1, List.of(new AgonizingMemories()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(secondHandCard, firstHandCard, existingLibraryTop);
+    }
+}

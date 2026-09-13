@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CitanulCentaurs.class, Humble.class})
 class CitanulCentaursTest extends BaseCardTest {
 
     @Test
@@ -19,8 +21,9 @@ class CitanulCentaursTest extends BaseCardTest {
     void shroudPreventsTargeting() {
         var centaurs = harness.addToBattlefieldAndReturn(player1, new CitanulCentaurs());
 
-        harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, centaurs.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -59,11 +62,20 @@ class CitanulCentaursTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Citanul Centaurs");
     }
 
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveCentaurs();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Citanul Centaurs");
+    }
+
     private void castAndResolveCentaurs() {
-        harness.setHand(player1, List.of(new CitanulCentaurs()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new CitanulCentaurs(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Citanul Centaurs");

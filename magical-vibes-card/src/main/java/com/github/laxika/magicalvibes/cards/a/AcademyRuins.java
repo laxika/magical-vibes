@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "269")
+@CardRegistration(set = "MMA", collectorNumber = "219")
 public class AcademyRuins extends Card {
 
     public AcademyRuins() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FUT", collectorNumber = "68")
 @CardRegistration(set = "DDD", collectorNumber = "51")
+@CardRegistration(set = "GVL", collectorNumber = "51")
 public class IchorSlick extends Card {
 
     public IchorSlick() {

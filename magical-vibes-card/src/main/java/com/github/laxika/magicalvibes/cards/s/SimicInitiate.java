@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "92")
+@CardRegistration(set = "MM2", collectorNumber = "162")
 public class SimicInitiate extends Card {
 
     public SimicInitiate() {

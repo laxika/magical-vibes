@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "150")
+@CardRegistration(set = "DDK", collectorNumber = "49")
 public class CoalStoker extends Card {
 
     public CoalStoker() {

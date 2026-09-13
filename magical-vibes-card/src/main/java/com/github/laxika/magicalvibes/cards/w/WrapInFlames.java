@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "173")
 @CardRegistration(set = "THB", collectorNumber = "164")
+@CardRegistration(set = "MM2", collectorNumber = "136")
 public class WrapInFlames extends Card {
 
     public WrapInFlames() {

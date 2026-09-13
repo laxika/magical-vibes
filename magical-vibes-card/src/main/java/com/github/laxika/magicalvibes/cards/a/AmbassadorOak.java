@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "113")
+@CardRegistration(set = "DDS", collectorNumber = "42")
+@CardRegistration(set = "A25", collectorNumber = "158")
 public class AmbassadorOak extends Card {
 
     public AmbassadorOak() {

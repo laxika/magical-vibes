@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "185")
 @CardRegistration(set = "FUT", collectorNumber = "130")
+@CardRegistration(set = "DDU", collectorNumber = "18")
 public class LlanowarEmpath extends Card {
 
     public LlanowarEmpath() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "9")
+@CardRegistration(set = "DDQ", collectorNumber = "6")
 public class DearlyDeparted extends Card {
 
     public DearlyDeparted() {

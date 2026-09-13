@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "223")
+@CardRegistration(set = "MM3", collectorNumber = "211")
 public class SunderingGrowth extends Card {
 
     public SunderingGrowth() {

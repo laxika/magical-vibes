@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "124")
+@CardRegistration(set = "VMA", collectorNumber = "114")
 public class DauthiMercenary extends Card {
 
     public DauthiMercenary() {

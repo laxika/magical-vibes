@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VugLizard.class, CoralMerfolk.class, Mountain.class})
 class VugLizardTest extends BaseCardTest {
 
     @Test
@@ -23,19 +24,11 @@ class VugLizardTest extends BaseCardTest {
     void mountainwalkPreventsBlockingWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
-        Permanent attackerPerm = new Permanent(new VugLizard());
-        attackerPerm.setSummoningSick(false);
+        Permanent attackerPerm = addCreatureReady(player1, new VugLizard());
         attackerPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
@@ -43,6 +36,23 @@ class VugLizardTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Mountainwalk allows blocking when defending player controls no Mountain")
+    void mountainwalkAllowsBlockingWithoutDefendingMountain() {
+        Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
+
+        Permanent attackerPerm = addCreatureReady(player1, new VugLizard());
+        attackerPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.getBlockingTargetIds()).containsExactly(attackerPerm.getId());
     }
 
     @Test
@@ -57,6 +67,23 @@ class VugLizardTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Vug Lizard");
+        harness.assertInGraveyard(player1, "Vug Lizard");
+    }
+
+    @Test
+    @DisplayName("Echo waits for Vug Lizard's controller's next upkeep")
+    void echoWaitsForControllersNextUpkeep() {
+        castAndResolveVugLizard();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Vug Lizard");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         harness.assertInGraveyard(player1, "Vug Lizard");
     }
 
@@ -79,9 +106,7 @@ class VugLizardTest extends BaseCardTest {
     }
 
     private void castAndResolveVugLizard() {
-        harness.setHand(player1, List.of(new VugLizard()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new VugLizard(), "{1}{R}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Vug Lizard");

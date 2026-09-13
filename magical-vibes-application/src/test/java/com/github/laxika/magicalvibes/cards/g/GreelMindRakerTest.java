@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GreelMindRaker.class, Forest.class, GrizzlyBears.class, LightningBolt.class,
+        GiantGrowth.class, SerraAngel.class})
 class GreelMindRakerTest extends BaseCardTest {
 
     private Permanent readyGreel() {
@@ -64,6 +67,54 @@ class GreelMindRakerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canTargetController() {
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        readyGreel();
+
+        harness.activateAbility(player1, 0, 1, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without two cards to discard")
+    void cannotActivateWithoutTwoCardsToDiscard() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent greel = readyGreel();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(greel.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discards the target's entire hand when X exceeds its hand size")
+    void xGreaterThanTargetHandDiscardsEntireHand() {
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new SerraAngel()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        readyGreel();
+
+        harness.activateAbility(player1, 0, 3, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
     @Test

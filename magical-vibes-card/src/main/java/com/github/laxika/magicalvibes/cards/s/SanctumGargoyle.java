@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ALA", collectorNumber = "24")
+@CardRegistration(set = "MMA", collectorNumber = "28")
 public class SanctumGargoyle extends Card {
 
     public SanctumGargoyle() {

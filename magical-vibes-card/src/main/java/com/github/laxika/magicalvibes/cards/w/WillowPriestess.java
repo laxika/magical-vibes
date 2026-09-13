@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "100")
+@CardRegistration(set = "ME3", collectorNumber = "138")
 public class WillowPriestess extends Card {
 
     public WillowPriestess() {

@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "131")
+@CardRegistration(set = "W16", collectorNumber = "11")
+@CardRegistration(set = "IMA", collectorNumber = "119")
+@CardRegistration(set = "EMA", collectorNumber = "120")
 public class BorderlandMarauder extends Card {
 
     public BorderlandMarauder() {

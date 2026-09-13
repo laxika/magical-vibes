@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "44")
+@CardRegistration(set = "PC2", collectorNumber = "21")
+@CardRegistration(set = "PCA", collectorNumber = "21")
 public class NinjaOfTheDeepHours extends Card {
 
     public NinjaOfTheDeepHours() {

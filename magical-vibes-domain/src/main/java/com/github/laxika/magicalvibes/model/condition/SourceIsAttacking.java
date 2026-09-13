@@ -4,6 +4,11 @@ package com.github.laxika.magicalvibes.model.condition;
 public record SourceIsAttacking() implements Condition {
 
     @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
+
+    @Override
     public String conditionName() {
         return "source attacking";
     }

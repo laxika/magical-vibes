@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -117,5 +116,27 @@ class GoblinDiggingTeamTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Goblin Digging Team");
         harness.assertNotInGraveyard(player1, "Goblin Digging Team");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the ability resolves")
+    void sacrificesSourceAsCostBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
+
+        int teamIdx = gd.playerBattlefields.get(player1.getId()).indexOf(team);
+        harness.activateAbility(player1, teamIdx, 0, null, wall.getId());
+
+        harness.assertNotOnBattlefield(player1, "Goblin Digging Team");
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
+        harness.assertOnBattlefield(player2, "Wall of Air");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Air");
+        harness.assertInGraveyard(player2, "Wall of Air");
     }
 }

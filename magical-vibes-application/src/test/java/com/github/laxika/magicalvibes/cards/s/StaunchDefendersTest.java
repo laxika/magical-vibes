@@ -4,10 +4,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(StaunchDefenders.class)
+@CardUsed({StaunchDefenders.class})
 class StaunchDefendersTest extends BaseCardTest {
 
     @Test
@@ -45,5 +44,17 @@ class StaunchDefendersTest extends BaseCardTest {
 
         harness.assertLife(player1, 14);
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield puts the life-gain trigger on the stack")
+    void entryTriggersLifeGain() {
+        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Staunch Defenders");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
     }
 }

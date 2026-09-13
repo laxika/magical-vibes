@@ -104,6 +104,17 @@ public class CloneService {
         return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, xValue, landPlay);
     }
 
+    public boolean prepareNinjutsuCloneReplacementEffect(GameData gameData, UUID controllerId, Card card,
+                                                        UUID attackTargetId) {
+        boolean prepared = prepareCloneReplacementEffect(gameData, controllerId, card, null, 0, false);
+        if (prepared) {
+            gameData.cloneOperation.ninjutsuEntry = true;
+            gameData.cloneOperation.ninjutsuAttackTargetId = attackTargetId;
+            gameData.cloneOperation.entersTapped = true;
+        }
+        return prepared;
+    }
+
     private boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                   int xValue, int filterXValue, boolean landPlay) {
         CopyPermanentOnEnterEffect copyEffect = findCopyEffect(gameData, controllerId, card);
@@ -373,6 +384,8 @@ public class CloneService {
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
         boolean entersTapped = gameData.cloneOperation.entersTapped;
+        boolean ninjutsuEntry = gameData.cloneOperation.ninjutsuEntry;
+        UUID ninjutsuAttackTargetId = gameData.cloneOperation.ninjutsuAttackTargetId;
         boolean landPlay = gameData.cloneOperation.landPlay;
         int xValue = gameData.cloneOperation.xValue;
 
@@ -403,6 +416,8 @@ public class CloneService {
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.ninjutsuEntry = false;
+        gameData.cloneOperation.ninjutsuAttackTargetId = null;
         gameData.cloneOperation.landPlay = false;
         gameData.cloneOperation.xValue = 0;
         gameData.cloneOperation.copyCardFilter = null;
@@ -470,7 +485,15 @@ public class CloneService {
                 }
         }
 
+        if (ninjutsuEntry) {
+            perm.tap();
+        }
+
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
+        if (ninjutsuEntry) {
+            perm.setAttacking(true);
+            perm.setAttackTarget(ninjutsuAttackTargetId);
+        }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
@@ -494,7 +517,8 @@ public class CloneService {
                 triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
             }
         } else {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId,
+                    !ninjutsuEntry);
         }
 
         if (exileCopiedGraveyardCard && targetCard != null) {

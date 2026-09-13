@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class ExileAndReturnTransformedService {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final SagaChapterService sagaChapterService;
+    private final CreatureControlService creatureControlService;
 
     /**
      * Exiles the given permanent and immediately returns it transformed. No-op when the permanent
@@ -48,14 +51,24 @@ public class ExileAndReturnTransformedService {
      *         may keep the physical card in exile instead of allowing it to return.
      */
     public boolean exileAndReturnTransformed(GameData gameData, UUID permanentId) {
-        return exileAndReturn(gameData, permanentId, true);
+        return exileAndReturn(gameData, permanentId, true, false);
+    }
+
+    /**
+     * Exiles the permanent and returns it transformed, optionally under its current controller's
+     * control instead of its owner's control.
+     */
+    public boolean exileAndReturnTransformed(GameData gameData, UUID permanentId,
+                                             boolean underControllerControl) {
+        return exileAndReturn(gameData, permanentId, true, underControllerControl);
     }
 
     public boolean exileAndReturnFront(GameData gameData, UUID permanentId) {
-        return exileAndReturn(gameData, permanentId, false);
+        return exileAndReturn(gameData, permanentId, false, false);
     }
 
-    private boolean exileAndReturn(GameData gameData, UUID permanentId, boolean transformed) {
+    private boolean exileAndReturn(GameData gameData, UUID permanentId, boolean transformed,
+                                   boolean underControllerControl) {
         Permanent perm = null;
         UUID controllerId = null;
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
@@ -75,13 +88,12 @@ public class ExileAndReturnTransformedService {
         if (transformedFace == null) return false;
         Card returnedCard = transformed ? originalCard.getBackFaceCard() : originalCard;
         if (returnedCard == null) return false;
-        UUID returnControllerId = originalCard.getOwnerId() != null
-                ? originalCard.getOwnerId() : controllerId;
+        UUID returnControllerId = underControllerControl || originalCard.getOwnerId() == null
+                ? controllerId : originalCard.getOwnerId();
 
         boolean returningTransformed = !perm.isTransformed();
         Card returningCard = returningTransformed ? transformedFace : originalCard;
 
-        UUID ownerId = originalCard.getOwnerId() != null ? originalCard.getOwnerId() : controllerId;
         permanentRemovalService.removePermanentToExile(gameData, perm);
         // Removed from exile immediately — it returns right away on the opposite face.
         gameData.removeFromExile(originalCard.getId());
@@ -94,23 +106,31 @@ public class ExileAndReturnTransformedService {
         // A back face can be a planeswalker (Kytheon, Hero of Akros; Jace, Vryn's Prodigy): it
         // enters with its starting loyalty, otherwise the state-based check kills it immediately.
         if (returningCard.hasType(CardType.PLANESWALKER) && returningCard.getLoyalty() != null) {
-            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, ownerId,
-                    CounterType.LOYALTY, returningCard.getLoyalty(), ownerId);
+            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, returnControllerId,
+                    CounterType.LOYALTY, returningCard.getLoyalty(), returnControllerId);
             newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, newPerm);
         if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {
             return true;
         }
 
+        if (underControllerControl && originalCard.getOwnerId() != null
+                && !originalCard.getOwnerId().equals(returnControllerId)) {
+            gameData.stolenCreatures.put(newPerm.getId(), originalCard.getOwnerId());
+            creatureControlService.applyControlEffect(gameData, returnControllerId, newPerm,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    ControlDuration.PERMANENT.toEffectDuration(), null, originalCard.getName());
+        }
+
         if (gameQueryService.isCreature(gameData, newPerm)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, ownerId, returningCard, null, false);
+                    gameData, returnControllerId, returningCard, null, false);
         }
 
         if (returningCard.isSaga()) {
-            sagaChapterService.initializeSaga(gameData, newPerm, returningCard, ownerId);
+            sagaChapterService.initializeSaga(gameData, newPerm, returningCard, returnControllerId);
         }
 
         gameLogService.append(gameData, GameLog.cardTextCard(originalCard,

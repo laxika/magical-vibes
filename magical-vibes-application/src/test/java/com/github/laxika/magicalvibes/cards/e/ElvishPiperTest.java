@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -87,6 +86,7 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -129,8 +129,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent piper = new Permanent(new ElvishPiper());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(piper);
+        harness.addToBattlefield(player1, new ElvishPiper());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -159,4 +158,35 @@ class ElvishPiperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Ability can be activated during an opponent's turn")
+    void activatingAbilityDuringOpponentsTurn() {
+        Permanent piper = addReadyPiper();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(piper.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addReadyPiper();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    private Permanent addReadyPiper() {
+        return addCreatureReady(player1, new ElvishPiper());
+    }
+
 }

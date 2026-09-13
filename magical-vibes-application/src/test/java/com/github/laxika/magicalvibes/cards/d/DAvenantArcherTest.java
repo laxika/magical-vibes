@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.BenalishHero;
+import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DAvenantArcher.class, BenalishHero.class})
+@CardUsed({DAvenantArcher.class, SamiteHealer.class})
 class DAvenantArcherTest extends BaseCardTest {
 
     @Test
@@ -32,7 +32,19 @@ class DAvenantArcherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        harness.assertInGraveyard(player2, "Benalish Hero");
+        harness.assertInGraveyard(player2, "Samite Healer");
+    }
+
+    @Test
+    @DisplayName("Ability can target a creature controlled by its controller")
+    void abilityCanTargetOwnCreature() {
+        addArcherReady(player1);
+        Permanent attacker = addCombatCreature(player1, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Samite Healer");
     }
 
     @Test
@@ -44,7 +56,7 @@ class DAvenantArcherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Benalish Hero");
+        harness.assertInGraveyard(player2, "Samite Healer");
     }
 
     @Test
@@ -89,7 +101,7 @@ class DAvenantArcherTest extends BaseCardTest {
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking, boolean blocking) {
-        Permanent creature = addCreatureReady(player, new BenalishHero());
+        Permanent creature = addCreatureReady(player, new SamiteHealer());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
         return creature;

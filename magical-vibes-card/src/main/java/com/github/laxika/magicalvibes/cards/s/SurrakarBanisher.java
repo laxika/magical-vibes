@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "39")
+@CardRegistration(set = "DDO", collectorNumber = "43")
 public class SurrakarBanisher extends Card {
 
     public SurrakarBanisher() {

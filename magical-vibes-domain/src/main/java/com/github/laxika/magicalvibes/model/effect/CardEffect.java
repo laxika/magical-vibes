@@ -121,7 +121,8 @@ public interface CardEffect {
 
     /**
      * Returns whether this effect or one of its nested effects branches on the source ability's
-     * resolution count for the current turn.
+     * resolution count for the current turn, either through an explicit condition or a dynamic
+     * amount that reads the count.
      */
     default boolean hasAbilityResolutionCondition() { return false; }
 

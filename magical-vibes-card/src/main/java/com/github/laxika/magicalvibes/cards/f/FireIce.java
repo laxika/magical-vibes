@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "128")
+@CardRegistration(set = "DDJ", collectorNumber = "32")
 public class FireIce extends Card {
 
     public FireIce() {

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.f.FinalFortune;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrderOfTheSacredTorch.class, GrizzlyBears.class, Terror.class, Incinerate.class, DarkRitual.class})
+@CardUsed({OrderOfTheSacredTorch.class, GrizzlyBears.class, Terror.class, FinalFortune.class})
 class OrderOfTheSacredTorchTest extends BaseCardTest {
 
     @Test
@@ -54,15 +53,15 @@ class OrderOfTheSacredTorchTest extends BaseCardTest {
         Permanent orderPermanent = addCreatureReady(player1, order);
         harness.setLife(player1, 20);
 
-        Incinerate incinerate = new Incinerate();
-        harness.setHand(player2, List.of(incinerate));
+        FinalFortune finalFortune = new FinalFortune();
+        harness.setHand(player2, List.of(finalFortune));
         harness.addMana(player2, ManaColor.RED, 2);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstant(player2, 0);
         harness.passPriority(player2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, incinerate.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, finalFortune.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(orderPermanent.isTapped()).isFalse();
         harness.assertLife(player1, 20);
@@ -75,18 +74,41 @@ class OrderOfTheSacredTorchTest extends BaseCardTest {
         Permanent orderPermanent = addCreatureReady(player1, order);
         harness.setLife(player1, 20);
 
-        DarkRitual ritual = new DarkRitual();
-        harness.setHand(player1, List.of(ritual));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        Terror terror = new Terror();
+        harness.setHand(player1, List.of(terror));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
-        harness.castInstant(player1, 0);
-        harness.activateAbility(player1, 0, null, ritual.getId());
+        harness.castInstant(player1, 0, victim.getId());
+        harness.activateAbility(player1, 0, null, terror.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Dark Ritual");
+        harness.assertInGraveyard(player1, "Terror");
         assertThat(gd.stack).isEmpty();
         assertThat(orderPermanent.isTapped()).isTrue();
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without life to pay")
+    void cannotActivateWithoutLife() {
+        OrderOfTheSacredTorch order = new OrderOfTheSacredTorch();
+        Permanent orderPermanent = addCreatureReady(player1, order);
+
+        Terror terror = new Terror();
+        harness.setHand(player2, List.of(terror));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, orderPermanent.getId());
+        harness.passPriority(player2);
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, terror.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+        assertThat(orderPermanent.isTapped()).isFalse();
+        harness.assertLife(player1, 0);
     }
 }

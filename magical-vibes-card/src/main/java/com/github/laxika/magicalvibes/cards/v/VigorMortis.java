@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "111")
+@CardRegistration(set = "DDJ", collectorNumber = "74")
 public class VigorMortis extends Card {
 
     public VigorMortis() {

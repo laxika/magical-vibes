@@ -1,27 +1,26 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlue;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MossDiamond;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Boomerang.class, GrizzlyBears.class, GloriousAnthem.class, Island.class, MossDiamond.class})
+@CardUsed({Boomerang.class, CircleOfProtectionBlue.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, MossDiamond.class})
 class BoomerangTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -71,6 +70,20 @@ class BoomerangTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInHand(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Resolving returns target enchantment to owner's hand")
+    void resolvingReturnsEnchantmentToHandUpstreamReview() {
+        harness.addToBattlefield(player2, new CircleOfProtectionBlue());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Blue");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Circle of Protection: Blue");
+        harness.assertInHand(player2, "Circle of Protection: Blue");
     }
 
     @Test
@@ -180,5 +193,28 @@ class BoomerangTest extends BaseCardTest {
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
-}
 
+    @Test
+    @DisplayName("Returns a controlled permanent to its owner's hand")
+    void returnsControlledPermanentToOwnersHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+}

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "42")
+@CardRegistration(set = "MMA", collectorNumber = "80")
 public class DragDown extends Card {
 
     public DragDown() {

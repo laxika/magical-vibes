@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FUT", collectorNumber = "20")
+@CardRegistration(set = "MMA", collectorNumber = "8")
 public class BoundInSilence extends Card {
 
     public BoundInSilence() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LandEquilibriumEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "64")
+@CardRegistration(set = "ME3", collectorNumber = "40")
 public class LandEquilibrium extends Card {
 
     public LandEquilibrium() {

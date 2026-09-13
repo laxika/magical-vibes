@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "212")
+@CardRegistration(set = "MM3", collectorNumber = "162")
 public class EvilTwin extends Card {
 
     public EvilTwin() {

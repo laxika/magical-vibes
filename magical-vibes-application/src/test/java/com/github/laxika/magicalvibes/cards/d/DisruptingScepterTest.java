@@ -70,6 +70,38 @@ class DisruptingScepterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(scepter.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can activate during any step of its controller's turn")
+    void canActivateDuringOwnEndStep() {
+        addReadyScepter(player1);
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the Scepter while it is tapped")
+    void cannotActivateWhenTapped() {
+        Permanent scepter = addReadyScepter(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(scepter.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 
     @Test

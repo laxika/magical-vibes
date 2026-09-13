@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "84")
+@CardRegistration(set = "DDQ", collectorNumber = "51")
 public class AppetiteForBrains extends Card {
 
     public AppetiteForBrains() {

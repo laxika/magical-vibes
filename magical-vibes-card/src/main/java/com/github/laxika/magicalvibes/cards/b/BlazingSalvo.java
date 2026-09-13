@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "178")
+@CardRegistration(set = "DDK", collectorNumber = "58")
 public class BlazingSalvo extends Card {
 
     public BlazingSalvo() {

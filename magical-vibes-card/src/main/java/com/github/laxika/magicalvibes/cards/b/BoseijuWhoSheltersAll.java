@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "273")
+@CardRegistration(set = "V12", collectorNumber = "2")
 public class BoseijuWhoSheltersAll extends Card {
 
     public BoseijuWhoSheltersAll() {

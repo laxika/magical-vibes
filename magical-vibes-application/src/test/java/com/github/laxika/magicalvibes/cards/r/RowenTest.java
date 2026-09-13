@@ -49,6 +49,26 @@ class RowenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the first card of a multi-card draw is revealed")
+    void onlyFirstCardOfMultiCardDrawIsRevealed() {
+        harness.addToBattlefield(player1, new Rowen());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), new GrizzlyBears()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+
+        assertThat(gameLogContains("reveals Forest")).isTrue();
+        assertThat(gameLogContains("reveals Grizzly Bears")).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("First draw being a nonbasic land does not trigger")
     void firstDrawNonbasicLandDoesNotTrigger() {
         harness.addToBattlefield(player1, new Rowen());

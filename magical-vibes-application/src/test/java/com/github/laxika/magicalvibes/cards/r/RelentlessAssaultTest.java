@@ -2,20 +2,19 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
 import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
+import com.github.laxika.magicalvibes.cards.w.WuInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RelentlessAssault.class, GoblinSpelunkers.class})
+@CardUsed({GoblinSpelunkers.class, RelentlessAssault.class, VedalkenOrrery.class, WuInfantry.class})
 class RelentlessAssaultTest extends BaseCardTest {
 
     @Test
@@ -198,5 +197,30 @@ class RelentlessAssaultTest extends BaseCardTest {
 
         assertThat(attackedGoblin.isTapped()).isFalse();
         assertThat(gd.additionalCombatMainPhasePairs).isZero();
+    }
+
+    @Test
+    @DisplayName("A precombat cast leaves the normal combat after the additional main phase")
+    void precombatCastLeavesNormalCombatAfterAdditionalMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
     }
 }

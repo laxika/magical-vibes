@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "CST", collectorNumber = "51")
 @CardRegistration(set = "DPA", collectorNumber = "48")
 @CardRegistration(set = "ME2", collectorNumber = "131")
+@CardRegistration(set = "JVC", collectorNumber = "51")
 public class Incinerate extends Card {
 
     public Incinerate() {

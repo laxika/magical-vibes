@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "3ED", collectorNumber = "133")
 @CardRegistration(set = "DDC", collectorNumber = "47")
 @CardRegistration(set = "DPA", collectorNumber = "36")
+@CardRegistration(set = "DVD", collectorNumber = "47")
 public class UnholyStrength extends Card {
 
     public UnholyStrength() {

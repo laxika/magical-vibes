@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "185")
+@CardRegistration(set = "MMA", collectorNumber = "128")
+@CardRegistration(set = "IMA", collectorNumber = "144")
 public class RyuseiTheFallingStar extends Card {
 
     public RyuseiTheFallingStar() {

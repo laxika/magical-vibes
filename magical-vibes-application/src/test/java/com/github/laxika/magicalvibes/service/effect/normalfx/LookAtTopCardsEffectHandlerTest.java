@@ -207,7 +207,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card spell = createCard("Lightning Bolt");
             gd.playerDecks.get(player1Id).add(land);
             gd.playerDecks.get(player1Id).add(spell);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> ((Card) inv.getArgument(0)).getName().equals("Forest"));
 
             LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(2),
@@ -228,7 +228,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card spell2 = createCard("Shock");
             gd.playerDecks.get(player1Id).add(spell1);
             gd.playerDecks.get(player1Id).add(spell2);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
 
             LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(2),
                     new CardTypePredicate(CardType.LAND), LookDestination.BOTTOM_OF_LIBRARY, true);
@@ -245,7 +245,7 @@ class LookAtTopCardsEffectHandlerTest {
             stubCardViewFactory();
             gd.playerDecks.get(player1Id).add(createCard("Forest"));
             gd.playerDecks.get(player1Id).add(createCard("Mountain"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
 
             LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(1),
                     new CardTypePredicate(CardType.LAND), LookDestination.BOTTOM_OF_LIBRARY, false);
@@ -313,7 +313,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card b = createCard("Forest");
             gd.playerDecks.get(player1Id).add(a);
             gd.playerDecks.get(player1Id).add(b);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseNToHandRestToGraveyard(
                     2, 1, new CardTypePredicate(CardType.CREATURE), false);
@@ -330,7 +330,7 @@ class LookAtTopCardsEffectHandlerTest {
             stubCardViewFactory();
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
             gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseNToHandRestToGraveyard(
                     2, 1, new CardTypePredicate(CardType.CREATURE), true);
@@ -349,7 +349,7 @@ class LookAtTopCardsEffectHandlerTest {
             gd.playerDecks.get(player1Id).add(land1);
             gd.playerDecks.get(player1Id).add(spell);
             gd.playerDecks.get(player1Id).add(land2);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> ((Card) inv.getArgument(0)).getName().contains("Forest")
                             || ((Card) inv.getArgument(0)).getName().contains("Mountain"));
 
@@ -387,7 +387,7 @@ class LookAtTopCardsEffectHandlerTest {
             stubCardViewFactory();
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
             gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
                     3, new CardTypePredicate(CardType.CREATURE));
@@ -400,7 +400,7 @@ class LookAtTopCardsEffectHandlerTest {
         @DisplayName("Single non-matching card goes back on the bottom without a reorder prompt")
         void singleNonMatchGoesToBottom() {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
                     3, new CardTypePredicate(CardType.CREATURE));
@@ -417,7 +417,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card bears = createCard("Grizzly Bears");
             gd.playerDecks.get(player1Id).add(bears);
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> inv.getArgument(0) == bears);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
@@ -438,7 +438,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card bears = createCard("Grizzly Bears");
             gd.playerDecks.get(player1Id).add(bears);
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> inv.getArgument(0) == bears);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestToGraveyard(
@@ -460,7 +460,7 @@ class LookAtTopCardsEffectHandlerTest {
         void mayRevealOneRestToGraveyardNoMatches() {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
             gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestToGraveyard(
                     5, new CardTypePredicate(CardType.CREATURE));
@@ -478,7 +478,7 @@ class LookAtTopCardsEffectHandlerTest {
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
             gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> !((Card) inv.getArgument(0)).getName().contains("Bolt"));
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealAnyNumberToHandRestOnBottom(
@@ -500,7 +500,7 @@ class LookAtTopCardsEffectHandlerTest {
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
             gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
             gd.playerDecks.get(player1Id).add(createCard("Runeclaw Bear"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealUpToToHandRestOnBottom(
                     3, new CardTypePredicate(CardType.CREATURE), 2);
@@ -737,7 +737,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card spell = createCard("Shock");
             Card creature = createCard("Llanowar Elves");
             gd.playerDecks.get(player1Id).addAll(List.of(land, spell, creature));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> inv.getArgument(0) == land);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOnTopRestOnBottomRandom(
@@ -761,7 +761,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card first = createCard("Shock");
             Card second = createCard("Giant Growth");
             gd.playerDecks.get(player1Id).addAll(List.of(first, second));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(false);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOnTopRestOnBottomRandom(

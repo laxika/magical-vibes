@@ -78,6 +78,7 @@ class CardImmutabilityArchTest {
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
             "ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler", // decorates freshly assembled Spirit token-copy cards
             "ReturnDyingOpponentCreatureAsTreasureEffectHandler", // changes a fresh runtime copy into a Treasure card
+            "ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler", // changes fresh runtime copies into Food cards
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
             "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService

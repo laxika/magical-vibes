@@ -45,13 +45,26 @@ class SerraAdvocateTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is neither attacking nor blocking")
     void cannotTargetNonCombatCreature() {
         addSerraAdvocate();
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not boost a creature that stops attacking before resolution")
+    void doesNotBoostCreatureThatStopsAttackingBeforeResolution() {
+        Permanent attacker = addSerraAdvocateAndCombatCreature(true, false, player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(0);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test

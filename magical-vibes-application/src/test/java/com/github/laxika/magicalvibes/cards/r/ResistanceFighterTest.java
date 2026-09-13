@@ -61,6 +61,25 @@ class ResistanceFighterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature that leaves before resolution is no longer affected")
+    void targetLeavingBeforeResolutionIsNoLongerAffected() {
+        addReadyFighter();
+        Permanent originalAttacker = addAttacker(player2, new Warthog());
+
+        harness.activateAbility(player1, 0, null, originalAttacker.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, originalAttacker));
+        addAttacker(player2, new Warthog());
+        harness.passBothPriorities();
+
+        harness.setLife(player1, 20);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
     @DisplayName("Prevention is cleared at end of turn")
     void preventionClearedAtEndOfTurn() {
         addReadyFighter();
@@ -72,7 +91,7 @@ class ResistanceFighterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // POSTCOMBAT_MAIN -> END_STEP
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
     }

@@ -11,11 +11,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Opposition.class, GrizzlyBears.class, Forest.class, HowlingMine.class, Pacifism.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HowlingMine.class, Opposition.class, Pacifism.class})
 class OppositionTest extends BaseCardTest {
 
     // ===== Tapping targets =====
@@ -151,5 +150,19 @@ class OppositionTest extends BaseCardTest {
 
     private Permanent addOpposition(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Opposition());
+    }
+
+    @Test
+    @DisplayName("Cannot pay the cost with an untapped noncreature permanent")
+    void cannotPayWithNonCreature() {
+        addOpposition(player1);
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(nonCreature.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsUntapDuringEachPlayersUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -47,6 +48,8 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.UntapPreventionSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 
 @ExtendWith(MockitoExtension.class)
 class UntapStepServiceTest {
@@ -113,6 +116,33 @@ class UntapStepServiceTest {
         Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(playerId).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A face-up plane untaps permanents on both battlefields during each player's untap step")
+    void planarEffectUntapsAllPermanentsDuringEachUntapStep() {
+        Card horizonBoughs = createCardWithName("Horizon Boughs");
+        horizonBoughs.addEffect(EffectSlot.STATIC,
+                new AllPermanentsUntapDuringEachPlayersUntapStepEffect());
+        gd.planechase = new PlanechaseState();
+        gd.planechase.faceUp.add(new PlanarObject(horizonBoughs, gd.nextTimestamp()));
+
+        Permanent playerOnePermanent = addPermanent(player1Id, createCardWithName("Player One Permanent"));
+        Permanent playerTwoPermanent = addPermanent(player2Id, createCardWithName("Player Two Permanent"));
+        playerOnePermanent.tap();
+        playerTwoPermanent.tap();
+
+        sut.untapPermanents(gd, player1Id);
+
+        assertThat(playerOnePermanent.isTapped()).isFalse();
+        assertThat(playerTwoPermanent.isTapped()).isFalse();
+
+        playerOnePermanent.tap();
+        playerTwoPermanent.tap();
+        sut.untapPermanents(gd, player2Id);
+
+        assertThat(playerOnePermanent.isTapped()).isFalse();
+        assertThat(playerTwoPermanent.isTapped()).isFalse();
     }
 
     @Test
@@ -514,7 +544,8 @@ class UntapStepServiceTest {
         void appliesWithUntappedMatrixAndTappedPermanent() {
             Card matrixCard = createCardWithName("Storage Matrix");
             matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
-            addPermanent(player1Id, matrixCard);
+            Permanent matrix = addPermanent(player1Id, matrixCard);
+            when(gameQueryService.hasActiveStaticEffect(gd, matrix, StorageMatrixEffect.class)).thenReturn(true);
             addPermanent(player1Id, createCardWithName("Grizzly Bears")).tap();
 
             assertThat(sut.storageMatrixRestrictionApplies(gd, player1Id)).isTrue();

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "149")
+@CardRegistration(set = "MM2", collectorNumber = "208")
+@CardRegistration(set = "IMA", collectorNumber = "214")
 public class DarksteelAxe extends Card {
 
     public DarksteelAxe() {

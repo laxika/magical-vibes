@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "41")
+@CardRegistration(set = "DDM", collectorNumber = "16")
 public class LeylinePhantom extends Card {
 
     public LeylinePhantom() {

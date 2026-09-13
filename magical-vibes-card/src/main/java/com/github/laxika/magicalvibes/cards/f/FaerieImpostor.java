@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "39")
+@CardRegistration(set = "DDN", collectorNumber = "43")
 public class FaerieImpostor extends Card {
 
     public FaerieImpostor() {

@@ -142,6 +142,24 @@ public class BlockLegalityService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            UUID planarController = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                FilterContext filterContext = FilterContext.of(gameData)
+                        .withSourceControllerId(planarController)
+                        .withSourceCardId(planar.getCard().getId());
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof BlockingRestrictionEffect restriction) {
+                        addGlobalBlockRestriction(globalBlockRestrictions, restriction, filterContext);
+                    }
+                    if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                            && restriction.globallyCantAttackOrBlock() != null) {
+                        globalAttackOrBlockRestrictions.add(new GlobalAttackOrBlockRestriction(
+                                restriction.globallyCantAttackOrBlock(), filterContext));
+                    }
+                }
+            }
+        }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (floating.effect() instanceof BlockingRestrictionEffect restriction) {
@@ -486,7 +504,7 @@ public class BlockLegalityService {
             return true;
         }
         UUID controllerId = null;
-        if (!creature.isFaceDown()) {
+        if (!creature.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, creature)) {
             for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
                 Condition unless = null;
                 if (effect instanceof AttackOrBlockRestrictionEffect restriction) {

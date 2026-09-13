@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FUT", collectorNumber = "44")
+@CardRegistration(set = "MMA", collectorNumber = "66")
 public class TakePossession extends Card {
 
     public TakePossession() {

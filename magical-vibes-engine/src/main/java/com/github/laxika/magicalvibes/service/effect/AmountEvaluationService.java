@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
@@ -427,6 +428,17 @@ public class AmountEvaluationService {
                     source = ctx.stackEntry().getSourcePermanentSnapshot();
                 }
                 yield source == null ? 0 : source.getTimesMutated();
+            }
+            case TimesSourceAbilityResolvedThisTurn ignored -> {
+                UUID sourceId = ctx.stackEntry() != null
+                        ? ctx.stackEntry().getSourcePermanentId()
+                        : ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId();
+                if (sourceId == null && ctx.stackEntry() != null
+                        && ctx.stackEntry().getSourcePermanentSnapshot() != null) {
+                    sourceId = ctx.stackEntry().getSourcePermanentSnapshot().getId();
+                }
+                yield sourceId == null
+                        ? 0 : gameData.permanentAbilityResolutionsThisTurn.getOrDefault(sourceId, 0);
             }
             case CreaturesDevoured ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCreatures().size();
@@ -1804,12 +1816,17 @@ public class AmountEvaluationService {
 
         List<Set<CardSubtype>> creatureTypes = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) {
+            // Party can define power in layer 7. Read the already applied type and
+            // ability layers instead of recursively assembling that power again.
+            var state = LayerSystemService.activeStateFor(permanent.getId());
+            if (!(state != null ? state.getCardTypes().contains(CardType.CREATURE)
+                    : gameQueryService.isCreature(gameData, permanent))) {
                 continue;
             }
-            Set<CardSubtype> types = new HashSet<>(
-                    gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
-            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+            Set<CardSubtype> types = new HashSet<>(state != null ? state.getSubtypes()
+                    : gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
+            if (state != null ? state.getKeywords().contains(Keyword.CHANGELING)
+                    : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
                 types.addAll(PARTY_ROLES);
             }
             creatureTypes.add(types);

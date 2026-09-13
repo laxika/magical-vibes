@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "281")
+@CardRegistration(set = "ME3", collectorNumber = "198")
 public class KnowledgeVault extends Card {
 
     public KnowledgeVault() {

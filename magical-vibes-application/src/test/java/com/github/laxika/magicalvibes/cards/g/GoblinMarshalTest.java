@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.p.PlatedSpider;
+import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinMarshal.class, PlatedSpider.class, RecklessAbandon.class})
 class GoblinMarshalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield creates two 1/1 red Goblin tokens")
     void entersCreatesGoblinTokens() {
-        harness.setHand(player1, List.of(new GoblinMarshal()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        castAndResolveGoblinMarshal();
 
         assertGoblinTokens(player1, 2);
     }
@@ -33,13 +31,13 @@ class GoblinMarshalTest extends BaseCardTest {
     @Test
     @DisplayName("When Goblin Marshal dies, it creates two 1/1 red Goblin tokens")
     void diesCreatesGoblinTokens() {
-        harness.addToBattlefield(player1, new GoblinMarshal());
+        Permanent marshal = harness.addToBattlefieldAndReturn(player1, new GoblinMarshal());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new PlatedSpider());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player1, 0, marshal.getId(), sacrificed.getId());
+        resolveAllTriggers();
 
         assertGoblinTokens(player1, 2);
     }
@@ -47,7 +45,7 @@ class GoblinMarshalTest extends BaseCardTest {
     @Test
     @DisplayName("Paying echo {4}{R}{R} keeps Goblin Marshal on the battlefield")
     void payingEchoKeepsGoblinMarshal() {
-        harness.addToBattlefield(player1, new GoblinMarshal());
+        castAndResolveGoblinMarshal();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -56,12 +54,17 @@ class GoblinMarshalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Goblin Marshal");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Goblin Marshal");
     }
 
     @Test
     @DisplayName("Declining echo sacrifices Goblin Marshal")
     void decliningEchoSacrificesGoblinMarshal() {
-        harness.addToBattlefield(player1, new GoblinMarshal());
+        castAndResolveGoblinMarshal();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -70,6 +73,24 @@ class GoblinMarshalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Goblin Marshal");
         harness.assertInGraveyard(player1, "Goblin Marshal");
+        assertGoblinTokens(player1, 2);
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveGoblinMarshal();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Goblin Marshal");
+    }
+
+    private void castAndResolveGoblinMarshal() {
+        harness.castFromHand(player1, new GoblinMarshal(), "{4}{R}{R}");
+        resolveAllTriggers();
     }
 
     private void assertGoblinTokens(com.github.laxika.magicalvibes.model.Player player, int amount) {

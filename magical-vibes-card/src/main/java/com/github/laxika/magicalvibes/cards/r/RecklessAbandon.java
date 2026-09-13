@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "UDS", collectorNumber = "94")
+@CardRegistration(set = "DDN", collectorNumber = "20")
 public class RecklessAbandon extends Card {
 
     public RecklessAbandon() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "40")
+@CardRegistration(set = "OPCA", collectorNumber = "84")
 public class VelisVel extends Card {
 
     public VelisVel() {

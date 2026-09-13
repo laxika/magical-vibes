@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 
 @CardRegistration(set = "DKA", collectorNumber = "45")
+@CardRegistration(set = "DDQ", collectorNumber = "46")
 public class RelentlessSkaabs extends Card {
 
     public RelentlessSkaabs() {

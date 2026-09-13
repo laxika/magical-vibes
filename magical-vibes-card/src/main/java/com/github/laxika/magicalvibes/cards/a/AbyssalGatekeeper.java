@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WTH", collectorNumber = "59")
 @CardRegistration(set = "DDC", collectorNumber = "31")
+@CardRegistration(set = "DVD", collectorNumber = "31")
 public class AbyssalGatekeeper extends Card {
 
     public AbyssalGatekeeper() {

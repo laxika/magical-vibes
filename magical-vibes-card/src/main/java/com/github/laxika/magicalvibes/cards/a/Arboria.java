@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "174")
+@CardRegistration(set = "ME3", collectorNumber = "113")
 public class Arboria extends Card {
 
     public Arboria() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "1")
+@CardRegistration(set = "MMA", collectorNumber = "2")
 public class AmrouScout extends Card {
 
     public AmrouScout() {

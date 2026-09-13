@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "S99", collectorNumber = "93")
+@CardRegistration(set = "ME3", collectorNumber = "91")
+@CardRegistration(set = "A25", collectorNumber = "126")
 public class CinderStorm extends Card {
 
     public CinderStorm() {

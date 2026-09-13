@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "71")
+@CardRegistration(set = "DDM", collectorNumber = "31")
 public class SummonersBane extends Card {
 
     public SummonersBane() {

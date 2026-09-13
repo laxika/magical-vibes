@@ -1,24 +1,23 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.w.WoodenSphere;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.cards.w.WoodenSphere;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LeshracsRite.class, GrizzlyBears.class, Swamp.class, WoodenSphere.class})
+@CardUsed({GrizzlyBears.class, LeshracsRite.class, Millstone.class, Swamp.class, WoodenSphere.class})
 class LeshracsRiteTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -50,8 +49,7 @@ class LeshracsRiteTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leshrac's Rite")
-                        && p.isAttached()
+                .anyMatch(p -> p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -171,5 +169,42 @@ class LeshracsRiteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Leshrac's Rite")
+    void cannotTargetNonCreatureUpstreamReview() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.setHand(player1, List.of(new LeshracsRite()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Swampwalk checks the defending player's Swamps")
+    void swampwalkChecksDefendingPlayersSwamps() {
+        harness.addToBattlefield(player1, new Swamp());
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        Permanent rite = harness.addToBattlefieldAndReturn(player1, new LeshracsRite());
+        rite.setAttachedTo(attacker.getId());
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

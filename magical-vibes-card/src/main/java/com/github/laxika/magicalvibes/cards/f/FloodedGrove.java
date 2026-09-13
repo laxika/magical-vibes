@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "177")
+@CardRegistration(set = "EXP", collectorNumber = "35")
+@CardRegistration(set = "A25", collectorNumber = "239")
 public class FloodedGrove extends Card {
 
     public FloodedGrove() {
