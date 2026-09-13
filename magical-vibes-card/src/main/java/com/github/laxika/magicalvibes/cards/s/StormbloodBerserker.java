@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * rather than an ETB trigger. Menace is a Scryfall-loaded keyword and needs no engine logic here.
  */
 @CardRegistration(set = "M12", collectorNumber = "156")
+@CardRegistration(set = "MM2", collectorNumber = "130")
 public class StormbloodBerserker extends Card {
 
     public StormbloodBerserker() {

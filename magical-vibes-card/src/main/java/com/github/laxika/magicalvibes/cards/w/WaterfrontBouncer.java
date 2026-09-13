@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "114")
+@CardRegistration(set = "VMA", collectorNumber = "102")
 public class WaterfrontBouncer extends Card {
 
     public WaterfrontBouncer() {

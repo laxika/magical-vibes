@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "180")
+@CardRegistration(set = "MM2", collectorNumber = "190")
 public class AshenmoorGouger extends Card {
 
     public AshenmoorGouger() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorE
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "257")
+@CardRegistration(set = "MPS", collectorNumber = "20")
 public class PaintersServant extends Card {
 
     public PaintersServant() {

@@ -1,31 +1,26 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.k.KorHaven;
+import com.github.laxika.magicalvibes.cards.m.Mossdog;
+import com.github.laxika.magicalvibes.cards.s.SealOfCleansing;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ParallaxTide.class, KorHaven.class, Mossdog.class, SealOfCleansing.class})
 class ParallaxTideTest extends BaseCardTest {
 
     private void castAndResolveTide() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new ParallaxTide()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ParallaxTide(), "{2}{U}{U}");
         harness.passBothPriorities();
     }
 
@@ -52,6 +47,19 @@ class ParallaxTideTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Parallax Tide removes its last fade counter without sacrificing")
+    void removesLastFadeCounterWithoutSacrificing() {
+        Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
+        tide.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(tide.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Parallax Tide");
+    }
+
+    @Test
     @DisplayName("Parallax Tide sacrifices itself when it has no fade counters")
     void sacrificesWithoutFadeCounters() {
         harness.addToBattlefield(player1, new ParallaxTide());
@@ -65,40 +73,95 @@ class ParallaxTideTest extends BaseCardTest {
     @Test
     @DisplayName("Parallax Tide exiles a target land and returns it when Tide leaves")
     void exilesLandUntilTideLeaves() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
         Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
         tide.setCounterCount(CounterType.FADE, 1);
 
-        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.activateAbility(player1, 0, null, land.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Kor Haven");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Forest"));
+                .anyMatch(card -> card.getName().equals("Kor Haven"));
         assertThat(tide.getCounterCount(CounterType.FADE)).isZero();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, tide.getId());
-        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new SealOfCleansing());
+        harness.activateAbility(player2, 0, null, tide.getId());
+        resolveAllTriggers();
 
-        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Kor Haven");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .noneMatch(card -> card.getName().equals("Forest"));
+                .noneMatch(card -> card.getName().equals("Kor Haven"));
     }
 
     @Test
     @DisplayName("Parallax Tide cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Mossdog());
         Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
         tide.setCounterCount(CounterType.FADE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Parallax Tide cannot activate without a fade counter")
+    void cannotActivateWithoutFadeCounter() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
+        harness.addToBattlefield(player1, new ParallaxTide());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Parallax Tide returns exiled lands to their owners")
+    void returnsExiledLandsToTheirOwners() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new KorHaven());
+        tide.setCounterCount(CounterType.FADE, 2);
+
+        harness.activateAbility(player1, 1, null, ownLand.getId());
+        harness.activateAbility(player1, 1, null, opponentLand.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kor Haven");
+        harness.assertNotOnBattlefield(player2, "Kor Haven");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Kor Haven"));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Kor Haven"));
+
+        harness.addToBattlefield(player2, new SealOfCleansing());
+        harness.activateAbility(player2, 0, null, tide.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Kor Haven")).hasSize(1);
+        assertThat(findPermanents(player2, "Kor Haven")).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Kor Haven"));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Kor Haven"));
+    }
+
+    @Test
+    @DisplayName("Parallax Tide's exile ability still resolves after Tide leaves before resolution")
+    void exileAbilityResolvesAfterTideLeavesBeforeResolution() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
+        harness.addToBattlefield(player2, new SealOfCleansing());
+        Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
+        tide.setCounterCount(CounterType.FADE, 1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 1, null, tide.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Parallax Tide");
+        harness.assertNotOnBattlefield(player2, "Kor Haven");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Kor Haven"));
     }
 }

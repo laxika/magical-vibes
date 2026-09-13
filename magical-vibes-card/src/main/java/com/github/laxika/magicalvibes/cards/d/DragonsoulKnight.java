@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndO
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "62")
+@CardRegistration(set = "MM2", collectorNumber = "112")
 public class DragonsoulKnight extends Card {
 
     public DragonsoulKnight() {

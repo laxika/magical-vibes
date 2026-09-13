@@ -67,6 +67,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
 
 import com.github.laxika.magicalvibes.model.GameLog;
+
 /**
  * Trigger collectors for land-tap events (ON_ANY_PLAYER_TAPS_LAND).
  */
@@ -262,7 +263,7 @@ public class LandTapTriggerCollectorService {
             ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                     .fixedColorCombination(tappingPlayerId, false, amount, ofColors.colors());
             List<String> colors = ofColors.colors().stream().map(Enum::name).toList();
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+            AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, gameData, new PendingInteraction.ColorChoice(
                     tappingPlayerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
             gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                     " triggers — " + playerName + " chooses colors of mana to add."));
@@ -561,7 +562,7 @@ public class LandTapTriggerCollectorService {
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
-        if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+        if (!gameQueryService.hasEffectiveSubtype(match.gameData(), tappedLand, trigger.subtype())) return false;
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
         // The tapping player is the land's controller and receives the additional mana.

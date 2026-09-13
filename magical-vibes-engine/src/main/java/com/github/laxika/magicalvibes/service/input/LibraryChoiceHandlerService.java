@@ -800,6 +800,7 @@ public class LibraryChoiceHandlerService {
 
             Integer maxManaValue = librarySearch.mayCastManaValueAtMost();
             boolean mayCast = maxManaValue != null
+                    && !chosenCard.hasType(CardType.LAND)
                     && (filterCardTypes == null || filterCardTypes.isEmpty()
                     || filterCardTypes.contains(chosenCard.getType())
                     || chosenCard.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains))

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "143")
+@CardRegistration(set = "VMA", collectorNumber = "325")
 public class YavimayaHollow extends Card {
 
     public YavimayaHollow() {

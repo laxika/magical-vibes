@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "136")
+@CardRegistration(set = "MM2", collectorNumber = "242")
 @CardRegistration(set = "EXP", collectorNumber = "38")
 public class EyeOfUgin extends Card {
 

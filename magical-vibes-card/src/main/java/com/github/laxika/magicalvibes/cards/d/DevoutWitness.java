@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "17")
+@CardRegistration(set = "VMA", collectorNumber = "24")
 public class DevoutWitness extends Card {
 
     public DevoutWitness() {

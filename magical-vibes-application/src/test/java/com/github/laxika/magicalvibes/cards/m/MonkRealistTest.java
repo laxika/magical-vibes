@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MonkRealist.class, AngelicChorus.class, ArgothianSwine.class})
 class MonkRealistTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class MonkRealistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -35,11 +37,11 @@ class MonkRealistTest extends BaseCardTest {
 
     @Test
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArgothianSwine());
         harness.setHand(player1, List.of(new MonkRealist()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Argothian Swine");
         assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -52,6 +54,7 @@ class MonkRealistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Monk Realist");
     }
 }

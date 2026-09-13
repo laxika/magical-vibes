@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "139")
+@CardRegistration(set = "MM2", collectorNumber = "114")
 public class GoblinFireslinger extends Card {
 
     public GoblinFireslinger() {

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "326")
 @CardRegistration(set = "DDI", collectorNumber = "34")
+@CardRegistration(set = "VMA", collectorNumber = "296")
 public class FloodPlain extends Card {
 
     public FloodPlain() {

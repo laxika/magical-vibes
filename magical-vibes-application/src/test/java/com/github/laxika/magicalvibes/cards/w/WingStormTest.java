@@ -1,35 +1,30 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.MarshBoa;
+import com.github.laxika.magicalvibes.cards.s.StormwatchEagle;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WingStorm.class, MarshBoa.class, StormwatchEagle.class})
 class WingStormTest extends BaseCardTest {
 
     private void castWingStorm() {
-        harness.setHand(player1, List.of(new WingStorm()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WingStorm(), "{2}{G}");
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Deals twice the number of flying creatures to each player")
     void dealsTwiceFlyingCreatureCountToEachPlayer() {
-        harness.addToBattlefield(player1, new AirElemental());
-        harness.addToBattlefield(player1, new SerraAngel());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new AirElemental());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new StormwatchEagle());
+        harness.addToBattlefield(player1, new StormwatchEagle());
+        harness.addToBattlefield(player1, new MarshBoa());
+        harness.addToBattlefield(player2, new StormwatchEagle());
+        harness.addToBattlefield(player2, new MarshBoa());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -42,8 +37,8 @@ class WingStormTest extends BaseCardTest {
     @Test
     @DisplayName("Ignores creatures without flying")
     void ignoresCreaturesWithoutFlying() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MarshBoa());
+        harness.addToBattlefield(player2, new MarshBoa());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

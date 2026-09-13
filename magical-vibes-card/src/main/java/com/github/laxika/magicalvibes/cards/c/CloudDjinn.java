@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "WTH", collectorNumber = "36")
 @CardRegistration(set = "BTD", collectorNumber = "4")
+@CardRegistration(set = "VMA", collectorNumber = "61")
 public class CloudDjinn extends Card {
 
     public CloudDjinn() {

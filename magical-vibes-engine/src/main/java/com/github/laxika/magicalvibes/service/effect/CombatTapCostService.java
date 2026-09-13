@@ -31,12 +31,12 @@ public class CombatTapCostService {
     public boolean canPayAttackCost(GameData gameData, Permanent attacker) {
         Set<UUID> declaredIds = Set.of(attacker.getId());
         return availableTapSourceCount(gameData, attackerController(gameData, attacker), declaredIds)
-                >= requiredTapCount(attacker);
+                >= requiredTapCount(gameData, attacker);
     }
 
     public boolean canPayAttackCosts(GameData gameData, UUID playerId, Collection<Permanent> attackers) {
         Set<UUID> declaredIds = idsOf(attackers);
-        int required = attackers.stream().mapToInt(this::requiredTapCount).sum();
+        int required = attackers.stream().mapToInt(permanent -> requiredTapCount(gameData, permanent)).sum();
         return availableTapSourceCount(gameData, playerId, declaredIds) >= required;
     }
 
@@ -49,7 +49,7 @@ public class CombatTapCostService {
         });
         declaredIds.add(blocker.getId());
         return availableTapSourceCount(gameData, attackerController(gameData, blocker), declaredIds)
-                >= requiredTapCount(blocker);
+                >= requiredTapCount(gameData, blocker);
     }
 
     /**
@@ -61,7 +61,7 @@ public class CombatTapCostService {
                                     Collection<Permanent> blockers) {
         Set<UUID> declaredIds = idsOf(attackingPermanents);
         blockers.forEach(blocker -> declaredIds.add(blocker.getId()));
-        int required = uniquePermanents(blockers).stream().mapToInt(this::requiredTapCount).sum();
+        int required = uniquePermanents(blockers).stream().mapToInt(permanent -> requiredTapCount(gameData, permanent)).sum();
         return availableTapSourceCount(gameData, playerId, declaredIds) >= required;
     }
 
@@ -73,7 +73,7 @@ public class CombatTapCostService {
 
     public void payAttackCosts(GameData gameData, UUID playerId, List<Permanent> attackers) {
         Set<UUID> declaredIds = idsOf(attackers);
-        tapSources(gameData, playerId, declaredIds, attackers.stream().mapToInt(this::requiredTapCount).sum(),
+        tapSources(gameData, playerId, declaredIds, attackers.stream().mapToInt(permanent -> requiredTapCount(gameData, permanent)).sum(),
                 "attack");
     }
 
@@ -88,7 +88,7 @@ public class CombatTapCostService {
                               Collection<Permanent> blockers) {
         Set<UUID> declaredIds = idsOf(attackingPermanents);
         blockers.forEach(blocker -> declaredIds.add(blocker.getId()));
-        int required = uniquePermanents(blockers).stream().mapToInt(this::requiredTapCount).sum();
+        int required = uniquePermanents(blockers).stream().mapToInt(permanent -> requiredTapCount(gameData, permanent)).sum();
         tapSources(gameData, playerId, declaredIds, required, "block");
     }
 
@@ -144,12 +144,13 @@ public class CombatTapCostService {
                 && !usedIds.contains(permanent.getId());
     }
 
-    private int requiredTapCount(Permanent permanent) {
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+    private int requiredTapCount(GameData gameData, Permanent permanent) {
+        int required = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(CombatTapCostEffect.class::isInstance)
                 .map(CombatTapCostEffect.class::cast)
                 .mapToInt(CombatTapCostEffect::tapCount)
                 .sum();
+        return required > 0 && gameQueryService.hasLostPrintedAbilities(gameData, permanent) ? 0 : required;
     }
 
     private UUID attackerController(GameData gameData, Permanent permanent) {

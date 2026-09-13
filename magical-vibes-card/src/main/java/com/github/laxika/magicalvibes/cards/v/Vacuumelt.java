@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "40")
+@CardRegistration(set = "DDJ", collectorNumber = "24")
 public class Vacuumelt extends Card {
 
     public Vacuumelt() {

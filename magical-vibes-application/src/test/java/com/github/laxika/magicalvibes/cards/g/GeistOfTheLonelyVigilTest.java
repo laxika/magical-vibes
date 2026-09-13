@@ -52,7 +52,8 @@ class GeistOfTheLonelyVigilTest extends BaseCardTest {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(geist);
         beginDeclareAttackers();
 
-        gs.declareAttackers(gd, player1, List.of(index));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(index)));
 
         assertThat(geist.isAttacking()).isTrue();
     }

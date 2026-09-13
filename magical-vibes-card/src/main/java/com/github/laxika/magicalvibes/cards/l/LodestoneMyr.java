@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "200")
 @CardRegistration(set = "HOP", collectorNumber = "117")
+@CardRegistration(set = "MM2", collectorNumber = "220")
 public class LodestoneMyr extends Card {
 
     public LodestoneMyr() {

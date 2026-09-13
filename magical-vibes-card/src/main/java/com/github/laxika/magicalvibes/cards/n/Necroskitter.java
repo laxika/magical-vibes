@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 
 @CardRegistration(set = "EVE", collectorNumber = "38")
 @CardRegistration(set = "TD2", collectorNumber = "55")
+@CardRegistration(set = "MM2", collectorNumber = "88")
 public class Necroskitter extends Card {
 
     public Necroskitter() {

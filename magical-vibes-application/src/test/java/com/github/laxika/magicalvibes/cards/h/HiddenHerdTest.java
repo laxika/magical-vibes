@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.w.Wasteland;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.TolarianAcademy;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HiddenHerd.class, Island.class, TolarianAcademy.class})
 class HiddenHerdTest extends BaseCardTest {
 
     @Test
@@ -20,7 +22,7 @@ class HiddenHerdTest extends BaseCardTest {
     void becomesBeastCreatureWhenOpponentPlaysNonbasicLand() {
         Permanent hiddenHerd = harness.addToBattlefieldAndReturn(player1, new HiddenHerd());
         prepareOpponentLandPlay();
-        harness.setHand(player2, List.of(new Wasteland()));
+        harness.setHand(player2, List.of(new TolarianAcademy()));
 
         harness.playLand(player2, 0);
         harness.passBothPriorities();
@@ -37,7 +39,7 @@ class HiddenHerdTest extends BaseCardTest {
     void doesNotTriggerForBasicLand() {
         Permanent hiddenHerd = harness.addToBattlefieldAndReturn(player1, new HiddenHerd());
         prepareOpponentLandPlay();
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Island()));
 
         harness.playLand(player2, 0);
 
@@ -53,7 +55,7 @@ class HiddenHerdTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Wasteland()));
+        harness.setHand(player1, List.of(new TolarianAcademy()));
 
         harness.playLand(player1, 0);
 
@@ -67,7 +69,7 @@ class HiddenHerdTest extends BaseCardTest {
     void doesNotTriggerWhenLandEntersWithoutBeingPlayed() {
         Permanent hiddenHerd = harness.addToBattlefieldAndReturn(player1, new HiddenHerd());
 
-        harness.addToBattlefield(player2, new Wasteland());
+        harness.addToBattlefield(player2, new TolarianAcademy());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isEnchantment(gd, hiddenHerd)).isTrue();
@@ -79,7 +81,7 @@ class HiddenHerdTest extends BaseCardTest {
     void doesNotTriggerAfterBecomingCreature() {
         Permanent hiddenHerd = harness.addToBattlefieldAndReturn(player1, new HiddenHerd());
         prepareOpponentLandPlay();
-        harness.setHand(player2, List.of(new Wasteland()));
+        harness.setHand(player2, List.of(new TolarianAcademy()));
 
         harness.playLand(player2, 0);
         harness.passBothPriorities();
@@ -87,7 +89,7 @@ class HiddenHerdTest extends BaseCardTest {
 
         gd.landsPlayedThisTurn.put(player2.getId(), 0);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Wasteland()));
+        harness.setHand(player2, List.of(new TolarianAcademy()));
         harness.playLand(player2, 0);
 
         assertThat(gd.stack).isEmpty();

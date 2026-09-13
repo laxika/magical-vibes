@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SOK", collectorNumber = "51")
+@CardRegistration(set = "DDJ", collectorNumber = "28")
 public class OverwhelmingIntellect extends Card {
 
     public OverwhelmingIntellect() {

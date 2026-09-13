@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ODY", collectorNumber = "198")
 @CardRegistration(set = "DPA", collectorNumber = "49")
 @CardRegistration(set = "DDL", collectorNumber = "16")
+@CardRegistration(set = "DDS", collectorNumber = "39")
 public class KamahlPitFighter extends Card {
 
     public KamahlPitFighter() {

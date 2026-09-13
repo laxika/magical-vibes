@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "18")
+@CardRegistration(set = "VMA", collectorNumber = "43")
 public class SealOfCleansing extends Card {
 
     public SealOfCleansing() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "114")
+@CardRegistration(set = "MM2", collectorNumber = "176")
 public class GhostCouncilOfOrzhova extends Card {
 
     public GhostCouncilOfOrzhova() {

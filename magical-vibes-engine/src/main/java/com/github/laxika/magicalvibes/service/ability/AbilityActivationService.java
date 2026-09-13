@@ -1549,7 +1549,7 @@ public class AbilityActivationService {
      */
     private boolean isMultiTargetGraveyardAbility(ActivatedAbility ability) {
         return !targetsGraveyardCards(ability)
-                && (ability.isMultiTarget() || ability.getMaxTargets() > 1);
+                && (ability.isMultiTarget() || ability.isXScaledTargets() || ability.getMaxTargets() > 1);
     }
 
     private boolean targetsGraveyardCards(ActivatedAbility ability) {
@@ -3767,6 +3767,11 @@ public class AbilityActivationService {
                     gameData, playerId, activationEffects,
                     targetIds != null ? targetIds : List.of(), permanent.getCard().getId(), targetValidationXValue,
                     ability.getMultiTargetConstraint());
+        } else if (ability.isExactXTargets()) {
+            List<UUID> exactTargets = targetIds != null && !targetIds.isEmpty() ? targetIds
+                    : targetId != null ? List.of(targetId) : List.of();
+            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
+                    exactTargets, permanent.getCard(), targetValidationXValue, activationEffects);
         } else if (ability.isMultiTarget() && ability.getMaxTargets() == 1
                 && (targetIds == null || targetIds.isEmpty())) {
             targetLegalityService.validateActivatedAbilityTargeting(

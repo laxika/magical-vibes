@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.d.Daze;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudBehemoth;
+import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolrathTheFallen.class, SpinelessThug.class, SkyshroudBehemoth.class, Daze.class})
 class VolrathTheFallenTest extends BaseCardTest {
 
     @Test
@@ -24,23 +27,47 @@ class VolrathTheFallenTest extends BaseCardTest {
         Permanent volrath = addReadyVolrath(player1);
         int basePower = gqs.getEffectivePower(gd, volrath);
         int baseToughness = gqs.getEffectiveToughness(gd, volrath);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SpinelessThug()));
         addActivationMana();
 
         harness.activateAbility(player1, 0, 0, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Spineless Thug");
         assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    @DisplayName("Each activation uses the discarded creature's mana value and accumulates")
+    void repeatedActivationsAccumulateDiscardedManaValues() {
+        Permanent volrath = addReadyVolrath(player1);
+        int basePower = gqs.getEffectivePower(gd, volrath);
+        int baseToughness = gqs.getEffectiveToughness(gd, volrath);
+        harness.setHand(player1, List.of(new SpinelessThug(), new SkyshroudBehemoth()));
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spineless Thug");
+        harness.assertInGraveyard(player1, "Skyshroud Behemoth");
+        assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(basePower + 2 + 7);
+        assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(baseToughness + 2 + 7);
     }
 
     @Test
     @DisplayName("Only creature cards are valid for the discard cost")
     void onlyCreatureCardsAreValid() {
         addReadyVolrath(player1);
-        harness.setHand(player1, List.of(new LightningBolt(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Daze(), new SpinelessThug()));
         addActivationMana();
 
         harness.activateAbility(player1, 0, 0, null);
@@ -54,7 +81,7 @@ class VolrathTheFallenTest extends BaseCardTest {
     @DisplayName("Cannot activate without a creature card to discard")
     void cannotActivateWithoutCreatureCard() {
         addReadyVolrath(player1);
-        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player1, List.of(new Daze()));
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
@@ -66,7 +93,7 @@ class VolrathTheFallenTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent volrath = addReadyVolrath(player1);
         int basePower = gqs.getEffectivePower(gd, volrath);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SpinelessThug()));
         addActivationMana();
 
         harness.activateAbility(player1, 0, 0, null);

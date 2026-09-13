@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "11")
+@CardRegistration(set = "MM2", collectorNumber = "19")
 public class IndomitableArchangel extends Card {
 
     public IndomitableArchangel() {

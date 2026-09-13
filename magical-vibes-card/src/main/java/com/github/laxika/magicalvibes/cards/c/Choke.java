@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "237")
 @CardRegistration(set = "TMP", collectorNumber = "219")
+@CardRegistration(set = "MP2", collectorNumber = "50")
 public class Choke extends Card {
 
     public Choke() {

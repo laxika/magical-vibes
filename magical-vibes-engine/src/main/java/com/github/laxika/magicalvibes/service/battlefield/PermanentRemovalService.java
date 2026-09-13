@@ -882,6 +882,7 @@ public class PermanentRemovalService {
     public boolean removeOrphanedAuras(GameData gameData) {
         var result = auraAttachmentService.removeOrphanedAuras(gameData);
         for (var removal : result.removals()) {
+            triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
@@ -897,6 +898,7 @@ public class PermanentRemovalService {
     public boolean enforceAttachmentLegality(GameData gameData) {
         var result = auraAttachmentService.enforceAttachmentLegality(gameData);
         for (var removal : result.removals()) {
+            triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
