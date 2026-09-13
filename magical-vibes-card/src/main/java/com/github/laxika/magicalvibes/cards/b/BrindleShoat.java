@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PC2", collectorNumber = "60")
+@CardRegistration(set = "PCA", collectorNumber = "60")
 public class BrindleShoat extends Card {
 
     public BrindleShoat() {

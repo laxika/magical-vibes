@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PC2", collectorNumber = "64")
+@CardRegistration(set = "PCA", collectorNumber = "64")
 public class DreampodDruid extends Card {
 
     public DreampodDruid() {
