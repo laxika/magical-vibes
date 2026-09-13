@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "RAV", collectorNumber = "239")
+@CardRegistration(set = "GK1", collectorNumber = "122")
 public class Watchwolf extends Card {
 }

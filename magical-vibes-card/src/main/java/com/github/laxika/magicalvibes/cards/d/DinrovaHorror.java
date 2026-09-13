@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  */
 @CardRegistration(set = "GTC", collectorNumber = "155")
 @CardRegistration(set = "MM3", collectorNumber = "160")
+@CardRegistration(set = "GK1", collectorNumber = "14")
 public class DinrovaHorror extends Card {
 
     public DinrovaHorror() {

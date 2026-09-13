@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "101")
+@CardRegistration(set = "GK1", collectorNumber = "7")
 public class RibbonsOfNight extends Card {
 
     public RibbonsOfNight() {

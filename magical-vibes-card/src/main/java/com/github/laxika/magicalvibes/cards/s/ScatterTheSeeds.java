@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "181")
 @CardRegistration(set = "MM2", collectorNumber = "159")
+@CardRegistration(set = "GK1", collectorNumber = "106")
 public class ScatterTheSeeds extends Card {
 
     public ScatterTheSeeds() {

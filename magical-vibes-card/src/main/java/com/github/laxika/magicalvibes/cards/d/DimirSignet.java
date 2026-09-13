@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "260")
 @CardRegistration(set = "MM3", collectorNumber = "219")
+@CardRegistration(set = "GK1", collectorNumber = "22")
 public class DimirSignet extends Card {
 
     public DimirSignet() {

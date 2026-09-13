@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "170")
+@CardRegistration(set = "GK1", collectorNumber = "39")
 public class HypersonicDragon extends Card {
 
     public HypersonicDragon() {

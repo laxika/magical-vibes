@@ -24,6 +24,7 @@ import java.util.List;
  * per CR 702.96b, chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "93")
+@CardRegistration(set = "GK1", collectorNumber = "29")
 public class Electrickery extends Card {
 
     public Electrickery() {

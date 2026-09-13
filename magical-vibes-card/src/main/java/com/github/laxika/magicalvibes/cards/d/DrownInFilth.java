@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DGM", collectorNumber = "67")
+@CardRegistration(set = "GK1", collectorNumber = "60")
 public class DrownInFilth extends Card {
 
     public DrownInFilth() {
