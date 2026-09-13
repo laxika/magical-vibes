@@ -6,12 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "UDS", collectorNumber = "85")
 public class GoblinMarshal extends Card {
@@ -25,10 +23,6 @@ public class GoblinMarshal extends Card {
         addEffect(EffectSlot.ON_DEATH, goblinTokens);
 
         // Echo {4}{R}{R}.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new ForcedCostOrElseEffect(
-                        new PayManaCost("{4}{R}{R}"),
-                        List.of(new SacrificeSelfEffect()),
-                        true));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
     }
 }

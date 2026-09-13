@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "116")
+@CardRegistration(set = "IMA", collectorNumber = "121")
 public class CoordinatedAssault extends Card {
 
     public CoordinatedAssault() {

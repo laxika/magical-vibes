@@ -60,6 +60,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(weaponsmith.getPowerModifier()).isEqualTo(4);

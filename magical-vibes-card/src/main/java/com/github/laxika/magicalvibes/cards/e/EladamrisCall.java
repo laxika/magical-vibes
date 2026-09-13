@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "PLS", collectorNumber = "106")
+@CardRegistration(set = "A25", collectorNumber = "203")
 public class EladamrisCall extends Card {
 
     public EladamrisCall() {

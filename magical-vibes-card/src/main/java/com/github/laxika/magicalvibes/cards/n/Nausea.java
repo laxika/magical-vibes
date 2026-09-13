@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 @CardRegistration(set = "8ED", collectorNumber = "148")
 @CardRegistration(set = "7ED", collectorNumber = "148")
 @CardRegistration(set = "EXO", collectorNumber = "67")
+@CardRegistration(set = "EMA", collectorNumber = "97")
 public class Nausea extends Card {
 
     public Nausea() {

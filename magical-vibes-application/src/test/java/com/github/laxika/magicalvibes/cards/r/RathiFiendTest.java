@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianProwler;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudRidgeback;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RathiFiend.class, RathiIntimidator.class, SkyshroudRidgeback.class, PhyrexianProwler.class})
 class RathiFiendTest extends BaseCardTest {
 
     @Test
@@ -34,11 +35,9 @@ class RathiFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability puts a qualifying Mercenary permanent onto the battlefield")
     void searchesMercenaryPermanentWithManaValueAtMostThree() {
-        addCreatureReady(player1, new RathiFiend());
+        var fiend = addCreatureReady(player1, new RathiFiend());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new DauthiMercenary(), new GrizzlyBears(), new HillGiant()));
+        harness.setLibrary(player1, List.of(new RathiIntimidator(), new SkyshroudRidgeback(), new PhyrexianProwler()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -48,12 +47,13 @@ class RathiFiendTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards())
                 .extracting(Card::getName)
-                .containsExactly("Dauthi Mercenary");
+                .containsExactly("Rathi Intimidator");
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        harness.assertOnBattlefield(player1, "Dauthi Mercenary");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        assertThat(fiend.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Rathi Intimidator");
+        harness.assertNotOnBattlefield(player1, "Skyshroud Ridgeback");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Prowler");
     }
 }

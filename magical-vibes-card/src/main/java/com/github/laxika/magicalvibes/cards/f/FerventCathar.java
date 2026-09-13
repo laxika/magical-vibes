@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AVR", collectorNumber = "135")
+@CardRegistration(set = "EMA", collectorNumber = "129")
 public class FerventCathar extends Card {
 
     public FerventCathar() {

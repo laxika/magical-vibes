@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "58")
+@CardRegistration(set = "MM3", collectorNumber = "41")
 public class GraspOfPhantoms extends Card {
 
     public GraspOfPhantoms() {

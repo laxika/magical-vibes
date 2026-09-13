@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEff
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "288")
+@CardRegistration(set = "VMA", collectorNumber = "268")
 public class FlowstoneSculpture extends Card {
 
     public FlowstoneSculpture() {

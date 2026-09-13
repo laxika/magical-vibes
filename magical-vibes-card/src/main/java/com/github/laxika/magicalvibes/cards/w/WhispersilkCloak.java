@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DST", collectorNumber = "160")
 @CardRegistration(set = "DDE", collectorNumber = "23")
 @CardRegistration(set = "PC2", collectorNumber = "115")
+@CardRegistration(set = "PCA", collectorNumber = "115")
 public class WhispersilkCloak extends Card {
 
     public WhispersilkCloak() {

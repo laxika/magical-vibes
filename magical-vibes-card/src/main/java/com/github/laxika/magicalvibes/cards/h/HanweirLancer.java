@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "138")
+@CardRegistration(set = "MM3", collectorNumber = "97")
 public class HanweirLancer extends Card {
 
     public HanweirLancer() {

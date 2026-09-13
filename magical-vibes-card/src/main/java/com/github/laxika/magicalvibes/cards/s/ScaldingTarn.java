@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "223")
 @CardRegistration(set = "EXP", collectorNumber = "22")
+@CardRegistration(set = "MM3", collectorNumber = "244")
 public class ScaldingTarn extends Card {
 
     public ScaldingTarn() {

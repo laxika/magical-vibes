@@ -22,8 +22,7 @@ public class OrcishSettlers extends Card {
                 new PermanentPredicateTargetFilter(
                         new PermanentIsLandPredicate(),
                         "Targets must be lands"
-                ),
-                null, null, null, List.of(), 100, 100)
-                .withXScaledTargets());
+                ))
+                .withExactXTargets());
     }
 }

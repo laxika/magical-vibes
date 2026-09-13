@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "50")
+@CardRegistration(set = "MM3", collectorNumber = "57")
 public class WingSplicer extends Card {
 
     public WingSplicer() {

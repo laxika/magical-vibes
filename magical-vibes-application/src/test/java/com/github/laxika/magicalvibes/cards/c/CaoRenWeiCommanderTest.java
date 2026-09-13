@@ -37,8 +37,7 @@ class CaoRenWeiCommanderTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WuInfantry());
         Permanent caoRen = addCreatureReady(player1, new CaoRenWeiCommander());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

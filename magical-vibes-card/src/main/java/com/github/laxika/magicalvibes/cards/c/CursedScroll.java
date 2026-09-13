@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "281")
 @CardRegistration(set = "TPR", collectorNumber = "220")
+@CardRegistration(set = "VMA", collectorNumber = "267")
 public class CursedScroll extends Card {
 
     public CursedScroll() {

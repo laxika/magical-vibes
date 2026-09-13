@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "11")
+@CardRegistration(set = "A25", collectorNumber = "21")
 public class KorFirewalker extends Card {
 
     public KorFirewalker() {

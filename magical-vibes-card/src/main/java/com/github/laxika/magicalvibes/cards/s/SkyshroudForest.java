@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "326")
 @CardRegistration(set = "TPR", collectorNumber = "244")
+@CardRegistration(set = "VMA", collectorNumber = "315")
 public class SkyshroudForest extends Card {
 
     public SkyshroudForest() {

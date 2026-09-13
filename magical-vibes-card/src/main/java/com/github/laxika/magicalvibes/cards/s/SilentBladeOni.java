@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromTargetPlayerHandWithoutPayingManaCostEffect;
 
 @CardRegistration(set = "PC2", collectorNumber = "105")
+@CardRegistration(set = "PCA", collectorNumber = "105")
 public class SilentBladeOni extends Card {
 
     public SilentBladeOni() {

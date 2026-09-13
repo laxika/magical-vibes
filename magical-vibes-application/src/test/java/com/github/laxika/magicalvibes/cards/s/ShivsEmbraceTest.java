@@ -80,7 +80,7 @@ class ShivsEmbraceTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         // 2 base + 2 aura + 1 firebreathing = 5 power
@@ -97,11 +97,11 @@ class ShivsEmbraceTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         // 2 base + 2 aura + 3 firebreathing = 7 power
@@ -117,9 +117,9 @@ class ShivsEmbraceTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
@@ -139,7 +139,7 @@ class ShivsEmbraceTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GoblinRaider());
         addAttachedEmbrace(creature);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -152,7 +152,7 @@ class ShivsEmbraceTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isFalse();

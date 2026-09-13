@@ -80,9 +80,7 @@ class CurtainOfLightTest extends BaseCardTest {
         Permanent blockedAttacker = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
-        declareAttackers(List.of(0, 1));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
         giveSpell();

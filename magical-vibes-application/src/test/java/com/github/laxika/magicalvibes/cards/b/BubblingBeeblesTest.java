@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.Attrition;
+import com.github.laxika.magicalvibes.cards.w.WildColos;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +14,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Attrition.class, BubblingBeebles.class, WildColos.class})
 class BubblingBeeblesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Bubbling Beebles can't be blocked when defending player controls an enchantment")
     void cantBeBlockedWhenDefenderControlsEnchantment() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Attrition());
+        Permanent blocker = addCreatureReady(player2, new WildColos());
         Permanent beebles = attackingBeebles();
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -37,10 +36,26 @@ class BubblingBeeblesTest extends BaseCardTest {
     @Test
     @DisplayName("Bubbling Beebles can be blocked when defending player controls no enchantments")
     void canBeBlockedWhenDefenderControlsNoEnchantment() {
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new WildColos());
         Permanent beebles = attackingBeebles();
 
-        beginBlockers();
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(beebles))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bubbling Beebles can be blocked when only its controller controls an enchantment")
+    void canBeBlockedWhenOnlyAttackerControlsEnchantment() {
+        harness.addToBattlefield(player1, new Attrition());
+        Permanent blocker = addCreatureReady(player2, new WildColos());
+        Permanent beebles = attackingBeebles();
+
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -55,10 +70,7 @@ class BubblingBeeblesTest extends BaseCardTest {
         harness.setLife(player2, 20);
         attackingBeebles();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -69,19 +81,5 @@ class BubblingBeeblesTest extends BaseCardTest {
         beebles.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(beebles);
         return beebles;
-    }
-
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

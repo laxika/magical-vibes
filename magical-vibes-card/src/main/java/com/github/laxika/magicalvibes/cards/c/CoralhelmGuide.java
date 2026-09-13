@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "74")
+@CardRegistration(set = "A25", collectorNumber = "49")
 public class CoralhelmGuide extends Card {
 
     public CoralhelmGuide() {

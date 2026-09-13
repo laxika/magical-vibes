@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "88")
+@CardRegistration(set = "A25", collectorNumber = "107")
 public class RuthlessRipper extends Card {
 
     public RuthlessRipper() {

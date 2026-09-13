@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "151")
 @CardRegistration(set = "ONS", collectorNumber = "205")
+@CardRegistration(set = "VMA", collectorNumber = "170")
 public class GoblinPiledriver extends Card {
 
     public GoblinPiledriver() {

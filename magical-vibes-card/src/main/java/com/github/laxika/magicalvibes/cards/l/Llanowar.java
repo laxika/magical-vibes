@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "OHOP", collectorNumber = "22")
+@CardRegistration(set = "OPCA", collectorNumber = "48")
 public class Llanowar extends Card {
 
     public Llanowar() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "70")
 @CardRegistration(set = "DDM", collectorNumber = "4")
+@CardRegistration(set = "A25", collectorNumber = "69")
 public class PhantasmalBear extends Card {
 
     public PhantasmalBear() {

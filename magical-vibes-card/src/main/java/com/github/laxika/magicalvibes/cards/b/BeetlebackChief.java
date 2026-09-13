@@ -10,8 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "VMA", collectorNumber = "150")
 @CardRegistration(set = "PC2", collectorNumber = "40")
 @CardRegistration(set = "DDN", collectorNumber = "14")
+@CardRegistration(set = "EMA", collectorNumber = "119")
+@CardRegistration(set = "PCA", collectorNumber = "40")
 public class BeetlebackChief extends Card {
 
     public BeetlebackChief() {

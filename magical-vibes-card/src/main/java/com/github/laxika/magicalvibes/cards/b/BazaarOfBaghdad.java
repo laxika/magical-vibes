@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "VMA", collectorNumber = "294")
 @CardRegistration(set = "ME3", collectorNumber = "205")
 public class BazaarOfBaghdad extends Card {
 

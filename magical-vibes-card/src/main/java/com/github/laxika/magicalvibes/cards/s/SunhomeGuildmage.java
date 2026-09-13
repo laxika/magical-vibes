@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "200")
+@CardRegistration(set = "MM3", collectorNumber = "191")
 public class SunhomeGuildmage extends Card {
 
     public SunhomeGuildmage() {

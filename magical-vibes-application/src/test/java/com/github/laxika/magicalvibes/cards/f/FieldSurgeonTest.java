@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FieldSurgeon.class, GrizzlyBears.class, ProdigalPyromancer.class, Forest.class})
 class FieldSurgeonTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,20 @@ class FieldSurgeonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May tap itself to pay the cost and target a creature it controls")
+    void canTapItselfToPayCostAndTargetOwnCreature() {
+        Permanent surgeon = addCreatureReady(player1, new FieldSurgeon());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+
+        harness.activateAbility(player1, indexOf(player1, surgeon), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(surgeon.isTapped()).isTrue();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot activate without an untapped creature to tap")
     void requiresUntappedCreatureToTap() {
         Permanent surgeon = addSurgeonWithCostCreature();
@@ -50,8 +66,7 @@ class FieldSurgeonTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent surgeon = addSurgeonWithCostCreature();
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(forest);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         UUID forestId = forest.getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, surgeon), null, forestId))

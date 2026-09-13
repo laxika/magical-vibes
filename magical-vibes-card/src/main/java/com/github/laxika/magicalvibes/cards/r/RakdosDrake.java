@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
  * has a +1/+1 counter on it".
  */
 @CardRegistration(set = "DGM", collectorNumber = "28")
+@CardRegistration(set = "IMA", collectorNumber = "103")
 public class RakdosDrake extends Card {
 
     public RakdosDrake() {

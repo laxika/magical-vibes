@@ -92,8 +92,7 @@ class BreachTest extends BaseCardTest {
         Permanent attacker = castBreachOn(new GorillaWarrior());
         Permanent blocker = addCreatureReady(player2, new CoralMerfolk());
 
-        declareAttackers(List.of(indexOf(player1, attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, attacker)))))

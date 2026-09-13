@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "MIR", collectorNumber = "203")
 @CardRegistration(set = "BRB", collectorNumber = "97")
 @CardRegistration(set = "TSB", collectorNumber = "72")
+@CardRegistration(set = "EMA", collectorNumber = "153")
 public class WildfireEmissary extends Card {
 
     public WildfireEmissary() {

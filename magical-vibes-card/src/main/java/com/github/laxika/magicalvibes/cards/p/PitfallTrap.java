@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "32")
+@CardRegistration(set = "MM3", collectorNumber = "18")
 public class PitfallTrap extends Card {
 
     public PitfallTrap() {

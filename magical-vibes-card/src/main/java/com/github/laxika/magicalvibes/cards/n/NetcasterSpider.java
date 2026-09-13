@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordE
 @CardRegistration(set = "M20", collectorNumber = "184")
 @CardRegistration(set = "OGW", collectorNumber = "137")
 @CardRegistration(set = "DDO", collectorNumber = "49")
+@CardRegistration(set = "IMA", collectorNumber = "178")
 public class NetcasterSpider extends Card {
 
     public NetcasterSpider() {

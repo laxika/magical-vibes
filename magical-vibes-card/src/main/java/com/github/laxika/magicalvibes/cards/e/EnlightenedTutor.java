@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "19")
 @CardRegistration(set = "MIR", collectorNumber = "14")
+@CardRegistration(set = "EMA", collectorNumber = "9")
 public class EnlightenedTutor extends Card {
 
     public EnlightenedTutor() {

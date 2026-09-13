@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "13")
+@CardRegistration(set = "OPCA", collectorNumber = "30")
 public class Goldmeadow extends Card {
 
     public Goldmeadow() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "DIS", collectorNumber = "99")
+@CardRegistration(set = "A25", collectorNumber = "192")
 public class UtopiaSprawl extends Card {
 
     public UtopiaSprawl() {

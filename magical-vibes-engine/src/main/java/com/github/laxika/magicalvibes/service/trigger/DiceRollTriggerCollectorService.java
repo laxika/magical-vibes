@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -34,11 +35,14 @@ public class DiceRollTriggerCollectorService {
                                                TriggerContext context) {
         if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
                 && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+                match.permanent() == null
+                        ? ConditionContext.forCard(match.sourceCard(), match.controllerId())
+                        : ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
             return false;
         }
 
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
+        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         TargetSpec targetSpec = effect.targetSpec();
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                 || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
@@ -53,7 +57,7 @@ public class DiceRollTriggerCollectorService {
                     !targetSpec.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilter,
                     0,
-                    match.permanent().getId()));
+                    sourcePermanentId));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers on controller rolling dice and awaits a target",
                     match.gameData().id, sourceCard.getName());
@@ -67,9 +71,12 @@ public class DiceRollTriggerCollectorService {
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId());
+                sourcePermanentId);
         if (context instanceof TriggerContext.DiceRoll diceRoll && !diceRoll.planar()) {
             entry.setEventValue(diceRoll.result());
+        }
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
         }
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

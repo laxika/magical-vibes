@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "27")
 @CardRegistration(set = "S99", collectorNumber = "20")
 @CardRegistration(set = "DDF", collectorNumber = "5")
+@CardRegistration(set = "A25", collectorNumber = "22")
 public class LoyalSentry extends Card {
 
     public LoyalSentry() {

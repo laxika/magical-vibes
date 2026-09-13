@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCards
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "18")
+@CardRegistration(set = "OPCA", collectorNumber = "34")
 public class GroveOfTheDreampods extends Card {
 
     public GroveOfTheDreampods() {

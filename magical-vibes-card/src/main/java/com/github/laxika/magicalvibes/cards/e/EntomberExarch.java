@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "59")
+@CardRegistration(set = "MM3", collectorNumber = "68")
 public class EntomberExarch extends Card {
 
     public EntomberExarch() {

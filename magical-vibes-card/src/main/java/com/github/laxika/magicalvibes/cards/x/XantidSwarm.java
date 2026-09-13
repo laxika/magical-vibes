@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsThisTurnEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "135")
+@CardRegistration(set = "EMA", collectorNumber = "193")
 public class XantidSwarm extends Card {
 
     public XantidSwarm() {
