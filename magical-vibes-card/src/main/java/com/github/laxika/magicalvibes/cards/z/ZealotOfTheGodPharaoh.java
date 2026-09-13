@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "207")
 @CardRegistration(set = "AKR", collectorNumber = "181")
+@CardRegistration(set = "GN2", collectorNumber = "45")
 public class ZealotOfTheGodPharaoh extends Card {
 
     public ZealotOfTheGodPharaoh() {

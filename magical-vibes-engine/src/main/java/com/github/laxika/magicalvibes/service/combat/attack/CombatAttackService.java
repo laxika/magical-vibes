@@ -1980,6 +1980,7 @@ public class CombatAttackService {
                                 perm.getId()
                         );
                         anyAttackTrigger.setNonTargeting(true);
+                        anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                         gameData.stack.add(anyAttackTrigger);
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
