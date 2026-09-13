@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "80")
+@CardRegistration(set = "GK2", collectorNumber = "15")
 public class LaviniaOfTheTenth extends Card {
 
     public LaviniaOfTheTenth() {

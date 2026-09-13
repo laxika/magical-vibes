@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "145")
+@CardRegistration(set = "GK2", collectorNumber = "8")
 public class AzoriusCharm extends Card {
 
     public AzoriusCharm() {

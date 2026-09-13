@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "100")
+@CardRegistration(set = "GK2", collectorNumber = "98")
 public class SavagebornHydra extends Card {
 
     public SavagebornHydra() {

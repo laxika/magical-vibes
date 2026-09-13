@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
 
 @CardRegistration(set = "DGM", collectorNumber = "82")
+@CardRegistration(set = "GK2", collectorNumber = "66")
 public class MasterOfCruelties extends Card {
 
     public MasterOfCruelties() {
