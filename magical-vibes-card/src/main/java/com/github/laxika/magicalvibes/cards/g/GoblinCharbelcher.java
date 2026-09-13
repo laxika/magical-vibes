@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilLandBottomThenDama
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "176")
+@CardRegistration(set = "DDT", collectorNumber = "57")
 public class GoblinCharbelcher extends Card {
 
     public GoblinCharbelcher() {
