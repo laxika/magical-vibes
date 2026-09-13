@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "110")
 @CardRegistration(set = "SS3", collectorNumber = "1")
+@CardRegistration(set = "Q06", collectorNumber = "6")
 public class ChandraTorchOfDefiance extends Card {
 
     public ChandraTorchOfDefiance() {
