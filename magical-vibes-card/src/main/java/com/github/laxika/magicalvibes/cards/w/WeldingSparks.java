@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "140")
+@CardRegistration(set = "DDU", collectorNumber = "49")
 public class WeldingSparks extends Card {
 
     public WeldingSparks() {

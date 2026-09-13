@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "136")
+@CardRegistration(set = "EMA", collectorNumber = "233")
 public class TickingGnomes extends Card {
 
     public TickingGnomes() {

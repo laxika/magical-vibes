@@ -114,7 +114,7 @@ class AuraAttachmentServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(aura);
             assertThat(result.removals()).containsExactly(
-                    new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id));
+                    new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id, aura));
             verify(graveyardService).addCardToGraveyard(
                     gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura);
         }

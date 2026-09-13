@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingLands;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TaskMageAssembly.class, GrizzlyBears.class, LivingLands.class, Forest.class})
 class TaskMageAssemblyTest extends BaseCardTest {
 
     @Test
@@ -28,6 +32,43 @@ class TaskMageAssemblyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Task Mage Assembly");
         harness.assertInGraveyard(player1, "Task Mage Assembly");
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice itself while a creature is on the opponent's battlefield")
+    void doesNotSacrificeWhileCreatureIsOnOpponentsBattlefield() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Task Mage Assembly");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself even if a creature enters before its state trigger resolves")
+    void sacrificesEvenIfCreatureEntersBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Task Mage Assembly");
+        harness.assertInGraveyard(player1, "Task Mage Assembly");
+    }
+
+    @Test
+    @DisplayName("Counts a Forest animated into a creature by Living Lands")
+    void countsAnAnimatedForestAsACreature() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        harness.addToBattlefield(player1, new LivingLands());
+        harness.addToBattlefield(player1, new Forest());
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Task Mage Assembly");
     }
 
     @Test

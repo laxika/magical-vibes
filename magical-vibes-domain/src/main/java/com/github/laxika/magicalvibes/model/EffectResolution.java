@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -562,11 +563,11 @@ public final class EffectResolution {
     }
 
     /**
-     * True when any spell or battlefield-entry effect reads {@link ManaSpentToCast} — the cast path
+     * True when any spell, self-cast, or battlefield-entry effect reads {@link ManaSpentToCast} — the cast path
      * must snapshot total mana spent into the stack entry's {@code xValue}.
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
-        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
+        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_SELF_CAST, EffectSlot.ON_ENTER_BATTLEFIELD)
                 .flatMap(slot -> card.getEffects(slot).stream())
                 .anyMatch(EffectResolution::effectUsesManaSpentToCast);
     }
@@ -588,6 +589,9 @@ public final class EffectResolution {
         }
         if (e instanceof ReturnCardFromGraveyardEffect returnEffect) {
             return returnEffect.dynamicMaxManaValue() instanceof ManaSpentToCast;
+        }
+        if (e instanceof CreateTokenEffect createToken) {
+            return createToken.amount() instanceof ManaSpentToCast;
         }
         return false;
     }

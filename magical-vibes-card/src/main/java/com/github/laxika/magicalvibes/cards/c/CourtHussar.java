@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "22")
+@CardRegistration(set = "A25", collectorNumber = "51")
 public class CourtHussar extends Card {
 
     public CourtHussar() {

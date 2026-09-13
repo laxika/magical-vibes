@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "84")
+@CardRegistration(set = "MM3", collectorNumber = "62")
 public class CowerInFear extends Card {
 
     public CowerInFear() {

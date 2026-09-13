@@ -80,8 +80,7 @@ class PhyrexianColossusTest extends BaseCardTest {
             addCreatureReady(player2, new ArgothianSwine());
         }
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))

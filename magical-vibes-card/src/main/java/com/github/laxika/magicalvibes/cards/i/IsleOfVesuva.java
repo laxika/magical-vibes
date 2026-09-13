@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "18")
+@CardRegistration(set = "OPCA", collectorNumber = "39")
 public class IsleOfVesuva extends Card {
 
     public IsleOfVesuva() {

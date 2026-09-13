@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffec
 
 @CardRegistration(set = "AVR", collectorNumber = "80")
 @CardRegistration(set = "DDQ", collectorNumber = "29")
+@CardRegistration(set = "MM3", collectorNumber = "53")
 public class TandemLookout extends Card {
 
     public TandemLookout() {

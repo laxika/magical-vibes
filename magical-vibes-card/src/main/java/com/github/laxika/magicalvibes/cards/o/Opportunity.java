@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "M14", collectorNumber = "66")
 @CardRegistration(set = "ULG", collectorNumber = "37")
 @CardRegistration(set = "BRB", collectorNumber = "47")
+@CardRegistration(set = "MM3", collectorNumber = "45")
 public class Opportunity extends Card {
 
     public Opportunity() {

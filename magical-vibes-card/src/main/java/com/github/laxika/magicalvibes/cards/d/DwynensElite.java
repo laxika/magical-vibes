@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "173")
 @CardRegistration(set = "FDN", collectorNumber = "218")
+@CardRegistration(set = "DDU", collectorNumber = "3")
 public class DwynensElite extends Card {
 
     public DwynensElite() {

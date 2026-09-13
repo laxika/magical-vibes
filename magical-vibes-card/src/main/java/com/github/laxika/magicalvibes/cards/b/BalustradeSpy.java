@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "57")
+@CardRegistration(set = "IMA", collectorNumber = "80")
 public class BalustradeSpy extends Card {
 
     public BalustradeSpy() {

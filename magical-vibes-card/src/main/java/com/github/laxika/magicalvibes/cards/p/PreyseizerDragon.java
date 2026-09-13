@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 
 @CardRegistration(set = "PC2", collectorNumber = "50")
+@CardRegistration(set = "PCA", collectorNumber = "50")
 public class PreyseizerDragon extends Card {
 
     public PreyseizerDragon() {

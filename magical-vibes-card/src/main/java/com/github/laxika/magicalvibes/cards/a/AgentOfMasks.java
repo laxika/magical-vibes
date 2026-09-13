@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
  * lost this way.
  */
 @CardRegistration(set = "GPT", collectorNumber = "100")
+@CardRegistration(set = "MM3", collectorNumber = "149")
 public class AgentOfMasks extends Card {
 
     public AgentOfMasks() {

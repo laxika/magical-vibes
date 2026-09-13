@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "112")
+@CardRegistration(set = "IMA", collectorNumber = "105")
 public class RotfeasterMaggot extends Card {
 
     public RotfeasterMaggot() {

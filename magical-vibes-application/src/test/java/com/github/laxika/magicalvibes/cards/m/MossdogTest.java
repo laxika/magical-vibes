@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FlowstoneStrike;
+import com.github.laxika.magicalvibes.cards.s.SealOfFire;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mossdog.class, FlowstoneStrike.class, SealOfFire.class})
 class MossdogTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,8 @@ class MossdogTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new FlowstoneStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castInstant(player2, 0, mossdogId);
         harness.passBothPriorities();
@@ -44,11 +46,8 @@ class MossdogTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mossdog());
         UUID mossdogId = harness.getPermanentId(player1, "Mossdog");
 
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
-        firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
+        harness.addToBattlefield(player2, new SealOfFire());
 
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.activateAbility(player2, 0, null, mossdogId);
         harness.passBothPriorities();
 
@@ -62,9 +61,23 @@ class MossdogTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mossdog());
         UUID mossdogId = harness.getPermanentId(player1, "Mossdog");
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new FlowstoneStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, mossdogId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Mossdog")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when its controller's own ability targets it")
+    void doesNotTriggerOnOwnAbility() {
+        harness.addToBattlefield(player1, new Mossdog());
+        UUID mossdogId = harness.getPermanentId(player1, "Mossdog");
+        harness.addToBattlefield(player1, new SealOfFire());
+
+        harness.activateAbility(player1, 1, null, mossdogId);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(findPermanent(player1, "Mossdog")

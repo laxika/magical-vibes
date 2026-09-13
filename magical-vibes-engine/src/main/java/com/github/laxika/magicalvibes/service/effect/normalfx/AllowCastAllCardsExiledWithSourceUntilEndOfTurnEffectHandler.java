@@ -34,9 +34,14 @@ public class AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffectHandler
                         || predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))
                 .toList();
         for (Card card : matchingCards) {
-            gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-            gameData.exilePlayAnyManaType.add(card.getId());
+            if (permission.withoutPayingManaCost()) {
+                gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+                        UUID.randomUUID(), sourcePermanentId, entry.getControllerId(), card.getId(), true));
+            } else {
+                gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
+                gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+                gameData.exilePlayAnyManaType.add(card.getId());
+            }
         }
     }
 }

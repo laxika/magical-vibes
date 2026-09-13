@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "66")
+@CardRegistration(set = "EMA", collectorNumber = "103")
 public class PlagueWitch extends Card {
 
     public PlagueWitch() {

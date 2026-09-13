@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "48")
+@CardRegistration(set = "DDU", collectorNumber = "42")
 public class TrophyMage extends Card {
 
     public TrophyMage() {

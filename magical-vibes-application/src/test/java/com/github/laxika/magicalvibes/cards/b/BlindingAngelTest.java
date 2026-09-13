@@ -1,28 +1,21 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlindingAngel.class})
 class BlindingAngelTest extends BaseCardTest {
-
-    private Permanent addReadyCreature(Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
-    }
 
     @Test
     @DisplayName("Dealing combat damage to a player flags them to skip their next combat phase")
     void flagsPlayerOnCombatDamage() {
-        Permanent angel = addReadyCreature(new BlindingAngel());
+        Permanent angel = addCreatureReady(player1, new BlindingAngel());
         angel.setAttacking(true);
         harness.setLife(player2, 20);
 
@@ -40,7 +33,7 @@ class BlindingAngelTest extends BaseCardTest {
     @Test
     @DisplayName("The skip lands on the damaged player, not the trigger's controller, and on no other queue")
     void flagsOnlyTheDamagedPlayersCombatPhase() {
-        Permanent angel = addReadyCreature(new BlindingAngel());
+        Permanent angel = addCreatureReady(player1, new BlindingAngel());
         angel.setAttacking(true);
 
         resolveCombat();
@@ -55,15 +48,13 @@ class BlindingAngelTest extends BaseCardTest {
     @Test
     @DisplayName("No flag when Blinding Angel is blocked and deals no damage to a player")
     void noFlagWhenBlocked() {
-        Permanent angel = addReadyCreature(new BlindingAngel());
+        Permanent angel = addCreatureReady(player1, new BlindingAngel());
         angel.setAttacking(true);
 
-        // Serra Angel (4/4 flier) can legally block and survives the 2 damage
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
+        // A second Blinding Angel (2/4 flier) can legally block and survives the 2 damage.
+        Permanent blocker = addCreatureReady(player2, new BlindingAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombat();
 
@@ -72,9 +63,21 @@ class BlindingAngelTest extends BaseCardTest {
 
     /** Gives player2 a creature that can attack, so normal combat halts in the combat phase. */
     private void addReadyAttackerForPlayer2() {
-        Permanent bear = new Permanent(new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        addCreatureReady(player2, new BlindingAngel());
+    }
+
+    @Test
+    @DisplayName("Separate combat-damage triggers queue separate combat-phase skips")
+    void queuesOneSkipPerTrigger() {
+        Permanent firstAngel = addCreatureReady(player1, new BlindingAngel());
+        Permanent secondAngel = addCreatureReady(player1, new BlindingAngel());
+        firstAngel.setAttacking(true);
+        secondAngel.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test

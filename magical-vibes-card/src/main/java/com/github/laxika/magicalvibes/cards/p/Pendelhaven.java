@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "ATH", collectorNumber = "73")
 @CardRegistration(set = "TSB", collectorNumber = "120")
 @CardRegistration(set = "LEG", collectorNumber = "305")
+@CardRegistration(set = "A25", collectorNumber = "244")
 public class Pendelhaven extends Card {
 
     public Pendelhaven() {

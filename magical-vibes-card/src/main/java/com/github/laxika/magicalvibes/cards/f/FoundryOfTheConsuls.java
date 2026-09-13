@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "247")
+@CardRegistration(set = "DDU", collectorNumber = "66")
 public class FoundryOfTheConsuls extends Card {
 
     public FoundryOfTheConsuls() {

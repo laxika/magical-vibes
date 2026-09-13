@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "USG", collectorNumber = "199")
 @CardRegistration(set = "ROE", collectorNumber = "150")
 @CardRegistration(set = "BRB", collectorNumber = "32")
+@CardRegistration(set = "IMA", collectorNumber = "133")
 public class HeatRay extends Card {
 
     public HeatRay() {

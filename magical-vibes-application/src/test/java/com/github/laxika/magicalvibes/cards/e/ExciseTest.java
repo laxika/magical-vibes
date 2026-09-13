@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Excise.class, DivingGriffin.class})
 class ExciseTest extends BaseCardTest {
 
     @Test
@@ -27,24 +29,26 @@ class ExciseTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Diving Griffin");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getName)
-                .contains("Grizzly Bears");
+                .contains("Diving Griffin");
     }
 
     @Test
     @DisplayName("The attacking creature is exiled automatically when its controller cannot pay")
     void cannotPayAutomaticallyExilesCreature() {
         addAttacker(player1);
-        castExcise(2, harness.getPermanentId(player1, "Grizzly Bears"));
+        castExcise(2, harness.getPermanentId(player1, "Diving Griffin"));
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Diving Griffin");
     }
 
     @Test
@@ -61,7 +65,7 @@ class ExciseTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getName)
-                .doesNotContain("Grizzly Bears");
+                .doesNotContain("Diving Griffin");
     }
 
     @Test
@@ -77,10 +81,26 @@ class ExciseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that stops attacking before resolution is no longer legal")
+    void targetThatStopsAttackingBeforeResolutionIsNoLongerLegal() {
+        Permanent attacker = addAttacker(player1);
+        castExcise(2, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Diving Griffin");
+    }
+
+    @Test
     @DisplayName("Excise cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addAttacker(player1);
-        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new DivingGriffin());
         harness.setHand(player2, List.of(new Excise()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -104,11 +124,9 @@ class ExciseTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner) {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new DivingGriffin());
         attacker.setAttacking(true);
         attacker.setAttackTarget(owner.getId().equals(player1.getId()) ? player2.getId() : player1.getId());
-        gd.playerBattlefields.get(owner.getId()).add(attacker);
         return attacker;
     }
 }

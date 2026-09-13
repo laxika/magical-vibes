@@ -185,6 +185,7 @@ public enum CardSubtype {
     WURM("Wurm"),
     WEIRD("Weird"),
     WORM("Worm"),
+    WHALE("Whale"),
     SATYR("Satyr"),
     JUGGERNAUT("Juggernaut"),
     THOPTER("Thopter"),

@@ -16,6 +16,26 @@ import static org.mockito.Mockito.*;
 
 class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
+    @Test
+    void recordsActualDamageForFollowingEffectsWithoutCountingEarlierDamage() {
+        Card source = createCard("Damage source");
+        Permanent creature = addPermanent(player2Id, createCreature("Creature", 4, 4));
+        StackEntry entry = createEntry(source, player1Id, creature.getId());
+        gd.recordDamageDealtBySource(source.getId(), 5);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(creature, 4);
+        stubNoKeywordsOnSource(entry);
+        when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry,
+                new DealDamageToAnyTargetEffect(2, false).recordingDamageDealt());
+
+        assertThat(entry.getEventValue()).isEqualTo(2);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
     private DealDamageToAnyTargetEffectHandler dealDamageToAnyTargetHandler;
 
     @Override

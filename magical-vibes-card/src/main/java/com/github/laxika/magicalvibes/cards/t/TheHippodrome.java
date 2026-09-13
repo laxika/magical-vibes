@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "16")
+@CardRegistration(set = "OPCA", collectorNumber = "36")
 public class TheHippodrome extends Card {
 
     public TheHippodrome() {

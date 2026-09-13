@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "72")
+@CardRegistration(set = "MM3", collectorNumber = "46")
 public class PhantasmalImage extends Card {
 
     public PhantasmalImage() {

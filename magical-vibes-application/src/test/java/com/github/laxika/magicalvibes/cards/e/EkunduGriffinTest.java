@@ -19,8 +19,7 @@ class EkunduGriffinTest extends BaseCardTest {
         Permanent griffin = addCreatureReady(player1, new EkunduGriffin());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(

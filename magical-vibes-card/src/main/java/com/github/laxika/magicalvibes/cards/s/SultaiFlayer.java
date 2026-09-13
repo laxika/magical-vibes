@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "152")
+@CardRegistration(set = "IMA", collectorNumber = "186")
 public class SultaiFlayer extends Card {
 
     private static final TriggeringPermanentConditionalEffect DEATH_TRIGGER =

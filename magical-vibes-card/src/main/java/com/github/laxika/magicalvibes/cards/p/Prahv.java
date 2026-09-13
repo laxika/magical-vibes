@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsIfAtt
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "31")
+@CardRegistration(set = "OPCA", collectorNumber = "64")
 public class Prahv extends Card {
 
     public Prahv() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredica
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "114")
+@CardRegistration(set = "A25", collectorNumber = "212")
 public class PerniciousDeed extends Card {
 
     public PerniciousDeed() {

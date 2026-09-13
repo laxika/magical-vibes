@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "54")
+@CardRegistration(set = "EMA", collectorNumber = "77")
 public class Wonder extends Card {
 
     public Wonder() {

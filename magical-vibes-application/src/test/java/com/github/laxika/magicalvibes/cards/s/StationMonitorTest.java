@@ -80,8 +80,7 @@ class StationMonitorTest extends BaseCardTest {
         Permanent flyingAttacker = addCreatureReady(player2, new EkunduGriffin());
         Permanent drone = findPermanent(player1, "Drone");
 
-        declareAttackers(player2, List.of(0, 1));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
         int groundAttackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(groundAttacker);

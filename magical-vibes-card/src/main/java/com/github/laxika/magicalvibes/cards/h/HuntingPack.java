@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SCG", collectorNumber = "121")
+@CardRegistration(set = "IMA", collectorNumber = "168")
 public class HuntingPack extends Card {
 
     public HuntingPack() {

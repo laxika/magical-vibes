@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "45")
+@CardRegistration(set = "EMA", collectorNumber = "27")
 public class SecondThoughts extends Card {
 
     public SecondThoughts() {

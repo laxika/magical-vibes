@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesDownToCountEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class EachPlayerSacrificesDownToCountEffectHandler implements NormalEffec
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +45,9 @@ public class EachPlayerSacrificesDownToCountEffectHandler implements NormalEffec
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
         for (UUID playerId : ordered) {
+            if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) {
+                continue;
+            }
             List<Permanent> matching = matching(gameData, playerId, downTo);
             int toSacrifice = matching.size() - downTo.count();
             if (toSacrifice <= 0) {

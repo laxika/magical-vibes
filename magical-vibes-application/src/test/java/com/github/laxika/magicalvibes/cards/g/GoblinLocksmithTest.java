@@ -19,11 +19,11 @@ class GoblinLocksmithTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking makes creatures with defender unable to block this turn")
     void creaturesWithDefenderCannotBlock() {
-        addCreatureReady(player1, new GoblinLocksmith());
+        Permanent locksmith = addCreatureReady(player1, new GoblinLocksmith());
         Permanent wall = addCreatureReady(player2, new WallOfMist());
 
         declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -31,17 +31,18 @@ class GoblinLocksmithTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(wall.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, wall, locksmith,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
     @DisplayName("Attacking does not stop creatures without defender from blocking")
     void creaturesWithoutDefenderCanBlock() {
-        addCreatureReady(player1, new GoblinLocksmith());
+        Permanent locksmith = addCreatureReady(player1, new GoblinLocksmith());
         Permanent elves = addCreatureReady(player2, new LlanowarElves());
 
         declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

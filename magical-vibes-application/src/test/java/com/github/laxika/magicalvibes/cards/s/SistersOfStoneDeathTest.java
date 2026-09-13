@@ -30,8 +30,7 @@ class SistersOfStoneDeathTest extends BaseCardTest {
 
         assertThat(blocker.getMustBlockIds()).contains(sisters.getId());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");

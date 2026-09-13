@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "13")
+@CardRegistration(set = "OPCA", collectorNumber = "20")
 public class EdgeOfMalacol extends Card {
 
     public EdgeOfMalacol() {

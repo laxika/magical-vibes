@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "7")
+@CardRegistration(set = "MM3", collectorNumber = "2")
 public class BanishingStroke extends Card {
 
     public BanishingStroke() {

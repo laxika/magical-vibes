@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "159")
+@CardRegistration(set = "DDU", collectorNumber = "15")
 public class KujarSeedsculptor extends Card {
 
     public KujarSeedsculptor() {

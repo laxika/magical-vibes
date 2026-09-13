@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "79")
+@CardRegistration(set = "EMA", collectorNumber = "116")
 public class Wakedancer extends Card {
 
     public Wakedancer() {

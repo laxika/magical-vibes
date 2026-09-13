@@ -139,14 +139,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void loseTargetPermanentControllerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
-        // targetId is the targeted permanent; the controller of that permanent loses life. Runs
-        // before any accompanying destroy effect so the permanent is still on the battlefield.
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
             return;
         }
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
+            controllerId = entry.getTriggeringPermanentControllerId();
+        }
+        if (controllerId != null) {
+            lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
+        }
     }
 
     private boolean controlsMatching(GameData gameData, UUID playerId, PermanentPredicate predicate) {

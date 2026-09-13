@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BodySnatcher.class, Forest.class, GrizzlyBears.class, Juggernaut.class, WrathOfGod.class})
 class BodySnatcherTest extends BaseCardTest {
 
     @Test
@@ -52,12 +53,30 @@ class BodySnatcherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An artifact creature card satisfies the creature discard requirement")
+    void artifactCreatureCanBeDiscarded() {
+        Card bodySnatcher = new BodySnatcher();
+        harness.castFromHand(player1, bodySnatcher, "{2}{B}{B}");
+        harness.setHand(player1, List.of(new Juggernaut()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(bodySnatcher.getId()));
+        harness.assertInGraveyard(player1, "Juggernaut");
+    }
+
+    @Test
     @DisplayName("With no creature card in hand, the ETB ability exiles Body Snatcher automatically")
     void noCreatureInHandExilesAutomatically() {
         Card bodySnatcher = new BodySnatcher();
-        harness.setHand(player1, List.of(bodySnatcher));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bodySnatcher, "{2}{B}{B}");
         harness.setHand(player1, List.of(new Forest()));
 
         harness.passBothPriorities();
@@ -110,11 +129,33 @@ class BodySnatcherTest extends BaseCardTest {
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bodySnatcher.getId()));
     }
 
+    @Test
+    @DisplayName("The death trigger only targets creature cards in its controller's graveyard")
+    void deathTriggerFiltersToOwnCreatureCards() {
+        Card bodySnatcher = new BodySnatcher();
+        addCreatureReady(player1, bodySnatcher);
+        harness.setGraveyard(player1, List.of(new Forest()));
+        Card opponentCreature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        castWrathOfGod();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(bodySnatcher.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(bodySnatcher.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bodySnatcher.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(opponentCreature.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
+    }
+
     private Card castBodySnatcherWithCreatureInHand() {
         Card bodySnatcher = new BodySnatcher();
-        harness.setHand(player1, List.of(bodySnatcher));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bodySnatcher, "{2}{B}{B}");
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -122,9 +163,7 @@ class BodySnatcherTest extends BaseCardTest {
     }
 
     private void castWrathOfGod() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
     }
 }

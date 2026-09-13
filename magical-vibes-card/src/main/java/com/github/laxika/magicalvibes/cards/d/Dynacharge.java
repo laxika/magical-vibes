@@ -22,6 +22,7 @@ import java.util.List;
  * chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "92")
+@CardRegistration(set = "MM3", collectorNumber = "94")
 public class Dynacharge extends Card {
 
     public Dynacharge() {

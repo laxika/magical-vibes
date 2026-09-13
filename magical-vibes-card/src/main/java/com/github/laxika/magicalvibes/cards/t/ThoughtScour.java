@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "DKA", collectorNumber = "52")
 @CardRegistration(set = "DDM", collectorNumber = "21")
+@CardRegistration(set = "IMA", collectorNumber = "76")
 public class ThoughtScour extends Card {
 
     public ThoughtScour() {

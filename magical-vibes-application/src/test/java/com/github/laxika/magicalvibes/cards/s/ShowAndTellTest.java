@@ -109,7 +109,7 @@ class ShowAndTellTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
 
-        assertThat(findPermanent(player1, "Blanchwood Armor").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(findPermanent(player1, "Blanchwood Armor").getAttachedTo()).isEqualTo(findPermanent(player1, "Coral Merfolk").getId());
     }
 
     private void castShowAndTell() {
@@ -117,5 +117,41 @@ class ShowAndTellTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
+    }
+
+    @Test
+    void choosesAuraAttachmentBeforeEitherPlayersCardEnters() {
+        var first = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        var second = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        Card aura = new BlanchwoodArmor();
+        Card land = new Forest();
+        harness.setHand(player1, List.of(new ShowAndTell(), aura));
+        harness.setHand(player2, List.of(land));
+        castShowAndTell();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(land.getId()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(findPermanent(player1, "Blanchwood Armor").getAttachedTo()).isEqualTo(second.getId());
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    void auraCannotAttachToCreatureEnteringInTheSameBatch() {
+        Card aura = new BlanchwoodArmor();
+        Card creature = new CoralMerfolk();
+        harness.setHand(player1, List.of(new ShowAndTell(), aura));
+        harness.setHand(player2, List.of(creature));
+        castShowAndTell();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
+
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+        harness.assertNotOnBattlefield(player1, "Blanchwood Armor");
+        assertThat(gd.playerHands.get(player1.getId())).contains(aura);
     }
 }
