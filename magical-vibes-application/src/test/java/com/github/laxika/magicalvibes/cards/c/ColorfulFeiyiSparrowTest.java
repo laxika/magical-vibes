@@ -19,10 +19,10 @@ class ColorfulFeiyiSparrowTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a nonflying creature from blocking Colorful Feiyi Sparrow")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
-        addCreatureReady(player1, new ColorfulFeiyiSparrow());
+        Permanent attacker = addCreatureReady(player1, new ColorfulFeiyiSparrow());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
+        attacker.setAttacking(true);
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(

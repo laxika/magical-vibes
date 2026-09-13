@@ -40,7 +40,7 @@ class VividFlyingFishTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent fish = addCreatureReady(player1, new VividFlyingFish());
 
-        declareAttackers(List.of(0));
+        fish.setAttacking(true);
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -56,13 +56,14 @@ class VividFlyingFishTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new SuntailHawk());
         Permanent fish = addCreatureReady(player1, new VividFlyingFish());
 
-        declareAttackers(List.of(0));
+        fish.setAttacking(true);
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(fish)))))
                 .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -71,12 +72,13 @@ class VividFlyingFishTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
         Permanent fish = addCreatureReady(player1, new VividFlyingFish());
 
-        declareAttackers(List.of(0));
+        fish.setAttacking(true);
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(fish)))))
                 .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
