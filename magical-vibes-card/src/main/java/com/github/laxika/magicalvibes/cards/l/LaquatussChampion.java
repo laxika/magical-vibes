@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "67")
+@CardRegistration(set = "A25", collectorNumber = "95")
 public class LaquatussChampion extends Card {
 
     public LaquatussChampion() {

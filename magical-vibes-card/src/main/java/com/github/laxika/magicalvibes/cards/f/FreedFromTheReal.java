@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "38")
+@CardRegistration(set = "A25", collectorNumber = "58")
 public class FreedFromTheReal extends Card {
 
     public FreedFromTheReal() {

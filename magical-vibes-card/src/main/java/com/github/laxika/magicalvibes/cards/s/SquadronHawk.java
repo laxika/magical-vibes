@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "M11", collectorNumber = "33")
+@CardRegistration(set = "A25", collectorNumber = "34")
 public class SquadronHawk extends Card {
 
     public SquadronHawk() {

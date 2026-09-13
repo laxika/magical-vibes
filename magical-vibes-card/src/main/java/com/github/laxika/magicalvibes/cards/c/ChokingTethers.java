@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "74")
+@CardRegistration(set = "A25", collectorNumber = "48")
 public class ChokingTethers extends Card {
 
     public ChokingTethers() {

@@ -685,6 +685,8 @@ public class Card {
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case StateTriggerEffect e -> e.effects().forEach(innerEffect ->
+                    registerEffectTargetIndex(innerEffect, targetIndex));
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);

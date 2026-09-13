@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandThenSacrif
 
 @CardRegistration(set = "6ED", collectorNumber = "67")
 @CardRegistration(set = "MIR", collectorNumber = "66")
+@CardRegistration(set = "A25", collectorNumber = "57")
 public class Flash extends Card {
 
     public Flash() {

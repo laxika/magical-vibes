@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "213")
 @CardRegistration(set = "DDP", collectorNumber = "26")
+@CardRegistration(set = "A25", collectorNumber = "194")
 public class WildheartInvoker extends Card {
 
     public WildheartInvoker() {

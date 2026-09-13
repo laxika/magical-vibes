@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "118")
+@CardRegistration(set = "A25", collectorNumber = "215")
 public class QuicksilverDagger extends Card {
 
     public QuicksilverDagger() {

@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "19")
 @CardRegistration(set = "DDO", collectorNumber = "21")
+@CardRegistration(set = "A25", collectorNumber = "25")
 public class NobleTemplar extends Card {
 
     public NobleTemplar() {

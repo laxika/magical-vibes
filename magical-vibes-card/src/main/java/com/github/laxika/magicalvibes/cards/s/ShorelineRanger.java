@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "51")
+@CardRegistration(set = "A25", collectorNumber = "72")
 public class ShorelineRanger extends Card {
 
     public ShorelineRanger() {
