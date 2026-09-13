@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "489")
+@CardRegistration(set = "GS1", collectorNumber = "12")
 public class AncestorDragon extends Card {
 
     public AncestorDragon() {

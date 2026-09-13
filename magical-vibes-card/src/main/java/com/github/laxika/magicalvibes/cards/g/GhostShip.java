@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "75")
 @CardRegistration(set = "DRK", collectorNumber = "28")
 @CardRegistration(set = "TSB", collectorNumber = "21")
+@CardRegistration(set = "A25", collectorNumber = "60")
 public class GhostShip extends Card {
 
     public GhostShip() {

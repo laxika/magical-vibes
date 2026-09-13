@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "167")
+@CardRegistration(set = "IMA", collectorNumber = "148")
 public class SurrealMemoir extends Card {
 
     public SurrealMemoir() {

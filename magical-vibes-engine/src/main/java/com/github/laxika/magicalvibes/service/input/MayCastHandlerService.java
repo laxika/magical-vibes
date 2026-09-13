@@ -54,6 +54,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -184,13 +185,19 @@ public class MayCastHandlerService {
                                                      boolean publiclyRevealed) {
         Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
-        List<Card> deck = gameData.playerDecks.get(player.getId());
+        UUID libraryOwnerId = ability.effects().stream()
+                .filter(e -> e instanceof RevealTopCardMayPlayFreeEffect)
+                .map(e -> ((RevealTopCardMayPlayFreeEffect) e).libraryOwnerId())
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(player.getId());
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         if (!accepted) {
             switch (notPlayedDestination) {
-                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName,
+                case HAND -> putTopCardIntoHand(gameData, libraryOwnerId, deck, cardToPlay, playerName,
                         publiclyRevealed);
-                case EXILE -> exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
+                case EXILE -> exileTopCardFromLibrary(gameData, libraryOwnerId, deck, cardToPlay, playerName);
                 case BOTTOM_OF_LIBRARY -> bottomTopCardOfLibrary(gameData, deck, cardToPlay, playerName);
                 default -> {
                     // Declined — the card stays on top of the library
@@ -265,12 +272,12 @@ public class MayCastHandlerService {
                 if (validTargets.isEmpty()) {
                     switch (notPlayedDestination) {
                         case HAND -> {
-                            gameData.addCardToHand(player.getId(), cardToPlay);
+                            gameData.addCardToHand(libraryOwnerId, cardToPlay);
                             logCardPutIntoHand(gameData, cardToPlay, playerName, publiclyRevealed);
                         }
                         case EXILE -> {
                             // No valid targets — exile the card instead
-                            exileService.exileCard(gameData, player.getId(), cardToPlay);
+                            exileService.exileCard(gameData, libraryOwnerId, cardToPlay);
                             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and is exiled."));
                             log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
                         }

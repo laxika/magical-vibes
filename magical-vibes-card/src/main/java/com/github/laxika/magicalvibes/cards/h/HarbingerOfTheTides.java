@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "58")
+@CardRegistration(set = "DDT", collectorNumber = "7")
 public class HarbingerOfTheTides extends Card {
 
     public HarbingerOfTheTides() {

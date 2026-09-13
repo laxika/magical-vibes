@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "213")
+@CardRegistration(set = "EMA", collectorNumber = "172")
 public class HondenOfLifesWeb extends Card {
 
     public HondenOfLifesWeb() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "15")
+@CardRegistration(set = "OPCA", collectorNumber = "33")
 public class Grixis extends Card {
 
     public Grixis() {

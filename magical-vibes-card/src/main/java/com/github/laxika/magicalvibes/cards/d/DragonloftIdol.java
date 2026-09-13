@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "237")
+@CardRegistration(set = "IMA", collectorNumber = "215")
 public class DragonloftIdol extends Card {
 
     public DragonloftIdol() {

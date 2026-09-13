@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "88")
+@CardRegistration(set = "IMA", collectorNumber = "83")
 public class BogbrewWitch extends Card {
 
     public BogbrewWitch() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "119")
+@CardRegistration(set = "IMA", collectorNumber = "112")
 public class Ulcerate extends Card {
 
     public Ulcerate() {

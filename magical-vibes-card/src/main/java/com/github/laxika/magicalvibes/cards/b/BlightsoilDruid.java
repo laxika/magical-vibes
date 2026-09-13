@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "59")
+@CardRegistration(set = "EMA", collectorNumber = "80")
 public class BlightsoilDruid extends Card {
 
     public BlightsoilDruid() {

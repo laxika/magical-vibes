@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BRO", collectorNumber = "176")
 @CardRegistration(set = "DTK", collectorNumber = "185")
+@CardRegistration(set = "A25", collectorNumber = "170")
 public class EpicConfrontation extends Card {
 
     public EpicConfrontation() {

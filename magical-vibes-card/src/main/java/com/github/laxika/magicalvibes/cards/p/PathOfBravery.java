@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 
 @CardRegistration(set = "M14", collectorNumber = "26")
+@CardRegistration(set = "IMA", collectorNumber = "26")
 public class PathOfBravery extends Card {
 
     public PathOfBravery() {

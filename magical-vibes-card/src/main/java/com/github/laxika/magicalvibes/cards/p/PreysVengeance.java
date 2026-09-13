@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "205")
+@CardRegistration(set = "IMA", collectorNumber = "182")
 public class PreysVengeance extends Card {
 
     public PreysVengeance() {

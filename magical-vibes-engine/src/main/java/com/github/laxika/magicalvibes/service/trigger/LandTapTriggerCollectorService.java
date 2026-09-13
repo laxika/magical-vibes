@@ -144,9 +144,10 @@ public class LandTapTriggerCollectorService {
         }
         var gameData = match.gameData();
         gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on land tap by {}", gameData.id,
-                match.permanent().getCard().getName(), gameData.playerIdToName.get(lt.tappingPlayerId()));
+                sourceCard.getName(), gameData.playerIdToName.get(lt.tappingPlayerId()));
         return true;
     }
 
@@ -160,7 +161,8 @@ public class LandTapTriggerCollectorService {
                 return null;
             }
         }
-        var sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
+        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -169,9 +171,14 @@ public class LandTapTriggerCollectorService {
                 new ArrayList<>(List.of(new DealDamageToPlayersEffect(
                         trigger.damage(), DamageRecipient.TARGET_PLAYER))),
                 tappingPlayerId,
-                match.permanent().getId());
+                sourcePermanentId);
         entry.setNonTargeting(true);
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        if (match.permanent() != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        }
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        }
         return entry;
     }
 

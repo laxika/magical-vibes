@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 
 @CardRegistration(set = "NPH", collectorNumber = "68")
 @CardRegistration(set = "ONE", collectorNumber = "105")
+@CardRegistration(set = "A25", collectorNumber = "101")
 public class PhyrexianObliterator extends Card {
 
     public PhyrexianObliterator() {

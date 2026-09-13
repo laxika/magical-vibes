@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "173")
+@CardRegistration(set = "IMA", collectorNumber = "155")
 public class AssaultFormation extends Card {
 
     public AssaultFormation() {

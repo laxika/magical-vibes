@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "MRD", collectorNumber = "84")
+@CardRegistration(set = "IMA", collectorNumber = "115")
 public class WrenchMind extends Card {
 
     public WrenchMind() {

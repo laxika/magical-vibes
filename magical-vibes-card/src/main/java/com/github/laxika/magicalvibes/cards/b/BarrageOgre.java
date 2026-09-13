@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "83")
+@CardRegistration(set = "DDU", collectorNumber = "44")
 public class BarrageOgre extends Card {
 
     public BarrageOgre() {

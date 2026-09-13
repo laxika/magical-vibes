@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 @CardRegistration(set = "OHOP", collectorNumber = "33")
+@CardRegistration(set = "OPCA", collectorNumber = "68")
 public class SeaOfSand extends Card {
 
     public SeaOfSand() {

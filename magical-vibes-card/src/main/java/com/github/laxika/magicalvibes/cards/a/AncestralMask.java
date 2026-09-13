@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MMQ", collectorNumber = "229")
+@CardRegistration(set = "EMA", collectorNumber = "157")
 public class AncestralMask extends Card {
 
     public AncestralMask() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WTH", collectorNumber = "16")
 @CardRegistration(set = "JUD", collectorNumber = "13")
+@CardRegistration(set = "IMA", collectorNumber = "23")
 public class GuidedStrike extends Card {
 
     public GuidedStrike() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "SOM", collectorNumber = "9")
 @CardRegistration(set = "TD2", collectorNumber = "12")
+@CardRegistration(set = "EMA", collectorNumber = "12")
 public class GlimmerpointStag extends Card {
 
     public GlimmerpointStag() {

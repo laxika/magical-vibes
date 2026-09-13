@@ -17,6 +17,7 @@ import java.util.List;
  * has for the rest of the turn.
  */
 @CardRegistration(set = "GTC", collectorNumber = "206")
+@CardRegistration(set = "IMA", collectorNumber = "211")
 public class VizkopaGuildmage extends Card {
 
     public VizkopaGuildmage() {

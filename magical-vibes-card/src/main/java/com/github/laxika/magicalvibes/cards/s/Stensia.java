@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "34")
+@CardRegistration(set = "OPCA", collectorNumber = "74")
 public class Stensia extends Card {
 
     public Stensia() {

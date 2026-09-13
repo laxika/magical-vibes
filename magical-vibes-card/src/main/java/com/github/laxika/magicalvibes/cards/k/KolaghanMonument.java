@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "241")
+@CardRegistration(set = "IMA", collectorNumber = "217")
 public class KolaghanMonument extends Card {
 
     public KolaghanMonument() {

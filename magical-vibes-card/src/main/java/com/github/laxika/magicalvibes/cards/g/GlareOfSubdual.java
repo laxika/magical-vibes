@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "207")
+@CardRegistration(set = "EMA", collectorNumber = "202")
 public class GlareOfSubdual extends Card {
 
     public GlareOfSubdual() {
