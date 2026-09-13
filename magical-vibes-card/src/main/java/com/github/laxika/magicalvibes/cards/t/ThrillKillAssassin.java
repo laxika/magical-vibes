@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
  */
 @CardRegistration(set = "RTR", collectorNumber = "81")
 @CardRegistration(set = "GK2", collectorNumber = "54")
+@CardRegistration(set = "IMA", collectorNumber = "111")
 public class ThrillKillAssassin extends Card {
 
     public ThrillKillAssassin() {

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "M11", collectorNumber = "143")
 @CardRegistration(set = "M12", collectorNumber = "142")
 @CardRegistration(set = "ROE", collectorNumber = "148")
+@CardRegistration(set = "DDT", collectorNumber = "49")
 public class GoblinTunneler extends Card {
 
     public GoblinTunneler() {

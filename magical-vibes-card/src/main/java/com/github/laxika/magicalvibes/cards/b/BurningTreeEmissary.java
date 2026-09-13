@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "MM3", collectorNumber = "207")
 @CardRegistration(set = "DDS", collectorNumber = "55")
 @CardRegistration(set = "GK2", collectorNumber = "88")
+@CardRegistration(set = "HA1", collectorNumber = "16")
 public class BurningTreeEmissary extends Card {
 
     public BurningTreeEmissary() {

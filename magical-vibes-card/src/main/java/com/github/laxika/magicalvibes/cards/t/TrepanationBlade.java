@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilTypeMillAndBoostAt
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "235")
+@CardRegistration(set = "IMA", collectorNumber = "231")
 public class TrepanationBlade extends Card {
 
     public TrepanationBlade() {

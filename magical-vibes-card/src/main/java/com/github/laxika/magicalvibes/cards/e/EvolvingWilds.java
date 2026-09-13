@@ -40,6 +40,7 @@ import java.util.List;
 @CardRegistration(set = "DDN", collectorNumber = "32")
 @CardRegistration(set = "DDO", collectorNumber = "58")
 @CardRegistration(set = "DDP", collectorNumber = "31")
+@CardRegistration(set = "IMA", collectorNumber = "235")
 public class EvolvingWilds extends Card {
 
     public EvolvingWilds() {

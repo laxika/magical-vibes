@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "M11", collectorNumber = "13")
 @CardRegistration(set = "M12", collectorNumber = "15")
 @CardRegistration(set = "DDF", collectorNumber = "2")
+@CardRegistration(set = "EMA", collectorNumber = "8")
 public class EliteVanguard extends Card {
 }

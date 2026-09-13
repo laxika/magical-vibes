@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "99")
 @CardRegistration(set = "GK2", collectorNumber = "80")
+@CardRegistration(set = "A25", collectorNumber = "216")
 public class RuricTharTheUnbowed extends Card {
 
     public RuricTharTheUnbowed() {

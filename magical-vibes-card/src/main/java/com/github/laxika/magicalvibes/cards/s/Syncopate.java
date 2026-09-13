@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "RTR", collectorNumber = "54")
 @CardRegistration(set = "VOW", collectorNumber = "83")
 @CardRegistration(set = "FIN", collectorNumber = "80")
+@CardRegistration(set = "GK1", collectorNumber = "3")
 public class Syncopate extends Card {
 
     public Syncopate() {

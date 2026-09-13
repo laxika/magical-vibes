@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "102")
+@CardRegistration(set = "IMA", collectorNumber = "91")
 public class FoulTongueInvocation extends Card {
 
     public FoulTongueInvocation() {

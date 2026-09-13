@@ -55,7 +55,7 @@ class HonorGuardTest extends BaseCardTest {
     // ===== Activate ability =====
 
     @Test
-    @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
+    @DisplayName("Activating ability puts it on the stack")
     void activatingAbilityPutsOnStack() {
         Permanent guardPerm = addHonorGuardReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -67,7 +67,6 @@ class HonorGuardTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard()).isSameAs(guardPerm.getCard());
-        assertThat(entry.getTargetId()).isEqualTo(guardPerm.getId());
     }
 
     @Test
@@ -98,6 +97,20 @@ class HonorGuardTest extends BaseCardTest {
         assertThat(guard.getEffectiveToughness()).isEqualTo(2);
         assertThat(guard.getToughnessModifier()).isEqualTo(1);
         assertThat(guard.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Resolving ability does not boost another creature")
+    void resolvingAbilityOnlyBoostsHonorGuard() {
+        addHonorGuardReady(player1);
+        Permanent wurm = addCreatureReady(player1, new SpinedWurm());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wurm.getEffectivePower()).isEqualTo(5);
+        assertThat(wurm.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test
@@ -138,9 +151,7 @@ class HonorGuardTest extends BaseCardTest {
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
         HonorGuard card = new HonorGuard();
-        Permanent guardPerm = new Permanent(card);
-        // summoningSick is true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(guardPerm);
+        harness.addToBattlefieldAndReturn(player1, card);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -187,20 +198,21 @@ class HonorGuardTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if Honor Guard is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
-        addHonorGuardReady(player1);
+    @DisplayName("Removing Honor Guard before resolution prevents the boost")
+    void abilityDoesNotBoostAfterSourceIsRemoved() {
+        Permanent removedGuard = addHonorGuardReady(player1);
+        Permanent remainingGuard = addHonorGuardReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
         // Remove Honor Guard before resolution
-        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(removedGuard);
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.stack).isEmpty();
+        assertThat(remainingGuard.getEffectivePower()).isEqualTo(1);
+        assertThat(remainingGuard.getEffectiveToughness()).isEqualTo(1);
     }
 
     // ===== Validation errors =====

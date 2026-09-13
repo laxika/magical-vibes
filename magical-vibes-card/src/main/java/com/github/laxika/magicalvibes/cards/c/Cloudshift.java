@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "12")
+@CardRegistration(set = "A25", collectorNumber = "7")
 public class Cloudshift extends Card {
 
     public Cloudshift() {

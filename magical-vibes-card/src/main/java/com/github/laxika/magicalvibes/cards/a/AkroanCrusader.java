@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "111")
+@CardRegistration(set = "UMA", collectorNumber = "121")
 public class AkroanCrusader extends Card {
 
     public AkroanCrusader() {

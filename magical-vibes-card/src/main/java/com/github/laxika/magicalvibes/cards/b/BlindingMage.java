@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "5")
 @CardRegistration(set = "M11", collectorNumber = "8")
+@CardRegistration(set = "IMA", collectorNumber = "13")
 public class BlindingMage extends Card {
 
     public BlindingMage() {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "22")
 @CardRegistration(set = "MMA", collectorNumber = "47")
+@CardRegistration(set = "UMA", collectorNumber = "58")
 public class GlenElendraArchmage extends Card {
 
     public GlenElendraArchmage() {

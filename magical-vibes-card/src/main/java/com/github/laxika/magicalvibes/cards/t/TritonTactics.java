@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "71")
+@CardRegistration(set = "DDT", collectorNumber = "23")
 public class TritonTactics extends Card {
 
     public TritonTactics() {

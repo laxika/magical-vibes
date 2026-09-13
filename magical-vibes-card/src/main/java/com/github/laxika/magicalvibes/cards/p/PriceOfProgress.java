@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "95")
 @CardRegistration(set = "PD2", collectorNumber = "18")
+@CardRegistration(set = "EMA", collectorNumber = "141")
 public class PriceOfProgress extends Card {
 
     public PriceOfProgress() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "193")
+@CardRegistration(set = "UMA", collectorNumber = "233")
 public class PlatinumEmperion extends Card {
 
     public PlatinumEmperion() {

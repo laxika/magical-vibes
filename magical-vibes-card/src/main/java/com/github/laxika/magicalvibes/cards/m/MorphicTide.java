@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MorphicTideEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "3")
+@CardRegistration(set = "OPCA", collectorNumber = "3")
 public class MorphicTide extends Card {
 
     public MorphicTide() {

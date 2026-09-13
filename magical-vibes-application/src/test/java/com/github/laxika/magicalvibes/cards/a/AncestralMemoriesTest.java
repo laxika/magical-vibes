@@ -89,6 +89,31 @@ class AncestralMemoriesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the top seven cards are considered")
+    void onlyTopSevenCardsAreConsidered() {
+        List<Card> cards = sevenCards();
+        Card cardBelowTopSeven = new Island();
+        cards.add(cardBelowTopSeven);
+        setupTopCards(cards);
+
+        AncestralMemories spell = new AncestralMemories();
+        harness.castFromHand(player1, spell, "{2}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        Card chosen0 = cards.get(0);
+        Card chosen1 = cards.get(1);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen0.getId(), chosen1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen0, chosen1)
+                .doesNotContain(cardBelowTopSeven);
+        List<Card> expectedGraveyard = new ArrayList<>(cards.subList(2, 7));
+        expectedGraveyard.add(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(expectedGraveyard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cardBelowTopSeven);
+    }
+
+    @Test
     @DisplayName("With only two cards in library, both go directly to hand (no choice needed)")
     void twoCardsInLibraryBothGoToHand() {
         GameData gd = harness.getGameData();

@@ -124,6 +124,37 @@ class JandorsSaddlebagsTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Resolves if the Saddlebags leaves before resolution")
+    void resolvesIfSourceLeavesBeforeResolution() {
+        addReadySaddlebags(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not untap a target creature that leaves before resolution")
+    void doesNotUntapTargetThatLeavesBeforeResolution() {
+        addReadySaddlebags(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadySaddlebags(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new JandorsSaddlebags());
         perm.setSummoningSick(false);

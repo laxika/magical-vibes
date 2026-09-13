@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDam
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "228")
+@CardRegistration(set = "A25", collectorNumber = "150")
 public class SkirkCommando extends Card {
 
     public SkirkCommando() {

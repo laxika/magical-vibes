@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TOR", collectorNumber = "48")
+@CardRegistration(set = "EMA", collectorNumber = "74")
 public class StupefyingTouch extends Card {
 
     public StupefyingTouch() {

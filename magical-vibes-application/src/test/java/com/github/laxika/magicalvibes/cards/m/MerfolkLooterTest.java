@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MerfolkLooter.class, Forest.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({MerfolkLooter.class, GrizzlyBears.class})
 class MerfolkLooterTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -27,10 +26,7 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("Casting Merfolk Looter puts it on the stack")
     void castingPutsOnStack() {
         MerfolkLooter card = new MerfolkLooter();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{1}{U}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -41,10 +37,7 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("Resolving puts Merfolk Looter onto the battlefield")
     void resolvingPutsOnBattlefield() {
         MerfolkLooter card = new MerfolkLooter();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -67,10 +60,7 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         MerfolkLooter card = new MerfolkLooter();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{1}{U}");
         harness.passBothPriorities();
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
@@ -86,8 +76,6 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
         Permanent looter = addCreatureReady(player1, new MerfolkLooter());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -100,8 +88,6 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("Activating ability taps Merfolk Looter")
     void activatingTapsLooter() {
         Permanent looter = addCreatureReady(player1, new MerfolkLooter());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -113,8 +99,6 @@ class MerfolkLooterTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent looter = addCreatureReady(player1, new MerfolkLooter());
         looter.tap();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -126,8 +110,6 @@ class MerfolkLooterTest extends BaseCardTest {
     void cannotActivateWithSummoningSickness() {
         Permanent looter = harness.addToBattlefieldAndReturn(player1, new MerfolkLooter());
         looter.setSummoningSick(true);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -140,7 +122,7 @@ class MerfolkLooterTest extends BaseCardTest {
     void resolvingDrawsThenPromptsForDiscard() {
         addCreatureReady(player1, new MerfolkLooter());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -158,17 +140,17 @@ class MerfolkLooterTest extends BaseCardTest {
     void completingDiscardMovesToGraveyard() {
         addCreatureReady(player1, new MerfolkLooter());
         GrizzlyBears bears = new GrizzlyBears();
-        Forest drawnCard = new Forest();
+        GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.setLibrary(player1, List.of(drawnCard));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Hand has [GrizzlyBears, Forest], discard the bears at index 0
+        // Hand has [the original card, the drawn card], discard the original at index 0
         harness.handleCardChosen(player1, 0);
 
-        // Hand should have 1 card (the Forest drawn)
+        // Hand should have 1 card (the drawn card)
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         // Graveyard should have the discarded card
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
@@ -182,14 +164,14 @@ class MerfolkLooterTest extends BaseCardTest {
     void canDiscardTheDrawnCard() {
         addCreatureReady(player1, new MerfolkLooter());
         GrizzlyBears bears = new GrizzlyBears();
-        Forest drawnCard = new Forest();
+        GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.setLibrary(player1, List.of(drawnCard));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Hand has [GrizzlyBears, Forest], discard the Forest at index 1
+        // Hand has [the original card, the drawn card], discard the drawn card at index 1
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
@@ -232,7 +214,7 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("With an empty starting hand, discards the card it drew")
     void discardsDrawnCardWhenStartingHandIsEmpty() {
         addCreatureReady(player1, new MerfolkLooter());
-        Forest drawnCard = new Forest();
+        GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
 
@@ -252,8 +234,8 @@ class MerfolkLooterTest extends BaseCardTest {
     @DisplayName("Net card count stays the same after full loot cycle")
     void netCardCountStaysSame() {
         addCreatureReady(player1, new MerfolkLooter());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest()));
-        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -263,6 +245,29 @@ class MerfolkLooterTest extends BaseCardTest {
 
         // Hand size should remain the same (drew 1, discarded 1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Draws and discards only for the ability's controller")
+    void onlyControllerDrawsAndDiscards() {
+        addCreatureReady(player1, new MerfolkLooter());
+        GrizzlyBears ownHand = new GrizzlyBears();
+        GrizzlyBears ownDrawn = new GrizzlyBears();
+        GrizzlyBears opponentHand = new GrizzlyBears();
+        GrizzlyBears opponentDrawn = new GrizzlyBears();
+        harness.setHand(player1, List.of(ownHand));
+        harness.setLibrary(player1, List.of(ownDrawn));
+        harness.setHand(player2, List.of(opponentHand));
+        harness.setLibrary(player2, List.of(opponentDrawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownDrawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownHand);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentHand);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentDrawn);
     }
 
     // ===== Combat =====

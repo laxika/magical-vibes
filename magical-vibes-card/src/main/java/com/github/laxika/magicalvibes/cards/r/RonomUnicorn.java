@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "16")
+@CardRegistration(set = "UMA", collectorNumber = "33")
 public class RonomUnicorn extends Card {
 
     public RonomUnicorn() {

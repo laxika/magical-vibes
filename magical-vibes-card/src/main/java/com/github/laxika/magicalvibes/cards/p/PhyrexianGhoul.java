@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "37")
 @CardRegistration(set = "DDE", collectorNumber = "6")
 @CardRegistration(set = "TD2", collectorNumber = "53")
+@CardRegistration(set = "A25", collectorNumber = "100")
 public class PhyrexianGhoul extends Card {
 
     public PhyrexianGhoul() {

@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StonybrookSchoolmaster.class, CoralMerfolk.class})
 class StonybrookSchoolmasterTest extends BaseCardTest {
 
     // "Whenever this creature becomes tapped, you may create a 1/1 blue Merfolk Wizard creature token."

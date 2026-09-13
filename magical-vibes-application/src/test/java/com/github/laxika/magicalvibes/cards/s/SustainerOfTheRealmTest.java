@@ -95,8 +95,7 @@ class SustainerOfTheRealmTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ValorMadeReal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, sustainer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, sustainer.getId());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(

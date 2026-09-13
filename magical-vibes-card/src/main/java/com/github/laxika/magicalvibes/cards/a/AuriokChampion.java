@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "5DN", collectorNumber = "3")
+@CardRegistration(set = "IMA", collectorNumber = "9")
 public class AuriokChampion extends Card {
 
     public AuriokChampion() {

@@ -7,22 +7,19 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Oppression.class, Forest.class, GrizzlyBears.class, HealingSalve.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HealingSalve.class, Oppression.class})
 class OppressionTest extends BaseCardTest {
 
     @Test
     @DisplayName("When the controller casts a spell, they discard a card")
     void controllerCastingDiscards() {
         harness.addToBattlefield(player1, new Oppression());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0); // cast Grizzly Bears
@@ -43,7 +40,7 @@ class OppressionTest extends BaseCardTest {
     @DisplayName("Triggers for every player — an opponent casting a spell discards their own card")
     void opponentCastingDiscards() {
         harness.addToBattlefield(player1, new Oppression());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player2);
@@ -64,7 +61,7 @@ class OppressionTest extends BaseCardTest {
     @DisplayName("A caster with no other cards in hand discards nothing")
     void emptyHandDiscardsNothing() {
         harness.addToBattlefield(player1, new Oppression());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -72,6 +69,19 @@ class OppressionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Playing a land does not trigger Oppression")
+    void playingLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Oppression());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test

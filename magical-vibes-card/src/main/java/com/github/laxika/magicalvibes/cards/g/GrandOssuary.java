@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OPC2", collectorNumber = "17")
+@CardRegistration(set = "OPCA", collectorNumber = "31")
 public class GrandOssuary extends Card {
 
     public GrandOssuary() {

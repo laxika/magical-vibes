@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "200")
 @CardRegistration(set = "SOI", collectorNumber = "208")
 @CardRegistration(set = "MMQ", collectorNumber = "250")
+@CardRegistration(set = "UMA", collectorNumber = "168")
 public class Groundskeeper extends Card {
 
     public Groundskeeper() {

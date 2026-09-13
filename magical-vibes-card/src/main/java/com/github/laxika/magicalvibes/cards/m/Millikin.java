@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "302")
+@CardRegistration(set = "EMA", collectorNumber = "226")
 public class Millikin extends Card {
 
     public Millikin() {

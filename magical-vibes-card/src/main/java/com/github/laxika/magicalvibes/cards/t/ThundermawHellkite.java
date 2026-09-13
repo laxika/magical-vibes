@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "150")
+@CardRegistration(set = "IMA", collectorNumber = "149")
 public class ThundermawHellkite extends Card {
 
     public ThundermawHellkite() {

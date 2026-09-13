@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "122")
+@CardRegistration(set = "EMA", collectorNumber = "160")
 public class CentaurChieftain extends Card {
 
     public CentaurChieftain() {

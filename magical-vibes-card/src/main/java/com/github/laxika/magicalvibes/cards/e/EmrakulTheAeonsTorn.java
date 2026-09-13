@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "4")
 @CardRegistration(set = "MM2", collectorNumber = "3")
+@CardRegistration(set = "UMA", collectorNumber = "4")
 public class EmrakulTheAeonsTorn extends Card {
 
     public EmrakulTheAeonsTorn() {

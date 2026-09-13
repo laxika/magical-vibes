@@ -16,6 +16,7 @@ import java.util.List;
  * Destroy each nonland permanent with mana value X or less.
  */
 @CardRegistration(set = "DGM", collectorNumber = "72")
+@CardRegistration(set = "GK1", collectorNumber = "61")
 public class GazeOfGranite extends Card {
 
     public GazeOfGranite() {

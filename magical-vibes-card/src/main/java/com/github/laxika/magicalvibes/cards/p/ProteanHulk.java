@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreaturesWith
 @CardRegistration(set = "DIS", collectorNumber = "90")
 @CardRegistration(set = "TD2", collectorNumber = "65")
 @CardRegistration(set = "GK2", collectorNumber = "83")
+@CardRegistration(set = "A25", collectorNumber = "185")
 public class ProteanHulk extends Card {
 
     public ProteanHulk() {

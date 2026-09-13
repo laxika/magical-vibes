@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "265")
 @CardRegistration(set = "VMA", collectorNumber = "259")
+@CardRegistration(set = "UMA", collectorNumber = "205")
 public class RevivingVapors extends Card {
 
     public RevivingVapors() {

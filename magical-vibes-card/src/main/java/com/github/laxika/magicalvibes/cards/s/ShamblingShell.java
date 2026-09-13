@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "230")
 @CardRegistration(set = "DDJ", collectorNumber = "57")
+@CardRegistration(set = "GK1", collectorNumber = "70")
 public class ShamblingShell extends Card {
 
     public ShamblingShell() {
