@@ -118,7 +118,7 @@ class OrderChaosTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        Permanent attackerForPlayer1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attackerForPlayer1 = addCreatureReady(player1, new UrborgElf());
 
         assertThat(bls.canBlockAttacker(gd, creature, attackerForPlayer1,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
