@@ -544,7 +544,8 @@ class UntapStepServiceTest {
         void appliesWithUntappedMatrixAndTappedPermanent() {
             Card matrixCard = createCardWithName("Storage Matrix");
             matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
-            addPermanent(player1Id, matrixCard);
+            Permanent matrix = addPermanent(player1Id, matrixCard);
+            when(gameQueryService.hasActiveStaticEffect(gd, matrix, StorageMatrixEffect.class)).thenReturn(true);
             addPermanent(player1Id, createCardWithName("Grizzly Bears")).tap();
 
             assertThat(sut.storageMatrixRestrictionApplies(gd, player1Id)).isTrue();

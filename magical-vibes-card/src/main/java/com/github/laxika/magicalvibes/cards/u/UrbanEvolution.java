@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "204")
+@CardRegistration(set = "DDO", collectorNumber = "57")
 public class UrbanEvolution extends Card {
 
     public UrbanEvolution() {

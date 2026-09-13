@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGra
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -211,6 +212,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
                     boolean applies = switch (spellLimit.scope()) {
@@ -334,6 +338,14 @@ public class CastingPermissionService {
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
+        }
+        // Basandra, Battle Seraph: during combat no player can cast spells. Lands are excluded
+        // because playing a land is not casting a spell; planar cards are not spells either.
+        if (gameQueryService.isSpellCastingCombatLockActive(gameData)) {
+            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
+            spellTypes.remove(CardType.LAND);
+            spellTypes.removeIf(CardType::isPlanar);
+            restricted.addAll(spellTypes);
         }
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
@@ -843,12 +855,16 @@ public class CastingPermissionService {
                                 || card.getName().equals(perm.getSecondChosenName()))) {
                         return true;
                     }
-                    if (effect instanceof CardNameRestrictionEffect restriction
-                            && !card.getSupertypes().contains(CardSupertype.BASIC)) {
+                    if (effect instanceof CardNameRestrictionEffect restriction) {
                         if (nontokenPermanentNames == null) {
                             nontokenPermanentNames = getNontokenPermanentNames(gameData);
                         }
-                        if (restriction.forbiddenNonbasicLandNames(nontokenPermanentNames).contains(card.getName())) {
+                        boolean nonbasicLandRestricted = !card.getSupertypes().contains(CardSupertype.BASIC)
+                                && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames)
+                                .contains(card.getName());
+                        boolean landRestricted = restriction.forbiddenLandNames(nontokenPermanentNames)
+                                .contains(card.getName());
+                        if (nonbasicLandRestricted || landRestricted) {
                             return true;
                         }
                     }
@@ -1696,6 +1712,12 @@ public class CastingPermissionService {
     /** Returns whether the current top card has a temporary free-play permission from the library. */
     public boolean hasLibraryTopCardFreePlayPermission(GameData gameData, UUID playerId, Card card) {
         List<Card> deck = gameData.playerDecks.get(playerId);
+        UUID permittedId = gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId);
+        if (permittedId != null && (deck == null || deck.isEmpty()
+                || !permittedId.equals(deck.getFirst().getId()))) {
+            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId, permittedId);
+            return false;
+        }
         if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
             return false;
         }
@@ -2212,7 +2234,7 @@ public class CastingPermissionService {
                         .anyMatch(permission -> canAccessExiledEntry(
                                 source, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, source, entry));
-                if (hasOncePerTurnPermission) {
+                if (hasOncePerTurnPermission && !card.hasType(CardType.LAND)) {
                     gameData.oncePerTurnExileCastPermissionsUsedThisTurn.add(source.getId());
                 }
                 boolean hasOneShotPermission = permissions.stream()
@@ -2374,7 +2396,7 @@ public class CastingPermissionService {
         if (permission.controllerTurnOnly() && !playerId.equals(gameData.activePlayerId)) return false;
         if (permission.ownOnly() && !playerId.equals(entry.ownerId())) return false;
         if (permission.thisTurnOnly() && entry.exiledTurnNumber() != gameData.turnNumber) return false;
-        if (permission.oncePerTurn()
+        if (permission.oncePerTurn() && !entry.card().hasType(CardType.LAND)
                 && (gameData.freeCastPermanentUsedThisTurn.contains(source.getId())
                 || gameData.oncePerTurnExileCastPermissionsUsedThisTurn.contains(source.getId()))) return false;
         if (permission.oneShot()

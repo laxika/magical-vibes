@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "ATQ", collectorNumber = "66")
 @CardRegistration(set = "ME1", collectorNumber = "168")
+@CardRegistration(set = "VMA", collectorNumber = "285")
 public class SuChi extends Card {
 
     public SuChi() {

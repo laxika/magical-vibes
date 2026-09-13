@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "180")
+@CardRegistration(set = "MM2", collectorNumber = "158")
 public class RootKinAlly extends Card {
 
     public RootKinAlly() {

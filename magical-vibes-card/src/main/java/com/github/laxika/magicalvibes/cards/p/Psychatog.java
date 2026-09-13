@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "292")
+@CardRegistration(set = "VMA", collectorNumber = "258")
 public class Psychatog extends Card {
 
     public Psychatog() {

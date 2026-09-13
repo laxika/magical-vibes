@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "38")
+@CardRegistration(set = "VMA", collectorNumber = "86")
 public class Palinchron extends Card {
 
     public Palinchron() {

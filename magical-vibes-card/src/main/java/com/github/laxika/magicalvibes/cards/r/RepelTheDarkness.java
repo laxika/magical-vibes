@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "42")
+@CardRegistration(set = "DDP", collectorNumber = "8")
 public class RepelTheDarkness extends Card {
 
     public RepelTheDarkness() {

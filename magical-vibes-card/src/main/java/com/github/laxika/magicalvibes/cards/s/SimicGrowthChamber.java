@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "180")
+@CardRegistration(set = "MM2", collectorNumber = "249")
 public class SimicGrowthChamber extends Card {
 
     public SimicGrowthChamber() {

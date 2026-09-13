@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "84")
+@CardRegistration(set = "VMA", collectorNumber = "161")
 public class FlowstoneHellion extends Card {
 
     public FlowstoneHellion() {

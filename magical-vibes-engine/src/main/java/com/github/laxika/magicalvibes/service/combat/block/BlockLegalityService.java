@@ -504,7 +504,7 @@ public class BlockLegalityService {
             return true;
         }
         UUID controllerId = null;
-        if (!creature.isFaceDown()) {
+        if (!creature.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, creature)) {
             for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
                 Condition unless = null;
                 if (effect instanceof AttackOrBlockRestrictionEffect restriction) {

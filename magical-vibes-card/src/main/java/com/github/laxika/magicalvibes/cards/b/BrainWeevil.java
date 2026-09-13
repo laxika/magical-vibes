@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "91")
+@CardRegistration(set = "DDJ", collectorNumber = "58")
 public class BrainWeevil extends Card {
 
     public BrainWeevil() {

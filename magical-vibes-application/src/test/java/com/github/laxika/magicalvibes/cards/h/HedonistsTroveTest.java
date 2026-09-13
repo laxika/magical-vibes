@@ -62,6 +62,22 @@ class HedonistsTroveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tracked land can still be played after the turn's tracked spell")
+    void playsLandAfterCastingSpellFromTrove() {
+        Forest land = new Forest();
+        GrizzlyBears spell = new GrizzlyBears();
+        castTrove(List.of(land, spell));
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, spell.getId());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
     @DisplayName("Trove cannot target its controller")
     void cannotTargetController() {
         harness.setGraveyard(player2, List.of(new Forest()));

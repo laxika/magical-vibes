@@ -102,7 +102,8 @@ class GargoyleSentinelTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(sentinel.isAttacking()).isTrue();
     }

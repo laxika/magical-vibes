@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "78")
 @CardRegistration(set = "MMA", collectorNumber = "57")
+@CardRegistration(set = "DDS", collectorNumber = "5")
 public class PeerThroughDepths extends Card {
 
     public PeerThroughDepths() {

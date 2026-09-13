@@ -24,6 +24,7 @@ public class PlanarBirth extends Card {
                                 new CardTypePredicate(CardType.LAND))),
                         null,
                         false,
+                        true,
                         true));
     }
 }

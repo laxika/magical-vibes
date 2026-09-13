@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "74")
+@CardRegistration(set = "W17", collectorNumber = "14")
 public class TricksOfTheTrade extends Card {
 
     public TricksOfTheTrade() {

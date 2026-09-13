@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "85")
+@CardRegistration(set = "DDQ", collectorNumber = "50")
 public class AbattoirGhoul extends Card {
 
     public AbattoirGhoul() {

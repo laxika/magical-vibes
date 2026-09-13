@@ -21,6 +21,6 @@ public class TaintedAether extends Card {
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate())),
-                        SacrificeRecipient.TARGET_PLAYER));
+                        SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

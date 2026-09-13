@@ -81,9 +81,8 @@ class NafsAspTest extends BaseCardTest {
     @DisplayName("Noncombat damage also creates a delayed obligation")
     void noncombatDamageCreatesObligation() {
         Permanent asp = addReadyAsp();
-        Permanent aura = new Permanent(new HermeticStudy());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         aura.setAttachedTo(asp.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

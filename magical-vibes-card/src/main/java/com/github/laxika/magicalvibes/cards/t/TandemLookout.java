@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "80")
+@CardRegistration(set = "DDQ", collectorNumber = "29")
 public class TandemLookout extends Card {
 
     public TandemLookout() {

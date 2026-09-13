@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 
 @CardRegistration(set = "USG", collectorNumber = "5")
+@CardRegistration(set = "VMA", collectorNumber = "19")
 public class BrilliantHalo extends Card {
 
     public BrilliantHalo() {
@@ -19,6 +21,7 @@ public class BrilliantHalo extends Card {
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
+                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .filter(new CardIsSelfPredicate())
                         .returnAll(true)
                         .build());

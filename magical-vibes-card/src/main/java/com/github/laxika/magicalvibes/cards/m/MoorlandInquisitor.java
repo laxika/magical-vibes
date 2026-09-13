@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "30")
 @CardRegistration(set = "M20", collectorNumber = "31")
+@CardRegistration(set = "DDQ", collectorNumber = "16")
 public class MoorlandInquisitor extends Card {
 
     public MoorlandInquisitor() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "75")
 @CardRegistration(set = "SOI", collectorNumber = "87")
+@CardRegistration(set = "W17", collectorNumber = "11")
 public class SleepParalysis extends Card {
 
     public SleepParalysis() {

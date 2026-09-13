@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "29")
+@CardRegistration(set = "MM2", collectorNumber = "38")
 public class WaxmaneBaku extends Card {
 
     public WaxmaneBaku() {

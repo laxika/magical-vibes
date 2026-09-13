@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "85")
 @CardRegistration(set = "FUT", collectorNumber = "110")
+@CardRegistration(set = "MM2", collectorNumber = "107")
 public class BloodshotTrainee extends Card {
 
     public BloodshotTrainee() {

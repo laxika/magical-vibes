@@ -1103,7 +1103,8 @@ public class TriggeredAbilityQueueService {
         }
         if (needsTarget) {
             Card targetingCard = prepareTriggeredModalTargeting(sourceCard, chosenModes);
-            if (etbTokenTargetService.needsSlotBySlotTargetSelection(targetingCard)) {
+            if (targetingCard.getSpellTargets().size() > 1
+                    || etbTokenTargetService.needsSlotBySlotTargetSelection(targetingCard)) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         targetingCard, controllerId, effects, sourcePermanentId,
                         List.of(), 0, 0));

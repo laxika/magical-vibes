@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "60")
+@CardRegistration(set = "DDR", collectorNumber = "55")
 public class MiresToll extends Card {
 
     public MiresToll() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Incendiary.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class})
 class IncendiaryTest extends BaseCardTest {
 
     @Test
@@ -58,6 +60,25 @@ class IncendiaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+        harness.assertInGraveyard(player1, "Incendiary");
+    }
+
+    @Test
+    @DisplayName("Incendiary's death trigger uses its counters when an opponent controls the enchanted creature")
+    void enchantedOpponentCreatureDeathUsesAuraCounters() {
+        Permanent incendiary = addIncendiaryAttachedTo(player1, player2);
+        incendiary.setCounterCount(CounterType.FUSE, 2);
+        Permanent creature = findAttachedCreature(incendiary);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        killCreature(creature);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Incendiary");
     }
 

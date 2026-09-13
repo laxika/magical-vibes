@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "86")
 @CardRegistration(set = "FUT", collectorNumber = "111")
+@CardRegistration(set = "DDS", collectorNumber = "36")
 public class BoldwyrIntimidator extends Card {
 
     public BoldwyrIntimidator() {

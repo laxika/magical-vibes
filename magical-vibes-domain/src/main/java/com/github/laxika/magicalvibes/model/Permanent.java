@@ -163,6 +163,8 @@ public class Permanent {
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
     @Setter private String chosenMode;
+    /** Mode chosen by each player for an entering permanent whose ability says each player chooses. */
+    private final Map<UUID, String> chosenModeByPlayer = new HashMap<>();
     /** The number last chosen for this permanent by a "choose a number between X and Y" effect
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
@@ -743,6 +745,7 @@ public class Permanent {
         this.chosenCardType = source.chosenCardType;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenMode = source.chosenMode;
+        this.chosenModeByPlayer.putAll(source.chosenModeByPlayer);
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);

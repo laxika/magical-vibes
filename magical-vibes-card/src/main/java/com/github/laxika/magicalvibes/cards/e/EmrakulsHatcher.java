@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "142")
+@CardRegistration(set = "DDP", collectorNumber = "59")
 public class EmrakulsHatcher extends Card {
 
     public EmrakulsHatcher() {

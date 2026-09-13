@@ -7,12 +7,16 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DPA", collectorNumber = "106")
+@CardRegistration(set = "G17", collectorNumber = "4")
 @CardRegistration(set = "DDN", collectorNumber = "37")
 @CardRegistration(set = "DDN", collectorNumber = "78")
 @CardRegistration(set = "DDL", collectorNumber = "37")
 @CardRegistration(set = "DDL", collectorNumber = "38")
 @CardRegistration(set = "DDL", collectorNumber = "74")
 @CardRegistration(set = "DDL", collectorNumber = "76")
+@CardRegistration(set = "DDP", collectorNumber = "73")
+@CardRegistration(set = "DDP", collectorNumber = "74")
+@CardRegistration(set = "DDP", collectorNumber = "75")
 @CardRegistration(set = "PD2", collectorNumber = "31")
 @CardRegistration(set = "PD2", collectorNumber = "32")
 @CardRegistration(set = "PD2", collectorNumber = "33")
@@ -38,6 +42,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ZNR", collectorNumber = "275")
 @CardRegistration(set = "ZNR", collectorNumber = "276")
 @CardRegistration(set = "DD2", collectorNumber = "62")
+@CardRegistration(set = "DDJ", collectorNumber = "41")
+@CardRegistration(set = "DDJ", collectorNumber = "42")
+@CardRegistration(set = "DDJ", collectorNumber = "43")
+@CardRegistration(set = "DDJ", collectorNumber = "44")
 @CardRegistration(set = "ONS", collectorNumber = "343")
 @CardRegistration(set = "ONS", collectorNumber = "344")
 @CardRegistration(set = "ONS", collectorNumber = "345")
@@ -420,6 +428,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "EVG", collectorNumber = "60")
 @CardRegistration(set = "EVG", collectorNumber = "61")
 @CardRegistration(set = "EVG", collectorNumber = "62")
+@CardRegistration(set = "DDS", collectorNumber = "31")
+@CardRegistration(set = "DDS", collectorNumber = "32")
+@CardRegistration(set = "DDS", collectorNumber = "33")
+@CardRegistration(set = "DDS", collectorNumber = "60")
+@CardRegistration(set = "DDS", collectorNumber = "61")
+@CardRegistration(set = "DDS", collectorNumber = "62")
 public class Mountain extends Card {
 
     public Mountain() {

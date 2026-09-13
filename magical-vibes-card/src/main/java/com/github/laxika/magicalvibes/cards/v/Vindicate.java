@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "APC", collectorNumber = "126")
+@CardRegistration(set = "MP2", collectorNumber = "30")
 public class Vindicate extends Card {
 
     public Vindicate() {

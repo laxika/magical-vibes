@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "VIS", collectorNumber = "59")
+@CardRegistration(set = "VMA", collectorNumber = "119")
 public class FallenAskari extends Card {
 
     public FallenAskari() {

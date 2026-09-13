@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "91")
 @CardRegistration(set = "FDN", collectorNumber = "529")
+@CardRegistration(set = "W17", collectorNumber = "20")
 public class UntamedHunger extends Card {
 
     public UntamedHunger() {
