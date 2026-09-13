@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "109")
 @CardRegistration(set = "IKO", collectorNumber = "103")
+@CardRegistration(set = "ANB", collectorNumber = "64")
 public class UnlikelyAid extends Card {
 
     public UnlikelyAid() {

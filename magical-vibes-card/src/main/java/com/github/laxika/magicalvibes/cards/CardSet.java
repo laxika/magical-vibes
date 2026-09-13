@@ -62,6 +62,7 @@ public enum CardSet {
     SET_M19("M19"),
     SET_OANA("OANA"),
     SET_M20("M20"),
+    SET_ANB("ANB"),
     SET_M21("M21"),
     SET_MMQ("MMQ"),
     SET_ORI("ORI"),

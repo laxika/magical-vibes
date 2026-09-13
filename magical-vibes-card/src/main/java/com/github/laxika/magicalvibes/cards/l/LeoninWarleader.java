@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "23")
+@CardRegistration(set = "ANB", collectorNumber = "13")
 public class LeoninWarleader extends Card {
 
     public LeoninWarleader() {

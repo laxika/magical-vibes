@@ -18,6 +18,7 @@ import java.util.List;
  * Target blocking or blocked creature you control gets +2/+2 until end of turn.
  */
 @CardRegistration(set = "OANA", collectorNumber = "12")
+@CardRegistration(set = "ANB", collectorNumber = "22")
 public class TacticalAdvantage extends Card {
 
     public TacticalAdvantage() {
