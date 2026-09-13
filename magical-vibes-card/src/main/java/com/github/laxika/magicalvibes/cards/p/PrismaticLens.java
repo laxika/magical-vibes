@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "262")
+@CardRegistration(set = "E02", collectorNumber = "43")
 public class PrismaticLens extends Card {
 
     public PrismaticLens() {

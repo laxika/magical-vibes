@@ -65,6 +65,7 @@ public enum CardSet {
     SET_EVE("EVE"),
     SET_ECL("ECL"),
     SET_EMN("EMN"),
+    SET_E02("E02"),
     SET_MRD("MRD"),
     SET_5DN("5DN"),
     SET_DST("DST"),

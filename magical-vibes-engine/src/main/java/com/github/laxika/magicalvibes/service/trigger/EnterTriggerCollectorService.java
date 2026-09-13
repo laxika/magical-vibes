@@ -1806,13 +1806,17 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * Resolves an Aura attachment to the creature that caused the opponent-creature enter trigger.
-     * Optional markers queue the existing may-attach flow; mandatory markers queue a non-targeting
-     * stack entry with the entering permanent already identified.
+     * Resolves an Aura attachment to the creature that caused the enter trigger. Optional markers
+     * queue the existing may-attach flow; mandatory markers queue a non-targeting stack entry with
+     * the entering permanent already identified.
      */
-    @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleOpponentCreatureAttachAura(TriggerMatchContext match,
+    @CollectsTriggers({
+            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleCreatureAttachAura(TriggerMatchContext match,
             AttachSourceAuraToEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
