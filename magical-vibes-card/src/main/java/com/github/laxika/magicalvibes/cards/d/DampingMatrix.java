@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "161")
+@CardRegistration(set = "MM3", collectorNumber = "218")
 public class DampingMatrix extends Card {
 
     public DampingMatrix() {

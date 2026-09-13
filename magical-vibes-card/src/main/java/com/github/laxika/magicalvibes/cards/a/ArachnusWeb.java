@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "163")
+@CardRegistration(set = "MM3", collectorNumber = "118")
 public class ArachnusWeb extends Card {
 
     public ArachnusWeb() {

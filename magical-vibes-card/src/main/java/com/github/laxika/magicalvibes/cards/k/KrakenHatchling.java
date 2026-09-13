@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "58")
 @CardRegistration(set = "ZEN", collectorNumber = "50")
+@CardRegistration(set = "MM3", collectorNumber = "42")
 public class KrakenHatchling extends Card {
 }

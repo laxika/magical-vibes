@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "20")
+@CardRegistration(set = "MM3", collectorNumber = "22")
 public class Seance extends Card {
 
     public Seance() {

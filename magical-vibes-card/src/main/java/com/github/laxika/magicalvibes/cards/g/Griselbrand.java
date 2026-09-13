@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "115")
 @CardRegistration(set = "INR", collectorNumber = "381")
 @CardRegistration(set = "AVR", collectorNumber = "106")
+@CardRegistration(set = "MM3", collectorNumber = "72")
 public class Griselbrand extends Card {
 
     public Griselbrand() {

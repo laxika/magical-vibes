@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "123")
+@CardRegistration(set = "MM3", collectorNumber = "81")
 public class PitKeeper extends Card {
 
     public PitKeeper() {
