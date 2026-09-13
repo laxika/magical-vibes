@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "ONS", collectorNumber = "326")
 @CardRegistration(set = "DD1", collectorNumber = "27")
 @CardRegistration(set = "EVG", collectorNumber = "26")
+@CardRegistration(set = "DDU", collectorNumber = "29")
 public class TranquilThicket extends Card {
 
     public TranquilThicket() {
