@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "202")
+@CardRegistration(set = "MM3", collectorNumber = "193")
 public class Teleportal extends Card {
 
     public Teleportal() {

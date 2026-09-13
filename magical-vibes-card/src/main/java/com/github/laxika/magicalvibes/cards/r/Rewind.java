@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "M13", collectorNumber = "65")
 @CardRegistration(set = "USG", collectorNumber = "93")
 @CardRegistration(set = "M21", collectorNumber = "63")
+@CardRegistration(set = "MM3", collectorNumber = "47")
 public class Rewind extends Card {
 
     public Rewind() {

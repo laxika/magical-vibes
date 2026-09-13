@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "220")
+@CardRegistration(set = "MM3", collectorNumber = "212")
 public class TattermungeWitch extends Card {
 
     public TattermungeWitch() {

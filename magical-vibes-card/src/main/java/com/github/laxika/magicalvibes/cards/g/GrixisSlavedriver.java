@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 
 @CardRegistration(set = "CON", collectorNumber = "46")
+@CardRegistration(set = "MM3", collectorNumber = "74")
 public class GrixisSlavedriver extends Card {
 
     public GrixisSlavedriver() {

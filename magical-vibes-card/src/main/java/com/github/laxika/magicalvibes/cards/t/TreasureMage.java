@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "34")
+@CardRegistration(set = "DDU", collectorNumber = "40")
 public class TreasureMage extends Card {
 
     public TreasureMage() {

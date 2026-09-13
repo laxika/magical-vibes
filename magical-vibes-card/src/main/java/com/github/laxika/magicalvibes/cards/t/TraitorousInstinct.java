@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "109")
 @CardRegistration(set = "ROE", collectorNumber = "168")
+@CardRegistration(set = "MM3", collectorNumber = "114")
 public class TraitorousInstinct extends Card {
 
     public TraitorousInstinct() {

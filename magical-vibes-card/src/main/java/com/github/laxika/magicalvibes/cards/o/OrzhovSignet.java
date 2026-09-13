@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "155")
+@CardRegistration(set = "MM3", collectorNumber = "224")
 public class OrzhovSignet extends Card {
 
     public OrzhovSignet() {
