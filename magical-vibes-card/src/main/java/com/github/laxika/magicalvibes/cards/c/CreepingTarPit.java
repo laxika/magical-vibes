@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "134")
+@CardRegistration(set = "ZNE", collectorNumber = "24")
 public class CreepingTarPit extends Card {
 
     public CreepingTarPit() {

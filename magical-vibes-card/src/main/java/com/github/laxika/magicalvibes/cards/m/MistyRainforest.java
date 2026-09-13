@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "ZEN", collectorNumber = "220")
 @CardRegistration(set = "EXP", collectorNumber = "25")
 @CardRegistration(set = "MM3", collectorNumber = "240")
+@CardRegistration(set = "ZNE", collectorNumber = "10")
 public class MistyRainforest extends Card {
 
     public MistyRainforest() {

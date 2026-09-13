@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "ZEN", collectorNumber = "211")
 @CardRegistration(set = "EXP", collectorNumber = "24")
 @CardRegistration(set = "MM3", collectorNumber = "229")
+@CardRegistration(set = "ZNE", collectorNumber = "9")
 public class AridMesa extends Card {
 
     public AridMesa() {
