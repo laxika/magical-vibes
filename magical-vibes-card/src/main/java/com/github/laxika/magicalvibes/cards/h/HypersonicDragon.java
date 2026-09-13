@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "170")
 @CardRegistration(set = "GK1", collectorNumber = "39")
+@CardRegistration(set = "IMA", collectorNumber = "201")
 public class HypersonicDragon extends Card {
 
     public HypersonicDragon() {

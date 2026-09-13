@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GPT", collectorNumber = "125")
 @CardRegistration(set = "MM2", collectorNumber = "183")
+@CardRegistration(set = "A25", collectorNumber = "213")
 public class PilloryOfTheSleepless extends Card {
 
     public PilloryOfTheSleepless() {

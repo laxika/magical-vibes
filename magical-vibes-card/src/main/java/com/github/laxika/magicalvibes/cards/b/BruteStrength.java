@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "AKH", collectorNumber = "122")
 @CardRegistration(set = "AKR", collectorNumber = "142")
 @CardRegistration(set = "OGW", collectorNumber = "103")
+@CardRegistration(set = "DDT", collectorNumber = "35")
 public class BruteStrength extends Card {
 
     public BruteStrength() {

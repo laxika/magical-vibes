@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "134")
+@CardRegistration(set = "IMA", collectorNumber = "123")
 public class DraconicRoar extends Card {
 
     public DraconicRoar() {

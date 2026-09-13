@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DPA", collectorNumber = "106")
+@CardRegistration(set = "DDT", collectorNumber = "61")
+@CardRegistration(set = "DDT", collectorNumber = "62")
+@CardRegistration(set = "DDT", collectorNumber = "63")
 @CardRegistration(set = "PCA", collectorNumber = "147")
 @CardRegistration(set = "PCA", collectorNumber = "148")
 @CardRegistration(set = "PCA", collectorNumber = "149")
@@ -422,6 +425,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDK", collectorNumber = "75")
 @CardRegistration(set = "DDK", collectorNumber = "76")
 @CardRegistration(set = "DDK", collectorNumber = "77")
+@CardRegistration(set = "DDT", collectorNumber = "60")
 @CardRegistration(set = "DDU", collectorNumber = "75")
 @CardRegistration(set = "DDU", collectorNumber = "76")
 @CardRegistration(set = "JVC", collectorNumber = "59")
@@ -442,6 +446,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDS", collectorNumber = "62")
 @CardRegistration(set = "GK1", collectorNumber = "49")
 @CardRegistration(set = "GK1", collectorNumber = "101")
+@CardRegistration(set = "GS1", collectorNumber = "39")
 public class Mountain extends Card {
 
     public Mountain() {

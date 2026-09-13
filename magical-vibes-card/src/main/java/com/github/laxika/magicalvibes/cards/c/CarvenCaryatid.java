@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "155")
+@CardRegistration(set = "IMA", collectorNumber = "156")
 public class CarvenCaryatid extends Card {
 
     public CarvenCaryatid() {

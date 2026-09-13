@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RandomPlayerDiscardsAndLosesL
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OPC2", collectorNumber = "14")
+@CardRegistration(set = "OPCA", collectorNumber = "26")
 public class FurnaceLayer extends Card {
 
     public FurnaceLayer() {

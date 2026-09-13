@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "21")
+@CardRegistration(set = "OPCA", collectorNumber = "47")
 public class LetheLake extends Card {
 
     public LetheLake() {

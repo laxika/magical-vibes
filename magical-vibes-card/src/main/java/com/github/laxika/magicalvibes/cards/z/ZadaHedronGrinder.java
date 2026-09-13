@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "162")
+@CardRegistration(set = "A25", collectorNumber = "156")
 public class ZadaHedronGrinder extends Card {
 
     public ZadaHedronGrinder() {

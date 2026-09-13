@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsMatchingToHandR
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "38")
+@CardRegistration(set = "OPCA", collectorNumber = "81")
 public class TrugaJungle extends Card {
 
     public TrugaJungle() {

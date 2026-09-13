@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "4")
+@CardRegistration(set = "OPCA", collectorNumber = "4")
 public class MutualEpiphany extends Card {
 
     public MutualEpiphany() {

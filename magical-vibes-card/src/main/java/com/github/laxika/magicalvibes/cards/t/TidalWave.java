@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MIR", collectorNumber = "100")
+@CardRegistration(set = "DDT", collectorNumber = "21")
 @CardRegistration(set = "EMA", collectorNumber = "75")
 public class TidalWave extends Card {
 

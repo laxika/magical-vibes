@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "5")
+@CardRegistration(set = "OPCA", collectorNumber = "18")
 public class CliffsideMarket extends Card {
 
     public CliffsideMarket() {

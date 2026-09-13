@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "205")
+@CardRegistration(set = "IMA", collectorNumber = "213")
 public class BubblingCauldron extends Card {
 
     public BubblingCauldron() {

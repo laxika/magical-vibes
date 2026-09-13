@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "214")
+@CardRegistration(set = "IMA", collectorNumber = "206")
 public class RosheenMeanderer extends Card {
 
     public RosheenMeanderer() {

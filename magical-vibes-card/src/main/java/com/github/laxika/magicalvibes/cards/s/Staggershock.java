@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "166")
+@CardRegistration(set = "IMA", collectorNumber = "147")
 public class Staggershock extends Card {
 
     public Staggershock() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "79")
+@CardRegistration(set = "IMA", collectorNumber = "97")
 public class MerEkNightblade extends Card {
 
     public MerEkNightblade() {

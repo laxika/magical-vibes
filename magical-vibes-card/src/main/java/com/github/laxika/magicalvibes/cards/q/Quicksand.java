@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "323")
 @CardRegistration(set = "VIS", collectorNumber = "166")
 @CardRegistration(set = "WWK", collectorNumber = "140")
+@CardRegistration(set = "A25", collectorNumber = "245")
 public class Quicksand extends Card {
 
     public Quicksand() {

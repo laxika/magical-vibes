@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "RAV", collectorNumber = "208")
 @CardRegistration(set = "GK1", collectorNumber = "15")
+@CardRegistration(set = "IMA", collectorNumber = "200")
 public class GlimpseTheUnthinkable extends Card {
 
     public GlimpseTheUnthinkable() {

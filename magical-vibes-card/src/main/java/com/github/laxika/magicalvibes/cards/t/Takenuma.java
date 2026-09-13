@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OPC2", collectorNumber = "35")
+@CardRegistration(set = "OPCA", collectorNumber = "76")
 public class Takenuma extends Card {
 
     public Takenuma() {
