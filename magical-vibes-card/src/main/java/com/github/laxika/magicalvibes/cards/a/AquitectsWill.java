@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "52")
+@CardRegistration(set = "DDT", collectorNumber = "2")
 public class AquitectsWill extends Card {
 
     public AquitectsWill() {

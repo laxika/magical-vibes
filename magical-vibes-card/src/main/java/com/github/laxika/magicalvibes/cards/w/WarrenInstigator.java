@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "154")
+@CardRegistration(set = "DDT", collectorNumber = "32")
 public class WarrenInstigator extends Card {
 
     public WarrenInstigator() {

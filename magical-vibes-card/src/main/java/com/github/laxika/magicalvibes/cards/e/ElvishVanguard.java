@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "259")
+@CardRegistration(set = "EMA", collectorNumber = "164")
 @CardRegistration(set = "DDU", collectorNumber = "8")
 public class ElvishVanguard extends Card {
 

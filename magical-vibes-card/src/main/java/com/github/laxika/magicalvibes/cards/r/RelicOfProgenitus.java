@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "124")
 @CardRegistration(set = "MD1", collectorNumber = "21")
 @CardRegistration(set = "MMA", collectorNumber = "213")
+@CardRegistration(set = "EMA", collectorNumber = "231")
 public class RelicOfProgenitus extends Card {
 
     public RelicOfProgenitus() {

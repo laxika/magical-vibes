@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "3")
+@CardRegistration(set = "EMA", collectorNumber = "3")
 public class BallynockCohort extends Card {
 
     public BallynockCohort() {

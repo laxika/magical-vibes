@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "217")
+@CardRegistration(set = "EMA", collectorNumber = "205")
 public class ShamanOfThePack extends Card {
 
     public ShamanOfThePack() {
