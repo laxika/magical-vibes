@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.Crawlspace;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MightOfOaks.class, GiantCockroach.class, Crawlspace.class})
+@CardUsed({MightOfOaks.class, GiantCockroach.class, Forest.class})
 class MightOfOaksTest extends BaseCardTest {
 
 
@@ -206,11 +206,11 @@ class MightOfOaksTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new GiantCockroach()); // valid creature target keeps the spell playable
-        Permanent crawlspace = harness.addToBattlefieldAndReturn(player1, new Crawlspace());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new MightOfOaks()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, crawlspace.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

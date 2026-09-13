@@ -7,17 +7,21 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Impatience.class, GrizzlyBears.class})
+@CardUsed({GrizzlyBears.class, Impatience.class})
 class ImpatienceTest extends BaseCardTest {
 
-    private void advanceToEndStepTrigger(Player activePlayer) {
+    private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities(); // resolve trigger
+    }
+
+    private void advanceToEndStepAndResolve(Player activePlayer) {
+        advanceToEndStep(activePlayer);
+        harness.passBothPriorities();
     }
 
     @Test
@@ -26,9 +30,9 @@ class ImpatienceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Impatience());
         harness.setLife(player1, 20);
 
-        advanceToEndStepTrigger(player1);
+        advanceToEndStepAndResolve(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -38,9 +42,9 @@ class ImpatienceTest extends BaseCardTest {
         harness.setLife(player1, 20);
         gd.recordSpellCast(player1.getId(), new GrizzlyBears());
 
-        advanceToEndStepTrigger(player1);
+        advanceToEndStepAndResolve(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -51,15 +55,28 @@ class ImpatienceTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        advanceToEndStepTrigger(player1);
+        advanceToEndStepAndResolve(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("No damage if the end-step player casts a spell before the trigger resolves")
     void noDamageWhenSpellCastAfterTrigger() {
+        harness.addToBattlefield(player1, new Impatience());
+        harness.setLife(player1, 20);
+
+        advanceToEndStep(player1);
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("No damage if the end-step player casts a spell before the trigger resolves")
+    void noDamageWhenSpellCastAfterTriggerUpstreamReview() {
         harness.addToBattlefield(player1, new Impatience());
         harness.setLife(player1, 20);
 
@@ -74,4 +91,25 @@ class ImpatienceTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Each player's end step can trigger Impatience")
+    void triggersDuringOpponentEndStep() {
+        harness.addToBattlefield(player1, new Impatience());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToEndStepAndResolve(player2);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    private void advanceToEndStepTrigger(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        harness.passBothPriorities(); // resolve trigger
+    }
+
 }

@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -2152,6 +2153,7 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @CardUsed({HillGiant.class, Okk.class, Hipparion.class})
         @DisplayName("Easy AI drops Okk when its greater-power partner is unaffordable")
         void dropsOkkWhenGreaterPowerPartnerIsUnaffordable() {
             Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new HillGiant());

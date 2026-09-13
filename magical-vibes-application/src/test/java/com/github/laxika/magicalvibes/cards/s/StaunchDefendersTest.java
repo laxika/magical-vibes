@@ -4,22 +4,24 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({StaunchDefenders.class})
 class StaunchDefendersTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Entering the battlefield puts the life-gain trigger on the stack")
-    void entryTriggersLifeGain() {
-        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
+    @DisplayName("Entering the battlefield queues life gain until the trigger resolves")
+    void entryQueuesLifeGainUntilTriggerResolves() {
+        int lifeBefore = gd.getLife(player1.getId());
 
+        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Staunch Defenders");
-        assertThat(gd.stack).hasSize(1);
-        harness.assertLife(player1, 20);
+        harness.assertLife(player1, lifeBefore);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 4);
     }
 
     @Test
@@ -42,5 +44,17 @@ class StaunchDefendersTest extends BaseCardTest {
 
         harness.assertLife(player1, 14);
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield puts the life-gain trigger on the stack")
+    void entryTriggersLifeGain() {
+        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Staunch Defenders");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MasterOfThePearlTrident.class, CoralMerfolk.class, GrizzlyBears.class, Island.class})
 class MasterOfThePearlTridentTest extends BaseCardTest {
 
     @Test
@@ -110,14 +112,10 @@ class MasterOfThePearlTridentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MasterOfThePearlTrident());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent attacker = new Permanent(new CoralMerfolk());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new CoralMerfolk());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

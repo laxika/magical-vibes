@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "M20", collectorNumber = "330")
 @CardRegistration(set = "WAR", collectorNumber = "128")
+@CardRegistration(set = "ANA", collectorNumber = "38")
 public class GoblinAssailant extends Card {
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "112")
+@CardRegistration(set = "IMA", collectorNumber = "93")
 public class HauntingHymn extends Card {
 
     public HauntingHymn() {

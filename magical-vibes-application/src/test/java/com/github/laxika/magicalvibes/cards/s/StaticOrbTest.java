@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.l.LotusPetal;
+import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -62,6 +63,27 @@ class StaticOrbTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(MinimusContainment.class)
+    @DisplayName("A Static Orb that has lost its abilities imposes no restriction")
+    void abilitylessStaticOrbImposesNoRestriction() {
+        Permanent orb = addCreatureReady(player1, new StaticOrb());
+        Permanent containment = harness.addToBattlefieldAndReturn(player2, new MinimusContainment());
+        containment.setAttachedTo(orb.getId());
+        Permanent giant = addCreatureReady(player1, new LowlandGiant());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent petal = addCreatureReady(player1, new LotusPetal());
+        giant.tap();
+        forest.tap();
+        petal.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThat(giant.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(petal.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Two or fewer permanents untap normally without a choice")
     void twoOrFewerUntapNormally() {
         addCreatureReady(player1, new StaticOrb());
@@ -115,12 +137,11 @@ class StaticOrbTest extends BaseCardTest {
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 }

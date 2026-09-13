@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "202")
+@CardRegistration(set = "IMA", collectorNumber = "188")
 public class UndercityTroll extends Card {
 
     public UndercityTroll() {

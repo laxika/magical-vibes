@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "70")
+@CardRegistration(set = "A25", collectorNumber = "89")
 public class DuskLegionZealot extends Card {
 
     public DuskLegionZealot() {

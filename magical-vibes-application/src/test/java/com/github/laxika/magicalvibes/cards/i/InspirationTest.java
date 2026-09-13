@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.h.HulkingCyclops;
+import com.github.laxika.magicalvibes.cards.g.GoblinGlider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Inspiration.class, HulkingCyclops.class})
+@CardUsed({Inspiration.class, GoblinGlider.class})
 class InspirationTest extends BaseCardTest {
 
     @Test
@@ -48,13 +48,13 @@ class InspirationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = addCreatureReady(player2, new HulkingCyclops());
+        Permanent creature = addCreatureReady(player2, new GoblinGlider());
         harness.setHand(player1, List.of(new Inspiration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        UUID bearId = bear.getId();
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, bearId))
+        UUID creatureId = creature.getId();
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

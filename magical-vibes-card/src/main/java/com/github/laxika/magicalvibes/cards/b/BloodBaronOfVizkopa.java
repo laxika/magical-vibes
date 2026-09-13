@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "57")
+@CardRegistration(set = "IMA", collectorNumber = "195")
 public class BloodBaronOfVizkopa extends Card {
 
     public BloodBaronOfVizkopa() {

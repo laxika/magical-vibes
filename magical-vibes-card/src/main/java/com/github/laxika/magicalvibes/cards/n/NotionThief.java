@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "88")
+@CardRegistration(set = "A25", collectorNumber = "211")
 public class NotionThief extends Card {
 
     public NotionThief() {

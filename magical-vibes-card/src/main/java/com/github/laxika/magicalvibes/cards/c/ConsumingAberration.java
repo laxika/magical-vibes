@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "152")
 @CardRegistration(set = "FDN", collectorNumber = "238")
+@CardRegistration(set = "GK1", collectorNumber = "10")
 public class ConsumingAberration extends Card {
 
     public ConsumingAberration() {

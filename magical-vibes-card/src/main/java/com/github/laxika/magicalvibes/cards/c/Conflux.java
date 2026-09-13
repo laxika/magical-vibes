@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEach
 
 @CardRegistration(set = "CON", collectorNumber = "102")
 @CardRegistration(set = "V16", collectorNumber = "3")
+@CardRegistration(set = "A25", collectorNumber = "202")
 public class Conflux extends Card {
 
     public Conflux() {

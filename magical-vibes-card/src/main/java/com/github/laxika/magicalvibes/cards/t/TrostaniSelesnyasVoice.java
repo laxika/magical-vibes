@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "206")
+@CardRegistration(set = "GK1", collectorNumber = "102")
 public class TrostaniSelesnyasVoice extends Card {
 
     public TrostaniSelesnyasVoice() {

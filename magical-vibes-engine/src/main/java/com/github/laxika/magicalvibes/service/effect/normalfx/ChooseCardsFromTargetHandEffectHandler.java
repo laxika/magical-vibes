@@ -169,7 +169,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                                          ChooseCardsFromTargetHandEffect effect, Card card,
                                          UUID sourceCardId, UUID targetPlayerId) {
         boolean typeMatches = effect.includedTypes().isEmpty()
-                ? !effect.excludedTypes().contains(card.getType())
+                ? effect.excludedTypes().stream().noneMatch(card::hasType)
                 : effect.includedTypes().contains(card.getType())
                 || card.getAdditionalTypes().stream().anyMatch(effect.includedTypes()::contains);
         return typeMatches && (effect.filter() == null || predicateEvaluationService.matchesCardPredicate(

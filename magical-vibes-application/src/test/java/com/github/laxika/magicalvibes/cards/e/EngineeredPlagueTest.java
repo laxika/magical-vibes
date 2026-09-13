@@ -86,6 +86,21 @@ class EngineeredPlagueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An affected 1/1 creature is put into its graveyard for having 0 toughness")
+    void putsAffectedCreatureWithZeroToughnessIntoGraveyard() {
+        harness.addToBattlefield(player1, new GoblinWelder());
+        harness.addToBattlefield(player1, new WeatherseedElf());
+        addPlague(CardSubtype.GOBLIN);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Welder");
+        harness.assertInGraveyard(player1, "Goblin Welder");
+        harness.assertOnBattlefield(player1, "Weatherseed Elf");
+        harness.assertOnBattlefield(player1, "Engineered Plague");
+    }
+
+    @Test
     @DisplayName("A creature with the chosen type among multiple types is affected")
     void matchesAnyCreatureSubtype() {
         Permanent goblinPerm = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());

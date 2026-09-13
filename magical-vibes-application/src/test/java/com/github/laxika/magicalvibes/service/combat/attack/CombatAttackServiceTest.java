@@ -469,8 +469,20 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(Okk.class)
+        void greaterPowerRestrictionEndsWithPrintedAbilities() {
+            Permanent okk = addCreatureReady(player1, new Okk());
+            okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+            enterDeclareAttackers();
+
+            declare(List.of(index(okk)));
+
+            assertThat(okk.isAttacking()).isTrue();
+        }
+
+        @Test
+        @CardUsed({Okk.class, HillGiant.class, CrawWurm.class})
         @DisplayName("CR 508.1a: Okk needs a strictly greater-power attacker beside it")
-        @CardUsed({CrawWurm.class, HillGiant.class, Okk.class})
         void greaterPowerRestrictionNeedsABiggerAttacker() {
             // Okk is 4/4; Hill Giant (3/3) is not enough, Craw Wurm (6/4) is.
             Permanent okk = addCreatureReady(player1, new Okk());
