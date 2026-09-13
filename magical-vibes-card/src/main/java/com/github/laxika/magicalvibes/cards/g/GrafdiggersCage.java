@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "149")
 @CardRegistration(set = "M20", collectorNumber = "227")
+@CardRegistration(set = "MM3", collectorNumber = "221")
 public class GrafdiggersCage extends Card {
 
     public GrafdiggersCage() {

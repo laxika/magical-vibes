@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "228")
+@CardRegistration(set = "MM3", collectorNumber = "243")
 public class SavageLands extends Card {
 
     public SavageLands() {

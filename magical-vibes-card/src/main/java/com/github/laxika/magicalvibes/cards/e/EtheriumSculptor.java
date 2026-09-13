@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ALA", collectorNumber = "42")
 @CardRegistration(set = "MMA", collectorNumber = "44")
+@CardRegistration(set = "DDU", collectorNumber = "37")
 public class EtheriumSculptor extends Card {
 
     public EtheriumSculptor() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "216")
+@CardRegistration(set = "DDU", collectorNumber = "51")
 public class ReclusiveArtificer extends Card {
 
     public ReclusiveArtificer() {

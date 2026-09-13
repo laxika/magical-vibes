@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "184")
+@CardRegistration(set = "MM3", collectorNumber = "139")
 public class SummoningTrap extends Card {
 
     public SummoningTrap() {

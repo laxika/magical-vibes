@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "199")
 @CardRegistration(set = "DDK", collectorNumber = "71")
+@CardRegistration(set = "EMA", collectorNumber = "217")
+@CardRegistration(set = "MM3", collectorNumber = "213")
 public class TorrentOfSouls extends Card {
 
     public TorrentOfSouls() {

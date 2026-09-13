@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "72")
+@CardRegistration(set = "MM3", collectorNumber = "80")
 public class OgreJailbreaker extends Card {
 
     public OgreJailbreaker() {

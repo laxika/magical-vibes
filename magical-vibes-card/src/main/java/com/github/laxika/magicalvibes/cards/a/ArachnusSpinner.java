@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "162")
+@CardRegistration(set = "MM3", collectorNumber = "117")
 public class ArachnusSpinner extends Card {
 
     public ArachnusSpinner() {

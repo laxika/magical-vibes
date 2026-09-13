@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "MMQ", collectorNumber = "174")
 @CardRegistration(set = "DDT", collectorNumber = "33")
+@CardRegistration(set = "EMA", collectorNumber = "118")
 public class BattleSquadron extends Card {
 
     public BattleSquadron() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "229")
 @CardRegistration(set = "EXP", collectorNumber = "23")
+@CardRegistration(set = "MM3", collectorNumber = "249")
 public class VerdantCatacombs extends Card {
 
     public VerdantCatacombs() {
