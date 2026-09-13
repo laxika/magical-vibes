@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.c.CursedTotem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -10,15 +12,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
-
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pyrotechnics.class, GrizzlyBears.class, CursedTotem.class})
+@CardUsed({ChandraNalaar.class, CursedTotem.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Pyrotechnics.class})
 class PyrotechnicsTest extends BaseCardTest {
 
     @Test
@@ -58,34 +58,6 @@ class PyrotechnicsTest extends BaseCardTest {
     }
 
     @Test
-    void canDivideOneDamageAmongFourCreatures() {
-        harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new Pyrotechnics()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent thirdBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent fourthBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-
-        harness.castSorcery(player1, 0, Map.of(
-                firstBear.getId(), 1,
-                secondBear.getId(), 1,
-                thirdBear.getId(), 1,
-                fourthBear.getId(), 1));
-        harness.passBothPriorities();
-
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(Permanent::getId)
-                .containsExactlyInAnyOrder(
-                        firstBear.getId(), secondBear.getId(), thirdBear.getId(), fourthBear.getId());
-        assertThat(firstBear.getMarkedDamage()).isEqualTo(1);
-        assertThat(secondBear.getMarkedDamage()).isEqualTo(1);
-        assertThat(thirdBear.getMarkedDamage()).isEqualTo(1);
-        assertThat(fourthBear.getMarkedDamage()).isEqualTo(1);
-    }
-
-    @Test
     void canDealAllDamageToPlayer() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new Pyrotechnics()));
@@ -97,6 +69,20 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    void canDealAllDamageToItsController() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castSorcery(player1, 0, Map.of(player1.getId(), 4));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 4);
     }
 
     @Test
@@ -198,19 +184,6 @@ class PyrotechnicsTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetNoncreatureArtifact() {
-        harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new Pyrotechnics()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        Permanent totem = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
-
-        assertThatThrownBy(() ->
-                harness.castSorcery(player1, 0, Map.of(totem.getId(), 4))
-        ).isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
     void cannotTargetHexproofCreatureWhenCasting() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new Pyrotechnics()));
@@ -221,6 +194,60 @@ class PyrotechnicsTest extends BaseCardTest {
 
         assertThatThrownBy(() ->
                 harness.castSorcery(player1, 0, Map.of(bears.getId(), 4))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetNonCreaturePermanentWhenCasting() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        assertThatThrownBy(() ->
+                harness.castSorcery(player1, 0, Map.of(mountain.getId(), 4))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canDivideOneDamageAmongFourCreatures() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent thirdBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent fourthBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, Map.of(
+                firstBear.getId(), 1,
+                secondBear.getId(), 1,
+                thirdBear.getId(), 1,
+                fourthBear.getId(), 1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .containsExactlyInAnyOrder(
+                        firstBear.getId(), secondBear.getId(), thirdBear.getId(), fourthBear.getId());
+        assertThat(firstBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(secondBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(thirdBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(fourthBear.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void cannotTargetNoncreatureArtifact() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent totem = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
+
+        assertThatThrownBy(() ->
+                harness.castSorcery(player1, 0, Map.of(totem.getId(), 4))
         ).isInstanceOf(IllegalStateException.class);
     }
 }

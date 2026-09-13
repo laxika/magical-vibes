@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -86,6 +86,38 @@ class LandTapTriggerCollectorServiceTest {
         verify(interactionHandlerRegistry, org.mockito.Mockito.never()).begin(any(), any());
     }
 
+    @Test
+    void symmetricSubtypeBonusGoesToLandControllerWhenAnotherPlayerTapsIt() {
+        Permanent source = createPermanent("Vernal Bloom");
+        Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+        var effect = new AddManaWhenLandOfSubtypeTappedForManaEffect(CardSubtype.FOREST, ManaColor.GREEN);
+        when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+        when(gameQueryService.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).thenReturn(true);
+        when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player2Id);
+
+        registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                effect, new TriggerContext.LandTap(player1Id, forest.getId()));
+
+        assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void landTapLifeGainWaitsOnTheStack() {
+        Permanent source = createPermanent("Sanctimony");
+        Permanent mountain = createLandPermanent("Mountain", ManaColor.RED);
+        var effect = new GainLifeWhenOpponentTapsLandOfSubtypeEffect(CardSubtype.MOUNTAIN, 1);
+        gd.playerLifeTotals.put(player1Id, 20);
+        when(gameQueryService.findPermanentById(gd, mountain.getId())).thenReturn(mountain);
+        when(gameQueryService.effectiveBasicLandTypes(gd, mountain)).thenReturn(Set.of(CardSubtype.MOUNTAIN));
+
+        registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                effect, new TriggerContext.LandTap(player2Id, mountain.getId()));
+
+        assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+        assertThat(gd.stack).hasSize(1);
+    }
+
     @Mock
     private GameQueryService gameQueryService;
 
@@ -103,9 +135,6 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
-
-    @Mock
-    private LifeSupport lifeSupport;
 
     @Mock
     private ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
@@ -734,6 +763,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, swamp.getId());
 
             when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+            when(gameQueryService.findPermanentController(gd, swamp.getId())).thenReturn(player2Id);
             when(gameQueryService.hasEffectiveSubtype(gd, swamp, CardSubtype.SWAMP)).thenReturn(true);
 
             boolean result = registry.dispatch(

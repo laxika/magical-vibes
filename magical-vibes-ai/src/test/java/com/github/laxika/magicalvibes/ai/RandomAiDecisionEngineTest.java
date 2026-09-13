@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -1876,6 +1877,7 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    @CardUsed({GrizzlyBears.class, Okk.class})
     void doesNotDeclareOkkWithoutGreaterPowerBlocker() {
         GameTestHarness harness = new GameTestHarness();
         GameData gameData = harness.getGameData();
@@ -1888,6 +1890,7 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    @CardUsed({GrizzlyBears.class, Okk.class})
     void acceptsUnfulfillableMustBlockRequirementForOkk() {
         GameTestHarness harness = new GameTestHarness();
         GameData gameData = harness.getGameData();

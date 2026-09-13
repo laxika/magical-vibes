@@ -3,24 +3,48 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GildedDrake;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TaintedAether.class, Forest.class, GorillaWarrior.class, GildedDrake.class, IvoryMask.class})
+@CardUsed({Forest.class, GildedDrake.class, GorillaWarrior.class, GrizzlyBears.class, IvoryMask.class, TaintedAether.class})
 class TaintedAetherTest extends BaseCardTest {
+
+    @Test
+    @CardUsed(Panharmonicon.class)
+    void creatureEntryTriggerCanBeDoubled() {
+        harness.addToBattlefield(player1, new TaintedAether());
+        harness.addToBattlefield(player1, new Panharmonicon());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void sacrificeStillHappensAfterEnteringCreatureLeaves() {
+        harness.addToBattlefield(player1, new TaintedAether());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+    }
 
     @Test
     @DisplayName("A creature entering under the controller triggers Tainted Aether")
@@ -94,6 +118,33 @@ class TaintedAetherTest extends BaseCardTest {
         // The entering creature's controller (player2), not Tainted Aether's controller, sacrifices.
         harness.assertInGraveyard(player2, "Gorilla Warrior");
         harness.assertOnBattlefield(player1, "Tainted Aether");
+    }
+
+    @Test
+    @DisplayName("A noncreature permanent entering does not trigger Tainted Aether")
+    void doesNotTriggerForNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new TaintedAether());
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Tainted Aether triggers when it enters as a creature")
+    void triggersWhenEnteringAsCreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+
+        harness.enterBattlefieldAndReturn(player1, new TaintedAether());
+
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Tainted Aether"))).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Tainted Aether");
     }
 
     @Test

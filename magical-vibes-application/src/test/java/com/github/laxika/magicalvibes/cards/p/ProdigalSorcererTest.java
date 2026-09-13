@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -42,17 +40,16 @@ class ProdigalSorcererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         addCreatureReady(player1, new ProdigalSorcerer());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -63,13 +60,25 @@ class ProdigalSorcererTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addCreatureReady(player1, new ProdigalSorcerer());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
     }
 
     @Test
@@ -98,11 +107,10 @@ class ProdigalSorcererTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new ProdigalSorcerer());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        UUID targetId = target.getId();
-        harness.activateAbility(player1, 0, null, targetId);
-        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 }

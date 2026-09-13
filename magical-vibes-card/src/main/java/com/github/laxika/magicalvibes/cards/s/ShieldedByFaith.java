@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "E02", collectorNumber = "4")
+@CardRegistration(set = "SS2", collectorNumber = "5")
 public class ShieldedByFaith extends Card {
 
     public ShieldedByFaith() {

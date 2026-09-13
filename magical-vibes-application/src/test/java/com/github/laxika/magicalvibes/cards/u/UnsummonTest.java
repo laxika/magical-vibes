@@ -1,25 +1,25 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.a.AetherFlash;
+import com.github.laxika.magicalvibes.cards.c.Confiscate;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.a.AetherFlash;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Unsummon.class, GrizzlyBears.class, AetherFlash.class, Island.class})
+@CardUsed({AetherFlash.class, Confiscate.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, Unsummon.class})
 class UnsummonTest extends BaseCardTest {
 
     @Test
@@ -41,6 +41,21 @@ class UnsummonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target an enchantment")
+    void cannotTargetEnchantmentUpstreamReview() {
         harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new AetherFlash());
         harness.setHand(player1, List.of(new Unsummon()));
@@ -99,6 +114,27 @@ class UnsummonTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a stolen creature to its owner's hand")
     void returnsStolenCreatureToOwnersHand() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Confiscate()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner's hand")
+    void returnsStolenCreatureToOwnersHandUpstreamReview() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         gd.stolenCreatures.put(target.getId(), player2.getId());
 
@@ -159,4 +195,3 @@ class UnsummonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Unsummon");
     }
 }
-

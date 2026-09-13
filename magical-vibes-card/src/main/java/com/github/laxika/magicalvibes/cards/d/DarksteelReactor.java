@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPr
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "114")
+@CardRegistration(set = "HA1", collectorNumber = "20")
 public class DarksteelReactor extends Card {
 
     public DarksteelReactor() {

@@ -119,6 +119,25 @@ class DisruptingScepterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate during any step of its controller's turn")
+    void canActivateDuringAnyStepOfYourTurn() {
+        addReadyScepter(player1);
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         addReadyScepter(player1);

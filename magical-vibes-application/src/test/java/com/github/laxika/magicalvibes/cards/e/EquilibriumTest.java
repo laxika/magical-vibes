@@ -27,6 +27,7 @@ class EquilibriumTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -44,6 +45,54 @@ class EquilibriumTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.assertInHand(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Paying {1} can return a creature controlled by Equilibrium's controller")
+    void payReturnsControllerCreature() {
+        harness.addToBattlefield(player1, new Equilibrium());
+        harness.addToBattlefield(player1, new HillGiant());
+        UUID giantId = harness.getPermanentId(player1, "Hill Giant");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        harness.handlePermanentChosen(player1, giantId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInHand(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("The trigger cannot target a player")
+    void playerCannotBeTargeted() {
+        harness.addToBattlefield(player1, new Equilibrium());
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(giantId);
+        assertThat(choice.validPlayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting without enough mana does not return the target creature")
+    void acceptingWithoutEnoughManaDoesNotReturnTarget() {
+        harness.addToBattlefield(player1, new Equilibrium());
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        harness.handlePermanentChosen(player1, giantId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     @Test

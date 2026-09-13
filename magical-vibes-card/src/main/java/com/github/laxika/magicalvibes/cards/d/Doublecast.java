@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "137")
+@CardRegistration(set = "ANA", collectorNumber = "37")
 public class Doublecast extends Card {
 
     public Doublecast() {

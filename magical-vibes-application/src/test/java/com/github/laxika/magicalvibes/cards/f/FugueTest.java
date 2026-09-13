@@ -21,8 +21,7 @@ class FugueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fugue()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -37,8 +36,7 @@ class FugueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fugue()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -56,8 +54,7 @@ class FugueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fugue()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -73,8 +70,7 @@ class FugueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fugue(), new Fugue(), new Fugue(), new Fugue()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -94,12 +90,29 @@ class FugueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fugue()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Target with more than three cards keeps the rest of their hand")
+    void targetWithMoreThanThreeCardsKeepsTheRestOfTheirHand() {
+        harness.setHand(player2, List.of(new Fugue(), new Fugue(), new Fugue(), new Fugue()));
+        harness.setHand(player1, List.of(new Fugue()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
 }

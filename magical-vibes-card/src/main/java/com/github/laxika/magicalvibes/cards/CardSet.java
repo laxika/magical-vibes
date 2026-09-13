@@ -60,6 +60,7 @@ public enum CardSet {
     SET_W16("W16"),
     SET_W17("W17"),
     SET_M19("M19"),
+    SET_OANA("OANA"),
     SET_M20("M20"),
     SET_M21("M21"),
     SET_MMQ("MMQ"),
@@ -115,6 +116,8 @@ public enum CardSet {
     SET_WTH("WTH"),
     SET_HML("HML"),
     SET_ALA("ALA"),
+    SET_ANA("ANA"),
+    SET_XANA("XANA"),
     SET_CON("CON"),
     SET_AKH("AKH"),
     SET_MP2("MP2"),
@@ -140,6 +143,7 @@ public enum CardSet {
     SET_ELD("ELD"),
     SET_WOE("WOE"),
     SET_SOS("SOS"),
+    SET_SS2("SS2"),
     SET_SUM("SUM"),
     SET_S00("S00"),
     SET_S99("S99"),
@@ -237,6 +241,7 @@ public enum CardSet {
     SET_GS1("GS1"),
     SET_EMA("EMA"),
     SET_SS1("SS1"),
+    SET_HA1("HA1"),
     SET_HA2("HA2");
 
     @Getter
