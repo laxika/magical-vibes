@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "90")
+@CardRegistration(set = "V17", collectorNumber = "2")
 public class ArguelsBloodFast extends Card {
 
     public ArguelsBloodFast() {
