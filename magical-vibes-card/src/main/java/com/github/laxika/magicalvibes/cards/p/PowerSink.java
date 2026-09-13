@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "USG", collectorNumber = "89")
 @CardRegistration(set = "BTD", collectorNumber = "14")
 @CardRegistration(set = "SUM", collectorNumber = "74")
+@CardRegistration(set = "VMA", collectorNumber = "88")
 public class PowerSink extends Card {
 
     public PowerSink() {

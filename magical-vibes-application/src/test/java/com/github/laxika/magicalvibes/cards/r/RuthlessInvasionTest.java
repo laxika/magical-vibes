@@ -30,7 +30,10 @@ class RuthlessInvasionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        Permanent attackerForPlayer1 = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, bears, attackerForPlayer1,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -44,7 +47,10 @@ class RuthlessInvasionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(myr.isCantBlockThisTurn()).isFalse();
+        Permanent attackerForPlayer1 = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, myr, attackerForPlayer1,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test
@@ -60,9 +66,12 @@ class RuthlessInvasionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(ownBears.isCantBlockThisTurn()).isTrue();
-        assertThat(oppBears.isCantBlockThisTurn()).isTrue();
-        assertThat(oppMyr.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, ownBears, oppBears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppBears, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppMyr, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test

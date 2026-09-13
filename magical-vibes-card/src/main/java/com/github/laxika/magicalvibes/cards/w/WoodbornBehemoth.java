@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "203")
+@CardRegistration(set = "DDR", collectorNumber = "26")
 public class WoodbornBehemoth extends Card {
 
     public WoodbornBehemoth() {

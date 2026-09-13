@@ -440,8 +440,7 @@ public class UntapStepService {
      */
     public boolean storageMatrixRestrictionApplies(GameData gameData, UUID activePlayerId) {
         boolean untappedMatrixPresent = gameData.anyPermanentMatches(p -> !p.isTapped()
-                && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof StorageMatrixEffect));
+                && gameQueryService.hasActiveStaticEffect(gameData, p, StorageMatrixEffect.class));
         if (!untappedMatrixPresent) {
             return false;
         }

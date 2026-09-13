@@ -1,63 +1,86 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FlintGolem;
+import com.github.laxika.magicalvibes.cards.s.StrongholdZeppelin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PredatorFlagship.class, FlintGolem.class, StrongholdZeppelin.class})
 class PredatorFlagshipTest extends BaseCardTest {
 
     @Test
     @DisplayName("Two-mana ability grants flying until end of turn")
     void grantsFlyingUntilEndOfTurn() {
         addFlagship();
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FlintGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
     @DisplayName("Five-mana ability destroys a creature with flying")
     void destroysCreatureWithFlying() {
-        addFlagship();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent flagship = addFlagship();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StrongholdZeppelin());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
+        assertThat(flagship.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Stronghold Zeppelin");
     }
 
     @Test
     @DisplayName("Destroy ability cannot target a creature without flying")
     void cannotDestroyCreatureWithoutFlying() {
         addFlagship();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlintGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature with flying");
+    }
+
+    @Test
+    @DisplayName("A creature granted flying becomes eligible for destruction")
+    void grantedFlyingMakesCreatureEligibleForDestruction() {
+        Permanent flagship = addFlagship();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlintGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        assertThat(flagship.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Flint Golem");
     }
 
     private Permanent addFlagship() {

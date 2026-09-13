@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "82")
+@CardRegistration(set = "W17", collectorNumber = "15")
 public class BloodhunterBat extends Card {
 
     public BloodhunterBat() {

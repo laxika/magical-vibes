@@ -438,8 +438,6 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-
-
     public void handleCounterUnlessExilesGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                          PendingMayAbility ability) {
         ability.effects().stream()
@@ -777,7 +775,7 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> validIndices = new ArrayList<>();
             if (hand != null) {
                 for (int i = 0; i < hand.size(); i++) {
-                    if (effect.requiredType() == null || hand.get(i).getType() == effect.requiredType()) {
+                    if (effect.requiredType() == null || hand.get(i).hasType(effect.requiredType())) {
                         validIndices.add(i);
                     }
                 }

@@ -27,7 +27,10 @@ class SeismicStompTest extends BaseCardTest {
 
         castSeismicStomp();
 
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        Permanent attackerForPlayer1 = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, bears, attackerForPlayer1,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -37,7 +40,10 @@ class SeismicStompTest extends BaseCardTest {
 
         castSeismicStomp();
 
-        assertThat(drake.isCantBlockThisTurn()).isFalse();
+        Permanent attackerForPlayer1 = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, drake, attackerForPlayer1,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test
@@ -49,9 +55,12 @@ class SeismicStompTest extends BaseCardTest {
 
         castSeismicStomp();
 
-        assertThat(ownBears.isCantBlockThisTurn()).isTrue();
-        assertThat(oppBears.isCantBlockThisTurn()).isTrue();
-        assertThat(oppDrake.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, ownBears, oppBears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppBears, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppDrake, ownBears,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test

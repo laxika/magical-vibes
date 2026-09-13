@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "S99", collectorNumber = "100")
+@CardRegistration(set = "VMA", collectorNumber = "164")
 public class GoblinCommando extends Card {
 
     public GoblinCommando() {

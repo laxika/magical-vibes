@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBatt
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "124")
+@CardRegistration(set = "DDR", collectorNumber = "64")
 public class UnhallowedPact extends Card {
 
     public UnhallowedPact() {

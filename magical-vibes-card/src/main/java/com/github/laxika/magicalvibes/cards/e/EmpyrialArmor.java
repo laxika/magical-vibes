@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WTH", collectorNumber = "13")
+@CardRegistration(set = "VMA", collectorNumber = "25")
 public class EmpyrialArmor extends Card {
 
     public EmpyrialArmor() {

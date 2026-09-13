@@ -12,17 +12,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "NEM", collectorNumber = "49")
 public class TricksterMage extends Card {
 
     public TricksterMage() {
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{U}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new TapOrUntapTargetPermanentEffect()
+                        new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target permanent?")
                 ),
                 "{U}, {T}, Discard a card: You may tap or untap target artifact, creature, or land.",
                 new PermanentPredicateTargetFilter(

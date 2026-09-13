@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "17")
+@CardRegistration(set = "VMA", collectorNumber = "37")
 public class ParallaxWave extends Card {
 
     public ParallaxWave() {
@@ -29,7 +30,7 @@ public class ParallaxWave extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.FADE),
-                        new ExileTargetPermanentUntilSourceLeavesEffect()
+                        ExileTargetPermanentUntilSourceLeavesEffect.evenIfSourceAlreadyLeft()
                 ),
                 "Remove a fade counter from this enchantment: Exile target creature.",
                 TargetFilters.creature()

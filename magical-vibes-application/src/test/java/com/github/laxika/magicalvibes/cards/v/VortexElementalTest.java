@@ -67,8 +67,7 @@ class VortexElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)

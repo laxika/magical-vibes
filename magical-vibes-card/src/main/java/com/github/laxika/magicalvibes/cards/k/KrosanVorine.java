@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "131")
+@CardRegistration(set = "VMA", collectorNumber = "219")
 public class KrosanVorine extends Card {
 
     public KrosanVorine() {

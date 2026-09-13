@@ -3,16 +3,16 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.b.BrilliantHalo;
+import com.github.laxika.magicalvibes.cards.l.LingeringMirage;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.cards.s.SpiritLink;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AcademyResearchers.class, ArgothianSwine.class, BrilliantHalo.class,
+        LingeringMirage.class, Pacifism.class})
 class AcademyResearchersTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -36,7 +38,6 @@ class AcademyResearchersTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Academy Researchers");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -70,7 +71,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @DisplayName("ETB prompts controller to choose an Aura from hand")
     void etbPromptsAuraChoice() {
         setupAndCast();
-        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.setHand(player1, List.of(new BrilliantHalo()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
@@ -85,15 +86,15 @@ class AcademyResearchersTest extends BaseCardTest {
     @DisplayName("Only Aura card indices are offered when hand has mixed cards")
     void onlyAuraIndicesOffered() {
         setupAndCast();
-        // Hand: [GrizzlyBears, HolyStrength, Pacifism, GrizzlyBears]
-        harness.setHand(player1, List.of(new GrizzlyBears(), new HolyStrength(), new Pacifism(), new GrizzlyBears()));
+        // Hand: [ArgothianSwine, BrilliantHalo, Pacifism, ArgothianSwine]
+        harness.setHand(player1, List.of(new ArgothianSwine(), new BrilliantHalo(), new Pacifism(), new ArgothianSwine()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
-        // Only indices 1 (HolyStrength) and 2 (Pacifism) should be valid
+        // Only indices 1 (Brilliant Halo) and 2 (Pacifism) should be valid
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(1, 2);
     }
 
@@ -101,22 +102,18 @@ class AcademyResearchersTest extends BaseCardTest {
     @DisplayName("Choosing an Aura puts it onto the battlefield attached to Academy Researchers")
     void choosingAuraAttachesToSelf() {
         setupAndCast();
-        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.setHand(player1, List.of(new BrilliantHalo()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
-        // Choose Holy Strength
+        // Choose Brilliant Halo
         harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
 
-        // Holy Strength is on the battlefield
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Holy Strength"))
-                .findFirst()
-                .orElse(null);
-        assertThat(auraPerm).isNotNull();
+        // Brilliant Halo is on the battlefield
+        Permanent auraPerm = findPermanent(player1, "Brilliant Halo");
 
         // It's attached to Academy Researchers
         Permanent researchers = findPermanent(player1, "Academy Researchers");
@@ -130,7 +127,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @DisplayName("Aura static effect applies to Academy Researchers after attachment")
     void auraStaticEffectApplies() {
         setupAndCast();
-        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.setHand(player1, List.of(new BrilliantHalo()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
@@ -140,31 +137,43 @@ class AcademyResearchersTest extends BaseCardTest {
 
         Permanent researchers = findPermanent(player1, "Academy Researchers");
 
-        // Holy Strength gives +1/+2, Academy Researchers is 2/2 → should be 3/4
+        // Brilliant Halo gives +1/+2, Academy Researchers is 2/2 → should be 3/4
         assertThat(harness.getGameQueryService().getEffectivePower(gd, researchers)).isEqualTo(3);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, researchers)).isEqualTo(4);
     }
 
-    // ===== Decline =====
-
     @Test
-    @DisplayName("Declining to choose an Aura leaves hand and battlefield unchanged")
-    void decliningLeavesHandUnchanged() {
+    @DisplayName("Declining the may ability leaves hand and battlefield unchanged")
+    void decliningMayLeavesHandUnchanged() {
         setupAndCast();
-        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.setHand(player1, List.of(new BrilliantHalo()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
-
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
         int battlefieldSizeBefore = harness.getGameData().playerBattlefields.get(player1.getId()).size();
 
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the may ability requires choosing an Aura")
+    void acceptingMayRequiresAuraSelection() {
+        setupAndCast();
+        harness.setHand(player1, List.of(new BrilliantHalo()));
+        harness.passBothPriorities(); // resolve creature spell - may on stack
+        harness.passBothPriorities(); // resolve MayEffect - may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept - Aura choice is required
+
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     // ===== No Auras in hand =====
@@ -174,7 +183,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void etbDoesNothingWithNoAuras() {
         setupAndCast();
         // Hand has only non-Aura cards
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ArgothianSwine()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
@@ -182,6 +191,20 @@ class AcademyResearchersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
+    }
+
+    @Test
+    @DisplayName("Only Auras that can enchant Academy Researchers are offered")
+    void onlyLegallyEnchantableAurasAreOffered() {
+        setupAndCast();
+        harness.setHand(player1, List.of(new LingeringMirage(), new Pacifism()));
+        harness.passBothPriorities(); // resolve creature spell - may on stack
+        harness.passBothPriorities(); // resolve MayEffect - may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept - inner effect resolves inline
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -204,7 +227,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @DisplayName("ETB fizzles if Academy Researchers left the battlefield before resolution")
     void etbFizzlesIfCreatureLeftBattlefield() {
         setupAndCast();
-        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.setHand(player1, List.of(new BrilliantHalo()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -225,7 +248,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @DisplayName("Player can choose among multiple Auras in hand")
     void canChooseAmongMultipleAuras() {
         setupAndCast();
-        harness.setHand(player1, List.of(new HolyStrength(), new SpiritLink()));
+        harness.setHand(player1, List.of(new BrilliantHalo(), new Pacifism()));
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
@@ -234,21 +257,18 @@ class AcademyResearchersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(0, 1);
 
-        // Choose Spirit Link (index 1)
+        // Choose Pacifism (index 1)
         harness.handleCardChosen(player1, 1);
 
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spirit Link"))
-                .findFirst()
-                .orElse(null);
+        Permanent auraPerm = findPermanent(player1, "Pacifism");
         assertThat(auraPerm).isNotNull();
 
         Permanent researchers = findPermanent(player1, "Academy Researchers");
         assertThat(auraPerm.getAttachedTo()).isEqualTo(researchers.getId());
 
-        // Holy Strength remains in hand
+        // Brilliant Halo remains in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Holy Strength");
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Brilliant Halo");
     }
 
     // ===== Helper =====

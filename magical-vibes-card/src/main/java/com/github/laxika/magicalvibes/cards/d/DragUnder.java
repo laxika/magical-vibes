@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "57")
+@CardRegistration(set = "W17", collectorNumber = "9")
 public class DragUnder extends Card {
 
     public DragUnder() {

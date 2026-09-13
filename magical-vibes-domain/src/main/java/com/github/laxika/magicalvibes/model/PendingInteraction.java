@@ -3221,8 +3221,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
                                   UUID targetId, String prompt, UUID exileSourceIfDeclinedId,
-                                  UUID returnSourceToHandId)
+                                  UUID returnSourceToHandId, boolean declinable)
             implements PendingInteraction, HandChoice {
+
+        public TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                      UUID targetId, String prompt, UUID exileSourceIfDeclinedId,
+                                      UUID returnSourceToHandId) {
+            this(playerId, validIndices, targetId, prompt, exileSourceIfDeclinedId, returnSourceToHandId, true);
+        }
 
         /** Non-exiling variant (the common case): declining simply puts nothing onto the battlefield. */
         public TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -3242,7 +3248,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, true);
+            return new InteractionOptions.CardIndexPick(validIndices, declinable);
         }
     }
 

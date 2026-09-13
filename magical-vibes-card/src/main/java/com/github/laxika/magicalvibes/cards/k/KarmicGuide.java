@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "11")
+@CardRegistration(set = "VMA", collectorNumber = "32")
 public class KarmicGuide extends Card {
 
     public KarmicGuide() {

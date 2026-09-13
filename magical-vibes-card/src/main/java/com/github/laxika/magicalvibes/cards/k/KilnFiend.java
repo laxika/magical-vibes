@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "153")
+@CardRegistration(set = "DDJ", collectorNumber = "2")
 public class KilnFiend extends Card {
 
     public KilnFiend() {

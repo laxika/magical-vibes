@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "CSP", collectorNumber = "90")
+@CardRegistration(set = "DDS", collectorNumber = "34")
 public class LovisaColdeyes extends Card {
 
     public LovisaColdeyes() {

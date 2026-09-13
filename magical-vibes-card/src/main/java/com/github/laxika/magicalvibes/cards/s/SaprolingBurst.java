@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NEM", collectorNumber = "113")
+@CardRegistration(set = "VMA", collectorNumber = "230")
 public class SaprolingBurst extends Card {
 
     public SaprolingBurst() {

@@ -72,8 +72,10 @@ class TemurCharmTest extends BaseCardTest {
 
         castMode(2, List.of());
 
-        assertThat(lowPowerBlocker.isCantBlockThisTurn()).isTrue();
-        assertThat(highPowerBlocker.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, lowPowerBlocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, highPowerBlocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
 
         attacker.setAttacking(true);
         harness.forceActivePlayer(player1);

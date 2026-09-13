@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "53")
 @CardRegistration(set = "TPR", collectorNumber = "84")
+@CardRegistration(set = "VMA", collectorNumber = "107")
 public class Carnophage extends Card {
 
     public Carnophage() {

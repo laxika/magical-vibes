@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "LGN", collectorNumber = "41")
+@CardRegistration(set = "VMA", collectorNumber = "75")
 public class KeeneyeAven extends Card {
 
     public KeeneyeAven() {
