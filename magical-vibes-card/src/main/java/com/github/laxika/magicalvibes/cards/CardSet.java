@@ -231,6 +231,7 @@ public enum CardSet {
     SET_PD3("PD3"),
     SET_MD1("MD1"),
     SET_G17("G17"),
+    SET_GNT("GNT"),
     SET_EMA("EMA");
 
     @Getter

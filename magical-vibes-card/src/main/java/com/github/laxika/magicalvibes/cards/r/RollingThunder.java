@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 @CardRegistration(set = "BRB", collectorNumber = "60")
 @CardRegistration(set = "HOP", collectorNumber = "64")
 @CardRegistration(set = "BFZ", collectorNumber = "154")
+@CardRegistration(set = "GNT", collectorNumber = "40")
 public class RollingThunder extends Card {
 
     public RollingThunder() {

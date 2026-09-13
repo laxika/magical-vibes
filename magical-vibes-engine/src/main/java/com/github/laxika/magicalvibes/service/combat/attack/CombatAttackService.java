@@ -819,6 +819,7 @@ public class CombatAttackService {
             // permanent's transient attacking state.
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
+                gameData.recordPlayerAttackAgainstPlayer(playerId, attackTarget);
             } else if (attackTarget != null) {
                 Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
                 if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {

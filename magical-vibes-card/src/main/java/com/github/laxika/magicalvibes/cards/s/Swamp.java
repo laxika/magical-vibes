@@ -452,6 +452,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDP", collectorNumber = "70")
 @CardRegistration(set = "DDP", collectorNumber = "71")
 @CardRegistration(set = "DDP", collectorNumber = "72")
+@CardRegistration(set = "GNT", collectorNumber = "63")
+@CardRegistration(set = "GNT", collectorNumber = "64")
 public class Swamp extends Card {
 
     public Swamp() {
