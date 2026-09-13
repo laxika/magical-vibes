@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.CloudElemental;
 import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LongbowArcher.class, AirElemental.class, Python.class})
+@CardUsed({AirElemental.class, CloudElemental.class, LongbowArcher.class, Python.class})
 class LongbowArcherTest extends BaseCardTest {
 
     @Test
@@ -50,6 +49,22 @@ class LongbowArcherTest extends BaseCardTest {
     @Test
     @DisplayName("First strike defeats a 3/2 blocker before it deals combat damage")
     void firstStrikeDealsCombatDamageFirst() {
+        Permanent archer = addCreatureReady(player1, new LongbowArcher());
+        archer.setAttacking(true);
+
+        Permanent python = addCreatureReady(player2, new Python());
+        python.setBlocking(true);
+        python.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Longbow Archer");
+        harness.assertInGraveyard(player2, "Python");
+    }
+
+    @Test
+    @DisplayName("First strike defeats a 3/2 blocker before it deals combat damage")
+    void firstStrikeDealsCombatDamageFirstUpstreamReview() {
         addCreatureReady(player1, new LongbowArcher());
         addCreatureReady(player2, new Python());
         declareAttackers(List.of(0));

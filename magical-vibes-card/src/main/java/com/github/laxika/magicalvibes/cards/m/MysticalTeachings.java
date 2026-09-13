@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "69")
+@CardRegistration(set = "MM3", collectorNumber = "44")
 public class MysticalTeachings extends Card {
 
     public MysticalTeachings() {

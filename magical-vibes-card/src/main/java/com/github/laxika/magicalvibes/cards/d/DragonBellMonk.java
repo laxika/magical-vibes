@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "10")
+@CardRegistration(set = "IMA", collectorNumber = "17")
 public class DragonBellMonk extends Card {
 
     public DragonBellMonk() {

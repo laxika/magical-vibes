@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 @CardRegistration(set = "INR", collectorNumber = "90")
 @CardRegistration(set = "INR", collectorNumber = "307")
 @CardRegistration(set = "AVR", collectorNumber = "81")
+@CardRegistration(set = "MM3", collectorNumber = "54")
 public class TemporalMastery extends Card {
 
     public TemporalMastery() {

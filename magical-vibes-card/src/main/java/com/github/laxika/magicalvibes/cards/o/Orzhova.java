@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 @CardRegistration(set = "OPC2", collectorNumber = "30")
+@CardRegistration(set = "OPCA", collectorNumber = "60")
 public class Orzhova extends Card {
 
     public Orzhova() {

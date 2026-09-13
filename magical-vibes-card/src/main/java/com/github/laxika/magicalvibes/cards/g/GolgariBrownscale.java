@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "166")
+@CardRegistration(set = "UMA", collectorNumber = "166")
 public class GolgariBrownscale extends Card {
 
     public GolgariBrownscale() {

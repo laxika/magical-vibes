@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "216")
 @CardRegistration(set = "DDH", collectorNumber = "51")
+@CardRegistration(set = "MM3", collectorNumber = "173")
+@CardRegistration(set = "GK1", collectorNumber = "18")
 public class Moroii extends Card {
 
     public Moroii() {

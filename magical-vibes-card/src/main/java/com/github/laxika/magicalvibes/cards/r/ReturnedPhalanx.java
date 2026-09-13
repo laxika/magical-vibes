@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "104")
+@CardRegistration(set = "A25", collectorNumber = "106")
 public class ReturnedPhalanx extends Card {
 
     public ReturnedPhalanx() {

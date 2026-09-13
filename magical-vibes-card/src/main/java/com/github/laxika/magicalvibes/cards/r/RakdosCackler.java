@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "220")
+@CardRegistration(set = "GK2", collectorNumber = "67")
 public class RakdosCackler extends Card {
 
     public RakdosCackler() {

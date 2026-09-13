@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "ATH", collectorNumber = "47")
 @CardRegistration(set = "ME2", collectorNumber = "147")
 @CardRegistration(set = "DDL", collectorNumber = "32")
+@CardRegistration(set = "EMA", collectorNumber = "143")
 public class Pyrokinesis extends Card {
 
     public Pyrokinesis() {

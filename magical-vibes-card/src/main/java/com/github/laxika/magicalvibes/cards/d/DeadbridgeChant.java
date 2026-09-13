@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "63")
+@CardRegistration(set = "GK1", collectorNumber = "58")
 public class DeadbridgeChant extends Card {
 
     public DeadbridgeChant() {

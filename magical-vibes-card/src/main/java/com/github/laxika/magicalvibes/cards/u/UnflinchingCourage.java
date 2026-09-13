@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "111")
+@CardRegistration(set = "MM3", collectorNumber = "197")
 public class UnflinchingCourage extends Card {
 
     public UnflinchingCourage() {

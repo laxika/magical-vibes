@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PC2", collectorNumber = "87")
+@CardRegistration(set = "PCA", collectorNumber = "87")
 public class DragonlairSpider extends Card {
 
     public DragonlairSpider() {

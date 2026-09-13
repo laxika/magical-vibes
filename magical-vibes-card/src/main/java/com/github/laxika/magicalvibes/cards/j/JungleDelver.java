@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "195")
+@CardRegistration(set = "GNT", collectorNumber = "45")
 public class JungleDelver extends Card {
 
     public JungleDelver() {

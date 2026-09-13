@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "M12", collectorNumber = "220")
 @CardRegistration(set = "UDS", collectorNumber = "141")
 @CardRegistration(set = "PC2", collectorNumber = "114")
+@CardRegistration(set = "PCA", collectorNumber = "114")
 public class ThranGolem extends Card {
 
     public ThranGolem() {

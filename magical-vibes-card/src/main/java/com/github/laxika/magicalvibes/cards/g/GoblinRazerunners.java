@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "64")
+@CardRegistration(set = "DDT", collectorNumber = "47")
 public class GoblinRazerunners extends Card {
 
     public GoblinRazerunners() {

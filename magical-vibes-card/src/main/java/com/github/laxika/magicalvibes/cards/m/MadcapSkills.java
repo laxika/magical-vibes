@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "98")
+@CardRegistration(set = "MM3", collectorNumber = "99")
 public class MadcapSkills extends Card {
 
     public MadcapSkills() {

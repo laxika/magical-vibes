@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "TD2", collectorNumber = "40")
 @CardRegistration(set = "DDF", collectorNumber = "74")
 @CardRegistration(set = "HOP", collectorNumber = "136")
+@CardRegistration(set = "DDU", collectorNumber = "69")
 public class SeatOfTheSynod extends Card {
 
     public SeatOfTheSynod() {

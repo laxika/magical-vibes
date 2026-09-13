@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "35")
+@CardRegistration(set = "OPCA", collectorNumber = "71")
 public class Skybreen extends Card {
 
     public Skybreen() {

@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class Levitation extends Card {
 
     public Levitation() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
     }
 }

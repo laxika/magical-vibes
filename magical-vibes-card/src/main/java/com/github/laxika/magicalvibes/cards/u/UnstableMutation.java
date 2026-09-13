@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SUM", collectorNumber = "86")
 @CardRegistration(set = "TSB", collectorNumber = "33")
 @CardRegistration(set = "3ED", collectorNumber = "86")
+@CardRegistration(set = "UMA", collectorNumber = "80")
 public class UnstableMutation extends Card {
 
     public UnstableMutation() {

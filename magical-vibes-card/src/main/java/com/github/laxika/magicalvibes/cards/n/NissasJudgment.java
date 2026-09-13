@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "139")
+@CardRegistration(set = "DDU", collectorNumber = "21")
 public class NissasJudgment extends Card {
 
     public NissasJudgment() {

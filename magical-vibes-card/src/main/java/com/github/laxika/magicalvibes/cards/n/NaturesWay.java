@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "162")
+@CardRegistration(set = "DDU", collectorNumber = "20")
 public class NaturesWay extends Card {
 
     public NaturesWay() {

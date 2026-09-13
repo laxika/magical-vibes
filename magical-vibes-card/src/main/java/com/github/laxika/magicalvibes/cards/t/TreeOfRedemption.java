@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithCreature
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "207")
+@CardRegistration(set = "A25", collectorNumber = "191")
 public class TreeOfRedemption extends Card {
 
     public TreeOfRedemption() {

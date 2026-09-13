@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostContr
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "58")
+@CardRegistration(set = "DDT", collectorNumber = "5")
 public class EngulfTheShore extends Card {
 
     public EngulfTheShore() {

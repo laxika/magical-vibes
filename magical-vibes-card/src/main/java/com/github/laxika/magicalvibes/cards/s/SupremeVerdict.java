@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "201")
+@CardRegistration(set = "IMA", collectorNumber = "210")
 public class SupremeVerdict extends Card {
 
     public SupremeVerdict() {

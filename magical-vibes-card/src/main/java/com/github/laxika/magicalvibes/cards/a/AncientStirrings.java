@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "174")
+@CardRegistration(set = "A25", collectorNumber = "159")
 public class AncientStirrings extends Card {
 
     public AncientStirrings() {

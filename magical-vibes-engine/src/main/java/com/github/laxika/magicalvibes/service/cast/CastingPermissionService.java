@@ -212,6 +212,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
                     boolean applies = switch (spellLimit.scope()) {
@@ -1709,6 +1712,12 @@ public class CastingPermissionService {
     /** Returns whether the current top card has a temporary free-play permission from the library. */
     public boolean hasLibraryTopCardFreePlayPermission(GameData gameData, UUID playerId, Card card) {
         List<Card> deck = gameData.playerDecks.get(playerId);
+        UUID permittedId = gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId);
+        if (permittedId != null && (deck == null || deck.isEmpty()
+                || !permittedId.equals(deck.getFirst().getId()))) {
+            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId, permittedId);
+            return false;
+        }
         if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
             return false;
         }

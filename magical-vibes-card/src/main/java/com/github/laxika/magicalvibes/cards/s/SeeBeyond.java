@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleCardsFromHandIntoLibra
 
 @CardRegistration(set = "ROE", collectorNumber = "86")
 @CardRegistration(set = "PC2", collectorNumber = "25")
+@CardRegistration(set = "PCA", collectorNumber = "25")
 public class SeeBeyond extends Card {
 
     public SeeBeyond() {

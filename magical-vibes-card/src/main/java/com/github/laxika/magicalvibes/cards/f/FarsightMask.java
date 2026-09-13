@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "170")
 @CardRegistration(set = "PC2", collectorNumber = "109")
+@CardRegistration(set = "PCA", collectorNumber = "109")
 public class FarsightMask extends Card {
 
     public FarsightMask() {

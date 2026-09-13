@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "3")
+@CardRegistration(set = "IMA", collectorNumber = "12")
 public class BenevolentAncestor extends Card {
 
     public BenevolentAncestor() {

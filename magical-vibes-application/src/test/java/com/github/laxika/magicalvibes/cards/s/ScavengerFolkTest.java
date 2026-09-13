@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.Kismet;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
+import com.github.laxika.magicalvibes.cards.v.VernalBloom;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScavengerFolk.class, FellwarStone.class, GrizzlyBears.class, Kismet.class, Forest.class})
+@CardUsed({ScavengerFolk.class, SisaysRing.class, PhyrexianHulk.class, GrizzlyBears.class, VernalBloom.class, Forest.class})
 class ScavengerFolkTest extends BaseCardTest {
 
     @Test
@@ -32,8 +30,8 @@ class ScavengerFolkTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Scavenger Folk");
         harness.assertInGraveyard(player1, "Scavenger Folk");
-        harness.assertNotOnBattlefield(player2, "Fellwar Stone");
-        harness.assertInGraveyard(player2, "Fellwar Stone");
+        harness.assertNotOnBattlefield(player2, "Sisay's Ring");
+        harness.assertInGraveyard(player2, "Sisay's Ring");
     }
 
     @Test
@@ -47,11 +45,11 @@ class ScavengerFolkTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Scavenger Folk");
         harness.assertInGraveyard(player1, "Scavenger Folk");
-        harness.assertOnBattlefield(player2, "Fellwar Stone");
+        harness.assertOnBattlefield(player2, "Sisay's Ring");
 
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Fellwar Stone");
+        harness.assertInGraveyard(player2, "Sisay's Ring");
     }
 
     @Test
@@ -64,7 +62,20 @@ class ScavengerFolkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Fellwar Stone");
+        harness.assertInGraveyard(player1, "Sisay's Ring");
+    }
+
+    @Test
+    @DisplayName("Can target an artifact creature")
+    void canTargetArtifactCreature() {
+        addReadyFolk(player1);
+        Permanent target = addReadyArtifactCreature(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Phyrexian Hulk");
     }
 
     @Test
@@ -142,13 +153,12 @@ class ScavengerFolkTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Fellwar Stone"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target));
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     private Permanent addReadyFolk(Player player) {
@@ -156,11 +166,15 @@ class ScavengerFolkTest extends BaseCardTest {
     }
 
     private Permanent addReadyArtifact(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new FellwarStone());
+        return harness.addToBattlefieldAndReturn(player, new SisaysRing());
+    }
+
+    private Permanent addReadyArtifactCreature(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new PhyrexianHulk());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Kismet());
+        return harness.addToBattlefieldAndReturn(player, new VernalBloom());
     }
 
     private Permanent addReadyLand(Player player) {

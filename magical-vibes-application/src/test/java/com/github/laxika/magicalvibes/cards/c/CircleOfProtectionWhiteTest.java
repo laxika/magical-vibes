@@ -195,6 +195,43 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A white permanent spell remains the chosen source after it resolves")
+    void preventsDamageFromChosenWhiteSpellAfterItResolves() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new CircleOfProtectionWhite());
+        Justice justiceSpell = new Justice();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, justiceSpell, "{2}{W}{W}");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(justiceSpell.getId());
+
+        harness.handlePermanentChosen(player1, justiceSpell.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addCreatureReady(player1, new CircleOfProtectionWhite());

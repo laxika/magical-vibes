@@ -599,14 +599,14 @@ Cards: `BrassSquire` (2 targets: Equipment + creature), `SoulConduit` (2 targets
 
 **Filterless "any target" group** ("−6: deals 6 damage to each of up to six targets" — Chandra, the Firebrand): pass `multiTargetFilters = List.of()` with `minTargets 0` / `maxTargets 6` on the full ctor. With no global and no per-position filter, `ValidTargetService`/`TargetLegalityService` derive the slot type from the effects' `targetSpec()`: when every permanent-targeting effect also targets players the slot is "any target", so players are offered alongside creatures and planeswalkers and every other permanent type is rejected. A filterless group is routed onto the multi-target path by `maxTargets > 1` even though `isMultiTarget()` (per-position filters) is false — X-scaled groups stay on the single-target path.
 
-**X-scaled target count** ("{X}, {T}, Sacrifice this artifact: X target creatures with power 2 or less can't be blocked this turn" — Runed Arch): use the full ctor with a single `targetFilter`, empty `multiTargetFilters`, `minTargets = 0` and a sanity `maxTargets` cap, then chain `.withXScaledTargets()`. This is the ability-side counterpart of `Card.targetX`: the paid X bounds the target count via `ActivatedAbility.getEffectiveMinTargets/MaxTargets(x)`, honoured by `TargetLegalityService.validateMultiTargetAbility(..., xValue)` and `ValidTargetService.computeValidTargetsForAbility(..., xValue)`. Per-position filtering falls back to the ability's single `targetFilter`, and the chosen group rides on `StackEntry.getTargetIds()` (so any handler that fans over `getTargetIds()` — e.g. `MakeCreatureUnblockableEffect` — works unchanged).
+**Exactly X targets** (Runed Arch, Alexi, Zephyr Mage): use the constructor taking a single `targetFilter`, then chain `.withExactXTargets()`. Both effective target bounds equal the announced X, including zero, with no fixed cap. `TargetLegalityService.validateMultiTargetAbility(..., xValue)` enforces that count and `ValidTargetService.computeValidTargetsForAbility(..., xValue)` reports it to the client. Per-position filtering falls back to the ability's single `targetFilter`, and the chosen group rides on `StackEntry.getTargetIds()`, so handlers that iterate over that list work unchanged. The older `.withXScaledTargets()` clamps configured numeric bounds to X; do not use `100, 100` to encode an exact-X requirement.
 
 ```java
 addActivatedAbility(new ActivatedAbility(true, "{X}",
         List.of(new SacrificeSelfCost(), new MakeCreatureUnblockableEffect()),
         "{X}, {T}, Sacrifice this artifact: X target creatures with power 2 or less can't be blocked this turn.",
-        creatureWithPowerAtMost2Filter, null, null, null, List.of(), 0, 100)
-        .withXScaledTargets());
+        creatureWithPowerAtMost2Filter)
+        .withExactXTargets());
 ```
 
 **Minimum X:** chain `.withMinimumXValue(n)` when an activated ability says that X cannot be

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 
 @CardRegistration(set = "USG", collectorNumber = "298")
 @CardRegistration(set = "V10", collectorNumber = "6")
@@ -24,7 +25,7 @@ import java.util.Set;
 public class KarnSilverGolem extends Card {
 
     public KarnSilverGolem() {
-        addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(-4, 4));
+        addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(-4, 4), TriggerMode.ONCE_PER_BLOCK);
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BoostSelfEffect(-4, 4));
 
         addActivatedAbility(new ActivatedAbility(

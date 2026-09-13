@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 @CardRegistration(set = "PC2", collectorNumber = "88")
+@CardRegistration(set = "PCA", collectorNumber = "88")
 public class ElderwoodScion extends Card {
 
     public ElderwoodScion() {

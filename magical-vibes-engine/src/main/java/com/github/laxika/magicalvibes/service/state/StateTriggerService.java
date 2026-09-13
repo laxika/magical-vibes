@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,19 +42,28 @@ public class StateTriggerService {
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
+    private final ETBTokenTargetService etbTokenTargetService;
 
     @Autowired
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService,
-                               GameQueryService gameQueryService) {
+                               GameQueryService gameQueryService,
+                               @Lazy ETBTokenTargetService etbTokenTargetService) {
         this.gameLogService = gameLogService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
+        this.etbTokenTargetService = etbTokenTargetService;
+    }
+
+    public StateTriggerService(GameLogService gameLogService,
+                               PredicateEvaluationService predicateEvaluationService,
+                               GameQueryService gameQueryService) {
+        this(gameLogService, predicateEvaluationService, gameQueryService, null);
     }
 
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService) {
-        this(gameLogService, predicateEvaluationService, null);
+        this(gameLogService, predicateEvaluationService, null, null);
     }
 
 
@@ -128,24 +139,36 @@ public class StateTriggerService {
                         }
                         gameData.stateTriggerOnStack.add(key);
 
-                        StackEntry entry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                trigger.description(),
-                                trigger.effects(),
-                                null,
-                                perm.getId()
-                        );
-                        if (referencedPermanent != null) {
-                            entry.setTriggeringPermanentId(referencedPermanent.getId());
-                            entry.setTriggeringPermanentControllerId(playerIdOf(
-                                    gameData, referencedPermanent.getId()));
-                            entry.setTriggeringCardId(referencedPermanent.getCard().getId());
-                            entry.setDamageSourceCard(referencedPermanent.getCard());
+                        if (hasTargets(perm, trigger)) {
+                            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending =
+                                    new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                            perm.getCard(), playerId, trigger.effects(), perm.getId(),
+                                            List.of(), 0, 0)
+                                            .withStateTriggerEffectIndex(i);
+                            gameData.queueInteraction(pending);
+                            if (!gameData.interaction.isAwaitingInput()) {
+                                etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+                            }
+                        } else {
+                            StackEntry entry = new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    trigger.description(),
+                                    trigger.effects(),
+                                    null,
+                                    perm.getId()
+                            );
+                            if (referencedPermanent != null) {
+                                entry.setTriggeringPermanentId(referencedPermanent.getId());
+                                entry.setTriggeringPermanentControllerId(playerIdOf(
+                                        gameData, referencedPermanent.getId()));
+                                entry.setTriggeringCardId(referencedPermanent.getCard().getId());
+                                entry.setDamageSourceCard(referencedPermanent.getCard());
+                            }
+                            entry.setStateTriggerEffectIndex(i);
+                            gameData.stack.add(entry);
                         }
-                        entry.setStateTriggerEffectIndex(i);
-                        gameData.stack.add(entry);
 
                         gameLogService.append(gameData, GameLog.text(trigger.description() + " triggers."));
                         log.info("Game {} - State trigger fires for {} (permanent {})",
@@ -154,6 +177,15 @@ public class StateTriggerService {
                 }
             }
         }
+    }
+
+    private boolean hasTargets(Permanent permanent, StateTriggerEffect trigger) {
+        if (etbTokenTargetService == null || permanent.getCard().getSpellTargets().isEmpty()) {
+            return false;
+        }
+        return trigger.effects().stream().anyMatch(effect ->
+                effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
     }
 
     private List<CardEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {

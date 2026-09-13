@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "5")
+@CardRegistration(set = "OPCA", collectorNumber = "5")
 public class PlanewideDisaster extends Card {
 
     public PlanewideDisaster() {

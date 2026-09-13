@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandBottomThenD
 
 @CardRegistration(set = "ONS", collectorNumber = "201")
 @CardRegistration(set = "PC2", collectorNumber = "41")
+@CardRegistration(set = "PCA", collectorNumber = "41")
 public class ErraticExplosion extends Card {
 
     public ErraticExplosion() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FDN", collectorNumber = "140")
 @CardRegistration(set = "FDN", collectorNumber = "422")
 @CardRegistration(set = "FDN", collectorNumber = "432")
+@CardRegistration(set = "E02", collectorNumber = "2")
 public class DayOfJudgment extends Card {
 
     public DayOfJudgment() {

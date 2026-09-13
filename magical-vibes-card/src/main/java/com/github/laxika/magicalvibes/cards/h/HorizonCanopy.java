@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "177")
 @CardRegistration(set = "EXP", collectorNumber = "40")
+@CardRegistration(set = "IMA", collectorNumber = "240")
 public class HorizonCanopy extends Card {
 
     public HorizonCanopy() {

@@ -19,16 +19,19 @@ class ScentOfJasmineTest extends BaseCardTest {
     @Test
     @DisplayName("Gains 2 life for each white card in hand")
     void gainsLifeForWhiteCardsInHand() {
+        VoiceOfDuty firstWhiteCard = new VoiceOfDuty();
+        SerraAdvocate secondWhiteCard = new SerraAdvocate();
         harness.setHand(player1, List.of(
                 new ScentOfJasmine(),
-                new VoiceOfDuty(),
-                new SerraAdvocate(),
+                firstWhiteCard,
+                secondWhiteCard,
                 new ScentOfCinder()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
+        harness.handleMultipleCardsChosen(player1, List.of(firstWhiteCard.getId(), secondWhiteCard.getId()));
         harness.assertLife(player1, 24);
     }
 

@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "219")
 @CardRegistration(set = "EXP", collectorNumber = "21")
+@CardRegistration(set = "MM3", collectorNumber = "239")
+@CardRegistration(set = "SLU", collectorNumber = "1")
 public class MarshFlats extends Card {
 
     public MarshFlats() {

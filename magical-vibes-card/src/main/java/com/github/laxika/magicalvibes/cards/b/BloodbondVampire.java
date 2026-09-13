@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "104")
+@CardRegistration(set = "E02", collectorNumber = "15")
 public class BloodbondVampire extends Card {
 
     public BloodbondVampire() {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "156")
+@CardRegistration(set = "MM3", collectorNumber = "120")
 public class BalothCageTrap extends Card {
 
     public BalothCageTrap() {

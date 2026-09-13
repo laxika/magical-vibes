@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "53")
+@CardRegistration(set = "EMA", collectorNumber = "131")
 public class FlameJab extends Card {
 
     public FlameJab() {

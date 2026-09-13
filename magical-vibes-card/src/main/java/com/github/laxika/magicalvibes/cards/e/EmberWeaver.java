@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "81")
+@CardRegistration(set = "A25", collectorNumber = "169")
 public class EmberWeaver extends Card {
 
     public EmberWeaver() {

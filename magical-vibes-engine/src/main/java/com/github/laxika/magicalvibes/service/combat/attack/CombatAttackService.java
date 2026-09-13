@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
@@ -819,6 +821,7 @@ public class CombatAttackService {
             // permanent's transient attacking state.
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
+                gameData.recordPlayerAttackAgainstPlayer(playerId, attackTarget);
             } else if (attackTarget != null) {
                 Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
                 if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {
@@ -1932,6 +1935,7 @@ public class CombatAttackService {
         // trigger the ability (e.g. Windreader Sphinx and Nahiri, Forged in Fury).
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
+            UUID attackedTargetId = attacker.getAttackTarget();
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
                 UUID permController = bf.getKey();
                 for (Permanent perm : new ArrayList<>(bf.getValue())) {
@@ -1947,7 +1951,15 @@ public class CombatAttackService {
                                 .withSourceControllerId(permController)
                                 .withSourcePermanentId(perm.getId());
                         while (matches) {
-                            if (matchingEffect instanceof TriggeringPermanentControllerConditionalEffect controllerConditional) {
+                            if (matchingEffect instanceof PutCounterOnAttackingCreatureOnAttacksYouEffect counterEffect) {
+                                if (!perm.isAttached()
+                                        || !gameData.playerIds.contains(attackedTargetId)
+                                        || !attackedTargetId.equals(perm.getAttachedTo())) {
+                                    matches = false;
+                                } else {
+                                    matchingEffect = new PutCounterOnTargetPermanentEffect(counterEffect.counterType());
+                                }
+                            } else if (matchingEffect instanceof TriggeringPermanentControllerConditionalEffect controllerConditional) {
                                 if (!permController.equals(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
                                     matches = false;
                                 } else {
@@ -2614,7 +2626,8 @@ public class CombatAttackService {
                                                  List<Integer> attackerIndices) {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
-            if (!hasGreaterPowerRestriction(restricted)) {
+            if (!hasGreaterPowerRestriction(restricted)
+                    || gameQueryService.hasLostPrintedAbilities(gameData, restricted)) {
                 continue;
             }
             int power = gameQueryService.getEffectivePower(gameData, restricted);

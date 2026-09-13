@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "124")
+@CardRegistration(set = "E02", collectorNumber = "33")
 public class HuntersProwess extends Card {
 
     public HuntersProwess() {

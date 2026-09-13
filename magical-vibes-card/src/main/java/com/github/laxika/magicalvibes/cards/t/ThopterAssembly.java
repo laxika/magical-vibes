@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "140")
+@CardRegistration(set = "DDU", collectorNumber = "63")
 public class ThopterAssembly extends Card {
 
     public ThopterAssembly() {

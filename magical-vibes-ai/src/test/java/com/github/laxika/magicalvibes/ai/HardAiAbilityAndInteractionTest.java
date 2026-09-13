@@ -937,7 +937,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI may pump Killer Bees when it is attacking")
     void pumpsAttackingKillerBeesDuringCombat() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 25);
         giveCombatPriority(player1);
         Permanent bees = addKillerBees(player1);
         bees.setAttacking(true);
@@ -956,7 +957,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @DisplayName("Hard AI may pump Killer Bees when it is blocking")
     void pumpsBlockingKillerBeesDuringCombat() {
         pinLibrariesAndHands();
-        HardAiDecisionEngine ai = createHardAi(player1);
+        // A small seeded search suffices to verify that the blocking pump is available and chosen.
+        HardAiDecisionEngine ai = createHardAi(player1, 25);
         giveCombatPriority(player2);
         gd.priorityPassedBy.add(player2.getId());
         Permanent attacker = new Permanent(new GrizzlyBears());

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCard
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "155")
+@CardRegistration(set = "MM3", collectorNumber = "105")
+@CardRegistration(set = "SS3", collectorNumber = "4")
 public class PastInFlames extends Card {
 
     public PastInFlames() {

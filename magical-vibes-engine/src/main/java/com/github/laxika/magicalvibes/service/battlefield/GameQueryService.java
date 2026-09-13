@@ -514,7 +514,14 @@ public class GameQueryService {
     private boolean playerHasTemporaryStaticEffect(GameData gameData, UUID playerId,
                                                    Class<? extends CardEffect> effectType) {
         List<CardEffect> effects = gameData.playerStaticEffectsUntilEndOfTurn.get(playerId);
-        return effects != null && effects.stream().anyMatch(effectType::isInstance);
+        if (effects != null && effects.stream().anyMatch(effectType::isInstance)) {
+            return true;
+        }
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream().anyMatch(floating ->
+                    playerId.equals(floating.affectedPlayerId())
+                            && effectType.isInstance(floating.effect()));
+        }
     }
 
     /**
@@ -1470,7 +1477,8 @@ public class GameQueryService {
             }
             for (Permanent source : battlefield) {
                 for (var effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof LandManaProducesFixedColorEffect fixed) {
+                    if (effect instanceof LandManaProducesFixedColorEffect fixed
+                            && !hasLostAllAbilities(gameData, source)) {
                         return fixed.color();
                     }
                 }
@@ -2040,7 +2048,7 @@ public class GameQueryService {
                                       int currentLife) {
         boolean active = switch (lifeFloor.condition()) {
             case ALWAYS -> true;
-            case CONTROLS_A_CREATURE -> controlsCreature;
+            case CONTROLS_A_CREATURE -> controlsCreature && currentLife >= lifeFloor.floor();
             case LIFE_AT_LEAST_FLOOR -> currentLife >= lifeFloor.floor();
         };
         return active ? lifeFloor.floor() : 0;
@@ -7814,7 +7822,8 @@ public class GameQueryService {
                         && sourceControllerId != null
                         && sourceControllerId.equals(controllerId)
                         && effect instanceof ControllerRecipientDamageMultiplyingEffect multiplyingEffect) {
-                    if (!combatDamage || !multiplyingEffect.noncombatOnly()) {
+                    if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
+                            && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
                         multiplier[0] *= multiplyingEffect.damageMultiplier();
                     }
                 }
@@ -8654,8 +8663,8 @@ public class GameQueryService {
             return true;
         }
         // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
-        if (isCombatDamage && creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) {
+        if (isCombatDamage && hasActiveStaticEffect(gameData, creature,
+                PreventAllCombatDamageToAndBySelfEffect.class)) {
             return true;
         }
         if (isCombatDamage && hasActiveStaticEffect(gameData, creature, PreventAllCombatDamageBySelfEffect.class)) {
@@ -8744,7 +8753,8 @@ public class GameQueryService {
     public boolean hasActiveStaticEffect(GameData gameData, Permanent source,
                                          Class<? extends CardEffect> effectType) {
         UUID controllerId = findPermanentController(gameData, source.getId());
-        if (controllerId == null || source.isStaticEffectSuppressed(effectType)) return false;
+        if (controllerId == null || source.isStaticEffectSuppressed(effectType)
+                || hasLostPrintedAbilities(gameData, source)) return false;
         return source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(effect -> !source.isStaticEffectSuppressed(effect.getClass()))
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))

@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "175")
 @CardRegistration(set = "VIS", collectorNumber = "114")
+@CardRegistration(set = "EMA", collectorNumber = "177")
 public class NaturalOrder extends Card {
 
     public NaturalOrder() {
