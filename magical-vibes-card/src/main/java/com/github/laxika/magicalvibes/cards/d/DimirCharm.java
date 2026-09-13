@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "154")
+@CardRegistration(set = "GK1", collectorNumber = "11")
 public class DimirCharm extends Card {
 
     public DimirCharm() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,15 +11,13 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenalishInfantry.class, GrizzlyBears.class, SageOwl.class})
+@CardUsed({BenalishInfantry.class, EagerCadet.class, GrizzlyBears.class, SageOwl.class})
 class SageOwlTest extends BaseCardTest {
 
     @Test
@@ -150,7 +149,7 @@ class SageOwlTest extends BaseCardTest {
     @DisplayName("Flying prevents a nonflying creature from blocking Sage Owl")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new SageOwl());
-        addCreatureReady(player2, new BenalishInfantry());
+        addCreatureReady(player2, new EagerCadet());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -160,4 +159,3 @@ class SageOwlTest extends BaseCardTest {
                 .hasMessageContaining("(flying)");
     }
 }
-

@@ -1,22 +1,21 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.Crusade;
+import com.github.laxika.magicalvibes.cards.f.FleetwheelCruiser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.v.Vitalize;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Meekstone.class, GrizzlyBears.class, TrainedArmodon.class, Crusade.class,
-        LongbowArcher.class, Vitalize.class})
+@CardUsed({Crusade.class, GrizzlyBears.class, HillGiant.class, LongbowArcher.class, Meekstone.class, TrainedArmodon.class, Vitalize.class, WhiteKnight.class})
 class MeekstoneTest extends BaseCardTest {
 
     @Test
@@ -26,9 +25,22 @@ class MeekstoneTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player1, new TrainedArmodon()); // 3/3
         giant.tap();
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(giant.isTapped()).isTrue();
+    }
+
+    @CardUsed(FleetwheelCruiser.class)
+    @Test
+    @DisplayName("A noncreature Vehicle with power 3+ untaps normally")
+    void noncreatureVehicleWithPower3OrGreaterUntaps() {
+        harness.addToBattlefield(player1, new Meekstone());
+        Permanent cruiser = harness.addToBattlefieldAndReturn(player1, new FleetwheelCruiser());
+        cruiser.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(cruiser.isTapped()).isFalse();
     }
 
     @Test
@@ -38,7 +50,7 @@ class MeekstoneTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         bears.tap();
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(bears.isTapped()).isFalse();
     }
@@ -50,8 +62,7 @@ class MeekstoneTest extends BaseCardTest {
         Permanent opponentGiant = addCreatureReady(player2, new TrainedArmodon()); // 3/3
         opponentGiant.tap();
 
-        // player2's untap step
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(opponentGiant.isTapped()).isTrue();
     }
@@ -64,7 +75,7 @@ class MeekstoneTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player1, new TrainedArmodon()); // 3/3
         giant.tap();
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(giant.isTapped()).isTrue();
     }
@@ -77,7 +88,7 @@ class MeekstoneTest extends BaseCardTest {
         Permanent knight = addCreatureReady(player1, new LongbowArcher()); // 2/2, 3/3 with Crusade
         knight.tap();
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(knight.isTapped()).isTrue();
     }
@@ -91,7 +102,7 @@ class MeekstoneTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(meekstone);
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(giant.isTapped()).isFalse();
     }
@@ -107,13 +118,5 @@ class MeekstoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(giant.isTapped()).isFalse();
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 }

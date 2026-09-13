@@ -18,17 +18,15 @@ class NaturesRevoltTest extends BaseCardTest {
     @Test
     @DisplayName("Lands of both players become 2/2 creatures that are still lands")
     void animatesAllLands() {
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new Mountain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.addToBattlefield(player1, new NaturesRevolt());
 
-        Permanent forest = findPermanent(player1, "Forest");
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
         assertThat(gqs.isLand(gd, forest)).isTrue();
 
-        Permanent mountain = findPermanent(player2, "Mountain");
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(2);
@@ -39,9 +37,8 @@ class NaturesRevoltTest extends BaseCardTest {
     @DisplayName("Lands entering after Nature's Revolt also become 2/2 creatures")
     void animatesLandsThatEnterLater() {
         harness.addToBattlefield(player1, new NaturesRevolt());
-        harness.enterBattlefieldAndReturn(player2, new Mountain());
+        Permanent mountain = harness.enterBattlefieldAndReturn(player2, new Mountain());
 
-        Permanent mountain = findPermanent(player2, "Mountain");
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(2);
@@ -51,10 +48,9 @@ class NaturesRevoltTest extends BaseCardTest {
     @Test
     @DisplayName("Does not animate non-land permanents or change existing creatures")
     void doesNotAnimateNonLands() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new NaturesRevolt());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.isCreature(gd, bears)).isTrue();
         // Grizzly Bears is a natural 2/2 — Nature's Revolt does not touch its P/T.
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -64,24 +60,34 @@ class NaturesRevoltTest extends BaseCardTest {
     @Test
     @DisplayName("Animated lands benefit from a creature anthem")
     void animatedLandsBenefitFromAnthem() {
-        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new NaturesRevolt());
         harness.addToBattlefield(player1, new GloriousAnthem());
 
-        Permanent forest = findPermanent(player1, "Forest");
         // 2/2 from Nature's Revolt + 1/1 from Glorious Anthem = 3/3.
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(3);
     }
 
     @Test
+    @DisplayName("A land entering under Nature's Revolt has summoning sickness")
+    void enteringLandHasSummoningSickness() {
+        harness.addToBattlefield(player1, new NaturesRevolt());
+        Permanent mountain = harness.enterBattlefieldAndReturn(player1, new Mountain());
+
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(als.canAttack(gd, mountain, player1.getId())).isFalse();
+
+        mountain.setSummoningSick(false);
+        assertThat(als.canAttack(gd, mountain, player1.getId())).isTrue();
+    }
+
+    @Test
     @DisplayName("Lands revert to non-creatures when Nature's Revolt leaves")
     void revertsWhenLeaves() {
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new NaturesRevolt());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent revolt = harness.addToBattlefieldAndReturn(player1, new NaturesRevolt());
 
-        Permanent forest = findPermanent(player1, "Forest");
-        Permanent revolt = findPermanent(player1, "Nature's Revolt");
         assertThat(gqs.isCreature(gd, forest)).isTrue();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()

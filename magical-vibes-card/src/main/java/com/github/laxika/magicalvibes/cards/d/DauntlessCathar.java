@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "19")
 @CardRegistration(set = "INR", collectorNumber = "339")
 @CardRegistration(set = "SOI", collectorNumber = "11")
+@CardRegistration(set = "A25", collectorNumber = "10")
 public class DauntlessCathar extends Card {
 
     public DauntlessCathar() {

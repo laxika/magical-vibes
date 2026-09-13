@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OPC2", collectorNumber = "40")
+@CardRegistration(set = "OPCA", collectorNumber = "86")
 public class TheZephyrMaze extends Card {
 
     public TheZephyrMaze() {

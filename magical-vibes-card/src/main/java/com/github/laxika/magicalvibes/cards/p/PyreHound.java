@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "174")
+@CardRegistration(set = "A25", collectorNumber = "145")
 public class PyreHound extends Card {
 
     public PyreHound() {

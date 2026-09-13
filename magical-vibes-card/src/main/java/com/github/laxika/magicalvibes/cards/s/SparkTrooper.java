@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "199")
+@CardRegistration(set = "GK1", collectorNumber = "94")
 public class SparkTrooper extends Card {
 
     public SparkTrooper() {

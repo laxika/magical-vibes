@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "27")
+@CardRegistration(set = "OPCA", collectorNumber = "57")
 public class NornsDominion extends Card {
 
     public NornsDominion() {

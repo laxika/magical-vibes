@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 @CardRegistration(set = "CHK", collectorNumber = "128")
 @CardRegistration(set = "PHUK", collectorNumber = "17")
 @CardRegistration(set = "PHUK", collectorNumber = "29")
+@CardRegistration(set = "A25", collectorNumber = "99")
 public class NezumiCutthroat extends Card {
 
     public NezumiCutthroat() {

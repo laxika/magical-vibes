@@ -25,8 +25,7 @@ class WingSnareTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WingSnare()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, flyingCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, flyingCreature.getId());
 
         harness.assertNotOnBattlefield(player2, "Sustainer of the Realm");
         harness.assertInGraveyard(player2, "Sustainer of the Realm");

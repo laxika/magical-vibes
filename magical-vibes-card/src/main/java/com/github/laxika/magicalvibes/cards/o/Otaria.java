@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCard
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "28")
+@CardRegistration(set = "OPCA", collectorNumber = "61")
 public class Otaria extends Card {
 
     public Otaria() {

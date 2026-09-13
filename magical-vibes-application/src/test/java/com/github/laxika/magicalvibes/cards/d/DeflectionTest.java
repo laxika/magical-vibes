@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,6 +68,23 @@ class DeflectionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, arcTrail.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("single target");
+    }
+
+    @Test
+    @CardUsed(Pyrotechnics.class)
+    @DisplayName("Casting Deflection can target a variable-target spell cast with one target")
+    void castingAcceptsVariableTargetSpellWithOneTarget() {
+        Pyrotechnics pyrotechnics = new Pyrotechnics();
+        harness.setHand(player1, List.of(pyrotechnics));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player2, 0, pyrotechnics.getId());
     }
 
     @Test

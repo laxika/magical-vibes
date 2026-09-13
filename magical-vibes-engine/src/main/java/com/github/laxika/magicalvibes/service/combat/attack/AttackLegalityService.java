@@ -392,7 +392,11 @@ public class AttackLegalityService {
                         .withSourceControllerId(planarController)
                         .withSourceCardId(planar.getCard().getId());
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                    if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, creature, restriction.exemptionPredicate())) {
+                        restricted[0] = true;
+                    } else if (effect instanceof AttackOrBlockRestrictionEffect restriction
                             && restriction.globallyCantAttackOrBlock() != null
                             && predicateEvaluationService.matchesPermanentPredicate(
                             creature, restriction.globallyCantAttackOrBlock(), context)) {

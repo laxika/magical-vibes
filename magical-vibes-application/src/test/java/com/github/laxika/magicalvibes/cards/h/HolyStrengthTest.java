@@ -46,6 +46,20 @@ class HolyStrengthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Holy Strength boosts only the enchanted creature")
+    void onlyEnchantedCreatureGetsBoost() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(enchanted.getId());
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Holy Strength can enchant an opponent's creature")
     void canEnchantOpponentsCreature() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());

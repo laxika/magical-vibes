@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "50")
+@CardRegistration(set = "A25", collectorNumber = "75")
 public class TwistedImage extends Card {
 
     public TwistedImage() {

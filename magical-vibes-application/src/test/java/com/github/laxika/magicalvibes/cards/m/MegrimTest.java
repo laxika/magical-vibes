@@ -30,10 +30,7 @@ class MegrimTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Megrim puts it on the stack as enchantment spell")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Megrim()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Megrim(), "{2}{B}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -43,10 +40,7 @@ class MegrimTest extends BaseCardTest {
     @Test
     @DisplayName("Megrim resolves onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new Megrim()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Megrim(), "{2}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

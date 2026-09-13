@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "WWK", collectorNumber = "31")
 @CardRegistration(set = "VMA", collectorNumber = "74")
 @CardRegistration(set = "V13", collectorNumber = "18")
+@CardRegistration(set = "A25", collectorNumber = "62")
 @CardRegistration(set = "EMA", collectorNumber = "57")
 public class JaceTheMindSculptor extends Card {
 

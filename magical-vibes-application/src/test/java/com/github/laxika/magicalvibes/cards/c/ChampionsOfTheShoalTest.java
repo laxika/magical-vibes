@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChampionsOfTheShoal.class, CoralMerfolk.class, GrizzlyBears.class})
 class ChampionsOfTheShoalTest extends BaseCardTest {
 
     @Test
@@ -43,9 +44,7 @@ class ChampionsOfTheShoalTest extends BaseCardTest {
     @Test
     @DisplayName("Becomes-tapped trigger taps and stuns up to one target creature")
     void becomesTappedTapsAndStunsTarget() {
-        Permanent source = new Permanent(new ChampionsOfTheShoal());
-        source.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(source);
+        Permanent source = addCreatureReady(player1, new ChampionsOfTheShoal());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         source.tap();

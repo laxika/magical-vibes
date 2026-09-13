@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
 import com.github.laxika.magicalvibes.cards.v.Vertigo;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,15 +12,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FemerefArchers.class, PearlDragon.class, GrizzlyBears.class, Vertigo.class})
+@CardUsed({FemerefArchers.class, FemerefScouts.class, GrizzlyBears.class, PearlDragon.class, Vertigo.class})
 class FemerefArchersTest extends BaseCardTest {
 
     @Test
@@ -54,6 +53,20 @@ class FemerefArchersTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(attacker.getCard().getId()));
         assertThat(gameLogContains("deals 4 damage")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability deals exactly 4 damage to a larger attacking flying creature")
+    void abilityDealsExactlyFourDamage() {
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
     }
 
     @Test
@@ -105,24 +118,6 @@ class FemerefArchersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not damage a target that loses flying before resolution")
-    void targetMustStillHaveFlyingOnResolution() {
-        addCreatureReady(player1, new FemerefArchers());
-        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
-
-        harness.activateAbility(player1, 0, null, attacker.getId());
-
-        harness.setHand(player2, List.of(new Vertigo()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
-        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
-    }
-
-    @Test
     @DisplayName("Cannot activate the ability while Femeref Archers is already tapped")
     void cannotActivateWhenTapped() {
         Permanent archers = addCreatureReady(player1, new FemerefArchers());
@@ -138,5 +133,23 @@ class FemerefArchersTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player, card);
         creature.setAttacking(true);
         return creature;
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that loses flying before resolution")
+    void targetMustStillHaveFlyingOnResolution() {
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        harness.setHand(player2, List.of(new Vertigo()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 }

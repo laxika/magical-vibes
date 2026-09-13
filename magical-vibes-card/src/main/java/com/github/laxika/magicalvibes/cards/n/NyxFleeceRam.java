@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "18")
+@CardRegistration(set = "A25", collectorNumber = "26")
 public class NyxFleeceRam extends Card {
 
     public NyxFleeceRam() {

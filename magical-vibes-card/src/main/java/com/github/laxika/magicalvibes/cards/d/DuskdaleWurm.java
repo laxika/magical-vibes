@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "EVE", collectorNumber = "67")
 @CardRegistration(set = "M13", collectorNumber = "166")
 @CardRegistration(set = "DPA", collectorNumber = "58")
+@CardRegistration(set = "IMA", collectorNumber = "161")
 public class DuskdaleWurm extends Card {
 }

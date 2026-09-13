@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.c.Castle;
+import com.github.laxika.magicalvibes.cards.f.Fervor;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.s.StarfieldOfNyx;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Knighthood.class, GiantCockroach.class})
+@CardUsed({Castle.class, Fervor.class, GiantCockroach.class, GloriousAnthem.class, Knighthood.class,
+        StarfieldOfNyx.class})
 class KnighthoodTest extends BaseCardTest {
 
     @Test
@@ -38,6 +43,19 @@ class KnighthoodTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Knighthood());
 
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Knighthood has first strike when it becomes a creature")
+    void creatureKnighthoodGainsFirstStrike() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        harness.addToBattlefield(player1, new Fervor());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new Castle());
+        Permanent knighthood = harness.addToBattlefieldAndReturn(player1, new Knighthood());
+
+        assertThat(gqs.isCreature(gd, knighthood)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knighthood, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test

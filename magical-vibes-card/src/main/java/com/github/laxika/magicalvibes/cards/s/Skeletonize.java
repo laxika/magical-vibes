@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "114")
+@CardRegistration(set = "A25", collectorNumber = "149")
 public class Skeletonize extends Card {
 
     public Skeletonize() {

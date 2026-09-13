@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "39")
+@CardRegistration(set = "OPCA", collectorNumber = "85")
 public class WindriddlePalaces extends Card {
 
     public WindriddlePalaces() {

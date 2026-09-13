@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,14 +15,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GrizzlyBears.class, Hurricane.class, MerfolkOfThePearlTrident.class})
+@CardUsed({AirElemental.class, BalduvianBears.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GiantGrowth.class, GrizzlyBears.class, Hurricane.class, MerfolkOfThePearlTrident.class, ZuranSpellcaster.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -169,6 +170,29 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A green spell need not be capable of dealing damage to be a legal source choice")
+    void greenSpellNeedNotDealDamage() {
+        addReadyCircle(player1);
+        Permanent bears = addReadyGreenCreature(player2);
+        GiantGrowth giantGrowth = new GiantGrowth();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(giantGrowth));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(giantGrowth.getId());
+    }
+
+    @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyCircle(player1);
@@ -181,9 +205,7 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
@@ -191,27 +213,6 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
 
     private Permanent addReadyCircle(Player player) {
         return addCreatureReady(player, new CircleOfProtectionGreen());
-    }
-
-    @Test
-    void chosenSourceDamageToControlledCreatureIsNotPrevented() {
-        addReadyCircle(player1);
-        Permanent target = addCreatureReady(player1, new AirElemental());
-        target.setAttacking(true);
-        Permanent archers = addCreatureReady(player2, new FemerefArchers());
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, archers.getId());
-
-        harness.activateAbility(player2, 0, 0, null, target.getId());
-        harness.passBothPriorities();
-
-        assertThat(target.getMarkedDamage()).isEqualTo(4);
-        assertThat(gd.playerSourceNextDamageShields)
-                .filteredOn(s -> s.playerId().equals(player1.getId()))
-                .anyMatch(s -> s.sourceId().equals(archers.getId()));
     }
 
     private Permanent addReadyGreenCreature(Player player) {
@@ -248,5 +249,26 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    void chosenSourceDamageToControlledCreatureIsNotPrevented() {
+        addReadyCircle(player1);
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        target.setAttacking(true);
+        Permanent archers = addCreatureReady(player2, new FemerefArchers());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, archers.getId());
+
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.playerSourceNextDamageShields)
+                .filteredOn(s -> s.playerId().equals(player1.getId()))
+                .anyMatch(s -> s.sourceId().equals(archers.getId()));
     }
 }
