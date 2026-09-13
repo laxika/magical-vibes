@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "78")
+@CardRegistration(set = "HA4", collectorNumber = "11")
 public class TormentOfScarabs extends Card {
 
     public TormentOfScarabs() {
