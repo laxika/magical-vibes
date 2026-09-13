@@ -85,6 +85,12 @@ class DeflectionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castInstant(player2, 0, pyrotechnics.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
     }
 
     @Test

@@ -60,6 +60,7 @@ public enum CardSet {
     SET_W16("W16"),
     SET_W17("W17"),
     SET_M19("M19"),
+    SET_OANA("OANA"),
     SET_M20("M20"),
     SET_M21("M21"),
     SET_MMQ("MMQ"),
@@ -239,7 +240,8 @@ public enum CardSet {
     SET_G17("G17"),
     SET_GS1("GS1"),
     SET_EMA("EMA"),
-    SET_SS1("SS1");
+    SET_SS1("SS1"),
+    SET_HA1("HA1");
 
     @Getter
     private final String code;

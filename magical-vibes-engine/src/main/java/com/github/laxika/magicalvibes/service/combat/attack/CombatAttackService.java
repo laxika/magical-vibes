@@ -2625,7 +2625,8 @@ public class CombatAttackService {
                                                  List<Integer> attackerIndices) {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
-            if (!hasGreaterPowerRestriction(restricted)) {
+            if (!hasGreaterPowerRestriction(restricted)
+                    || gameQueryService.hasLostPrintedAbilities(gameData, restricted)) {
                 continue;
             }
             int power = gameQueryService.getEffectivePower(gameData, restricted);

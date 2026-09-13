@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.k;
+package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
-@CardRegistration(set = "M19", collectorNumber = "19")
-@CardRegistration(set = "OANA", collectorNumber = "5")
-public class KnightsPledge extends Card {
+@CardRegistration(set = "OANA", collectorNumber = "19")
+public class RiversFavor extends Card {
 
-    public KnightsPledge() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+    public RiversFavor() {
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

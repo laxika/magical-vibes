@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "27")
+@CardRegistration(set = "OANA", collectorNumber = "11")
 public class SpiritualGuardian extends Card {
 
     public SpiritualGuardian() {

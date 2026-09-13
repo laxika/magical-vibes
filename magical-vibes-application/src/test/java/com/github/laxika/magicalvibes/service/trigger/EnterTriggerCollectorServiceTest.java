@@ -813,6 +813,7 @@ class EnterTriggerCollectorServiceTest {
         service.checkAnyPermanentEntersTriggers(gd, player2Id, entering);
 
         assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTriggeringPermanentControllerId()).isEqualTo(player2Id);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
                 .isInstanceOf(PutCountersOnSelfEffect.class);
     }
