@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "198")
+@CardRegistration(set = "KLR", collectorNumber = "224")
 public class BomatBazaarBarge extends Card {
 
     public BomatBazaarBarge() {

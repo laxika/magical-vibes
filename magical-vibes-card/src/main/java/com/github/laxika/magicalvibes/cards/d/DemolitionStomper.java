@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "206")
+@CardRegistration(set = "KLR", collectorNumber = "233")
 public class DemolitionStomper extends Card {
 
     public DemolitionStomper() {

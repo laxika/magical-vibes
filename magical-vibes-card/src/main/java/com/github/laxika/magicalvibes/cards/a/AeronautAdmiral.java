@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "2")
+@CardRegistration(set = "KLR", collectorNumber = "2")
 public class AeronautAdmiral extends Card {
 
     public AeronautAdmiral() {

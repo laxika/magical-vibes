@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "M19", collectorNumber = "177")
 @CardRegistration(set = "AER", collectorNumber = "106")
 @CardRegistration(set = "FDN", collectorNumber = "554")
+@CardRegistration(set = "KLR", collectorNumber = "159")
 public class DruidOfTheCowl extends Card {
 
     public DruidOfTheCowl() {

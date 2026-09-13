@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "3")
+@CardRegistration(set = "KLR", collectorNumber = "4")
 public class AetherstormRoc extends Card {
 
     private static final PermanentAllOfPredicate DEFENDING_PLAYER_CREATURE =

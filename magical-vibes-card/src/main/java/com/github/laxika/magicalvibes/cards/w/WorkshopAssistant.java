@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "241")
+@CardRegistration(set = "KLR", collectorNumber = "278")
 public class WorkshopAssistant extends Card {
 
     public WorkshopAssistant() {

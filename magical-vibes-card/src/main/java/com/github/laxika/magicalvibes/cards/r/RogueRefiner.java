@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "135")
+@CardRegistration(set = "KLR", collectorNumber = "206")
 public class RogueRefiner extends Card {
 
     public RogueRefiner() {

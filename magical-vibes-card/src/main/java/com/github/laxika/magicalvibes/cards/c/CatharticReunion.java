@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "109")
 @CardRegistration(set = "IKO", collectorNumber = "110")
+@CardRegistration(set = "KLR", collectorNumber = "116")
 public class CatharticReunion extends Card {
 
     public CatharticReunion() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "36")
+@CardRegistration(set = "KLR", collectorNumber = "53")
 public class IllusionistsStratagem extends Card {
 
     public IllusionistsStratagem() {

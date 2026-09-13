@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "177")
+@CardRegistration(set = "KLR", collectorNumber = "190")
 public class ContrabandKingpin extends Card {
 
     public ContrabandKingpin() {
