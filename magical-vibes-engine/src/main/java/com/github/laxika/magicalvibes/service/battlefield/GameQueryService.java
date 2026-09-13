@@ -513,7 +513,14 @@ public class GameQueryService {
     private boolean playerHasTemporaryStaticEffect(GameData gameData, UUID playerId,
                                                    Class<? extends CardEffect> effectType) {
         List<CardEffect> effects = gameData.playerStaticEffectsUntilEndOfTurn.get(playerId);
-        return effects != null && effects.stream().anyMatch(effectType::isInstance);
+        if (effects != null && effects.stream().anyMatch(effectType::isInstance)) {
+            return true;
+        }
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream().anyMatch(floating ->
+                    playerId.equals(floating.affectedPlayerId())
+                            && effectType.isInstance(floating.effect()));
+        }
     }
 
     /**

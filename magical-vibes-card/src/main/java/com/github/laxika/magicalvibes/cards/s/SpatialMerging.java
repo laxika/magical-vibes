@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "7")
+@CardRegistration(set = "OPCA", collectorNumber = "7")
 public class SpatialMerging extends Card {
 
     public SpatialMerging() {

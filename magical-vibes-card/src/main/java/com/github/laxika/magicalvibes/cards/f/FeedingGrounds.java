@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "9")
+@CardRegistration(set = "OPCA", collectorNumber = "23")
 public class FeedingGrounds extends Card {
 
     public FeedingGrounds() {

@@ -712,6 +712,14 @@ public class TurnCleanupService {
                 }
             }
         }
+        if (gameData.planechase != null) {
+            for (var planarObject : gameData.planechase.faceUp) {
+                if (planarObject.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 }

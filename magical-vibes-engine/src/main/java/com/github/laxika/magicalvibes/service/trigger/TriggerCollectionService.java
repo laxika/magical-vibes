@@ -1947,6 +1947,20 @@ public class TriggerCollectionService {
             dispatchSlot(gameData, perm, rollingPlayerId, EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
                     new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true));
         }
+        if (gameData.planechase == null || gameData.planechase.controllerId == null
+                || !gameData.planechase.controllerId.equals(rollingPlayerId)) {
+            return;
+        }
+        UUID planarControllerId = gameData.planechase.controllerId;
+        TriggerContext context = new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true);
+        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+            for (CardEffect effect : object.getCard().getEffects(
+                    EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)) {
+                registry.dispatch(new TriggerMatchContext(gameData, null, planarControllerId, effect,
+                                object.getCard(), object.copy()),
+                        EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, effect, context);
+            }
+        }
     }
 
     public void checkControllerRollsOneOrMoreDiceTriggers(GameData gameData, UUID rollingPlayerId,
@@ -3028,6 +3042,19 @@ public class TriggerCollectionService {
                 }
             }
         });
+
+        if (gameData.planechase != null && gameData.planechase.controllerId != null) {
+            UUID planarControllerId = gameData.planechase.controllerId;
+            for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+                for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
+                    var match = new TriggerMatchContext(gameData, null, planarControllerId, effect,
+                            object.getCard(), object.copy());
+                    if (registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
+                        anyTriggered[0] = true;
+                    }
+                }
+            }
+        }
 
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {

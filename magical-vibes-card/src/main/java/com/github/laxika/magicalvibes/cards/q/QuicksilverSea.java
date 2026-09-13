@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffec
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "32")
+@CardRegistration(set = "OPCA", collectorNumber = "65")
 public class QuicksilverSea extends Card {
 
     public QuicksilverSea() {

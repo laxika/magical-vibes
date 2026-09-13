@@ -149,6 +149,9 @@ public class BlockLegalityService {
                         .withSourceControllerId(planarController)
                         .withSourceCardId(planar.getCard().getId());
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof BlockingRestrictionEffect restriction) {
+                        addGlobalBlockRestriction(globalBlockRestrictions, restriction, filterContext);
+                    }
                     if (effect instanceof AttackOrBlockRestrictionEffect restriction
                             && restriction.globallyCantAttackOrBlock() != null) {
                         globalAttackOrBlockRestrictions.add(new GlobalAttackOrBlockRestriction(

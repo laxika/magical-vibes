@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "24")
+@CardRegistration(set = "OPCA", collectorNumber = "46")
 public class LairOfTheAshenIdol extends Card {
 
     public LairOfTheAshenIdol() {
