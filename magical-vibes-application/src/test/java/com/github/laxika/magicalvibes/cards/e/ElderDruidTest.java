@@ -89,14 +89,31 @@ class ElderDruidTest extends BaseCardTest {
     void doesNotAutomaticallyUntapTargetTappedBeforeResolution() {
         addReadyDruid(player1);
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.tap();
         addDruidMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can choose to untap a target tapped before resolution")
+    void canChooseToUntapTargetTappedBeforeResolution() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        addDruidMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
     }
 
     @Test

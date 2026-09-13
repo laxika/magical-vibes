@@ -2656,6 +2656,7 @@ public class CombatBlockService {
         for (Permanent permanent : attackerBattlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
                         && (restriction.affectedCreatureFilter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
                         gameData, attacker, restriction.affectedCreatureFilter()))) {
@@ -2724,7 +2725,8 @@ public class CombatBlockService {
         for (int idx : uniqueBlockerIndices) {
             Permanent restricted = defenderBattlefield.get(idx);
             boolean hasRestriction = restricted.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
+                    .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance)
+                    && !gameQueryService.hasLostPrintedAbilities(gameData, restricted);
             if (!hasRestriction) {
                 continue;
             }

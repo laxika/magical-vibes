@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -21,6 +22,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Forest.class, GildedDrake.class, GorillaWarrior.class, GrizzlyBears.class, IvoryMask.class, TaintedAether.class})
 class TaintedAetherTest extends BaseCardTest {
+
+    @Test
+    @CardUsed(Panharmonicon.class)
+    void creatureEntryTriggerCanBeDoubled() {
+        harness.addToBattlefield(player1, new TaintedAether());
+        harness.addToBattlefield(player1, new Panharmonicon());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void sacrificeStillHappensAfterEnteringCreatureLeaves() {
+        harness.addToBattlefield(player1, new TaintedAether());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+    }
 
     @Test
     @DisplayName("A creature entering under the controller triggers Tainted Aether")
