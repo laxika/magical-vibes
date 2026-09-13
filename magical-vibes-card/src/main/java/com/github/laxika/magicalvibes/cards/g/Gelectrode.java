@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "113")
+@CardRegistration(set = "DDJ", collectorNumber = "5")
 public class Gelectrode extends Card {
 
     public Gelectrode() {

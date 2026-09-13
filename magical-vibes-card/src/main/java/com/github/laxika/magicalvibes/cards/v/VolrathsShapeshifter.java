@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCard
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "48")
+@CardRegistration(set = "VMA", collectorNumber = "101")
 public class VolrathsShapeshifter extends Card {
 
     public VolrathsShapeshifter() {

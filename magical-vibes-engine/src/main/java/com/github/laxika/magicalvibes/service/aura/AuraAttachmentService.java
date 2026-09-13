@@ -65,7 +65,7 @@ public class AuraAttachmentService {
      * A card that was put into the graveyard as an orphaned aura, along with the controller
      * who owned it at the time. Callers use this to fire graveyard triggers after cleanup.
      */
-    public record OrphanedAuraRemoval(Card card, UUID controllerId) {}
+    public record OrphanedAuraRemoval(Card card, UUID controllerId, Permanent permanent) {}
 
     /**
      * Removes auras that are unattached or whose enchanted permanent no longer exists, and
@@ -135,7 +135,7 @@ public class AuraAttachmentService {
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (" + reason + ")."));
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         if (wentToGraveyard) {
-                            removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));
+                            removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
                         }
                     }
                 }
@@ -246,7 +246,7 @@ public class AuraAttachmentService {
                     gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
                     log.info("Game {} - {} removed (illegally attached: {})", gameData.id, p.getCard().getName(), reason);
                     if (wentToGraveyard) {
-                        removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));
+                        removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
                     }
                 }
             }

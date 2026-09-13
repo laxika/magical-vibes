@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatu
 
 @CardRegistration(set = "RTR", collectorNumber = "63")
 @CardRegistration(set = "MM3", collectorNumber = "66")
+@CardRegistration(set = "DDR", collectorNumber = "44")
 public class DesecrationDemon extends Card {
 
     public DesecrationDemon() {

@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CacklingFiend.class, CoralMerfolk.class})
 class CacklingFiendTest extends BaseCardTest {
 
     @Test
@@ -30,7 +29,7 @@ class CacklingFiendTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger makes each opponent discard a card")
     void etbMakesOpponentDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new CoralMerfolk(), new CoralMerfolk()));
         castCacklingFiend();
 
         harness.passBothPriorities();
@@ -42,14 +41,14 @@ class CacklingFiendTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Coral Merfolk");
     }
 
     @Test
     @DisplayName("ETB trigger does nothing when the opponent has no cards in hand")
     void etbDoesNothingWithEmptyOpponentHand() {
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
         castCacklingFiend();
 
         harness.passBothPriorities();
@@ -59,9 +58,6 @@ class CacklingFiendTest extends BaseCardTest {
     }
 
     private void castCacklingFiend() {
-        harness.setHand(player1, List.of(new CacklingFiend()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CacklingFiend(), "{2}{B}{B}");
     }
 }

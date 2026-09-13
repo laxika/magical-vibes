@@ -21,6 +21,6 @@ public class Viseling extends Card {
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),
                                 new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4))),
-                        DamageRecipient.TARGET_PLAYER));
+                        DamageRecipient.ACTIVE_PLAYER));
     }
 }

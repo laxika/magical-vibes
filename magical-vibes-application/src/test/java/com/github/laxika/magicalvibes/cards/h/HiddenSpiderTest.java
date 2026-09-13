@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.p.PendrellDrake;
+import com.github.laxika.magicalvibes.cards.r.Rescind;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HiddenSpider.class, ArgothianSwine.class, PendrellDrake.class, Rescind.class})
 class HiddenSpiderTest extends BaseCardTest {
 
     private Permanent addHiddenSpider() {
@@ -33,9 +36,7 @@ class HiddenSpiderTest extends BaseCardTest {
         Permanent spider = addHiddenSpider();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, spider)).isTrue();
@@ -52,9 +53,7 @@ class HiddenSpiderTest extends BaseCardTest {
         Permanent spider = addHiddenSpider();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new ArgothianSwine(), "{3}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isEnchantment(gd, spider)).isTrue();
@@ -67,18 +66,43 @@ class HiddenSpiderTest extends BaseCardTest {
         Permanent spider = addHiddenSpider();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isCreature(gd, spider)).isTrue();
         assertThat(gqs.isEnchantment(gd, spider)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger when its controller casts a flying creature spell")
+    void doesNotTriggerForControllerFlyingCreature() {
+        Permanent spider = addHiddenSpider();
+
+        harness.castFromHand(player1, new PendrellDrake(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isEnchantment(gd, spider)).isTrue();
+        assertThat(gqs.isCreature(gd, spider)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A queued trigger does nothing if Hidden Spider leaves before it resolves")
+    void checksEnchantmentConditionAgainAtResolution() {
+        Permanent spider = addHiddenSpider();
+        prepareOpponentCast();
+
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, spider.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Hidden Spider");
+        harness.assertInHand(player1, "Hidden Spider");
     }
 }

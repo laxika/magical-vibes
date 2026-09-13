@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "M20", collectorNumber = "190")
 @CardRegistration(set = "SOI", collectorNumber = "223")
 @CardRegistration(set = "ZNR", collectorNumber = "199")
+@CardRegistration(set = "W17", collectorNumber = "26")
 public class RabidBite extends Card {
 
     public RabidBite() {

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpreadingAlgae.class, ElvishLyrist.class, Forest.class, Swamp.class})
 class SpreadingAlgaeTest extends BaseCardTest {
 
     // ===== Casting and targeting =====
@@ -21,8 +24,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
     @Test
     @DisplayName("Can cast Spreading Algae targeting a Swamp")
     void canTargetSwamp() {
-        harness.addToBattlefield(player1, new Swamp());
-        Permanent swamp = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         harness.setHand(player1, List.of(new SpreadingAlgae()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
@@ -36,16 +38,30 @@ class SpreadingAlgaeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot cast Spreading Algae targeting a non-Swamp permanent")
-    void cannotTargetNonSwamp() {
-        harness.addToBattlefield(player1, new Swamp()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = findPermanent(player1, "Grizzly Bears");
+    @DisplayName("Can cast Spreading Algae targeting an opponent's Swamp")
+    void canTargetOpponentsSwamp() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
         harness.setHand(player1, List.of(new SpreadingAlgae()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+        harness.castEnchantment(player1, 0, swamp.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Spreading Algae").getAttachedTo()).isEqualTo(swamp.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot cast Spreading Algae targeting a non-Swamp permanent")
+    void cannotTargetNonSwamp() {
+        harness.addToBattlefield(player1, new Swamp()); // valid target so spell is playable
+        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = findPermanent(player1, "Forest");
+        harness.setHand(player1, List.of(new SpreadingAlgae()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Swamp");
     }
@@ -53,8 +69,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Spreading Algae attaches it to the target Swamp")
     void resolvingAttachesToSwamp() {
-        harness.addToBattlefield(player1, new Swamp());
-        Permanent swamp = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         harness.setHand(player1, List.of(new SpreadingAlgae()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
@@ -89,7 +104,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
         addSwampWithAura();
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Swamp");
     }
@@ -100,7 +115,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Spreading Algae"));
         assertThat(gd.pendingManaAbilityTriggers)
@@ -117,11 +132,29 @@ class SpreadingAlgaeTest extends BaseCardTest {
 
         harness.tapPermanent(player1, 0);
         // Resolve the destroy trigger, then the return-to-hand trigger it spawns.
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Spreading Algae");
         harness.assertNotInGraveyard(player1, "Spreading Algae");
         harness.assertInHand(player1, "Spreading Algae");
+    }
+
+    @Test
+    @DisplayName("A pending tap trigger still destroys the Swamp if Spreading Algae leaves first")
+    void pendingTapTriggerStillDestroysSwampAfterAuraLeaves() {
+        Permanent swamp = addSwampWithAura();
+        Permanent aura = findPermanent(player1, "Spreading Algae");
+        addCreatureReady(player2, new ElvishLyrist());
+
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.tapPermanent(player1, 0);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Spreading Algae");
+        harness.assertNotOnBattlefield(player2, "Elvish Lyrist");
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getId().equals(swamp.getId()));
     }
 
     // ===== Helpers =====
@@ -132,25 +165,10 @@ class SpreadingAlgaeTest extends BaseCardTest {
      * @return the Swamp permanent
      */
     private Permanent addSwampWithAura() {
-        harness.addToBattlefield(player1, new Swamp());
-        Permanent swamp = gd.playerBattlefields.get(player1.getId()).getFirst();
-
-        SpreadingAlgae auraCard = new SpreadingAlgae();
-        Permanent aura = new Permanent(auraCard);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SpreadingAlgae());
         aura.setAttachedTo(swamp.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         return swamp;
-    }
-
-    /**
-     * Drives priority until the stack and any deferred mana-ability triggers are fully resolved.
-     * Each passBothPriorities() call handles a single flush/resolve step, so several are needed to
-     * work through a deferred trigger that spawns another trigger.
-     */
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
     }
 }

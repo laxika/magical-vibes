@@ -32,7 +32,7 @@ public class DiscordantDirge extends Card {
                         new SacrificeSelfCost(),
                         new ChooseCardsFromTargetHandEffect(
                                 new CountersOnSource(CounterType.VERSE), List.of(), List.of(),
-                                HandChoiceDestination.DISCARD, false, null, true, false)
+                                HandChoiceDestination.DISCARD, false, null, 0, true, false, false, false)
                 ),
                 "{B}, Sacrifice this enchantment: Look at target opponent's hand and choose up to X cards from it, "
                         + "where X is the number of verse counters on this enchantment. That player discards those cards.",

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PC2", collectorNumber = "6")
+@CardRegistration(set = "PCA", collectorNumber = "6")
 public class FelidarUmbra extends Card {
 
     public FelidarUmbra() {

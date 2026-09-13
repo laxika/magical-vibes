@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JUD", collectorNumber = "132")
+@CardRegistration(set = "VMA", collectorNumber = "233")
 public class SuddenStrength extends Card {
 
     public SuddenStrength() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect
 @CardRegistration(set = "DRK", collectorNumber = "58")
 @CardRegistration(set = "MMA", collectorNumber = "106")
 @CardRegistration(set = "MM3", collectorNumber = "90")
+@CardRegistration(set = "MP2", collectorNumber = "46")
 public class BloodMoon extends Card {
 
     public BloodMoon() {

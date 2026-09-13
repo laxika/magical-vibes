@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "130")
+@CardRegistration(set = "DDJ", collectorNumber = "76")
 public class TwilightsCall extends Card {
 
     public TwilightsCall() {

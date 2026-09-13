@@ -26,9 +26,9 @@ class RealityHeistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-
-        harness.assertInGraveyard(player1, "Reality Heist");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reality Heist");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

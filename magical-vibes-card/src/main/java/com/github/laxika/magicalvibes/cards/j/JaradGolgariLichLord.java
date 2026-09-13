@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "174")
+@CardRegistration(set = "DDJ", collectorNumber = "45")
 public class JaradGolgariLichLord extends Card {
 
     public JaradGolgariLichLord() {

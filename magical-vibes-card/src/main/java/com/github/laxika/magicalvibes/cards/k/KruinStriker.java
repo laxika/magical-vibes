@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AVR", collectorNumber = "143")
+@CardRegistration(set = "DDS", collectorNumber = "40")
 public class KruinStriker extends Card {
 
     public KruinStriker() {

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeathPitOffering.class, GrizzlyBears.class})
 class DeathPitOfferingTest extends BaseCardTest {
 
     // ===== ETB: sacrifice all creatures you control =====
@@ -65,17 +68,28 @@ class DeathPitOfferingTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Death Pit Offering leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new DeathPitOffering());
+        Permanent offering = harness.addToBattlefieldAndReturn(player1, new DeathPitOffering());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Death Pit Offering"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, offering));
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Creatures you control includes Death Pit Offering when it becomes a creature")
+    void animatedOfferingBuffsItself() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent offering = harness.addToBattlefieldAndReturn(player1, new DeathPitOffering());
+
+        assertThat(gqs.isCreature(gd, offering)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, offering)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, offering)).isEqualTo(6);
     }
 
     // ===== Helpers =====

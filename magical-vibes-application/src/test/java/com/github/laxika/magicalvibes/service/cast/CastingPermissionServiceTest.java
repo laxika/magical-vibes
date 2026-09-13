@@ -534,6 +534,22 @@ class CastingPermissionServiceTest {
     class RestrictionsAndLimits {
 
         @Test
+        void removedSpellLimitAbilityAllowsAnotherSpell() {
+            Card ruleOfLaw = new Card();
+            ruleOfLaw.addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
+            Permanent source = new Permanent(ruleOfLaw);
+            gd.playerBattlefields.get(player2Id).add(source);
+            Card spell = new Card();
+            spell.setName("Test instant");
+            spell.setType(CardType.INSTANT);
+            gd.recordSpellCast(player1Id, spell);
+
+            assertThat(svc.isSpellLimitReached(gd, player1Id, spell)).isTrue();
+            when(gameQueryService.hasLostAllAbilities(gd, source)).thenReturn(true);
+            assertThat(svc.isSpellLimitReached(gd, player1Id, spell)).isFalse();
+        }
+
+        @Test
         @DisplayName("Rejects spell when per-turn spell limit is reached")
         void rejectsWhenSpellLimitReached() {
             Card ruleOfLaw = new Card();

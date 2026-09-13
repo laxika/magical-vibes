@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "283")
+@CardRegistration(set = "DDJ", collectorNumber = "81")
 public class SvogthosTheRestlessTomb extends Card {
 
     public SvogthosTheRestlessTomb() {

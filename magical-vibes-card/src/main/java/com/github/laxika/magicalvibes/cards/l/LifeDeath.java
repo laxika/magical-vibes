@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "130")
+@CardRegistration(set = "DDJ", collectorNumber = "77")
 public class LifeDeath extends Card {
 
     public LifeDeath() {

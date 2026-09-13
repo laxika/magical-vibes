@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "MOR", collectorNumber = "99")
 @CardRegistration(set = "PC2", collectorNumber = "51")
+@CardRegistration(set = "PCA", collectorNumber = "51")
 public class RivalsDuel extends Card {
 
     public RivalsDuel() {
