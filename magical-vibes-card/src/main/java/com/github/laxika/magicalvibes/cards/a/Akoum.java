@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "9")
+@CardRegistration(set = "OPCA", collectorNumber = "12")
 public class Akoum extends Card {
 
     public Akoum() {

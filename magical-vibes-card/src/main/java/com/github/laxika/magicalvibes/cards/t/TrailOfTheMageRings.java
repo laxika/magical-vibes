@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "37")
+@CardRegistration(set = "OPCA", collectorNumber = "80")
 public class TrailOfTheMageRings extends Card {
 
     public TrailOfTheMageRings() {

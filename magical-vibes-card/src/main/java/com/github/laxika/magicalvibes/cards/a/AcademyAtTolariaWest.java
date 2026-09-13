@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "1")
+@CardRegistration(set = "OPCA", collectorNumber = "9")
 public class AcademyAtTolariaWest extends Card {
 
     public AcademyAtTolariaWest() {

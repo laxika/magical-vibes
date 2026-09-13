@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetPlay
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "7")
+@CardRegistration(set = "OPCA", collectorNumber = "21")
 public class ElorenWilds extends Card {
 
     public ElorenWilds() {
