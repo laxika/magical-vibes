@@ -242,7 +242,8 @@ public enum CardSet {
     SET_GS1("GS1"),
     SET_EMA("EMA"),
     SET_SS1("SS1"),
-    SET_HA1("HA1");
+    SET_HA1("HA1"),
+    SET_HA2("HA2");
 
     @Getter
     private final String code;
