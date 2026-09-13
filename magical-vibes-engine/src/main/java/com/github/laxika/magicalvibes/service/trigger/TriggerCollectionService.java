@@ -10943,6 +10943,36 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires "whenever another permanent enters under your control" triggers. */
+    public void checkAllyPermanentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
+        if (enteringPermanent == null) return;
+
+        TriggerContext.PermanentEnters context = new TriggerContext.PermanentEnters(
+                enteringCard,
+                controllerId,
+                null,
+                1 + gameQueryService.countETBExtraTriggers(
+                        gameData, controllerId, controllerId, enteringCard),
+                enteringPermanent.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent permanent : new ArrayList<>(battlefield)) {
+            if (permanent.getCard() == enteringCard || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            List<CardEffect> effects = new ArrayList<>(
+                    permanent.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, permanent, EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD));
+            for (CardEffect effect : effects) {
+                dispatchEnter(gameData, permanent, controllerId,
+                        EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD, effect, context);
+            }
+        }
+    }
+
     /** "Whenever a creature enters under an opponent's control" (ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD). */
     public void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;

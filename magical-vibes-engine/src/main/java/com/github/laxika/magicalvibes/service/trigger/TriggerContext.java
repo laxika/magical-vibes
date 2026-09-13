@@ -340,7 +340,8 @@ public sealed interface TriggerContext {
     record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 
     /**
-     * Context for enter-the-battlefield triggers (ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+     * Context for enter-the-battlefield triggers (ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+     * ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
      * ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD).
      *
