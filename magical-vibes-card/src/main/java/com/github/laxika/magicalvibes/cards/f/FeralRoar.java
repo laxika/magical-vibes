@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
-@CardRegistration(set = "ANA", collectorNumber = "46")
+@CardRegistration(set = "OANA", collectorNumber = "46")
 public class FeralRoar extends Card {
 
     public FeralRoar() {
