@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MerrowHarbinger.class, CoralMerfolk.class, GrizzlyBears.class, Island.class})
 class MerrowHarbingerTest extends BaseCardTest {
 
     @Test
@@ -92,8 +94,6 @@ class MerrowHarbingerTest extends BaseCardTest {
     }
 
     private void setupLibraryWithMerfolk() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new CoralMerfolk(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new CoralMerfolk(), new GrizzlyBears(), new Island()));
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "132")
+@CardRegistration(set = "GK1", collectorNumber = "43")
 public class StitchInTime extends Card {
 
     public StitchInTime() {

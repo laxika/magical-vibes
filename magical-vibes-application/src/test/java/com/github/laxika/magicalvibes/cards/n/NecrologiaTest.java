@@ -90,4 +90,19 @@ class NecrologiaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Cannot cast during an opponent's end step")
+    void cannotCastDuringOpponentsEndStep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Necrologia()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
 }

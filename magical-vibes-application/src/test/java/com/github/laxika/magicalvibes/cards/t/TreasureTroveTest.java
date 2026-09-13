@@ -87,10 +87,7 @@ class TreasureTroveTest extends BaseCardTest {
     }
 
     private Permanent addTrove(Player player) {
-        Permanent perm = new Permanent(new TreasureTrove());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new TreasureTrove());
     }
 
     private int indexOf(Player player, Permanent perm) {

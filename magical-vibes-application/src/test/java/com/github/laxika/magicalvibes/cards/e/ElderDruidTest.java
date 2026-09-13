@@ -85,6 +85,21 @@ class ElderDruidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not automatically untap a target tapped before resolution")
+    void doesNotAutomaticallyUntapTargetTappedBeforeResolution() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        target.tap();
+        addDruidMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Can decline tapping or untapping the target")
     void canDeclineTapOrUntap() {
         addReadyDruid(player1);

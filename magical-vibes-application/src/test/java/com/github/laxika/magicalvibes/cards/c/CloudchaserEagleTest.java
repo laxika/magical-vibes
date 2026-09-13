@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
 import com.github.laxika.magicalvibes.cards.p.Propaganda;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -58,6 +59,22 @@ class CloudchaserEagleTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Propaganda");
         harness.assertInGraveyard(player2, "Propaganda");
+    }
+
+    @Test
+    @DisplayName("ETB does not destroy an indestructible enchantment")
+    void etbDoesNotDestroyIndestructibleEnchantment() {
+        var propaganda = harness.addToBattlefieldAndReturn(player2, new Propaganda());
+        propaganda.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new CloudchaserEagle()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, propaganda.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Propaganda");
+        harness.assertNotInGraveyard(player2, "Propaganda");
     }
 
     @Test

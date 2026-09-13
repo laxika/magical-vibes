@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Revenant.class, RabidRats.class, Shock.class})
+@CardUsed({Revenant.class, GrizzlyBears.class, Shock.class})
 class RevenantTest extends BaseCardTest {
 
     @Test
@@ -64,7 +65,7 @@ class RevenantTest extends BaseCardTest {
     @DisplayName("Revenant does NOT count token creatures in a graveyard")
     void doesNotCountTokenCreatures() {
         Permanent perm = addRevenantReady(player1);
-        RabidRats token = new RabidRats();
+        GrizzlyBears token = new GrizzlyBears();
         token.setToken(true);
         harness.setGraveyard(player1, List.of(token));
 
@@ -80,7 +81,7 @@ class RevenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
 
-        gd.playerGraveyards.get(player1.getId()).add(new RabidRats());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
@@ -90,8 +91,8 @@ class RevenantTest extends BaseCardTest {
     @DisplayName("Revenant counts the graveyard of its current controller")
     void followsItsCurrentController() {
         Permanent perm = addRevenantReady(player1);
-        harness.setGraveyard(player1, List.of(new RabidRats()));
-        harness.setGraveyard(player2, List.of(new RabidRats(), new RabidRats()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerBattlefields.get(player2.getId()).add(perm);
@@ -107,7 +108,7 @@ class RevenantTest extends BaseCardTest {
     private List<Card> createCreatureCards(int count) {
         List<Card> creatures = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            creatures.add(new RabidRats());
+            creatures.add(new GrizzlyBears());
         }
         return creatures;
     }

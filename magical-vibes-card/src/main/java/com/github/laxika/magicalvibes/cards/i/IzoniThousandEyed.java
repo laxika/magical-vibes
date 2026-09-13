@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "180")
+@CardRegistration(set = "GK1", collectorNumber = "50")
 public class IzoniThousandEyed extends Card {
 
     public IzoniThousandEyed() {

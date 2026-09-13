@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "65")
+@CardRegistration(set = "GS1", collectorNumber = "13")
 public class CloakOfMists extends Card {
 
     public CloakOfMists() {

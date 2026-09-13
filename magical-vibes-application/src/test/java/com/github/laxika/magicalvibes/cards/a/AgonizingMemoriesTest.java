@@ -12,12 +12,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -110,25 +108,27 @@ class AgonizingMemoriesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Places exactly two selected cards on top in selection order")
-    void placesExactlyTwoCardsOnTopInSelectionOrder() {
-        Card firstHandCard = new GrizzlyBears();
-        Card secondHandCard = new Peek();
-        Card existingLibraryTop = new AgonizingMemories();
-        harness.setHand(player2, List.of(firstHandCard, secondHandCard));
-        harness.setLibrary(player2, List.of(existingLibraryTop));
+    @DisplayName("Choosing cards in a different order preserves that order on top of the library")
+    void choosingTwoCardsInDifferentOrder() {
+        Card card1 = new Abeyance();
+        Card card2 = new AlabasterDragon();
+        Card card3 = new AgonizingMemories();
+        harness.setHand(player2, new ArrayList<>(List.of(card1, card2, card3)));
 
         harness.setHand(player1, List.of(new AgonizingMemories()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
+        // Choose card2 first, then card1 after card2 is removed from the hand.
         harness.handleCardChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerDecks.get(player2.getId()))
-                .containsExactly(secondHandCard, firstHandCard, existingLibraryTop);
+        List<Card> deck = gd.playerDecks.get(player2.getId());
+        assertThat(deck.get(0).getId()).isEqualTo(card2.getId());
+        assertThat(deck.get(1).getId()).isEqualTo(card1.getId());
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(card3.getId());
     }
 
     @Test
@@ -327,5 +327,26 @@ class AgonizingMemoriesTest extends BaseCardTest {
                     && cardSegment.card().getId().equals(card1.getId()));
         });
     }
-}
 
+    @Test
+    @DisplayName("Places exactly two selected cards on top in selection order")
+    void placesExactlyTwoCardsOnTopInSelectionOrder() {
+        Card firstHandCard = new GrizzlyBears();
+        Card secondHandCard = new Peek();
+        Card existingLibraryTop = new AgonizingMemories();
+        harness.setHand(player2, List.of(firstHandCard, secondHandCard));
+        harness.setLibrary(player2, List.of(existingLibraryTop));
+
+        harness.setHand(player1, List.of(new AgonizingMemories()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(secondHandCard, firstHandCard, existingLibraryTop);
+    }
+}

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "RAV", collectorNumber = "251")
+@CardRegistration(set = "GK1", collectorNumber = "116")
 public class PrivilegedPosition extends Card {
 
     public PrivilegedPosition() {
