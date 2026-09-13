@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "86")
+@CardRegistration(set = "KLR", collectorNumber = "132")
 public class InvigoratedRampage extends Card {
 
     public InvigoratedRampage() {

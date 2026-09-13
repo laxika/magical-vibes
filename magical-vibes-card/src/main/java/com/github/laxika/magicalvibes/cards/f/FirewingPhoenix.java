@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "131")
+@CardRegistration(set = "UMA", collectorNumber = "130")
 public class FirewingPhoenix extends Card {
 
     public FirewingPhoenix() {

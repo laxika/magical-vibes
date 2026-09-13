@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "151")
+@CardRegistration(set = "UMA", collectorNumber = "126")
 public class Conflagrate extends Card {
 
     public Conflagrate() {

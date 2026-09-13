@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZon
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "88")
+@CardRegistration(set = "KLR", collectorNumber = "96")
 public class LostLegacy extends Card {
 
     public LostLegacy() {

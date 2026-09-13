@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "120")
+@CardRegistration(set = "KLR", collectorNumber = "131")
 public class InventorsApprentice extends Card {
 
     public InventorsApprentice() {

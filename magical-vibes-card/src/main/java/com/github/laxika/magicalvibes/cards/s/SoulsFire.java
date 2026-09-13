@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "115")
+@CardRegistration(set = "UMA", collectorNumber = "148")
 public class SoulsFire extends Card {
 
     public SoulsFire() {

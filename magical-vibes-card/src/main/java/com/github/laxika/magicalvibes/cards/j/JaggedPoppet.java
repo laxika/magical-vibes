@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "DIS", collectorNumber = "115")
+@CardRegistration(set = "GK2", collectorNumber = "64")
 public class JaggedPoppet extends Card {
 
     public JaggedPoppet() {

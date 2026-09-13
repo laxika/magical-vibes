@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "82")
+@CardRegistration(set = "KLR", collectorNumber = "88")
 public class FoundryScreecher extends Card {
 
     public FoundryScreecher() {

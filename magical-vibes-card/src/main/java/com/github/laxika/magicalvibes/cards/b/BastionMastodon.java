@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "197")
+@CardRegistration(set = "KLR", collectorNumber = "223")
 public class BastionMastodon extends Card {
 
     public BastionMastodon() {

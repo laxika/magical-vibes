@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "SOI", collectorNumber = "156")
 @CardRegistration(set = "TOR", collectorNumber = "97")
 @CardRegistration(set = "TSB", collectorNumber = "62")
+@CardRegistration(set = "UMA", collectorNumber = "129")
 public class FieryTemper extends Card {
 
     public FieryTemper() {

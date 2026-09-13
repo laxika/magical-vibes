@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "174")
+@CardRegistration(set = "KLR", collectorNumber = "187")
 public class WildestDreams extends Card {
 
     public WildestDreams() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "251")
+@CardRegistration(set = "SLU", collectorNumber = "11")
 public class BarkchannelPathway extends Card {
 
     public BarkchannelPathway() {

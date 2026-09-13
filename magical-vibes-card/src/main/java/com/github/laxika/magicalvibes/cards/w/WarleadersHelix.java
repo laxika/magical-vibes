@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "116")
+@CardRegistration(set = "UMA", collectorNumber = "210")
 public class WarleadersHelix extends Card {
 
     public WarleadersHelix() {

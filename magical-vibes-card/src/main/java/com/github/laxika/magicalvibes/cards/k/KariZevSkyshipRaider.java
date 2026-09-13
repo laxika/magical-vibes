@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "87")
+@CardRegistration(set = "KLR", collectorNumber = "133")
 public class KariZevSkyshipRaider extends Card {
 
     public KariZevSkyshipRaider() {

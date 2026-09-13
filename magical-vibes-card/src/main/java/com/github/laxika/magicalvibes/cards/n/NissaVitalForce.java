@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "163")
+@CardRegistration(set = "KLR", collectorNumber = "172")
 public class NissaVitalForce extends Card {
 
     private static final String EMBLEM_TEXT =

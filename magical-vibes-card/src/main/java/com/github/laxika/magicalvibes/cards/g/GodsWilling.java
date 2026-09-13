@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "16")
 @CardRegistration(set = "M20", collectorNumber = "19")
+@CardRegistration(set = "UMA", collectorNumber = "18")
 @CardRegistration(set = "A25", collectorNumber = "16")
 public class GodsWilling extends Card {
 

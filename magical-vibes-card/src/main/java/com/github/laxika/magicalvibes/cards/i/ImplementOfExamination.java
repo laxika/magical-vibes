@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "156")
+@CardRegistration(set = "KLR", collectorNumber = "244")
 public class ImplementOfExamination extends Card {
 
     public ImplementOfExamination() {

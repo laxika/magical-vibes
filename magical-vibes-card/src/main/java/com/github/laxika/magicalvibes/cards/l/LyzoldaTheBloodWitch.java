@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "117")
+@CardRegistration(set = "GK2", collectorNumber = "65")
 public class LyzoldaTheBloodWitch extends Card {
 
     public LyzoldaTheBloodWitch() {
