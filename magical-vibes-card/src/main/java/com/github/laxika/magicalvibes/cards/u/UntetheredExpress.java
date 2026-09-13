@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "179")
+@CardRegistration(set = "KLR", collectorNumber = "274")
 public class UntetheredExpress extends Card {
 
     public UntetheredExpress() {

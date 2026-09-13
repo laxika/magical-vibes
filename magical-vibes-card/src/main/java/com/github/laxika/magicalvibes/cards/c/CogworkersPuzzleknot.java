@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "201")
+@CardRegistration(set = "KLR", collectorNumber = "227")
 public class CogworkersPuzzleknot extends Card {
 
     public CogworkersPuzzleknot() {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "247")
+@CardRegistration(set = "KLR", collectorNumber = "284")
 public class InventorsFair extends Card {
 
     public InventorsFair() {

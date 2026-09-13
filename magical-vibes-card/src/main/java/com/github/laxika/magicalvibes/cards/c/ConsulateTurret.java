@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "147")
+@CardRegistration(set = "KLR", collectorNumber = "229")
 public class ConsulateTurret extends Card {
 
     public ConsulateTurret() {

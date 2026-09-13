@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "107")
+@CardRegistration(set = "KLR", collectorNumber = "160")
 public class GreenbeltRampager extends Card {
 
     public GreenbeltRampager() {

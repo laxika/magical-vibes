@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "221")
+@CardRegistration(set = "HA5", collectorNumber = "22")
 public class DromokasCommand extends Card {
 
     public DromokasCommand() {

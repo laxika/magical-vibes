@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "M21", collectorNumber = "141")
 @CardRegistration(set = "AER", collectorNumber = "78")
 @CardRegistration(set = "GN2", collectorNumber = "38")
+@CardRegistration(set = "KLR", collectorNumber = "121")
 public class DestructiveTampering extends Card {
 
     public DestructiveTampering() {

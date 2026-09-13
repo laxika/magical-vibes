@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "65")
+@CardRegistration(set = "KLR", collectorNumber = "68")
 public class TezzeretsAmbition extends Card {
 
     public TezzeretsAmbition() {

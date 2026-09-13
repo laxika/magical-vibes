@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "174")
+@CardRegistration(set = "KLR", collectorNumber = "266")
 public class ReservoirWalker extends Card {
 
     public ReservoirWalker() {

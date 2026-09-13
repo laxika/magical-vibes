@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -217,6 +219,29 @@ class EnterTriggerCollectorServiceTest {
         service.checkAllyCreatureEntersTriggers(gd, player1Id, land, 0);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ally-permanent player targets are chosen when the trigger is put on the stack")
+    void allyPermanentPlayerTargetQueuesChoice() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentTruePredicate(),
+                        new MillEffect(2, MillRecipient.TARGET_PLAYER)));
+
+        Card entering = new Card();
+        entering.setName("Snow Permanent");
+        entering.setType(CardType.LAND);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+        service.checkAllyPermanentEntersTriggers(gd, player1Id, entering);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
     }
 
     @Test
