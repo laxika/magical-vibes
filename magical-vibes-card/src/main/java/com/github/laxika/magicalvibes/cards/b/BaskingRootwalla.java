@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "DDD", collectorNumber = "2")
 @CardRegistration(set = "VMA", collectorNumber = "196")
 @CardRegistration(set = "GVL", collectorNumber = "2")
+@CardRegistration(set = "UMA", collectorNumber = "156")
 public class BaskingRootwalla extends Card {
 
     public BaskingRootwalla() {

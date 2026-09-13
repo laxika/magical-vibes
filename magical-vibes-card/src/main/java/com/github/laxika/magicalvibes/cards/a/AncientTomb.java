@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "V12", collectorNumber = "1")
 @CardRegistration(set = "EXP", collectorNumber = "36")
 @CardRegistration(set = "ZNE", collectorNumber = "21")
+@CardRegistration(set = "UMA", collectorNumber = "236")
 public class AncientTomb extends Card {
 
     public AncientTomb() {

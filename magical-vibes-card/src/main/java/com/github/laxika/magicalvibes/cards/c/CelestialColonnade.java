@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "133")
 @CardRegistration(set = "ZNE", collectorNumber = "23")
+@CardRegistration(set = "UMA", collectorNumber = "238")
 public class CelestialColonnade extends Card {
 
     public CelestialColonnade() {

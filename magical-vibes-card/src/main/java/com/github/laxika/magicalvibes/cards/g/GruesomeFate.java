@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "75")
+@CardRegistration(set = "GNT", collectorNumber = "30")
 public class GruesomeFate extends Card {
 
     public GruesomeFate() {

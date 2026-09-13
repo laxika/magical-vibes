@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "40")
+@CardRegistration(set = "GK2", collectorNumber = "53")
 public class CryptChampion extends Card {
 
     public CryptChampion() {

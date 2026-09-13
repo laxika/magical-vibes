@@ -7822,7 +7822,8 @@ public class GameQueryService {
                         && sourceControllerId != null
                         && sourceControllerId.equals(controllerId)
                         && effect instanceof ControllerRecipientDamageMultiplyingEffect multiplyingEffect) {
-                    if (!combatDamage || !multiplyingEffect.noncombatOnly()) {
+                    if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
+                            && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
                         multiplier[0] *= multiplyingEffect.damageMultiplier();
                     }
                 }

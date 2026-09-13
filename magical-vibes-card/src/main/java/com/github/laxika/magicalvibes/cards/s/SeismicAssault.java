@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "8ED", collectorNumber = "219")
 @CardRegistration(set = "7ED", collectorNumber = "216")
 @CardRegistration(set = "EXO", collectorNumber = "101")
+@CardRegistration(set = "UMA", collectorNumber = "146")
 public class SeismicAssault extends Card {
 
     public SeismicAssault() {

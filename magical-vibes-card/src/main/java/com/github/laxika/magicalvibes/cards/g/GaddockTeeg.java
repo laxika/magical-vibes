@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "248")
+@CardRegistration(set = "UMA", collectorNumber = "199")
 public class GaddockTeeg extends Card {
 
     public GaddockTeeg() {

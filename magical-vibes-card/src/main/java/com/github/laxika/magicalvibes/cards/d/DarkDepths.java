@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CSP", collectorNumber = "145")
 @CardRegistration(set = "V16", collectorNumber = "4")
+@CardRegistration(set = "UMA", collectorNumber = "241")
 public class DarkDepths extends Card {
 
     public DarkDepths() {
