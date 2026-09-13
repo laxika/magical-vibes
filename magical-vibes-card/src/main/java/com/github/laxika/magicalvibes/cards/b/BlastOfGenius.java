@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "55")
+@CardRegistration(set = "UMA", collectorNumber = "197")
 public class BlastOfGenius extends Card {
 
     public BlastOfGenius() {

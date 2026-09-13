@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 
 @CardRegistration(set = "FRF", collectorNumber = "72")
+@CardRegistration(set = "UMA", collectorNumber = "102")
 public class GurmagAngler extends Card {
 
     public GurmagAngler() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JUD", collectorNumber = "38")
+@CardRegistration(set = "UMA", collectorNumber = "48")
 public class DefyGravity extends Card {
 
     public DefyGravity() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "HOU", collectorNumber = "125")
 @CardRegistration(set = "M20", collectorNumber = "186")
+@CardRegistration(set = "GNT", collectorNumber = "48")
 public class Overcome extends Card {
 
     public Overcome() {

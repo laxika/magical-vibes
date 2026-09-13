@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "KLD", collectorNumber = "236")
+@CardRegistration(set = "GNT", collectorNumber = "57")
 public class SnareThopter extends Card {
 }

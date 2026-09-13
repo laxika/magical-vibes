@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "98")
 @CardRegistration(set = "INR", collectorNumber = "327")
 @CardRegistration(set = "INR", collectorNumber = "461")
+@CardRegistration(set = "V17", collectorNumber = "4")
 public class BloodlineKeeper extends Card {
 
     public BloodlineKeeper() {

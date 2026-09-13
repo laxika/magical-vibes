@@ -14,6 +14,7 @@ import java.util.EnumMap;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -509,7 +510,7 @@ public class StackEntry {
         this.xValue = xValue;
         this.targetId = targetId;
         this.sourcePermanentId = null;
-        this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
+        this.damageAssignments = damageAssignments != null ? new LinkedHashMap<>(damageAssignments) : Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
@@ -601,7 +602,7 @@ public class StackEntry {
         this.xValue = xValue;
         this.targetId = targetId;
         this.sourcePermanentId = sourcePermanentId;
-        this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
+        this.damageAssignments = damageAssignments != null ? new LinkedHashMap<>(damageAssignments) : Map.of();
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
@@ -649,7 +650,7 @@ public class StackEntry {
         this.targetId = source.targetId;
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
-        this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
@@ -1029,7 +1030,11 @@ public class StackEntry {
             throw new IllegalArgumentException("Invalid target index");
         }
         List<UUID> updated = new ArrayList<>(targetIds);
-        updated.set(targetIndex, targetId);
+        UUID previousTarget = updated.set(targetIndex, targetId);
+        if (damageAssignments.containsKey(previousTarget)) {
+            int assignedDamage = damageAssignments.remove(previousTarget);
+            damageAssignments.merge(targetId, assignedDamage, Integer::sum);
+        }
         targetIds = List.copyOf(updated);
         illegalTargetIndices.remove(targetIndex);
     }
@@ -1296,7 +1301,7 @@ public class StackEntry {
     }
 
     public boolean isSingleTarget() {
-        return targetId != null && targetIds.isEmpty() && targetCardIds.isEmpty();
+        return !nonTargeting && (targetId != null ? 1 : 0) + targetIds.size() + targetCardIds.size() == 1;
     }
 
     public boolean hasAnyTarget() {

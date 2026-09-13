@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "84")
 @CardRegistration(set = "DDQ", collectorNumber = "51")
+@CardRegistration(set = "UMA", collectorNumber = "83")
 public class AppetiteForBrains extends Card {
 
     public AppetiteForBrains() {

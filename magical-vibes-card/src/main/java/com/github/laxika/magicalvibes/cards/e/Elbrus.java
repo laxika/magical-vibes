@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "147")
+@CardRegistration(set = "V17", collectorNumber = "8")
 public class Elbrus extends Card {
 
     public Elbrus() {

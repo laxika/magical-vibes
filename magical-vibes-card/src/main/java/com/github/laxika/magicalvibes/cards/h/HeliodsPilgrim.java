@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "14")
 @CardRegistration(set = "THB", collectorNumber = "20")
+@CardRegistration(set = "UMA", collectorNumber = "19")
 public class HeliodsPilgrim extends Card {
 
     public HeliodsPilgrim() {

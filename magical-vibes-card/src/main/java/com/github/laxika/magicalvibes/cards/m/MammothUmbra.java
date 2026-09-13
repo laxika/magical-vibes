@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "37")
 @CardRegistration(set = "PC2", collectorNumber = "10")
+@CardRegistration(set = "UMA", collectorNumber = "24")
 @CardRegistration(set = "PCA", collectorNumber = "10")
 public class MammothUmbra extends Card {
 

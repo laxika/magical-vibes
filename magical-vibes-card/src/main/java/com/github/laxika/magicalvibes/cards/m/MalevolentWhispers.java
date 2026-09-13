@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "173")
+@CardRegistration(set = "UMA", collectorNumber = "139")
 public class MalevolentWhispers extends Card {
 
     public MalevolentWhispers() {
