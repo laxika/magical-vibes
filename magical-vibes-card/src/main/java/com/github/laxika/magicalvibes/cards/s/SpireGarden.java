@@ -1,29 +1,24 @@
-package com.github.laxika.magicalvibes.cards.c;
+package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasAtLeastOpponents;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
+@CardRegistration(set = "ZNE", collectorNumber = "19")
+public class SpireGarden extends Card {
 
-@CardRegistration(set = "SOM", collectorNumber = "225")
-@CardRegistration(set = "ONE", collectorNumber = "249")
-@CardRegistration(set = "ZNE", collectorNumber = "14")
-public class CopperlineGorge extends Card {
-
-    public CopperlineGorge() {
+    public SpireGarden() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect()));
+                new NotCondition(new ControllerHasAtLeastOpponents(2)), new EntersTappedEffect()));
 
-        // {T}: Add {R}.
+        // {T}: Add {R} or {G}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
-
-        // {T}: Add {G}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

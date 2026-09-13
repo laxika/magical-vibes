@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "230")
 @CardRegistration(set = "ONS", collectorNumber = "313")
 @CardRegistration(set = "EXP", collectorNumber = "18")
+@CardRegistration(set = "ZNE", collectorNumber = "3")
 @CardRegistration(set = "SLU", collectorNumber = "8")
 public class BloodstainedMire extends Card {
 
