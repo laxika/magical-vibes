@@ -351,18 +351,21 @@ public class EnterTriggerCollectorService {
                     match.gameData().id, match.permanent().getCard().getName());
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                pe.enteringControllerId(),
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
-        entry.setTriggeringCardId(pe.enteringCard().getId());
-        match.gameData().stack.add(entry);
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    pe.enteringControllerId(),
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
+            entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
+        }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} any-permanent-enters trigger queued", match.gameData().id,
                 match.permanent().getCard().getName());

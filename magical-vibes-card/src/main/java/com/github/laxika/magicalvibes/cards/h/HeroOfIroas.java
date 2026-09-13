@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "17")
+@CardRegistration(set = "UMA", collectorNumber = "20")
 public class HeroOfIroas extends Card {
 
     public HeroOfIroas() {

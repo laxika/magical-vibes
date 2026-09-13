@@ -62,8 +62,8 @@ class OrcishArtilleryTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -75,9 +75,8 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 20 - 2 (target damage) - 3 (controller damage) = 15
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertLife(player1, 15);
     }
 
     @Test
@@ -123,10 +122,9 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -141,10 +139,9 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -159,9 +156,8 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetArtillery.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player2, "Orcish Artillery");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -177,7 +173,7 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     // ===== Validation =====
@@ -224,7 +220,7 @@ class OrcishArtilleryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Controller does NOT take damage when ability fizzles
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
 }

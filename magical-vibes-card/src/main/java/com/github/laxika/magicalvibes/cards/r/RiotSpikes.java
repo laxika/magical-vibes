@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DIS", collectorNumber = "146")
+@CardRegistration(set = "GK2", collectorNumber = "73")
 public class RiotSpikes extends Card {
 
     public RiotSpikes() {

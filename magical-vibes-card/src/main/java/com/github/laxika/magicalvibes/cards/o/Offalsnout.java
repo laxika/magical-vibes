@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "71")
+@CardRegistration(set = "UMA", collectorNumber = "108")
 public class Offalsnout extends Card {
 
     public Offalsnout() {

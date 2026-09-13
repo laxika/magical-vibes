@@ -821,6 +821,7 @@ public class CombatAttackService {
             // permanent's transient attacking state.
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
+                gameData.recordPlayerAttackAgainstPlayer(playerId, attackTarget);
             } else if (attackTarget != null) {
                 Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
                 if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) {
@@ -2625,7 +2626,8 @@ public class CombatAttackService {
                                                  List<Integer> attackerIndices) {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
-            if (!hasGreaterPowerRestriction(restricted)) {
+            if (!hasGreaterPowerRestriction(restricted)
+                    || gameQueryService.hasLostPrintedAbilities(gameData, restricted)) {
                 continue;
             }
             int power = gameQueryService.getEffectivePower(gameData, restricted);

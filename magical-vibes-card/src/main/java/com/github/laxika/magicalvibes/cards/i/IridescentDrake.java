@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 
 @CardRegistration(set = "UDS", collectorNumber = "35")
+@CardRegistration(set = "UMA", collectorNumber = "59")
 public class IridescentDrake extends Card {
 
     public IridescentDrake() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
  */
 @CardRegistration(set = "DGM", collectorNumber = "120")
 @CardRegistration(set = "DDL", collectorNumber = "48")
+@CardRegistration(set = "GK2", collectorNumber = "101")
 public class ZhurTaaDruid extends Card {
 
     public ZhurTaaDruid() {

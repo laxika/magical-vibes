@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "83")
 @CardRegistration(set = "DDU", collectorNumber = "43")
+@CardRegistration(set = "GNT", collectorNumber = "25")
 public class WhirlerRogue extends Card {
 
     public WhirlerRogue() {

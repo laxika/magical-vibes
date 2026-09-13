@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WalkThePlank.class, CoralMerfolk.class, GrizzlyBears.class})
 class WalkThePlankTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -23,8 +25,7 @@ class WalkThePlankTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Walk the Plank targeting a non-Merfolk creature puts it on stack")
     void castingPutsOnStack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -43,10 +44,9 @@ class WalkThePlankTest extends BaseCardTest {
     @DisplayName("Cannot target a Merfolk creature")
     void cannotTargetMerfolkCreature() {
         // Add a non-Merfolk creature as valid target so spell is playable
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent merfolk = new Permanent(new CoralMerfolk());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(merfolk);
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
 
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -61,8 +61,7 @@ class WalkThePlankTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Walk the Plank destroys target creature")
     void resolvingDestroysTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -78,9 +77,8 @@ class WalkThePlankTest extends BaseCardTest {
     @Test
     @DisplayName("Walk the Plank allows regeneration")
     void allowsRegeneration() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setRegenerationShield(1);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -95,8 +93,7 @@ class WalkThePlankTest extends BaseCardTest {
     @Test
     @DisplayName("Walk the Plank fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);

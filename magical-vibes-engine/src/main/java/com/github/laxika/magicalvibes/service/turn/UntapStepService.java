@@ -485,6 +485,7 @@ public class UntapStepService {
         gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (e instanceof StaticOrbEffect orb
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, p)
                         && appliesToUntapStep(orb, activePlayerId, controllerId)
                         && (!orb.requiresUntappedSource() || !p.isTapped())) {
                     active.add(orb);

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +13,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Boil.class, Island.class, LowlandGiant.class, Mountain.class, Plains.class})
+@CardUsed({Boil.class, GrizzlyBears.class, Island.class, LowlandGiant.class, Mountain.class, Plains.class, VolcanicIsland.class})
 class BoilTest extends BaseCardTest {
 
     @Test
@@ -32,13 +34,48 @@ class BoilTest extends BaseCardTest {
     void doesNotDestroyNonIslands() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player1, new LowlandGiant());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.castFromHand(player1, new Boil(), "{3}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player1, "Plains");
-        harness.assertOnBattlefield(player1, "Lowland Giant");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Destroys nonbasic lands with the Island subtype")
+    void destroysNonbasicIslands() {
+        harness.addToBattlefield(player1, new VolcanicIsland());
+        harness.castFromHand(player1, new Boil(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Volcanic Island");
+        harness.assertInGraveyard(player1, "Volcanic Island");
+    }
+
+    @Test
+    @DisplayName("Indestructible Islands survive Boil")
+    void indestructibleIslandsSurvive() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.castFromHand(player1, new Boil(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Regeneration shields save Islands from Boil")
+    void regenerationShieldsSaveIslands() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setRegenerationShield(1);
+        harness.castFromHand(player1, new Boil(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotInGraveyard(player1, "Island");
     }
 
     @Test

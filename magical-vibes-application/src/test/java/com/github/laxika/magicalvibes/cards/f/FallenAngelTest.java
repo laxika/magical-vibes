@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.CharcoalDiamond;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,11 +9,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FallenAngel.class, GrizzlyBears.class, HowlingMine.class})
+@CardUsed({CharcoalDiamond.class, FallenAngel.class, GrizzlyBears.class, HowlingMine.class})
 class FallenAngelTest extends BaseCardTest {
 
     @Test
@@ -105,8 +105,29 @@ class FallenAngelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can sacrifice only a creature, not another permanent")
+    @DisplayName("Can sacrifice only a creature, not a noncreature permanent")
     void cannotSacrificeNoncreaturePermanent() {
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent diamond = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, diamond.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+
+        harness.handlePermanentChosen(player1, ownBears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Charcoal Diamond");
+        assertThat(angel.getPowerModifier()).isEqualTo(2);
+        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice only a creature, not another permanent")
+    void cannotSacrificeNoncreaturePermanentUpstreamReview() {
         Permanent angel = addCreatureReady(player1, new FallenAngel());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());

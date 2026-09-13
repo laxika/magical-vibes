@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "99")
+@CardRegistration(set = "GK2", collectorNumber = "86")
 public class WurmweaverCoil extends Card {
 
     public WurmweaverCoil() {

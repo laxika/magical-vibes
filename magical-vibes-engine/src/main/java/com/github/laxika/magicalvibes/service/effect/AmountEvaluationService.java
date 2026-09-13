@@ -145,6 +145,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
@@ -468,6 +469,8 @@ public class AmountEvaluationService {
                     greatestOpponentHandSize(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
+            case OpponentsAttackedThisTurn ignored ->
+                    opponentsAttackedThisTurn(gameData, ctx);
             case OpponentsWhoLostLifeThisTurn ignored ->
                     opponentsWhoLostLifeThisTurn(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->
@@ -2150,6 +2153,19 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
                     && gameData.lifeLostThisTurn.getOrDefault(playerId, 0) > 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsAttackedThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int count = 0;
+        for (Map.Entry<UUID, Set<UUID>> entry : gameData.playersWhoAttackedPlayersThisTurn.entrySet()) {
+            if (gameData.orderedPlayerIds.contains(entry.getKey())
+                    && !entry.getKey().equals(ctx.controllerId())
+                    && entry.getValue().contains(ctx.controllerId())) {
                 count++;
             }
         }

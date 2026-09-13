@@ -5963,6 +5963,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(controllerId)) return;
             for (EffectRegistration registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)) {
+                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) break;
                 CardEffect effect = registration.effect();
                 if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
                 CardEffect resolved = effect;

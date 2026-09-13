@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +47,40 @@ class RakavolverTest extends BaseCardTest {
 
         assertThat(rakavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, rakavolver, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Blue kicker does not grant the white kicker's life-gain ability")
+    void blueKickerDoesNotGrantLifeGain() {
+        Permanent rakavolver = castWithBlueKicker();
+
+        dealCombatDamageAndResolveTrigger(rakavolver);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("White kicker gains life when Rakavolver deals combat damage to a creature")
+    void whiteKickerGainsLifeFromDamageToCreature() {
+        Permanent rakavolver = castWithWhiteKicker();
+        Permanent blocker = addCreatureReady(player2, new Rakavolver());
+
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        rakavolver.setSummoningSick(false);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(rakavolver))));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player2, "Rakavolver");
     }
 
     @Test
@@ -109,15 +144,13 @@ class RakavolverTest extends BaseCardTest {
     }
 
     private void dealCombatDamageAndResolveTrigger(Permanent rakavolver) {
-        rakavolver.setSummoningSick(false);
-        rakavolver.setAttacking(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        rakavolver.setSummoningSick(false);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+        resolveAllTriggers();
     }
 
     private void addMana(ManaColor color, int amount) {

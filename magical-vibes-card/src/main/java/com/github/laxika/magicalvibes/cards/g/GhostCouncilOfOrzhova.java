@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "114")
 @CardRegistration(set = "MM2", collectorNumber = "176")
+@CardRegistration(set = "GK2", collectorNumber = "40")
 public class GhostCouncilOfOrzhova extends Card {
 
     public GhostCouncilOfOrzhova() {
