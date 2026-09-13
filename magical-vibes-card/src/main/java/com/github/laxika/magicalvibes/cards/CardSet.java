@@ -240,10 +240,12 @@ public enum CardSet {
     SET_PD3("PD3"),
     SET_MD1("MD1"),
     SET_G17("G17"),
+    SET_GNT("GNT"),
     SET_GS1("GS1"),
     SET_EMA("EMA"),
     SET_SS1("SS1"),
-    SET_HA1("HA1");
+    SET_HA1("HA1"),
+    SET_HA2("HA2");
 
     @Getter
     private final String code;

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "183")
+@CardRegistration(set = "GNT", collectorNumber = "58")
 public class WelderAutomaton extends Card {
 
     public WelderAutomaton() {

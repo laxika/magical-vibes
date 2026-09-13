@@ -775,6 +775,7 @@ public class TurnProgressionService {
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
         gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn.clear();
+        gameData.playersWhoAttackedPlayersThisTurn.clear();
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
