@@ -113,6 +113,8 @@ public enum CardSet {
     SET_WTH("WTH"),
     SET_HML("HML"),
     SET_ALA("ALA"),
+    SET_ANA("ANA"),
+    SET_XANA("XANA"),
     SET_CON("CON"),
     SET_AKH("AKH"),
     SET_MP2("MP2"),
