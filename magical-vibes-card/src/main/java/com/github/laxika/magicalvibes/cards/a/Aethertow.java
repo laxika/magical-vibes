@@ -19,6 +19,7 @@ import java.util.List;
  * Put target attacking or blocking creature on top of its owner's library.
  */
 @CardRegistration(set = "SHM", collectorNumber = "136")
+@CardRegistration(set = "MM3", collectorNumber = "205")
 public class Aethertow extends Card {
 
     public Aethertow() {

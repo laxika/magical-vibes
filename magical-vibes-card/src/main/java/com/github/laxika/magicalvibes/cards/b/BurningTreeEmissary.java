@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "216")
+@CardRegistration(set = "MM3", collectorNumber = "207")
 public class BurningTreeEmissary extends Card {
 
     public BurningTreeEmissary() {

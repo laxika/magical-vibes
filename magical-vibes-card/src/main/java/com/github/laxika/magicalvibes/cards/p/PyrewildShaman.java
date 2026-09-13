@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "36")
+@CardRegistration(set = "MM3", collectorNumber = "106")
 public class PyrewildShaman extends Card {
 
     public PyrewildShaman() {

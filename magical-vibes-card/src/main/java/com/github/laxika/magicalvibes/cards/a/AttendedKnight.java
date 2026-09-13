@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "5")
+@CardRegistration(set = "MM3", collectorNumber = "1")
 public class AttendedKnight extends Card {
 
     public AttendedKnight() {

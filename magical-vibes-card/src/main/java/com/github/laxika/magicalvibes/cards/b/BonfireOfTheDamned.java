@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "129")
+@CardRegistration(set = "MM3", collectorNumber = "91")
 public class BonfireOfTheDamned extends Card {
 
     public BonfireOfTheDamned() {

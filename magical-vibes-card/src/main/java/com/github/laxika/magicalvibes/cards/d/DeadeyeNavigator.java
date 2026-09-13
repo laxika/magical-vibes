@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "59")
 @CardRegistration(set = "AVR", collectorNumber = "47")
+@CardRegistration(set = "MM3", collectorNumber = "36")
 public class DeadeyeNavigator extends Card {
 
     public DeadeyeNavigator() {
