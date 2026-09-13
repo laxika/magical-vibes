@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "161")
 @CardRegistration(set = "VIS", collectorNumber = "72")
+@CardRegistration(set = "EMA", collectorNumber = "112")
 public class VampiricTutor extends Card {
 
     public VampiricTutor() {

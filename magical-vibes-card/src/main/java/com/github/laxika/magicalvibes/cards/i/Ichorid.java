@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "65")
+@CardRegistration(set = "EMA", collectorNumber = "93")
 public class Ichorid extends Card {
 
     public Ichorid() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "95")
 @CardRegistration(set = "ME1", collectorNumber = "127")
+@CardRegistration(set = "EMA", collectorNumber = "183")
 public class Roots extends Card {
 
     public Roots() {

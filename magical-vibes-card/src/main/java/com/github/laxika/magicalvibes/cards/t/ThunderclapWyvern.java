@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "218")
+@CardRegistration(set = "EMA", collectorNumber = "208")
 public class ThunderclapWyvern extends Card {
 
     public ThunderclapWyvern() {

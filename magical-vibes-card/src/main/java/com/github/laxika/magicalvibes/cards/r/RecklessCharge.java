@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "215")
 @CardRegistration(set = "HOP", collectorNumber = "61")
+@CardRegistration(set = "EMA", collectorNumber = "144")
 public class RecklessCharge extends Card {
 
     public RecklessCharge() {

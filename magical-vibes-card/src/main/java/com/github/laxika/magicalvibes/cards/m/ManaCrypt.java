@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 
 @CardRegistration(set = "ME2", collectorNumber = "214")
+@CardRegistration(set = "EMA", collectorNumber = "225")
 public class ManaCrypt extends Card {
 
     public ManaCrypt() {

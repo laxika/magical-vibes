@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "163")
+@CardRegistration(set = "EMA", collectorNumber = "104")
 public class ProwlingPangolin extends Card {
 
     public ProwlingPangolin() {

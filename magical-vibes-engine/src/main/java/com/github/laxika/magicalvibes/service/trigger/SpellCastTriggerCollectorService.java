@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetedPermanentsOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
@@ -181,6 +182,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -211,6 +213,52 @@ public class SpellCastTriggerCollectorService {
     private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsEmblemTrigger(GainControlOfTargetedPermanentsOnControllerSpellCastEffect.class)
+    private boolean handleDackFaydenEmblem(EmblemTriggerMatchContext match,
+                                            GainControlOfTargetedPermanentsOnControllerSpellCastEffect trigger,
+                                            TriggerContext ctx) {
+        TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;
+        if (!match.controllerId().equals(spellCast.castingPlayerId())) {
+            return true;
+        }
+
+        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCast.spellCard().getId());
+        if (triggeringSpell == null) {
+            return true;
+        }
+
+        LinkedHashSet<UUID> targetIds = new LinkedHashSet<>(triggeringSpell.getTargetIds());
+        if (triggeringSpell.getTargetId() != null) {
+            targetIds.add(triggeringSpell.getTargetId());
+        }
+        List<UUID> targetedPermanents = targetIds.stream()
+                .filter(targetId -> gameQueryService.findPermanentById(match.gameData(), targetId) != null)
+                .toList();
+        if (targetedPermanents.isEmpty()) {
+            return true;
+        }
+
+        Card source = match.emblem().sourceCard();
+        Card sourceCard = source != null ? source : spellCast.spellCard();
+        String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                description,
+                new ArrayList<>(List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT))),
+                null,
+                targetedPermanents
+        );
+        entry.setTriggeringCardId(spellCast.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.text(description + " triggers."));
+        log.info("Game {} - {} gains control of {} targeted permanents",
+                match.gameData().id, description, targetedPermanents.size());
+        return true;
     }
 
     @CollectsTrigger(value = FirstMulticoloredSpellCastTriggerEffect.class,

@@ -636,6 +636,11 @@ public class TriggerCollectionService {
         // Chandra Dressed to Kill's emblem). Mana-spent readers must run before clearSpellCastManaSpent.
         for (Emblem emblem : gameData.emblems) {
             for (CardEffect effect : emblem.staticEffects()) {
+                if (registry.dispatchEmblem(
+                        new EmblemTriggerMatchContext(gameData, emblem, emblem.controllerId(), spellCard, effect),
+                        effect, ctx)) {
+                    continue;
+                }
                 if (effect instanceof ExileTargetOnControllerSpellCastEffect) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(

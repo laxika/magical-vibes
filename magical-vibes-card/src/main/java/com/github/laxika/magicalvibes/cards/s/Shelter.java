@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "46")
+@CardRegistration(set = "EMA", collectorNumber = "29")
 public class Shelter extends Card {
 
     public Shelter() {

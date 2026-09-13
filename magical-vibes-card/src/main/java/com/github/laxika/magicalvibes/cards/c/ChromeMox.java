@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "152")
+@CardRegistration(set = "EMA", collectorNumber = "219")
 public class ChromeMox extends Card {
 
     public ChromeMox() {
