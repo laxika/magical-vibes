@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "115")
+@CardRegistration(set = "GK2", collectorNumber = "128")
 public class VorelOfTheHullClade extends Card {
 
     public VorelOfTheHullClade() {

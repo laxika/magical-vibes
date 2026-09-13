@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "196")
+@CardRegistration(set = "GK2", collectorNumber = "20")
 public class SkymarkRoc extends Card {
 
     public SkymarkRoc() {

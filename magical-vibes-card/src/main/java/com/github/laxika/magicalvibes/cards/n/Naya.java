@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "27")
+@CardRegistration(set = "OPCA", collectorNumber = "55")
 public class Naya extends Card {
 
     public Naya() {

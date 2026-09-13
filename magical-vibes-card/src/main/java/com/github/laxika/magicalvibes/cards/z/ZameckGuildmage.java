@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCr
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "209")
+@CardRegistration(set = "GK2", collectorNumber = "129")
 public class ZameckGuildmage extends Card {
 
     public ZameckGuildmage() {

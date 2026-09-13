@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "39")
 @CardRegistration(set = "JVC", collectorNumber = "17")
 @CardRegistration(set = "MMA", collectorNumber = "36")
+@CardRegistration(set = "UMA", collectorNumber = "44")
 public class Aethersnipe extends Card {
 
     public Aethersnipe() {

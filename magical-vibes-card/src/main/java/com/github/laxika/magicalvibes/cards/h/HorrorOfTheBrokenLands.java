@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "95")
 @CardRegistration(set = "AKR", collectorNumber = "108")
+@CardRegistration(set = "A25", collectorNumber = "93")
 public class HorrorOfTheBrokenLands extends Card {
 
     public HorrorOfTheBrokenLands() {

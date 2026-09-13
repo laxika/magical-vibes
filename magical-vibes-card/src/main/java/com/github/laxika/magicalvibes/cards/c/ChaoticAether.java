@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BlankPlanarDieRollsCauseChaosEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "1")
+@CardRegistration(set = "OPCA", collectorNumber = "1")
 public class ChaoticAether extends Card {
 
     public ChaoticAether() {

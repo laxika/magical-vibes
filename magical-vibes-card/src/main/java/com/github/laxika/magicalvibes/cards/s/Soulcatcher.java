@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "47")
+@CardRegistration(set = "EMA", collectorNumber = "30")
 public class Soulcatcher extends Card {
 
     public Soulcatcher() {

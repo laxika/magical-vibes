@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "190")
+@CardRegistration(set = "IMA", collectorNumber = "196")
 public class ChroniclerOfHeroes extends Card {
 
     public ChroniclerOfHeroes() {

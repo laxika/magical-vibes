@@ -44,10 +44,9 @@ class UnholyStrengthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() instanceof UnholyStrength
-                        && p.isAttached()
-                        && bears.getId().equals(p.getAttachedTo()));
+        Permanent aura = findPermanent(player1, "Unholy Strength");
+        assertThat(aura.isAttached()).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
     }
 
     @Test
@@ -104,10 +103,8 @@ class UnholyStrengthTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof UnholyStrength);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof UnholyStrength);
+        harness.assertInGraveyard(player1, "Unholy Strength");
+        harness.assertNotOnBattlefield(player1, "Unholy Strength");
     }
 
     @Test
@@ -130,10 +127,9 @@ class UnholyStrengthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() instanceof UnholyStrength
-                        && p.isAttached()
-                        && bears.getId().equals(p.getAttachedTo()));
+        Permanent aura = findPermanent(player1, "Unholy Strength");
+        assertThat(aura.isAttached()).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }

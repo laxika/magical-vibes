@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "6")
 @CardRegistration(set = "MM2", collectorNumber = "5")
+@CardRegistration(set = "UMA", collectorNumber = "6")
 public class KozilekButcherOfTruth extends Card {
 
     public KozilekButcherOfTruth() {

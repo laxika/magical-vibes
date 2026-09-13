@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageByCreat
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "21")
+@CardRegistration(set = "OPCA", collectorNumber = "42")
 public class Kessig extends Card {
 
     public Kessig() {

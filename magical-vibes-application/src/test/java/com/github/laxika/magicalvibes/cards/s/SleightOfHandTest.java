@@ -48,6 +48,22 @@ class SleightOfHandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cards below the top two remain in the library")
+    void onlyLooksAtTopTwoCards() {
+        Card top1 = new GrizzlyBears();
+        Card top2 = new LlanowarElves();
+        Card belowTopTwo = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top1, top2, belowTopTwo));
+        harness.castFromHand(player1, new SleightOfHand(), "{U}");
+
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(top1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowTopTwo, top2);
+    }
+
+    @Test
     @DisplayName("Looking at cards does not publicly reveal the chosen card")
     void chosenCardIsNotPubliclyRevealed() {
         Card chosenCard = new GrizzlyBears();

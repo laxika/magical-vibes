@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "PC2", collectorNumber = "104")
+@CardRegistration(set = "EMA", collectorNumber = "206")
 @CardRegistration(set = "PCA", collectorNumber = "104")
 public class ShardlessAgent extends Card {
 

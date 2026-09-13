@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "36")
 @CardRegistration(set = "GN2", collectorNumber = "14")
+@CardRegistration(set = "IMA", collectorNumber = "37")
 public class TopanFreeblade extends Card {
 
     public TopanFreeblade() {

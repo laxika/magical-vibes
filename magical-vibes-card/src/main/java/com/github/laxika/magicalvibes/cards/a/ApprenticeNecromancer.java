@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "51")
+@CardRegistration(set = "UMA", collectorNumber = "84")
 public class ApprenticeNecromancer extends Card {
 
     public ApprenticeNecromancer() {

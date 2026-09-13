@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialCrevasses;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.o.OrcishCannoneers;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -93,6 +92,58 @@ class CircleOfProtectionRedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents only the next damage event from the chosen red source")
+    void preventsOnlyNextDamageEventFromChosenSource() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent cannoneers = addReadyRedDamageSource(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, cannoneers.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+
+        harness.performUntapStep(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevention applies only to damage dealt to the protected player")
+    void onlyPreventsDamageToController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent creature = addReadyRedCreature(player1);
+        Permanent cannoneers = addReadyRedDamageSource(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, cannoneers.getId());
+
+        int cannoneersIndex = gd.playerBattlefields.get(player2.getId()).indexOf(cannoneers);
+        harness.activateAbility(player2, cannoneersIndex, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(cannoneers.getId()));
+    }
+
+    @Test
     @DisplayName("Only the chosen source is prevented; a different red source still deals damage")
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
@@ -148,7 +199,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test
@@ -246,9 +297,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();

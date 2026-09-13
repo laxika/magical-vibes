@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "145")
+@CardRegistration(set = "GK2", collectorNumber = "69")
 public class RakdosGuildmage extends Card {
 
     public RakdosGuildmage() {

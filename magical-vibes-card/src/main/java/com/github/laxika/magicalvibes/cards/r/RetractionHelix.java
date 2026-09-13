@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "49")
+@CardRegistration(set = "A25", collectorNumber = "71")
 public class RetractionHelix extends Card {
 
     public RetractionHelix() {

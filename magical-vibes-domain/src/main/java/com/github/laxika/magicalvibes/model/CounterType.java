@@ -117,6 +117,7 @@ public enum CounterType {
     PHYLACTERY,
     PIN,
     PLAN,
+    PLOT,
     POINT,
     POLYP,
     PLAGUE,

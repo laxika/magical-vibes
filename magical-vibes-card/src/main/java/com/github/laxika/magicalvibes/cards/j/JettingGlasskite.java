@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 
 
 @CardRegistration(set = "BOK", collectorNumber = "38")
+@CardRegistration(set = "EMA", collectorNumber = "58")
 public class JettingGlasskite extends Card {
 
     public JettingGlasskite() {

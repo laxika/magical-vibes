@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreatu
 
 @CardRegistration(set = "CHK", collectorNumber = "217")
 @CardRegistration(set = "MMA", collectorNumber = "150")
+@CardRegistration(set = "IMA", collectorNumber = "172")
 public class JuganTheRisingStar extends Card {
 
     public JuganTheRisingStar() {

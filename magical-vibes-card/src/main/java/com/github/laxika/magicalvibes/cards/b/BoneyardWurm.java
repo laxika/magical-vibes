@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "171")
 @CardRegistration(set = "DDJ", collectorNumber = "51")
+@CardRegistration(set = "UMA", collectorNumber = "159")
 public class BoneyardWurm extends Card {
 
     public BoneyardWurm() {

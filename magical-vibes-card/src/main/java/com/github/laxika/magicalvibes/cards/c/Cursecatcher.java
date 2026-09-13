@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "34")
+@CardRegistration(set = "A25", collectorNumber = "53")
 public class Cursecatcher extends Card {
 
     public Cursecatcher() {

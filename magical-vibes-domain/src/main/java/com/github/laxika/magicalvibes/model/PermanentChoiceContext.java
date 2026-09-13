@@ -1665,7 +1665,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       UUID triggeringCardId,
                                       UUID triggeringPermanentId,
                                       int eventValue,
-                                      com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource)
+                                      com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                      int stateTriggerEffectIndex)
             implements PermanentChoiceContext {
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1679,7 +1680,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, 0, null);
+                    triggeringPermanentId, 0, null, -1);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1694,7 +1695,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, null);
+                    triggeringPermanentId, eventValue, null, -1);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1707,6 +1708,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           UUID triggeringPermanentId,
                                           int eventValue,
                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, -1);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue,
+                                          com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                          int stateTriggerEffectIndex) {
             this.sourceCard = sourceCard;
             this.controllerId = controllerId;
             this.effects = List.copyOf(effects);
@@ -1722,6 +1740,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this.triggeringPermanentId = triggeringPermanentId;
             this.eventValue = eventValue;
             this.planarSource = planarSource;
+            this.stateTriggerEffectIndex = stateTriggerEffectIndex;
+        }
+
+        public ETBTokenMultiTargetTrigger withStateTriggerEffectIndex(int index) {
+            return new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, index);
         }
 
         public ETBTokenMultiTargetTrigger copyPlanarSnapshot() {
@@ -1729,7 +1756,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource.copy());
+                    triggeringPermanentId, eventValue, planarSource.copy(), stateTriggerEffectIndex);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

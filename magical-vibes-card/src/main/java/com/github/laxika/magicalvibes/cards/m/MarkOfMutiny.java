@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M13", collectorNumber = "141")
 @CardRegistration(set = "ZEN", collectorNumber = "137")
 @CardRegistration(set = "PC2", collectorNumber = "47")
+@CardRegistration(set = "IMA", collectorNumber = "139")
 @CardRegistration(set = "PCA", collectorNumber = "47")
 public class MarkOfMutiny extends Card {
 

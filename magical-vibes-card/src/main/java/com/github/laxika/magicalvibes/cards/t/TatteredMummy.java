@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "AKH", collectorNumber = "278")
 @CardRegistration(set = "M19", collectorNumber = "295")
 @CardRegistration(set = "GN2", collectorNumber = "34")
+@CardRegistration(set = "GNT", collectorNumber = "34")
 public class TatteredMummy extends Card {
 
     public TatteredMummy() {

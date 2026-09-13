@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "155")
+@CardRegistration(set = "UMA", collectorNumber = "224")
 public class TurnToMist extends Card {
 
     public TurnToMist() {

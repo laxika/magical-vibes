@@ -64,6 +64,24 @@ class MonstrousGrowthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not boost a creature that leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        harness.setHand(player1, List.of(new MonstrousGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new BearCub());

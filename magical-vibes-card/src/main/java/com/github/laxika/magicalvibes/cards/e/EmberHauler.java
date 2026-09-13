@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "135")
 @CardRegistration(set = "M20", collectorNumber = "137")
+@CardRegistration(set = "DDT", collectorNumber = "37")
 public class EmberHauler extends Card {
 
     public EmberHauler() {

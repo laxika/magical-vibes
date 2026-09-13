@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "29")
+@CardRegistration(set = "UMA", collectorNumber = "42")
 public class WanderingChampion extends Card {
 
     public WanderingChampion() {

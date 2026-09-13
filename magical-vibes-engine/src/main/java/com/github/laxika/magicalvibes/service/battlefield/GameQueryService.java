@@ -514,7 +514,14 @@ public class GameQueryService {
     private boolean playerHasTemporaryStaticEffect(GameData gameData, UUID playerId,
                                                    Class<? extends CardEffect> effectType) {
         List<CardEffect> effects = gameData.playerStaticEffectsUntilEndOfTurn.get(playerId);
-        return effects != null && effects.stream().anyMatch(effectType::isInstance);
+        if (effects != null && effects.stream().anyMatch(effectType::isInstance)) {
+            return true;
+        }
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream().anyMatch(floating ->
+                    playerId.equals(floating.affectedPlayerId())
+                            && effectType.isInstance(floating.effect()));
+        }
     }
 
     /**
@@ -7816,7 +7823,8 @@ public class GameQueryService {
                         && sourceControllerId != null
                         && sourceControllerId.equals(controllerId)
                         && effect instanceof ControllerRecipientDamageMultiplyingEffect multiplyingEffect) {
-                    if (!combatDamage || !multiplyingEffect.noncombatOnly()) {
+                    if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
+                            && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
                         multiplier[0] *= multiplyingEffect.damageMultiplier();
                     }
                 }

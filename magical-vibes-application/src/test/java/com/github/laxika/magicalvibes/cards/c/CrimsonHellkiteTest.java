@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,11 +13,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrimsonHellkite.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({CrimsonHellkite.class, GrizzlyBears.class, IronTuskElephant.class, Mountain.class})
 class CrimsonHellkiteTest extends BaseCardTest {
 
     @Test
@@ -51,6 +51,40 @@ class CrimsonHellkiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spends red mana on X and leaves other colors unspent")
+    void spendsOnlyRedManaOnX() {
+        addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X=0 taps the source, preserves mana, and deals no damage")
+    void zeroXDealsNoDamage() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(hellkite.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
     @DisplayName("Resolving deals X damage and destroys creature when X >= toughness")
     void resolvingDestroysWhenLethal() {
         addHellkiteReady(player1);
@@ -79,26 +113,6 @@ class CrimsonHellkiteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gameLogContains("deals 1 damage")).isTrue();
-    }
-
-    @Test
-    @DisplayName("Resolving with X equal to zero still requires and preserves the creature target")
-    void resolvingWithZeroXPreservesTarget() {
-        Permanent hellkite = addHellkiteReady(player1);
-        Permanent target = addTargetCreature(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("requires a target");
-        assertThat(hellkite.isTapped()).isFalse();
-        assertThat(gd.stack).isEmpty();
-
-        harness.activateAbility(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -147,6 +161,81 @@ class CrimsonHellkiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        Permanent hellkite = addHellkiteReady(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hellkite.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate when Crimson Hellkite is already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        hellkite.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateSummoningSick() {
+        CrimsonHellkite card = new CrimsonHellkite();
+        Permanent perm = new Permanent(card); // summoningSick true by default
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    private Permanent addHellkiteReady(Player player) {
+        return addCreatureReady(player, new CrimsonHellkite());
+    }
+
+    private Permanent addTargetCreature(Player player) {
+        return addCreatureReady(player, new GrizzlyBears());
+    }
+
+    @Test
+    @DisplayName("Resolving with X equal to zero still requires and preserves the creature target")
+    void resolvingWithZeroXPreservesTarget() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("requires a target");
+        assertThat(hellkite.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Cannot use non-red mana alongside red mana for X")
     void cannotUseNonRedManaAlongsideRedManaForX() {
         Permanent hellkite = addHellkiteReady(player1);
@@ -175,28 +264,5 @@ class CrimsonHellkiteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
-    }
-
-    @Test
-    @DisplayName("Cannot activate with summoning sickness")
-    void cannotActivateSummoningSick() {
-        CrimsonHellkite card = new CrimsonHellkite();
-        Permanent perm = new Permanent(card); // summoningSick true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
-        Permanent target = addTargetCreature(player2);
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("summoning sickness");
-    }
-
-    private Permanent addHellkiteReady(Player player) {
-        return addCreatureReady(player, new CrimsonHellkite());
-    }
-
-    private Permanent addTargetCreature(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
     }
 }

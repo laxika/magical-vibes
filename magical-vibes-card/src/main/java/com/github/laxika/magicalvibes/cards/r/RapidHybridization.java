@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "44")
+@CardRegistration(set = "GK2", collectorNumber = "109")
 public class RapidHybridization extends Card {
 
     public RapidHybridization() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "AKH", collectorNumber = "98")
 @CardRegistration(set = "AKR", collectorNumber = "113")
 @CardRegistration(set = "GN2", collectorNumber = "31")
+@CardRegistration(set = "GNT", collectorNumber = "32")
 public class LilianasMastery extends Card {
 
     public LilianasMastery() {

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "115")
 @CardRegistration(set = "ELD", collectorNumber = "103")
+@CardRegistration(set = "IMA", collectorNumber = "104")
 public class ReaveSoul extends Card {
 
     public ReaveSoul() {

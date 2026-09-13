@@ -18,6 +18,8 @@ import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "62")
 @CardRegistration(set = "M11", collectorNumber = "65")
+@CardRegistration(set = "DDT", collectorNumber = "11")
+@CardRegistration(set = "E02", collectorNumber = "10")
 public class MerfolkSovereign extends Card {
 
     public MerfolkSovereign() {
