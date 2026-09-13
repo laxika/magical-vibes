@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "INR", collectorNumber = "355")
 @CardRegistration(set = "DDQ", collectorNumber = "43")
 @CardRegistration(set = "UMA", collectorNumber = "56")
+@CardRegistration(set = "MM3", collectorNumber = "38")
 public class ForbiddenAlchemy extends Card {
 
     public ForbiddenAlchemy() {

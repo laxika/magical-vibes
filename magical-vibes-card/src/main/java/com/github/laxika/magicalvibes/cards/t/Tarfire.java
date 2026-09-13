@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "LRW", collectorNumber = "194")
 @CardRegistration(set = "DD1", collectorNumber = "56")
 @CardRegistration(set = "EVG", collectorNumber = "56")
+@CardRegistration(set = "DDT", collectorNumber = "55")
 public class Tarfire extends Card {
 
     public Tarfire() {

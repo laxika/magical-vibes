@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "183")
 @CardRegistration(set = "PD2", collectorNumber = "2")
+@CardRegistration(set = "A25", collectorNumber = "139")
 public class JackalPup extends Card {
 
     public JackalPup() {

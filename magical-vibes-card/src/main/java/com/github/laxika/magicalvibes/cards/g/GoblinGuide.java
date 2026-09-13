@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfDefendingPlaye
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "126")
+@CardRegistration(set = "MM3", collectorNumber = "96")
 public class GoblinGuide extends Card {
 
     public GoblinGuide() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MIR", collectorNumber = "216")
 @CardRegistration(set = "BTD", collectorNumber = "55")
 @CardRegistration(set = "3ED", collectorNumber = "195")
+@CardRegistration(set = "EMA", collectorNumber = "167")
 public class Fog extends Card {
 
     public Fog() {

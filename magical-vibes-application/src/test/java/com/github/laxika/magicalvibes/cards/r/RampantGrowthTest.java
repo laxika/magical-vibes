@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RampantGrowth.class, Plains.class, Forest.class, Island.class, RootwaterDepths.class})
+@CardUsed({RampantGrowth.class, Plains.class, Forest.class, Island.class, CityOfBrass.class})
 class RampantGrowthTest extends BaseCardTest {
 
     @Test
@@ -113,7 +114,7 @@ class RampantGrowthTest extends BaseCardTest {
         Card plains = new Plains();
         Card forest = new Forest();
         Card island = new Island();
-        harness.setLibrary(player1, List.of(plains, forest, island, new RootwaterDepths(), new RampantGrowth()));
+        harness.setLibrary(player1, List.of(plains, forest, island, new CityOfBrass(), new RampantGrowth()));
         return List.of(plains, forest, island);
     }
 }

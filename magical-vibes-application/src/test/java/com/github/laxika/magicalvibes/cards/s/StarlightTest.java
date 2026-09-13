@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Starlight.class, BogImp.class, GrizzlyBears.class})
+@CardUsed({Starlight.class, BogImp.class, GrizzlyBears.class, Swamp.class})
 class StarlightTest extends BaseCardTest {
 
     private void prepareStarlight() {
@@ -39,11 +39,12 @@ class StarlightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only black creatures count; non-black creatures are ignored")
+    @DisplayName("Only black creatures count; non-black creatures and noncreatures are ignored")
     void ignoresNonBlackCreatures() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player2, new BogImp());
         harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Swamp());
 
         castStarlight();
 

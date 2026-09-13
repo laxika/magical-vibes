@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "45")
+@CardRegistration(set = "DDU", collectorNumber = "36")
 public class ArtificersEpiphany extends Card {
 
     public ArtificersEpiphany() {

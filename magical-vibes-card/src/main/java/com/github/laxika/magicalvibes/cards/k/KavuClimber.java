@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "10E", collectorNumber = "273")
 @CardRegistration(set = "9ED", collectorNumber = "249")
 @CardRegistration(set = "INV", collectorNumber = "192")
+@CardRegistration(set = "A25", collectorNumber = "175")
 public class KavuClimber extends Card {
 
     public KavuClimber() {

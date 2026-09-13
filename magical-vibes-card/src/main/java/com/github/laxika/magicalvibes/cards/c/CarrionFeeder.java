@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "59")
 @CardRegistration(set = "DDE", collectorNumber = "2")
+@CardRegistration(set = "EMA", collectorNumber = "84")
 public class CarrionFeeder extends Card {
 
     public CarrionFeeder() {

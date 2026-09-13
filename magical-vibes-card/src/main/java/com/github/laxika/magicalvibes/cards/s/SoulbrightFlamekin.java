@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "DD2", collectorNumber = "37")
 @CardRegistration(set = "MM2", collectorNumber = "126")
 @CardRegistration(set = "JVC", collectorNumber = "37")
+@CardRegistration(set = "A25", collectorNumber = "151")
 public class SoulbrightFlamekin extends Card {
 
     public SoulbrightFlamekin() {

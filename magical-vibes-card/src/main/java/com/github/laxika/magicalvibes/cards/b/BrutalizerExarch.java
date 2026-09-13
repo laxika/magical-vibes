@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "105")
 @CardRegistration(set = "PC2", collectorNumber = "61")
+@CardRegistration(set = "PCA", collectorNumber = "61")
 public class BrutalizerExarch extends Card {
 
     public BrutalizerExarch() {

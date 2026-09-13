@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "DIS", collectorNumber = "52")
+@CardRegistration(set = "A25", collectorNumber = "103")
 public class Ratcatcher extends Card {
 
     public Ratcatcher() {

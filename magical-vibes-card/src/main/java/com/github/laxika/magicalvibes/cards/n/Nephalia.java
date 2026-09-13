@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "26")
+@CardRegistration(set = "OPCA", collectorNumber = "56")
 public class Nephalia extends Card {
 
     public Nephalia() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PalaceGuard;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.ScrapdiverSerpent;
+import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -68,6 +70,20 @@ class CombatBlockServiceTest extends BaseCardTest {
 
         assertThat(blocker.getEffectivePower()).isEqualTo(1);
         assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(Okk.class)
+    void greaterPowerRestrictionEndsWithPrintedAbilities() {
+        Permanent attacker = attacking(player1, new GrizzlyBears());
+        Permanent okk = addCreatureReady(player2, new Okk());
+        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        enterDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(defenderIndex(okk), attackerIndex(attacker))));
+
+        assertThat(okk.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
 
     private CombatBlockService service() {

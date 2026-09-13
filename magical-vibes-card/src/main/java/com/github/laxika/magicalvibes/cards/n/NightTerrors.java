@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "111")
+@CardRegistration(set = "MM3", collectorNumber = "79")
 public class NightTerrors extends Card {
 
     public NightTerrors() {

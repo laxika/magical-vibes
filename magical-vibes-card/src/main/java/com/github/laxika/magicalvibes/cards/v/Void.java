@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "287")
 @CardRegistration(set = "TSB", collectorNumber = "105")
+@CardRegistration(set = "EMA", collectorNumber = "211")
 public class Void extends Card {
 
     public Void() {

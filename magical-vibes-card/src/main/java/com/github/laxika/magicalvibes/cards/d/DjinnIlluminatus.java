@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "142")
 @CardRegistration(set = "DDJ", collectorNumber = "12")
+@CardRegistration(set = "GK1", collectorNumber = "36")
 public class DjinnIlluminatus extends Card {
 
     public DjinnIlluminatus() {

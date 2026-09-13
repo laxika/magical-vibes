@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "31")
+@CardRegistration(set = "DDT", collectorNumber = "24")
 public class WakeThrasher extends Card {
 
     public WakeThrasher() {

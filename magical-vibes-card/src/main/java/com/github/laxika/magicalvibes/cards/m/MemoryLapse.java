@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "HML", collectorNumber = "32a")
 @CardRegistration(set = "HML", collectorNumber = "32b")
 @CardRegistration(set = "DDM", collectorNumber = "24")
+@CardRegistration(set = "EMA", collectorNumber = "60")
 public class MemoryLapse extends Card {
 
     public MemoryLapse() {

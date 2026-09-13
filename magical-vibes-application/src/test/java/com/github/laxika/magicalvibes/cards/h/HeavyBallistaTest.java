@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenalishKnight.class, HeavyBallista.class})
+@CardUsed({BenalishKnight.class, GrizzlyBears.class, HeavyBallista.class})
 class HeavyBallistaTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,7 @@ class HeavyBallistaTest extends BaseCardTest {
 
         assertThat(ballista.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Benalish Knight");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -38,14 +38,14 @@ class HeavyBallistaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Benalish Knight");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addReadyBallista(player1);
-        Permanent creature = addCreatureReady(player2, new BenalishKnight());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -60,7 +60,7 @@ class HeavyBallistaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Benalish Knight");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -77,6 +77,23 @@ class HeavyBallistaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
     }
 
+    private Permanent addReadyBallista(Player player) {
+        return addCreatureReady(player, new HeavyBallista());
+    }
+
+    private Permanent addAttacker(Player owner) {
+        Permanent attacker = addCreatureReady(owner, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        return attacker;
+    }
+
+    private Permanent addBlocker(Player owner) {
+        Permanent blocker = addCreatureReady(owner, new GrizzlyBears());
+        blocker.setBlocking(true);
+        return blocker;
+    }
+
     @Test
     @DisplayName("Cannot activate while it has summoning sickness")
     void cannotActivateWithSummoningSickness() {
@@ -86,22 +103,5 @@ class HeavyBallistaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
-    }
-
-    private Permanent addReadyBallista(Player player) {
-        return addCreatureReady(player, new HeavyBallista());
-    }
-
-    private Permanent addAttacker(Player owner) {
-        Permanent attacker = addCreatureReady(owner, new BenalishKnight());
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player1.getId());
-        return attacker;
-    }
-
-    private Permanent addBlocker(Player owner) {
-        Permanent blocker = addCreatureReady(owner, new BenalishKnight());
-        blocker.setBlocking(true);
-        return blocker;
     }
 }

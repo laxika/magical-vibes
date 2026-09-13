@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
+@CardRegistration(set = "EMA", collectorNumber = "198")
 @CardRegistration(set = "VMA", collectorNumber = "246")
 public class BragoKingEternal extends Card {
 

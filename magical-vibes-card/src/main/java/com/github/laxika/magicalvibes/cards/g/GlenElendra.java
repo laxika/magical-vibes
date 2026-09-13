@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "16")
+@CardRegistration(set = "OPCA", collectorNumber = "28")
 public class GlenElendra extends Card {
 
     public GlenElendra() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsUntapDuringEachPlayersUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -291,6 +292,8 @@ public class UntapStepService {
         gameLogService.append(gameData, GameLog.text(untapLog));
         log.info("Game {} - {} untaps their permanents", gameData.id, activePlayerName);
 
+        untapAllPermanentsDuringEachPlayersUntapStep(gameData, activePlayerId);
+
         // Queue may-not-untap choices for tapped permanents with MayNotUntapDuringUntapStepEffect
         for (Permanent p : mayNotUntapPermanents) {
             gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -336,6 +339,28 @@ public class UntapStepService {
 
         untapSelfPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
         untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
+    }
+
+    private void untapAllPermanentsDuringEachPlayersUntapStep(GameData gameData, UUID activePlayerId) {
+        if (!allPermanentsUntapDuringEachPlayersUntapStepApplies(gameData)) {
+            return;
+        }
+
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) {
+                return;
+            }
+            playerBattlefield.forEach(permanent -> tapUntapSupport.untapPermanent(gameData, permanent));
+        });
+    }
+
+    private boolean allPermanentsUntapDuringEachPlayersUntapStepApplies(GameData gameData) {
+        if (gameData.planechase == null) {
+            return false;
+        }
+        return gameData.planechase.faceUp.stream()
+                .anyMatch(object -> object.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof AllPermanentsUntapDuringEachPlayersUntapStepEffect));
     }
 
     private void untapSelfPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
@@ -460,6 +485,7 @@ public class UntapStepService {
         gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (e instanceof StaticOrbEffect orb
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, p)
                         && appliesToUntapStep(orb, activePlayerId, controllerId)
                         && (!orb.requiresUntappedSource() || !p.isTapped())) {
                     active.add(orb);

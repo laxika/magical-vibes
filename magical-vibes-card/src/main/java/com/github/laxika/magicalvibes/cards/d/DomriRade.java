@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "156")
+@CardRegistration(set = "MM3", collectorNumber = "161")
 public class DomriRade extends Card {
 
     public DomriRade() {

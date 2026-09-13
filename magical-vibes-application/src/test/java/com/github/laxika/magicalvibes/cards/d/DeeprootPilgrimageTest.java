@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ class DeeprootPilgrimageTest extends BaseCardTest {
     @DisplayName("Creates a hexproof Merfolk token when a nontoken Merfolk becomes tapped")
     void createsTokenWhenNontokenMerfolkBecomesTapped() {
         harness.addToBattlefield(player1, new DeeprootPilgrimage());
-        Permanent merfolk = addReady(player1, new CoralMerfolk());
+        Permanent merfolk = addCreatureReady(player1, new CoralMerfolk());
 
         tapAndCheckTriggers(merfolk);
         harness.passBothPriorities();
@@ -39,8 +38,8 @@ class DeeprootPilgrimageTest extends BaseCardTest {
     @DisplayName("Does not trigger for a token or a non-Merfolk permanent")
     void ignoresTokensAndNonMerfolk() {
         harness.addToBattlefield(player1, new DeeprootPilgrimage());
-        Permanent merfolk = addReady(player1, new CoralMerfolk());
-        Permanent bear = addReady(player1, new GrizzlyBears());
+        Permanent merfolk = addCreatureReady(player1, new CoralMerfolk());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         tapAndCheckTriggers(merfolk);
         harness.passBothPriorities();
@@ -57,9 +56,9 @@ class DeeprootPilgrimageTest extends BaseCardTest {
     @DisplayName("Triggers only once when two Merfolk are tapped together to pay one cost")
     void triggersOnceForSimultaneousTaps() {
         harness.addToBattlefield(player1, new DeeprootPilgrimage());
-        Permanent gemguard = addReady(player1, new AdaptiveGemguard());
-        Permanent firstMerfolk = addReady(player1, new CoralMerfolk());
-        Permanent secondMerfolk = addReady(player1, new CoralMerfolk());
+        Permanent gemguard = addCreatureReady(player1, new AdaptiveGemguard());
+        Permanent firstMerfolk = addCreatureReady(player1, new CoralMerfolk());
+        Permanent secondMerfolk = addCreatureReady(player1, new CoralMerfolk());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gemguard), null, null);
         harness.handlePermanentChosen(player1, firstMerfolk.getId());
@@ -68,13 +67,6 @@ class DeeprootPilgrimageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Merfolk")).hasSize(1);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private void tapAndCheckTriggers(Permanent permanent) {

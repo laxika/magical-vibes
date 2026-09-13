@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "47")
+@CardRegistration(set = "IMA", collectorNumber = "51")
 public class Dissolve extends Card {
 
     public Dissolve() {

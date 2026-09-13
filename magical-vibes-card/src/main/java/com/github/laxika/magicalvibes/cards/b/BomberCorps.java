@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "86")
+@CardRegistration(set = "GK1", collectorNumber = "80")
 public class BomberCorps extends Card {
 
     public BomberCorps() {

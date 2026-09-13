@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "99")
+@CardRegistration(set = "GK1", collectorNumber = "6")
 public class NetherbornPhalanx extends Card {
 
     public NetherbornPhalanx() {

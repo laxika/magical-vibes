@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "31")
+@CardRegistration(set = "DDT", collectorNumber = "19")
 public class TidalCourier extends Card {
 
     public TidalCourier() {

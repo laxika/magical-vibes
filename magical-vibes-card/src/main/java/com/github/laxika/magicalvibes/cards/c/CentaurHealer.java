@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "148")
+@CardRegistration(set = "MM3", collectorNumber = "156")
+@CardRegistration(set = "GK1", collectorNumber = "110")
 public class CentaurHealer extends Card {
 
     public CentaurHealer() {

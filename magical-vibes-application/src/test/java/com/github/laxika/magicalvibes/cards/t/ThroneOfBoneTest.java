@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.d.DiabolicVision;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThroneOfBone.class, ScatheZombies.class, GrizzlyBears.class})
+@CardUsed({DiabolicVision.class, GrizzlyBears.class, ScatheZombies.class, ThroneOfBone.class})
 class ThroneOfBoneTest extends BaseCardTest {
 
     // ===== Controller casts black spell =====
@@ -79,21 +79,31 @@ class ThroneOfBoneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Each Throne of Bone triggers independently for one black spell")
-    void eachThroneTriggersIndependently() {
+    @DisplayName("Multicolored black spell triggers Throne of Bone")
+    void multicoloredBlackSpellTriggers() {
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new DiabolicVision(), "{U}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Throne of Bone triggers independently")
+    void multipleThronesTriggerIndependently() {
         harness.addToBattlefield(player1, new ThroneOfBone());
         harness.addToBattlefield(player1, new ThroneOfBone());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
-
-        assertThat(gd.stack.stream()
-                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && e.getCard().getName().equals("Throne of Bone")))
-                .hasSize(2);
-
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -101,23 +111,6 @@ class ThroneOfBoneTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-    }
-
-    @Test
-    @DisplayName("Trigger resolves after Throne of Bone leaves the battlefield")
-    void triggerResolvesAfterThroneOfBoneLeavesBattlefield() {
-        var throne = harness.addToBattlefieldAndReturn(player1, new ThroneOfBone());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
-
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .removePermanentToGraveyard(gd, throne));
-
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
     // ===== Opponent casts black spell =====
@@ -162,5 +155,47 @@ class ThroneOfBoneTest extends BaseCardTest {
                 && e.getCard().getName().equals("Throne of Bone"));
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Each Throne of Bone triggers independently for one black spell")
+    void eachThroneTriggersIndependently() {
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+
+        assertThat(gd.stack.stream()
+                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getCard().getName().equals("Throne of Bone")))
+                .hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Trigger resolves after Throne of Bone leaves the battlefield")
+    void triggerResolvesAfterThroneOfBoneLeavesBattlefield() {
+        var throne = harness.addToBattlefieldAndReturn(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, throne));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 }

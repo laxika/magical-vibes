@@ -33,6 +33,15 @@ class FervorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fervor does not grant haste to noncreature permanents")
+    void noncreaturePermanentsDoNotHaveHaste() {
+        Permanent fervor = harness.addToBattlefieldAndReturn(player1, new Fervor());
+
+        assertThat(gqs.isCreature(gd, fervor)).isFalse();
+        assertThat(gqs.hasKeyword(gd, fervor, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Fervor's haste grant ends when Fervor leaves the battlefield")
     void hasteGrantEndsWhenFervorLeavesBattlefield() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArdentMilitia());

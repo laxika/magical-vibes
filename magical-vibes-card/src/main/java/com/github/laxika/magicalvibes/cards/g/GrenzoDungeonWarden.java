@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "254")
+@CardRegistration(set = "A25", collectorNumber = "205")
 public class GrenzoDungeonWarden extends Card {
 
     public GrenzoDungeonWarden() {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "180")
+@CardRegistration(set = "DDU", collectorNumber = "57")
 public class MyrBattlesphere extends Card {
 
     public MyrBattlesphere() {

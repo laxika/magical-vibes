@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "131")
+@CardRegistration(set = "IMA", collectorNumber = "113")
 public class VirulentSwipe extends Card {
 
     public VirulentSwipe() {

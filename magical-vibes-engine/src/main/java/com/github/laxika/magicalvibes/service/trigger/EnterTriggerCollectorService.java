@@ -330,18 +330,21 @@ public class EnterTriggerCollectorService {
                     match.gameData().id, match.permanent().getCard().getName());
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                pe.enteringControllerId(),
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
-        entry.setTriggeringCardId(pe.enteringCard().getId());
-        match.gameData().stack.add(entry);
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    pe.enteringControllerId(),
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
+            entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
+        }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} any-permanent-enters trigger queued", match.gameData().id,
                 match.permanent().getCard().getName());
@@ -1833,13 +1836,17 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * Resolves an Aura attachment to the creature that caused the opponent-creature enter trigger.
-     * Optional markers queue the existing may-attach flow; mandatory markers queue a non-targeting
-     * stack entry with the entering permanent already identified.
+     * Resolves an Aura attachment to the creature that caused the enter trigger. Optional markers
+     * queue the existing may-attach flow; mandatory markers queue a non-targeting stack entry with
+     * the entering permanent already identified.
      */
-    @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleOpponentCreatureAttachAura(TriggerMatchContext match,
+    @CollectsTriggers({
+            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleCreatureAttachAura(TriggerMatchContext match,
             AttachSourceAuraToEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();

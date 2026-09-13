@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "219")
+@CardRegistration(set = "MM3", collectorNumber = "209")
 public class GiftOfOrzhova extends Card {
 
     public GiftOfOrzhova() {

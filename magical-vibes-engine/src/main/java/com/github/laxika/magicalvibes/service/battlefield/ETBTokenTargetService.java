@@ -314,7 +314,8 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
                 continue;
             }
 
@@ -332,7 +333,8 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
                 continue;
             }
 
@@ -483,7 +485,8 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
                 continue;
             }
 
@@ -748,6 +751,9 @@ public class ETBTokenTargetService {
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         etbEntry.setEventValue(pending.eventValue());
         etbEntry.setTriggeringCardId(pending.triggeringCardId());
+        if (pending.stateTriggerEffectIndex() >= 0) {
+            etbEntry.setStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
+        }
         if (pending.planarSource() != null) {
             etbEntry.setSourcePlanarObject(pending.planarSource().copy());
         }

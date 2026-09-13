@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "70")
+@CardRegistration(set = "A25", collectorNumber = "66")
 public class MurderOfCrows extends Card {
 
     public MurderOfCrows() {

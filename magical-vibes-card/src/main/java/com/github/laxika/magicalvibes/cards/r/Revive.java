@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 @CardRegistration(set = "8ED", collectorNumber = "276")
 @CardRegistration(set = "M13", collectorNumber = "187")
 @CardRegistration(set = "MMQ", collectorNumber = "262")
+@CardRegistration(set = "MM3", collectorNumber = "133")
 public class Revive extends Card {
 
     public Revive() {

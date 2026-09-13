@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "134")
+@CardRegistration(set = "IMA", collectorNumber = "120")
 public class CharmbreakerDevils extends Card {
 
     public CharmbreakerDevils() {

@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.m.Meekstone;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DakmorLancer.class, GrizzlyBears.class, Meekstone.class, PhyrexianHulk.class, ScatheZombies.class})
 class DakmorLancerTest extends BaseCardTest {
 
     @Test
@@ -30,7 +33,7 @@ class DakmorLancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
@@ -52,17 +55,16 @@ class DakmorLancerTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy an artifact creature (only nonblack restricted)")
     void canDestroyArtifactCreature() {
-        harness.addToBattlefield(player2, new BottleGnomes());
+        harness.addToBattlefield(player2, new PhyrexianHulk());
         harness.setHand(player1, List.of(new DakmorLancer()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Bottle Gnomes");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Phyrexian Hulk");
+        harness.castCreature(player1, 0, targetId);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player2, "Bottle Gnomes");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Hulk");
     }
 
     @Test
@@ -73,7 +75,7 @@ class DakmorLancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities();
 
@@ -88,13 +90,27 @@ class DakmorLancerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
-        harness.addToBattlefield(player2, new MassOfGhouls());
+        harness.addToBattlefield(player2, new ScatheZombies());
         harness.setHand(player1, List.of(new DakmorLancer()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Mass of Ghouls");
+        UUID targetId = harness.getPermanentId(player2, "Scathe Zombies");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player2, new Meekstone());
+        harness.setHand(player1, List.of(new DakmorLancer()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        UUID targetId = harness.getPermanentId(player2, "Meekstone");
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack creature");
     }
@@ -107,15 +123,14 @@ class DakmorLancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities();
 
-        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }

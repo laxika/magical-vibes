@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "179")
+@CardRegistration(set = "IMA", collectorNumber = "246")
 public class RiverOfTears extends Card {
 
     public RiverOfTears() {

@@ -7,6 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "G17", collectorNumber = "3")
+@CardRegistration(set = "ANA", collectorNumber = "5a")
+@CardRegistration(set = "ANA", collectorNumber = "12")
+@CardRegistration(set = "ANA", collectorNumber = "13")
+@CardRegistration(set = "ANA", collectorNumber = "14")
+@CardRegistration(set = "ANA", collectorNumber = "27")
+@CardRegistration(set = "ANA", collectorNumber = "28")
+@CardRegistration(set = "ANA", collectorNumber = "29")
+@CardRegistration(set = "GK1", collectorNumber = "75")
 @CardRegistration(set = "GVL", collectorNumber = "60")
 @CardRegistration(set = "DDR", collectorNumber = "67")
 @CardRegistration(set = "DDR", collectorNumber = "69")
@@ -24,6 +32,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ONS", collectorNumber = "340")
 @CardRegistration(set = "DDJ", collectorNumber = "85")
 @CardRegistration(set = "PC2", collectorNumber = "142")
+@CardRegistration(set = "PCA", collectorNumber = "142")
+@CardRegistration(set = "PCA", collectorNumber = "143")
+@CardRegistration(set = "PCA", collectorNumber = "144")
+@CardRegistration(set = "PCA", collectorNumber = "145")
+@CardRegistration(set = "PCA", collectorNumber = "146")
 @CardRegistration(set = "PC2", collectorNumber = "143")
 @CardRegistration(set = "PC2", collectorNumber = "144")
 @CardRegistration(set = "PC2", collectorNumber = "145")
@@ -447,6 +460,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDP", collectorNumber = "70")
 @CardRegistration(set = "DDP", collectorNumber = "71")
 @CardRegistration(set = "DDP", collectorNumber = "72")
+@CardRegistration(set = "GK1", collectorNumber = "25")
 public class Swamp extends Card {
 
     public Swamp() {

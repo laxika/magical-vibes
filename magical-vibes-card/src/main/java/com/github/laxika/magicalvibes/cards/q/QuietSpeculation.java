@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "49")
+@CardRegistration(set = "EMA", collectorNumber = "68")
 public class QuietSpeculation extends Card {
 
     public QuietSpeculation() {

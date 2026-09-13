@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacr
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureAttackRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -246,6 +247,12 @@ public class AttackLegalityService {
                         .withSourceCardId(source.getCard().getId())
                         .withSourceControllerId(protectedPlayerId);
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof EnchantedCreatureAttackRestrictionEffect
+                            && !source.isAuraEffectsIgnoredThisTurn()
+                            && source.isAttached()
+                            && attacker.getId().equals(source.getAttachedTo())) {
+                        return false;
+                    }
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
                             && (restriction.restrictedAttackerId() == null
@@ -385,7 +392,11 @@ public class AttackLegalityService {
                         .withSourceControllerId(planarController)
                         .withSourceCardId(planar.getCard().getId());
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                    if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, creature, restriction.exemptionPredicate())) {
+                        restricted[0] = true;
+                    } else if (effect instanceof AttackOrBlockRestrictionEffect restriction
                             && restriction.globallyCantAttackOrBlock() != null
                             && predicateEvaluationService.matchesPermanentPredicate(
                             creature, restriction.globallyCantAttackOrBlock(), context)) {
