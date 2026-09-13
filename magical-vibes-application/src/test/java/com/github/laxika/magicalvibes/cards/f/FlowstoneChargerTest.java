@@ -10,19 +10,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(FlowstoneCharger.class)
+@CardUsed({FlowstoneCharger.class})
 class FlowstoneChargerTest extends BaseCardTest {
 
     @Test
     void attackingGivesItPlusThreeMinusThreeUntilEndOfTurn() {
         Permanent charger = addCreatureReady(player1, new FlowstoneCharger());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(charger.getPowerModifier()).isEqualTo(3);
@@ -30,15 +25,24 @@ class FlowstoneChargerTest extends BaseCardTest {
     }
 
     @Test
+    void onlyTheAttackingChargerGetsTheBoost() {
+        Permanent attackingCharger = addCreatureReady(player1, new FlowstoneCharger());
+        Permanent nonAttackingCharger = addCreatureReady(player1, new FlowstoneCharger());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attackingCharger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attackingCharger)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttackingCharger)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttackingCharger)).isEqualTo(5);
+    }
+
+    @Test
     void attackBoostWearsOffAtEndOfTurn() {
         Permanent charger = addCreatureReady(player1, new FlowstoneCharger());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);

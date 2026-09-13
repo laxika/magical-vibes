@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "DDD", collectorNumber = "46")
 @CardRegistration(set = "GVL", collectorNumber = "46")
 @CardRegistration(set = "MMA", collectorNumber = "96")
+@CardRegistration(set = "GK2", collectorNumber = "34")
 public class SkeletalVampire extends Card {
 
     private static final CreateTokenEffect BAT_TOKENS = new CreateTokenEffect(

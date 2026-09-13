@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.j.JadedResponse;
+import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,16 +14,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GuidedPassage.class, GrizzlyBears.class, Forest.class, Shock.class})
+@CardUsed({GuidedPassage.class, GaeasSkyfolk.class, YavimayaCoast.class, JadedResponse.class})
 class GuidedPassageTest extends BaseCardTest {
 
     @Test
     @DisplayName("An opponent chooses a creature, land, and noncreature nonland card for the hand")
     void opponentChoosesOneCardOfEachCategory() {
-        Card creature = new GrizzlyBears();
-        Card land = new Forest();
-        Card spell = new Shock();
-        Card untouched = new Shock();
+        Card creature = new GaeasSkyfolk();
+        Card land = new YavimayaCoast();
+        Card spell = new JadedResponse();
+        Card untouched = new JadedResponse();
         castGuidedPassage(List.of(creature, land, spell, untouched));
 
         PendingInteraction.GuidedPassageChoice choice =
@@ -49,9 +48,9 @@ class GuidedPassageTest extends BaseCardTest {
     @Test
     @DisplayName("An available category must be represented exactly once")
     void rejectsMissingCategory() {
-        Card creature = new GrizzlyBears();
-        Card land = new Forest();
-        Card spell = new Shock();
+        Card creature = new GaeasSkyfolk();
+        Card land = new YavimayaCoast();
+        Card spell = new JadedResponse();
         castGuidedPassage(List.of(creature, land, spell));
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
@@ -64,8 +63,8 @@ class GuidedPassageTest extends BaseCardTest {
     @Test
     @DisplayName("Categories without matching cards are ignored")
     void ignoresMissingCategory() {
-        Card creature = new GrizzlyBears();
-        Card land = new Forest();
+        Card creature = new GaeasSkyfolk();
+        Card land = new YavimayaCoast();
         castGuidedPassage(List.of(creature, land));
 
         harness.handleMultipleCardsChosen(player2, List.of(creature.getId(), land.getId()));
@@ -75,13 +74,19 @@ class GuidedPassageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("An empty library resolves without opening a choice")
+    void resolvesEmptyLibrary() {
+        castGuidedPassage(List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Guided Passage");
+    }
+
     private void castGuidedPassage(List<Card> library) {
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new GuidedPassage()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GuidedPassage(), "{G}{U}{R}");
         harness.passBothPriorities();
     }
 }

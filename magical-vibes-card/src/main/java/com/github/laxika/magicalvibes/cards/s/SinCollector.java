@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "103")
 @CardRegistration(set = "MM3", collectorNumber = "183")
+@CardRegistration(set = "GK2", collectorNumber = "45")
 public class SinCollector extends Card {
 
     public SinCollector() {

@@ -32,6 +32,18 @@ class DwarvenLandslideTest extends BaseCardTest {
     }
 
     @Test
+    void cannotTargetNonLandWithoutKicker() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DwarvenLandslide()));
+        addBaseMana();
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
     void kickedDestroysAnotherTargetLandAndSacrificesALand() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player2, new Forest());
@@ -42,16 +54,29 @@ class DwarvenLandslideTest extends BaseCardTest {
         UUID sacrificeId = harness.getPermanentId(player1, "Mountain");
         UUID firstTargetId = harness.getPermanentId(player2, "Forest");
         UUID secondTargetId = harness.getPermanentId(player2, "Mountain");
-        harness.getGameService().playCard(
-                harness.getGameData(), player1, 0, 0, null, null,
-                List.of(firstTargetId, secondTargetId), List.of(), false, sacrificeId,
-                null, null, null, null, true
-        );
+        harness.castKickedSorceryWithSacrifice(player1, 0, firstTargetId, secondTargetId, sacrificeId);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Mountain");
         harness.assertInGraveyard(player2, "Forest");
         harness.assertInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    void kickedAdditionalTargetMustBeALand() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DwarvenLandslide()));
+        addKickedMana();
+
+        UUID sacrificeId = harness.getPermanentId(player1, "Mountain");
+        UUID firstTargetId = harness.getPermanentId(player2, "Forest");
+        UUID secondTargetId = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrifice(
+                player1, 0, firstTargetId, secondTargetId, sacrificeId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a land");
     }
 
     @Test
@@ -65,11 +90,8 @@ class DwarvenLandslideTest extends BaseCardTest {
         UUID firstTargetId = harness.getPermanentId(player2, "Forest");
         UUID secondTargetId = harness.getPermanentId(player2, "Mountain");
         UUID sacrificeId = harness.getPermanentId(player1, "Grizzly Bears");
-        assertThatThrownBy(() -> harness.getGameService().playCard(
-                harness.getGameData(), player1, 0, 0, null, null,
-                List.of(firstTargetId, secondTargetId), List.of(), false, sacrificeId,
-                null, null, null, null, true
-        )).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrifice(
+                player1, 0, firstTargetId, secondTargetId, sacrificeId))
                 .hasMessageContaining("a land");
     }
 
@@ -82,11 +104,8 @@ class DwarvenLandslideTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
         UUID sacrificeId = harness.getPermanentId(player1, "Mountain");
-        assertThatThrownBy(() -> harness.getGameService().playCard(
-                harness.getGameData(), player1, 0, 0, null, null,
-                List.of(targetId, targetId), List.of(), false, sacrificeId,
-                null, null, null, null, true
-        )).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrifice(
+                player1, 0, targetId, targetId, sacrificeId))
                 .hasMessageContaining("All targets must be different");
     }
 

@@ -27,13 +27,16 @@ class WhirlpoolWarriorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gameLogContains(player1.getUsername() + " shuffles 2 cards from hand into their library.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles")).isFalse();
+        assertThat(gameLogContains(player2.getUsername() + " draws")).isFalse();
     }
 
     @Test
@@ -55,6 +58,10 @@ class WhirlpoolWarriorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(warrior);
         harness.assertInGraveyard(player1, "Whirlpool Warrior");
+        assertThat(gameLogContains(player1.getUsername() + " shuffles 2 cards from hand into their library.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles 1 card from hand into their library.")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " draws 1 card.")).isTrue();
     }
 
     private List<Card> libraryWithThreeCards() {

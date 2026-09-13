@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "103")
+@CardRegistration(set = "GK2", collectorNumber = "87")
 public class Borborygmos extends Card {
 
     public Borborygmos() {

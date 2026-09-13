@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
+import com.github.laxika.magicalvibes.cards.m.MournfulZombie;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,11 +11,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GladeGnarr.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({GladeGnarr.class, MournfulZombie.class, GaeasSkyfolk.class})
 class GladeGnarrTest extends BaseCardTest {
 
     @Test
@@ -35,9 +33,7 @@ class GladeGnarrTest extends BaseCardTest {
     void doesNotTriggerForNonblueSpell() {
         Permanent gnarr = addGnarr();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        castSpellAsOpponent();
+        castSpellAsOpponent(new MournfulZombie(), "{2}{B}");
 
         assertThat(gnarr.getPowerModifier()).isZero();
         assertThat(gnarr.getToughnessModifier()).isZero();
@@ -80,19 +76,20 @@ class GladeGnarrTest extends BaseCardTest {
     }
 
     private void castBlueSpell(Player caster) {
-        harness.setHand(caster, List.of(new FugitiveWizard()));
-        harness.addMana(caster, ManaColor.BLUE, 1);
         if (caster == player2) {
-            castSpellAsOpponent();
-        } else {
-            harness.castCreature(caster, 0);
+            prepareOpponentMainPhase();
         }
+        harness.castFromHand(caster, new GaeasSkyfolk(), "{G}{U}");
     }
 
-    private void castSpellAsOpponent() {
+    private void castSpellAsOpponent(Card spell, String manaCost) {
+        prepareOpponentMainPhase();
+        harness.castFromHand(player2, spell, manaCost);
+    }
+
+    private void prepareOpponentMainPhase() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castCreature(player2, 0);
     }
 }

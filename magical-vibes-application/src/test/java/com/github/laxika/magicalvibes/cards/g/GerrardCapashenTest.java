@@ -14,14 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GerrardCapashen.class, GrizzlyBears.class})
+@CardUsed({GerrardCapashen.class, GaeasSkyfolk.class})
 class GerrardCapashenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gains life equal to target opponent's hand size on upkeep")
     void gainsLifeEqualToTargetOpponentsHandSize() {
         harness.addToBattlefield(player1, new GerrardCapashen());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GaeasSkyfolk(), new GaeasSkyfolk(), new GaeasSkyfolk()));
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
@@ -29,6 +29,35 @@ class GerrardCapashenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Gains no life when the target opponent's hand is empty")
+    void gainsNoLifeWhenTargetOpponentsHandIsEmpty() {
+        harness.addToBattlefield(player1, new GerrardCapashen());
+        harness.setHand(player2, List.of());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counts the target opponent's hand when the trigger resolves")
+    void countsTargetOpponentsHandAtResolution() {
+        harness.addToBattlefield(player1, new GerrardCapashen());
+        harness.setHand(player2, List.of(new GaeasSkyfolk(), new GaeasSkyfolk(), new GaeasSkyfolk()));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player2, List.of(new GaeasSkyfolk()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
     }
 
     @Test
@@ -45,11 +74,9 @@ class GerrardCapashenTest extends BaseCardTest {
     @Test
     @DisplayName("Can tap a creature while attacking")
     void tapsCreatureWhileAttacking() {
-        Permanent gerrard = addCreatureReady(player1, new GerrardCapashen());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        gerrard.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        addCreatureReady(player1, new GerrardCapashen());
+        Permanent target = addCreatureReady(player2, new GaeasSkyfolk());
+        declareAttackers(List.of(0));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -63,7 +90,7 @@ class GerrardCapashenTest extends BaseCardTest {
     @DisplayName("Cannot activate the tap ability while not attacking")
     void cannotActivateTapAbilityWhileNotAttacking() {
         addCreatureReady(player1, new GerrardCapashen());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GaeasSkyfolk());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 1);

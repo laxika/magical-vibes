@@ -28,9 +28,38 @@ class MaskOfIntoleranceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals 3 damage with all five basic land types")
+    void dealsDamageWithFiveBasicLandTypes() {
+        harness.addToBattlefield(player1, new MaskOfIntolerance());
+        addFourBasicLandTypes(player2);
+        harness.addToBattlefield(player2, new Forest());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Does not deal damage when the active player controls fewer than four basic land types")
     void doesNotDealDamageWithFewerThanFourBasicLandTypes() {
         harness.addToBattlefield(player1, new MaskOfIntolerance());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not count duplicate basic land types toward the threshold")
+    void doesNotDealDamageWithFourLandsButOnlyThreeBasicLandTypes() {
+        harness.addToBattlefield(player1, new MaskOfIntolerance());
+        harness.addToBattlefield(player2, new Plains());
         harness.addToBattlefield(player2, new Plains());
         harness.addToBattlefield(player2, new Island());
         harness.addToBattlefield(player2, new Swamp());

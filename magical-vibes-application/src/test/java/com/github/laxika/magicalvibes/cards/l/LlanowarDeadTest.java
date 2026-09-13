@@ -37,9 +37,8 @@ class LlanowarDeadTest extends BaseCardTest {
     }
 
     private Permanent addLlanowarDead(boolean summoningSick) {
-        Permanent dead = new Permanent(new LlanowarDead());
+        Permanent dead = harness.addToBattlefieldAndReturn(player1, new LlanowarDead());
         dead.setSummoningSick(summoningSick);
-        gd.playerBattlefields.get(player1.getId()).add(dead);
         return dead;
     }
 }
