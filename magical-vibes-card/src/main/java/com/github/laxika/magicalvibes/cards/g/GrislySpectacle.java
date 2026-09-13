@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "66")
 @CardRegistration(set = "DDM", collectorNumber = "75")
+@CardRegistration(set = "IMA", collectorNumber = "92")
 public class GrislySpectacle extends Card {
 
     public GrislySpectacle() {

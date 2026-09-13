@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "M11", collectorNumber = "95")
 @CardRegistration(set = "M12", collectorNumber = "95")
 @CardRegistration(set = "M14", collectorNumber = "96")
+@CardRegistration(set = "IMA", collectorNumber = "87")
 public class DoomBlade extends Card {
 
     public DoomBlade() {

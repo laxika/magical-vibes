@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "56")
 @CardRegistration(set = "MM2", collectorNumber = "43")
 @CardRegistration(set = "MMA", collectorNumber = "38")
+@CardRegistration(set = "IMA", collectorNumber = "48")
 public class CrypticCommand extends Card {
 
     public CrypticCommand() {

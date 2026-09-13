@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaEqualToTar
 
 @CardRegistration(set = "LEG", collectorNumber = "65")
 @CardRegistration(set = "ME3", collectorNumber = "43")
+@CardRegistration(set = "IMA", collectorNumber = "65")
 public class ManaDrain extends Card {
 
     public ManaDrain() {

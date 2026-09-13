@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 @CardRegistration(set = "ODY", collectorNumber = "245")
 @CardRegistration(set = "IKO", collectorNumber = "161")
 @CardRegistration(set = "HOP", collectorNumber = "74")
+@CardRegistration(set = "IMA", collectorNumber = "170")
 public class IvyElemental extends Card {
 
     public IvyElemental() {

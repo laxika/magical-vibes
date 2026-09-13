@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "67")
+@CardRegistration(set = "IMA", collectorNumber = "68")
 public class OjutaisBreath extends Card {
 
     public OjutaisBreath() {

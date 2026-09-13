@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SCG", collectorNumber = "55")
+@CardRegistration(set = "IMA", collectorNumber = "81")
 public class BladewingsThrall extends Card {
 
     public BladewingsThrall() {

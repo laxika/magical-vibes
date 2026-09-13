@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "95")
+@CardRegistration(set = "IMA", collectorNumber = "79")
 public class BalaGedScorpion extends Card {
 
     public BalaGedScorpion() {

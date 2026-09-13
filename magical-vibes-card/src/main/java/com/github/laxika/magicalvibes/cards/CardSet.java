@@ -42,6 +42,7 @@ public enum CardSet {
     SET_M13("M13"),
     SET_M14("M14"),
     SET_MMA("MMA"),
+    SET_IMA("IMA"),
     SET_THS("THS"),
     SET_THB("THB"),
     SET_BNG("BNG"),

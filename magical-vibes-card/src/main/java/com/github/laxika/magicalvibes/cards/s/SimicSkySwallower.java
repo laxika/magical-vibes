@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "DIS", collectorNumber = "130")
 @CardRegistration(set = "DDO", collectorNumber = "56")
+@CardRegistration(set = "IMA", collectorNumber = "208")
 public class SimicSkySwallower extends Card {
 }
