@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "124")
+@CardRegistration(set = "GK2", collectorNumber = "43")
 public class OrzhovPontiff extends Card {
 
     public OrzhovPontiff() {

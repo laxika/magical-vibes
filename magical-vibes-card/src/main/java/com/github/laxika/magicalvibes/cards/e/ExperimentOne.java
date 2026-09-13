@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "119")
+@CardRegistration(set = "GK2", collectorNumber = "111")
 public class ExperimentOne extends Card {
 
     public ExperimentOne() {

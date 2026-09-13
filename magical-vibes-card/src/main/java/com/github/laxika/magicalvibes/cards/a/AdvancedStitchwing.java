@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "49")
+@CardRegistration(set = "GNT", collectorNumber = "18")
 public class AdvancedStitchwing extends Card {
 
     public AdvancedStitchwing() {

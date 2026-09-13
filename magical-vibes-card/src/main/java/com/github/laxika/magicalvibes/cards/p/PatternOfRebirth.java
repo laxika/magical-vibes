@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMa
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "UDS", collectorNumber = "115")
+@CardRegistration(set = "UMA", collectorNumber = "176")
 public class PatternOfRebirth extends Card {
 
     public PatternOfRebirth() {

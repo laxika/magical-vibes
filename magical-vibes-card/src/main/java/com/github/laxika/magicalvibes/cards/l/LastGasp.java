@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "93")
 @CardRegistration(set = "SOS", collectorNumber = "86")
+@CardRegistration(set = "UMA", collectorNumber = "103")
 @CardRegistration(set = "GK1", collectorNumber = "5")
 public class LastGasp extends Card {
 

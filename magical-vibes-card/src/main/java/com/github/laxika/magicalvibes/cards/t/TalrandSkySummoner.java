@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "72")
 @CardRegistration(set = "DDS", collectorNumber = "11")
+@CardRegistration(set = "UMA", collectorNumber = "76")
 public class TalrandSkySummoner extends Card {
 
     public TalrandSkySummoner() {

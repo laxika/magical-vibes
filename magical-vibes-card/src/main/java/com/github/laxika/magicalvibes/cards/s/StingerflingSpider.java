@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "197")
 @CardRegistration(set = "DDJ", collectorNumber = "61")
+@CardRegistration(set = "UMA", collectorNumber = "186")
 public class StingerflingSpider extends Card {
 
     public StingerflingSpider() {

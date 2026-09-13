@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 // Trample and persist are loaded from Scryfall and resolved automatically
 // (PermanentRemovalService.collectPersistTrigger + PersistReturnEffect).
 @CardRegistration(set = "SHM", collectorNumber = "216")
+@CardRegistration(set = "UMA", collectorNumber = "221")
 public class ScuzzbackMarauders extends Card {
 }

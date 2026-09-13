@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "2")
+@CardRegistration(set = "GK2", collectorNumber = "2")
 public class AzoriusHerald extends Card {
 
     public AzoriusHerald() {

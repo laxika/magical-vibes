@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "33")
+@CardRegistration(set = "UMA", collectorNumber = "51")
 public class DisruptingShoal extends Card {
 
     public DisruptingShoal() {

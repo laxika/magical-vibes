@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "6")
+@CardRegistration(set = "GNT", collectorNumber = "11")
 public class EverdawnChampion extends Card {
 
     public EverdawnChampion() {

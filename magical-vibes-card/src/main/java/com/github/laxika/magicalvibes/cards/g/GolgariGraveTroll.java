@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "167")
 @CardRegistration(set = "DDJ", collectorNumber = "60")
+@CardRegistration(set = "UMA", collectorNumber = "167")
 public class GolgariGraveTroll extends Card {
 
     public GolgariGraveTroll() {

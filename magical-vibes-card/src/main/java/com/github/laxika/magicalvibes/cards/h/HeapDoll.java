@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "253")
+@CardRegistration(set = "UMA", collectorNumber = "228")
 public class HeapDoll extends Card {
 
     public HeapDoll() {

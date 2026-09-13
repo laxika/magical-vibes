@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "160")
 @CardRegistration(set = "ME2", collectorNumber = "110")
+@CardRegistration(set = "UMA", collectorNumber = "115")
 public class SongsOfTheDamned extends Card {
 
     public SongsOfTheDamned() {

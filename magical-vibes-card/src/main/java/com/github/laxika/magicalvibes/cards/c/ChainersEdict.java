@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "VMA", collectorNumber = "108")
 @CardRegistration(set = "V13", collectorNumber = "10")
 @CardRegistration(set = "HA3", collectorNumber = "10")
+@CardRegistration(set = "UMA", collectorNumber = "89")
 public class ChainersEdict extends Card {
 
     public ChainersEdict() {

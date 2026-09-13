@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "143")
 @CardRegistration(set = "MM3", collectorNumber = "108")
+@CardRegistration(set = "SS3", collectorNumber = "6")
 public class PyromancerAscension extends Card {
 
     public PyromancerAscension() {

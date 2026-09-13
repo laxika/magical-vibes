@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "6")
+@CardRegistration(set = "GNT", collectorNumber = "8")
 public class BenalishMarshal extends Card {
 
     public BenalishMarshal() {
