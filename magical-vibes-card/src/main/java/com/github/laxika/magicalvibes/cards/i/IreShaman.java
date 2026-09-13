@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "141")
+@CardRegistration(set = "A25", collectorNumber = "137")
 public class IreShaman extends Card {
 
     public IreShaman() {

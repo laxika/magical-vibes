@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 
 @CardRegistration(set = "TSP", collectorNumber = "156")
+@CardRegistration(set = "A25", collectorNumber = "130")
 public class FortuneThief extends Card {
 
     public FortuneThief() {

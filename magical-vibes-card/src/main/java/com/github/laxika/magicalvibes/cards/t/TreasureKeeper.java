@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardWithManaValueAndCastEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "177")
+@CardRegistration(set = "A25", collectorNumber = "235")
 public class TreasureKeeper extends Card {
 
     public TreasureKeeper() {
