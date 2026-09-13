@@ -146,6 +146,7 @@ public enum CardSet {
     SET_WOE("WOE"),
     SET_SOS("SOS"),
     SET_SS2("SS2"),
+    SET_SS3("SS3"),
     SET_SLU("SLU"),
     SET_SUM("SUM"),
     SET_S00("S00"),
