@@ -16,6 +16,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
 @Component
@@ -40,7 +44,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             case ENCHANTED -> resolveEnchanted(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
             case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e, filterContext);
-            case ALL_CREATURES -> resolveAllCreatures(gameData, e, filterContext);
+            case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported can't-block scope: " + e.scope());
         }
     }
@@ -160,25 +164,13 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveAllCreatures(GameData gameData, CantBlockThisTurnEffect e, FilterContext filterContext) {
-        int count = 0;
-        for (UUID playerId : gameData.playerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)
-                        && (e.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                    p.setCantBlockThisTurn(true);
-                    count++;
-                }
-            }
-        }
-
-        if (count > 0) {
-            String logEntry = "Some creatures can't block this turn.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} creatures can't block this turn", gameData.id, count);
-        }
+    private void resolveAllCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect effect) {
+        var predicate = effect.filter() == null ? new PermanentTruePredicate() : effect.filter();
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
+                        new PermanentTruePredicate(), "can't block this turn"),
+                null, null, predicate, EffectDuration.UNTIL_END_OF_TURN, 0));
+        gameLogService.append(gameData, GameLog.text("Matching creatures can't block this turn."));
     }
 }

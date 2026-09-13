@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAnyNumberEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "217")
+@CardRegistration(set = "VMA", collectorNumber = "182")
 public class RitesOfInitiation extends Card {
 
     public RitesOfInitiation() {

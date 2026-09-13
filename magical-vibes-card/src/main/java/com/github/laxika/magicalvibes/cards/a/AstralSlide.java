@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ONS", collectorNumber = "4")
+@CardRegistration(set = "VMA", collectorNumber = "13")
 public class AstralSlide extends Card {
 
     public AstralSlide() {

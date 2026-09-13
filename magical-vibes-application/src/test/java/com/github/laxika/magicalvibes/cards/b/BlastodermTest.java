@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FlowstoneStrike;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,16 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Blastoderm.class, FlowstoneStrike.class})
 class BlastodermTest extends BaseCardTest {
 
     @Test
     @DisplayName("Blastoderm enters with three fade counters")
     void entersWithFadeCounters() {
-        harness.setHand(player1, List.of(new Blastoderm()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new Blastoderm(), "{2}{G}{G}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         Permanent blastoderm = findPermanent(player1, "Blastoderm");
@@ -43,6 +42,32 @@ class BlastodermTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fading leaves Blastoderm on the battlefield after removing its last fade counter")
+    void remainsAfterRemovingLastFadeCounter() {
+        Permanent blastoderm = addCreatureReady(player1, new Blastoderm());
+        blastoderm.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(blastoderm.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Blastoderm");
+    }
+
+    @Test
+    @DisplayName("Fading does not trigger during an opponent's upkeep")
+    void doesNotRemoveFadeCounterDuringOpponentsUpkeep() {
+        Permanent blastoderm = addCreatureReady(player1, new Blastoderm());
+        blastoderm.setCounterCount(CounterType.FADE, 2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(blastoderm.getCounterCount(CounterType.FADE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Blastoderm");
+    }
+
+    @Test
     @DisplayName("Fading sacrifices Blastoderm when it has no fade counters")
     void sacrificesWithoutFadeCounters() {
         addCreatureReady(player1, new Blastoderm());
@@ -58,8 +83,9 @@ class BlastodermTest extends BaseCardTest {
     void shroudPreventsTargeting() {
         Permanent blastoderm = addCreatureReady(player1, new Blastoderm());
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new FlowstoneStrike()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, blastoderm.getId()))
                 .isInstanceOf(IllegalStateException.class);

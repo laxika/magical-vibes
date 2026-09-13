@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "WTH", collectorNumber = "69")
+@CardRegistration(set = "VMA", collectorNumber = "121")
 public class FledglingDjinn extends Card {
 
     public FledglingDjinn() {

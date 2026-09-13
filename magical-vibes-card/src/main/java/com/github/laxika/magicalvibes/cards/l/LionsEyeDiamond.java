@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "307")
+@CardRegistration(set = "VMA", collectorNumber = "271")
 public class LionsEyeDiamond extends Card {
 
     public LionsEyeDiamond() {

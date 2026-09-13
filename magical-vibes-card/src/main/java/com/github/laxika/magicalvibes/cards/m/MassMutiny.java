@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PC2", collectorNumber = "48")
+@CardRegistration(set = "PCA", collectorNumber = "48")
 public class MassMutiny extends Card {
 
     public MassMutiny() {

@@ -206,11 +206,11 @@ class FallOfTheThranTest extends BaseCardTest {
         // Player1 should be prompted to choose (graveyard choice awaiting input)
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
-        // Player2's 1 land should already be on the battlefield (auto-returned)
+        // Player2 waits until player1 has completed their choices.
         long p2Lands = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().hasType(CardType.LAND))
                 .count();
-        assertThat(p2Lands).isEqualTo(1);
+        assertThat(p2Lands).isZero();
 
         // Player1 chooses first land (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -223,6 +223,8 @@ class FallOfTheThranTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         gd = harness.getGameData();
+
+        harness.assertOnBattlefield(player2, "Mountain");
 
         // Player1 should have 2 lands on the battlefield
         long p1Lands = gd.playerBattlefields.get(player1.getId()).stream()

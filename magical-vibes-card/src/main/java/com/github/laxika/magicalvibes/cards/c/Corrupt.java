@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 
 @CardRegistration(set = "M11", collectorNumber = "89")
 @CardRegistration(set = "SHM", collectorNumber = "62")
@@ -25,12 +26,9 @@ public class Corrupt extends Card {
     public Corrupt() {
         // Deals damage to any target equal to the number of Swamps you control...
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER)));
+                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER))
+                .recordingDamageDealt());
 
-        // ...and you gain life equal to that Swamp count. (Oracle text reads "life equal to the
-        // damage dealt this way", but the engine does not thread prevented damage through to the
-        // life amount, so this reproduces the pre-fold behavior of gaining the full count.)
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER)));
+        addEffect(EffectSlot.SPELL, new GainLifeEffect(new EventValue()));
     }
 }

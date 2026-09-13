@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "214")
+@CardRegistration(set = "DDR", collectorNumber = "21")
 public class ThicketElemental extends Card {
 
     public ThicketElemental() {
