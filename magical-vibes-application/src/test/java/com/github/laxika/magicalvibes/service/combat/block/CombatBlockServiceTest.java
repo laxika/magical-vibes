@@ -176,6 +176,17 @@ class CombatBlockServiceTest extends BaseCardTest {
     @DisplayName("Declare-blockers step")
     class DeclareBlockersStep {
 
+        @Test
+        void noLegalPairSkipsBlockerInputEvenWhenBothSidesHaveCreatures() {
+            attacking(player1, new Ornithopter());
+            addCreatureReady(player2, new GrizzlyBears());
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+            assertThat(handleStep()).isEqualTo(CombatResult.AUTO_PASS_ONLY);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+        }
+
         private CombatResult handleStep() {
             CombatResult[] result = new CombatResult[1];
             harness.inMutationScope(() -> result[0] = service().handleDeclareBlockersStep(gd));

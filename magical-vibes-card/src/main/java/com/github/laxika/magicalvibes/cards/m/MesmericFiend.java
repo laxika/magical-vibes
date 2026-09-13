@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "69")
+@CardRegistration(set = "VMA", collectorNumber = "128")
 @CardRegistration(set = "DDK", collectorNumber = "7")
 @CardRegistration(set = "A25", collectorNumber = "97")
 public class MesmericFiend extends Card {

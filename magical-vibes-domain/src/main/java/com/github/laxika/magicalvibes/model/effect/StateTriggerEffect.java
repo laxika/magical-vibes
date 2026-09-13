@@ -20,6 +20,7 @@ import java.util.List;
  * @param sourcePredicate layer-aware condition on the source permanent, or {@code null}
  * @param battlefieldPredicate layer-aware predicate counted across all battlefields, or {@code null}
  * @param maximumBattlefieldMatches maximum matching permanents for the condition to be true
+ * @param minimumBattlefieldMatches minimum matching permanents for the condition to be true
  * @param referencedPermanentPredicate selects a non-targeting permanent reference when the
  *                                     trigger fires, or {@code null}
  * @param effects         effects to put on the stack when triggered
@@ -33,27 +34,45 @@ public record StateTriggerEffect(
         PermanentPredicate sourcePredicate,
         PermanentPredicate battlefieldPredicate,
         int maximumBattlefieldMatches,
+        int minimumBattlefieldMatches,
         PermanentPredicate referencedPermanentPredicate,
         List<CardEffect> effects,
         String description
 ) implements CardEffect {
 
+    public StateTriggerEffect(StateTriggerPredicate predicate,
+                              PermanentPredicate sourcePredicate,
+                              PermanentPredicate battlefieldPredicate,
+                              int maximumBattlefieldMatches,
+                              PermanentPredicate referencedPermanentPredicate,
+                              List<CardEffect> effects,
+                              String description) {
+        this(predicate, sourcePredicate, battlefieldPredicate, maximumBattlefieldMatches, 0,
+                referencedPermanentPredicate, effects, description);
+    }
+
     public StateTriggerEffect(StateTriggerPredicate predicate, List<CardEffect> effects, String description) {
-        this(predicate, null, null, 0, null, effects, description);
+        this(predicate, null, null, 0, 0, null, effects, description);
     }
 
     public StateTriggerEffect(StateTriggerPredicate predicate,
                               PermanentPredicate referencedPermanentPredicate,
                               List<CardEffect> effects, String description) {
-        this(predicate, null, null, 0, referencedPermanentPredicate, effects, description);
+        this(predicate, null, null, 0, 0, referencedPermanentPredicate, effects, description);
     }
 
     public StateTriggerEffect(PermanentPredicate sourcePredicate, List<CardEffect> effects, String description) {
-        this(null, sourcePredicate, null, 0, null, effects, description);
+        this(null, sourcePredicate, null, 0, 0, null, effects, description);
     }
 
     public static StateTriggerEffect whenBattlefieldHasAtMost(
             int maximumMatches, PermanentPredicate predicate, List<CardEffect> effects, String description) {
-        return new StateTriggerEffect(null, null, predicate, maximumMatches, null, effects, description);
+        return new StateTriggerEffect(null, null, predicate, maximumMatches, 0, null, effects, description);
+    }
+
+    public static StateTriggerEffect whenBattlefieldHasAtLeast(
+            int minimumMatches, PermanentPredicate predicate, List<CardEffect> effects, String description) {
+        return new StateTriggerEffect(null, null, predicate, Integer.MAX_VALUE, minimumMatches,
+                null, effects, description);
     }
 }

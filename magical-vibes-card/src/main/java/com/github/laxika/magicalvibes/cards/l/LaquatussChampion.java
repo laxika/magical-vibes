@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "67")
 @CardRegistration(set = "A25", collectorNumber = "95")
+@CardRegistration(set = "VMA", collectorNumber = "125")
 public class LaquatussChampion extends Card {
 
     public LaquatussChampion() {

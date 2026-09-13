@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrenzoDungeonWarden.class, GrizzlyBears.class, LowlandGiant.class, Shock.class})
+@CardUsed({GrenzoDungeonWarden.class, GrizzlyBears.class, LowlandGiant.class, Shock.class, Forest.class, HillGiant.class})
 class GrenzoDungeonWardenTest extends BaseCardTest {
 
     @Test
@@ -104,5 +106,71 @@ class GrenzoDungeonWardenTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    void entersWithTheChosenNumberOfPlusOnePlusOneCounters() {
+        harness.setHand(player1, List.of(new GrenzoDungeonWarden()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent grenzo = findPermanent(player1, "Grenzo, Dungeon Warden");
+        assertThat(grenzo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void putsBottomCreatureOntoBattlefieldWhenItsPowerIsAtMostGrenzos() {
+        Permanent grenzo = addReadyGrenzo();
+        grenzo.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new HillGiant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(Forest.class);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    void leavesBottomCreatureInGraveyardWhenItsPowerIsTooHigh() {
+        addReadyGrenzo();
+        harness.setLibrary(player1, List.of(new Forest(), new HillGiant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(Forest.class);
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    void usesSourceSnapshotWhenGrenzoLeavesBeforeResolution() {
+        Permanent grenzo = addReadyGrenzo(player1, 2);
+        Card bottomCard = new LowlandGiant();
+        harness.setLibrary(player1, List.of(bottomCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareTurn();
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(grenzo);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(bottomCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bottomCard);
+    }
+
+    private Permanent addReadyGrenzo() {
+        return addCreatureReady(player1, new GrenzoDungeonWarden());
     }
 }

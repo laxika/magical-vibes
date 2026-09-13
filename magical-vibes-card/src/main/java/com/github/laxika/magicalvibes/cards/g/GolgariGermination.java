@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "209")
+@CardRegistration(set = "DDJ", collectorNumber = "70")
 public class GolgariGermination extends Card {
 
     public GolgariGermination() {

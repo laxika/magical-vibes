@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.FeedThePack;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.c.Compost;
+import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
+import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AcademyRector.class, Compost.class, MetathranSoldier.class, RecklessAbandon.class})
 class AcademyRectorTest extends BaseCardTest {
 
     @Test
@@ -27,13 +27,11 @@ class AcademyRectorTest extends BaseCardTest {
         Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
         Card rectorCard = rector.getCard();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        castRecklessAbandonAt(player1, rector);
 
         setupLibrary(player1);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Wrath resolves — Rector dies, ON_DEATH trigger on stack
+        harness.passBothPriorities(); // Reckless Abandon resolves — Rector dies and its trigger is on the stack.
         harness.passBothPriorities(); // trigger resolves → may prompt
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -50,9 +48,9 @@ class AcademyRectorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.ENCHANTMENT));
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertOnBattlefield(player1, "Feed the Pack");
+        harness.assertOnBattlefield(player1, "Compost");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.ENCHANTMENT));
     }
@@ -64,13 +62,11 @@ class AcademyRectorTest extends BaseCardTest {
         Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
         Card rectorCard = rector.getCard();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        castRecklessAbandonAt(player1, rector);
 
         setupLibrary(player1);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Wrath resolves — Rector dies
+        harness.passBothPriorities(); // Reckless Abandon resolves — Rector dies
         harness.passBothPriorities(); // trigger resolves → may prompt
 
         harness.handleMayAbilityChosen(player1, false);
@@ -80,7 +76,7 @@ class AcademyRectorTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getId().equals(rectorCard.getId()));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        harness.assertNotOnBattlefield(player1, "Feed the Pack");
+        harness.assertNotOnBattlefield(player1, "Compost");
     }
 
     @Test
@@ -90,15 +86,11 @@ class AcademyRectorTest extends BaseCardTest {
         Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
         Card rectorCard = rector.getCard();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        castRecklessAbandonAt(player1, rector);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new MetathranSoldier(), new MetathranSoldier()));
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Wrath resolves — Rector dies
+        harness.passBothPriorities(); // Reckless Abandon resolves — Rector dies
         harness.passBothPriorities(); // trigger resolves → may prompt
 
         harness.handleMayAbilityChosen(player1, true);
@@ -110,9 +102,39 @@ class AcademyRectorTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().hasType(CardType.ENCHANTMENT));
     }
 
+    @Test
+    @DisplayName("If Rector leaves its graveyard before the trigger resolves, it cannot search")
+    void doesNotSearchIfRectorLeavesGraveyardBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new AcademyRector());
+        Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Card rectorCard = rector.getCard();
+
+        castRecklessAbandonAt(player1, rector);
+        setupLibrary(player1);
+
+        harness.passBothPriorities(); // Reckless Abandon resolves — Rector dies and its trigger is on the stack.
+
+        gd.playerGraveyards.get(player1.getId())
+                .removeIf(card -> card.getId().equals(rectorCard.getId()));
+        harness.setExile(player1, List.of(rectorCard));
+
+        harness.passBothPriorities(); // Trigger resolves and prompts for the may choice.
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Compost");
+    }
+
+    private void castRecklessAbandonAt(com.github.laxika.magicalvibes.model.Player player, Permanent rector) {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player, new MetathranSoldier());
+        harness.setHand(player, List.of(new RecklessAbandon()));
+        harness.addMana(player, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player, 0, rector.getId(), sacrifice.getId());
+    }
+
     private void setupLibrary(com.github.laxika.magicalvibes.model.Player player) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new FeedThePack(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player, List.of(new Compost(), new MetathranSoldier(), new MetathranSoldier()));
     }
 }

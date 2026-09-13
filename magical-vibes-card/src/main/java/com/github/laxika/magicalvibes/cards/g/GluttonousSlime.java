@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "83")
 @CardRegistration(set = "PC2", collectorNumber = "65")
+@CardRegistration(set = "PCA", collectorNumber = "65")
 public class GluttonousSlime extends Card {
 
     public GluttonousSlime() {

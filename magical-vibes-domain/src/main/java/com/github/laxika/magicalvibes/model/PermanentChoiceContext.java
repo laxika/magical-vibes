@@ -26,6 +26,14 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready)
+            implements PermanentChoiceContext {
+        public AuraEntryBatchChoice {
+            remaining = List.copyOf(remaining);
+            ready = List.copyOf(ready);
+        }
+    }
+
     record CloneCopy() implements PermanentChoiceContext {}
 
     record CopyPermanentTargetedBySpell() implements PermanentChoiceContext {}
@@ -751,7 +759,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                              Card damageSourceControllerCard,
                                              boolean preventHalfDamage,
                                              boolean drawCards,
-                                             Set<CardColor> requiredDamageColors) implements PermanentChoiceContext {
+                                             Set<CardColor> requiredDamageColors,
+                                             com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter) implements PermanentChoiceContext {
+        public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
+                                                 boolean exileFromLibrary, Card damageSourceControllerCard,
+                                                 boolean preventHalfDamage, boolean drawCards,
+                                                 Set<CardColor> requiredDamageColors) {
+            this(controllerId, gainLife, exileFromLibrary, damageSourceControllerCard,
+                    preventHalfDamage, drawCards, requiredDamageColors, null);
+        }
+
         public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                                  boolean exileFromLibrary) {
             this(controllerId, gainLife, exileFromLibrary, null, false, false, null);

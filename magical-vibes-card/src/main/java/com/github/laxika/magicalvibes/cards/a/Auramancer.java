@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "DDL", collectorNumber = "9")
 @CardRegistration(set = "PC2", collectorNumber = "2")
 @CardRegistration(set = "A25", collectorNumber = "6")
+@CardRegistration(set = "PCA", collectorNumber = "2")
 public class Auramancer extends Card {
 
     public Auramancer() {

@@ -22,8 +22,7 @@ class BayFalconTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BayFalcon());
         addCreatureReady(player2, new ViashinoWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

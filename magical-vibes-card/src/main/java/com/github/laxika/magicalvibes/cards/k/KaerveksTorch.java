@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "185")
+@CardRegistration(set = "VMA", collectorNumber = "175")
 public class KaerveksTorch extends Card {
 
     public KaerveksTorch() {

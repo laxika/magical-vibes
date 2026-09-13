@@ -51,6 +51,24 @@ import static org.mockito.Mockito.verify;
 class TurnCleanupServiceTest {
 
     @Test
+    void cleanupQueuesDelayedAbilityWithoutResolvingIt() {
+        Card source = new Card();
+        source.setName("Cleanup source");
+        var effect = new LoseLifeEffect(2);
+        gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger(
+                player1Id, source, effect));
+
+        sut.applyCleanupResets(gd);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.getDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger.class)).isEmpty();
+        sut.applyCleanupResets(gd);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     void cleanupExpiresBlockRestrictionsButPreservesUpcomingUntapRestrictions() {
         var blocking = new com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(
                 null, new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(), "creatures");

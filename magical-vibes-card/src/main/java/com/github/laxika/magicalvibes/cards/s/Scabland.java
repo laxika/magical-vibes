@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "325")
 @CardRegistration(set = "TPR", collectorNumber = "243")
+@CardRegistration(set = "VMA", collectorNumber = "312")
 public class Scabland extends Card {
 
     public Scabland() {

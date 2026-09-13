@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "139")
 @CardRegistration(set = "TPR", collectorNumber = "107")
+@CardRegistration(set = "VMA", collectorNumber = "124")
 public class Kezzerdrix extends Card {
 
     public Kezzerdrix() {

@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "297")
 @CardRegistration(set = "MIR", collectorNumber = "308")
+@CardRegistration(set = "VMA", collectorNumber = "273")
 public class ManaPrism extends Card {
 
     public ManaPrism() {

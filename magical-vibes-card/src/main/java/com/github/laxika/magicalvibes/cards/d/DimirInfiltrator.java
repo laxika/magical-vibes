@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "203")
 @CardRegistration(set = "PC2", collectorNumber = "86")
+@CardRegistration(set = "PCA", collectorNumber = "86")
 public class DimirInfiltrator extends Card {
 
     public DimirInfiltrator() {

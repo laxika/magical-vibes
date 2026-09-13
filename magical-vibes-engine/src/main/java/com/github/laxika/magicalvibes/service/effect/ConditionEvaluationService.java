@@ -1982,9 +1982,10 @@ public class ConditionEvaluationService {
 
     /** True when the stack entry's source card object is still in its controller's graveyard. */
     private boolean isSourceCardInGraveyard(GameData gameData, ConditionContext ctx) {
-        if (ctx.controllerId() == null || ctx.sourceCard() == null) return false;
-        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
-        return graveyard != null && graveyard.contains(ctx.sourceCard());
+        if (ctx.sourceCard() == null) return false;
+        return gameData.playerGraveyards.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(card -> card.getId().equals(ctx.sourceCard().getId()));
     }
 
     /** True when the source card is still exiled with a positive time-counter entry. */

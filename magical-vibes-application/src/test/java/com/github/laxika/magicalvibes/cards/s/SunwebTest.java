@@ -41,9 +41,7 @@ class SunwebTest extends BaseCardTest {
         Permanent sunweb = addCreatureReady(player2, new Sunweb());
 
         addCreatureReady(player1, new PearlDragon()); // 4/4 flying
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -56,9 +54,7 @@ class SunwebTest extends BaseCardTest {
         addCreatureReady(player2, new Sunweb());
 
         addCreatureReady(player1, new GrizzlyBears()); // 2/2
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -71,8 +67,7 @@ class SunwebTest extends BaseCardTest {
         Permanent sunweb = addCreatureReady(player2, new Sunweb());
 
         addCreatureReady(player1, new GorillaChieftain()); // 3/3
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -89,8 +84,7 @@ class SunwebTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, attacker.getId());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

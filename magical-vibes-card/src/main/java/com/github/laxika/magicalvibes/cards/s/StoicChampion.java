@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "LGN", collectorNumber = "21")
+@CardRegistration(set = "VMA", collectorNumber = "50")
 public class StoicChampion extends Card {
 
     public StoicChampion() {

@@ -1,26 +1,27 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BullHippo;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishHerder.class, BullHippo.class, Forest.class})
 class ElvishHerderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Ability grants trample to target creature")
     void grantsTrample() {
         harness.addToBattlefieldAndReturn(player1, new ElvishHerder());
-        Permanent target = addCreature(player1);
+        Permanent target = addCreatureReady(player1, new BullHippo());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -30,10 +31,22 @@ class ElvishHerderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability can target Elvish Herder itself")
+    void grantsTrampleToItself() {
+        Permanent herder = harness.addToBattlefieldAndReturn(player1, new ElvishHerder());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, herder.getId());
+        harness.passBothPriorities();
+
+        assertThat(herder.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Ability can target a creature an opponent controls")
     void grantsTrampleToOpponentCreature() {
         harness.addToBattlefieldAndReturn(player1, new ElvishHerder());
-        Permanent target = addCreature(player2);
+        Permanent target = addCreatureReady(player2, new BullHippo());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -68,7 +81,7 @@ class ElvishHerderTest extends BaseCardTest {
     @DisplayName("Granted trample wears off at end of turn")
     void trampleWearsOff() {
         harness.addToBattlefieldAndReturn(player1, new ElvishHerder());
-        Permanent target = addCreature(player1);
+        Permanent target = addCreatureReady(player1, new BullHippo());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -86,17 +99,10 @@ class ElvishHerderTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         harness.addToBattlefieldAndReturn(player1, new ElvishHerder());
-        Permanent target = addCreature(player1);
+        Permanent target = addCreatureReady(player1, new BullHippo());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addCreature(Player player) {
-        Permanent perm = new Permanent(new RagingGoblin());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

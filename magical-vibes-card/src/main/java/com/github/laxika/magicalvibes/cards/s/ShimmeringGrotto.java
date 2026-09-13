@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "273")
 @CardRegistration(set = "M14", collectorNumber = "229")
 @CardRegistration(set = "PC2", collectorNumber = "126")
+@CardRegistration(set = "PCA", collectorNumber = "126")
 public class ShimmeringGrotto extends Card {
 
     public ShimmeringGrotto() {

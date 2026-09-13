@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArgothianSwine.class, PouncingJaguar.class})
 class ArgothianSwineTest extends BaseCardTest {
 
     @Test
@@ -20,30 +21,23 @@ class ArgothianSwineTest extends BaseCardTest {
     void trampleAssignsExcessDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent swine = new Permanent(new ArgothianSwine());
-        swine.setSummoningSick(false);
+        Permanent swine = addCreatureReady(player1, new ArgothianSwine());
         swine.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(swine);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent jaguar = addCreatureReady(player2, new PouncingJaguar());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                bears.getId(), 2,
+                jaguar.getId(), 2,
                 player2.getId(), 1
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         harness.assertOnBattlefield(player1, "Argothian Swine");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Pouncing Jaguar");
     }
 }

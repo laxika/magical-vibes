@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +21,6 @@ public class EachPlayerReturnsCardsFromGraveyardToHandEffectHandler implements N
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,25 +50,10 @@ public class EachPlayerReturnsCardsFromGraveyardToHandEffectHandler implements N
                 continue;
             }
 
-            if (matching.size() <= returnEffect.maxCount()) {
-                graveyardService.beginGraveyardLeaveBatch(gameData);
-                try {
-                    for (Card card : matching) {
-                        if (graveyard.remove(card)) {
-                            graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
-                            graveyardReturnSupport.moveCardToDestination(
-                                    gameData, playerId, card, GraveyardChoiceDestination.HAND,
-                                    null, null, false);
-                        }
-                    }
-                } finally {
-                    graveyardService.endGraveyardLeaveBatch(gameData);
-                }
-            } else {
-                gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
-                        playerId, returnEffect.maxCount(), returnEffect.filter(),
-                        GraveyardChoiceDestination.HAND, true, false, false));
-            }
+            gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
+                    playerId, returnEffect.maxCount(), returnEffect.filter(),
+                    GraveyardChoiceDestination.HAND, true, false, false));
+
         }
 
         if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {

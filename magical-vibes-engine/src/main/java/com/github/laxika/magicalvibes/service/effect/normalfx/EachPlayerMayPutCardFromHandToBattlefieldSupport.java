@@ -16,6 +16,9 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 
 /**
  * Coordinates hand-to-battlefield choices in player order. The normal mode places all chosen
@@ -30,6 +33,7 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final GameLogService gameLogService;
 
     /** Begins the next eligible player's optional choice, or places the accumulated choices. */
@@ -158,39 +162,19 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
             return;
         }
 
-        List<ChosenCard> chosenCards = new ArrayList<>();
+        List<BattlefieldEntryCard> chosenCards = new ArrayList<>();
         for (UUID cardId : chosenCardIds) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Card> hand = gameData.playerHands.get(playerId);
-                if (hand == null) {
-                    continue;
-                }
-                Card chosenCard = hand.stream().filter(card -> card.getId().equals(cardId)).findFirst().orElse(null);
-                if (chosenCard != null) {
-                    hand.remove(chosenCard);
-                    chosenCards.add(new ChosenCard(playerId, chosenCard));
+                if (hand == null) continue;
+                Card card = hand.stream().filter(candidate -> candidate.getId().equals(cardId)).findFirst().orElse(null);
+                if (card != null) {
+                    chosenCards.add(new BattlefieldEntryCard(
+                            playerId, playerId, card, Zone.HAND, null));
                     break;
                 }
             }
         }
-
-        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> alreadyEntered = new ArrayList<>();
-        for (ChosenCard chosenCard : chosenCards) {
-            Permanent permanent = new Permanent(chosenCard.card());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, chosenCard.playerId(), permanent,
-                    enterTappedTypes, List.copyOf(alreadyEntered));
-            alreadyEntered.add(permanent);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(gameData.playerIdToName.get(chosenCard.playerId()) + " puts ")
-                    .card(chosenCard.card())
-                    .text(" onto the battlefield (" + cardName + ").")
-                    .build());
-        }
-        log.info("Game {} - Put {} chosen {} card(s) onto the battlefield",
-                gameData.id, chosenCards.size(), effect.label());
-    }
-
-    private record ChosenCard(UUID playerId, Card card) {
+        battlefieldEntryBatchSupport.begin(gameData, chosenCards);
     }
 }

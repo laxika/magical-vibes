@@ -153,8 +153,7 @@ class CavePeopleTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.MOUNTAINWALK)).isTrue();
 
-        declareAttackers(List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)

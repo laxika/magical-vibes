@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Electryte.class)
 class ElectryteTest extends BaseCardTest {
 
     @Test
@@ -29,6 +31,24 @@ class ElectryteTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         assertThat(blocker.getMarkedDamage()).isEqualTo(5);
         assertThat(bystander.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Deals its current power to every blocking creature")
+    void dealsCurrentPowerToEveryBlockingCreature() {
+        harness.setLife(player2, 20);
+        Permanent electryte = addCreatureReady(player1, new Electryte());
+        electryte.setPowerModifier(2);
+        electryte.setAttacking(true);
+        addAttackingCreature(player1, creature("Harmless Attacker", 0, 5));
+        Permanent firstBlocker = addBlockingCreature(player2, creature("First Blocker", 0, 6), 1);
+        Permanent secondBlocker = addBlockingCreature(player2, creature("Second Blocker", 0, 6), 1);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(firstBlocker.getMarkedDamage()).isEqualTo(5);
+        assertThat(secondBlocker.getMarkedDamage()).isEqualTo(5);
     }
 
     @Test

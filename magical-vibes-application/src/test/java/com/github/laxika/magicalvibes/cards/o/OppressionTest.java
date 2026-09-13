@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Oppression.class, Forest.class, GrizzlyBears.class, HealingSalve.class})
 class OppressionTest extends BaseCardTest {
 
     @Test
@@ -69,5 +72,23 @@ class OppressionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Triggers when a player casts a noncreature spell")
+    void noncreatureSpellCastingDiscards() {
+        harness.addToBattlefield(player1, new Oppression());
+        harness.setHand(player1, List.of(new HealingSalve(), new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertLife(player1, 23);
     }
 }
