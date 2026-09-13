@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ThievingMagpie extends Card {
 
     public ThievingMagpie() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect());
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new DrawCardEffect());
     }
 }

@@ -133,9 +133,26 @@ class TwiddleTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         target.tap();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can choose to untap a target tapped before resolution")
+    void canChooseToUntapTargetTappedBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
     }
 
     @Test

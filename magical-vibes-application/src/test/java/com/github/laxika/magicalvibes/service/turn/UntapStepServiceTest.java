@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.GameLog;
 
+import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -116,6 +117,19 @@ class UntapStepServiceTest {
         Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(playerId).add(perm);
         return perm;
+    }
+
+    @Test
+    void lostPrintedAbilitiesRemoveUntapLimit() {
+        Card card = createCardWithName("Untap Limiter");
+        card.addEffect(EffectSlot.STATIC, new StaticOrbEffect());
+        Permanent source = addPermanent(player1Id, card);
+        for (int i = 0; i < 3; i++) {
+            addPermanent(player1Id, createCardWithName("Tapped Permanent")).tap();
+        }
+        when(gameQueryService.hasLostPrintedAbilities(gd, source)).thenReturn(true);
+
+        assertThat(sut.bindingUntapRestriction(gd, player1Id)).isEmpty();
     }
 
     @Test
