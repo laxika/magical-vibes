@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ARB", collectorNumber = "29")
+@CardRegistration(set = "MM3", collectorNumber = "185")
 public class SoulManipulation extends Card {
 
     public SoulManipulation() {

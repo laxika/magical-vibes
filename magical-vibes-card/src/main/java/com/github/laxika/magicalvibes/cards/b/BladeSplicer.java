@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "4")
+@CardRegistration(set = "MM3", collectorNumber = "3")
 public class BladeSplicer extends Card {
 
     public BladeSplicer() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 
 @CardRegistration(set = "PC2", collectorNumber = "106")
+@CardRegistration(set = "PCA", collectorNumber = "106")
 public class ThromokTheInsatiable extends Card {
 
     public ThromokTheInsatiable() {

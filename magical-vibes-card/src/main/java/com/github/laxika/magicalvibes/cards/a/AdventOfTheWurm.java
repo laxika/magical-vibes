@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "51")
+@CardRegistration(set = "MM3", collectorNumber = "147")
 public class AdventOfTheWurm extends Card {
 
     public AdventOfTheWurm() {

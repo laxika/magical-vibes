@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "PC2", collectorNumber = "107")
+@CardRegistration(set = "PCA", collectorNumber = "107")
 public class VelaTheNightClad extends Card {
 
     public VelaTheNightClad() {

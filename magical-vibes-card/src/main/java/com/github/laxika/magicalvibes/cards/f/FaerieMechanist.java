@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "DDF", collectorNumber = "54")
 @CardRegistration(set = "MM2", collectorNumber = "44")
 @CardRegistration(set = "MMA", collectorNumber = "45")
+@CardRegistration(set = "DDU", collectorNumber = "38")
 public class FaerieMechanist extends Card {
 
     public FaerieMechanist() {
