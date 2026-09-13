@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ONS", collectorNumber = "289")
+@CardRegistration(set = "VMA", collectorNumber = "236")
 public class SymbioticWurm extends Card {
 
     public SymbioticWurm() {

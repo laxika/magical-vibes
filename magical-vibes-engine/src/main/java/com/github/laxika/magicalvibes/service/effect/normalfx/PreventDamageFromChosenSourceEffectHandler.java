@@ -99,7 +99,8 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
                         controllerId, e.gainLife(), e.exileFromLibrary(),
                         e.damageSourceController() ? entry.getCard() : null,
-                        e.preventHalfDamage(), e.drawCards(), requiredDamageColors);
+                        e.preventHalfDamage(), e.drawCards(), requiredDamageColors,
+                        sourceFilter instanceof PermanentColorInPredicate ? null : sourceFilter);
                 String prevention = e.preventHalfDamage()
                         ? "prevent half that damage, rounded down"
                         : "prevent that damage";

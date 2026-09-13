@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "202")
+@CardRegistration(set = "VMA", collectorNumber = "177")
 public class LightningDragon extends Card {
 
     public LightningDragon() {

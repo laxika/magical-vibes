@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpurGrappler.class, Forest.class})
 class SpurGrapplerTest extends BaseCardTest {
 
     @Test
@@ -31,6 +33,20 @@ class SpurGrapplerTest extends BaseCardTest {
         forest.tap();
 
         assertStats(spurGrappler, 4, 2);
+    }
+
+    @Test
+    void updatesBoostWhenLandBecomesTappedOrUntapped() {
+        Permanent spurGrappler = addSpurGrappler();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertStats(spurGrappler, 2, 1);
+
+        forest.tap();
+        assertStats(spurGrappler, 4, 2);
+
+        forest.untap();
+        assertStats(spurGrappler, 2, 1);
     }
 
     @Test

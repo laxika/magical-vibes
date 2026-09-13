@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "12")
+@CardRegistration(set = "VMA", collectorNumber = "26")
 public class EternalDragon extends Card {
 
     public EternalDragon() {

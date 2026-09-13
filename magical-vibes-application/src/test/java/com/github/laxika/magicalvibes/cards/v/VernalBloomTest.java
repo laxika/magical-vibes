@@ -1,14 +1,20 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LushGrowth;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VernalBloom.class, Forest.class, Mountain.class})
 class VernalBloomTest extends BaseCardTest {
 
     @Test
@@ -45,6 +51,25 @@ class VernalBloomTest extends BaseCardTest {
 
         // The Forest's controller (player2) gets the additional {G}.
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(LushGrowth.class)
+    @DisplayName("A land that becomes a Forest also produces an additional green")
+    void effectiveForestSubtypeAlsoTriggers() {
+        harness.addToBattlefield(player1, new VernalBloom());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent mountain = gd.playerBattlefields.get(player1.getId()).get(1);
+
+        harness.setHand(player1, List.of(new LushGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 1);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 
     @Test

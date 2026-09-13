@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetChosenColorUntilEndOfTurnE
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "121")
+@CardRegistration(set = "VMA", collectorNumber = "262")
 public class Spiritmonger extends Card {
 
     public Spiritmonger() {

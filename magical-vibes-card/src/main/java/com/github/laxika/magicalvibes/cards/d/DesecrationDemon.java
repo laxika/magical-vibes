@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "63")
+@CardRegistration(set = "DDR", collectorNumber = "44")
 public class DesecrationDemon extends Card {
 
     public DesecrationDemon() {

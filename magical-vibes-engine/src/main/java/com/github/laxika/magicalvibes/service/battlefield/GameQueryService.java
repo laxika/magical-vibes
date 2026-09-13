@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseDiscardEffect;
@@ -1469,7 +1470,8 @@ public class GameQueryService {
             }
             for (Permanent source : battlefield) {
                 for (var effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof LandManaProducesFixedColorEffect fixed) {
+                    if (effect instanceof LandManaProducesFixedColorEffect fixed
+                            && !hasLostAllAbilities(gameData, source)) {
                         return fixed.color();
                     }
                 }
@@ -2039,7 +2041,7 @@ public class GameQueryService {
                                       int currentLife) {
         boolean active = switch (lifeFloor.condition()) {
             case ALWAYS -> true;
-            case CONTROLS_A_CREATURE -> controlsCreature;
+            case CONTROLS_A_CREATURE -> controlsCreature && currentLife >= lifeFloor.floor();
             case LIFE_AT_LEAST_FLOOR -> currentLife >= lifeFloor.floor();
         };
         return active ? lifeFloor.floor() : 0;
@@ -8045,6 +8047,15 @@ public class GameQueryService {
     }
 
     /**
+     * True while a {@link PlayersCantCastSpellsDuringCombatEffect} (Basandra, Battle Seraph) is
+     * on the battlefield and the game is currently in a combat step.
+     */
+    public boolean isSpellCastingCombatLockActive(GameData gameData) {
+        return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
+                && anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsDuringCombatEffect.class);
+    }
+
+    /**
      * Applies the global damage multiplier to the given damage amount.
      *
      * @return the damage after applying all {@link GlobalDamageMultiplyingEffect} multipliers
@@ -8644,8 +8655,8 @@ public class GameQueryService {
             return true;
         }
         // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
-        if (isCombatDamage && creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) {
+        if (isCombatDamage && hasActiveStaticEffect(gameData, creature,
+                PreventAllCombatDamageToAndBySelfEffect.class)) {
             return true;
         }
         if (isCombatDamage && hasActiveStaticEffect(gameData, creature, PreventAllCombatDamageBySelfEffect.class)) {
@@ -8734,7 +8745,8 @@ public class GameQueryService {
     public boolean hasActiveStaticEffect(GameData gameData, Permanent source,
                                          Class<? extends CardEffect> effectType) {
         UUID controllerId = findPermanentController(gameData, source.getId());
-        if (controllerId == null || source.isStaticEffectSuppressed(effectType)) return false;
+        if (controllerId == null || source.isStaticEffectSuppressed(effectType)
+                || hasLostPrintedAbilities(gameData, source)) return false;
         return source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(effect -> !source.isStaticEffectSuppressed(effect.getClass()))
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))

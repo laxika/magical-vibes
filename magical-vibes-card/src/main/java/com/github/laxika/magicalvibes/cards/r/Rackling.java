@@ -22,6 +22,6 @@ public class Rackling extends Card {
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),
                                 new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),
-                        DamageRecipient.TARGET_PLAYER));
+                        DamageRecipient.ACTIVE_PLAYER));
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Flameshot.class, GrizzlyBears.class, LlanowarElves.class, Mountain.class})
 class FlameshotTest extends BaseCardTest {
 
     @Test
@@ -35,6 +37,44 @@ class FlameshotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than three target creatures")
+    void cannotChooseMoreThanThreeTargetCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(
+                first.getId(), 1,
+                second.getId(), 1,
+                third.getId(), 1,
+                fourth.getId(), 0
+        ))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can divide damage unevenly among two target creatures")
+    void dividesDamageUnevenlyAmongTwoCreatures() {
+        Permanent receivesTwo = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent receivesOne = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        harness.castSorcery(player1, 0, Map.of(
+                receivesTwo.getId(), 2,
+                receivesOne.getId(), 1
+        ));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(receivesOne)
+                .doesNotContain(receivesTwo);
+        assertThat(receivesOne.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

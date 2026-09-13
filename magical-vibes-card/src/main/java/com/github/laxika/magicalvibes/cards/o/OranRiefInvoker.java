@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "182")
+@CardRegistration(set = "DDR", collectorNumber = "17")
 public class OranRiefInvoker extends Card {
 
     public OranRiefInvoker() {

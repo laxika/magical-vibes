@@ -69,6 +69,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 
 /**
  * Shared graveyard return/exile helpers used by every normal Graveyard Return effect handler
@@ -97,6 +99,7 @@ public class GraveyardReturnSupport {
     private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -618,6 +621,24 @@ public class GraveyardReturnSupport {
 
     public void resolveReturnAll(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                   UUID controllerId, UUID sourceCardId) {
+        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD && effect.chooseAuraAttachment()) {
+            List<BattlefieldEntryCard> cards = new ArrayList<>();
+            for (var graveyard : gameData.playerGraveyards.entrySet()) {
+                if (effect.source() != GraveyardSearchScope.ALL_GRAVEYARDS
+                        && !graveyard.getKey().equals(controllerId)) continue;
+                for (Card card : graveyard.getValue()) {
+                    if (matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
+                        UUID recipientId = effect.underOwnersControl()
+                                ? card.getOwnerId() == null ? graveyard.getKey() : card.getOwnerId()
+                                : controllerId;
+                        cards.add(new BattlefieldEntryCard(
+                                recipientId, graveyard.getKey(), card, Zone.GRAVEYARD, null));
+                    }
+                }
+            }
+            battlefieldEntryBatchSupport.begin(gameData, cards);
+            return;
+        }
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
                 && effect.attachmentTarget() != null) {
             resolveReturnAllWithAttachments(gameData, entry, effect, controllerId, sourceCardId);
@@ -1559,9 +1580,15 @@ public class GraveyardReturnSupport {
 
             Permanent permanent = new Permanent(card);
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+            if (batch.enterTapped()) {
+                permanent.tap();
+            }
+            if (batch.enterWithCounter() != null) {
+                permanent.setCounterCount(batch.enterWithCounter(), 1);
+            }
             UUID battlefieldControllerId = batch.underOwnersControl()
                     ? card.getOwnerId() != null ? card.getOwnerId() : graveyardOwnerId
-                    : batch.controllerId();
+                    : batch.eachPlayerChooses() ? graveyardOwnerId : batch.controllerId();
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(permanent);
@@ -1886,7 +1913,6 @@ public class GraveyardReturnSupport {
             lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, entry.getCard().getName());
         }
     }
-
 
     /**
      * Records that a permanent entered the battlefield under a non-owner's control (e.g. stolen
@@ -2254,9 +2280,6 @@ public class GraveyardReturnSupport {
      * then queuing a may-cast choice for the controller.
      */
 
-
-
-
     /**
      * Resolves an {@link ExileGraveyardCardsEffect} by forcing the affected
      * player to exile cards from their own graveyard.
@@ -2371,7 +2394,7 @@ public class GraveyardReturnSupport {
         String filterLabel = CardPredicateUtils.describeFilter(next.filter());
         String destText = destination == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield";
         PendingGraveyardReturnBatch batch = gameData.pendingGraveyardReturnBatch;
-        UUID choosingPlayerId = batch == null ? next.playerId() : batch.controllerId();
+        UUID choosingPlayerId = batch == null || batch.eachPlayerChooses() ? next.playerId() : batch.controllerId();
         List<Card> matchingCards = matchingIndices.stream().map(graveyard::get).toList();
         List<Integer> choiceIndices = batch == null
                 ? matchingIndices
@@ -2399,8 +2422,6 @@ public class GraveyardReturnSupport {
      * Registers a delayed trigger that will return the source card from its owner's graveyard
      * to the battlefield transformed at the beginning of the next end step.
      */
-
-
 
     /**
      * Step 1: the separator has assigned cards to Pile 1. Unselected cards form Pile 2.

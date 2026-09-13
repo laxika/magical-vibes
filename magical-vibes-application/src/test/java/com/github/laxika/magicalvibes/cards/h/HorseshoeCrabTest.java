@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,34 +15,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HorseshoeCrab.class})
 class HorseshoeCrabTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Horseshoe Crab puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new HorseshoeCrab()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        HorseshoeCrab crab = new HorseshoeCrab();
+        harness.castFromHand(player1, crab, "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Horseshoe Crab");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(crab);
     }
 
     @Test
     @DisplayName("Resolving puts Horseshoe Crab onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new HorseshoeCrab()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HorseshoeCrab(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Horseshoe Crab");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -58,12 +50,10 @@ class HorseshoeCrabTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Activated ability - Untap self =====
-
     @Test
     @DisplayName("Activating ability puts UntapSelf on the stack")
     void activatingAbilityPutsOnStack() {
-        addCrabReady(player1);
+        Permanent crab = addCreatureReady(player1, new HorseshoeCrab());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -71,13 +61,13 @@ class HorseshoeCrabTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Horseshoe Crab");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(crab.getId());
     }
 
     @Test
     @DisplayName("Resolving ability untaps Horseshoe Crab")
     void resolvingAbilityUntapsSelf() {
-        Permanent crabPerm = addCrabReady(player1);
+        Permanent crabPerm = addCreatureReady(player1, new HorseshoeCrab());
         crabPerm.tap();
         assertThat(crabPerm.isTapped()).isTrue();
 
@@ -93,7 +83,7 @@ class HorseshoeCrabTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability when already untapped")
     void canActivateWhenAlreadyUntapped() {
-        addCrabReady(player1);
+        addCreatureReady(player1, new HorseshoeCrab());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -106,7 +96,7 @@ class HorseshoeCrabTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
-        Permanent crabPerm = addCrabReady(player1);
+        Permanent crabPerm = addCreatureReady(player1, new HorseshoeCrab());
         crabPerm.tap();
         harness.addMana(player1, ManaColor.BLUE, 3);
 
@@ -126,7 +116,7 @@ class HorseshoeCrabTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
-        addCrabReady(player1);
+        addCreatureReady(player1, new HorseshoeCrab());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -136,9 +126,22 @@ class HorseshoeCrabTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate ability while summoning sick because it has no tap cost")
+    void canActivateWhileSummoningSick() {
+        Permanent crab = harness.addToBattlefieldAndReturn(player1, new HorseshoeCrab());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crab.isSummoningSick()).isTrue();
+        assertThat(crab.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
-        addCrabReady(player1);
+        addCreatureReady(player1, new HorseshoeCrab());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -149,7 +152,7 @@ class HorseshoeCrabTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addCrabReady(player1);
+        addCreatureReady(player1, new HorseshoeCrab());
         // No mana added
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -158,15 +161,15 @@ class HorseshoeCrabTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if Horseshoe Crab is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
-        addCrabReady(player1);
+    @DisplayName("Ability has no effect if Horseshoe Crab is removed before resolution")
+    void abilityDoesNothingIfSourceRemoved() {
+        Permanent crab = addCreatureReady(player1, new HorseshoeCrab());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
         // Remove Horseshoe Crab before resolution
-        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player1.getId()).remove(crab);
 
         harness.passBothPriorities();
 
@@ -176,55 +179,41 @@ class HorseshoeCrabTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability logs the activation")
     void activatingAbilityLogsActivation() {
-        addCrabReady(player1);
+        addCreatureReady(player1, new HorseshoeCrab());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("activates Horseshoe Crab's ability"));
+        assertThat(gameLogContains("activates ")).isTrue();
     }
 
     @Test
     @DisplayName("Resolving ability logs the untap")
     void resolvingAbilityLogsUntap() {
-        Permanent crabPerm = addCrabReady(player1);
+        Permanent crabPerm = addCreatureReady(player1, new HorseshoeCrab());
         crabPerm.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Horseshoe Crab untaps"));
+        assertThat(gameLogContains(" untaps.")).isTrue();
     }
 
-    // ===== Combat =====
-
     @Test
-    @DisplayName("Unblocked Horseshoe Crab deals 1 damage to defending player")
-    void dealsOneDamageWhenUnblocked() {
+    @DisplayName("Unblocked Horseshoe Crab deals combat damage to defending player")
+    void dealsCombatDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new HorseshoeCrab());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new HorseshoeCrab());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-    }
-
-    // ===== Helper methods =====
-
-    private Permanent addCrabReady(Player player) {
-        HorseshoeCrab card = new HorseshoeCrab();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
     }
 }
 

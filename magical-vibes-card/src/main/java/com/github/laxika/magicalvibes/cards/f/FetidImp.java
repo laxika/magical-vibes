@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "97")
 @CardRegistration(set = "M21", collectorNumber = "98")
+@CardRegistration(set = "DDR", collectorNumber = "48")
 public class FetidImp extends Card {
 
     public FetidImp() {

@@ -195,7 +195,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MasterOfPredicamentsCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.TargetedHandCardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, true));
+                (gameData, interaction) -> projectHandChoice(interaction,
+                        ((PendingInteraction.TargetedHandCardChoice) interaction).declinable()));
         register(PendingInteraction.DiscardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction,
                         ((PendingInteraction.DiscardChoice) interaction).declinable()));
@@ -1634,6 +1635,7 @@ public class InteractionPromptProjectionRegistry {
 
     private static boolean isCardNameChoice(ChoiceContext context) {
         return context instanceof ChoiceContext.CardNameChoice
+                || context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice
                 || context instanceof ChoiceContext.ExileByNameChoice
                 || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice

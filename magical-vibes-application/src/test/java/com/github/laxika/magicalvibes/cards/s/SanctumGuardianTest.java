@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.a.ArcLightning;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,13 +12,16 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SanctumGuardian.class, GrizzlyBears.class, ProdigalPyromancer.class})
 class SanctumGuardianTest extends BaseCardTest {
 
     // ===== Activation / source choice =====
@@ -45,6 +49,37 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+    }
+
+    @Test
+    @CardUsed(ArcLightning.class)
+    @DisplayName("Can choose a damage spell on the stack as the source")
+    void preventsDamageFromSpellOnStack() {
+        harness.setLife(player1, 20);
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        ArcLightning arcLightning = new ArcLightning();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(arcLightning));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player2, 0, Map.of(player1.getId(), 3));
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(arcLightning.getId());
+        harness.handlePermanentChosen(player1, arcLightning.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     @Test

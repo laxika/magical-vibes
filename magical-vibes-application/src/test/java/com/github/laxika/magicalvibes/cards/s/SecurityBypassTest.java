@@ -25,8 +25,7 @@ class SecurityBypassTest extends BaseCardTest {
         attachAura(attacker);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(indexOf(player1, attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, attacker)))))

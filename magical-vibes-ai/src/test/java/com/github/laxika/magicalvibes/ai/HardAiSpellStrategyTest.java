@@ -305,7 +305,7 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI plays the land that enables casting a spell in hand")
     void playsLandThatEnablesSpellCasting() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 40);
         // Land selection is evaluator-only, but the follow-up cast is another thin
         // cast-versus-pass margin: passing in precombat main reaches the same board, because the
         // rollout can still cast the bears postcombat. Pin the libraries so the assertion measures

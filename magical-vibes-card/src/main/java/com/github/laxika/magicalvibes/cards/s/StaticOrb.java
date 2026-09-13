@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "319")
 @CardRegistration(set = "TMP", collectorNumber = "310")
+@CardRegistration(set = "MPS", collectorNumber = "26")
 public class StaticOrb extends Card {
 
     public StaticOrb() {

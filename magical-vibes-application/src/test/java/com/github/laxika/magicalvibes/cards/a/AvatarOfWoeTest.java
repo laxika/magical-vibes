@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.c.CelestialConvergence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +15,14 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AvatarOfWoe.class, AgentOfShauku.class, Abolish.class, CelestialConvergence.class})
 class AvatarOfWoeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can cast for {B}{B} when there are ten creature cards across all graveyards")
     void costsLessWithTenCreatureCardsAcrossGraveyards() {
-        harness.setGraveyard(player1, IntStream.range(0, 9).<Card>mapToObj(i -> new GrizzlyBears()).toList());
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, IntStream.range(0, 9).<Card>mapToObj(i -> new AgentOfShauku()).toList());
+        harness.setGraveyard(player2, List.of(new AgentOfShauku()));
         harness.setHand(player1, List.of(new AvatarOfWoe()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -34,8 +35,8 @@ class AvatarOfWoeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not reduce its cost for noncreature cards in graveyards")
     void doesNotCountNoncreatureCards() {
-        harness.setGraveyard(player1, IntStream.range(0, 9).<Card>mapToObj(i -> new GrizzlyBears()).toList());
-        harness.setGraveyard(player2, List.of(new HolyDay()));
+        harness.setGraveyard(player1, IntStream.range(0, 9).<Card>mapToObj(i -> new AgentOfShauku()).toList());
+        harness.setGraveyard(player2, List.of(new Abolish()));
         harness.setHand(player1, List.of(new AvatarOfWoe()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -48,7 +49,7 @@ class AvatarOfWoeTest extends BaseCardTest {
     @DisplayName("Tap ability destroys a target creature without allowing regeneration")
     void destroysTargetCreatureWithoutRegeneration() {
         Permanent avatar = addCreatureReady(player1, new AvatarOfWoe());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AgentOfShauku());
         target.setRegenerationShield(1);
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
@@ -57,8 +58,24 @@ class AvatarOfWoeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
+        assertThat(avatar.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(avatar);
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Agent of Shauku");
+        harness.assertInGraveyard(player2, "Agent of Shauku");
+    }
+
+    @Test
+    @DisplayName("Tap ability cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        addCreatureReady(player1, new AvatarOfWoe());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CelestialConvergence());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 }

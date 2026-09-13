@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.ObsianusGolem;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,20 +16,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RuneOfProtectionArtifacts.class, ObsianusGolem.class, GrizzlyBears.class})
+@CardUsed({RuneOfProtectionArtifacts.class, ObsianusGolem.class, GrizzlyBears.class, RodOfRuin.class})
 class RuneOfProtectionArtifactsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability prompts for an artifact source choice")
     void resolvingAbilityPromptsForArtifactSource() {
         addReadyRune(player1);
-        addReadyArtifactCreature(player2);
+        Permanent golem = addReadyArtifactCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(golem.getId());
     }
 
     @Test
@@ -68,6 +70,47 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the chosen artifact source's next damage is prevented")
+    void differentArtifactSourceStillDealsDamage() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent chosen = addReadyArtifactCreature(player2);
+        Permanent other = addReadyArtifactCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        other.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(chosen.getId()));
+    }
+
+    @Test
+    @DisplayName("Prevents the next noncombat damage from the chosen artifact source")
+    void preventsNextNoncombatDamage() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rod.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("Non-artifact permanents are not valid source choices")
     void nonArtifactSourceNotValid() {
         addReadyRune(player1);
@@ -79,8 +122,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test
