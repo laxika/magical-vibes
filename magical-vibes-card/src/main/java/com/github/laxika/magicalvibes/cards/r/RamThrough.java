@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamag
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "IKO", collectorNumber = "170")
+@CardRegistration(set = "GN3", collectorNumber = "105")
 public class RamThrough extends Card {
 
     public RamThrough() {

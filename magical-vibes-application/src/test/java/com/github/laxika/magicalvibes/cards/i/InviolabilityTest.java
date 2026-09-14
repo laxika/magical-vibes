@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.j.JhovallQueen;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.t.Thunderclap;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,42 +16,39 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Inviolability.class, FreshVolunteers.class, JhovallQueen.class, Mountain.class, Thunderclap.class})
 class InviolabilityTest extends BaseCardTest {
 
     @Test
     @DisplayName("Inviolability prevents noncombat damage to the enchanted creature")
     void preventsNoncombatDamage() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new FreshVolunteers());
         castInviolability(creature);
 
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Thunderclap()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isZero();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
     }
 
     @Test
     @DisplayName("Inviolability prevents combat damage to the enchanted creature")
     void preventsCombatDamage() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new FreshVolunteers());
         castInviolability(creature);
         creature.setBlocking(true);
         creature.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new AirElemental());
+        Permanent attacker = addCreatureReady(player2, new JhovallQueen());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
     }
 
     @Test

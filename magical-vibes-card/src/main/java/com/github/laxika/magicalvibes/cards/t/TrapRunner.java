@@ -24,7 +24,7 @@ public class TrapRunner extends Card {
                 TargetFilters.unblockedAttackingCreature(),
                 null,
                 null,
-                ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS
+                ActivationTimingRestriction.ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED
         ));
     }
 }

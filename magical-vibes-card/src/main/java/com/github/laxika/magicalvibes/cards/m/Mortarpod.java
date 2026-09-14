@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "MBS", collectorNumber = "115")
 @CardRegistration(set = "TD2", collectorNumber = "68")
 @CardRegistration(set = "MM2", collectorNumber = "222")
+@CardRegistration(set = "HA7", collectorNumber = "17")
 public class Mortarpod extends Card {
 
     public Mortarpod() {

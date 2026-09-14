@@ -223,6 +223,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller selected Auras and Equipment they control to attach to the source creature. */
+    record AttachAnyNumberOfControlledAurasAndEquipmentToSource(UUID sourcePermanentId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The controller may choose an Equipment attached to a creature they control to unattach. */
     record UnattachEquipmentFromControlledCreature(StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {

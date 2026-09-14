@@ -1183,7 +1183,8 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player's life total is allowed to change (i.e. no
-     * {@link LifeTotalCantChangeEffect} is present on their battlefield).
+     * {@link LifeTotalCantChangeEffect} is present on their battlefield and no temporary player
+     * effect prevents life-total changes).
      */
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
         return !gameData.playersWithLifeTotalCantChangeUntilNextTurn.contains(playerId)
@@ -7997,7 +7998,7 @@ public class GameQueryService {
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
                 .anyMatch(OpponentsCantCastOrActivateDuringYourTurnEffect.class::isInstance));
     }
 
@@ -8010,7 +8011,7 @@ public class GameQueryService {
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
                 .anyMatch(effect -> effect instanceof OpponentsCantCastOrActivateDuringYourTurnEffect restriction
                         && restriction.restrictsActivatedAbilities()));
     }
@@ -8934,6 +8935,7 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
+                .filter(permanent -> !hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(PreventAllCombatDamageToAndByCreaturesYouControlEffect.class::isInstance);
     }
@@ -8950,7 +8952,11 @@ public class GameQueryService {
     /** Returns whether damage from the given permanent is prevented by an active source-based effect. */
     public boolean isDamageFromPermanentSourcePrevented(GameData gameData, Permanent source) {
         if (!isDamagePreventable(gameData) || source == null) return false;
-        if (hasTargetCreatureDamagePrevention(gameData, source)) {
+        if (hasAuraWithEffect(gameData, source, PreventAllDamageToAndByEnchantedCreatureEffect.class)
+                || hasAuraWithEffect(gameData, source,
+                        effect -> effect instanceof PreventAllDamageDealtByEnchantedCreatureEffect prevented
+                                && !prevented.combatOnly())
+                || hasTargetCreatureDamagePrevention(gameData, source)) {
             return true;
         }
         if (gameData.preventAllDamageFromNonHumanSources
@@ -8973,6 +8979,7 @@ public class GameQueryService {
     /** Returns whether damage from the given non-permanent source card is prevented. */
     public boolean isDamageFromCardSourcePrevented(GameData gameData, Card sourceCard) {
         if (!isDamagePreventable(gameData) || sourceCard == null) return false;
+        if (gameData.isPreventedFromDealingDamage(sourceCard.getId())) return true;
         if (gameData.preventAllDamageFromNonHumanSources
                 && !getCardSubtypes(sourceCard, gameData, sourceCard.getOwnerId()).contains(CardSubtype.HUMAN)) {
             return true;

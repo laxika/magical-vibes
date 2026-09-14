@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.ChamberedNautilus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.i.IronLance;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Overtaker.class, Forest.class, ChamberedNautilus.class, IronLance.class})
 class OvertakerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card untaps, steals, and grants haste to a target creature")
     void activatesAndResolves() {
         Permanent overtaker = addReadyOvertaker(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new ChamberedNautilus());
         target.tap();
         harness.setHand(player1, List.of(new Forest()));
         addActivationMana();
@@ -45,7 +47,7 @@ class OvertakerTest extends BaseCardTest {
     @DisplayName("Control and haste expire at cleanup")
     void controlAndHasteExpireAtCleanup() {
         addReadyOvertaker(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new ChamberedNautilus());
         harness.setHand(player1, List.of(new Forest()));
         addActivationMana();
 
@@ -67,7 +69,7 @@ class OvertakerTest extends BaseCardTest {
     @DisplayName("Cannot activate without a card to discard")
     void cannotActivateWithoutCardToDiscard() {
         addReadyOvertaker(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new ChamberedNautilus());
         harness.setHand(player1, List.of());
         addActivationMana();
 
@@ -79,13 +81,13 @@ class OvertakerTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         addReadyOvertaker(player1);
-        addCreatureReady(player2, new GrizzlyBears());
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        addCreatureReady(player2, new ChamberedNautilus());
+        Permanent artifact = new Permanent(new IronLance());
+        gd.playerBattlefields.get(player2.getId()).add(artifact);
         harness.setHand(player1, List.of(new Forest()));
         addActivationMana();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -96,9 +98,6 @@ class OvertakerTest extends BaseCardTest {
     }
 
     private Permanent addReadyOvertaker(Player player) {
-        Permanent permanent = new Permanent(new Overtaker());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new Overtaker());
     }
 }

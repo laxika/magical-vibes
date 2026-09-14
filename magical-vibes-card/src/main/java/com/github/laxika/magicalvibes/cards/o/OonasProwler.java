@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "133")
+@CardRegistration(set = "2X2", collectorNumber = "85")
 public class OonasProwler extends Card {
 
     public OonasProwler() {

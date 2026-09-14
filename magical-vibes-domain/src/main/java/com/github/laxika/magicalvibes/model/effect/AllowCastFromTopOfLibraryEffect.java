@@ -20,13 +20,21 @@ import java.util.Set;
  */
 public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
                                               CardPredicate filter, boolean oncePerTurn,
-                                              List<CastingCost> additionalCosts, int enterWithCounterCount)
+                                              List<CastingCost> additionalCosts, int enterWithCounterCount,
+                                              boolean grantsFlash)
         implements CardEffect {
 
     public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
                                            CardPredicate filter, boolean oncePerTurn,
                                            List<CastingCost> additionalCosts) {
-        this(castableTypes, castableColorless, filter, oncePerTurn, additionalCosts, 0);
+        this(castableTypes, castableColorless, filter, oncePerTurn, additionalCosts, 0, false);
+    }
+
+    public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
+                                           CardPredicate filter, boolean oncePerTurn,
+                                           List<CastingCost> additionalCosts, int enterWithCounterCount) {
+        this(castableTypes, castableColorless, filter, oncePerTurn, additionalCosts,
+                enterWithCounterCount, false);
     }
 
     public AllowCastFromTopOfLibraryEffect {
@@ -67,6 +75,11 @@ public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boole
 
     public AllowCastFromTopOfLibraryEffect(CardPredicate filter, boolean oncePerTurn) {
         this(Set.of(), false, filter, oncePerTurn);
+    }
+
+    /** A top-library permission that also lets matching spells be cast as though they had flash. */
+    public static AllowCastFromTopOfLibraryEffect withFlash(CardPredicate filter) {
+        return new AllowCastFromTopOfLibraryEffect(Set.of(), false, filter, false, List.of(), 0, true);
     }
 
     public boolean matches(Card card) {

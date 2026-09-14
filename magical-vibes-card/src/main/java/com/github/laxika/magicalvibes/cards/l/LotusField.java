@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "249")
+@CardRegistration(set = "SLC", collectorNumber = "58")
+@CardRegistration(set = "SLC", collectorNumber = "84")
 public class LotusField extends Card {
 
     public LotusField() {

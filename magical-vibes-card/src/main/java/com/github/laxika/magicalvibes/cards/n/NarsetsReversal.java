@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "62")
+@CardRegistration(set = "SLC", collectorNumber = "14")
+@CardRegistration(set = "SLC", collectorNumber = "41")
 public class NarsetsReversal extends Card {
 
     public NarsetsReversal() {

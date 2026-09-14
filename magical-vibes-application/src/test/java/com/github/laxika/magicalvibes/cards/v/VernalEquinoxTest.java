@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GroundSeal;
+import com.github.laxika.magicalvibes.cards.f.FoodChain;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.t.Tranquility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VernalEquinox.class, FreshVolunteers.class, FoodChain.class, Tranquility.class})
 class VernalEquinoxTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,8 @@ class VernalEquinoxTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VernalEquinox());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
 
@@ -36,8 +38,8 @@ class VernalEquinoxTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VernalEquinox());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GroundSeal()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new FoodChain()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castEnchantment(player1, 0);
 
@@ -51,10 +53,25 @@ class VernalEquinoxTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Any player can cast an enchantment spell at instant speed")
+    void opponentCanCastEnchantmentAtInstantSpeed() {
+        harness.addToBattlefield(player1, new VernalEquinox());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new FoodChain()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -65,10 +82,10 @@ class VernalEquinoxTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VernalEquinox());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player1, List.of(new Tranquility()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

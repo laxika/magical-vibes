@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "29")
 @CardRegistration(set = "VMA", collectorNumber = "57")
+@CardRegistration(set = "SLC", collectorNumber = "2")
+@CardRegistration(set = "SLC", collectorNumber = "29")
 public class BrainFreeze extends Card {
 
     public BrainFreeze() {

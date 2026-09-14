@@ -32,6 +32,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "93")
 @CardRegistration(set = "SIR", collectorNumber = "119")
+@CardRegistration(set = "2X2", collectorNumber = "81")
 public class LilianaTheLastHope extends Card {
 
     private static final String EMBLEM_TEXT =

@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
@@ -698,7 +699,8 @@ public class ActivatedAbilityExecutionService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability);
+        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability,
+                activatedPermanentControllerId);
         snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
         // and its cost and effect don't move cards to or from a library.
@@ -881,7 +883,8 @@ public class ActivatedAbilityExecutionService {
     }
 
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
-                                             Permanent permanent, ActivatedAbility ability) {
+                                             Permanent permanent, ActivatedAbility ability,
+                                             UUID activatedPermanentControllerId) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect printedEffect : abilityEffects) {
             CardEffect effect = TextChangeTransformer.transform(printedEffect,
@@ -909,6 +912,9 @@ public class ActivatedAbilityExecutionService {
                         destroy.counterType(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
+            } else if (effect instanceof SourcePermanentControllerLosesLifeEffect lifeLoss) {
+                snapshotEffects.add(new SourcePermanentControllerLosesLifeEffect(
+                        lifeLoss.amount(), activatedPermanentControllerId));
             } else if (effect instanceof MustBlockSourceEffect) {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {

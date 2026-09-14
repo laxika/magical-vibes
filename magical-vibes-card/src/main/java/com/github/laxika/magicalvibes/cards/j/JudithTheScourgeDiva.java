@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "185")
+@CardRegistration(set = "2X2", collectorNumber = "234")
 public class JudithTheScourgeDiva extends Card {
 
     private static final DealDamageToAnyTargetEffect DEATH_DAMAGE = new DealDamageToAnyTargetEffect(1);

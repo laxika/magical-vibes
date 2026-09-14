@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "18")
+@CardRegistration(set = "SLC", collectorNumber = "13")
+@CardRegistration(set = "SLC", collectorNumber = "40")
 public class MyrelShieldOfArgive extends Card {
 
     public MyrelShieldOfArgive() {

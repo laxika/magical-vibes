@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
@@ -2113,6 +2114,7 @@ public class CombatAttackService {
         processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
         processDelayedVehicleAttackTriggers(gameData, battlefield, attackerIndices);
+        processDelayedWatchedCreatureAttackTriggers(gameData, battlefield, attackerIndices);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
@@ -2213,6 +2215,41 @@ public class CombatAttackService {
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
                 log.info("Game {} - {} delayed attacker boost fires for {}",
                         gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
+
+    /** Fires delayed triggers for a watched creature attacking one of its registering player's opponents. */
+    private void processDelayedWatchedCreatureAttackTriggers(GameData gameData,
+                                                              List<Permanent> battlefield,
+                                                              List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedWatchedCreatureAttack.class)) {
+            return;
+        }
+        for (DelayedWatchedCreatureAttack watch
+                : gameData.getDelayedActions(DelayedWatchedCreatureAttack.class)) {
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                UUID attackedTargetId = attacker.getAttackTarget();
+                if (!watch.watchedPermanentId().equals(attacker.getId())
+                        || attackedTargetId == null
+                        || !gameData.playerIds.contains(attackedTargetId)
+                        || watch.controllerId().equals(attackedTargetId)) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watch.sourceCard(),
+                        watch.controllerId(),
+                        watch.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(watch.effects()),
+                        (UUID) null,
+                        attacker.getId());
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(watch.sourceCard()).text("'s ability triggers.").build());
             }
         }
     }

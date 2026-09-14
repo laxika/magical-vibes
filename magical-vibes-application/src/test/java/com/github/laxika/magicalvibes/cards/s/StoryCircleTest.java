@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.h.HornedTroll;
+import com.github.laxika.magicalvibes.cards.l.Lunge;
+import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,18 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StoryCircle.class, WildJhovall.class, HornedTroll.class, Lunge.class})
 class StoryCircleTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
 
     // ===== Casting =====
 
@@ -112,7 +102,7 @@ class StoryCircleTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability with {W} puts prevention on stack")
     void activatingAbilityPutsOnStack() {
-        Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
+        addReadyStoryCircle(player1, CardColor.RED);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -124,75 +114,88 @@ class StoryCircleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving ability adds prevention count for chosen color")
-    void resolvingAbilityAddsPreventionCount() {
-        Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
+    @DisplayName("Resolving ability prompts to choose a source of the chosen color")
+    void resolvingAbilityPromptsForChosenSource() {
+        addReadyStoryCircle(player1, CardColor.RED);
+        Permanent redSource = addCreatureReady(player2, new WildJhovall());
+        Permanent greenSource = addCreatureReady(player2, new HornedTroll());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerColorDamagePreventionCount.get(player1.getId()))
-                .containsEntry(CardColor.RED, 1);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(redSource.getId()).doesNotContain(greenSource.getId());
+    }
+
+    @Test
+    @DisplayName("Allows choosing a matching red spell on the stack as the source")
+    void allowsChoosingMatchingSpellOnStack() {
+        addReadyStoryCircle(player1, CardColor.RED);
+        Permanent target = addCreatureReady(player1, new HornedTroll());
+        Lunge lunge = new Lunge();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(lunge));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, List.of(target.getId(), player1.getId()));
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(lunge.getId());
     }
 
     // ===== Damage prevention in combat =====
 
     @Test
-    @DisplayName("Prevents combat damage from creature of chosen color")
-    void preventsCombatDamageFromChosenColor() {
+    @DisplayName("Prevents the next combat damage from the chosen source")
+    void preventsCombatDamageFromChosenSource() {
         addReadyStoryCircle(player2, CardColor.RED);
+        Permanent attacker = addCreatureReady(player1, new WildJhovall());
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        // Activate Story Circle
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-
-        // Set up combat: red creature attacks player2
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 5, 4, CardColor.RED));
-        attacker.setSummoningSick(false);
+        harness.handlePermanentChosen(player2, attacker.getId());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        resolveCombat(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // Player2 takes no damage — red damage prevented
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     @Test
-    @DisplayName("Does NOT prevent combat damage from non-chosen color")
-    void doesNotPreventDamageFromNonChosenColor() {
+    @DisplayName("Damage from a different source is not prevented")
+    void doesNotPreventDamageFromUnchosenSource() {
         addReadyStoryCircle(player2, CardColor.RED);
+        Permanent chosenSource = addCreatureReady(player1, new WildJhovall());
+        Permanent attacker = addCreatureReady(player1, new HornedTroll());
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        // Activate Story Circle (prevents red)
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-
-        // Set up combat: GREEN creature attacks player2
-        Permanent attacker = new Permanent(createCreature("Big Green", 3, 3, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        harness.handlePermanentChosen(player2, chosenSource.getId());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        resolveCombat(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // Player2 takes 3 damage — green is not the chosen color
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(shield -> shield.playerId().equals(player2.getId())
+                        && shield.sourceId().equals(chosenSource.getId()));
     }
 
     // ===== Multiple activations =====
@@ -201,90 +204,76 @@ class StoryCircleTest extends BaseCardTest {
     @DisplayName("Multiple activations prevent multiple damage instances")
     void multipleActivationsPreventMultipleInstances() {
         addReadyStoryCircle(player2, CardColor.RED);
+        Permanent attacker1 = addCreatureReady(player1, new WildJhovall());
+        Permanent attacker2 = addCreatureReady(player1, new WildJhovall());
         harness.addMana(player2, ManaColor.WHITE, 2);
 
-        // Activate twice
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, attacker1.getId());
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, attacker2.getId());
 
-        assertThat(gd.playerColorDamagePreventionCount.get(player2.getId()))
-                .containsEntry(CardColor.RED, 2);
-
-        // Two red creatures attack
-        Permanent attacker1 = new Permanent(createCreature("Red One", 2, 2, CardColor.RED));
-        attacker1.setSummoningSick(false);
         attacker1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker1);
-
-        Permanent attacker2 = new Permanent(createCreature("Red Two", 3, 3, CardColor.RED));
-        attacker2.setSummoningSick(false);
         attacker2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        resolveCombat(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // Both prevented — life unchanged
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     // ===== Prevention resets at end of turn =====
 
     @Test
-    @DisplayName("Prevention count resets at end of turn")
+    @DisplayName("Source-choice prevention resets at end of turn")
     void preventionResetsAtEndOfTurn() {
         addReadyStoryCircle(player1, CardColor.RED);
+        Permanent redSource = addCreatureReady(player2, new WildJhovall());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.playerColorDamagePreventionCount.get(player1.getId()))
-                .containsEntry(CardColor.RED, 1);
+        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
         // Advance to end step and pass
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerColorDamagePreventionCount).isEmpty();
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
-    // ===== Empty battlefield safety =====
+    // ===== Source leaves the battlefield =====
 
     @Test
-    @DisplayName("Ability still resolves after Story Circle is destroyed")
-    void abilityResolvesAfterSourceDestroyed() {
+    @DisplayName("Source-choice shield remains after Story Circle leaves the battlefield")
+    void sourceChoiceRemainsAfterSourceDestroyed() {
         Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
+        Permanent redSource = addCreatureReady(player2, new WildJhovall());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, redSource.getId());
 
-        // Remove Story Circle before resolution (e.g. destroyed in response)
         gd.playerBattlefields.get(player1.getId()).remove(storyCircle);
 
-        // Ability resolves independently — prevention should still be added
-        harness.passBothPriorities();
-
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerColorDamagePreventionCount.get(player1.getId()))
-                .containsEntry(CardColor.RED, 1);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(shield -> shield.playerId().equals(player1.getId())
+                        && shield.sourceId().equals(redSource.getId()));
     }
 
     // ===== Helpers =====
 
     private Permanent addReadyStoryCircle(Player player, CardColor chosenColor) {
-        StoryCircle card = new StoryCircle();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new StoryCircle());
         perm.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
