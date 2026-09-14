@@ -783,6 +783,7 @@ public class LayerSystemService {
         h = mix(h, p.getFaceDownPower());
         h = mix(h, p.getFaceDownToughness());
         h = hashEnums(h, p.getFaceDownCardTypes());
+        h = hashEnums(h, p.getFaceDownSubtypes());
 
         h = hashEnums(h, p.getGrantedKeywords());
         h = hashEnums(h, p.getPersistentGrantedKeywords());

@@ -914,7 +914,11 @@ public class GameQueryService {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (!bonus.landSubtypeOverriding()) {
-            addLandTypes(result, permanent.getCard().getSubtypes());
+            if (permanent.isFaceDown()) {
+                addLandTypes(result, permanent.getFaceDownSubtypes());
+            } else {
+                addLandTypes(result, permanent.getCard().getSubtypes());
+            }
             addLandTypes(result, permanent.getGrantedSubtypes());
         }
         addLandTypes(result, bonus.grantedSubtypes());
@@ -924,6 +928,28 @@ public class GameQueryService {
         return result;
     }
 
+    /** Returns the mana colors granted intrinsically by the permanent's effective basic land types. */
+    public Set<ManaColor> intrinsicBasicLandManaColors(GameData gameData, Permanent permanent) {
+        if (permanent == null || !isLand(gameData, permanent)) {
+            return Set.of();
+        }
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        for (CardSubtype subtype : effectiveBasicLandTypes(gameData, permanent)) {
+            ManaColor color = switch (subtype) {
+                case PLAINS -> ManaColor.WHITE;
+                case ISLAND -> ManaColor.BLUE;
+                case SWAMP -> ManaColor.BLACK;
+                case MOUNTAIN -> ManaColor.RED;
+                case FOREST -> ManaColor.GREEN;
+                default -> null;
+            };
+            if (color != null) {
+                colors.add(color);
+            }
+        }
+        return colors;
+    }
+
     public Set<CardSubtype> landTypesOf(Card card) {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         addLandTypes(result, card.getSubtypes());
@@ -931,6 +957,14 @@ public class GameQueryService {
     }
 
     private void addLandTypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {
+        for (CardSubtype subtype : subtypes) {
+            if (LAND_SUBTYPES.contains(subtype)) {
+                target.add(subtype);
+            }
+        }
+    }
+
+    private void addLandTypes(Set<CardSubtype> target, Set<CardSubtype> subtypes) {
         for (CardSubtype subtype : subtypes) {
             if (LAND_SUBTYPES.contains(subtype)) {
                 target.add(subtype);

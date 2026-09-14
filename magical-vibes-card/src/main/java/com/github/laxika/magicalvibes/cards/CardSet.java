@@ -46,6 +46,7 @@ public enum CardSet {
     SET_M14("M14"),
     SET_HA4("HA4"),
     SET_MMA("MMA"),
+    SET_MUL("MUL"),
     SET_2XM("2XM"),
     SET_IMA("IMA"),
     SET_MPS("MPS"),

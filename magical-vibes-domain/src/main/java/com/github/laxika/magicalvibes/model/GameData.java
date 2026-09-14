@@ -315,6 +315,7 @@ public class GameData {
     /** Players for whom Melira's poison replacement effect has already applied this turn. */
     public final Set<UUID> playersAffectedByMeliraPoisonReplacementThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> playerExperienceCounters = new ConcurrentHashMap<>();
     /** Persistent speed values; absent means the player has not started their engines. */
     public final Map<UUID, Integer> playerSpeeds = new ConcurrentHashMap<>();
     /** Players whose speed has already increased during the current turn. */
@@ -5094,6 +5095,7 @@ public class GameData {
         copy.playersAffectedByMeliraPoisonReplacementThisTurn
                 .addAll(this.playersAffectedByMeliraPoisonReplacementThisTurn);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);
+        copy.playerExperienceCounters.putAll(this.playerExperienceCounters);
         copy.playerSpeeds.putAll(this.playerSpeeds);
         copy.playersWhoseSpeedIncreasedThisTurn.addAll(this.playersWhoseSpeedIncreasedThisTurn);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);

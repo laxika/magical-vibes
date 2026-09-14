@@ -5098,18 +5098,31 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                             continue;
                         }
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s end step ability",
-                                new ArrayList<>(List.of(effect)),
-                                null,
-                                perm.getId()
-                        ));
-                        gameLogService.append(gameData,
-                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
-                        log.info("Game {} - {} end-step life-gain trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        if (conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                            if (perm.getCard().getSpellTargets().size() > 1
+                                    || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
+                                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                        perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(),
+                                        List.of(), 0, 0));
+                            } else {
+                                gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                        perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                            }
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s end step ability",
+                                    new ArrayList<>(List.of(effect)),
+                                    null,
+                                    perm.getId()
+                            ));
+                            gameLogService.append(gameData,
+                                    GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                            log.info("Game {} - {} end-step life-gain trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        }
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof ControlsPermanentCount) {
                         // Intervening-if (CR 603.4): "at the beginning of the end step, if you control

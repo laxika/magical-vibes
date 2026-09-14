@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "119")
+@CardRegistration(set = "MUL", collectorNumber = "18")
+@CardRegistration(set = "MUL", collectorNumber = "83")
+@CardRegistration(set = "MUL", collectorNumber = "148")
 public class TymaretChosenFromDeath extends Card {
 
     public TymaretChosenFromDeath() {

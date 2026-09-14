@@ -276,8 +276,11 @@ public class AbilityActivationService {
         }
         // Check for land type override (e.g. Evil Presence / Lush Growth)
         List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
-        
-        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColors.isEmpty()) {
+        Set<ManaColor> intrinsicBasicLandManaColors = permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
+                ? gameQueryService.intrinsicBasicLandManaColors(gameData, permanent) : Set.of();
+
+        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
+                && overriddenManaColors.isEmpty() && intrinsicBasicLandManaColors.isEmpty()) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
         if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
@@ -302,13 +305,14 @@ public class AbilityActivationService {
         EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         int totalManaBefore = manaPool.getTotalAllMana();
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
+        boolean isLandSource = gameQueryService.isLand(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = isCaveSource(gameData, permanent);
         boolean basicLandSource = permanent.getCard().hasType(CardType.LAND)
                 && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         // Mana-production replacement effects are applied to the tapped permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
-        boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
+        boolean playerControlsLand = isLandSource
                 && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
         ManaColor controllerLandFixedColor = playerControlsLand
                 ? gameData.landManaFixedColorThisTurn.get(playerId)
@@ -318,13 +322,13 @@ public class AbilityActivationService {
                 && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
         ManaColor fixedLandColor = controllerLandFixedColor != null
                 ? controllerLandFixedColor
-                : permanent.getCard().hasType(CardType.LAND)
+                : isLandSource
                 ? gameQueryService.fixedLandManaColor(gameData, permanent)
                 : null;
-        boolean anyColorReplacement = permanent.getCard().hasType(CardType.LAND)
+        boolean anyColorReplacement = isLandSource
                 && fixedLandColor == null
                 && gameQueryService.basicLandManaProducesAnyColor(gameData, permanent);
-        Set<ManaColor> twistedColors = permanent.getCard().hasType(CardType.LAND)
+        Set<ManaColor> twistedColors = isLandSource
                 && fixedLandColor == null && !anyColorReplacement
                 ? gameQueryService.twistedLandManaColors(gameData, permanent)
                 : Set.of();
@@ -340,6 +344,8 @@ public class AbilityActivationService {
         } else if (fixedLandColor != null) {
             int totalMana = 0;
             if (!overriddenManaColors.isEmpty()) {
+                totalMana = manaMultiplier;
+            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
                 totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -369,6 +375,8 @@ public class AbilityActivationService {
             int totalMana = 0;
             if (!overriddenManaColors.isEmpty()) {
                 totalMana = manaMultiplier;
+            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
+                totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof ManaProducingEffect manaEffect
@@ -390,6 +398,8 @@ public class AbilityActivationService {
         } else if (!twistedColors.isEmpty()) {
             int totalMana = 0;
             if (!overriddenManaColors.isEmpty()) {
+                totalMana = manaMultiplier;
+            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
                 totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -457,12 +467,16 @@ public class AbilityActivationService {
         } else {
             // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
             boolean dampingReplacement = false;
-            if (permanent.getCard().hasType(CardType.LAND) && isDampingManaReplacementActiveOnTap(gameData)) {
+            if (isLandSource && isDampingManaReplacementActiveOnTap(gameData)) {
                 int totalMana = 0;
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof ManaProducingEffect manaEffect
-                            && manaEffect.estimatedManaColor() != null) {
-                        totalMana += onTapManaAmount(manaEffect);
+                if (!intrinsicBasicLandManaColors.isEmpty()) {
+                    totalMana = 1;
+                } else {
+                    for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                        if (effect instanceof ManaProducingEffect manaEffect
+                                && manaEffect.estimatedManaColor() != null) {
+                            totalMana += onTapManaAmount(manaEffect);
+                        }
                     }
                 }
                 if (totalMana >= 2) {
@@ -477,6 +491,17 @@ public class AbilityActivationService {
                 }
             }
             if (!dampingReplacement) {
+                if (!intrinsicBasicLandManaColors.isEmpty()) {
+                    for (ManaColor color : intrinsicBasicLandManaColors) {
+                        manaPool.add(color, manaMultiplier);
+                        if (basicLandSource) {
+                            manaPool.addBasicLandManaTag(color, manaMultiplier);
+                        }
+                        if (isCreatureSource) {
+                            manaPool.addCreatureMana(color, manaMultiplier);
+                        }
+                    }
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
                         int amount = onTapManaAmount(awardMana) * manaMultiplier;
@@ -512,7 +537,7 @@ public class AbilityActivationService {
         // when mana is being tapped to pay a cost.
         int stackBeforeTriggers = gameData.stack.size();
         boolean manaTypeChoicePending = isAwaitingOwnManaColorChoice(gameData, playerId);
-        if (permanent.getCard().hasType(CardType.LAND)) {
+        if (isLandSource) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
                     newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
         }

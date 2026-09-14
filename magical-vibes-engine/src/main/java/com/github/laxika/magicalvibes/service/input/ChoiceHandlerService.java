@@ -4026,14 +4026,19 @@ public class ChoiceHandlerService {
             ChoiceContext.CounterDistributionAssignment next =
                     new ChoiceContext.CounterDistributionAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
-                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex);
+                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
+                            ctx.allowsPartialDistribution());
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
-        if (assigned != ctx.total()) {
-            throw new IllegalStateException("Counter assignments must total " + ctx.total());
+        if (ctx.allowsPartialDistribution()
+                ? assigned <= 0 || assigned > ctx.total()
+                : assigned != ctx.total()) {
+            throw new IllegalStateException(ctx.allowsPartialDistribution()
+                    ? "Counter assignments must not exceed " + ctx.total()
+                    : "Counter assignments must total " + ctx.total());
         }
 
         gameData.interaction.clearAwaitingInput();
