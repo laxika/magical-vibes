@@ -1691,6 +1691,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `AddOnePlusOneCountersToSourceEffect()` — STATIC source-bound replacement marker (Mowu, Loyal Companion): adds one +1/+1 counter only when +1/+1 counters would be put on the permanent carrying the marker, including that permanent entering with counters
 - `DoubleCountersOnControlledPermanentsEffect()` — STATIC replacement marker (Doubling Season): doubles any counter type put on a permanent its controller controls. Uses the shared typed counter replacement pipeline, so it covers +1/+1, -1/-1, loyalty, charge, proliferate, enters-with, and other counter placement paths. Multiple copies stack multiplicatively
 - `DoubleCountersOnAllPermanentsEffect()` — STATIC planar replacement marker (Selesnya Loft Gardens): doubles any counter type put on any permanent. Uses the shared typed counter replacement pipeline, including enters-with and proliferate counter placement
+- `DoublePlusOnePlusOneCountersOnAllCreaturesEffect()` — STATIC global replacement marker (Primal Vigor): doubles +1/+1 counters put on any creature, regardless of controller. Uses the shared typed counter replacement pipeline, including enters-with, proliferate, and token-entry counters
 - `DoubleCountersOnControlledCreaturesSpacecraftsAndPlanetsEffect()` — STATIC replacement marker (Loading Zone): doubles any counter type put on a creature, Spacecraft, or Planet its controller controls. Uses the shared typed counter replacement pipeline. Multiple copies stack multiplicatively
 - `AddOnePlusOneCountersToCreaturesAndVehiclesEffect()` — STATIC replacement marker (Caradora, Heart of Alacria): the same replacement as `AddOnePlusOneCountersEffect`, but also applies to noncreature Vehicles the controller controls
 - `AddOneCounterToArtifactOrCreatureEffect()` — STATIC replacement marker (Winding Constrictor): adds one of each counter type to counters put on an artifact or creature its controller controls. Uses the shared typed counter replacement pipeline
@@ -3159,6 +3160,7 @@ source card is no longer in the graveyard, the library card is not exiled and no
 
 - `AddTokenCreationEffect(int additionalTokens, CardSubtype affectedSubtype)` — static replacement that adds a fixed number of matching tokens to each applicable creation event (Xorn uses `(1, TREASURE)`)
 - `MultiplyTokenCreationEffect(int multiplier[, CardSubtype affectedSubtype])` — static replacement that multiplies matching token creation; omitting the subtype applies to every token type
+- `MultiplyTokenCreationEffect.forAllPlayers(multiplier)` applies the token multiplier to every player's token creation (Primal Vigor)
 
 - `CreateTokenCopyOfTargetPermanentEffect.tappedAttackingWithAttackTargetChoice(nonlegendary, exileAtEndOfCombat)` asks for each token's player or planeswalker attack target and supports Delina, Wild Mage's nonlegendary copies and end-of-combat exile.
 

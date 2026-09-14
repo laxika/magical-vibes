@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "7")
+@CardRegistration(set = "WOT", collectorNumber = "4")
+@CardRegistration(set = "WOT", collectorNumber = "64")
+@CardRegistration(set = "WOT", collectorNumber = "84")
 public class GreaterAuramancy extends Card {
 
     public GreaterAuramancy() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "27")
+@CardRegistration(set = "WOT", collectorNumber = "20")
 public class HatchingPlans extends Card {
 
     public HatchingPlans() {
