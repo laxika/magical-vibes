@@ -13,6 +13,9 @@ import java.util.List;
 @CardRegistration(set = "USG", collectorNumber = "218")
 @CardRegistration(set = "EMA", collectorNumber = "148")
 @CardRegistration(set = "2XM", collectorNumber = "145")
+@CardRegistration(set = "WOT", collectorNumber = "50")
+@CardRegistration(set = "WOT", collectorNumber = "79")
+@CardRegistration(set = "WOT", collectorNumber = "99")
 @CardRegistration(set = "DMR", collectorNumber = "139")
 public class SneakAttack extends Card {
 
