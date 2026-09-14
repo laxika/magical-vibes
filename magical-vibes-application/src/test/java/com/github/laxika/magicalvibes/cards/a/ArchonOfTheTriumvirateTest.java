@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -57,11 +57,10 @@ class ArchonOfTheTriumvirateTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackers(List.of(indexOf(player1, archon)));
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        // Decline the optional first slot by choosing yourself.
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player2, "Grizzly Bears");
@@ -85,9 +84,12 @@ class ArchonOfTheTriumvirateTest extends BaseCardTest {
     void cannotDetainOwnPermanent() {
         Permanent archon = addReadyArchon();
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackers(List.of(indexOf(player1, archon)));
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBear.getId()))
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(ownBear.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -101,18 +103,10 @@ class ArchonOfTheTriumvirateTest extends BaseCardTest {
 
     private void attackAndDetain(List<java.util.UUID> targetIds, Permanent archon) {
         declareAttackers(List.of(indexOf(player1, archon)));
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        for (java.util.UUID targetId : targetIds) {
-            harness.handlePermanentChosen(player1, targetId);
-        }
-        // "Up to N": decline remaining slots only while the picker is still open. If no more
-        // legal permanents remain, ETBTokenTargetService advances past the group automatically.
-        if (targetIds.size() < 2
-                && gd.interaction.permanentChoiceContext() instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
+        harness.handleMultiplePermanentsChosen(player1, targetIds);
         harness.passBothPriorities();
     }
 

@@ -112,6 +112,42 @@ class BoneshardSlasherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Boneshard Slasher");
     }
 
+    @Test
+    @DisplayName("Losing threshold after the sacrifice trigger fires does not stop the sacrifice")
+    void stillSacrificesAfterLosingThresholdInResponse() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 7);
+        harness.setHand(player2, List.of(new Accelerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, slasher.getId());
+        assertThat(gd.stack).hasSize(2);
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertInGraveyard(player1, "Boneshard Slasher");
+    }
+
+    @Test
+    @DisplayName("Gaining threshold after being targeted does not create a sacrifice trigger")
+    void gainingThresholdAfterBeingTargetedDoesNotTrigger() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 6);
+        harness.setHand(player2, List.of(new Accelerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, slasher.getId());
+        assertThat(gd.stack).hasSize(1);
+        fillGraveyard(player1, 7);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertNotInGraveyard(player1, "Boneshard Slasher");
+    }
+
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
