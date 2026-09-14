@@ -221,6 +221,8 @@ public class GameData {
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** The game's current day/night designation. */
     public DayNight dayNight = DayNight.NEITHER;
+    /** The player who currently is the monarch, or {@code null} when no player is monarch. */
+    public UUID monarchPlayerId;
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
@@ -910,6 +912,8 @@ public class GameData {
      *  When the source permanent leaves the battlefield, the exiled cards return.
      *  A source may hold more than one pending return (e.g. Realm Razer exiles all lands). */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
+    /** Exile returns keyed by the player whose opponent must become monarch. */
+    public final Map<UUID, List<PendingExileReturn>> exileReturnOnOpponentBecomesMonarch = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     /** Whole-turn chosen-source prevention entries that gain life for black or red damage prevented. */
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionLifeGainIds = new ConcurrentHashMap<>();
@@ -4208,6 +4212,11 @@ public class GameData {
         exileReturnOnPermanentLeave.computeIfAbsent(sourcePermanentId, k -> new ArrayList<>()).add(pending);
     }
 
+    /** Registers a pending exile return for the next monarch change to an opponent of {@code controllerId}. */
+    public void addExileReturnOnOpponentBecomesMonarch(UUID controllerId, PendingExileReturn pending) {
+        exileReturnOnOpponentBecomesMonarch.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(pending);
+    }
+
     /** Removes an exiled card by card ID. Returns true if found and removed. */
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
@@ -5048,6 +5057,7 @@ public class GameData {
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
+        copy.monarchPlayerId = this.monarchPlayerId;
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
@@ -5389,6 +5399,8 @@ public class GameData {
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
                 copy.exileReturnOnPermanentLeave.put(k, new ArrayList<>(v)));
+        this.exileReturnOnOpponentBecomesMonarch.forEach((k, v) ->
+                copy.exileReturnOnOpponentBecomesMonarch.put(k, new ArrayList<>(v)));
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) ->

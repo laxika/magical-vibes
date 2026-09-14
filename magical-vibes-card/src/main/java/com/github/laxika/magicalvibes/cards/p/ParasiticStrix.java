@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "32")
+@CardRegistration(set = "2XM", collectorNumber = "60")
 public class ParasiticStrix extends Card {
 
     public ParasiticStrix() {

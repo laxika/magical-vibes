@@ -2899,7 +2899,9 @@ public class StepTriggerService {
                 }
 
                 // "At the beginning of each opponent's draw step" — never triggers on the controller's own draw step.
-                if (effect instanceof OpponentDrawStepOnlyEffect && playerId.equals(activePlayerId)) {
+                if (effect instanceof OpponentDrawStepOnlyEffect opponentDrawStepOnly
+                        && opponentDrawStepOnly.opponentDrawStepOnly()
+                        && playerId.equals(activePlayerId)) {
                     continue;
                 }
 

@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "138")
 @CardRegistration(set = "MM3", collectorNumber = "163")
+@CardRegistration(set = "2XM", collectorNumber = "195")
 public class FalkenrathAristocrat extends Card {
 
     public FalkenrathAristocrat() {

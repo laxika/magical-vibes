@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEf
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "51")
+@CardRegistration(set = "TSR", collectorNumber = "95")
 public class VeilingOddity extends Card {
 
     public VeilingOddity() {

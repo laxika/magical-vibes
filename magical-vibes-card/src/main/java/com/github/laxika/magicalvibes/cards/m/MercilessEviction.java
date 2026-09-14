@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "177")
+@CardRegistration(set = "2XM", collectorNumber = "211")
 public class MercilessEviction extends Card {
 
     public MercilessEviction() {

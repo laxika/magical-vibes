@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "175")
+@CardRegistration(set = "TSR", collectorNumber = "182")
 public class Reiterate extends Card {
 
     public Reiterate() {

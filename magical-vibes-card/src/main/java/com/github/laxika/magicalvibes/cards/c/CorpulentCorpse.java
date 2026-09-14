@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "98")
+@CardRegistration(set = "TSR", collectorNumber = "104")
 public class CorpulentCorpse extends Card {
 
     public CorpulentCorpse() {

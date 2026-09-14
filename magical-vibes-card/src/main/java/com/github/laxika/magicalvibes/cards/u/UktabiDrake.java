@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "141")
+@CardRegistration(set = "TSR", collectorNumber = "243")
 public class UktabiDrake extends Card {
 
     public UktabiDrake() {

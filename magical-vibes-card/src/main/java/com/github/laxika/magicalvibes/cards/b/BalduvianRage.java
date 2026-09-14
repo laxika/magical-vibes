@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CSP", collectorNumber = "76")
+@CardRegistration(set = "2XM", collectorNumber = "115")
 public class BalduvianRage extends Card {
 
     public BalduvianRage() {

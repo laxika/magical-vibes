@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 @CardRegistration(set = "DVD", collectorNumber = "36")
 @CardRegistration(set = "MMA", collectorNumber = "98")
 @CardRegistration(set = "GK1", collectorNumber = "53")
+@CardRegistration(set = "TSR", collectorNumber = "332")
 public class StinkweedImp extends Card {
 
     public StinkweedImp() {

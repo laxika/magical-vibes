@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "157")
 @CardRegistration(set = "MM2", collectorNumber = "228")
+@CardRegistration(set = "2XM", collectorNumber = "287")
 public class Sickleslicer extends Card {
 
     public Sickleslicer() {

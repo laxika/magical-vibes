@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "12")
+@CardRegistration(set = "TSR", collectorNumber = "35")
 public class RebuffTheWicked extends Card {
 
     public RebuffTheWicked() {

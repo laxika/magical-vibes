@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "3")
+@CardRegistration(set = "2XM", collectorNumber = "3")
 public class AncestralBlade extends Card {
 
     public AncestralBlade() {

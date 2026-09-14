@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "PLC", collectorNumber = "123")
 @CardRegistration(set = "DD1", collectorNumber = "52")
 @CardRegistration(set = "EVG", collectorNumber = "52")
+@CardRegistration(set = "TSR", collectorNumber = "191")
 public class SkirkShaman extends Card {
 
     public SkirkShaman() {

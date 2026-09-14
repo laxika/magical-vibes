@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "160")
+@CardRegistration(set = "2XM", collectorNumber = "294")
 public class SurgeNode extends Card {
 
     public SurgeNode() {

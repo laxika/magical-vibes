@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "151")
+@CardRegistration(set = "2XM", collectorNumber = "154")
 public class Bloodbriar extends Card {
 
     public Bloodbriar() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInste
 @CardRegistration(set = "AKR", collectorNumber = "5")
 @CardRegistration(set = "FUT", collectorNumber = "18")
 @CardRegistration(set = "MP2", collectorNumber = "2")
+@CardRegistration(set = "TSR", collectorNumber = "5")
 public class AvenMindcensor extends Card {
 
     public AvenMindcensor() {
