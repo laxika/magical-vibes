@@ -919,12 +919,22 @@ public class GraveyardTargetingService {
                                                      StackEntryType entryType, int targetCount,
                                                      CardPredicate filter, String destination,
                                                      List<CardEffect> spellEffects, GraveyardSearchScope scope) {
+        handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, targetCount,
+                filter, destination, spellEffects, scope, null);
+    }
+
+    public void handleExactNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     StackEntryType entryType, int targetCount,
+                                                     CardPredicate filter, String destination,
+                                                     List<CardEffect> spellEffects, GraveyardSearchScope scope,
+                                                     List<UUID> eligibleBeforeCosts) {
         List<Card> matchingCards = new ArrayList<>();
         for (UUID graveyardOwner : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
             List<Card> graveyard = targetableGraveyard(gameData, graveyardOwner, controllerId);
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
-                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    if ((eligibleBeforeCosts == null || eligibleBeforeCosts.contains(graveyardCard.getId()))
+                            && predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                         matchingCards.add(graveyardCard);
                     }
                 }

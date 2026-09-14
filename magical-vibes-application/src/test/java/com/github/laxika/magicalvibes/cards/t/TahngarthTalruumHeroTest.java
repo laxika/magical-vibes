@@ -53,11 +53,12 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
     void sourceLeavingBeforeResolutionStillDealsDamage() {
         Permanent tahngarth = addReadyTahngarth(player1);
         Permanent target = addCreatureReady(player2, new CrawWurm());
+        target.setToughnessModifier(1); // Keep the four damage nonlethal so it can be inspected.
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(tahngarth);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(target.getMarkedDamage()).isEqualTo(4);

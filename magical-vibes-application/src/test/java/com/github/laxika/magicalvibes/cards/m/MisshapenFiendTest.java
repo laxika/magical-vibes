@@ -22,8 +22,7 @@ class MisshapenFiendTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new MisshapenFiend());
         Permanent blocker = addCreatureReady(player2, new GerrardsIrregulars());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -40,8 +39,7 @@ class MisshapenFiendTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new MisshapenFiend());
         Permanent attacker = addCreatureReady(player1, new MisshapenFiend());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

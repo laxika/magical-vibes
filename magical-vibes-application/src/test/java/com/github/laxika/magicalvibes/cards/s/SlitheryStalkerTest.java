@@ -61,6 +61,8 @@ class SlitheryStalkerTest extends BaseCardTest {
         UUID sourceId = harness.getPermanentId(player1, "Slithery Stalker");
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, sourceId);
+        harness.assertNotOnBattlefield(player2, "Seton's Scout");
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Seton's Scout");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

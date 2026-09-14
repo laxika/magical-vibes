@@ -41,8 +41,8 @@ class BalloonPeddlerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        assertThat(peddler.isTapped()).isTrue();
         harness.handleCardChosen(player1, 0);
+        assertThat(peddler.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();

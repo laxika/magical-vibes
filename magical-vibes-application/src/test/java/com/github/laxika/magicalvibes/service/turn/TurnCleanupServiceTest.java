@@ -51,6 +51,31 @@ import static org.mockito.Mockito.verify;
 class TurnCleanupServiceTest {
 
     @Test
+    void cleanupExpiresOnlyCombatSkipsLimitedToThisTurn() {
+        gd.skipNextCombatPhaseCount.put(player1Id, 3);
+        gd.skipCombatPhaseExpirationsThisTurn.put(player1Id, 2);
+        gd.skipNextCombatPhaseCount.put(player2Id, 1);
+        gd.skipCombatPhaseExpirationsThisTurn.put(player2Id, 1);
+
+        sut.applyCleanupResets(gd);
+
+        assertThat(gd.skipNextCombatPhaseCount).containsOnlyKeys(player1Id);
+        assertThat(gd.skipNextCombatPhaseCount.get(player1Id)).isEqualTo(1);
+        assertThat(gd.skipCombatPhaseExpirationsThisTurn).isEmpty();
+    }
+
+    @Test
+    void cleanupExpiresUnresolvedEndOfCombatDestruction() {
+        gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat(
+                UUID.randomUUID()));
+
+        sut.applyCleanupResets(gd);
+
+        assertThat(gd.getDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class)).isEmpty();
+    }
+
+    @Test
     void cleanupQueuesDelayedAbilityWithoutResolvingIt() {
         Card source = new Card();
         source.setName("Cleanup source");

@@ -507,6 +507,8 @@ public class GameData {
     public final Map<UUID, Integer> playerCombatDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
+    /** Subset of queued combat skips that expires during this turn's cleanup. */
+    public final Map<UUID, Integer> skipCombatPhaseExpirationsThisTurn = new ConcurrentHashMap<>();
     /** Players whose next turn has no combat phases, including additional combats. */
     public final Set<UUID> skipCombatPhasesNextTurn = ConcurrentHashMap.newKeySet();
     /** Rules restricting blockers of matching creatures controlled by the keyed player this turn. */
@@ -907,6 +909,7 @@ public class GameData {
     public int combatPhasesThisTurn;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
+    public final Deque<PendingInteraction.PermanentAuctionPlacement> pendingAuctionEntries = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public final RetetherOperationState retetherOperation = new RetetherOperationState();
     public final AuspiciousStarrixOperationState auspiciousStarrixOperation =
@@ -5702,6 +5705,7 @@ public class GameData {
         copy.extraTurnPowerUpAbilitiesDisabled.addAll(this.extraTurnPowerUpAbilitiesDisabled);
         copy.extraTurnDamageCantBePrevented.addAll(this.extraTurnDamageCantBePrevented);
         copy.extraTurnSequences.addAll(this.extraTurnSequences);
+        copy.pendingAuctionEntries.addAll(this.pendingAuctionEntries);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 
@@ -5930,6 +5934,7 @@ public class GameData {
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
         copy.lifeLostLastTurn.putAll(this.lifeLostLastTurn);
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
+        copy.skipCombatPhaseExpirationsThisTurn.putAll(this.skipCombatPhaseExpirationsThisTurn);
         copy.skipCombatPhasesNextTurn.addAll(this.skipCombatPhasesNextTurn);
         this.matchingCreatureBlockRestrictionsThisTurn.forEach((id, restrictions) ->
                 copy.matchingCreatureBlockRestrictionsThisTurn.put(id, new ArrayList<>(restrictions)));

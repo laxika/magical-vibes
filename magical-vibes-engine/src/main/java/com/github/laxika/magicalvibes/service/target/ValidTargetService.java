@@ -1275,6 +1275,15 @@ public class ValidTargetService {
                 || targetFilter instanceof PermanentPredicateTargetFilter;
     }
 
+    /** Uses the same targeting restrictions for a triggered ability's optional target choice. */
+    public boolean isValidTriggeredAbilityPermanentTarget(GameData gameData, Card sourceCard,
+                                                            List<CardEffect> effects, TargetFilter filter,
+                                                            Permanent target, UUID controllerId) {
+        ActivatedAbility targeting = new ActivatedAbility(false, null, effects, "", filter);
+        return isValidAbilityPermanentTarget(gameData, sourceCard, targeting, target, controllerId,
+                false, -1, filter);
+    }
+
     public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,
                                                              ActivatedAbility ability, Permanent perm,
                                                              UUID controllerId, int sourcePermanentIndex,
