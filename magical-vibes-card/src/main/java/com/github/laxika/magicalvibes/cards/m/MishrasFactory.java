@@ -28,6 +28,7 @@ import java.util.Set;
 @CardRegistration(set = "A25", collectorNumber = "242")
 @CardRegistration(set = "EMA", collectorNumber = "242")
 @CardRegistration(set = "2XM", collectorNumber = "323")
+@CardRegistration(set = "DMR", collectorNumber = "251")
 public class MishrasFactory extends Card {
 
     public MishrasFactory() {

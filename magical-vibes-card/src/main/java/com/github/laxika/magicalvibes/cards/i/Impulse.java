@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "BTD", collectorNumber = "10")
 @CardRegistration(set = "DDN", collectorNumber = "63")
 @CardRegistration(set = "V13", collectorNumber = "5")
+@CardRegistration(set = "DMR", collectorNumber = "56")
 public class Impulse extends Card {
 
     public Impulse() {

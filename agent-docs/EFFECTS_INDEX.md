@@ -1,4 +1,5 @@
 # EFFECTS_INDEX
+| `CopyThisSpellForControllerEffect` | `()` | copies the spell currently resolving onto the stack under that spell's controller, then offers that player the standard "choose new targets for the copy" prompt. Used by Sevinne's Reclamation. Honors `cantBeCopied` |
 | `FlipCoinForTriggeringSpellAndCounterOnLossEffect` | `()` | flips for the caster of the spell that caused the trigger and counters that spell if the caster loses; targets the triggering spell and emits the caster's coin-flip win/loss triggers. Used by Mirrored Depths |
 | `RevealTopCardOfTargetPlayerMayCastFreeEffect` | `()` | target player reveals the top card of their library; if it is a nonland card, the ability controller may cast it without paying its mana cost. Lands and declined cards remain on top. Used by Mirrored Depths |
 `RevealTopCardMayPlayFreeEffect` also accepts an optional `UUID libraryOwnerId` when its controller is casting from another player's library.

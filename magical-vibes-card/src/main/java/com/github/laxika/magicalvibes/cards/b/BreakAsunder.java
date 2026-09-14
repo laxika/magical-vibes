@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "113")
+@CardRegistration(set = "DMR", collectorNumber = "152")
 public class BreakAsunder extends Card {
 
     public BreakAsunder() {

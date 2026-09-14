@@ -1,4 +1,5 @@
 # EFFECTS_QUICK_REFERENCE
+- `CopyThisSpellForControllerEffect()` — copies the spell currently resolving for its controller and offers that player a "choose new targets for the copy" prompt; use with `ConditionalEffect` and `MayEffect` for Sevinne's Reclamation.
 - `ControllerHasAtLeastOpponents(minimum)` — condition true when the controller has at least that many opponents in the game; combine with `NotCondition` for multiplayer check lands such as Sea of Clouds.
 - `FlipCoinForTriggeringSpellAndCounterOnLossEffect()` - flip for the caster of the triggering spell; counter that spell if the caster loses (Mirrored Depths)
 - `RevealTopCardOfTargetPlayerMayCastFreeEffect()` - target player reveals their top card; the controller may cast it free if it is a nonland, while lands and declined cards remain on top (Mirrored Depths)

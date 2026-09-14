@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "IMA", collectorNumber = "88")
 @CardRegistration(set = "EMA", collectorNumber = "86")
 @CardRegistration(set = "STA", collectorNumber = "29")
+@CardRegistration(set = "DMR", collectorNumber = "81")
 public class Duress extends Card {
 
     public Duress() {

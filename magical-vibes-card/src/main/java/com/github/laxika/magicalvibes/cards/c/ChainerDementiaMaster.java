@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "56")
+@CardRegistration(set = "DMR", collectorNumber = "77")
 public class ChainerDementiaMaster extends Card {
 
     public ChainerDementiaMaster() {
