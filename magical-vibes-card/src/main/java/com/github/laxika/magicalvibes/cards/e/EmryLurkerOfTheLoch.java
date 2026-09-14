@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "43")
+@CardRegistration(set = "SLC", collectorNumber = "2019")
 public class EmryLurkerOfTheLoch extends Card {
 
     public EmryLurkerOfTheLoch() {

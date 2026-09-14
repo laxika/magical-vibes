@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "117")
 @CardRegistration(set = "VMA", collectorNumber = "212")
+@CardRegistration(set = "SLC", collectorNumber = "64")
 public class Genesis extends Card {
 
     public Genesis() {

@@ -1,5 +1,7 @@
 # EFFECTS_INDEX
 | `CopyThisSpellForControllerEffect` | `()` | copies the spell currently resolving onto the stack under that spell's controller, then offers that player the standard "choose new targets for the copy" prompt. Used by Sevinne's Reclamation. Honors `cantBeCopied` |
+| `CantAttackCardOwnerEffect` | `()` | static self restriction: this creature can't attack its card owner or planeswalkers that player controls; enforced by `AttackLegalityService`. Xantcha, Sleeper Agent |
+| `SourcePermanentControllerLosesLifeEffect` | `(int amount)` | activated-ability effect: the source permanent's current controller loses `amount`; uses the controller captured on activation as last-known information if the source leaves before resolution. Xantcha, Sleeper Agent |
 | `TargetPlayerSacrificesCreatureOrCreatesTokenEffect` | `(CreateTokenEffect tokenTemplate)` | non-targeting combat-damage trigger; the damaged player sacrifices a creature or the source controller creates the fallback token. Used by Wasitora, Nekoru Queen |
 | `PreserveCountersOnZoneChangeEffect` | `()` | static marker for cards whose counters remain through zone changes except into a hand or library; battlefield zone-transition support restores the retained counters |
 | `GoadTargetCreatureUntilNextTurnEffect` | `()` | targeted activated-ability effect: the target creature must attack each combat if able and attack a player other than the ability controller if able until that controller's next turn; the handler stores a single-permanent floating combat requirement keyed by `affectedPermanentId` |

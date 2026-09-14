@@ -26,7 +26,7 @@ class SevinnesReclamationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -41,7 +41,7 @@ class SevinnesReclamationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, elemental.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(elemental.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
