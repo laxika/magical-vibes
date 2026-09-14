@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "130")
 @CardRegistration(set = "DDU", collectorNumber = "50")
+@CardRegistration(set = "KLR", collectorNumber = "199")
 public class MaverickThopterist extends Card {
 
     public MaverickThopterist() {

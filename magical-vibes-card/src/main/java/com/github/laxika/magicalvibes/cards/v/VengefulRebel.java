@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "73")
+@CardRegistration(set = "KLR", collectorNumber = "109")
 public class VengefulRebel extends Card {
 
     public VengefulRebel() {

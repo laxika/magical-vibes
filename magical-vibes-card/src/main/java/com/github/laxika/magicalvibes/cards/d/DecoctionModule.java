@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "205")
+@CardRegistration(set = "KLR", collectorNumber = "232")
 public class DecoctionModule extends Card {
 
     public DecoctionModule() {

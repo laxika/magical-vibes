@@ -440,6 +440,7 @@ public class EtbTriggerService {
 
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
                                                int extraEtbTriggers, boolean faceDown) {
+        triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
         if (!faceDown) {

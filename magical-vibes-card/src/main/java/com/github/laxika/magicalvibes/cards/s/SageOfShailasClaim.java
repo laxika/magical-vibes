@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "168")
+@CardRegistration(set = "KLR", collectorNumber = "181")
 public class SageOfShailasClaim extends Card {
 
     public SageOfShailasClaim() {

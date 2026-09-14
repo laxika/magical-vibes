@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "8")
+@CardRegistration(set = "ANB", collectorNumber = "5")
 public class CharmedStray extends Card {
 
     public CharmedStray() {

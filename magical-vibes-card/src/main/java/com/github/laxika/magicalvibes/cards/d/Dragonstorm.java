@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "TSB", collectorNumber = "60")
 @CardRegistration(set = "SCG", collectorNumber = "90")
 @CardRegistration(set = "MMA", collectorNumber = "111")
+@CardRegistration(set = "HA5", collectorNumber = "13")
 public class Dragonstorm extends Card {
 
     public Dragonstorm() {

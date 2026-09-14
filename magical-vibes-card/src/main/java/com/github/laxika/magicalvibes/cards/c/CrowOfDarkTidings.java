@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "SOI", collectorNumber = "105")
 @CardRegistration(set = "FDN", collectorNumber = "519")
+@CardRegistration(set = "GN2", collectorNumber = "28")
 @CardRegistration(set = "UMA", collectorNumber = "90")
 public class CrowOfDarkTidings extends Card {
 

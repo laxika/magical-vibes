@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "60")
+@CardRegistration(set = "KLR", collectorNumber = "89")
 public class FourthBridgeProwler extends Card {
 
     public FourthBridgeProwler() {

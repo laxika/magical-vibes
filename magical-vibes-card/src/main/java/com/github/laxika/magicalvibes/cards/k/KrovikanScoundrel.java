@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "CSP", collectorNumber = "64")
+@CardRegistration(set = "ANB", collectorNumber = "50")
 public class KrovikanScoundrel extends Card {
 }

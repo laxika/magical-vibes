@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,14 +28,39 @@ class AlterRealityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
         Permanent target = findPermanent(player2, "Paladin en-Vec");
         assertThat(target.getTextReplacements()).containsExactly(new TextReplacement("red", "green"));
+    }
+
+    @Test
+    @DisplayName("Changes the color named by protection and lasts indefinitely")
+    void changesColorWordInProtectionAbilityIndefinitely() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        harness.setHand(player1, List.of(new AlterReality()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.GREEN)).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.GREEN)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.GREEN)).isTrue();
     }
 
     @Test
@@ -46,8 +73,7 @@ class AlterRealityTest extends BaseCardTest {
 
         harness.castCreature(player1, 1);
         UUID paladinSpellId = gd.stack.getFirst().getCard().getId();
-        harness.castInstant(player1, 0, paladinSpellId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, paladinSpellId);
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
@@ -66,8 +92,7 @@ class AlterRealityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "WHITE");

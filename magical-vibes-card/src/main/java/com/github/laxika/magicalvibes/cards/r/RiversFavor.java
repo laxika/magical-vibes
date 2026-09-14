@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OANA", collectorNumber = "19")
+@CardRegistration(set = "ANB", collectorNumber = "32")
 public class RiversFavor extends Card {
 
     public RiversFavor() {

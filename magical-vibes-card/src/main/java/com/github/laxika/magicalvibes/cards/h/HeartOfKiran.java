@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "153")
+@CardRegistration(set = "KLR", collectorNumber = "242")
 public class HeartOfKiran extends Card {
 
     public HeartOfKiran() {

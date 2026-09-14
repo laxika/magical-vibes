@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TaintedPeak;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,46 +14,67 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Petravark.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Petravark.class, TaintedPeak.class, PardicCollaborator.class})
 class PetravarkTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB exiles a target land until Petravark leaves the battlefield")
     void etbExilesTargetLand() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
 
-        castAndResolvePetravark(forest.getId());
+        castAndResolvePetravark(peak.getId());
 
-        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Forest"));
+                .anyMatch(card -> card.getName().equals("Tainted Peak"));
     }
 
     @Test
     @DisplayName("The exiled land returns under its owner's control when Petravark leaves")
     void exiledLandReturnsWhenPetravarkLeaves() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        castAndResolvePetravark(forest.getId());
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        castAndResolvePetravark(peak.getId());
         Permanent petravark = findPermanent(player1, "Petravark");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, petravark));
 
-        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Tainted Peak");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .noneMatch(card -> card.getName().equals("Forest"));
+                .noneMatch(card -> card.getName().equals("Tainted Peak"));
+    }
+
+    @Test
+    @DisplayName("The ETB trigger still exiles the land if Petravark leaves before it resolves")
+    void etbStillExilesLandAfterPetravarkLeaves() {
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+
+        harness.setHand(player1, List.of(new Petravark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, 0, peak.getId());
+        harness.passBothPriorities();
+
+        Permanent petravark = findPermanent(player1, "Petravark");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, petravark));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Tainted Peak"));
     }
 
     @Test
     @DisplayName("Petravark cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent collaborator = harness.addToBattlefieldAndReturn(player2, new PardicCollaborator());
 
         harness.setHand(player1, List.of(new Petravark()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, collaborator.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

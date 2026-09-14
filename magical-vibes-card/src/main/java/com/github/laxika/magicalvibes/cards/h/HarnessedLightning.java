@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyToDealDam
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "117")
+@CardRegistration(set = "KLR", collectorNumber = "127")
 public class HarnessedLightning extends Card {
 
     public HarnessedLightning() {

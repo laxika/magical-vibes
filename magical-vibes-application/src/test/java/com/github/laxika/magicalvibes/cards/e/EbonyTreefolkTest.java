@@ -28,6 +28,22 @@ class EbonyTreefolkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple activations give Ebony Treefolk a cumulative boost")
+    void activatedAbilityStacks() {
+        Permanent treefolk = addReadyTreefolk(player1);
+        addBlackGreenMana(player1);
+        addBlackGreenMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Ebony Treefolk's temporary boost wears off at end of turn")
     void activatedAbilityWearsOffAtEndOfTurn() {
         Permanent treefolk = addReadyTreefolk(player1);
@@ -44,9 +60,7 @@ class EbonyTreefolkTest extends BaseCardTest {
     }
 
     private Permanent addReadyTreefolk(Player player) {
-        Permanent permanent = new Permanent(new EbonyTreefolk());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        Permanent permanent = addCreatureReady(player, new EbonyTreefolk());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;

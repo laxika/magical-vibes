@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.c.CetaSanctuary;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,13 +12,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnaDisciple.class, GrizzlyBears.class, Plains.class})
+@CardUsed({AnaDisciple.class, AngelfireCrusader.class, CetaSanctuary.class})
 class AnaDiscipleTest extends BaseCardTest {
 
     @Test
     void givesTargetCreatureFlyingUntilEndOfTurn() {
-        addReadyDisciple();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AnaDisciple());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelfireCrusader());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -36,8 +35,8 @@ class AnaDiscipleTest extends BaseCardTest {
 
     @Test
     void weakensTargetCreatureUntilEndOfTurn() {
-        addReadyDisciple();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AnaDisciple());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelfireCrusader());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -56,17 +55,11 @@ class AnaDiscipleTest extends BaseCardTest {
 
     @Test
     void abilitiesCannotTargetNoncreaturePermanent() {
-        addReadyDisciple();
-        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        addCreatureReady(player1, new AnaDisciple());
+        Permanent sanctuary = harness.addToBattlefieldAndReturn(player2, new CetaSanctuary());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, plains.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, sanctuary.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReadyDisciple() {
-        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new AnaDisciple());
-        disciple.setSummoningSick(false);
-        return disciple;
     }
 }

@@ -47,6 +47,39 @@ class GravegougerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB can exile only one card when the single graveyard has one card")
+    void etbCanExileOnlyOneAvailableCard() {
+        Card onlyCard = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(onlyCard));
+        castGravegouger();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.maxCount()).isEqualTo(1);
+
+        harness.handleMultipleCardsChosen(player1, List.of(onlyCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    @DisplayName("ETB may choose no cards")
+    void etbMayChooseNoCards() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(first, second));
+        castGravegouger();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("The ETB cards must be chosen from a single graveyard")
     void etbCardsMustShareGraveyard() {
         Card ownCard = new GrizzlyBears();
