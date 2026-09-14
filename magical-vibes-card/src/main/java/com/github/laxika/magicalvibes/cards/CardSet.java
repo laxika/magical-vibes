@@ -93,6 +93,7 @@ public enum CardSet {
     SET_RAV("RAV"),
     SET_ISD("ISD"),
     SET_SOI("SOI"),
+    SET_SIR("SIR"),
     SET_SIS("SIS"),
     SET_MID("MID"),
     SET_VOW("VOW"),

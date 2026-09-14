@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "191")
+@CardRegistration(set = "SIR", collectorNumber = "246")
 public class UlrichOfTheKrallenhorde extends Card {
 
     public UlrichOfTheKrallenhorde() {

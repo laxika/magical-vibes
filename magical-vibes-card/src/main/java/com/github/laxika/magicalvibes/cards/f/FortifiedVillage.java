@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "274")
+@CardRegistration(set = "SIR", collectorNumber = "267")
 public class FortifiedVillage extends Card {
 
     public FortifiedVillage() {

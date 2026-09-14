@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "77")
+@CardRegistration(set = "SIR", collectorNumber = "94")
 public class TatteredHaunter extends Card {
 
     public TatteredHaunter() {
