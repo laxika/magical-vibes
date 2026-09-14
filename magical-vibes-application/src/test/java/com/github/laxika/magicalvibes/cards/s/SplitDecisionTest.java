@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +21,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({SplitDecision.class, Divination.class, Forest.class, GrizzlyBears.class})
 class SplitDecisionTest extends BaseCardTest {
 
+    @BeforeEach
+    void setUpCastingTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+    }
+
     @Test
     void denialMajorityCountersTargetSpell() {
         harness.setHand(player2, List.of(new Divination()));
@@ -26,6 +34,7 @@ class SplitDecisionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castSorcery(player2, 0);
         UUID targetId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new SplitDecision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -55,6 +64,7 @@ class SplitDecisionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castSorcery(player2, 0);
         UUID targetId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new SplitDecision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -72,9 +82,11 @@ class SplitDecisionTest extends BaseCardTest {
     @Test
     void cannotTargetPermanentSpell() {
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castCreature(player2, 0);
         UUID permanentSpellId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new SplitDecision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
