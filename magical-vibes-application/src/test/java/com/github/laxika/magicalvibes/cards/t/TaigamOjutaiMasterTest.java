@@ -39,11 +39,13 @@ class TaigamOjutaiMasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Divination");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         harness.assertInGraveyard(player2, "Cancel");
 
         DragonHatchling dragon = new DragonHatchling();
         harness.setHand(player1, List.of(dragon));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player2, List.of(new Cancel()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -51,9 +53,9 @@ class TaigamOjutaiMasterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, dragon.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        harness.assertInGraveyard(player1, "Dragon Hatchling");
+        harness.assertOnBattlefield(player1, "Dragon Hatchling");
         harness.assertInGraveyard(player2, "Cancel");
     }
 

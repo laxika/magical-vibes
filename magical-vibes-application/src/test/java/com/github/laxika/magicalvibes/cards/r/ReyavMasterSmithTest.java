@@ -33,6 +33,7 @@ class ReyavMasterSmithTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1, 2, 3));
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, enchanted, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, equipped, Keyword.DOUBLE_STRIKE)).isTrue();

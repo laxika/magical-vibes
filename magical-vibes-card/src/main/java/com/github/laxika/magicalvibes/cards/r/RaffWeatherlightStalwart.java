@@ -40,7 +40,7 @@ public class RaffWeatherlightStalwart extends Card {
                 "{3}{W}{W}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "{3}{W}{W}: Creatures you control get +1/+1 and gain vigilance until end of turn."
         ));

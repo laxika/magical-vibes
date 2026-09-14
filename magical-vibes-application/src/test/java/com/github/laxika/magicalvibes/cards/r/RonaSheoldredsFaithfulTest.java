@@ -33,7 +33,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
@@ -55,7 +55,8 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(rona));
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Shock()));
+        var discardedCards = List.of(new GrizzlyBears(), new Shock());
+        harness.setHand(player1, discardedCards);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -65,7 +66,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(discardedCards);
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard() == rona);
     }
