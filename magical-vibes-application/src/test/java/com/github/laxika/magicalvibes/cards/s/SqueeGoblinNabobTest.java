@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,9 +10,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SqueeGoblinNabob.class, ShockTroops.class})
 class SqueeGoblinNabobTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Triggers during its owner's upkeep while in graveyard")
@@ -67,6 +67,23 @@ class SqueeGoblinNabobTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(squee.getId()));
+    }
+
+    @Test
+    @DisplayName("Returns Squee but not another card in the graveyard")
+    void returnsOnlySqueeFromGraveyard() {
+        SqueeGoblinNabob squee = new SqueeGoblinNabob();
+        ShockTroops otherCard = new ShockTroops();
+        harness.setGraveyard(player1, List.of(squee, otherCard));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(squee.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCard);
     }
 }
 

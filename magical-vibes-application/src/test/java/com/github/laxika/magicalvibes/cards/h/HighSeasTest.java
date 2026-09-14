@@ -1,53 +1,71 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
-import com.github.laxika.magicalvibes.cards.g.GoblinAssailant;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.r.RockBadger;
+import com.github.laxika.magicalvibes.cards.r.RushwoodDryad;
+import com.github.laxika.magicalvibes.cards.s.Sizzle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HighSeas.class, RockBadger.class, RushwoodDryad.class, CloudSprite.class, Sizzle.class})
 class HighSeasTest extends BaseCardTest {
 
     @Test
     @DisplayName("Red creature spells cost {1} more")
     void redCreatureSpellsCostMore() {
         harness.addToBattlefield(player1, new HighSeas());
-        harness.setHand(player1, List.of(new GoblinAssailant()));
-        harness.addMana(player1, ManaColor.RED, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new RockBadger(), "{4}{R}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Red creature spells are castable with the additional generic mana")
+    void redCreatureSpellsAreCastableWithAdditionalMana() {
+        harness.addToBattlefield(player1, new HighSeas());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player1, new RockBadger(), "{4}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
     @DisplayName("Green creature spells cost {1} more")
     void greenCreatureSpellsCostMore() {
         harness.addToBattlefield(player1, new HighSeas());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new RushwoodDryad(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Green creature spells are castable with the additional generic mana")
+    void greenCreatureSpellsAreCastableWithAdditionalMana() {
+        harness.addToBattlefield(player1, new HighSeas());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player1, new RushwoodDryad(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
     @DisplayName("Non-red and non-green creature spells are not affected")
     void otherColoredCreatureSpellsAreNotAffected() {
         harness.addToBattlefield(player1, new HighSeas());
-        harness.setHand(player1, List.of(new CoralMerfolk()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CloudSprite(), "{U}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -57,10 +75,8 @@ class HighSeasTest extends BaseCardTest {
     @DisplayName("Red noncreature spells are not affected")
     void redNoncreatureSpellsAreNotAffected() {
         harness.addToBattlefield(player1, new HighSeas());
-        harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castFromHand(player1, new Sizzle(), "{2}{R}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -71,13 +87,22 @@ class HighSeasTest extends BaseCardTest {
     void costIncreaseAppliesToOpponents() {
         harness.addToBattlefield(player1, new HighSeas());
         harness.forceActivePlayer(player2);
-        harness.forceStep(gd.currentStep);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GoblinAssailant()));
-        harness.addMana(player2, ManaColor.RED, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new RockBadger(), "{4}{R}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Multiple High Seas effects increase matching costs cumulatively")
+    void multipleHighSeasEffectsStack() {
+        harness.addToBattlefield(player1, new HighSeas());
+        harness.addToBattlefield(player1, new HighSeas());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromHand(player1, new RockBadger(), "{4}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

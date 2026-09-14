@@ -1,29 +1,29 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KyrenGlider.class, FreshVolunteers.class, CloudSprite.class})
 class KyrenGliderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Kyren Glider cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent glider = new Permanent(new KyrenGlider());
-        glider.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(glider);
+        addCreatureReady(player2, new KyrenGlider());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         prepareDeclareBlockers(player1);
 
@@ -36,7 +36,7 @@ class KyrenGliderTest extends BaseCardTest {
     @DisplayName("Kyren Glider's flying prevents a ground creature from blocking it")
     void flyingPreventsGroundCreatureFromBlocking() {
         addCreatureReady(player1, new KyrenGlider());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new FreshVolunteers());
 
         declareAttackers(player1, List.of(0));
         prepareDeclareBlockers(player1);
@@ -44,5 +44,19 @@ class KyrenGliderTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot block");
+    }
+
+    @Test
+    @DisplayName("Kyren Glider can be blocked by a creature with flying")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new KyrenGlider());
+        Permanent blocker = addCreatureReady(player2, new CloudSprite());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

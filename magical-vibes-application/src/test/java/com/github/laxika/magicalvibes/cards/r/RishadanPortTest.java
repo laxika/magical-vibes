@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RishadanPort.class, Forest.class, SteadfastGuard.class})
 class RishadanPortTest extends BaseCardTest {
 
     @Test
@@ -36,16 +38,46 @@ class RishadanPortTest extends BaseCardTest {
 
         assertThat(forest.isTapped()).isTrue();
         assertThat(port.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target its controller's land")
+    void tapsOwnLand() {
+        Permanent port = harness.addToBattlefieldAndReturn(player1, new RishadanPort());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(port.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an already tapped land")
+    void canTargetAlreadyTappedLand() {
+        Permanent port = harness.addToBattlefieldAndReturn(player1, new RishadanPort());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(port.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
         harness.addToBattlefield(player1, new RishadanPort());
-        Permanent elf = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SteadfastGuard());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, elf.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }

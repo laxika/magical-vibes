@@ -2,20 +2,20 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(RushwoodElemental.class)
 class RushwoodElementalTest extends BaseCardTest {
 
     @Test
     void acceptingUpkeepTriggerPutsCounterOnItself() {
-        Permanent elemental = addElemental(player1);
+        Permanent elemental = addCreatureReady(player1, new RushwoodElemental());
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -25,26 +25,22 @@ class RushwoodElementalTest extends BaseCardTest {
 
     @Test
     void decliningUpkeepTriggerDoesNotPutCounterOnItself() {
-        Permanent elemental = addElemental(player1);
+        Permanent elemental = addCreatureReady(player1, new RushwoodElemental());
 
-        triggerUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Permanent addElemental(Player player) {
-        Permanent perm = new Permanent(new RushwoodElemental());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent elemental = addCreatureReady(player1, new RushwoodElemental());
 
-    private void triggerUpkeep(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

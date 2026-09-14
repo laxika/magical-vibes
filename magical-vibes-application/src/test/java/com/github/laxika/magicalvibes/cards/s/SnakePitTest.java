@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SnakePit.class, GrizzlyBears.class, Unsummon.class, DarkRitual.class})
 class SnakePitTest extends BaseCardTest {
 
     private void setUpOpponentTurn() {
@@ -71,6 +73,21 @@ class SnakePitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.castCreature(player2, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(countPermanents(player1, "Snake")).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller's blue spell does not trigger Snake Pit")
+    void controllerBlueSpellDoesNotTrigger() {
+        setUpOpponentTurn();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

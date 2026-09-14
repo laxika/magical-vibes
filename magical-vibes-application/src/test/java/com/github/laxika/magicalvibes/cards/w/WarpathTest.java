@@ -1,36 +1,32 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CrenellatedWall;
+import com.github.laxika.magicalvibes.cards.i.IronLance;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Warpath.class, CrenellatedWall.class, IronLance.class})
 class WarpathTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 3 damage to each blocked creature and each blocking creature")
     void damagesBlockedAndBlockingCreatures() {
-        Permanent blocked = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        blocked.setSummoningSick(false);
+        Permanent blocked = addCreatureReady(player1, new CrenellatedWall());
         blocked.setAttacking(true);
 
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new CrenellatedWall());
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(blocked.getId());
 
-        Permanent unblocked = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        unblocked.setSummoningSick(false);
+        Permanent unblocked = addCreatureReady(player1, new CrenellatedWall());
         unblocked.setAttacking(true);
 
-        Permanent idle = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        idle.setSummoningSick(false);
+        Permanent idle = addCreatureReady(player2, new CrenellatedWall());
 
         castWarpath();
 
@@ -41,10 +37,20 @@ class WarpathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not damage noncreature permanents")
+    void doesNotDamageNoncreaturePermanents() {
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new IronLance());
+        noncreature.setBlocking(true);
+
+        castWarpath();
+
+        assertThat(noncreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Deals no damage when there are no blocked or blocking creatures")
     void doesNotDamageCreaturesOutsideCombat() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player1, new CrenellatedWall());
 
         castWarpath();
 
@@ -52,10 +58,7 @@ class WarpathTest extends BaseCardTest {
     }
 
     private void castWarpath() {
-        harness.setHand(player1, List.of(new Warpath()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Warpath(), "{3}{R}");
         harness.passBothPriorities();
     }
 }

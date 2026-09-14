@@ -5,22 +5,19 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Squall.class, SuntailHawk.class, AirElemental.class, GrizzlyBears.class, GiantSpider.class})
 class SquallTest extends BaseCardTest {
 
     private void castSquall() {
-        harness.setHand(player1, List.of(new Squall()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Squall(), "{2}{G}");
         harness.passBothPriorities();
     }
 
@@ -43,6 +40,18 @@ class SquallTest extends BaseCardTest {
 
         Permanent flyer = findPermanent(player2, "Air Elemental");
         assertThat(flyer.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Squall damages flying creatures controlled by either player")
+    void damagesFlyingCreaturesControlledByBothPlayers() {
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player2, new AirElemental());
+
+        castSquall();
+
+        assertThat(findPermanent(player1, "Air Elemental").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

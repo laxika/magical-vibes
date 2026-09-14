@@ -10,18 +10,20 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrossbowInfantry.class, FugitiveWizard.class, GrizzlyBears.class})
 class CrossbowInfantryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability taps the infantry and puts it on the stack")
     void activatingPutsOnStack() {
-        Permanent infantry = addInfantryReady(player1);
+        Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
         Permanent attacker = addAttackingCreature(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
@@ -37,7 +39,7 @@ class CrossbowInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage — a 2-toughness attacker survives")
     void dealsOneDamageTargetSurvives() {
-        addInfantryReady(player1);
+        addCreatureReady(player1, new CrossbowInfantry());
         Permanent attacker = addAttackingCreature(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
@@ -53,11 +55,9 @@ class CrossbowInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("1 damage destroys a 1-toughness blocking creature")
     void destroysOneToughnessTarget() {
-        addInfantryReady(player1);
-        Permanent blocker = new Permanent(new FugitiveWizard());
-        blocker.setSummoningSick(false);
+        addCreatureReady(player1, new CrossbowInfantry());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
         blocker.setBlocking(true);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
@@ -70,12 +70,26 @@ class CrossbowInfantryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttackingBeforeResolution() {
+        addCreatureReady(player1, new CrossbowInfantry());
+        Permanent attacker = addAttackingCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        addInfantryReady(player1);
-        Permanent bystander = new Permanent(new GrizzlyBears());
-        bystander.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bystander);
+        addCreatureReady(player1, new CrossbowInfantry());
+        Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bystander.getId()))
@@ -83,18 +97,9 @@ class CrossbowInfantryTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking");
     }
 
-    private Permanent addInfantryReady(Player player) {
-        Permanent infantry = new Permanent(new CrossbowInfantry());
-        infantry.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(infantry);
-        return infantry;
-    }
-
     private Permanent addAttackingCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player, new GrizzlyBears());
         creature.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }

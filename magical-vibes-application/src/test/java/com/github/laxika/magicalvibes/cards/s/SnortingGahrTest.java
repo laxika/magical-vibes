@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SnortingGahr.class, FreshVolunteers.class})
 class SnortingGahrTest extends BaseCardTest {
 
     @Test
@@ -20,10 +22,28 @@ class SnortingGahrTest extends BaseCardTest {
     void becomesBlockedGetsBoost() {
         Permanent gahr = addReadyGahr(player1);
         gahr.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new FreshVolunteers());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gahr.getPowerModifier()).isEqualTo(2);
+        assertThat(gahr.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple blockers still cause only one +2/+2 trigger")
+    void becomesBlockedByMultipleCreaturesGetsOneBoost() {
+        Permanent gahr = addReadyGahr(player1);
+        gahr.setAttacking(true);
+        addCreatureReady(player2, new FreshVolunteers());
+        addCreatureReady(player2, new FreshVolunteers());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
         assertThat(gahr.getPowerModifier()).isEqualTo(2);
@@ -48,7 +68,7 @@ class SnortingGahrTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent gahr = addReadyGahr(player1);
         gahr.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new FreshVolunteers());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -63,9 +83,6 @@ class SnortingGahrTest extends BaseCardTest {
     }
 
     private Permanent addReadyGahr(Player player) {
-        Permanent permanent = new Permanent(new SnortingGahr());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new SnortingGahr());
     }
 }
