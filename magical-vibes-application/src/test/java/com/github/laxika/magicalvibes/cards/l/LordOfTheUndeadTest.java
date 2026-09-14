@@ -1,8 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GravebornMuse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -13,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LordOfTheUndead.class, Gravedigger.class, GravebornMuse.class, GrizzlyBears.class, HolyDay.class})
 class LordOfTheUndeadTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -207,9 +206,10 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void activatingPutsOnStack() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -222,11 +222,12 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void activatingTapsLord() {
         Permanent lord = addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
         assertThat(lord.isTapped()).isFalse();
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
         assertThat(lord.isTapped()).isTrue();
     }
@@ -236,9 +237,10 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void manaIsConsumedWhenActivating() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
         // {1}{B} cost → 2 mana consumed, 2 remaining
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
@@ -252,17 +254,15 @@ class LordOfTheUndeadTest extends BaseCardTest {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setHand(player1, List.of());
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Gravedigger");
         harness.assertNotInGraveyard(player1, "Gravedigger");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -271,94 +271,93 @@ class LordOfTheUndeadTest extends BaseCardTest {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setHand(player1, List.of());
-        harness.setGraveyard(player1, List.of(new Gravedigger(), new GravebornMuse()));
+        Gravedigger gravedigger = new Gravedigger();
+        GravebornMuse target = new GravebornMuse();
+        harness.setGraveyard(player1, List.of(gravedigger, target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
-
-        // Choose Graveborn Muse (index 1)
-        harness.handleGraveyardCardChosen(player1, 1);
 
         harness.assertInHand(player1, "Graveborn Muse");
         harness.assertInGraveyard(player1, "Gravedigger");
         harness.assertNotInGraveyard(player1, "Graveborn Muse");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
-    @DisplayName("Player can decline graveyard choice")
-    void playerCanDeclineGraveyardChoice() {
-        addReadyLord(player1);
+    @DisplayName("A Zombie card target is required when activating the ability")
+    void requiresTargetWhenActivating() {
+        Permanent lord = addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger zombie = new Gravedigger();
+        harness.setGraveyard(player1, List.of(zombie));
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        harness.handleGraveyardCardChosen(player1, -1);
-
-        harness.assertInGraveyard(player1, "Gravedigger");
-        harness.assertNotInHand(player1, "Gravedigger");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Ability requires a target");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(lord.isTapped()).isFalse();
     }
 
     // ===== Activated ability: edge cases =====
 
     @Test
-    @DisplayName("No effect when graveyard is empty")
-    void noEffectWithEmptyGraveyard() {
-        addReadyLord(player1);
+    @DisplayName("The ability cannot be activated without a graveyard card")
+    void cannotActivateWithEmptyGraveyard() {
+        Permanent lord = addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Ability requires a target");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(lord.isTapped()).isFalse();
     }
 
     @Test
-    @DisplayName("No effect when graveyard has no Zombie cards")
-    void noEffectWithNoZombiesInGraveyard() {
-        addReadyLord(player1);
+    @DisplayName("A non-Zombie graveyard card cannot satisfy the target")
+    void cannotActivateWithNoZombieInGraveyard() {
+        Permanent lord = addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(bears.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(lord.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Only Zombie cards are selectable when graveyard has mixed cards")
-    void cannotChooseNonZombieFromGraveyard() {
+    void cannotTargetNonZombieFromGraveyard() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        // Index 0 = GrizzlyBears (not a Zombie), Index 1 = Gravedigger (Zombie)
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Gravedigger()));
+        GrizzlyBears bears = new GrizzlyBears();
+        Gravedigger zombie = new Gravedigger();
+        harness.setGraveyard(player1, List.of(bears, zombie));
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        // Trying to choose index 0 (Grizzly Bears) should fail
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(bears.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Non-creature Zombie cards are not in graveyard so only creatures qualify")
-    void nonCreatureCardsNotSelectable() {
+    @DisplayName("Non-Zombie cards are not selectable as targets")
+    void nonZombieCardsNotSelectable() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new HolyDay()));
+        HolyDay holyDay = new HolyDay();
+        harness.setGraveyard(player1, List.of(holyDay));
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(holyDay.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Activated ability: validation =====
@@ -368,8 +367,11 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -380,8 +382,11 @@ class LordOfTheUndeadTest extends BaseCardTest {
         Permanent lord = addReadyLord(player1);
         lord.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
@@ -395,25 +400,62 @@ class LordOfTheUndeadTest extends BaseCardTest {
         lord.setSummoningSick(true);
         gd.playerBattlefields.get(player1.getId()).add(lord);
         harness.addMana(player1, ManaColor.BLACK, 2);
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
     }
 
     @Test
-    @DisplayName("Opponent cannot make graveyard choice for controller")
-    void opponentCannotChoose() {
+    @DisplayName("The graveyard target is locked in when the ability is activated")
+    void targetIsSelectedAtActivation() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger target = new Gravedigger();
+        GravebornMuse otherZombie = new GravebornMuse();
+        harness.setGraveyard(player1, List.of(target, otherZombie));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherZombie, target));
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not your turn to choose");
+        harness.assertInHand(player1, "Gravedigger");
+        harness.assertInGraveyard(player1, "Graveborn Muse");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability cannot target a Zombie in an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        addReadyLord(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Gravedigger");
+    }
+
+    @Test
+    @DisplayName("The ability does not return a Zombie that left the graveyard before resolution")
+    void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
+        addReadyLord(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Gravedigger");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Lord remains on battlefield =====
@@ -423,11 +465,11 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void remainsOnBattlefieldAfterResolution() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.setGraveyard(player1, List.of(new Gravedigger()));
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Lord of the Undead");
@@ -436,11 +478,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyLord(Player player) {
-        LordOfTheUndead card = new LordOfTheUndead();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LordOfTheUndead());
     }
 }
 

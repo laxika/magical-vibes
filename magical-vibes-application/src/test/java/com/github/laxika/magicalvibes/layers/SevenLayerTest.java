@@ -673,6 +673,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A text change does not change a color chosen as the permanent entered")
+        @CardUsed({MindBend.class, VoiceOfAll.class})
         void textChangeDoesNotUpdateChosenColor() {
             Permanent voice = addReady(player2, new VoiceOfAll());
             voice.setChosenColor(CardColor.BLACK);
