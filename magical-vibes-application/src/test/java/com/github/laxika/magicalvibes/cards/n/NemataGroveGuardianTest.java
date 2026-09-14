@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MagnigothTreefolk;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NemataGroveGuardian.class, MagnigothTreefolk.class, Xenograft.class})
 class NemataGroveGuardianTest extends BaseCardTest {
 
     @Test
@@ -43,7 +46,7 @@ class NemataGroveGuardianTest extends BaseCardTest {
         Permanent sacrificed = addCreatureReady(player1, createSaprolingToken());
         Permanent survivingOwnSaproling = addCreatureReady(player1, createSaprolingToken());
         Permanent opposingSaproling = addCreatureReady(player2, createSaprolingToken());
-        Permanent nonSaproling = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonSaproling = addCreatureReady(player1, new MagnigothTreefolk());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handlePermanentChosen(player1, sacrificed.getId());
@@ -54,7 +57,7 @@ class NemataGroveGuardianTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opposingSaproling)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opposingSaproling)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, nonSaproling)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, nonSaproling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonSaproling)).isEqualTo(6);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(sacrificed.getId()));
     }
@@ -80,11 +83,27 @@ class NemataGroveGuardianTest extends BaseCardTest {
     @DisplayName("Cannot sacrifice a non-Saproling creature")
     void cannotActivateWithoutSaproling() {
         addCreatureReady(player1, new NemataGroveGuardian());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new MagnigothTreefolk());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permanent to sacrifice matching");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice itself if it is also a Saproling")
+    void canSacrificeSourceIfItIsASaproling() {
+        Permanent xenograft = harness.addToBattlefieldAndReturn(player1, new Xenograft());
+        xenograft.setChosenSubtype(CardSubtype.SAPROLING);
+        Permanent source = addCreatureReady(player1, new NemataGroveGuardian());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, source)).contains(CardSubtype.SAPROLING);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(source.getId()));
     }
 
     private Card createSaprolingToken() {

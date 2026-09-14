@@ -58,6 +58,8 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Effective colors of declared targets just before they left the battlefield. */
+    private final Map<UUID, Set<CardColor>> lastKnownTargetColors = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
     private final Map<UUID, UUID> removedPermanentControllers = new HashMap<>();
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
@@ -652,6 +654,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.lastKnownTargetColors.putAll(source.lastKnownTargetColors);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;

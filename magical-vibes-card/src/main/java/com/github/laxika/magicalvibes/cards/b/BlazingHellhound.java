@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "210")
+@CardRegistration(set = "2X2", collectorNumber = "183")
 public class BlazingHellhound extends Card {
 
     public BlazingHellhound() {

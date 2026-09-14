@@ -394,6 +394,7 @@ public class PermanentRemovalService {
      * @param controllerId the player who controlled the permanent on the battlefield
      */
     public void processAlreadyRemovedToGraveyard(GameData gameData, Permanent target, UUID controllerId) {
+        ZoneChangeCounterSupport.preserve(gameData, target);
         snapshotChosenPermanentStats(gameData, target,
                 gameQueryService.getEffectivePower(gameData, target),
                 gameQueryService.getEffectiveToughness(gameData, target));
@@ -885,6 +886,8 @@ public class PermanentRemovalService {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
+                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -901,6 +904,8 @@ public class PermanentRemovalService {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
+                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -1264,6 +1269,12 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                for (StackEntry entry : gameData.stack) {
+                    if (entry.getDeclaredTargetIds().contains(target.getId())) {
+                        entry.getLastKnownTargetColors().put(target.getId(),
+                                Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
+                    }
+                }
                 snapshotBeheldPower(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
@@ -1289,6 +1300,7 @@ public class PermanentRemovalService {
                     }
                 }
                 battlefield.remove(target);
+                ZoneChangeCounterSupport.preserve(gameData, target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand));
             }

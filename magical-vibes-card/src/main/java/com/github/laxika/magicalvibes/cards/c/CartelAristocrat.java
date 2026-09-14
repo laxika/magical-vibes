@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "150")
+@CardRegistration(set = "2X2", collectorNumber = "191")
 public class CartelAristocrat extends Card {
 
     public CartelAristocrat() {

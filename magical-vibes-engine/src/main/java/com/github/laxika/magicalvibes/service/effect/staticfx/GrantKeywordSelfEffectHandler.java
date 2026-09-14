@@ -35,6 +35,7 @@ public class GrantKeywordSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
+        if (grant.scope() == GrantScope.OWN_PERMANENTS) return;
         if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                 || support.matchesCreatureScope(context, grant.scope(), grant.filter()))
                 && support.matchesStaticFilter(context, context.target(), grant.filter())) {

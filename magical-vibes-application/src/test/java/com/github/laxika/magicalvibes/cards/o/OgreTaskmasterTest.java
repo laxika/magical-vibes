@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OgreTaskmaster.class, BearCub.class})
+@CardUsed({OgreTaskmaster.class, SteadfastGuard.class})
 class OgreTaskmasterTest extends BaseCardTest {
 
     @Test
@@ -21,9 +21,8 @@ class OgreTaskmasterTest extends BaseCardTest {
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new OgreTaskmaster());
 
-        Permanent attacker = addCreatureReady(player1, new BearCub());
-        attacker.setAttacking(true);
-
+        addCreatureReady(player1, new SteadfastGuard());
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -34,10 +33,10 @@ class OgreTaskmasterTest extends BaseCardTest {
     @Test
     @DisplayName("Ogre Taskmaster can be blocked while attacking")
     void canBeBlockedWhileAttacking() {
-        Permanent taskmaster = addCreatureReady(player1, new OgreTaskmaster());
-        taskmaster.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new BearCub());
+        addCreatureReady(player1, new OgreTaskmaster());
+        Permanent blocker = addCreatureReady(player2, new SteadfastGuard());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

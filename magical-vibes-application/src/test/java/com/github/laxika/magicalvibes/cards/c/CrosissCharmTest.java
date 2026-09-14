@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrosissCharm.class, Forest.class, GrizzlyBears.class, MassOfGhouls.class, Ornithopter.class})
 class CrosissCharmTest extends BaseCardTest {
 
     @Test
@@ -21,6 +24,15 @@ class CrosissCharmTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void returnsTargetLandToItsOwnersHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        cast(0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInHand(player2, "Forest");
     }
 
     @Test
@@ -38,7 +50,7 @@ class CrosissCharmTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
         setUpSpell();
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, target.getId()))
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -51,9 +63,18 @@ class CrosissCharmTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ornithopter");
     }
 
+    @Test
+    void cannotTargetNonArtifactPermanentWithArtifactMode() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        setUpSpell();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 2, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void cast(int mode, java.util.UUID targetId) {
         setUpSpell();
-        harness.castInstant(player1, 0, mode, targetId);
+        harness.castModalInstant(player1, 0, mode, List.of(targetId));
         harness.passBothPriorities();
     }
 

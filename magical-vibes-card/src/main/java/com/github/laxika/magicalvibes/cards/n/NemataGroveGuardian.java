@@ -36,7 +36,7 @@ public class NemataGroveGuardian extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
                                 )),
-                                "Sacrifice a Saproling"
+                                "Sacrifice a Saproling", false
                         ),
                         new BoostAllCreaturesEffect(1, 1,
                                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING))

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "250")
+@CardRegistration(set = "BRR", collectorNumber = "15")
 public class ElsewhereFlask extends Card {
 
     public ElsewhereFlask() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlackMarket.class, Disenchant.class, GrizzlyBears.class, Shock.class})
 class BlackMarketTest extends BaseCardTest {
 
     @Test
@@ -29,6 +32,26 @@ class BlackMarketTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not put a charge counter on itself when a noncreature enchantment dies")
+    void ignoresNoncreatureDeaths() {
+        Permanent market = addBlackMarket(player1);
+        Permanent otherMarket = addBlackMarket(player2);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player1, 0, otherMarket.getId());
+        harness.passBothPriorities();
+
+        assertThat(market.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertNotOnBattlefield(player2, "Black Market");
+        harness.assertInGraveyard(player2, "Black Market");
+    }
+
+    @Test
     @DisplayName("Adds black mana equal to its charge counters during the first main phase")
     void addsManaForChargeCounters() {
         Permanent market = addBlackMarket(player1);
@@ -38,6 +61,32 @@ class BlackMarketTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Adds mana using the charge counters present when the trigger resolves")
+    void evaluatesChargeCountersAtResolution() {
+        Permanent market = addBlackMarket(player1);
+        market.setCounterCount(CounterType.CHARGE, 3);
+
+        advanceToPrecombatMain(player1);
+        market.setCounterCount(CounterType.CHARGE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not add mana during an opponent's first main phase")
+    void doesNotAddManaDuringOpponentsFirstMainPhase() {
+        Permanent market = addBlackMarket(player1);
+        market.setCounterCount(CounterType.CHARGE, 3);
+
+        advanceToPrecombatMain(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     private Permanent addBlackMarket(Player player) {
@@ -50,15 +99,14 @@ class BlackMarketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, harness.getPermanentId(victimController, "Grizzly Bears"));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(victimController, "Grizzly Bears"));
+        resolveAllTriggers();
     }
 
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "190")
 @CardRegistration(set = "IMA", collectorNumber = "196")
+@CardRegistration(set = "2X2", collectorNumber = "193")
 public class ChroniclerOfHeroes extends Card {
 
     public ChroniclerOfHeroes() {

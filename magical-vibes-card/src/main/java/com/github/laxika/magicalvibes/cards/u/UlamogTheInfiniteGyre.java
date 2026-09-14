@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "V11", collectorNumber = "14")
 @CardRegistration(set = "MM2", collectorNumber = "6")
 @CardRegistration(set = "UMA", collectorNumber = "7")
+@CardRegistration(set = "2X2", collectorNumber = "3")
 public class UlamogTheInfiniteGyre extends Card {
 
     public UlamogTheInfiniteGyre() {

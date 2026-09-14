@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AVR", collectorNumber = "143")
 @CardRegistration(set = "DDS", collectorNumber = "40")
+@CardRegistration(set = "2X2", collectorNumber = "114")
 public class KruinStriker extends Card {
 
     public KruinStriker() {

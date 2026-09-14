@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "85")
+@CardRegistration(set = "2X2", collectorNumber = "88")
 public class SeveredStrands extends Card {
 
     public SeveredStrands() {

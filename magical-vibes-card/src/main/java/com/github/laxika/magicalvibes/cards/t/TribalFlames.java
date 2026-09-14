@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "DDE", collectorNumber = "51")
 @CardRegistration(set = "MM2", collectorNumber = "132")
 @CardRegistration(set = "MMA", collectorNumber = "138")
+@CardRegistration(set = "HA7", collectorNumber = "11")
 public class TribalFlames extends Card {
 
     public TribalFlames() {

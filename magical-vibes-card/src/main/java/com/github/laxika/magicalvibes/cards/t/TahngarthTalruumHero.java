@@ -14,7 +14,7 @@ public class TahngarthTalruumHero extends Card {
     public TahngarthTalruumHero() {
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}{R}",
-                List.of(new SourceFightsTargetCreatureEffect()),
+                List.of(new SourceFightsTargetCreatureEffect(false)),
                 "{1}{R}, {T}: Tahngarth deals damage equal to its power to target creature. "
                         + "That creature deals damage equal to its power to Tahngarth.",
                 TargetFilters.creature()

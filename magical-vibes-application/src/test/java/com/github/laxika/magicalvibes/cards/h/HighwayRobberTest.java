@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HighwayRobber.class})
 class HighwayRobberTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -22,11 +23,10 @@ class HighwayRobberTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HighwayRobber()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, player2.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Highway Robber");
     }
 
     // ===== Resolving creature spell =====
@@ -41,8 +41,17 @@ class HighwayRobberTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Highway Robber");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot target its controller with the ETB ability")
+    void cannotTargetItsController() {
+        harness.setHand(player1, List.of(new HighwayRobber()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== ETB life drain =====
@@ -54,8 +63,8 @@ class HighwayRobberTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -68,8 +77,8 @@ class HighwayRobberTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
+        harness.assertLife(player2, 13);
+        harness.assertLife(player1, 12);
     }
 
     @Test
@@ -89,8 +98,8 @@ class HighwayRobberTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses 2 life"));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains 2 life"));
+        assertThat(gameLogContains("loses 2 life")).isTrue();
+        assertThat(gameLogContains("gains 2 life")).isTrue();
     }
 
     // ===== Helpers =====
@@ -98,7 +107,7 @@ class HighwayRobberTest extends BaseCardTest {
     private void castHighwayRobber() {
         harness.setHand(player1, List.of(new HighwayRobber()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, player2.getId());
     }
 }
 

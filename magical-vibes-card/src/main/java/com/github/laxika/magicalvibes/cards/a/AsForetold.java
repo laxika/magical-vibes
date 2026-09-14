@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "42")
 @CardRegistration(set = "AKR", collectorNumber = "49")
+@CardRegistration(set = "2X2", collectorNumber = "38")
 public class AsForetold extends Card {
 
     public AsForetold() {

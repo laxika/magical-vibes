@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "108")
+@CardRegistration(set = "2X2", collectorNumber = "92")
 public class StrandsOfUndeath extends Card {
 
     public StrandsOfUndeath() {

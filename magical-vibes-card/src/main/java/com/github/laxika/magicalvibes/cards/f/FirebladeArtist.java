@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 @CardRegistration(set = "RNA", collectorNumber = "172")
+@CardRegistration(set = "2X2", collectorNumber = "214")
 public class FirebladeArtist extends Card {
 
     public FirebladeArtist() {

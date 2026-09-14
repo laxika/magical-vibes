@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "M12", collectorNumber = "214")
 @CardRegistration(set = "ULG", collectorNumber = "130")
 @CardRegistration(set = "E02", collectorNumber = "44")
+@CardRegistration(set = "BRR", collectorNumber = "45")
 public class QuicksilverAmulet extends Card {
 
     public QuicksilverAmulet() {

@@ -50,6 +50,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_END_OF_COMBAT` | Activate only during the end of combat step (`currentStep == END_OF_COMBAT`). Desert |
 | `ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED` | Activate only during the declare attackers step and only if you've been attacked this step (a creature is attacking you or a planeswalker you control). Kongming's Contraptions. Checks `gameData.currentStep == DECLARE_ATTACKERS` + `gameQueryService.isPlayerBeingAttacked(gd, playerId)` |
 | `ONLY_DURING_DECLARE_BLOCKERS` | Activate only during the declare blockers step (`currentStep == DECLARE_BLOCKERS`). General Jarkeld |
+| `ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED` | Activate during declare blockers, combat damage, or end of combat. Trap Runner |
 | `ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED` | Activate only during the declare blockers step and only if at least one creature is blocking this creature (`gameQueryService.isBlockedByAnyCreature`). Grizzled Wolverine |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `CAST_NONCREATURE_SPELL_THIS_TURN` | Activate only if you've cast a noncreature spell this turn (checks `gameQueryService.playerCastNoncreatureSpellThisTurn()`). Seeker of Insight |

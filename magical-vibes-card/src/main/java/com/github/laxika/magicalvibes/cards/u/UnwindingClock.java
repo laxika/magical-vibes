@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "164")
+@CardRegistration(set = "BRR", collectorNumber = "61")
 public class UnwindingClock extends Card {
 
     public UnwindingClock() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "202")
+@CardRegistration(set = "2X2", collectorNumber = "186")
 public class BoartuskLiege extends Card {
 
     public BoartuskLiege() {
