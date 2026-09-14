@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "145")
+@CardRegistration(set = "EA2", collectorNumber = "13")
 public class FieryImpulse extends Card {
 
     public FieryImpulse() {
