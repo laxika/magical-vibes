@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "104")
+@CardRegistration(set = "PC2", collectorNumber = "46")
+@CardRegistration(set = "UMA", collectorNumber = "134")
+@CardRegistration(set = "PCA", collectorNumber = "46")
 public class HissingIguanar extends Card {
 
     public HissingIguanar() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "44")
+@CardRegistration(set = "KLR", collectorNumber = "64")
 public class ShieldedAetherThief extends Card {
 
     public ShieldedAetherThief() {

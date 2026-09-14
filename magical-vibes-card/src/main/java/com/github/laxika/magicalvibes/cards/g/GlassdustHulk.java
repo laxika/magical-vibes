@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 
 
 @CardRegistration(set = "ARB", collectorNumber = "7")
+@CardRegistration(set = "MM2", collectorNumber = "177")
+@CardRegistration(set = "2XM", collectorNumber = "199")
 public class GlassdustHulk extends Card {
 
     public GlassdustHulk() {

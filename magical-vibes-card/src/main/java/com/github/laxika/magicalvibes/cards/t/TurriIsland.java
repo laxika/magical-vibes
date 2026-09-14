@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "38")
+@CardRegistration(set = "OPCA", collectorNumber = "82")
 public class TurriIsland extends Card {
 
     public TurriIsland() {

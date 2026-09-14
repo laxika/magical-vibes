@@ -1,70 +1,121 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FiresOfYavimaya;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.c.CloudCover;
+import com.github.laxika.magicalvibes.cards.d.DralnusCrusade;
+import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
+import com.github.laxika.magicalvibes.cards.m.MeteorCrater;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        NaturalEmergence.class,
+        ForsakenCity.class,
+        MeteorCrater.class,
+        DralnusCrusade.class,
+        CloudCover.class,
+        AlphaKavu.class
+})
 class NaturalEmergenceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Lands you control become 2/2 creatures with first strike")
     void animatesOnlyControlledLands() {
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new Mountain());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new ForsakenCity());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new MeteorCrater());
         harness.addToBattlefield(player1, new NaturalEmergence());
 
-        Permanent forest = findPermanent(player1, "Forest");
-        assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, forest, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isCreature(gd, ownLand)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownLand, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.isLand(gd, ownLand)).isTrue();
 
-        Permanent mountain = findPermanent(player2, "Mountain");
-        assertThat(gqs.isCreature(gd, mountain)).isFalse();
-        assertThat(gqs.hasKeyword(gd, mountain, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.isCreature(gd, opponentLand)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentLand, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.isLand(gd, opponentLand)).isTrue();
     }
 
     @Test
-    @DisplayName("Enters with a non-targeting choice to return a red or green enchantment")
+    @DisplayName("Lands entering after Natural Emergence also become 2/2 creatures with first strike")
+    void animatesLandsThatEnterLater() {
+        harness.addToBattlefield(player1, new NaturalEmergence());
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new ForsakenCity());
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated lands stop being creatures when Natural Emergence leaves")
+    void animationEndsWhenNaturalEmergenceLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new ForsakenCity());
+        Permanent emergence = harness.addToBattlefieldAndReturn(player1, new NaturalEmergence());
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, emergence));
+
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters with a non-targeting choice to return a controlled red or green enchantment")
     void etbChoosesMatchingEnchantment() {
-        harness.addToBattlefield(player1, new FiresOfYavimaya());
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new NaturalEmergence()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 4);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
+        Permanent ownEligible = harness.addToBattlefieldAndReturn(player1, new DralnusCrusade());
+        harness.addToBattlefield(player1, new CloudCover());
+        harness.addToBattlefield(player1, new AlphaKavu());
+        Permanent opponentEligible = harness.addToBattlefieldAndReturn(player2, new DralnusCrusade());
 
-        UUID firesId = harness.getPermanentId(player1, "Fires of Yavimaya");
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new NaturalEmergence(), "{2}{R}{G}");
         resolveAllTriggers();
 
         GameData gameData = harness.getGameData();
         PendingInteraction.PermanentChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         UUID emergenceId = harness.getPermanentId(player1, "Natural Emergence");
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(firesId, emergenceId);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(ownEligible.getId(), emergenceId);
+        assertThat(choice.validIds()).doesNotContain(opponentEligible.getId());
 
-        harness.handlePermanentChosen(player1, firesId);
+        harness.handlePermanentChosen(player1, ownEligible.getId());
 
-        harness.assertInHand(player1, "Fires of Yavimaya");
+        harness.assertInHand(player1, "Dralnu's Crusade");
         harness.assertOnBattlefield(player1, "Natural Emergence");
-        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Cloud Cover");
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
+        harness.assertOnBattlefield(player2, "Dralnu's Crusade");
+    }
+
+    @Test
+    @DisplayName("Its enters ability can return Natural Emergence itself")
+    void etbCanReturnItself() {
+        harness.addToBattlefield(player1, new DralnusCrusade());
+
+        harness.castFromHand(player1, new NaturalEmergence(), "{2}{R}{G}");
+        resolveAllTriggers();
+
+        UUID emergenceId = harness.getPermanentId(player1, "Natural Emergence");
+        harness.handlePermanentChosen(player1, emergenceId);
+
+        harness.assertInHand(player1, "Natural Emergence");
+        harness.assertOnBattlefield(player1, "Dralnu's Crusade");
+        harness.assertNotOnBattlefield(player1, "Natural Emergence");
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -76,8 +77,9 @@ class InscriptionOfInsightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InscriptionOfInsight()));
         addMana(3, 5);
 
-        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{0, 1, 2},
-                List.of(first.getId(), second.getId(), player2.getId()), List.of());
+        gs.playCard(gd, player1, 0, ChooseOneEffect.encodeModeSelection(1, 3, new int[]{0, 1, 2}),
+                null, null, List.of(first.getId(), second.getId(), player2.getId()),
+                List.of(), false, null, null, null, null, null, true);
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
@@ -85,8 +87,8 @@ class InscriptionOfInsightTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
                 .satisfies(illusion -> {
                     assertThat(illusion.getCard().isToken()).isTrue();
-                    assertThat(illusion.getEffectivePower()).isEqualTo(4);
-                    assertThat(illusion.getEffectiveToughness()).isEqualTo(4);
+                    assertThat(illusion.getEffectivePower()).isEqualTo(6);
+                    assertThat(illusion.getEffectiveToughness()).isEqualTo(6);
                 });
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }

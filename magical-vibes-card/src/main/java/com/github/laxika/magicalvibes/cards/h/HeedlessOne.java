@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "265")
 @CardRegistration(set = "DD1", collectorNumber = "7")
+@CardRegistration(set = "EVG", collectorNumber = "7")
 public class HeedlessOne extends Card {
 
     public HeedlessOne() {

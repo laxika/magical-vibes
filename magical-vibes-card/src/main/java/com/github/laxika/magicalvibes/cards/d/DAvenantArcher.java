@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "23")
 @CardRegistration(set = "CHR", collectorNumber = "5")
 @CardRegistration(set = "LEG", collectorNumber = "7")
+@CardRegistration(set = "ME3", collectorNumber = "6")
 public class DAvenantArcher extends Card {
 
     public DAvenantArcher() {

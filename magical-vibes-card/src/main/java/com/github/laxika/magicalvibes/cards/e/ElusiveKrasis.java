@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
  * unblockable static needs wiring here.
  */
 @CardRegistration(set = "GTC", collectorNumber = "160")
+@CardRegistration(set = "GK2", collectorNumber = "116")
 public class ElusiveKrasis extends Card {
 
     public ElusiveKrasis() {

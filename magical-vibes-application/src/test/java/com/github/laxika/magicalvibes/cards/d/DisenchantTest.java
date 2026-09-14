@@ -36,7 +36,7 @@ class DisenchantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving can destroy an artifact you control")
+    @DisplayName("Can target an artifact controlled by the caster")
     void resolvesAndDestroysOwnArtifact() {
         harness.addToBattlefield(player1, new KyrenToy());
         harness.setHand(player1, List.of(new Disenchant()));

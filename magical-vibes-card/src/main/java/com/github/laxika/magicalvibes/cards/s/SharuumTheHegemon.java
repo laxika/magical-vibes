@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ALA", collectorNumber = "194")
 @CardRegistration(set = "V11", collectorNumber = "11")
+@CardRegistration(set = "2XM", collectorNumber = "219")
 public class SharuumTheHegemon extends Card {
 
     public SharuumTheHegemon() {

@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.a.Aquamoeba;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,15 +13,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Compulsion.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({Compulsion.class, Aquamoeba.class})
 class CompulsionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card draws a card")
     void discardingCardDrawsCard() {
         harness.addToBattlefield(player1, new Compulsion());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new Aquamoeba()));
+        harness.setLibrary(player1, List.of(new Compulsion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -31,8 +31,9 @@ class CompulsionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Compulsion");
+        harness.assertInGraveyard(player1, "Aquamoeba");
     }
 
     @Test
@@ -40,14 +41,16 @@ class CompulsionTest extends BaseCardTest {
     void sacrificingCompulsionDrawsCard() {
         harness.addToBattlefield(player1, new Compulsion());
         harness.setHand(player1, List.of());
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLibrary(player1, List.of(new Aquamoeba()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof Compulsion);
+        harness.assertInHand(player1, "Aquamoeba");
+        harness.assertNotOnBattlefield(player1, "Compulsion");
         harness.assertInGraveyard(player1, "Compulsion");
     }
 
@@ -56,9 +59,24 @@ class CompulsionTest extends BaseCardTest {
     void discardAbilityRequiresCardInHand() {
         harness.addToBattlefield(player1, new Compulsion());
         harness.setHand(player1, List.of());
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Both abilities require blue mana")
+    void abilitiesRequireBlueMana() {
+        harness.addToBattlefield(player1, new Compulsion());
+        harness.setHand(player1, List.of(new Aquamoeba()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Compulsion");
     }
 }

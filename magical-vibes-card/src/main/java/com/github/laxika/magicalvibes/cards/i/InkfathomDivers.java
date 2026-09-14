@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "70")
+@CardRegistration(set = "DDT", collectorNumber = "8")
 public class InkfathomDivers extends Card {
 
     public InkfathomDivers() {

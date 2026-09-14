@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "155")
+@CardRegistration(set = "GK2", collectorNumber = "10")
 public class DetentionSphere extends Card {
 
     public DetentionSphere() {

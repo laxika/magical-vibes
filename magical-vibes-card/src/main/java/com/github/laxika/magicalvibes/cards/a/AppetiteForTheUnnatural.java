@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "141")
+@CardRegistration(set = "KLR", collectorNumber = "151")
 public class AppetiteForTheUnnatural extends Card {
 
     public AppetiteForTheUnnatural() {

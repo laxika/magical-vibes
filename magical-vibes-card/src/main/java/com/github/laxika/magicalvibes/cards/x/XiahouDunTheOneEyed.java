@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "92")
+@CardRegistration(set = "ME3", collectorNumber = "83")
 public class XiahouDunTheOneEyed extends Card {
 
     public XiahouDunTheOneEyed() {

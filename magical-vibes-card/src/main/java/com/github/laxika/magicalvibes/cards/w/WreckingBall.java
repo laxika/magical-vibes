@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "139")
+@CardRegistration(set = "MM2", collectorNumber = "189")
+@CardRegistration(set = "GK2", collectorNumber = "74")
 public class WreckingBall extends Card {
 
     public WreckingBall() {

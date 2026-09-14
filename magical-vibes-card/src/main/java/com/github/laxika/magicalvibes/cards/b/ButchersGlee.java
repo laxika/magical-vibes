@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "90")
+@CardRegistration(set = "IMA", collectorNumber = "84")
 public class ButchersGlee extends Card {
 
     public ButchersGlee() {

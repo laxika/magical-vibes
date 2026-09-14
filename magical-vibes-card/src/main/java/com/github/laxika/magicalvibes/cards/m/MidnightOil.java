@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeToSourceCountersEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "92")
+@CardRegistration(set = "KLR", collectorNumber = "100")
 public class MidnightOil extends Card {
 
     public MidnightOil() {

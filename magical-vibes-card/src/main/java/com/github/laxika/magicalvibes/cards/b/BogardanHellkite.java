@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 @CardRegistration(set = "DRB", collectorNumber = "2")
 @CardRegistration(set = "TSP", collectorNumber = "147")
 @CardRegistration(set = "DDG", collectorNumber = "47")
+@CardRegistration(set = "IMA", collectorNumber = "118")
 public class BogardanHellkite extends Card {
 
     public BogardanHellkite() {

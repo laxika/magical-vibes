@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "112")
+@CardRegistration(set = "2XM", collectorNumber = "133")
 public class KazuulsTollCollector extends Card {
 
     public KazuulsTollCollector() {

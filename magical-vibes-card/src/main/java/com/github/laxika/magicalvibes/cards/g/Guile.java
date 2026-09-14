@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoL
 
 @CardRegistration(set = "LRW", collectorNumber = "69")
 @CardRegistration(set = "DD2", collectorNumber = "14")
+@CardRegistration(set = "MM2", collectorNumber = "46")
+@CardRegistration(set = "JVC", collectorNumber = "14")
 public class Guile extends Card {
 
     public Guile() {

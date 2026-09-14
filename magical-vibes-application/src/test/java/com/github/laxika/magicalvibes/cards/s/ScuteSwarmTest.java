@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
@@ -45,8 +46,11 @@ class ScuteSwarmTest extends BaseCardTest {
 
         assertThat(scuteSwarmTokenCount()).isEqualTo(1);
 
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.playLand(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(scuteSwarmTokenCount()).isEqualTo(3);
     }

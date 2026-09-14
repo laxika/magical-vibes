@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5DN", collectorNumber = "17")
+@CardRegistration(set = "DDL", collectorNumber = "21")
 public class StandFirm extends Card {
 
     public StandFirm() {

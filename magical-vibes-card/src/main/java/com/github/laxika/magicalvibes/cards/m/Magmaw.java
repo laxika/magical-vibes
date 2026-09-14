@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "158")
+@CardRegistration(set = "DDP", collectorNumber = "62")
+@CardRegistration(set = "UMA", collectorNumber = "138")
 public class Magmaw extends Card {
 
     public Magmaw() {

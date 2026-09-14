@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -50,6 +52,7 @@ public class GraveyardTargetingService {
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     /**
      * Returns the given player's graveyard as a pool of legal targets, or {@code null} when no card
@@ -229,6 +232,12 @@ public class GraveyardTargetingService {
      */
     public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                       List<CardEffect> allEffects, ExileGraveyardCardsEffect exile) {
+        handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, allEffects, exile, exile.count());
+    }
+
+    public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                      List<CardEffect> allEffects, ExileGraveyardCardsEffect exile,
+                                                      int maximumTargets) {
         CardPredicate filter = exile.filter();
         GraveyardSearchScope scope = exile.targetSpec().graveyardScope().orElseThrow();
 
@@ -259,7 +268,7 @@ public class GraveyardTargetingService {
             return;
         }
 
-        int maxTargets = Math.min(exile.count(), matchingCards.size());
+        int maxTargets = Math.min(Math.min(exile.count(), Math.max(0, maximumTargets)), matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
@@ -556,6 +565,12 @@ public class GraveyardTargetingService {
         }
         GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(effects);
         CardPredicate filter = target == null ? null : target.filter();
+        int maximumManaValue = target == null || target.maximumManaValue() == null
+                ? Integer.MAX_VALUE
+                : amountEvaluationService.evaluate(gameData, target.maximumManaValue(),
+                        new AmountContext(controllerId,
+                                gameQueryService.findPermanentById(gameData, sourcePermanentId),
+                                null, 0, 0));
 
         List<UUID> searchPlayerIds = scope == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
                 ? List.of(controllerId)
@@ -568,8 +583,9 @@ public class GraveyardTargetingService {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                if (filter == null || predicateEvaluationService.matchesCardPredicate(
-                        graveyardCard, filter, card.getId(), gameData, playerId)) {
+                if (graveyardCard.getManaValue() <= maximumManaValue
+                        && (filter == null || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, filter, card.getId(), gameData, playerId))) {
                     matchingCards.add(graveyardCard);
                 }
             }

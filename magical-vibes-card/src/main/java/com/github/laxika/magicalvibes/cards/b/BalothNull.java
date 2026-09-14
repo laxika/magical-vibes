@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "152")
+@CardRegistration(set = "A25", collectorNumber = "197")
 public class BalothNull extends Card {
 
     public BalothNull() {

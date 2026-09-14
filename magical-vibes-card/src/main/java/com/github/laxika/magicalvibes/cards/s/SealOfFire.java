@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "NEM", collectorNumber = "98")
 @CardRegistration(set = "DIS", collectorNumber = "71")
 @CardRegistration(set = "DD2", collectorNumber = "50")
+@CardRegistration(set = "JVC", collectorNumber = "50")
 public class SealOfFire extends Card {
 
     public SealOfFire() {

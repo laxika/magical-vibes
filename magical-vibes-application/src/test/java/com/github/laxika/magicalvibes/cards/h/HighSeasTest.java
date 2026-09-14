@@ -87,6 +87,8 @@ class HighSeasTest extends BaseCardTest {
     void costIncreaseAppliesToOpponents() {
         harness.addToBattlefield(player1, new HighSeas());
         harness.forceActivePlayer(player2);
+        harness.forceStep(gd.currentStep);
+        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castFromHand(player2, new RockBadger(), "{4}{R}"))
                 .isInstanceOf(IllegalStateException.class)

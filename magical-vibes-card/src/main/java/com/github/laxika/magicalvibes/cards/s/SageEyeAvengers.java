@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "50")
+@CardRegistration(set = "DDS", collectorNumber = "8")
 public class SageEyeAvengers extends Card {
 
     public SageEyeAvengers() {

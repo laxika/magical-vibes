@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "188")
+@CardRegistration(set = "KLR", collectorNumber = "212")
 public class VeteranMotorist extends Card {
 
     public VeteranMotorist() {

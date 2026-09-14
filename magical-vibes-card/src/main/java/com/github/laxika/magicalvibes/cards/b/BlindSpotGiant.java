@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "153")
+@CardRegistration(set = "MMA", collectorNumber = "105")
 public class BlindSpotGiant extends Card {
 
     public BlindSpotGiant() {

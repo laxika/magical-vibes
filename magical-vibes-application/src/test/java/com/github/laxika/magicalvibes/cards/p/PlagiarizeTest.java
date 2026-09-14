@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DeepAnalysis;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,13 +8,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Plagiarize.class, DeepAnalysis.class, PossessedAven.class})
 class PlagiarizeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -33,6 +37,18 @@ class PlagiarizeTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
+    @Test
+    @DisplayName("Cannot target a permanent with Plagiarize")
+    void cannotTargetPermanent() {
+        harness.addToBattlefield(player2, new PossessedAven());
+        harness.setHand(player1, List.of(new Plagiarize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player2, "Possessed Aven")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     // ===== Replacement effect setup =====
 
     @Test
@@ -41,8 +57,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.drawReplacementTargetToController).containsEntry(player2.getId(), player1.getId());
     }
@@ -53,8 +68,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Plagiarize");
@@ -68,8 +82,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // Set up: player2 is active, about to draw
         harness.forceActivePlayer(player2);
@@ -102,31 +115,30 @@ class PlagiarizeTest extends BaseCardTest {
         // Cast Plagiarize targeting player2
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // Reset state so player2 can cast
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        // Now have player2 cast a draw spell (Peek targeting player1 to look at hand, also draws a card)
-        Peek peek = new Peek();
-        harness.setHand(player2, List.of(peek));
+        // Now have player2 cast a draw spell that makes its target draw two cards.
+        DeepAnalysis deepAnalysis = new DeepAnalysis();
+        harness.setHand(player2, List.of(deepAnalysis));
         harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         int player1HandBefore = gd.playerHands.get(player1.getId()).size();
         int player2DeckBefore = gd.playerDecks.get(player2.getId()).size();
         int player1DeckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castInstant(player2, 0, player1.getId()); // Peek targets player1 to look at hand
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player2.getId());
 
-        // Peek's DrawCardEffect draws for the controller (player2),
-        // but Plagiarize replaces player2's draw, so player1 draws instead
+        // Deep Analysis makes player2 draw two cards, but Plagiarize replaces both draws,
+        // so player1 draws two cards instead.
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 1);
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 2);
     }
 
     // ===== End of turn cleanup =====
@@ -137,8 +149,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.drawReplacementTargetToController).isNotEmpty();
 
@@ -158,8 +169,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.drawReplacementTargetToController).containsEntry(player1.getId(), player1.getId());
     }
@@ -170,8 +180,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         // Player1 is both target and controller — draw step should still give player1 a card
         harness.forceActivePlayer(player1);
@@ -196,8 +205,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Plagiarize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Plagiarize") && log.contains("draws are replaced"));
     }

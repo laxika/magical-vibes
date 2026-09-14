@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 
 @CardRegistration(set = "RIX", collectorNumber = "93")
 @CardRegistration(set = "EOE", collectorNumber = "129")
+@CardRegistration(set = "GNT", collectorNumber = "37")
+@CardRegistration(set = "ANB", collectorNumber = "67")
 public class Bombard extends Card {
 
     public Bombard() {

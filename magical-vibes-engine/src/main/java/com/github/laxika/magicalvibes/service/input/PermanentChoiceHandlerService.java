@@ -88,7 +88,9 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.CloneCopy) {
+        if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice auraEntry) {
+            battlefieldHandler.handleAuraEntryBatchChoice(gameData, permanentId, auraEntry);
+        } else if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.TurnFaceUpCopy turnFaceUpCopy) {
             battlefieldHandler.handleTurnFaceUpCopy(gameData, permanentId, turnFaceUpCopy);
@@ -267,6 +269,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
         } else if (context instanceof PermanentChoiceContext.DeepfathomEchoCreatureChoice deepfathomEcho) {
             battlefieldHandler.handleDeepfathomEchoCreatureChoice(gameData, permanentId, deepfathomEcho);
+        } else if (context instanceof PermanentChoiceContext.BrudicladTokenChoice brudicladToken) {
+            battlefieldHandler.handleBrudicladTokenChoice(gameData, permanentId, brudicladToken);
         } else if (context instanceof PermanentChoiceContext.PolymorphousRushCreatureChoice polymorphousRush) {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
@@ -485,6 +489,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
+        } else if (context instanceof PermanentChoiceContext.ChoosePlayerAsEnter cpae) {
+            battlefieldHandler.handleChoosePlayerAsEnter(gameData, permanentId, cpae);
         } else if (context instanceof PermanentChoiceContext.ChooseNonlandPermanentAsEnter ncpae) {
             battlefieldHandler.handleChooseNonlandPermanentAsEnter(gameData, permanentId, ncpae);
         } else if (context instanceof PermanentChoiceContext.ChooseEquipmentToAttachAsEnter equipmentChoice) {
@@ -493,6 +499,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBlightCreatureChoice(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentBlightsCreature blight) {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy) {
+            battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToDestroy(gameData, permanentId, destroy);
         } else if (context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken) {
             battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
                     sacrificeOrToken);

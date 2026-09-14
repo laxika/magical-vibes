@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "136")
+@CardRegistration(set = "ME3", collectorNumber = "122")
 public class HeavyFog extends Card {
 
     public HeavyFog() {

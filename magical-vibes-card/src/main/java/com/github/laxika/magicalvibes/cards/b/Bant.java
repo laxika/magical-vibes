@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "4")
+@CardRegistration(set = "OPCA", collectorNumber = "15")
 public class Bant extends Card {
 
     public Bant() {

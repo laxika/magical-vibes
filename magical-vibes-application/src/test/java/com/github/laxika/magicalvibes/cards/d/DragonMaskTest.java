@@ -30,6 +30,7 @@ class DragonMaskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent after = gqs.findPermanentById(gd, bears.getId());
+        assertThat(mask.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, after)).isEqualTo(baseToughness + 2);
     }
@@ -41,7 +42,7 @@ class DragonMaskTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        Permanent mask = harness.addToBattlefieldAndReturn(player1, new DragonMask());
+        harness.addToBattlefield(player1, new DragonMask());
 
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
@@ -62,7 +63,7 @@ class DragonMaskTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's creature")
     void cannotTargetOpponentCreature() {
-        Permanent mask = harness.addToBattlefieldAndReturn(player1, new DragonMask());
+        harness.addToBattlefield(player1, new DragonMask());
 
         Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
 
@@ -104,5 +105,73 @@ class DragonMaskTest extends BaseCardTest {
         assertThat(gqs.findPermanentById(gd, original.getId())).isNull();
         assertThat(gqs.findPermanentById(gd, replacement.getId())).isSameAs(replacement);
         assertThat(gd.playerHands.get(player1.getId())).contains(original.getCard());
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if Dragon Mask leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, mask));
+        harness.passBothPriorities();
+
+        Permanent after = gqs.findPermanentById(gd, bears.getId());
+        assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, after)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does nothing if the target leaves before the ability resolves")
+    void doesNothingIfTargetLeavesBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bears));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Returns the target at the next end step even when activated during the opponent's turn")
+    void returnsAtNextEndStepDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }

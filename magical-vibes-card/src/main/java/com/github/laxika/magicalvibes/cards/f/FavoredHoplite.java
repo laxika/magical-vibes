@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "13")
+@CardRegistration(set = "EA1", collectorNumber = "1")
 public class FavoredHoplite extends Card {
 
     public FavoredHoplite() {

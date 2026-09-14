@@ -18,9 +18,9 @@ public class TimeSpiral extends Card {
         addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
         addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(7));
 
-        // Untap up to six lands you control.
+        // Untap up to six lands.
         addEffect(EffectSlot.SPELL,
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 6));
+                new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 6));
 
         // Exile Time Spiral.
         addEffect(EffectSlot.SPELL, new ExileSpellEffect());

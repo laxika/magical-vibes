@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "225")
 @CardRegistration(set = "ONE", collectorNumber = "249")
+@CardRegistration(set = "ZNE", collectorNumber = "14")
 public class CopperlineGorge extends Card {
 
     public CopperlineGorge() {

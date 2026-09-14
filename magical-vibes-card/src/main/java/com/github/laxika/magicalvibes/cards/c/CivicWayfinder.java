@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "10E", collectorNumber = "255")
 @CardRegistration(set = "RAV", collectorNumber = "157")
 @CardRegistration(set = "DPA", collectorNumber = "56")
+@CardRegistration(set = "EMA", collectorNumber = "161")
+@CardRegistration(set = "DDR", collectorNumber = "5")
 public class CivicWayfinder extends Card {
 
     public CivicWayfinder() {

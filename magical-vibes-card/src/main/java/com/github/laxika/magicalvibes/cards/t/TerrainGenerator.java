@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "143")
 @CardRegistration(set = "DD2", collectorNumber = "29")
+@CardRegistration(set = "JVC", collectorNumber = "29")
 public class TerrainGenerator extends Card {
 
     public TerrainGenerator() {

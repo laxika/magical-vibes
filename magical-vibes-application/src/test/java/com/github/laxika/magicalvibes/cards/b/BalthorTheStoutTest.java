@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CabalSurgeon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalthorTheStout.class, GrizzlyBears.class})
+@CardUsed({BalthorTheStout.class, CabalSurgeon.class})
 class BalthorTheStoutTest extends BaseCardTest {
 
     @Test
@@ -39,12 +39,12 @@ class BalthorTheStoutTest extends BaseCardTest {
     @DisplayName("Balthor the Stout does not boost itself or non-Barbarians")
     void doesNotBoostItselfOrNonBarbarians() {
         Permanent balthor = addCreatureReady(player1, new BalthorTheStout());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonBarbarian = addCreatureReady(player1, new CabalSurgeon());
 
         assertThat(gqs.getEffectivePower(gd, balthor)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, balthor)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonBarbarian)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonBarbarian)).isEqualTo(1);
     }
 
     @Test
@@ -82,10 +82,10 @@ class BalthorTheStoutTest extends BaseCardTest {
     @DisplayName("The activated ability cannot target a non-Barbarian creature")
     void cannotTargetNonBarbarian() {
         addCreatureReady(player1, new BalthorTheStout());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonBarbarian = addCreatureReady(player1, new CabalSurgeon());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonBarbarian.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

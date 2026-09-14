@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -123,7 +124,6 @@ public class GraveyardService {
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
         this.triggerCollectionService = triggerCollectionService;
     }
-
 
     /**
      * Mills {@code count} cards from the target player's library, returning the cards that actually
@@ -632,7 +632,8 @@ public class GraveyardService {
         if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed
                 && !creatureDeathTriggersSuppressed) {
             collectPutIntoGraveyardFromBattlefieldTriggers(
-                    gameData, ownerId, card, battlefieldPermanentId, battlefieldSnapshot);
+                    gameData, battlefieldControllerId != null ? battlefieldControllerId : ownerId,
+                    card, battlefieldPermanentId, battlefieldSnapshot);
         }
         if (!card.isToken() && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -863,7 +864,6 @@ public class GraveyardService {
         }
     }
 
-
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
         return tryReplaceDestruction(gameData, perm, true, false);
     }
@@ -877,6 +877,13 @@ public class GraveyardService {
         if (pendingRegenerationChoices(gameData).stream()
                 .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
             return true;
+        }
+        Permanent cracklingEmergence = findDestructionReplacementSource(
+                gameData, perm, DestructionReplacement.SACRIFICE_AURA_AND_GRANT_INDESTRUCTIBLE);
+        if (cracklingEmergence != null && !gameQueryService.cantBeSacrificed(gameData, cracklingEmergence)) {
+            if (performSacrificeAuraAndGrantIndestructibleReplacement(gameData, perm, cracklingEmergence)) {
+                return true;
+            }
         }
         Permanent umbraArmor = findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR);
         if (umbraArmor != null) {
@@ -1051,6 +1058,23 @@ public class GraveyardService {
         permanentRemovalService.tryDestroyPermanent(gameData, aura);
     }
 
+    private boolean performSacrificeAuraAndGrantIndestructibleReplacement(
+            GameData gameData, Permanent protectedPermanent, Permanent aura) {
+        protectedPermanent.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
+        boolean sacrificed = permanentRemovalService.removePermanentToGraveyard(gameData, aura);
+        if (!sacrificed) {
+            return false;
+        }
+        if (controllerId != null) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, controllerId, aura.getCard());
+        }
+        gameLogService.append(gameData, GameLog.cardThen(aura.getCard(), " is sacrificed."));
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        return true;
+    }
+
     /**
      * True when some permanent on the battlefield currently has "creatures dealt damage by this creature
      * this turn can't be regenerated this turn" (Bone Shaman) and damaged this creature this turn.
@@ -1160,7 +1184,6 @@ public class GraveyardService {
         log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
     }
 
-
     public void recordCreatureDamagedByPermanent(GameData gameData, UUID sourcePermanentId, Permanent damagedCreature, int damage) {
         if (sourcePermanentId == null || damagedCreature == null || damage <= 0) {
             return;
@@ -1173,7 +1196,6 @@ public class GraveyardService {
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());
     }
-
 
     private boolean hasExileWithEggCountersReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
@@ -1417,6 +1439,9 @@ public class GraveyardService {
                                                               boolean creatureDeathTriggersSuppressed) {
         if (sourceZone == Zone.BATTLEFIELD) {
             gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = true;
+            if (card.hasType(CardType.ENCHANTMENT)) {
+                gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.add(ownerId);
+            }
         }
         if (sourceZone == Zone.BATTLEFIELD
                 && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE))) {
@@ -1640,7 +1665,6 @@ public class GraveyardService {
         return null;
     }
 
-
     /**
      * Begins a batch of graveyard removals that should produce a single
      * "one or more cards leave your graveyard" trigger event.
@@ -1724,6 +1748,7 @@ public class GraveyardService {
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
         if (leavingCard != null) {
             gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
+            gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
         }
         notifyCardsLeftGraveyard(gameData, ownerId, 1);
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
@@ -1740,6 +1765,7 @@ public class GraveyardService {
         }
         leavingCards.forEach(card -> gameData.graveyardAdventureCastPermissions.remove(card.getId()));
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
+        leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());
         int creatureCardCount = (int) leavingCards.stream()
                 .filter(card -> !card.isToken() && card.hasType(CardType.CREATURE))

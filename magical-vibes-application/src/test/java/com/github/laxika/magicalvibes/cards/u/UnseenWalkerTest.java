@@ -36,6 +36,27 @@ class UnseenWalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Granted forestwalk prevents blocking when the defending player controls a Forest")
+    void grantedForestwalkPreventsBlocking() {
+        harness.addToBattlefield(player1, new UnseenWalker());
+        Permanent attacker = addCreatureReady(player1, new ViashinoWarrior());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blocker = addCreatureReady(player2, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Granted forestwalk wears off at end of turn")
     void forestwalkWearsOff() {
         harness.addToBattlefield(player1, new UnseenWalker());

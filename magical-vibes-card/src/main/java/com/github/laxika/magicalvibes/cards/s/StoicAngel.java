@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ALA", collectorNumber = "199")
+@CardRegistration(set = "MM3", collectorNumber = "190")
 public class StoicAngel extends Card {
 
     public StoicAngel() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "3")
+@CardRegistration(set = "MM2", collectorNumber = "175")
 public class EthercasteKnight extends Card {
 
     public EthercasteKnight() {

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "25")
+@CardRegistration(set = "OPCA", collectorNumber = "53")
 public class Murasa extends Card {
 
     public Murasa() {

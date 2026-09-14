@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "APC", collectorNumber = "93")
+@CardRegistration(set = "DDM", collectorNumber = "74")
 public class ConsumeStrength extends Card {
 
     public ConsumeStrength() {

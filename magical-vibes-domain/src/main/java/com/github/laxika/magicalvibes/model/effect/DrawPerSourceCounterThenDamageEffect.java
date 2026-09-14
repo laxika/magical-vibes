@@ -16,6 +16,11 @@ public record DrawPerSourceCounterThenDamageEffect(CounterType counterType)
         implements DamageDealingEffect, OpponentDrawStepOnlyEffect {
 
     @Override
+    public boolean opponentDrawStepOnly() {
+        return true;
+    }
+
+    @Override
     public DynamicAmount damageAmount() {
         return new CountersOnSource(counterType);
     }

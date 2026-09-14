@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LEG", collectorNumber = "230")
+@CardRegistration(set = "ME3", collectorNumber = "151")
 public class HazezonTamar extends Card {
 
     public HazezonTamar() {

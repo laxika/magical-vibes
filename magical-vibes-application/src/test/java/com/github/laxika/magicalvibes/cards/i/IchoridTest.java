@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
+import com.github.laxika.magicalvibes.cards.c.CarrionRats;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,15 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ichorid.class, WalkingCorpse.class, GrizzlyBears.class})
+@CardUsed({Ichorid.class, CarrionRats.class, AvenTrooper.class})
 class IchoridTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles another black creature and returns Ichorid to the battlefield")
     void exilesAnotherBlackCreatureAndReturnsToBattlefield() {
         Ichorid ichorid = new Ichorid();
-        WalkingCorpse fodder = new WalkingCorpse();
-        GrizzlyBears nonblackCreature = new GrizzlyBears();
+        CarrionRats fodder = new CarrionRats();
+        AvenTrooper nonblackCreature = new AvenTrooper();
         harness.setGraveyard(player1, List.of(ichorid, fodder, nonblackCreature));
 
         advanceToUpkeep(player1);
@@ -42,10 +42,29 @@ class IchoridTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not return without another black creature to exile")
+    void doesNotReturnWithoutAnotherBlackCreature() {
+        Ichorid ichorid = new Ichorid();
+        AvenTrooper nonblackCreature = new AvenTrooper();
+        harness.setGraveyard(player1, List.of(ichorid, nonblackCreature));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getId())
+                .containsExactly(ichorid.getId(), nonblackCreature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(ichorid.getId()));
+    }
+
+    @Test
     @DisplayName("Declining the optional exile leaves Ichorid in the graveyard")
     void decliningExileLeavesIchoridInGraveyard() {
         Ichorid ichorid = new Ichorid();
-        WalkingCorpse fodder = new WalkingCorpse();
+        CarrionRats fodder = new CarrionRats();
         harness.setGraveyard(player1, List.of(ichorid, fodder));
 
         advanceToUpkeep(player1);

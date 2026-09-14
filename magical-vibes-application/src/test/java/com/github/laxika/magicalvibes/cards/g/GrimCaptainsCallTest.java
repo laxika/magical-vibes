@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.f.FathomFleetFirebrand;
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrimCaptainsCall.class, FathomFleetFirebrand.class, BaronyVampire.class,
+        FrenziedRaptor.class, CoralMerfolk.class, FathomFleetCutthroat.class, GrizzlyBears.class})
 class GrimCaptainsCallTest extends BaseCardTest {
 
     // ===== Resolution: all four subtypes present with single matches =====

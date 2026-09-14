@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SageAven;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.s.SkywingAven;
+import com.github.laxika.magicalvibes.cards.s.StupefyingTouch;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PossessedAven.class, SageAven.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({PossessedAven.class, SkywingAven.class, PardicLancer.class, StupefyingTouch.class})
 class PossessedAvenTest extends BaseCardTest {
 
     @Test
@@ -36,18 +35,50 @@ class PossessedAvenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Threshold counts only cards in Possessed Aven's controller's graveyard")
+    void thresholdUsesControllerGraveyard() {
+        fillGraveyard(player1, 6);
+        fillGraveyard(player2, 7);
+        Permanent aven = addReadyAven();
+
+        assertThat(gqs.getEffectivePower(gd, aven)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, aven)).isEqualTo(3);
+        assertThat(gqs.getEffectiveColors(gd, aven)).doesNotContain(CardColor.BLACK);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, aven)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Threshold ability destroys a target blue creature")
     void abilityDestroysBlueCreature() {
         fillGraveyard(player1, 7);
-        addReadyAven();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new SageAven());
+        Permanent aven = addReadyAven();
+        Permanent target = addCreatureReady(player2, new SkywingAven());
 
         prepareActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(aven.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Skywing Aven");
+        harness.assertInGraveyard(player2, "Skywing Aven");
+    }
+
+    @Test
+    @DisplayName("Threshold ability can destroy a blue creature you control")
+    void abilityDestroysOwnBlueCreature() {
+        fillGraveyard(player1, 7);
+        Permanent aven = addReadyAven();
+        Permanent target = addCreatureReady(player1, new SkywingAven());
+
+        prepareActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(aven.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Skywing Aven");
+        harness.assertInGraveyard(player1, "Skywing Aven");
     }
 
     @Test
@@ -55,7 +86,22 @@ class PossessedAvenTest extends BaseCardTest {
     void abilityCannotTargetNonblueCreature() {
         fillGraveyard(player1, 7);
         addReadyAven();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new PardicLancer());
+
+        prepareActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blue creature");
+    }
+
+    @Test
+    @DisplayName("Threshold ability cannot target a blue noncreature permanent")
+    void abilityCannotTargetBlueNoncreaturePermanent() {
+        fillGraveyard(player1, 7);
+        addReadyAven();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StupefyingTouch());
 
         prepareActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -79,9 +125,7 @@ class PossessedAvenTest extends BaseCardTest {
     }
 
     private Permanent addReadyAven() {
-        Permanent aven = harness.addToBattlefieldAndReturn(player1, new PossessedAven());
-        aven.setSummoningSick(false);
-        return aven;
+        return addCreatureReady(player1, new PossessedAven());
     }
 
     private void prepareActivation() {
@@ -93,7 +137,7 @@ class PossessedAvenTest extends BaseCardTest {
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Spellbook());
+            cards.add(new PossessedAven());
         }
         harness.setGraveyard(player, cards);
     }

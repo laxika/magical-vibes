@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "188")
+@CardRegistration(set = "DDR", collectorNumber = "19")
 public class ScytheLeopard extends Card {
 
     public ScytheLeopard() {

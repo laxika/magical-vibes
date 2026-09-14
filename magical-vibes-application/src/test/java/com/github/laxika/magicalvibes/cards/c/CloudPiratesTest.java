@@ -39,8 +39,7 @@ class CloudPiratesTest extends BaseCardTest {
 
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -53,8 +52,7 @@ class CloudPiratesTest extends BaseCardTest {
         addCreatureReady(player1, new CloudPirates());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "WWK", collectorNumber = "62")
+@CardRegistration(set = "DDM", collectorNumber = "43")
 public class PulseTracker extends Card {
 
     public PulseTracker() {

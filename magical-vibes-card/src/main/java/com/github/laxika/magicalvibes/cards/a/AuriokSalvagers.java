@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "4")
+@CardRegistration(set = "MMA", collectorNumber = "5")
+@CardRegistration(set = "2XM", collectorNumber = "6")
 public class AuriokSalvagers extends Card {
 
     public AuriokSalvagers() {

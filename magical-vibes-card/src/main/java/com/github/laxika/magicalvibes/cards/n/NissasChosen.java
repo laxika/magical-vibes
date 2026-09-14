@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutOnBottomOfLibraryInsteadOfDyingEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "171")
+@CardRegistration(set = "DDR", collectorNumber = "14")
 public class NissasChosen extends Card {
 
     public NissasChosen() {

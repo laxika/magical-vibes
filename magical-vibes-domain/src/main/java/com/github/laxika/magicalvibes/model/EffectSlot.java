@@ -23,6 +23,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
     /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */
     ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** "Whenever another permanent you control enters"; excludes the watcher's own entry. */
+    ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
     /** "Whenever this creature or another creature you control enters, …" — like
      *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
      *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
@@ -1342,6 +1344,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_BECOMES_PLOTTED,
     ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT,
     ON_EQUIPMENT_ATTACHED_TO_CREATURE,
+    /** Triggers whenever this Vehicle becomes crewed for the first time each turn. */
+    ON_SELF_BECOMES_CREWED,
     ON_SELF_BECOMES_SADDLED,
     ON_ALLY_CREATURE_MUTATES,
     ON_SELF_MUTATES,

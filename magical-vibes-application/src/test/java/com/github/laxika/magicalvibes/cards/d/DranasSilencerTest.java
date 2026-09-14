@@ -60,6 +60,7 @@ class DranasSilencerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -94,6 +95,6 @@ class DranasSilencerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

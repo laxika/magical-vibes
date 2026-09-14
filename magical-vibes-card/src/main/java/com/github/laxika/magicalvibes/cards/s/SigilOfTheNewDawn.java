@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "55")
+@CardRegistration(set = "UMA", collectorNumber = "35")
 public class SigilOfTheNewDawn extends Card {
 
     public SigilOfTheNewDawn() {

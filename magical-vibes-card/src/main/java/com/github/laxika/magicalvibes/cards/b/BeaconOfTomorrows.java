@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "24")
+@CardRegistration(set = "DDS", collectorNumber = "2")
 public class BeaconOfTomorrows extends Card {
 
     public BeaconOfTomorrows() {

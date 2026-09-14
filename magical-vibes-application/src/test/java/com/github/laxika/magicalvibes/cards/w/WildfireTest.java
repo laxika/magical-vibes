@@ -1,24 +1,24 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
-import com.github.laxika.magicalvibes.cards.d.DeathcoilWurm;
+import com.github.laxika.magicalvibes.cards.a.AncientSilverback;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
+import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Wildfire.class, AlabornTrooper.class, DeathcoilWurm.class, Forest.class, Mountain.class})
+@CardUsed({AncientSilverback.class, Forest.class, GrizzlyBears.class, Mountain.class, ShivanHellkite.class, ThunderingGiant.class, Wildfire.class})
 class WildfireTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -31,13 +31,6 @@ class WildfireTest extends BaseCardTest {
     private void castWildfire() {
         harness.castFromHand(player1, new Wildfire(), "{4}{R}{R}");
         harness.passBothPriorities();
-    }
-
-    private long landCount(com.github.laxika.magicalvibes.model.Player player) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain")
-                        || p.getCard().getName().equals("Forest"))
-                .count();
     }
 
     @Test
@@ -78,7 +71,6 @@ class WildfireTest extends BaseCardTest {
 
         castWildfire();
 
-        GameData gd = harness.getGameData();
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
@@ -94,22 +86,78 @@ class WildfireTest extends BaseCardTest {
 
         assertThat(landCount(player2)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Mountain");
+        assertThat(landCount(player1)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
     void dealsFourDamageToEachCreature() {
         addLands(4);
-        harness.addToBattlefield(player1, new AlabornTrooper());
-        harness.addToBattlefield(player2, new AlabornTrooper());
-        harness.addToBattlefield(player2, new DeathcoilWurm());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientSilverback());
 
         castWildfire();
 
-        harness.assertNotOnBattlefield(player1, "Alaborn Trooper");
-        harness.assertNotOnBattlefield(player2, "Alaborn Trooper");
-        harness.assertOnBattlefield(player2, "Deathcoil Wurm");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
+    void dealsFourDamageToEachCreatureUpstreamReview() {
+        addLands(4);
+        harness.addToBattlefield(player1, new ThunderingGiant());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+        harness.addToBattlefield(player2, new ShivanHellkite());
+
+        castWildfire();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Thundering Giant");
+        harness.assertNotOnBattlefield(player2, "Thundering Giant");
+        harness.assertOnBattlefield(player2, "Shivan Hellkite");
+    }
+
+    @Test
+    @DisplayName("Still deals damage when no player has lands to sacrifice")
+    void dealsDamageWhenNoLandsAreAvailable() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AncientSilverback());
+        harness.addToBattlefield(player2, new AncientSilverback());
+
+        castWildfire();
+
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ancient Silverback");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    private long landCount(Player player) {
+        return countPermanents(player, "Mountain")
+                + countPermanents(player, "Forest");
+    }
+
+    @Test
+    @DisplayName("A player with no lands still has their creatures dealt damage")
+    void playerWithNoLandsStillHasCreaturesDamaged() {
+        harness.addToBattlefield(player1, new ShivanHellkite());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+
+        castWildfire();
+
+        harness.assertOnBattlefield(player1, "Shivan Hellkite");
+        harness.assertNotOnBattlefield(player2, "Thundering Giant");
     }
 }

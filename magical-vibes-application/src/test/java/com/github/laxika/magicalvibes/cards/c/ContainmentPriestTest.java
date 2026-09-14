@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GatherTheTownsfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mycoloth;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -58,6 +59,22 @@ class ContainmentPriestTest extends BaseCardTest {
         assertThat(gd.exiledCards)
                 .extracting(entry -> entry.card().getName())
                 .contains("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An exiled creature does not offer devour or modify existing permanents")
+    void exiledCreatureDoesNotDevour() {
+        harness.setGraveyard(player2, List.of(new Mycoloth()));
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castContainmentPriest(player1);
+
+        reanimate(player2, player2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(firstBear, secondBear);
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName()).contains("Mycoloth");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

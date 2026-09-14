@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * than an ETB trigger. Flying is loaded from Scryfall metadata.
  */
 @CardRegistration(set = "M12", collectorNumber = "97")
+@CardRegistration(set = "DDK", collectorNumber = "6")
+@CardRegistration(set = "MM2", collectorNumber = "81")
 public class DuskhunterBat extends Card {
 
     public DuskhunterBat() {

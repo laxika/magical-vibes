@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,14 +8,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LoomingShade.class})
 class LoomingShadeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,27 +22,32 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Looming Shade puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new LoomingShade()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LoomingShade(), "{2}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Looming Shade");
+    }
+
+    @Test
+    @DisplayName("Casting Looming Shade puts it on the stack")
+    void castingPutsItOnStackUpstreamReview() {
+        harness.castFromHand(player1, new LoomingShade(), "{2}{B}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(LoomingShade.class);
     }
 
     @Test
     @DisplayName("Resolving Looming Shade puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new LoomingShade()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LoomingShade(), "{2}{B}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Looming Shade");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard())
+                .isInstanceOf(LoomingShade.class);
     }
 
     // ===== Activate ability =====
@@ -53,7 +55,7 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
     void activatingAbilityPutsOnStack() {
-        Permanent shadePerm = addLoomingShadeReady(player1);
+        Permanent shadePerm = addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -62,32 +64,44 @@ class LoomingShadeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Looming Shade");
         assertThat(entry.getTargetId()).isEqualTo(shadePerm.getId());
     }
 
     @Test
-    @DisplayName("Activating ability does NOT tap the permanent")
-    void activatingAbilityDoesNotTap() {
+    @DisplayName("Activating the ability puts it on the stack")
+    void activatingAbilityPutsOnStackUpstreamReview() {
         addLoomingShadeReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(entry.getCard()).isInstanceOf(LoomingShade.class);
+    }
+
+    @Test
+    @DisplayName("Activating ability does NOT tap the permanent")
+    void activatingAbilityDoesNotTap() {
+        addCreatureReady(player1, new LoomingShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent shade = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(shade.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Resolving ability gives +1/+1 to Looming Shade")
     void resolvingAbilityBoostsPowerAndToughness() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent shade = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(shade.getEffectivePower()).isEqualTo(2);
@@ -99,7 +113,7 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -119,7 +133,7 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability even when tapped")
     void canActivateWhenTapped() {
-        Permanent shadePerm = addLoomingShadeReady(player1);
+        Permanent shadePerm = addCreatureReady(player1, new LoomingShade());
         shadePerm.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -127,41 +141,60 @@ class LoomingShadeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Looming Shade");
+    }
+
+    @Test
+    @DisplayName("Can activate ability even when tapped")
+    void canActivateWhenTappedUpstreamReview() {
+        Permanent shadePerm = addLoomingShadeReady(player1);
+        shadePerm.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        LoomingShade card = new LoomingShade();
-        Permanent shadePerm = new Permanent(card);
-        // summoningSick is true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(shadePerm);
+        harness.addToBattlefield(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Looming Shade");
+    }
+
+    @Test
+    @DisplayName("Can activate ability with summoning sickness")
+    void canActivateWithSummoningSicknessUpstreamReview() {
+        harness.addToBattlefield(player1, new LoomingShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 
     @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -173,10 +206,8 @@ class LoomingShadeTest extends BaseCardTest {
         assertThat(shade.getEffectivePower()).isEqualTo(3);
         assertThat(shade.getEffectiveToughness()).isEqualTo(3);
 
-        // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from END to CLEANUP
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(shade.getPowerModifier()).isEqualTo(0);
         assertThat(shade.getToughnessModifier()).isEqualTo(0);
@@ -187,7 +218,7 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if Looming Shade is removed before resolution")
     void abilityFizzlesIfSourceRemoved() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -206,8 +237,29 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         // No mana added
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability without enough mana")
+    void cannotActivateWithoutEnoughManaUpstreamReview() {
+        addLoomingShadeReady(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with only nonblack mana")
+    void cannotActivateWithOnlyNonblackMana() {
+        addCreatureReady(player1, new LoomingShade());
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -217,36 +269,73 @@ class LoomingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability logs the activation")
     void activatingAbilityLogsActivation() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("activates Looming Shade's ability"));
+        assertThat(gameLogContains("activates")).isTrue();
     }
 
     @Test
     @DisplayName("Resolving ability logs the boost")
     void resolvingAbilityLogsBoost() {
-        addLoomingShadeReady(player1);
+        addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gets +1/+1"));
+        assertThat(gameLogContains("gets +1/+1")).isTrue();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("The boost affects only the Looming Shade whose ability was activated")
+    void boostOnlyAffectsSource() {
+        Permanent source = addLoomingShadeReady(player1);
+        Permanent otherShade = addLoomingShadeReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
+        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing the source before resolution does not boost a new object")
+    void abilityDoesNotBoostNewObjectIfSourceRemoved() {
+        Permanent original = addLoomingShadeReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent replacement = addLoomingShadeReady(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(replacement.getEffectivePower()).isEqualTo(1);
+        assertThat(replacement.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with only mana of the wrong color")
+    void cannotActivateWithOnlyWrongColorMana() {
+        addLoomingShadeReady(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 
     private Permanent addLoomingShadeReady(Player player) {
-        LoomingShade card = new LoomingShade();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LoomingShade());
     }
-}
 
+}

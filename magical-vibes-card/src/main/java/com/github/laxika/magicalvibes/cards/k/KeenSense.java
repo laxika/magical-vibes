@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "152")
+@CardRegistration(set = "TSR", collectorNumber = "213")
 public class KeenSense extends Card {
 
     public KeenSense() {

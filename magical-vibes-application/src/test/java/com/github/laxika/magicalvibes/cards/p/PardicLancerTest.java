@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PardicLancer.class, Forest.class})
+@CardUsed({PardicLancer.class, PardicArsonist.class})
 class PardicLancerTest extends BaseCardTest {
 
     @Test
@@ -22,7 +21,7 @@ class PardicLancerTest extends BaseCardTest {
     void discardsAndBoostsAndGrantsFirstStrike() {
         harness.addToBattlefield(player1, new PardicLancer());
         Permanent lancer = findPermanent(player1, "Pardic Lancer");
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new PardicArsonist()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -31,14 +30,36 @@ class PardicLancerTest extends BaseCardTest {
         assertThat(lancer.getToughnessModifier()).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Pardic Arsonist");
+    }
+
+    @Test
+    @DisplayName("The random discard is paid before the ability resolves")
+    void paysRandomDiscardAsActivationCost() {
+        harness.addToBattlefield(player1, new PardicLancer());
+        harness.setHand(player1, List.of(new PardicArsonist()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Pardic Arsonist");
+        Permanent lancer = findPermanent(player1, "Pardic Lancer");
+        assertThat(lancer.getPowerModifier()).isEqualTo(0);
+        assertThat(lancer.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(lancer.getPowerModifier()).isEqualTo(1);
+        assertThat(lancer.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
     @DisplayName("The boost and first strike wear off at end of turn")
     void boostAndFirstStrikeWearOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new PardicLancer());
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new PardicArsonist()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

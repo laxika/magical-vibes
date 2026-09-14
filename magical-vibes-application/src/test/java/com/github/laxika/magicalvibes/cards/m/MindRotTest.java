@@ -55,8 +55,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Target player (player2) should be prompted to discard, not the caster.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -74,8 +73,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Target player chooses first discard.
         harness.handleCardChosen(player2, 0);
@@ -104,8 +102,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // All indices should be valid because Mind Rot doesn't restrict card types.
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
@@ -127,8 +124,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
@@ -144,8 +140,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
@@ -165,8 +160,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // No discard prompt because the hand is empty.
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -185,8 +179,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell, firstDiscard, secondDiscard, remainingCard));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         // Player1 is prompted to discard from their own hand.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -208,8 +201,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -225,8 +217,7 @@ class MindRotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 

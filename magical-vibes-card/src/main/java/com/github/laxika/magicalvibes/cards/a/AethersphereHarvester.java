@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "142")
+@CardRegistration(set = "KLR", collectorNumber = "218")
 public class AethersphereHarvester extends Card {
 
     public AethersphereHarvester() {

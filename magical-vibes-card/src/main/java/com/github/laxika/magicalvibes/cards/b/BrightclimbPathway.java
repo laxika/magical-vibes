@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "259")
+@CardRegistration(set = "SLU", collectorNumber = "14")
 public class BrightclimbPathway extends Card {
 
     public BrightclimbPathway() {

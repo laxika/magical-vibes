@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FamiliarGround.class, BenalishKnight.class})
+@CardUsed({BenalishKnight.class, FamiliarGround.class, GrizzlyBears.class})
 class FamiliarGroundTest extends BaseCardTest {
 
     @Test
@@ -21,12 +20,12 @@ class FamiliarGroundTest extends BaseCardTest {
     void creatureCannotBeBlockedByTwoCreatures() {
         harness.addToBattlefield(player1, new FamiliarGround());
 
-        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent blockerOne = addCreatureReady(player2, new BenalishKnight());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent blockerTwo = addCreatureReady(player2, new BenalishKnight());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -39,18 +38,45 @@ class FamiliarGroundTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A single blocker is legal while Familiar Ground is out")
-    void canBeBlockedByOneCreature() {
+    @DisplayName("A creature you control can't be blocked by two creatures while Familiar Ground is out")
+    void creatureCannotBeBlockedByTwoCreaturesUpstreamReview() {
         harness.addToBattlefield(player1, new FamiliarGround());
 
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new BenalishKnight());
+        Permanent blockerOne = addCreatureReady(player2, new BenalishKnight());
+        Permanent blockerTwo = addCreatureReady(player2, new BenalishKnight());
 
         prepareDeclareBlockers();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerOneIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blockerOne);
+        int blockerTwoIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blockerTwo);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerOneIndex, attackerIndex),
+                new BlockerAssignment(blockerTwoIndex, attackerIndex)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked by more than 1 creature");
+    }
+
+    @Test
+    @DisplayName("A single blocker is legal while Familiar Ground is out")
+    void canBeBlockedByOneCreature() {
+        harness.addToBattlefield(player1, new FamiliarGround());
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
@@ -60,13 +86,13 @@ class FamiliarGroundTest extends BaseCardTest {
     void restrictsEveryControlledCreature() {
         harness.addToBattlefield(player1, new FamiliarGround());
 
-        Permanent firstAttacker = addCreatureReady(player1, new BenalishKnight());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
         firstAttacker.setAttacking(true);
-        Permanent secondAttacker = addCreatureReady(player1, new BenalishKnight());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
         secondAttacker.setAttacking(true);
 
-        addCreatureReady(player2, new BenalishKnight());
-        addCreatureReady(player2, new BenalishKnight());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -82,10 +108,10 @@ class FamiliarGroundTest extends BaseCardTest {
     @DisplayName("Familiar Ground does not restrict creatures controlled by an opponent")
     void doesNotRestrictOpponentControlledCreature() {
         harness.addToBattlefield(player1, new FamiliarGround());
-        Permanent blockerOne = addCreatureReady(player1, new BenalishKnight());
-        Permanent blockerTwo = addCreatureReady(player1, new BenalishKnight());
+        Permanent blockerOne = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blockerTwo = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent attacker = addCreatureReady(player2, new BenalishKnight());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player2);
@@ -93,6 +119,51 @@ class FamiliarGroundTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(2, 0)
+        ));
+
+        assertThat(blockerOne.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(blockerTwo.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Familiar Ground's restriction ends when it leaves the battlefield")
+    void restrictionEndsWhenFamiliarGroundLeavesBattlefield() {
+        Permanent familiarGround = harness.addToBattlefieldAndReturn(player1, new FamiliarGround());
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
+
+        gd.playerBattlefields.get(player1.getId()).remove(familiarGround);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(blockerOne.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(blockerTwo.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes Familiar Ground's restriction")
+    void losingAllAbilitiesRemovesRestriction() {
+        Permanent familiarGround = harness.addToBattlefieldAndReturn(player1, new FamiliarGround());
+        familiarGround.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1)
         ));
 
         assertThat(blockerOne.getBlockingTargetIds()).containsExactly(attacker.getId());

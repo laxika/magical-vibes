@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "144")
+@CardRegistration(set = "DDP", collectorNumber = "33")
+@CardRegistration(set = "UMA", collectorNumber = "251")
 public class StirringWildwood extends Card {
 
     public StirringWildwood() {

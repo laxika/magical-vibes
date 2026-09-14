@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "118")
 @CardRegistration(set = "BRO", collectorNumber = "144")
+@CardRegistration(set = "IMA", collectorNumber = "140")
+@CardRegistration(set = "TSR", collectorNumber = "349")
 public class MonasterySwiftspear extends Card {
 
     public MonasterySwiftspear() {

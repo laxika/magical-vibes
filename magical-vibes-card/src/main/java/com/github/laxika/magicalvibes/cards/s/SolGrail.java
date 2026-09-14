@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "130")
+@CardRegistration(set = "ME3", collectorNumber = "201")
 public class SolGrail extends Card {
 
     public SolGrail() {

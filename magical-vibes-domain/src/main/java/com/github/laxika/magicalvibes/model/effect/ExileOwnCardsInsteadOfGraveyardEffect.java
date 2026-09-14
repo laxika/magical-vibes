@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ExileOwnCardsInsteadOfGraveyardEffect() implements OwnGraveyardExileReplacement {
 
     @Override
+    public boolean appliesToTokens() {
+        return false;
+    }
+
+    @Override
     public CardPredicate filter() {
         return null;
     }

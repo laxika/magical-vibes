@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "S99", collectorNumber = "106")
+@CardRegistration(set = "VMA", collectorNumber = "172")
 public class GoblinSettler extends Card {
 
     public GoblinSettler() {

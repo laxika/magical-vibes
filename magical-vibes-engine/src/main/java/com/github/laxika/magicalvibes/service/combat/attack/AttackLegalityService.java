@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerTurnRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacr
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureAttackRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -189,6 +191,9 @@ public class AttackLegalityService {
      * is routed through {@link ConditionEvaluationService} with the attacker as source.
      */
     private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
+        if (gameQueryService.hasLostAllAbilities(gameData, creature)) {
+            return false;
+        }
         ConditionContext ctx = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
             Condition condition = null;
@@ -242,6 +247,12 @@ public class AttackLegalityService {
                         .withSourceCardId(source.getCard().getId())
                         .withSourceControllerId(protectedPlayerId);
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof EnchantedCreatureAttackRestrictionEffect
+                            && !source.isAuraEffectsIgnoredThisTurn()
+                            && source.isAttached()
+                            && attacker.getId().equals(source.getAttachedTo())) {
+                        return false;
+                    }
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
                             && (restriction.restrictedAttackerId() == null
@@ -335,7 +346,7 @@ public class AttackLegalityService {
         boolean[] restricted = {false};
         UUID creatureController = gameData.findControllerOf(creature);
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 return;
             }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
@@ -374,6 +385,26 @@ public class AttackLegalityService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            UUID planarController = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                FilterContext context = FilterContext.of(gameData)
+                        .withSourceControllerId(planarController)
+                        .withSourceCardId(planar.getCard().getId());
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, creature, restriction.exemptionPredicate())) {
+                        restricted[0] = true;
+                    } else if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                            && restriction.globallyCantAttackOrBlock() != null
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            creature, restriction.globallyCantAttackOrBlock(), context)) {
+                        restricted[0] = true;
+                    }
+                }
+            }
+        }
         return restricted[0];
     }
 
@@ -412,6 +443,28 @@ public class AttackLegalityService {
                     if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect) {
                         return true;
                     }
+                }
+            }
+        }
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (!controllerId.equals(playerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
+                                && restriction.preventsAttackingAfterSpellCast())) {
+                    return true;
+                }
+            }
+        }
+        if (gameData.planechase != null && playerId.equals(gameData.planechase.controllerId)) {
+            for (var planar : gameData.planechase.faceUp) {
+                if (planar.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
+                                && restriction.preventsAttackingAfterSpellCast())) {
+                    return true;
                 }
             }
         }
@@ -525,6 +578,8 @@ public class AttackLegalityService {
 
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
+                    && (floatingEffect.affectedPermanentId() == null
+                    || creature.getId().equals(floatingEffect.affectedPermanentId()))
                     && predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {
@@ -625,6 +680,8 @@ public class AttackLegalityService {
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
                     || !requirement.requiresAttackAtOtherPlayerIfAble()
+                    || (floatingEffect.affectedPermanentId() != null
+                    && !creature.getId().equals(floatingEffect.affectedPermanentId()))
                     || !predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {

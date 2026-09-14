@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveScreamCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -2898,7 +2899,9 @@ public class StepTriggerService {
                 }
 
                 // "At the beginning of each opponent's draw step" — never triggers on the controller's own draw step.
-                if (effect instanceof OpponentDrawStepOnlyEffect && playerId.equals(activePlayerId)) {
+                if (effect instanceof OpponentDrawStepOnlyEffect opponentDrawStepOnly
+                        && opponentDrawStepOnly.opponentDrawStepOnly()
+                        && playerId.equals(activePlayerId)) {
                     continue;
                 }
 
@@ -2925,6 +2928,9 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handlePrecombatMainTriggers(GameData gameData) {
+        if (gameData.planechase != null) planechaseService.step(gameData,
+                EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
+
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
         handleSagaLoreCounters(gameData);
 
@@ -3317,6 +3323,9 @@ public class StepTriggerService {
      */
     public void handleEndOfCombatTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_OF_FIRST_COMBAT);
+        if (gameData.planechase != null) {
+            planechaseService.step(gameData, EffectSlot.END_OF_COMBAT_TRIGGERED);
+        }
 
         List<DelayedEndOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
@@ -3366,6 +3375,9 @@ public class StepTriggerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggerCollectionService.processNextEmblemTriggerTarget(gameData);
+        } else if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
         }
     }
 
@@ -3415,6 +3427,17 @@ public class StepTriggerService {
                 case 5 -> "V";
                 default -> String.valueOf(newLoreCount);
             };
+
+            if (chapterEffects.size() == 1
+                    && chapterEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        card, activePlayerId, modal.choice(), saga.getId()));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+                log.info("Game {} - {} chapter {} triggers (awaiting mode selection)",
+                        gameData.id, card.getName(), chapterName);
+                continue;
+            }
 
             boolean needsPlayerTarget = chapterEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
@@ -4080,21 +4103,13 @@ public class StepTriggerService {
                             gameData.id, action.cardId());
                     continue;
                 }
-                gameData.removeFromExile(action.cardId());
-                gameData.addCardToHand(action.ownerId(), exiled.card());
-                if (action.sourceCard() != null) {
-                    String sourceName = action.sourceCard().getName();
-                    gameLogService.append(gameData, GameLog.text(
-                            "The card exiled with " + sourceName + " returns to its owner's hand."));
-                    log.info("Game {} - uncast card exiled with {} returns to owner's hand at end step",
-                            gameData.id, sourceName);
-                } else {
-                    String playerName = gameData.playerIdToName.get(action.ownerId());
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(exiled.card(), " returns to " + playerName + "'s hand (delayed trigger)."));
-                    log.info("Game {} - {} returns to {}'s hand from exile (delayed next-end-step trigger)",
-                            gameData.id, exiled.card().getName(), playerName);
-                }
+                Card sourceCard = action.sourceCard() != null ? action.sourceCard() : exiled.card();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                        sourceCard.getName() + "'s delayed ability — return exiled card to hand",
+                        new ArrayList<>(List.of(new ReturnExiledCardToHandEffect(
+                                action.cardId(), action.ownerId())))));
+                gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s delayed ability triggers."));
             }
         }
 
@@ -5267,7 +5282,14 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step raid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof MayEffect may) {
-                        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(may))));
+                            gameLogService.append(gameData,
+                                    GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                            log.info("Game {} - {} controller end-step graveyard-targeting may-trigger queued",
+                                    gameData.id, perm.getCard().getName());
+                        } else if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Targeted "you may" end-step trigger (Goblin Razerunners, Wall of Reverence,
                             // Conjurer's Closet). Targets are chosen as the trigger is put onto the stack and
@@ -5283,6 +5305,19 @@ public class StepTriggerService {
                             // Source permanent context is required by self-affecting may-effects
                             // (Obzedat, Ghost Council's "you may exile Obzedat").
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
+                        }
+                    } else if (effect instanceof MayPayManaEffect mayPay) {
+                        if (mayPay.targetAfterPayment()
+                                || (!mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                && !mayPay.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                            gameData.queueMayAbility(perm.getCard(), activePlayerId, mayPay, null, perm.getId());
+                        } else {
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(mayPay)), perm.getId()));
+                            gameLogService.append(gameData,
+                                    GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                            log.info("Game {} - {} controller end-step targeting may-pay trigger queued",
+                                    gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof DestroyRandomOpponentPermanentWithCounterEffect destroyRandom) {
                         // Intervening-if: only trigger if enough opponent permanents have the counter

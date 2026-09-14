@@ -14,6 +14,11 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "28")
 @CardRegistration(set = "ME1", collectorNumber = "33")
+@CardRegistration(set = "EMA", collectorNumber = "49")
+@CardRegistration(set = "VMA", collectorNumber = "69")
+@CardRegistration(set = "MP2", collectorNumber = "14")
+@CardRegistration(set = "2XM", collectorNumber = "51")
+@CardRegistration(set = "2XM", collectorNumber = "340")
 public class ForceOfWill extends Card {
 
     public ForceOfWill() {

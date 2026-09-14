@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "19")
+@CardRegistration(set = "DDN", collectorNumber = "53")
+@CardRegistration(set = "TSR", collectorNumber = "45")
 public class Stonecloaker extends Card {
 
     public Stonecloaker() {

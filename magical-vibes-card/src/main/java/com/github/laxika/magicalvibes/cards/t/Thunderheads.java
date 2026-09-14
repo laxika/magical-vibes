@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "37")
+@CardRegistration(set = "DDJ", collectorNumber = "23")
+@CardRegistration(set = "GK1", collectorNumber = "27")
 public class Thunderheads extends Card {
 
     public Thunderheads() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Disrupt;
 import com.github.laxika.magicalvibes.cards.d.Doomsday;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,11 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Relearn.class, Disrupt.class, Doomsday.class, BenalishInfantry.class})
+@CardUsed({BenalishInfantry.class, Counterspell.class, Disrupt.class, Doomsday.class, Relearn.class})
 class RelearnTest extends BaseCardTest {
 
     @Test
@@ -72,5 +74,33 @@ class RelearnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, instant.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("your graveyard");
+    }
+
+    @Test
+    @DisplayName("Relearn cannot be cast without a graveyard target")
+    void cannotCastWithoutGraveyardTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Relearn()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Relearn fizzles if the targeted card leaves the graveyard before resolution")
+    void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
+        Card instant = new Counterspell();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setHand(player1, List.of(new Relearn()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, instant.getId());
+        harness.getGameData().playerGraveyards.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
     }
 }

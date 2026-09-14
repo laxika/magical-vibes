@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "225")
+@CardRegistration(set = "MMA", collectorNumber = "168")
+@CardRegistration(set = "TSR", collectorNumber = "236")
 public class ThallidGerminator extends Card {
 
     public ThallidGerminator() {

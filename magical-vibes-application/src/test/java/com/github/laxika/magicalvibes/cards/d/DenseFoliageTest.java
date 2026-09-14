@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CloudDjinn;
 import com.github.laxika.magicalvibes.cards.g.GoblinVandal;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SouthernPaladin;
 import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DenseFoliage.class, Thunderbolt.class, CloudDjinn.class, SouthernPaladin.class, GoblinVandal.class})
+@CardUsed({CloudDjinn.class, DenseFoliage.class, GoblinVandal.class, Opalescence.class, Shock.class, SouthernPaladin.class, Thunderbolt.class})
 class DenseFoliageTest extends BaseCardTest {
 
     @Test
@@ -91,5 +93,22 @@ class DenseFoliageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thunderbolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Dense Foliage still protects itself when it becomes a creature")
+    void creatureVersionCannotBeTargetedBySpells() {
+        Permanent denseFoliage = harness.addToBattlefieldAndReturn(player1, new DenseFoliage());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, denseFoliage)).isTrue();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, denseFoliage.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of spells");
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "1")
+@CardRegistration(set = "W16", collectorNumber = "1")
 public class AegisAngel extends Card {
 
     public AegisAngel() {

@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "M10", collectorNumber = "35")
 @CardRegistration(set = "M11", collectorNumber = "34")
 @CardRegistration(set = "M12", collectorNumber = "38")
+@CardRegistration(set = "W17", collectorNumber = "5")
 public class StormfrontPegasus extends Card {
 }

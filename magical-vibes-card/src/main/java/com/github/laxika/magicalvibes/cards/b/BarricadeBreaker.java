@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "144")
+@CardRegistration(set = "KLR", collectorNumber = "222")
 public class BarricadeBreaker extends Card {
 
     public BarricadeBreaker() {

@@ -12,21 +12,29 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Used by Wort, the Raidmother (conspire, on red or green instant and sorcery spells), Chief Engineer
  * (convoke, on artifact spells), Inspiring Statuary (improvise, on nonartifact spells), and
  * Niv-Mizzet, Supreme (jump-start, on exactly two-color instants and sorceries in the graveyard).
+ * The {@link #allPlayers(Keyword, CardPredicate)} factory is for symmetric grants such as a Plane's
+ * "instant and sorcery spells have rebound" ability.
  * <p>
  * Only abilities with engine support are accepted: a grant nothing consults would be silently
  * inert, so widening this set means wiring a new gate at the same time.
  */
 public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
-                                                     Zone sourceZone, int abilityValue)
+                                                     Zone sourceZone, int abilityValue,
+                                                     boolean appliesToAllPlayers)
         implements SpellCastingAbilityGrantingEffect {
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
                                                      Zone sourceZone) {
-        this(grantedAbility, filter, sourceZone, 0);
+        this(grantedAbility, filter, sourceZone, 0, false);
     }
 
 
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter) {
         this(grantedAbility, filter, null);
+    }
+
+    public static GrantSpellCastingAbilityToSpellsEffect allPlayers(Keyword grantedAbility,
+                                                                     CardPredicate filter) {
+        return new GrantSpellCastingAbilityToSpellsEffect(grantedAbility, filter, null, 0, true);
     }
 
     public static GrantSpellCastingAbilityToSpellsEffect fromZone(Keyword grantedAbility,
@@ -50,6 +58,6 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
         }
     }
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, int abilityValue, CardPredicate filter) {
-        this(grantedAbility, filter, null, abilityValue);
+        this(grantedAbility, filter, null, abilityValue, false);
     }
 }

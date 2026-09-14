@@ -60,6 +60,56 @@ class CounterSpellEffectHandlerTest {
     private UUID player2Id;
     private CounterSpellEffectHandler counterSpellHandler;
 
+    @Test
+    void desertionUsesDisturbBackFaceTypeAndExilesEnchantment() {
+        Card front = new Card();
+        front.setName("Front creature");
+        front.setType(CardType.CREATURE);
+        Card back = new Card();
+        back.setName("Back enchantment");
+        back.setType(CardType.ENCHANTMENT);
+        front.setBackFaceCard(back);
+        StackEntry target = instantSpellEntry(front, player1Id, null);
+        target.setCastWithDisturb(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Counter"), player2Id, front.getId());
+
+        Card gained = counterSupport.counterSpellGainingArtifactOrCreatureControl(gd, counter, target);
+
+        assertThat(gained).isNull();
+        verify(exileService).exileCard(gd, player1Id, front);
+        assertThat(gd.stack).doesNotContain(target);
+    }
+
+    @Test
+    void libraryTopCounterExilesFlashbackSpell() {
+        Card spell = createInstantCard("Flashback spell");
+        StackEntry target = instantSpellEntry(spell, player1Id, null);
+        target.setCastWithFlashback(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Counter"), player2Id, spell.getId());
+
+        counterSpellHandler.resolve(gd, counter, new CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP));
+
+        verify(exileService).exileCard(gd, player1Id, spell);
+        assertThat(gd.stack).doesNotContain(target);
+    }
+
+    @Test
+    void libraryEndCounterDoesNotOfferChoiceForFlashbackSpell() {
+        Card spell = createInstantCard("Flashback spell");
+        StackEntry target = instantSpellEntry(spell, player1Id, null);
+        target.setCastWithFlashback(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Counter"), player2Id, spell.getId());
+
+        counterSpellHandler.resolve(gd, counter,
+                new CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP_OR_BOTTOM));
+
+        verify(exileService).exileCard(gd, player1Id, spell);
+        verify(interactionHandlerRegistry, never()).begin(any(), any());
+    }
+
     @BeforeEach
     void setUp() {
 

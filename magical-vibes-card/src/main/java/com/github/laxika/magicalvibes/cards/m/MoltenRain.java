@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MRD", collectorNumber = "101")
+@CardRegistration(set = "MM3", collectorNumber = "103")
+@CardRegistration(set = "TSR", collectorNumber = "348")
 public class MoltenRain extends Card {
 
     public MoltenRain() {

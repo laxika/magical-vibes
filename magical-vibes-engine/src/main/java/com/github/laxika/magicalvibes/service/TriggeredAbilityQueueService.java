@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -610,16 +611,20 @@ public class TriggeredAbilityQueueService {
     }
 
     private SpellTarget dynamicTargetForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+        SpellTarget target = targetGroupForTriggeredEffects(sourceCard, effects);
+        if (target == null) {
+            return null;
+        }
+        return target.getDynamicMaxTargets() == null ? null : target;
+    }
+
+    private SpellTarget targetGroupForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(sourceCard::getEffectTargetIndex)
                 .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
                 .findFirst()
                 .orElse(-1);
-        if (targetGroupIndex < 0) {
-            return null;
-        }
-        SpellTarget target = sourceCard.getSpellTargets().get(targetGroupIndex);
-        return target.getDynamicMaxTargets() == null ? null : target;
+        return targetGroupIndex < 0 ? null : sourceCard.getSpellTargets().get(targetGroupIndex);
     }
 
     private void enqueueSelfTriggeredAbilityWithoutTargets(GameData gameData,
@@ -828,7 +833,21 @@ public class TriggeredAbilityQueueService {
                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            if (optionalTarget) {
+            SpellTarget targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            if (targetGroup != null && targetGroup.getMaxTargets() > 1) {
+                int minTargets = targetGroup.getMinTargets();
+                int maxTargets = Math.min(targetGroup.getMaxTargets(), result.validTargets().size());
+                if (result.validTargets().size() < minTargets) {
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s triggered ability has too few valid targets."));
+                    continue;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId,
+                        result.validTargets(), maxTargets,
+                        new MultiPermanentChoiceContext.AttackTriggerTargets(pending, minTargets),
+                        pending.sourceCard().getName() + "'s ability - Choose up to " + maxTargets
+                                + " target permanents.");
+            } else if (optionalTarget) {
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, result.validTargets(),
                         List.of(pending.controllerId()),
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
@@ -1102,7 +1121,8 @@ public class TriggeredAbilityQueueService {
         }
         if (needsTarget) {
             Card targetingCard = prepareTriggeredModalTargeting(sourceCard, chosenModes);
-            if (targetingCard.getSpellTargets().size() > 1) {
+            if (targetingCard.getSpellTargets().size() > 1
+                    || etbTokenTargetService.needsSlotBySlotTargetSelection(targetingCard)) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         targetingCard, controllerId, effects, sourcePermanentId,
                         List.of(), 0, 0));
@@ -1920,6 +1940,13 @@ public class TriggeredAbilityQueueService {
                     scope = returnEffect.targetSpec().graveyardScope()
                             .orElse(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
                     break;
+                } else if (effect instanceof TargetedGraveyardCardsEffect targetEffect) {
+                    filter = targetEffect.filter();
+                    maxTargets = targetEffect.maxTargets() == 0
+                            ? Integer.MAX_VALUE : targetEffect.maxTargets();
+                    minTargets = 0;
+                    scope = targetEffect.source();
+                    break;
                 }
             }
 
@@ -2092,7 +2119,7 @@ public class TriggeredAbilityQueueService {
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
             int maxManaValue = lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId())
-                    : manaValueAtMostX ? pending.xValue() : Integer.MAX_VALUE;
+                    : manaValueAtMostX ? pending.xValue() + manaValueXOffset : Integer.MAX_VALUE;
 
             List<UUID> searchPlayerIds = pending.graveyardOwnerId() != null
                     ? List.of(pending.graveyardOwnerId())

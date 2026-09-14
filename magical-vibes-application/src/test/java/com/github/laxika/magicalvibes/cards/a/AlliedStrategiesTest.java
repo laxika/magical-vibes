@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.DarigaazsCaldera;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlliedStrategies.class, DarigaazsCaldera.class, Forest.class, Island.class, Mountain.class,
+        Plains.class, Swamp.class})
 class AlliedStrategiesTest extends BaseCardTest {
 
     @Test
@@ -40,10 +44,46 @@ class AlliedStrategiesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target the caster and counts the caster's distinct basic land types")
+    void canTargetCaster() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+
+        harness.setHand(player1, List.of(new AlliedStrategies()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands without basic land types do not contribute to Domain")
+    void nonbasicLandWithoutBasicLandTypeDoesNotCount() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new DarigaazsCaldera());
+
+        harness.setHand(player1, List.of(new AlliedStrategies()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+    }
+
+    @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new AlliedStrategies()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

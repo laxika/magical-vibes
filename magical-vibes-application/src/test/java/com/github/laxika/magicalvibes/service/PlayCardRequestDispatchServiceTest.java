@@ -128,7 +128,7 @@ class PlayCardRequestDispatchServiceTest {
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCardWithAlternateCost(
-                eq(gameData), eq(player), eq(2), isNull(), isNull(), isNull(), eq(List.of()));
+                eq(gameData), eq(player), eq(2), isNull(), isNull(), isNull(), eq(List.of()), isNull());
         verifyNoMoreInteractions(gameService);
     }
 

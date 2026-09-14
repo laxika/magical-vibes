@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "3")
+@CardRegistration(set = "MMA", collectorNumber = "9")
 public class CennsEnlistment extends Card {
 
     public CennsEnlistment() {

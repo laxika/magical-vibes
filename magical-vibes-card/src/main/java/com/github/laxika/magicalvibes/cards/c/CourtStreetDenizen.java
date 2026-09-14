@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "8")
+@CardRegistration(set = "DDO", collectorNumber = "5")
 public class CourtStreetDenizen extends Card {
 
     public CourtStreetDenizen() {

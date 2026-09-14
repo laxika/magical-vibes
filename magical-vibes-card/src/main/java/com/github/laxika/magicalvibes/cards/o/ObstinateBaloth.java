@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "188")
 @CardRegistration(set = "BRO", collectorNumber = "187")
+@CardRegistration(set = "IMA", collectorNumber = "179")
 public class ObstinateBaloth extends Card {
 
     public ObstinateBaloth() {

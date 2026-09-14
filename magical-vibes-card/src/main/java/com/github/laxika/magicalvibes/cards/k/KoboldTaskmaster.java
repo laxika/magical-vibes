@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSB", collectorNumber = "65")
 @CardRegistration(set = "LEG", collectorNumber = "156")
+@CardRegistration(set = "ME3", collectorNumber = "106")
 public class KoboldTaskmaster extends Card {
 
     public KoboldTaskmaster() {

@@ -48,6 +48,20 @@ class SengirAutocratTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Leaving the battlefield by exile also exiles all Serf tokens")
+    void exilingAutocratExilesSerfTokens() {
+        Permanent autocrat = castAndResolveAutocrat(player1);
+
+        assertThat(serfTokens(player1)).hasSize(3);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, autocrat));
+        resolveAllTriggers();
+
+        assertThat(serfTokens(player1)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Leaving the battlefield exiles Serf tokens controlled by both players")
     void leavesBattlefieldExilesAllPlayersSerfTokens() {
         Permanent autocrat = castAndResolveAutocrat(player1);

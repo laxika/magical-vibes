@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "TPR", collectorNumber = "112")
 @CardRegistration(set = "BRB", collectorNumber = "57")
 @CardRegistration(set = "PD3", collectorNumber = "15")
+@CardRegistration(set = "VMA", collectorNumber = "136")
+@CardRegistration(set = "UMA", collectorNumber = "110")
 public class Reanimate extends Card {
 
     public Reanimate() {

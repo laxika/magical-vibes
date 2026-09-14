@@ -18,6 +18,6 @@ public class TrainingGrounds extends Card {
         addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate())), 2));
+                        new PermanentControlledBySourceControllerPredicate())), 2, true, true));
     }
 }

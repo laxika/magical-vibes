@@ -64,8 +64,14 @@ public class EquipSupport {
 
     public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host,
                                       boolean permitsNonCreatureTarget) {
+        return canAttachEquipment(gameData, equipment, host, permitsNonCreatureTarget, false);
+    }
+
+    public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host,
+                                      boolean permitsNonCreatureTarget,
+                                      boolean permitsCreatureEquipment) {
         if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
-                || gameQueryService.isCreature(gameData, equipment)
+                || (!permitsCreatureEquipment && gameQueryService.isCreature(gameData, equipment))
                 || (!permitsNonCreatureTarget && !gameQueryService.isCreature(gameData, host))
                 || gameQueryService.cantBeEquipped(gameData, host)
                 || gameQueryService.hasProtectionFromSource(gameData, host, equipment)) {

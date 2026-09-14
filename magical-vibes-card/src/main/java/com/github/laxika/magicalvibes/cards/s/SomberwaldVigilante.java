@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "156")
+@CardRegistration(set = "DDL", collectorNumber = "2")
 public class SomberwaldVigilante extends Card {
 
     public SomberwaldVigilante() {

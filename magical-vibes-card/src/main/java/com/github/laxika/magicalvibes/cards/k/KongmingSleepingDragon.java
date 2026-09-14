@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "9")
+@CardRegistration(set = "VMA", collectorNumber = "33")
+@CardRegistration(set = "ME3", collectorNumber = "16")
+@CardRegistration(set = "A25", collectorNumber = "20")
 public class KongmingSleepingDragon extends Card {
 
     public KongmingSleepingDragon() {

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "128")
+@CardRegistration(set = "TSR", collectorNumber = "136")
 public class SengirNosferatu extends Card {
 
     public SengirNosferatu() {

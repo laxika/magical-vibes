@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "136")
+@CardRegistration(set = "DDK", collectorNumber = "56")
 public class GangOfDevils extends Card {
 
     public GangOfDevils() {

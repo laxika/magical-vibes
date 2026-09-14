@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "1")
 @CardRegistration(set = "JUD", collectorNumber = "1")
+@CardRegistration(set = "UMA", collectorNumber = "9")
 public class AncestorsChosen extends Card {
 
     public AncestorsChosen() {

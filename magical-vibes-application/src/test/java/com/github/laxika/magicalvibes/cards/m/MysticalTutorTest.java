@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MysticalTutor.class, Boomerang.class, StoneRain.class, BayFalcon.class, Island.class})
+@CardUsed({MysticalTutor.class, Boomerang.class, StoneRain.class, LongbowArcher.class, Island.class})
 class MysticalTutorTest extends BaseCardTest {
 
     @Test
@@ -55,7 +55,7 @@ class MysticalTutorTest extends BaseCardTest {
     @Test
     @DisplayName("Search may fail to find when no instant or sorcery is present")
     void mayFailToFind() {
-        List<Card> deck = List.of(new BayFalcon(), new Island());
+        List<Card> deck = List.of(new LongbowArcher(), new Island());
         harness.setLibrary(player1, deck);
         cast();
         harness.passBothPriorities();
@@ -83,7 +83,7 @@ class MysticalTutorTest extends BaseCardTest {
     }
 
     private List<Card> setupLibrary() {
-        List<Card> deck = List.of(new Boomerang(), new StoneRain(), new BayFalcon(), new Island());
+        List<Card> deck = List.of(new Boomerang(), new StoneRain(), new LongbowArcher(), new Island());
         harness.setLibrary(player1, deck);
         return deck;
     }

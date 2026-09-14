@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndSameNam
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "12")
+@CardRegistration(set = "HA4", collectorNumber = "2")
 public class DeclarationInStone extends Card {
 
     public DeclarationInStone() {

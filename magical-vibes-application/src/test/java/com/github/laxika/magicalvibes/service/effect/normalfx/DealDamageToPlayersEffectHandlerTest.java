@@ -26,6 +26,62 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
 
     private DealDamageToPlayersEffectHandler handler;
 
+    @Test
+    void damageUsesTriggeringPermanentsCurrentController() {
+        Card source = createCard("Damage source");
+        Permanent land = new Permanent(createCard("Land"));
+        StackEntry entry = createEntry(source, player1Id, player1Id);
+        entry.setTriggeringPermanentId(land.getId());
+        entry.setTriggeringPermanentControllerId(player1Id);
+        when(gameQueryService.findPermanentController(gd, land.getId())).thenReturn(player2Id);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubPlayerDamageCore(player2Id);
+        stubNoInfectOnSource(entry);
+
+        handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
+                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+
+        assertThat(gd.getLife(player1Id)).isEqualTo(20);
+        assertThat(gd.getLife(player2Id)).isEqualTo(18);
+    }
+
+    @Test
+    void recordsActualDamageForFollowingEffect() {
+        StackEntry entry = createEntry(createCard("Damage source"), player1Id, player2Id);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubPlayerDamageCore(player2Id);
+        stubNoInfectOnSource(entry);
+
+        handler.resolve(gd, entry,
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT).recordingDamageDealt());
+
+        assertThat(entry.getEventValue()).isEqualTo(2);
+    }
+
+    @Test
+    void damageUsesLastKnownControllerWhenTriggeringPermanentHasLeft() {
+        StackEntry entry = createEntry(createCard("Damage source"), player1Id, player1Id);
+        UUID landId = UUID.randomUUID();
+        entry.setTriggeringPermanentId(landId);
+        entry.setTriggeringPermanentControllerId(player1Id);
+        entry.getRemovedPermanentControllers().put(landId, player2Id);
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubPlayerDamageCore(player2Id);
+        stubNoInfectOnSource(entry);
+
+        handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
+                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+
+        assertThat(gd.getLife(player1Id)).isEqualTo(20);
+        assertThat(gd.getLife(player2Id)).isEqualTo(18);
+    }
+
     @Override
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(

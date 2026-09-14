@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "211")
+@CardRegistration(set = "TSR", collectorNumber = "224")
 public class PhantomWurm extends Card {
 
     public PhantomWurm() {

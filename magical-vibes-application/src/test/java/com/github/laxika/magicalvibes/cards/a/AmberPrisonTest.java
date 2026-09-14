@@ -86,6 +86,20 @@ class AmberPrisonTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact, creature, or land");
     }
 
+    @Test
+    @DisplayName("Can target Amber Prison itself")
+    void canTargetItself() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, amberPrison.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+
+        assertThat(amberPrison.isTapped()).isTrue();
+    }
+
     // ===== Prevent untap while source tapped =====
 
     @Test
@@ -199,6 +213,24 @@ class AmberPrisonTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("If Amber Prison leaves before resolution, the target can untap normally")
+    void sourceLeavesBeforeResolution() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        Permanent target = addReadyCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(amberPrison);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+
+        advanceToNextTurn(player1);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
     // ===== May not untap during untap step =====
 
     @Test
@@ -272,22 +304,20 @@ class AmberPrisonTest extends BaseCardTest {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // Cascades: END_STEP -> CLEANUP -> advanceTurn -> may ability prompt
-
-        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "139")
+@CardRegistration(set = "GK2", collectorNumber = "85")
 public class WastelandViper extends Card {
 
     public WastelandViper() {

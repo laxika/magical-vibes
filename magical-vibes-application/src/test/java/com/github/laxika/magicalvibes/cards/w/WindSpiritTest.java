@@ -25,7 +25,6 @@ class WindSpiritTest extends BaseCardTest {
         addCreatureReady(player2, new KjeldoranWarrior());
 
         declareAttackers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
 
         harness.assertLife(player2, 17);
     }
@@ -76,5 +75,22 @@ class WindSpiritTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace requires two creatures that can each block Wind Spirit")
+    void menaceRequiresTwoLegalBlockers() {
+        Permanent attacker = addCreatureReady(player1, new WindSpirit());
+        addCreatureReady(player2, new KjeldoranWarrior());
+        addCreatureReady(player2, new KjeldoranSkyknight());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block Wind Spirit (flying)");
     }
 }

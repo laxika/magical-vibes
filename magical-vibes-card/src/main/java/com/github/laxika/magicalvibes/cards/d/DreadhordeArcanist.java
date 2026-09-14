@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "125")
+@CardRegistration(set = "TSR", collectorNumber = "341")
 public class DreadhordeArcanist extends Card {
 
     public DreadhordeArcanist() {

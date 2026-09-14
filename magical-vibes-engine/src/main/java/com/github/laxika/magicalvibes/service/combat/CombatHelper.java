@@ -183,19 +183,40 @@ public final class CombatHelper {
                                                 Map<Integer, UUID> attackTargets) {
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CombatCreatureLimitEffect limit) {
-                    long affectedAttackers = attackerIndices.stream()
-                            .filter(index -> limit.appliesToAttackTarget(sourceControllerId,
-                                    permanent.getId(), attackTargets.get(index)))
-                            .count();
-                    if (affectedAttackers > limit.maxAttackers()) {
-                        throw new IllegalStateException("No more than " + limit.maxAttackers()
-                                + " creature" + (limit.maxAttackers() == 1 ? "" : "s")
-                                + " can attack each combat");
-                    }
-                }
+                validateMaximumAttackers(limitOrNull(effect), sourceControllerId, permanent.getId(),
+                        attackerIndices, attackTargets);
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    validateMaximumAttackers(limitOrNull(effect), gameData.planechase.controllerId,
+                            planar.getId(), attackerIndices, attackTargets);
+                }
+            }
+        }
+    }
+
+    private static CombatCreatureLimitEffect limitOrNull(CardEffect effect) {
+        return effect instanceof CombatCreatureLimitEffect limit ? limit : null;
+    }
+
+    private static void validateMaximumAttackers(CombatCreatureLimitEffect limit,
+                                                 UUID sourceControllerId, UUID sourceId,
+                                                 List<Integer> attackerIndices,
+                                                 Map<Integer, UUID> attackTargets) {
+        if (limit == null) {
+            return;
+        }
+        long affectedAttackers = attackerIndices.stream()
+                .filter(index -> limit.appliesToAttackTarget(sourceControllerId, sourceId,
+                        attackTargets.get(index)))
+                .count();
+        if (affectedAttackers > limit.maxAttackers()) {
+            throw new IllegalStateException("No more than " + limit.maxAttackers()
+                    + " creature" + (limit.maxAttackers() == 1 ? "" : "s")
+                    + " can attack each combat");
+        }
     }
 
     /**
@@ -210,6 +231,15 @@ public final class CombatHelper {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CombatCreatureLimitEffect limit) {
+                        maximum[0] = Math.min(maximum[0], limit.maxBlockers());
+                    }
+                }
+            }
+        }
         return maximum[0];
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Anaconda.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({Anaconda.class, ArgothianSwine.class, Swamp.class})
 class AnacondaTest extends BaseCardTest {
 
     @Test
@@ -22,10 +23,9 @@ class AnacondaTest extends BaseCardTest {
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerPerm = addCreatureReady(player2, new ArgothianSwine());
         Permanent atkPerm = addCreatureReady(player1, new Anaconda());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -38,10 +38,9 @@ class AnacondaTest extends BaseCardTest {
     @Test
     @DisplayName("Anaconda can be blocked when defending player does not control a Swamp")
     void canBeBlockedWhenDefenderDoesNotControlSwamp() {
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerPerm = addCreatureReady(player2, new ArgothianSwine());
         Permanent atkPerm = addCreatureReady(player1, new Anaconda());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -56,10 +55,9 @@ class AnacondaTest extends BaseCardTest {
     void canBeBlockedWhenOnlyAttackerControlsSwamp() {
         harness.addToBattlefield(player1, new Swamp());
 
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerPerm = addCreatureReady(player2, new ArgothianSwine());
         Permanent atkPerm = addCreatureReady(player1, new Anaconda());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -67,5 +65,22 @@ class AnacondaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Anaconda cannot be blocked when defending player controls a tapped Swamp")
+    void cannotBeBlockedWhenDefenderControlsTappedSwamp() {
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).tap();
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new Anaconda());
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "163")
+@CardRegistration(set = "PC2", collectorNumber = "94")
+@CardRegistration(set = "PCA", collectorNumber = "94")
 public class GlenElendraLiege extends Card {
 
     public GlenElendraLiege() {

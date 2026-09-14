@@ -23,6 +23,6 @@ public class SivvisRuse extends Card {
                         new OpponentControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)))),
                 false));
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControllerAndCreatures());
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControlledCreatures());
     }
 }

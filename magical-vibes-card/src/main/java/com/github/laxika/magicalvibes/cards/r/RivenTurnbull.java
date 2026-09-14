@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "LEG", collectorNumber = "254")
+@CardRegistration(set = "ME3", collectorNumber = "171")
 public class RivenTurnbull extends Card {
 
     public RivenTurnbull() {

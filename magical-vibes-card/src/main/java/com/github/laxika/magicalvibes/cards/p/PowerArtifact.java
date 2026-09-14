@@ -18,6 +18,6 @@ public class PowerArtifact extends Card {
         target(TargetFilters.artifact()).addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentIsHostOfSourceAuraPredicate())), 2));
+                        new PermanentIsHostOfSourceAuraPredicate())), 2, true, true));
     }
 }

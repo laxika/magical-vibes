@@ -19,8 +19,9 @@ import java.util.Set;
  * distributed evenly across the deck's colors) from every implemented printing. Used by the
  * "All Random" game mode and the AI fuzz tests.
  *
- * <p>The card pool is built lazily on first use and cached for the lifetime of this instance. It
- * was previously cached in statics for the lifetime of the JVM, which silently tied every caller to
+ * <p>The card pool can be initialized at startup or lazily on first use and is cached for the
+ * lifetime of this instance. It was previously cached in statics for the lifetime of the JVM,
+ * which silently tied every caller to
  * whichever {@link CardCatalog} happened to warm it first; the cache now lives and dies with the
  * catalog it was derived from.
  */
@@ -153,7 +154,8 @@ public final class RandomDeckGenerator {
         return deck;
     }
 
-    private synchronized void initializeCardPool() {
+    /** Preloads the card pool once so the first match does not pay the initialization cost. */
+    public synchronized void initializeCardPool() {
         if (allNonLandPrintings != null) {
             return;
         }

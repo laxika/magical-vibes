@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatalBlow.class, GrizzlyBears.class, AirElemental.class, Forest.class, Shock.class})
+@CardUsed({AirElemental.class, FatalBlow.class, Forest.class, GrizzlyBears.class, Shock.class})
 class FatalBlowTest extends BaseCardTest {
 
     @Test

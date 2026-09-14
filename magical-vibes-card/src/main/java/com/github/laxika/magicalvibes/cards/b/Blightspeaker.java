@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "64")
+@CardRegistration(set = "MMA", collectorNumber = "73")
+@CardRegistration(set = "TSR", collectorNumber = "103")
 public class Blightspeaker extends Card {
 
     public Blightspeaker() {

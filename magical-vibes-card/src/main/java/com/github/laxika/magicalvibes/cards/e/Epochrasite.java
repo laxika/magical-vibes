@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardWithSuspendCountersEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "162")
+@CardRegistration(set = "MMA", collectorNumber = "205")
 public class Epochrasite extends Card {
 
     public Epochrasite() {

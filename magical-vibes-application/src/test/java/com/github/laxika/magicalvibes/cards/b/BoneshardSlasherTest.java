@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.Accelerate;
 import com.github.laxika.magicalvibes.cards.c.CephalidIllusionist;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoneshardSlasher.class, CephalidIllusionist.class, Shock.class, Spellbook.class})
+@CardUsed({BoneshardSlasher.class, Accelerate.class, CephalidIllusionist.class})
 class BoneshardSlasherTest extends BaseCardTest {
 
     @Test
@@ -51,23 +50,55 @@ class BoneshardSlasherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrifices itself when targeted by a spell")
+    @DisplayName("With threshold, sacrifices itself when targeted by a spell")
     void sacrificesWhenTargetedBySpell() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
-        harness.setHand(player2, List.of(new Shock()));
+        fillGraveyard(player1, 7);
+        harness.setHand(player2, List.of(new Accelerate()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, slasher.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, slasher.getId());
 
         harness.assertNotOnBattlefield(player1, "Boneshard Slasher");
         harness.assertInGraveyard(player1, "Boneshard Slasher");
     }
 
     @Test
-    @DisplayName("Sacrifices itself when targeted by an ability")
+    @DisplayName("Without threshold, remains on the battlefield when targeted by a spell")
+    void doesNotSacrificeWhenTargetedBySpellBelowThreshold() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 6);
+        harness.setHand(player2, List.of(new Accelerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, slasher.getId());
+
+        harness.assertOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertNotInGraveyard(player1, "Boneshard Slasher");
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not enable the sacrifice trigger")
+    void opponentGraveyardDoesNotEnableSacrificeTrigger() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player2, 7);
+        harness.setHand(player2, List.of(new Accelerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, slasher.getId());
+
+        harness.assertOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertNotInGraveyard(player1, "Boneshard Slasher");
+    }
+
+    @Test
+    @DisplayName("With threshold, sacrifices itself when targeted by an ability")
     void sacrificesWhenTargetedByAbility() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 7);
         Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new CephalidIllusionist());
         illusionist.setSummoningSick(false);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -81,10 +112,46 @@ class BoneshardSlasherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Boneshard Slasher");
     }
 
+    @Test
+    @DisplayName("Losing threshold after the sacrifice trigger fires does not stop the sacrifice")
+    void stillSacrificesAfterLosingThresholdInResponse() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 7);
+        harness.setHand(player2, List.of(new Accelerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, slasher.getId());
+        assertThat(gd.stack).hasSize(2);
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertInGraveyard(player1, "Boneshard Slasher");
+    }
+
+    @Test
+    @DisplayName("Gaining threshold after being targeted does not create a sacrifice trigger")
+    void gainingThresholdAfterBeingTargetedDoesNotTrigger() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 6);
+        harness.setHand(player2, List.of(new Accelerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, slasher.getId());
+        assertThat(gd.stack).hasSize(1);
+        fillGraveyard(player1, 7);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertNotInGraveyard(player1, "Boneshard Slasher");
+    }
+
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Spellbook());
+            cards.add(new CephalidIllusionist());
         }
         harness.setGraveyard(player, cards);
     }

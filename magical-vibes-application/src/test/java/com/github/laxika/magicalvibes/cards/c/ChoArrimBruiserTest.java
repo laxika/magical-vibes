@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +25,9 @@ class ChoArrimBruiserTest extends BaseCardTest {
         Permanent second = addCreatureReady(player2, new FreshVolunteers());
 
         declareAttackers(List.of(indexOf(player1, bruiser)));
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -46,8 +44,7 @@ class ChoArrimBruiserTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new FreshVolunteers());
 
         declareAttackers(List.of(indexOf(player1, bruiser)));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -61,7 +58,7 @@ class ChoArrimBruiserTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new FreshVolunteers());
 
         declareAttackers(List.of(indexOf(player1, bruiser)));
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -77,8 +74,7 @@ class ChoArrimBruiserTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new FreshVolunteers());
 
         declareAttackers(List.of(indexOf(player1, bruiser)));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -92,8 +88,7 @@ class ChoArrimBruiserTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new FreshVolunteers());
 
         declareAttackers(List.of(indexOf(player1, bruiser)));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -107,7 +102,9 @@ class ChoArrimBruiserTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         declareAttackers(List.of(indexOf(player1, bruiser)));
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -61,10 +61,11 @@ class PraetorsGraspTest extends BaseCardTest {
         // Choose the card
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        // Card should be in caster's exile zone, face down (the search does not reveal it)
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
+        // Ownership is preserved; only the searching player can inspect the face-down card.
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(bears.getId()));
         assertThat(gd.findExiledCard(bears.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(bears.getId()).exilerId()).isEqualTo(player1.getId());
 
         // Play permission should be granted to caster
         assertThat(gd.exilePlayPermissions.get(bears.getId()))
@@ -156,7 +157,7 @@ class PraetorsGraspTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
 
         // Card should no longer be in exile
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getId().equals(bears.getId()));
     }
 

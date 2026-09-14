@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.u.UrborgMindsucker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiverBoa.class, UrborgMindsucker.class})
+@CardUsed({RiverBoa.class, GrizzlyBears.class})
 class RiverBoaTest extends BaseCardTest {
 
     @Test
@@ -31,6 +31,17 @@ class RiverBoaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration cannot be activated with only colorless mana")
+    void cannotActivateRegenerationWithOnlyColorlessMana() {
+        addCreatureReady(player1, new RiverBoa());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves River Boa from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent boa = addCreatureReady(player1, new RiverBoa());
@@ -38,7 +49,7 @@ class RiverBoaTest extends BaseCardTest {
         boa.setBlocking(true);
         boa.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new UrborgMindsucker());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player2);
@@ -57,7 +68,7 @@ class RiverBoaTest extends BaseCardTest {
         boa.setBlocking(true);
         boa.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new UrborgMindsucker());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player2);
@@ -71,7 +82,7 @@ class RiverBoaTest extends BaseCardTest {
     @DisplayName("Islandwalk prevents blocking while the defender controls an Island")
     void islandwalkPreventsBlockingWhenDefenderControlsIsland() {
         harness.addToBattlefield(player2, new Island());
-        Permanent blocker = addCreatureReady(player2, new UrborgMindsucker());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new RiverBoa());
         attacker.setAttacking(true);
 
@@ -88,7 +99,7 @@ class RiverBoaTest extends BaseCardTest {
     @Test
     @DisplayName("Islandwalk does not prevent blocking when the defender controls no Island")
     void islandwalkAllowsBlockingWithoutIsland() {
-        Permanent blocker = addCreatureReady(player2, new UrborgMindsucker());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new RiverBoa());
         attacker.setAttacking(true);
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "134")
+@CardRegistration(set = "KLR", collectorNumber = "204")
 public class RenegadeWheelsmith extends Card {
 
     public RenegadeWheelsmith() {

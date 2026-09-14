@@ -32,9 +32,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> elites = findPermanents(player1, "Llanowar Elite");
         assertThat(elites).hasSize(2);
@@ -50,6 +48,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Llanowar Elite")).hasSize(1);
         assertThat(findPermanent(player1, "Verazol, the Split Current")
@@ -63,6 +62,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0, 1);
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void castKickedElite() {

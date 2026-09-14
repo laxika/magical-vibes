@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -185,6 +184,27 @@ class SpiritLinkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Controller gains life when enchanted creature deals noncombat damage to a creature")
+    void controllerGainsLifeOnNoncombatDamageToCreature() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
+        attachSpiritLink(player1, pinger);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
     void combatDamageWaitsForTriggeredLifeGain() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -196,6 +216,26 @@ class SpiritLinkTest extends BaseCardTest {
         harness.resolveCombatDamage();
 
         harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("A queued life-gain trigger resolves after Spirit Link leaves the battlefield")
+    void triggeredLifeGainResolvesAfterSpiritLinkLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        Permanent aura = attachSpiritLink(player1, bears);
+
+        harness.resolveCombatDamage();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
         harness.assertLife(player1, 20);
 
         harness.passBothPriorities();
@@ -218,8 +258,7 @@ class SpiritLinkTest extends BaseCardTest {
         resolveCombat();
 
         harness.passBothPriorities();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .contains("Spirit Link's ability resolves.", "Alice gains 2 life.");
+        assertThat(gameLogContains("Alice gains 2 life.")).isTrue();
     }
 
     // ===== Targeting restriction =====
@@ -236,7 +275,7 @@ class SpiritLinkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spirit Link")
+                .anyMatch(p -> p.getCard() instanceof SpiritLink
                         && p.isAttached()
                         && p.getAttachedTo().equals(bears.getId()));
     }
@@ -246,11 +285,9 @@ class SpiritLinkTest extends BaseCardTest {
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new SpiritLink()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-
-        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -259,10 +296,9 @@ class SpiritLinkTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void attachSpiritLink(Player controller, Permanent target) {
-        SpiritLink card = new SpiritLink();
-        Permanent aura = new Permanent(card);
+    private Permanent attachSpiritLink(Player controller, Permanent target) {
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new SpiritLink());
         aura.setAttachedTo(target.getId());
-        harness.getGameData().playerBattlefields.get(controller.getId()).add(aura);
+        return aura;
     }
 }

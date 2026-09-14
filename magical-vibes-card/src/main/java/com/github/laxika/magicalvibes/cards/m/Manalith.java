@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 @CardRegistration(set = "HOU", collectorNumber = "164")
 @CardRegistration(set = "M12", collectorNumber = "212")
 @CardRegistration(set = "M19", collectorNumber = "239")
+@CardRegistration(set = "GNT", collectorNumber = "54")
 public class Manalith extends Card {
 
     public Manalith() {

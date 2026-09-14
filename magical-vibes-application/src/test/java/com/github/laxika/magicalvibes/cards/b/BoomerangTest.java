@@ -1,27 +1,26 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlue;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MossDiamond;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.m.MossDiamond;
-import com.github.laxika.magicalvibes.cards.p.PrismaticCircle;
-import com.github.laxika.magicalvibes.cards.b.BayFalcon;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Boomerang.class, BayFalcon.class, PrismaticCircle.class, Island.class, MossDiamond.class})
+@CardUsed({Boomerang.class, CircleOfProtectionBlue.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, MossDiamond.class})
 class BoomerangTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -29,11 +28,11 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Boomerang puts it on the stack with target")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new BayFalcon());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Bay Falcon");
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -48,29 +47,43 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns target creature to owner's hand")
     void resolvingReturnsCreatureToHand() {
-        harness.addToBattlefield(player2, new BayFalcon());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Bay Falcon");
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Bay Falcon");
-        harness.assertInHand(player2, "Bay Falcon");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Resolving returns target enchantment to owner's hand")
     void resolvingReturnsEnchantmentToHand() {
-        harness.addToBattlefield(player2, new PrismaticCircle());
+        harness.addToBattlefield(player2, new GloriousAnthem());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Prismatic Circle");
+        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Prismatic Circle");
-        harness.assertInHand(player2, "Prismatic Circle");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInHand(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Resolving returns target enchantment to owner's hand")
+    void resolvingReturnsEnchantmentToHandUpstreamReview() {
+        harness.addToBattlefield(player2, new CircleOfProtectionBlue());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Blue");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Circle of Protection: Blue");
+        harness.assertInHand(player2, "Circle of Protection: Blue");
     }
 
     @Test
@@ -90,15 +103,31 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Can bounce own permanent")
     void canBounceOwnPermanent() {
-        harness.addToBattlefield(player1, new BayFalcon());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player1, "Bay Falcon");
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player1, "Bay Falcon");
-        harness.assertInHand(player1, "Bay Falcon");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns an opponent-controlled permanent to its owner's hand")
+    void returnsPermanentToOwnerHandWhenControlledByOpponent() {
+        GrizzlyBears ownedBears = new GrizzlyBears();
+        ownedBears.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, ownedBears);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -118,11 +147,11 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Boomerang goes to graveyard after resolving")
     void boomerangGoesToGraveyardAfterResolving() {
-        harness.addToBattlefield(player2, new BayFalcon());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Bay Falcon");
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -133,7 +162,7 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -147,7 +176,7 @@ class BoomerangTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        harness.assertInGraveyard(player2, "Bay Falcon");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Boomerang still goes to graveyard
         harness.assertInGraveyard(player1, "Boomerang");
     }
@@ -155,14 +184,37 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature does not go to graveyard (it goes to hand)")
     void targetDoesNotGoToGraveyard() {
-        harness.addToBattlefield(player2, new BayFalcon());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Bay Falcon");
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotInGraveyard(player2, "Bay Falcon");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled permanent to its owner's hand")
+    void returnsControlledPermanentToOwnersHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
-

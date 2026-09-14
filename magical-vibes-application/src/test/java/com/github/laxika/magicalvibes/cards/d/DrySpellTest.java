@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrySpell.class, AysenBureaucrats.class, BeastWalkers.class, ApocalypseChime.class})
+@CardUsed({ApocalypseChime.class, AysenBureaucrats.class, BeastWalkers.class, DrySpell.class})
 class DrySpellTest extends BaseCardTest {
 
     @Test

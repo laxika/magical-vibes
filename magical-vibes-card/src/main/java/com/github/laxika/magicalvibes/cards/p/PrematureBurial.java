@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "125")
+@CardRegistration(set = "TSR", collectorNumber = "131")
 public class PrematureBurial extends Card {
 
     public PrematureBurial() {

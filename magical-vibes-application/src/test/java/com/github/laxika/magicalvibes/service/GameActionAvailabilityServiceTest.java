@@ -456,6 +456,7 @@ class GameActionAvailabilityServiceTest {
         @DisplayName("Land is playable during main phase regardless of cost modifiers")
         void landPlayableDuringMainPhase() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.getMaxLandsThisTurn(gd, player1Id)).thenReturn(1);
 
             Card land = new Card();
             land.setName("Forest");
@@ -476,6 +477,7 @@ class GameActionAvailabilityServiceTest {
         @DisplayName("Recognizes a Mayhem land after it was discarded this turn")
         void recognizesMayhemLand() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.getMaxLandsThisTurn(gd, player1Id)).thenReturn(1);
             when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
 
             Card land = new Card();

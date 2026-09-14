@@ -142,4 +142,20 @@ class StoneRainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Destroys only the targeted land")
+    void destroysOnlyTargetedLand() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new RishadanPort());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Rishadan Port");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Rishadan Port");
+        harness.assertInGraveyard(player2, "Rishadan Port");
+    }
 }

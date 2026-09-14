@@ -60,6 +60,20 @@ class WallOfFireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving the ability does not boost another Wall of Fire")
+    void resolvingAbilityOnlyBoostsSource() {
+        Permanent sourceWall = addCreatureReady(player1, new WallOfFire());
+        Permanent otherWall = addCreatureReady(player1, new WallOfFire());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sourceWall.getEffectivePower()).isEqualTo(1);
+        assertThat(otherWall.getEffectivePower()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         Permanent wall = addCreatureReady(player1, new WallOfFire());
@@ -111,5 +125,30 @@ class WallOfFireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability with only non-red mana")
+    void cannotActivateWithOnlyNonRedMana() {
+        addCreatureReady(player1, new WallOfFire());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Can activate the ability while tapped and summoning-sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfFire());
+        wall.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getPowerModifier()).isEqualTo(1);
+        assertThat(wall.isTapped()).isTrue();
     }
 }

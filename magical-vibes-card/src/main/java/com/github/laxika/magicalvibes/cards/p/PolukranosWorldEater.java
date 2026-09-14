@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "172")
+@CardRegistration(set = "DDL", collectorNumber = "43")
 public class PolukranosWorldEater extends Card {
 
     public PolukranosWorldEater() {

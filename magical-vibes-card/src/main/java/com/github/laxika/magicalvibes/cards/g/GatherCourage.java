@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "175")
 @CardRegistration(set = "RAV", collectorNumber = "165")
+@CardRegistration(set = "GK1", collectorNumber = "105")
 public class GatherCourage extends Card {
 
     public GatherCourage() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "86")
+@CardRegistration(set = "MMA", collectorNumber = "188")
 public class DivinityOfPride extends Card {
 
     public DivinityOfPride() {

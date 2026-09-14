@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "296")
+@CardRegistration(set = "ME3", collectorNumber = "202")
 public class SwordOfTheAges extends Card {
 
     public SwordOfTheAges() {

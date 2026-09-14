@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "154")
+@CardRegistration(set = "KLR", collectorNumber = "243")
 public class HopeOfGhirapur extends Card {
 
     public HopeOfGhirapur() {

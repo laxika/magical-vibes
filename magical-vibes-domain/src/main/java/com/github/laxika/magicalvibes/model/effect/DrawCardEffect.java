@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 
 /**
@@ -43,7 +44,8 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed)
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return amount instanceof SourceToughness ? TriggerContext.SOURCE_SELF : null;
+        return amount instanceof SourcePower || amount instanceof SourceToughness
+                ? TriggerContext.SOURCE_SELF : null;
     }
 
     @Override

@@ -14,6 +14,7 @@ import java.util.EnumMap;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -57,6 +58,8 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Effective colors of declared targets just before they left the battlefield. */
+    private final Map<UUID, Set<CardColor>> lastKnownTargetColors = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
     private final Map<UUID, UUID> removedPermanentControllers = new HashMap<>();
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
@@ -118,6 +121,8 @@ public class StackEntry {
     @Setter private boolean castTransformed;
     /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
     @Setter private boolean castFaceDown;
+    /** Whether this face-down creature turns face up when it would deal or receive damage or become tapped. */
+    @Setter private boolean faceDownTurnsFaceUpOnDamageOrTap;
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
     @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
@@ -217,6 +222,8 @@ public class StackEntry {
     @Setter private boolean controlledDragonAsCast;
     /** Whether the spell's controller controlled a Faerie when the spell was finished being cast. */
     @Setter private boolean controlledFaerieAsCast;
+    /** Whether the spell's controller controlled a modified creature when the spell was finished being cast. */
+    @Setter private boolean controlledModifiedCreatureAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -384,6 +391,8 @@ public class StackEntry {
      * {@code StackResolutionService} and turned into +1/+1 counters by the as-enters replacement.
      */
     @Setter private int grantedBloodthirst;
+    /** Numeric devour grant carried by this creature spell while it is on the stack. */
+    @Setter private int grantedDevour;
     /** Triggered abilities granted to the permanent as this spell enters the battlefield. */
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
@@ -503,7 +512,7 @@ public class StackEntry {
         this.xValue = xValue;
         this.targetId = targetId;
         this.sourcePermanentId = null;
-        this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
+        this.damageAssignments = damageAssignments != null ? new LinkedHashMap<>(damageAssignments) : Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
@@ -595,7 +604,7 @@ public class StackEntry {
         this.xValue = xValue;
         this.targetId = targetId;
         this.sourcePermanentId = sourcePermanentId;
-        this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
+        this.damageAssignments = damageAssignments != null ? new LinkedHashMap<>(damageAssignments) : Map.of();
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
@@ -643,8 +652,9 @@ public class StackEntry {
         this.targetId = source.targetId;
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
-        this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.lastKnownTargetColors.putAll(source.lastKnownTargetColors);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
@@ -677,6 +687,7 @@ public class StackEntry {
         this.castWithWarp = source.castWithWarp;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
+        this.faceDownTurnsFaceUpOnDamageOrTap = source.faceDownTurnsFaceUpOnDamageOrTap;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
         this.cyclingAbility = source.cyclingAbility;
@@ -710,6 +721,7 @@ public class StackEntry {
         this.controlledMountAsCast = source.controlledMountAsCast;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.controlledFaerieAsCast = source.controlledFaerieAsCast;
+        this.controlledModifiedCreatureAsCast = source.controlledModifiedCreatureAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
@@ -780,6 +792,7 @@ public class StackEntry {
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.grantedDevour = source.grantedDevour;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
@@ -935,7 +948,7 @@ public class StackEntry {
                 if (!(targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
                     continue;
                 }
-                int groupSize = Math.min(targetGroup.getMaxTargets(),
+                int groupSize = Math.min(wasKicked() ? targetGroup.getKickedMaxTargets() : targetGroup.getMaxTargets(),
                         declaredTargetCardIds.size() - graveyardTargetOffset);
                 if (targetGroup.getIndex() == group) {
                     if (groupSize <= 0) {
@@ -1020,7 +1033,11 @@ public class StackEntry {
             throw new IllegalArgumentException("Invalid target index");
         }
         List<UUID> updated = new ArrayList<>(targetIds);
-        updated.set(targetIndex, targetId);
+        UUID previousTarget = updated.set(targetIndex, targetId);
+        if (damageAssignments.containsKey(previousTarget)) {
+            int assignedDamage = damageAssignments.remove(previousTarget);
+            damageAssignments.merge(targetId, assignedDamage, Integer::sum);
+        }
         targetIds = List.copyOf(updated);
         illegalTargetIndices.remove(targetIndex);
     }
@@ -1287,7 +1304,7 @@ public class StackEntry {
     }
 
     public boolean isSingleTarget() {
-        return targetId != null && targetIds.isEmpty() && targetCardIds.isEmpty();
+        return !nonTargeting && (targetId != null ? 1 : 0) + targetIds.size() + targetCardIds.size() == 1;
     }
 
     public boolean hasAnyTarget() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "171")
+@CardRegistration(set = "ME3", collectorNumber = "125")
 public class JungleLion extends Card {
 
     public JungleLion() {

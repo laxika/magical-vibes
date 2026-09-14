@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "155")
+@CardRegistration(set = "MD1", collectorNumber = "5")
 public class ShrineOfLoyalLegions extends Card {
 
     public ShrineOfLoyalLegions() {

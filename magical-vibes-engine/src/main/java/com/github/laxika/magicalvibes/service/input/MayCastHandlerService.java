@@ -54,6 +54,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -184,13 +185,19 @@ public class MayCastHandlerService {
                                                      boolean publiclyRevealed) {
         Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
-        List<Card> deck = gameData.playerDecks.get(player.getId());
+        UUID libraryOwnerId = ability.effects().stream()
+                .filter(e -> e instanceof RevealTopCardMayPlayFreeEffect)
+                .map(e -> ((RevealTopCardMayPlayFreeEffect) e).libraryOwnerId())
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(player.getId());
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         if (!accepted) {
             switch (notPlayedDestination) {
-                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName,
+                case HAND -> putTopCardIntoHand(gameData, libraryOwnerId, deck, cardToPlay, playerName,
                         publiclyRevealed);
-                case EXILE -> exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
+                case EXILE -> exileTopCardFromLibrary(gameData, libraryOwnerId, deck, cardToPlay, playerName);
                 case BOTTOM_OF_LIBRARY -> bottomTopCardOfLibrary(gameData, deck, cardToPlay, playerName);
                 default -> {
                     // Declined — the card stays on top of the library
@@ -265,12 +272,12 @@ public class MayCastHandlerService {
                 if (validTargets.isEmpty()) {
                     switch (notPlayedDestination) {
                         case HAND -> {
-                            gameData.addCardToHand(player.getId(), cardToPlay);
+                            gameData.addCardToHand(libraryOwnerId, cardToPlay);
                             logCardPutIntoHand(gameData, cardToPlay, playerName, publiclyRevealed);
                         }
                         case EXILE -> {
                             // No valid targets — exile the card instead
-                            exileService.exileCard(gameData, player.getId(), cardToPlay);
+                            exileService.exileCard(gameData, libraryOwnerId, cardToPlay);
                             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and is exiled."));
                             log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
                         }
@@ -576,6 +583,10 @@ public class MayCastHandlerService {
 
                         if (validTargets.isEmpty()) {
                             // No valid targets — card goes to owner's graveyard
+                            if (castEffect.exileInsteadOfGraveyard()) {
+                                permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
+                                gameData.addToExile(graveyardOwnerId, cardToCast);
+                            }
                             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
                         } else {
@@ -1447,6 +1458,22 @@ public class MayCastHandlerService {
                                                     Class<? extends CardEffect> pendingEffectType,
                                                     boolean revealCardOnDecline,
                                                     boolean scryIfDeclined) {
+        boolean exileInsteadOfGraveyard = ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .map(MayCastFromHandWithoutPayingManaCostEffect::exileInsteadOfGraveyard)
+                .findFirst()
+                .orElse(false);
+        handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
+                revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard);
+    }
+
+    private void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
+                                                     PendingMayAbility ability,
+                                                     Class<? extends CardEffect> pendingEffectType,
+                                                     boolean revealCardOnDecline,
+                                                     boolean scryIfDeclined,
+                                                     boolean exileInsteadOfGraveyard) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -1512,7 +1539,7 @@ public class MayCastHandlerService {
 
         // Remove from hand and cast
         hand.remove(cardIndex);
-        castCardFromHandWithoutPaying(gameData, player, cardToCast);
+        castCardFromHandWithoutPaying(gameData, player, cardToCast, exileInsteadOfGraveyard);
     }
 
     private void queueScryFallback(GameData gameData) {
@@ -1523,8 +1550,10 @@ public class MayCastHandlerService {
         }
     }
 
-    private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card) {
-        castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0);
+    private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card,
+                                               boolean exileInsteadOfGraveyard) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0,
+                exileInsteadOfGraveyard);
     }
 
     private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
@@ -1541,6 +1570,12 @@ public class MayCastHandlerService {
     private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
                                                      String paidCostDescription, String costLabel,
                                                      int xValue) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, paidCostDescription, costLabel, xValue, false);
+    }
+
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription, String costLabel,
+                                                     int xValue, boolean exileInsteadOfGraveyard) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
         String costPhrase;
@@ -1579,7 +1614,11 @@ public class MayCastHandlerService {
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes to its owner's graveyard
                 UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : playerId;
-                graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                if (exileInsteadOfGraveyard) {
+                    gameData.addToExile(ownerId, card);
+                } else {
+                    graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                }
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} cast-from-hand has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1588,7 +1627,7 @@ public class MayCastHandlerService {
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType, xValue,
-                            castForMadnessCost));
+                            castForMadnessCost, exileInsteadOfGraveyard));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + card.getName() + ".");
 
@@ -1604,6 +1643,7 @@ public class MayCastHandlerService {
                 spellEffects, xValue, (UUID) null, null
         );
         entry.setMadness("madness".equals(costLabel));
+        entry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(playerId, card);

@@ -10,6 +10,9 @@ import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "19")
 @CardRegistration(set = "TSP", collectorNumber = "19")
+@CardRegistration(set = "MM2", collectorNumber = "17")
+@CardRegistration(set = "2XM", collectorNumber = "17")
+@CardRegistration(set = "TSR", collectorNumber = "18")
 public class Fortify extends Card {
 
     public Fortify() {

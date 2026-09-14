@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "21")
+@CardRegistration(set = "GK1", collectorNumber = "104")
 public class HourOfReckoning extends Card {
 
     public HourOfReckoning() {

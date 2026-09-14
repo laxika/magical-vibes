@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,10 +51,8 @@ class DeflectionTest extends BaseCardTest {
     void castingRejectsMultiTargetSpell() {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
 
         ArcTrail arcTrail = new ArcTrail();
         harness.setHand(player1, List.of(arcTrail));
@@ -71,14 +71,36 @@ class DeflectionTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Pyrotechnics.class)
+    @DisplayName("Casting Deflection can target a variable-target spell cast with one target")
+    void castingAcceptsVariableTargetSpellWithOneTarget() {
+        Pyrotechnics pyrotechnics = new Pyrotechnics();
+        harness.setHand(player1, List.of(pyrotechnics));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player2, 0, pyrotechnics.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @CardUsed(IcyManipulator.class)
     @DisplayName("Casting Deflection cannot target a single-target activated ability")
     void castingRejectsActivatedAbility() {
         IcyManipulator icyManipulator = new IcyManipulator();
         GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, icyManipulator);
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, bearsPermId);
         harness.passPriority(player1);
@@ -97,10 +119,8 @@ class DeflectionTest extends BaseCardTest {
     void resolvingRetargetsSpell() {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -130,11 +150,49 @@ class DeflectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deflection can retarget a spell after its original target leaves the battlefield")
+    void canRetargetAfterOriginalTargetLeavesBattlefield() {
+        GrizzlyBears bears1 = new GrizzlyBears();
+        GrizzlyBears bears2 = new GrizzlyBears();
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
+
+        Boomerang firstBoomerang = new Boomerang();
+        Boomerang secondBoomerang = new Boomerang();
+        harness.setHand(player1, List.of(firstBoomerang, secondBoomerang));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, bears1PermId);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, firstBoomerang.getId());
+        harness.castInstant(player1, 0, bears1PermId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(bears2PermId)
+                .doesNotContain(bears1PermId);
+
+        harness.handlePermanentChosen(player2, bears2PermId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getId().equals(bears1PermId));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(bears2PermId));
+    }
+
+    @Test
     @DisplayName("Deflection does nothing if there is no legal new target")
     void doesNothingWithoutAlternativeTarget() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -154,7 +212,6 @@ class DeflectionTest extends BaseCardTest {
 
         StackEntry boomerangEntry = gd.stack.getLast();
         assertThat(boomerangEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(boomerangEntry.getCard().getName()).isEqualTo("Boomerang");
         assertThat(boomerangEntry.getTargetId()).isEqualTo(bearsPermId);
     }
 

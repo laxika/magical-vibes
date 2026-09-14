@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Castle.class, GrizzlyBears.class})
+@CardUsed({Castle.class, GrizzlyBears.class, Caltrops.class})
 class CastleTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -31,6 +32,17 @@ class CastleTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    void buffsItselfWhenItBecomesACreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new Castle());
+
+        assertThat(gqs.isCreature(gd, castle)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, castle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, castle)).isEqualTo(6);
     }
 
     @Test
@@ -67,6 +79,17 @@ class CastleTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Does not buff an untapped noncreature permanent")
+    void doesNotBuffNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new Castle());
+        Permanent caltrops = harness.addToBattlefieldAndReturn(player1, new Caltrops());
+
+        assertThat(gqs.getEffectivePower(gd, caltrops)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, caltrops)).isEqualTo(0);
+    }
+
     @Test
     @DisplayName("Bonus is removed when Castle leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {

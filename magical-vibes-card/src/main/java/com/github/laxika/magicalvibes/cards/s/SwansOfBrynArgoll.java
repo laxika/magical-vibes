@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceC
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "151")
+@CardRegistration(set = "MM2", collectorNumber = "199")
 public class SwansOfBrynArgoll extends Card {
 
     public SwansOfBrynArgoll() {

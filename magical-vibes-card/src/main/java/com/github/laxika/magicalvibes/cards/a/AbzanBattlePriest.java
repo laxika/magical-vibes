@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "1")
+@CardRegistration(set = "IMA", collectorNumber = "2")
 public class AbzanBattlePriest extends Card {
 
     public AbzanBattlePriest() {

@@ -105,4 +105,22 @@ class SnakeBasketTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Snake Basket");
         harness.assertNotInGraveyard(player1, "Snake Basket");
     }
+
+    @Test
+    @DisplayName("Cannot activate outside a main phase on its controller's turn")
+    void cannotActivateOutsideMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        Permanent basket = harness.addToBattlefieldAndReturn(player1, new SnakeBasket());
+
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(basket);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Snake Basket");
+        harness.assertNotInGraveyard(player1, "Snake Basket");
+    }
 }

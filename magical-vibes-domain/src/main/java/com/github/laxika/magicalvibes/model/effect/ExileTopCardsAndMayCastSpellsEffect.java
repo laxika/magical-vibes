@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 /**
  * Exiles cards from a library, then lets the controller cast any number of the exiled spells
  * without paying their mana costs. The cast choices are made during resolution; uncast cards
- * remain exiled.
+ * normally remain exiled, or return to the owner's library bottom in random order when requested.
  */
 public record ExileTopCardsAndMayCastSpellsEffect(
         int count,
@@ -18,12 +18,13 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         DynamicAmount manaValueLimit,
         CardPredicate castFilter,
         int maxCastCount,
-        boolean targetedOpponent
+        boolean targetedOpponent,
+        boolean putUncastCardsOnBottomRandom
 ) implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     /** Exiles the top {@code count} cards of the controller's library. */
     public ExileTopCardsAndMayCastSpellsEffect(int count) {
-        this(count, null, LibraryScope.CONTROLLER, false, null, null, Integer.MAX_VALUE, false);
+        this(count, null, LibraryScope.CONTROLLER, false, null, null, Integer.MAX_VALUE, false, false);
     }
 
     /** Exiles cards from a combat-damaged opponent's library and tracks them with the source. */
@@ -31,7 +32,7 @@ public record ExileTopCardsAndMayCastSpellsEffect(
                                                boolean trackWithSource,
                                                DynamicAmount manaValueLimit) {
         this(0, dynamicCount, scope, trackWithSource, manaValueLimit, null,
-                Integer.MAX_VALUE, false);
+                Integer.MAX_VALUE, false, false);
     }
 
     /** Exiles cards and offers only cards matching {@code castFilter} for free casting. */
@@ -40,13 +41,21 @@ public record ExileTopCardsAndMayCastSpellsEffect(
                                                DynamicAmount manaValueLimit,
                                                CardPredicate castFilter) {
         this(0, dynamicCount, scope, trackWithSource, manaValueLimit, castFilter,
-                Integer.MAX_VALUE, false);
+                Integer.MAX_VALUE, false, false);
+    }
+
+    /** Exiles the controller's top cards and caps the free-cast offer. */
+    public ExileTopCardsAndMayCastSpellsEffect(int count, DynamicAmount manaValueLimit,
+                                               CardPredicate castFilter, int maxCastCount,
+                                               boolean putUncastCardsOnBottomRandom) {
+        this(count, null, LibraryScope.CONTROLLER, false, manaValueLimit, castFilter,
+                maxCastCount, false, putUncastCardsOnBottomRandom);
     }
 
     /** Exiles a fixed number from a targeted opponent and caps the number of free casts. */
     public static ExileTopCardsAndMayCastSpellsEffect targetedOpponent(int count, int maxCastCount) {
         return new ExileTopCardsAndMayCastSpellsEffect(
-                count, null, LibraryScope.TARGET_OPPONENT, true, null, null, maxCastCount, true);
+                count, null, LibraryScope.TARGET_OPPONENT, true, null, null, maxCastCount, true, false);
     }
 
     @Override

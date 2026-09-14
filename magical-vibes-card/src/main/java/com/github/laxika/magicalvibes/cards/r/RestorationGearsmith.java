@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "185")
+@CardRegistration(set = "KLR", collectorNumber = "205")
 public class RestorationGearsmith extends Card {
 
     public RestorationGearsmith() {

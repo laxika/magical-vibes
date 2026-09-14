@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "28")
+@CardRegistration(set = "MMA", collectorNumber = "29")
 public class Sandsower extends Card {
 
     public Sandsower() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "10")
+@CardRegistration(set = "MMA", collectorNumber = "10")
 public class CloudgoatRanger extends Card {
 
     public CloudgoatRanger() {

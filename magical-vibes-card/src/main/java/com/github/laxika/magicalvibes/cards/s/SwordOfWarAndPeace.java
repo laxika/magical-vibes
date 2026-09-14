@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "161")
+@CardRegistration(set = "MPS", collectorNumber = "51")
+@CardRegistration(set = "2XM", collectorNumber = "300")
 public class SwordOfWarAndPeace extends Card {
 
     public SwordOfWarAndPeace() {

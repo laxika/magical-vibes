@@ -4,5 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 public record ActivateHandAbilityRequest(int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue,
-                                         List<UUID> graveyardCardIds) {
+                                         List<UUID> graveyardCardIds, List<UUID> targetIds) {
+
+    public ActivateHandAbilityRequest(int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue,
+                                      List<UUID> graveyardCardIds) {
+        this(handCardIndex, abilityIndex, targetId, xValue, graveyardCardIds, null);
+    }
 }

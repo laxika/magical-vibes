@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "179")
+@CardRegistration(set = "MMA", collectorNumber = "133")
+@CardRegistration(set = "TSR", collectorNumber = "194")
 public class SuddenShock extends Card {
 
     public SuddenShock() {

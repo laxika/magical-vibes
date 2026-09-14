@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "153")
+@CardRegistration(set = "TSR", collectorNumber = "163")
 public class FiremawKavu extends Card {
 
     public FiremawKavu() {

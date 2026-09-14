@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "194")
+@CardRegistration(set = "GK1", collectorNumber = "87")
 public class Brightflame extends Card {
 
     public Brightflame() {

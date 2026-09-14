@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NPH", collectorNumber = "48")
 @CardRegistration(set = "DDH", collectorNumber = "58")
+@CardRegistration(set = "MM2", collectorNumber = "66")
 public class VaporSnag extends Card {
 
     public VaporSnag() {

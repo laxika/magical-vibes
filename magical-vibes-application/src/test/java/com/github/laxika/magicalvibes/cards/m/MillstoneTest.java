@@ -23,10 +23,7 @@ class MillstoneTest extends BaseCardTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         Millstone card = new Millstone();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, card, "{2}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -39,10 +36,7 @@ class MillstoneTest extends BaseCardTest {
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
         Millstone card = new Millstone();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, card, "{2}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

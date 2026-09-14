@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "161")
+@CardRegistration(set = "DDP", collectorNumber = "12")
 public class FrontierGuide extends Card {
 
     public FrontierGuide() {

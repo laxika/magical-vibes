@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BloodfireColossus;
+import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cromat.class, CrawWurm.class, GrizzlyBears.class})
+@CardUsed({Cromat.class, BloodfireColossus.class, GaeasSkyfolk.class})
 class CromatTest extends BaseCardTest {
 
     @Test
@@ -49,7 +50,7 @@ class CromatTest extends BaseCardTest {
     @DisplayName("Destroys a creature blocking or blocked by Cromat")
     void destroysCreatureInCombatWithCromat() {
         Permanent cromat = addReadyCromat(player1);
-        Permanent attacker = addCreatureReady(player2, new CrawWurm());
+        Permanent attacker = addCreatureReady(player2, new BloodfireColossus());
 
         declareAttackers(player2, List.of(0));
         prepareDeclareBlockers(player2);
@@ -66,10 +67,30 @@ class CromatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroys a creature blocking Cromat when Cromat is attacking")
+    void destroysCreatureBlockingAttackingCromat() {
+        Permanent cromat = addReadyCromat(player1);
+        Permanent blocker = addCreatureReady(player2, new BloodfireColossus());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cromat);
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is not in combat with Cromat")
     void combatAbilityRejectsCreatureOutsideCombat() {
         addReadyCromat(player1);
-        Permanent creature = addCreatureReady(player2, new CrawWurm());
+        Permanent creature = addCreatureReady(player2, new BloodfireColossus());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -82,7 +103,7 @@ class CromatTest extends BaseCardTest {
     @DisplayName("Regeneration lets Cromat survive lethal combat damage")
     void regenerationPreventsLethalCombatDamage() {
         Permanent cromat = addReadyCromat(player1);
-        Permanent attacker = addCreatureReady(player2, new CrawWurm());
+        Permanent attacker = addCreatureReady(player2, new BloodfireColossus());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -103,7 +124,7 @@ class CromatTest extends BaseCardTest {
     @DisplayName("Puts Cromat on top of its owner's library")
     void putsCromatOnTopOfLibrary() {
         Permanent cromat = addReadyCromat(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GaeasSkyfolk()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

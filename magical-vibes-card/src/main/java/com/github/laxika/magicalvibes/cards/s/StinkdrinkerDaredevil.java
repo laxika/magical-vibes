@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "191")
+@CardRegistration(set = "MMA", collectorNumber = "132")
 public class StinkdrinkerDaredevil extends Card {
 
     public StinkdrinkerDaredevil() {

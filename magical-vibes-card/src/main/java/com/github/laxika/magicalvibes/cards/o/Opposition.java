@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "92")
 @CardRegistration(set = "UDS", collectorNumber = "40")
+@CardRegistration(set = "MP2", collectorNumber = "35")
 public class Opposition extends Card {
 
     public Opposition() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -41,6 +42,15 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
         List<Card> trackedCards = sourcePermanentId == null
                 ? List.of()
                 : gameData.getCardsExiledByPermanent(sourcePermanentId);
+        if (copyEffect.onlyOwnKickCounterCards()) {
+            trackedCards = trackedCards.stream()
+                    .filter(card -> gameData.exiledCardsWithKickCounters.contains(card.getId()))
+                    .filter(card -> {
+                        ExiledCardEntry exiledCard = gameData.findExiledCard(card.getId());
+                        return exiledCard != null && entry.getControllerId().equals(exiledCard.ownerId());
+                    })
+                    .toList();
+        }
         List<Card> cardsToCopy = copyEffect.copyAll()
                 ? trackedCards
                 : singletonOrEmpty(findTargetCard(trackedCards, targetCardId(entry)));

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ManaLeech.class, Mountain.class, ArgothianSwine.class})
 class ManaLeechTest extends BaseCardTest {
 
     @Test
@@ -43,7 +44,7 @@ class ManaLeechTest extends BaseCardTest {
     @DisplayName("The ability cannot target a non-land permanent")
     void cannotTargetNonLand() {
         addReadyManaLeech(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new ArgothianSwine());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -63,6 +64,25 @@ class ManaLeechTest extends BaseCardTest {
 
         assertThat(manaLeech.isTapped()).isTrue();
         assertThat(targetLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A land controlled by Mana Leech's controller stays tapped through the source's untap step")
+    void sameControllerTargetLandStaysTappedThroughSourceUntapStep() {
+        Permanent manaLeech = addReadyManaLeech(player1);
+        Permanent targetLand = addReadyLand(player1);
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurnWithMayChoice(player2, true);
+
+        assertThat(manaLeech.isTapped()).isFalse();
+        assertThat(targetLand.isTapped()).isTrue();
+
+        advanceToNextTurn(player2);
+
+        assertThat(targetLand.isTapped()).isFalse();
     }
 
     @Test
@@ -99,7 +119,7 @@ class ManaLeechTest extends BaseCardTest {
     }
 
     private Permanent addReadyLand(Player player) {
-        Permanent permanent = new Permanent(new Forest());
+        Permanent permanent = new Permanent(new Mountain());
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
@@ -111,9 +131,8 @@ class ManaLeechTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -122,9 +141,8 @@ class ManaLeechTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

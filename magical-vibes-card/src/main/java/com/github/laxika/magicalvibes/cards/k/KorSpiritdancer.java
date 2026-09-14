@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "31")
+@CardRegistration(set = "PC2", collectorNumber = "9")
+@CardRegistration(set = "PCA", collectorNumber = "9")
 public class KorSpiritdancer extends Card {
 
     public KorSpiritdancer() {

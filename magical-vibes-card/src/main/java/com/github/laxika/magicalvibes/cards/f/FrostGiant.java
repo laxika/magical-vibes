@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "148")
+@CardRegistration(set = "ME3", collectorNumber = "101")
 public class FrostGiant extends Card {
 
     public FrostGiant() {

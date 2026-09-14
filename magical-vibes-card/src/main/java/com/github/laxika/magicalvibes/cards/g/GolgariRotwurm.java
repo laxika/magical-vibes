@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "210")
+@CardRegistration(set = "MM3", collectorNumber = "168")
+@CardRegistration(set = "DDJ", collectorNumber = "63")
 public class GolgariRotwurm extends Card {
 
     public GolgariRotwurm() {

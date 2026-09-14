@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "142")
+@CardRegistration(set = "VMA", collectorNumber = "180")
 public class PillagingHorde extends Card {
 
     public PillagingHorde() {

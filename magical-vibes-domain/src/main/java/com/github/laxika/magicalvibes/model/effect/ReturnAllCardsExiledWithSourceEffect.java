@@ -26,6 +26,8 @@ import java.util.Set;
  * @param baseToughness optional permanent base-toughness override for each returned permanent
  * @param grantedSubtype optional subtype added to each returned permanent
  * @param enteringCounterType optional counter put on each returned permanent as it enters
+ * @param enterTapped whether returned permanents enter tapped
+ * @param useLinkedSource whether the death trigger uses the leaving permanent's linked source
  */
 public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                    CardPredicate filter,
@@ -34,24 +36,25 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                                                    Integer basePower,
                                                    Integer baseToughness,
                                                    CardSubtype grantedSubtype,
-                                                   CounterType enteringCounterType) implements CardEffect {
+                                                   CounterType enteringCounterType,
+                                                   boolean enterTapped, boolean useLinkedSource) implements CardEffect {
 
     public ReturnAllCardsExiledWithSourceEffect() {
-        this(false, null, false, Set.of(), null, null, null, null);
+        this(false, null, false, Set.of(), null, null, null, null, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl) {
-        this(underControllerControl, null, false, Set.of(), null, null, null, null);
+        this(underControllerControl, null, false, Set.of(), null, null, null, null, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(CardPredicate filter) {
-        this(false, filter, false, Set.of(), null, null, null, null);
+        this(false, filter, false, Set.of(), null, null, null, null, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                 CardPredicate filter,
                                                 boolean turnFaceUp) {
-        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null);
+        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
@@ -59,6 +62,18 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                                                 boolean turnFaceUp,
                                                 Set<Keyword> grantedKeywords) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords,
-                null, null, null, null);
+                null, null, null, null, false, false);
+    }
+    public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
+            boolean turnFaceUp, Set<Keyword> grantedKeywords, boolean enterTapped, boolean useLinkedSource) {
+        this(underControllerControl, filter, turnFaceUp, grantedKeywords, null, null, null, null,
+                enterTapped, useLinkedSource);
+    }
+
+    public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
+            boolean turnFaceUp, Set<Keyword> grantedKeywords, Integer basePower, Integer baseToughness,
+            CardSubtype grantedSubtype, CounterType enteringCounterType) {
+        this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
+                grantedSubtype, enteringCounterType, false, false);
     }
 }

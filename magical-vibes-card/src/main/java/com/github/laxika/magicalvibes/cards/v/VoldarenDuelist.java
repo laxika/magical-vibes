@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "181")
 @CardRegistration(set = "SOI", collectorNumber = "191")
+@CardRegistration(set = "GN2", collectorNumber = "44")
 public class VoldarenDuelist extends Card {
 
     public VoldarenDuelist() {

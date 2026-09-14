@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "96")
+@CardRegistration(set = "2XM", collectorNumber = "80")
 public class CostlyPlunder extends Card {
 
     public CostlyPlunder() {

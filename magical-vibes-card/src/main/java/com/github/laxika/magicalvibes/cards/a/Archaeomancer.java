@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "41")
 @CardRegistration(set = "M14", collectorNumber = "43")
+@CardRegistration(set = "DDM", collectorNumber = "13")
+@CardRegistration(set = "UMA", collectorNumber = "45")
 public class Archaeomancer extends Card {
 
     public Archaeomancer() {

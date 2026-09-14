@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "90")
+@CardRegistration(set = "UMA", collectorNumber = "131")
 public class FurnaceCelebration extends Card {
 
     public FurnaceCelebration() {

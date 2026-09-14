@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitiesEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "93")
+@CardRegistration(set = "TSR", collectorNumber = "149")
 public class YixlidJailer extends Card {
 
     public YixlidJailer() {

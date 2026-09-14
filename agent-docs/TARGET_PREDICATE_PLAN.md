@@ -1322,6 +1322,13 @@ watcher *is* the damaged permanent, so "whenever this is dealt damage" is correc
 - `matchesPermanentPredicate` treats a `null` predicate as **`false`**, while card predicates and
   static filters treat `null` as **`true`**. Do not "normalize" this during migration.
 
+### Current-combat combat-damage predicate
+
+`PermanentDealtCombatDamageToPlayerThisCombatPredicate` reads
+`GameData.combatDamageToPlayersThisCombat`. The map is cleared at the beginning of combat and
+records each source permanent's player recipients for the current combat, so it is suitable for
+end-of-combat effects that require a permanent to have dealt combat damage this combat.
+
 ---
 
 ## Next-step prompt template

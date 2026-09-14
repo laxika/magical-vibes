@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "81")
+@CardRegistration(set = "MMA", collectorNumber = "74")
+@CardRegistration(set = "UMA", collectorNumber = "87")
 public class BridgeFromBelow extends Card {
 
     public BridgeFromBelow() {

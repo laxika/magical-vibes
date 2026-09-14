@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "M15", collectorNumber = "242")
 @CardRegistration(set = "DST", collectorNumber = "164")
 @CardRegistration(set = "DDF", collectorNumber = "72")
+@CardRegistration(set = "MM2", collectorNumber = "238")
+@CardRegistration(set = "DDU", collectorNumber = "65")
+@CardRegistration(set = "2XM", collectorNumber = "315")
+@CardRegistration(set = "EA1", collectorNumber = "20")
 public class DarksteelCitadel extends Card {
 
     public DarksteelCitadel() {

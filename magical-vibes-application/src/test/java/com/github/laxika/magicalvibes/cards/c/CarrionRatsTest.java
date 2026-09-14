@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,14 +12,14 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({CarrionRats.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CarrionRats.class, CabalSurgeon.class})
 class CarrionRatsTest extends BaseCardTest {
 
     @Test
     @DisplayName("An opponent may exile a card when Carrion Rats attacks")
     void opponentMayExileCardWhenRatsAttack() {
         Permanent rats = addCreatureReady(player1, new CarrionRats());
-        Card card = new HillGiant();
+        Card card = new CabalSurgeon();
         harness.setGraveyard(player2, List.of(card));
 
         attackUnblocked(rats);
@@ -41,8 +38,8 @@ class CarrionRatsTest extends BaseCardTest {
     @DisplayName("An accepted choice can select one of several graveyard cards")
     void acceptedChoiceSelectsOneOfSeveralGraveyardCards() {
         Permanent rats = addCreatureReady(player1, new CarrionRats());
-        Card first = new GrizzlyBears();
-        Card second = new HillGiant();
+        Card first = new CabalSurgeon();
+        Card second = new CabalSurgeon();
         harness.setGraveyard(player2, List.of(first, second));
 
         attackUnblocked(rats);
@@ -61,8 +58,8 @@ class CarrionRatsTest extends BaseCardTest {
     @DisplayName("Each player receives the choice in turn order")
     void eachPlayerReceivesChoiceInTurnOrder() {
         Permanent rats = addCreatureReady(player1, new CarrionRats());
-        Card ownCard = new GrizzlyBears();
-        Card opponentCard = new HillGiant();
+        Card ownCard = new CabalSurgeon();
+        Card opponentCard = new CabalSurgeon();
         harness.setGraveyard(player1, List.of(ownCard));
         harness.setGraveyard(player2, List.of(opponentCard));
 
@@ -81,7 +78,7 @@ class CarrionRatsTest extends BaseCardTest {
     @DisplayName("Declining the graveyard exile leaves Carrion Rats able to deal combat damage")
     void decliningExileDoesNotSuppressCombatDamage() {
         Permanent rats = addCreatureReady(player1, new CarrionRats());
-        Card card = new GrizzlyBears();
+        Card card = new CabalSurgeon();
         harness.setGraveyard(player1, List.of(card));
 
         attackUnblocked(rats);
@@ -96,18 +93,28 @@ class CarrionRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No player is offered the choice when both graveyards are empty")
+    void noChoiceWhenBothGraveyardsAreEmpty() {
+        Permanent rats = addCreatureReady(player1, new CarrionRats());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(rats)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
     @DisplayName("The block trigger also lets a player exile a card")
     void blockingTriggersGraveyardExileChoice() {
-        Permanent attacker = addCreatureReady(player1, new HillGiant());
+        Permanent attacker = addCreatureReady(player1, new CabalSurgeon());
         attacker.setAttacking(true);
         Permanent rats = addCreatureReady(player2, new CarrionRats());
-        Card card = new GrizzlyBears();
+        Card card = new CabalSurgeon();
         harness.setGraveyard(player2, List.of(card));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NPH", collectorNumber = "63")
+@CardRegistration(set = "MM2", collectorNumber = "84")
 public class GrimAffliction extends Card {
 
     public GrimAffliction() {

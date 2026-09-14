@@ -1537,6 +1537,20 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        void exactXTargetsReportsAnnouncedCountAboveOneHundred() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, "{X}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "X target creatures").withExactXTargets();
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of(), 101);
+
+            assertThat(response.minTargets()).isEqualTo(101);
+            assertThat(response.maxTargets()).isEqualTo(101);
+        }
+
+        @Test
         @DisplayName("source-counter-scaled ability uses the source counter count as its target limit")
         void sourceCounterScaledTargets_boundedBySourceCounters() {
             Card sourceCard = createCreatureCard();

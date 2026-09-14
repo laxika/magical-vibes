@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "105")
+@CardRegistration(set = "MM2", collectorNumber = "128")
 public class Spitebellows extends Card {
 
     public Spitebellows() {

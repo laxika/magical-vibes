@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "86")
+@CardRegistration(set = "ME3", collectorNumber = "117")
 public class FaerieNoble extends Card {
 
     public FaerieNoble() {

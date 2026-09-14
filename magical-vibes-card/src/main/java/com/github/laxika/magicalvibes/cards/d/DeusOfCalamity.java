@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayer
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "204")
+@CardRegistration(set = "DDL", collectorNumber = "54")
 public class DeusOfCalamity extends Card {
 
     public DeusOfCalamity() {

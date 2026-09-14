@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "98")
 @CardRegistration(set = "TPR", collectorNumber = "75")
+@CardRegistration(set = "VMA", collectorNumber = "98")
 public class TradewindRider extends Card {
 
     public TradewindRider() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "20")
+@CardRegistration(set = "UMA", collectorNumber = "41")
 public class WallOfReverence extends Card {
 
     public WallOfReverence() {

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "82")
 @CardRegistration(set = "TPR", collectorNumber = "63")
+@CardRegistration(set = "DDT", collectorNumber = "16")
 public class RootwaterHunter extends Card {
 
     public RootwaterHunter() {

@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "104")
 @CardRegistration(set = "FUT", collectorNumber = "116")
+@CardRegistration(set = "MMA", collectorNumber = "118")
+@CardRegistration(set = "TSR", collectorNumber = "168")
 public class GrinningIgnus extends Card {
 
     public GrinningIgnus() {

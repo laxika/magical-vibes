@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "199")
+@CardRegistration(set = "MM2", collectorNumber = "227")
 public class RustedRelic extends Card {
 
     public RustedRelic() {

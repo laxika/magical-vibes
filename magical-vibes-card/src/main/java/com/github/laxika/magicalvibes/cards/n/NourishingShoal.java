@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "137")
+@CardRegistration(set = "UMA", collectorNumber = "175")
 public class NourishingShoal extends Card {
 
     public NourishingShoal() {

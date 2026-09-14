@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "200")
 @CardRegistration(set = "AKR", collectorNumber = "262")
+@CardRegistration(set = "MM3", collectorNumber = "187")
+@CardRegistration(set = "GK2", collectorNumber = "21")
 public class SphinxsRevelation extends Card {
 
     public SphinxsRevelation() {

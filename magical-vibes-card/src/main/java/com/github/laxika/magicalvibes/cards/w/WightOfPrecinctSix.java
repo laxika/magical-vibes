@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "84")
+@CardRegistration(set = "DDM", collectorNumber = "46")
+@CardRegistration(set = "IMA", collectorNumber = "114")
 public class WightOfPrecinctSix extends Card {
 
     public WightOfPrecinctSix() {

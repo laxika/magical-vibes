@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 
 @CardRegistration(set = "GRN", collectorNumber = "47")
 @CardRegistration(set = "FUT", collectorNumber = "54")
+@CardRegistration(set = "MMA", collectorNumber = "55")
 public class Narcomoeba extends Card {
 
     public Narcomoeba() {

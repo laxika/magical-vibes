@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "103")
+@CardRegistration(set = "DDP", collectorNumber = "50")
 public class Corpsehatch extends Card {
 
     public Corpsehatch() {

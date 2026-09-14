@@ -28,6 +28,7 @@ class ShivanWurmTest extends BaseCardTest {
         UUID greenId = harness.addToBattlefieldAndReturn(player1, new QuirionExplorer()).getId();
         UUID redId = harness.addToBattlefieldAndReturn(player1, new MoggSentry()).getId();
         UUID blueId = harness.addToBattlefieldAndReturn(player1, new SaprazzanRaider()).getId();
+        UUID opponentRedId = harness.addToBattlefieldAndReturn(player2, new MoggSentry()).getId();
         harness.addToBattlefield(player1, new DromarsCavern());
 
         castShivanWurm();
@@ -40,7 +41,7 @@ class ShivanWurmTest extends BaseCardTest {
 
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.validIds()).containsExactlyInAnyOrder(greenId, redId, wurmId);
-        assertThat(choice.validIds()).doesNotContain(blueId);
+        assertThat(choice.validIds()).doesNotContain(blueId, opponentRedId);
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
     }

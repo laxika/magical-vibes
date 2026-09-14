@@ -59,9 +59,8 @@ class HecatombTest extends BaseCardTest {
     @CardUsed(GarrukWildspeaker.class)
     @DisplayName("Tapping a Swamp deals 1 damage to a target planeswalker")
     void dealsDamageToPlaneswalker() {
-        Permanent planeswalker = new Permanent(new GarrukWildspeaker());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.addToBattlefield(player1, new Hecatomb());
         harness.addToBattlefield(player1, new Swamp());
 
@@ -77,6 +76,16 @@ class HecatombTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Hecatomb());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         swamp.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability using an opponent's Swamp")
+    void cannotActivateWithOpponentsSwamp() {
+        harness.addToBattlefield(player1, new Hecatomb());
+        harness.addToBattlefield(player2, new Swamp());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

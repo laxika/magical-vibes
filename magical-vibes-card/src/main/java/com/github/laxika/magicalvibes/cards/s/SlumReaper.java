@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "77")
+@CardRegistration(set = "UMA", collectorNumber = "114")
+@CardRegistration(set = "GK1", collectorNumber = "52")
 public class SlumReaper extends Card {
 
     public SlumReaper() {

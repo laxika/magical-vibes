@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "61")
+@CardRegistration(set = "ME3", collectorNumber = "55")
 public class WuLongbowman extends Card {
 
     public WuLongbowman() {

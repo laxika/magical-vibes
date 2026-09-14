@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "2")
+@CardRegistration(set = "IMA", collectorNumber = "3")
 public class AbzanFalconer extends Card {
 
     public AbzanFalconer() {

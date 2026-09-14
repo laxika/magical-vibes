@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "164")
+@CardRegistration(set = "UMA", collectorNumber = "201")
+@CardRegistration(set = "GK1", collectorNumber = "62")
 public class GolgariCharm extends Card {
 
     public GolgariCharm() {

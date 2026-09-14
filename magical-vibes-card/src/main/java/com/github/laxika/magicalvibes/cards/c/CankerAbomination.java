@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "EVE", collectorNumber = "115")
+@CardRegistration(set = "UMA", collectorNumber = "212")
 public class CankerAbomination extends Card {
 
     public CankerAbomination() {

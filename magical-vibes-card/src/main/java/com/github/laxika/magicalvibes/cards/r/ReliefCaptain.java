@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "32")
+@CardRegistration(set = "GN2", collectorNumber = "11")
 public class ReliefCaptain extends Card {
 
     public ReliefCaptain() {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MesaFalcon.class, HillGiant.class})
+@CardUsed({MesaFalcon.class, GrizzlyBears.class})
 class MesaFalconTest extends BaseCardTest {
 
     @Test
@@ -72,8 +72,7 @@ class MesaFalconTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from END to CLEANUP
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(1);
     }
@@ -120,10 +119,24 @@ class MesaFalconTest extends BaseCardTest {
     }
 
     @Test
+    void canActivateWhileTapped() {
+        Permanent falcon = addCreatureReady(player1, new MesaFalcon());
+        falcon.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(2);
+        assertThat(falcon.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Flying prevents a non-flying creature from blocking Mesa Falcon")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new MesaFalcon());
-        addCreatureReady(player2, new HillGiant());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();

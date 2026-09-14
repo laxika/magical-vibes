@@ -73,6 +73,7 @@ public class PlanechaseService {
         state.faceUp.forEach(object -> state.deck.add(object.getCard()));
         state.faceUp.clear();
         state.specialActionRolls.clear();
+        state.blankRollChaosSources.clear();
         state.rollTurn = -1;
         state.lastRoll = null;
         state.lastRollPlayerId = null;
@@ -128,7 +129,11 @@ public class PlanechaseService {
                 + " rolls the planar die: " + state.lastRoll.name().toLowerCase(Locale.ROOT) + "."));
         triggers.checkControllerRollsPlanarDieTriggers(game, playerId);
         switch (state.lastRoll) {
-            case BLANK -> { }
+            case BLANK -> {
+                if (state.faceUp.stream().anyMatch(object -> state.blankRollChaosSources.contains(object.getId()))) {
+                    chaos(game);
+                }
+            }
             case CHAOS -> chaos(game);
             case PLANESWALKER -> game.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                     null, playerId, "Planeswalk", List.of(new PlaneswalkEffect())));
@@ -158,12 +163,40 @@ public class PlanechaseService {
     public void finishPlaneswalk(GameData game, List<PlanarObject> departing) {
         PlanechaseState state = game.planechase;
         state.faceUp.clear();
+        state.blankRollChaosSources.clear();
         for (PlanarObject object : departing) {
             state.deck.add(object.getCard());
             trigger(game, object, EffectSlot.PLANESWALK_FROM_TRIGGERED, state.controllerId);
         }
         game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
         reveal(game, true);
+    }
+
+    /** Replaces the face-up planar cards with the two planes found by Spatial Merging. */
+    public void completeSpatialMerging(GameData game, List<Card> arrivingPlanes,
+                                       List<Card> cardsToBottom, UUID controllerId) {
+        if (game.planechase == null) return;
+
+        PlanechaseState state = game.planechase;
+        state.controllerId = controllerId;
+        List<PlanarObject> departing = List.copyOf(state.faceUp);
+        state.faceUp.clear();
+        state.blankRollChaosSources.clear();
+
+        for (PlanarObject object : departing) {
+            state.deck.add(object.getCard());
+            trigger(game, object, EffectSlot.PLANESWALK_FROM_TRIGGERED, controllerId);
+        }
+        state.deck.addAll(cardsToBottom);
+        game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
+
+        for (Card card : arrivingPlanes) {
+            state.faceUp.add(new PlanarObject(card, game.nextTimestamp()));
+        }
+        for (PlanarObject object : List.copyOf(state.faceUp)) {
+            logs.append(game, GameLogEntry.text("The planar card is " + object.getCard().getName() + "."));
+            trigger(game, object, EffectSlot.PLANESWALK_TO_TRIGGERED, controllerId);
+        }
     }
 
     public void reveal(GameData game, boolean triggerAbilities) {
@@ -186,14 +219,26 @@ public class PlanechaseService {
                         || conditionEvaluationService.isMet(game, conditional.condition(),
                         ConditionContext.forCard(card, controller)))
                 .toList();
-        boolean hasMultipleTargetGroups = card.getSpellTargets().size() > 1;
-        List<CardEffect> multiTargetEffects = hasMultipleTargetGroups
+        boolean needsSlotBySlotTargetSelection = card.getSpellTargets().size() > 1
+                || card.getSpellTargets().stream().anyMatch(target -> target.getMaxTargets() > 1
+                || target.getMinTargets() == 0 || target.getDynamicMinTargets() != null);
+        List<CardEffect> multiTargetEffects = needsSlotBySlotTargetSelection
                 ? effects.stream().filter(effect -> card.getEffectTargetIndex(effect) >= 0).toList()
                 : List.of();
         boolean multiTargetQueued = false;
 
         for (CardEffect effect : effects) {
-            if (hasMultipleTargetGroups && card.getEffectTargetIndex(effect) >= 0) {
+            if (needsSlotBySlotTargetSelection && card.getEffectTargetIndex(effect) >= 0) {
+                if (isStandaloneSingleTargetEffect(card, effect, effects)) {
+                    int targetGroupIndex = card.getEffectTargetIndex(effect);
+                    TargetFilter targetFilter = card.getSpellTargets().get(targetGroupIndex).getFilter();
+                    boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+                    game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            card, controller, List.of(effect), playerTargetOnly, targetFilter,
+                            0, null, null, false, null, null, controller, object.copy()));
+                    continue;
+                }
                 if (multiTargetQueued) {
                     continue;
                 }
@@ -229,6 +274,18 @@ public class PlanechaseService {
         }
     }
 
+    private boolean isStandaloneSingleTargetEffect(Card card, CardEffect effect, List<CardEffect> effects) {
+        if (effects.size() != 1 || effect.targetSpec() == TargetSpec.NONE) {
+            return false;
+        }
+        int targetGroupIndex = card.getEffectTargetIndex(effect);
+        if (targetGroupIndex < 0 || targetGroupIndex >= card.getSpellTargets().size()) {
+            return false;
+        }
+        SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);
+        return targetGroup.getMinTargets() == 1 && targetGroup.getMaxTargets() == 1;
+    }
+
     public void step(GameData game, EffectSlot... slots) {
         if (game.planechase == null) return;
         game.planechase.controllerId = game.activePlayerId;
@@ -260,6 +317,12 @@ public class PlanechaseService {
             }
         }
         return false;
+    }
+
+    public void enableBlankPlanarDieRollChaos(GameData game, UUID sourceId) {
+        if (game.planechase != null && sourceId != null) {
+            game.planechase.blankRollChaosSources.add(sourceId);
+        }
     }
 
     private boolean isSource(StackEntry entry, PlanarObject object) {

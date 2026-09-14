@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "142")
+@CardRegistration(set = "MM2", collectorNumber = "94")
 public class ScuttlingDeath extends Card {
 
     public ScuttlingDeath() {

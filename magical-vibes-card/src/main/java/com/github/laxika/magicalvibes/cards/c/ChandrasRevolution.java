@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "77")
+@CardRegistration(set = "KLR", collectorNumber = "119")
 public class ChandrasRevolution extends Card {
 
     public ChandrasRevolution() {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "180")
+@CardRegistration(set = "MM3", collectorNumber = "174")
 public class MysticGenesis extends Card {
 
     public MysticGenesis() {

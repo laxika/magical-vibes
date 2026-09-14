@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.h.Hoodwink;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.j.JhovallRider;
 import com.github.laxika.magicalvibes.cards.s.StingingBarrier;
 import com.github.laxika.magicalvibes.cards.w.WreakHavoc;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -37,7 +35,6 @@ class CounterspellTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, rider.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry entry = gd.stack.getLast();
         assertThat(entry.getCard()).isSameAs(counterspell);
@@ -84,6 +81,7 @@ class CounterspellTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(hoodwink.getId()));
+        harness.assertOnBattlefield(player1, "Island");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getId().equals(hoodwink.getId()));
     }
@@ -129,7 +127,6 @@ class CounterspellTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, rider.getId());
 
-        GameData gd = harness.getGameData();
         gd.stack.removeIf(se -> se.getCard().getId().equals(rider.getId()));
 
         harness.passBothPriorities();

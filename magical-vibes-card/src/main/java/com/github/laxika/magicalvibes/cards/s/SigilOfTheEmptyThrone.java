@@ -16,6 +16,10 @@ import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "18")
 @CardRegistration(set = "ORI", collectorNumber = "31")
+@CardRegistration(set = "PC2", collectorNumber = "11")
+@CardRegistration(set = "PCA", collectorNumber = "11")
+@CardRegistration(set = "HA2", collectorNumber = "3")
+@CardRegistration(set = "TSR", collectorNumber = "301")
 public class SigilOfTheEmptyThrone extends Card {
 
     public SigilOfTheEmptyThrone() {

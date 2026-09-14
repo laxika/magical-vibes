@@ -16,6 +16,8 @@ import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "86")
 @CardRegistration(set = "LEG", collectorNumber = "260")
+@CardRegistration(set = "ME3", collectorNumber = "177")
+@CardRegistration(set = "A25", collectorNumber = "218")
 public class Stangg extends Card {
 
     public Stangg() {

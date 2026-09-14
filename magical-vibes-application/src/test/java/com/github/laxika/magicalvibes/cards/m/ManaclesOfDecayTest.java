@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,31 +16,36 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaclesOfDecay.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({ManaclesOfDecay.class, CavesOfKoilos.class, Dodecapod.class})
 class ManaclesOfDecayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Manacles of Decay can target a creature")
     void canTargetCreature() {
-        Permanent bears = addReadyBears(player1);
-        harness.setHand(player1, List.of(new ManaclesOfDecay()));
+        Permanent creature = addCreatureReady(player2, new Dodecapod());
+        ManaclesOfDecay aura = new ManaclesOfDecay();
+        harness.setHand(player1, List.of(aura));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
 
         assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == aura && p.isAttached()
+                        && p.getAttachedTo().equals(creature.getId()));
     }
 
     @Test
     @DisplayName("Manacles of Decay cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
         harness.setHand(player1, List.of(new ManaclesOfDecay()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent fountain = findPermanent(player1, "Fountain of Youth");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, fountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -47,70 +53,71 @@ class ManaclesOfDecayTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent bears = addReadyBears(player1);
-        addAuraOn(bears, player1);
+        Permanent creature = addCreatureReady(player1, new Dodecapod());
+        addAuraOn(creature, player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
 
     @Test
+    @DisplayName("Enchanted creature can still block")
+    void enchantedCreatureCanBlock() {
+        Permanent blocker = addCreatureReady(player1, new Dodecapod());
+        addAuraOn(blocker, player1);
+        addCreatureReady(player2, new Dodecapod());
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Black ability gives enchanted creature -1/-1 until end of turn")
     void blackAbilityShrinksEnchantedCreature() {
-        Permanent bears = addReadyBears(player1);
-        addAuraOn(bears, player1);
+        Permanent creature = addCreatureReady(player1, new Dodecapod());
+        addAuraOn(creature, player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Red ability makes enchanted creature unable to block this turn")
     void redAbilityPreventsBlockingUntilEndOfTurn() {
-        Permanent bears = addReadyBears(player1);
-        addAuraOn(bears, player1);
+        Permanent creature = addCreatureReady(player1, new Dodecapod());
+        addAuraOn(creature, player1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBlockThisTurn()).isFalse();
-    }
-
-    private Permanent addReadyBears(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(bears);
-        return bears;
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
     private Permanent addAuraOn(Permanent enchanted, com.github.laxika.magicalvibes.model.Player controller) {
-        Permanent aura = new Permanent(new ManaclesOfDecay());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new ManaclesOfDecay());
         aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "77")
+@CardRegistration(set = "EMA", collectorNumber = "133")
 public class GhituSlinger extends Card {
 
     public GhituSlinger() {

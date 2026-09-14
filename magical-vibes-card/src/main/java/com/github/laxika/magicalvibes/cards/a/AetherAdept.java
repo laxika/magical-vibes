@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "41")
 @CardRegistration(set = "M12", collectorNumber = "41")
+@CardRegistration(set = "DDM", collectorNumber = "12")
 public class AetherAdept extends Card {
 
     public AetherAdept() {

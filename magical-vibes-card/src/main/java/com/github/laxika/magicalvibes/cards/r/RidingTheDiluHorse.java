@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitel
 import java.util.Set;
 
 @CardRegistration(set = "PTK", collectorNumber = "144")
+@CardRegistration(set = "ME3", collectorNumber = "131")
 public class RidingTheDiluHorse extends Card {
 
     public RidingTheDiluHorse() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "135")
+@CardRegistration(set = "MM3", collectorNumber = "204")
 public class ZurTheEnchanter extends Card {
 
     public ZurTheEnchanter() {

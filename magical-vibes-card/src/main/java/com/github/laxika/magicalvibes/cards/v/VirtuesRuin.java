@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "116")
+@CardRegistration(set = "V14", collectorNumber = "14")
 public class VirtuesRuin extends Card {
 
     public VirtuesRuin() {

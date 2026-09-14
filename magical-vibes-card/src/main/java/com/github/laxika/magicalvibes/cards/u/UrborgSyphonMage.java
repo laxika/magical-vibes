@@ -11,6 +11,8 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "139")
 @CardRegistration(set = "DDD", collectorNumber = "40")
+@CardRegistration(set = "GVL", collectorNumber = "40")
+@CardRegistration(set = "TSR", collectorNumber = "148")
 public class UrborgSyphonMage extends Card {
 
     public UrborgSyphonMage() {

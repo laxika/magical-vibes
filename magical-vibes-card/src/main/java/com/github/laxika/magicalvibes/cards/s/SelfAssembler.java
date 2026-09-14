@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "232")
+@CardRegistration(set = "A25", collectorNumber = "231")
+@CardRegistration(set = "KLR", collectorNumber = "269")
 public class SelfAssembler extends Card {
 
     public SelfAssembler() {

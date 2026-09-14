@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "109")
+@CardRegistration(set = "DDQ", collectorNumber = "62")
+@CardRegistration(set = "UMA", collectorNumber = "107")
 public class MoanOfTheUnhallowed extends Card {
 
     public MoanOfTheUnhallowed() {

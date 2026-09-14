@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "201")
+@CardRegistration(set = "MM2", collectorNumber = "213")
+@CardRegistration(set = "2XM", collectorNumber = "255")
 public class ExpeditionMap extends Card {
 
     public ExpeditionMap() {

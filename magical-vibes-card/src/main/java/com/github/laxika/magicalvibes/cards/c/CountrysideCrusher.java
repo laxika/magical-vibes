@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutLandsIntoGraveyardRepeatEffect;
 
 @CardRegistration(set = "MOR", collectorNumber = "89")
+@CardRegistration(set = "MMA", collectorNumber = "108")
 public class CountrysideCrusher extends Card {
 
     public CountrysideCrusher() {

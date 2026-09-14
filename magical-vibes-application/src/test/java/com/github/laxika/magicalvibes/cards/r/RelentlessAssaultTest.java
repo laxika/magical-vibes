@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
 import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
 import com.github.laxika.magicalvibes.cards.w.WuInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,14 +9,12 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RelentlessAssault.class, WuInfantry.class})
+@CardUsed({GoblinSpelunkers.class, RelentlessAssault.class, VedalkenOrrery.class, WuInfantry.class})
 class RelentlessAssaultTest extends BaseCardTest {
 
     @Test
@@ -35,11 +34,11 @@ class RelentlessAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving untaps only creatures that attacked this turn")
     void resolvingUntapsOnlyAttackedCreatures() {
-        Permanent attackedWuInfantry = addCreatureReady(player1, new WuInfantry());
-        Permanent nonAttackedWuInfantry = addCreatureReady(player1, new WuInfantry());
+        Permanent attackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent nonAttackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
 
         declareAttackers(List.of(0));
-        nonAttackedWuInfantry.tap();
+        nonAttackedGoblin.tap();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -47,8 +46,25 @@ class RelentlessAssaultTest extends BaseCardTest {
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(attackedWuInfantry.isTapped()).isFalse();
-        assertThat(nonAttackedWuInfantry.isTapped()).isTrue();
+        assertThat(attackedGoblin.isTapped()).isFalse();
+        assertThat(nonAttackedGoblin.isTapped()).isTrue();
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(VedalkenOrrery.class)
+    @DisplayName("Resolving untaps creatures that attacked this turn regardless of controller")
+    void resolvingUntapsAnOpponentsAttacker() {
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        Permanent opponentAttacker = addCreatureReady(player2, new GoblinSpelunkers());
+
+        declareAttackers(player2, List.of(0));
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(opponentAttacker.isTapped()).isFalse();
         assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 
@@ -113,24 +129,24 @@ class RelentlessAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Attacked-this-turn status resets on turn change")
     void attackedThisTurnResetsOnTurnChange() {
-        Permanent wuInfantry = addCreatureReady(player1, new WuInfantry());
+        Permanent goblin = addCreatureReady(player1, new GoblinSpelunkers());
 
         declareAttackers(List.of(0));
-        assertThat(wuInfantry.isAttackedThisTurn()).isTrue();
+        assertThat(goblin.isAttackedThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.CLEANUP);
         gs.advanceStep(gd);
-        assertThat(wuInfantry.isAttackedThisTurn()).isFalse();
+        assertThat(goblin.isAttackedThisTurn()).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        wuInfantry.tap();
+        goblin.tap();
 
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(wuInfantry.isTapped()).isTrue();
+        assertThat(goblin.isTapped()).isTrue();
     }
 
     @Test
@@ -164,21 +180,47 @@ class RelentlessAssaultTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(VedalkenOrrery.class)
     @DisplayName("Resolving outside a main phase only untaps attacked creatures")
     void resolvingOutsideMainPhaseOnlyUntapsAttackedCreatures() {
-        Permanent attackedWuInfantry = addCreatureReady(player1, new WuInfantry());
-        attackedWuInfantry.setAttackedThisTurn(true);
-        attackedWuInfantry.tap();
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        Permanent attackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
+        attackedGoblin.setAttackedThisTurn(true);
+        attackedGoblin.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
-        gd.playersWithFlashUntilEndOfTurn.add(player1.getId());
 
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(attackedWuInfantry.isTapped()).isFalse();
+        assertThat(attackedGoblin.isTapped()).isFalse();
         assertThat(gd.additionalCombatMainPhasePairs).isZero();
+    }
+
+    @Test
+    @DisplayName("A precombat cast leaves the normal combat after the additional main phase")
+    void precombatCastLeavesNormalCombatAfterAdditionalMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
     }
 }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "52")
 @CardRegistration(set = "ULG", collectorNumber = "23")
 @CardRegistration(set = "DDC", collectorNumber = "8")
+@CardRegistration(set = "DVD", collectorNumber = "8")
+@CardRegistration(set = "IMA", collectorNumber = "35")
 public class SustainerOfTheRealm extends Card {
 
     public SustainerOfTheRealm() {

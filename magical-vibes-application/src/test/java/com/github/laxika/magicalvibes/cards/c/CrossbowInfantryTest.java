@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrossbowInfantry.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({CrossbowInfantry.class, EagerCadet.class, GrizzlyBears.class})
 class CrossbowInfantryTest extends BaseCardTest {
 
     @Test
@@ -56,7 +56,7 @@ class CrossbowInfantryTest extends BaseCardTest {
     @DisplayName("1 damage destroys a 1-toughness blocking creature")
     void destroysOneToughnessTarget() {
         addCreatureReady(player1, new CrossbowInfantry());
-        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+        Permanent blocker = addCreatureReady(player2, new EagerCadet());
         blocker.setBlocking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
@@ -66,7 +66,7 @@ class CrossbowInfantryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(blocker.getId()));
-        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Eager Cadet");
     }
 
     @Test

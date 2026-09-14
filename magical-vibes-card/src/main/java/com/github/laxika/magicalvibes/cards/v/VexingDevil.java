@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTakeDamageSacri
 @CardRegistration(set = "INR", collectorNumber = "313")
 @CardRegistration(set = "INR", collectorNumber = "178")
 @CardRegistration(set = "AVR", collectorNumber = "164")
+@CardRegistration(set = "UMA", collectorNumber = "154")
 public class VexingDevil extends Card {
 
     public VexingDevil() {

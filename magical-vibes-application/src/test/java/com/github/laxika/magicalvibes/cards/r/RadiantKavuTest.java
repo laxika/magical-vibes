@@ -1,38 +1,44 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.c.CavernHarpy;
+import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
+import com.github.laxika.magicalvibes.cards.p.PygmyKavu;
+import com.github.laxika.magicalvibes.cards.s.StormscapeFamiliar;
+import com.github.laxika.magicalvibes.cards.s.Stratadon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RadiantKavu.class, CavernHarpy.class, MaggotCarrier.class, PygmyKavu.class,
+        StormscapeFamiliar.class, Stratadon.class})
 class RadiantKavuTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activated ability prevents blue and black creatures from dealing combat damage")
     void preventsBlueAndBlackCombatDamage() {
-        addReadyKavu();
-        Permanent blue = harness.addToBattlefieldAndReturn(player2, new WindDrake());
-        Permanent black = harness.addToBattlefieldAndReturn(player2, new ScatheZombies());
+        addCreatureReady(player1, new RadiantKavu());
+        Permanent blue = addCreatureReady(player2, new StormscapeFamiliar());
+        Permanent black = addCreatureReady(player2, new MaggotCarrier());
+        Permanent blueAndBlack = addCreatureReady(player2, new CavernHarpy());
 
         activateAbility();
 
         assertThat(gqs.isPreventedFromDealingDamage(gd, blue, true)).isTrue();
         assertThat(gqs.isPreventedFromDealingDamage(gd, black, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, blueAndBlack, true)).isTrue();
     }
 
     @Test
     @DisplayName("Activated ability does not prevent other creatures from dealing combat damage")
     void allowsOtherCreatureColorsToDealCombatDamage() {
-        addReadyKavu();
-        Permanent green = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent colorless = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        addCreatureReady(player1, new RadiantKavu());
+        Permanent green = addCreatureReady(player2, new PygmyKavu());
+        Permanent colorless = addCreatureReady(player2, new Stratadon());
 
         activateAbility();
 
@@ -43,8 +49,8 @@ class RadiantKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability only prevents combat damage")
     void doesNotPreventNoncombatDamage() {
-        addReadyKavu();
-        Permanent black = harness.addToBattlefieldAndReturn(player2, new ScatheZombies());
+        addCreatureReady(player1, new RadiantKavu());
+        Permanent black = addCreatureReady(player2, new MaggotCarrier());
 
         activateAbility();
 
@@ -54,8 +60,8 @@ class RadiantKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Prevention expires at the end of the turn")
     void preventionExpiresAtEndOfTurn() {
-        addReadyKavu();
-        Permanent black = harness.addToBattlefieldAndReturn(player2, new ScatheZombies());
+        addCreatureReady(player1, new RadiantKavu());
+        Permanent black = addCreatureReady(player2, new MaggotCarrier());
 
         activateAbility();
         assertThat(gqs.isPreventedFromDealingDamage(gd, black, true)).isTrue();
@@ -75,10 +81,4 @@ class RadiantKavuTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addReadyKavu() {
-        Permanent kavu = new Permanent(new RadiantKavu());
-        kavu.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kavu);
-        return kavu;
-    }
 }

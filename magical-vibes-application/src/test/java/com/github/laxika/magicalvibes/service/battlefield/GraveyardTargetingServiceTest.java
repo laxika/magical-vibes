@@ -8,16 +8,20 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +53,7 @@ class GraveyardTargetingServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
+    @Mock private AmountEvaluationService amountEvaluationService;
 
     private GraveyardTargetingService service;
     private GameData gd;
@@ -57,7 +62,7 @@ class GraveyardTargetingServiceTest {
     @BeforeEach
     void setUp() {
         service = new GraveyardTargetingService(predicateEvaluationService, gameLogService, playerInputService,
-                gameQueryService, new GraveyardTargetingSupport());
+                gameQueryService, new GraveyardTargetingSupport(), amountEvaluationService);
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
 
         player1Id = UUID.randomUUID();
@@ -83,6 +88,38 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanentId);
         assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
         assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+    }
+
+    @Test
+    @DisplayName("handleAttackGraveyardTargeting applies a dynamic mana value cap")
+    void handleAttackGraveyardTargeting_appliesDynamicManaValueCap() {
+        Card source = new Card();
+        source.setName("Unforgiving One");
+        Card creature = new Card();
+        creature.setName("Creature");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}");
+        Card expensiveCreature = new Card();
+        expensiveCreature.setName("Expensive creature");
+        expensiveCreature.setType(CardType.CREATURE);
+        expensiveCreature.setManaCost("{2}");
+        gd.playerGraveyards.get(player1Id).addAll(List.of(creature, expensiveCreature));
+        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardTypePredicate(CardType.CREATURE))
+                .targetGraveyard(true)
+                .dynamicMaxManaValue(new Fixed(1))
+                .build();
+        when(amountEvaluationService.evaluate(any(), eq(new Fixed(1)), any())).thenReturn(1);
+        when(predicateEvaluationService.matchesCardPredicate(
+                any(), eq(effect.filter()), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(true);
+
+        service.handleAttackGraveyardTargeting(
+                gd, player1Id, source, List.of(effect), UUID.randomUUID(), null);
+
+        verify(playerInputService).beginMultiGraveyardChoice(
+                eq(gd), eq(player1Id), argThat(cards -> cards.contains(creature)
+                        && !cards.contains(expensiveCreature)), eq(1), eq(1), anyString());
     }
 
     @Test

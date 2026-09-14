@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "81")
+@CardRegistration(set = "EMA", collectorNumber = "73")
 public class SpriteNoble extends Card {
 
     public SpriteNoble() {

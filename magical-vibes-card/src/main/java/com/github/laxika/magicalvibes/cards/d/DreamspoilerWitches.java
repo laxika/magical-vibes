@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "108")
+@CardRegistration(set = "MMA", collectorNumber = "81")
 public class DreamspoilerWitches extends Card {
 
     public DreamspoilerWitches() {

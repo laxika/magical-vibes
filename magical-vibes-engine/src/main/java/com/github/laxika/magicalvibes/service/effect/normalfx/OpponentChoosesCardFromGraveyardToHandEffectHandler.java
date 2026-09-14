@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -32,6 +34,7 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,18 +47,28 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
         UUID controllerId = entry.getControllerId();
         String sourceName = entry.getCard().getName();
 
-        UUID chosenOpponentId = gameData.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
-        if (chosenOpponentId != null) {
-            gameData.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId = null;
-            beginCardChoice(gameData, entry, choiceEffect.filter(), chosenOpponentId);
-            return;
-        }
-
         UUID chosenCardId = gameData.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
         if (chosenCardId != null) {
             gameData.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId = null;
             gameData.rerunCurrentEffectAfterInteraction = false;
-            returnCardToHand(gameData, controllerId, chosenCardId, sourceName);
+            returnCardToHand(gameData, entry, chosenCardId, choiceEffect);
+            return;
+        }
+
+        if (choiceEffect.defendingPlayerChooses()) {
+            UUID defendingPlayerId = defendingPlayerId(gameData, entry);
+            if (defendingPlayerId == null) {
+                gameData.rerunCurrentEffectAfterInteraction = false;
+                return;
+            }
+            beginCardChoice(gameData, entry, choiceEffect, defendingPlayerId);
+            return;
+        }
+
+        UUID chosenOpponentId = gameData.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
+        if (chosenOpponentId != null) {
+            gameData.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId = null;
+            beginCardChoice(gameData, entry, choiceEffect, chosenOpponentId);
             return;
         }
 
@@ -66,7 +79,7 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
             return;
         }
         if (opponents.size() == 1) {
-            beginCardChoice(gameData, entry, choiceEffect.filter(), opponents.getFirst());
+            beginCardChoice(gameData, entry, choiceEffect, opponents.getFirst());
             return;
         }
 
@@ -83,8 +96,10 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void beginCardChoice(GameData gameData, StackEntry entry, CardPredicate filter,
+    private void beginCardChoice(GameData gameData, StackEntry entry,
+                                 OpponentChoosesCardFromGraveyardToHandEffect choiceEffect,
                                  UUID opponentId) {
+        CardPredicate filter = choiceEffect.filter();
         List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
         if (graveyard == null) {
             return;
@@ -100,8 +115,7 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
         }
         if (matchingCards.size() == 1) {
             gameData.rerunCurrentEffectAfterInteraction = false;
-            returnCardToHand(gameData, entry.getControllerId(), matchingCards.getFirst().getId(),
-                    entry.getCard().getName());
+            returnCardToHand(gameData, entry, matchingCards.getFirst().getId(), choiceEffect);
             return;
         }
 
@@ -117,7 +131,10 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
                 .build());
     }
 
-    private void returnCardToHand(GameData gameData, UUID controllerId, UUID cardId, String sourceName) {
+    private void returnCardToHand(GameData gameData, StackEntry entry, UUID cardId,
+                                  OpponentChoosesCardFromGraveyardToHandEffect choiceEffect) {
+        UUID controllerId = entry.getControllerId();
+        String sourceName = entry.getCard().getName();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null) {
             return;
@@ -134,5 +151,28 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
         gameData.addCardToHand(controllerId, card);
         gameLogService.append(gameData, GameLog.textCardText(
                 sourceName + " returns ", card, " from the graveyard to its owner's hand."));
+
+        if (choiceEffect.boostSourceByChosenCardManaValue() && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                int manaValue = card.getManaValue();
+                source.setPowerModifier(source.getPowerModifier() + manaValue);
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(source.getCard())
+                        .text(" gets +" + manaValue + "/+0 until end of turn.")
+                        .build());
+            }
+        }
+    }
+
+    private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) {
+            return null;
+        }
+        if (gameData.playerIds.contains(attackedTargetId)) {
+            return attackedTargetId;
+        }
+        return gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

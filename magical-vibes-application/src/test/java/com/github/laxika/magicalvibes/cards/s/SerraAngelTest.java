@@ -22,14 +22,26 @@ class SerraAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new SerraAngel());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
         assertThat(angel.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with flying can block Serra Angel")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new SerraAngel());
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test

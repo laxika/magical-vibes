@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "253")
 @CardRegistration(set = "TSB", collectorNumber = "89")
+@CardRegistration(set = "IMA", collectorNumber = "190")
 public class WallOfRoots extends Card {
 
     public WallOfRoots() {

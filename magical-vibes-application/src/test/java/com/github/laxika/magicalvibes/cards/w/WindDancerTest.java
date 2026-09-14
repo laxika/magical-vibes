@@ -31,6 +31,21 @@ class WindDancerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap cost prevents a second activation while Wind Dancer is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent dancer = addCreatureReady(player1, new WindDancer());
+        Permanent turtle = addCreatureReady(player1, new HornedTurtle());
+
+        harness.activateAbility(player1, 0, 0, null, turtle.getId());
+        assertThat(dancer.isTapped()).isTrue();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, turtle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+    }
+
+    @Test
     @DisplayName("Granted flying wears off at end of turn")
     void flyingWearsOff() {
         addCreatureReady(player1, new WindDancer());

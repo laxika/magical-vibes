@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "168")
+@CardRegistration(set = "MM3", collectorNumber = "169")
 public class GroundAssault extends Card {
 
     public GroundAssault() {

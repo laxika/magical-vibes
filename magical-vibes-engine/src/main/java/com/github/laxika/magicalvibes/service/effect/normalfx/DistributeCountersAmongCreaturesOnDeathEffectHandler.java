@@ -36,11 +36,15 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
         var e = (DistributeCountersAmongCreaturesOnDeathEffect) effect;
         Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
         gameData.pendingETBDamageAssignments = Map.of();
-        if (e.count() <= 0 || assignments.isEmpty()) {
+        int total = e.countFromSourcePower() ? Math.max(0, entry.getEventValue()) : e.count();
+        if (total <= 0 || assignments.isEmpty()) {
             return;
         }
 
-        List<Permanent> eligible = eligiblePermanents(gameData, entry, e.anyCreature());
+        UUID controllerId = entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId()
+                : entry.getControllerId();
+        List<Permanent> eligible = eligiblePermanents(gameData, controllerId, e.anyCreature());
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Integer amount = assignment.getValue();
             if (amount == null || amount <= 0) {
@@ -64,9 +68,9 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
         }
     }
 
-    private List<Permanent> eligiblePermanents(GameData gameData, StackEntry entry, boolean anyCreature) {
+    private List<Permanent> eligiblePermanents(GameData gameData, UUID controllerId, boolean anyCreature) {
         if (!anyCreature) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             return battlefield == null ? List.of() : battlefield;
         }
         List<Permanent> all = new ArrayList<>();

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "271")
+@CardRegistration(set = "EXP", collectorNumber = "29")
+@CardRegistration(set = "2XM", collectorNumber = "317")
 public class FireLitThicket extends Card {
 
     public FireLitThicket() {

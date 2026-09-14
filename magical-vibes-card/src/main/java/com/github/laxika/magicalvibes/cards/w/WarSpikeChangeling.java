@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "112")
+@CardRegistration(set = "MMA", collectorNumber = "139")
 public class WarSpikeChangeling extends Card {
 
     public WarSpikeChangeling() {
