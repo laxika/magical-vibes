@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackUntilNextTurnEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "9")
+@CardRegistration(set = "GN3", collectorNumber = "10")
 public class ForbiddingSpirit extends Card {
 
     public ForbiddingSpirit() {

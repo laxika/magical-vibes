@@ -1,4 +1,5 @@
 # EFFECTS_INDEX
+| `GoadEquippedCreatureEffect` | `()` | static Equipment combat requirement: the creature hosting the source Equipment is goaded while attached; attack validation counts the requirement and rejects an attack at the Equipment controller when another player is a legal attack target. Used by Bloodthirsty Blade |
 | `FlipCoinForTriggeringSpellAndCounterOnLossEffect` | `()` | flips for the caster of the spell that caused the trigger and counters that spell if the caster loses; targets the triggering spell and emits the caster's coin-flip win/loss triggers. Used by Mirrored Depths |
 | `RevealTopCardOfTargetPlayerMayCastFreeEffect` | `()` | target player reveals the top card of their library; if it is a nonland card, the ability controller may cast it without paying its mana cost. Lands and declined cards remain on top. Used by Mirrored Depths |
 `RevealTopCardMayPlayFreeEffect` also accepts an optional `UUID libraryOwnerId` when its controller is casting from another player's library.

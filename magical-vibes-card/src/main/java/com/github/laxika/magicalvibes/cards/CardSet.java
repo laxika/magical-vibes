@@ -247,6 +247,7 @@ public enum CardSet {
     SET_MD1("MD1"),
     SET_G17("G17"),
     SET_GN2("GN2"),
+    SET_GN3("GN3"),
     SET_GK2("GK2"),
     SET_GNT("GNT"),
     SET_GS1("GS1"),
