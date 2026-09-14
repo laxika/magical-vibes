@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DelveCost;
 
 @CardRegistration(set = "FUT", collectorNumber = "91")
 @CardRegistration(set = "MMA", collectorNumber = "102")
+@CardRegistration(set = "TSR", collectorNumber = "146")
 public class Tombstalker extends Card {
 
     public Tombstalker() {

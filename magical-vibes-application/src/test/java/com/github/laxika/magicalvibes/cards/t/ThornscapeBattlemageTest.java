@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
+import com.github.laxika.magicalvibes.cards.m.ManaCylix;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +15,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThornscapeBattlemage.class, ManaCylix.class, MaggotCarrier.class})
 class ThornscapeBattlemageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Without either kicker, neither ability resolves")
     void noKicker() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
         harness.setHand(player1, List.of(new ThornscapeBattlemage()));
         addMana(ManaColor.GREEN);
 
@@ -45,26 +47,41 @@ class ThornscapeBattlemageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Red kicker deals 2 damage to a target creature")
+    void redKickerDealsDamageToCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MaggotCarrier());
+        harness.setHand(player1, List.of(new ThornscapeBattlemage()));
+        addMana(ManaColor.RED, ManaColor.GREEN);
+
+        harness.castKickedCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Maggot Carrier");
+        harness.assertInGraveyard(player2, "Maggot Carrier");
+    }
+
+    @Test
     @DisplayName("White kicker destroys a target artifact")
     void whiteKickerDestroysArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
         harness.setHand(player1, List.of(new ThornscapeBattlemage()));
         addMana(ManaColor.WHITE);
 
-        castWithAdditionalCosts(List.of("{W}"));
+        harness.castInstantWithRepeatedCosts(player1, 0, null, List.of("{W}"));
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Mana Cylix");
+        harness.assertInGraveyard(player2, "Mana Cylix");
     }
 
     @Test
     @DisplayName("Both kicker abilities resolve independently")
     void bothKickers() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
         harness.setHand(player1, List.of(new ThornscapeBattlemage()));
         addMana(ManaColor.RED, ManaColor.WHITE, ManaColor.GREEN);
 
@@ -75,19 +92,19 @@ class ThornscapeBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Mana Cylix");
+        harness.assertInGraveyard(player2, "Mana Cylix");
     }
 
     @Test
     @DisplayName("White kicker only permits an artifact target")
     void whiteKickerOnlyTargetsArtifacts() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MaggotCarrier());
         harness.setHand(player1, List.of(new ThornscapeBattlemage()));
         addMana(ManaColor.WHITE);
 
-        castWithAdditionalCosts(List.of("{W}"));
+        harness.castInstantWithRepeatedCosts(player1, 0, null, List.of("{W}"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -101,10 +118,6 @@ class ThornscapeBattlemageTest extends BaseCardTest {
         for (ManaColor color : colored) {
             harness.addMana(player1, color, 1);
         }
-    }
-
-    private void castWithAdditionalCosts(List<String> payments) {
-        castWithAdditionalCosts(payments, null, false);
     }
 
     private void castWithAdditionalCosts(List<String> payments, UUID targetId, boolean kicked) {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "55")
+@CardRegistration(set = "TSR", collectorNumber = "59")
 public class CrookclawTransmuter extends Card {
 
     public CrookclawTransmuter() {

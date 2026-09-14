@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceTo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "26")
+@CardRegistration(set = "TSR", collectorNumber = "25")
 public class LymphSliver extends Card {
 
     public LymphSliver() {

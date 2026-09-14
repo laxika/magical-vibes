@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "152")
 @CardRegistration(set = "MMA", collectorNumber = "163")
+@CardRegistration(set = "TSR", collectorNumber = "232")
 public class SporolothAncient extends Card {
 
     public SporolothAncient() {

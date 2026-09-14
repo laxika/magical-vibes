@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "89")
+@CardRegistration(set = "GN2", collectorNumber = "29")
 public class GavonyUnhallowed extends Card {
 
     public GavonyUnhallowed() {

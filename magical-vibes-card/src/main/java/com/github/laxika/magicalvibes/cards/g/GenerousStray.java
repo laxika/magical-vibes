@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "129")
+@CardRegistration(set = "ANB", collectorNumber = "95")
 public class GenerousStray extends Card {
 
     public GenerousStray() {

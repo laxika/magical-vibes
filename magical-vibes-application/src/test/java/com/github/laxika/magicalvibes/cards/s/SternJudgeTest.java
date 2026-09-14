@@ -30,6 +30,21 @@ class SternJudgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No player loses life when neither controls a Swamp")
+    void doesNothingWhenNoPlayerControlsSwamp() {
+        Permanent judge = addCreatureReady(player1, new SternJudge());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(judge.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The Swamp count is read when the ability resolves")
     void countsSwampsAtResolution() {
         addCreatureReady(player1, new SternJudge());

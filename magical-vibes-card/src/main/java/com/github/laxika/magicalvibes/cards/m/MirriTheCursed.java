@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "75")
+@CardRegistration(set = "TSR", collectorNumber = "125")
 public class MirriTheCursed extends Card {
 
     public MirriTheCursed() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "40")
 @CardRegistration(set = "DDU", collectorNumber = "39")
+@CardRegistration(set = "2XM", collectorNumber = "65")
 public class Riddlesmith extends Card {
 
     public Riddlesmith() {

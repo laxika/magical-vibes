@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "270")
+@CardRegistration(set = "TSR", collectorNumber = "275")
 public class CalciformPools extends Card {
 
     public CalciformPools() {

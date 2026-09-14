@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "120")
+@CardRegistration(set = "EA1", collectorNumber = "7")
 public class TaintedRemedy extends Card {
 
     public TaintedRemedy() {

@@ -1223,6 +1223,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card type", gameData.id, playerName);
     }
 
+    public void beginSpellLandOrNonlandChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellLandOrNonlandChoice choiceContext =
+                new ChoiceContext.SpellLandOrNonlandChoice(playerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, List.of("LAND", "NONLAND"),
+                "Choose land or nonland."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose land or nonland", gameData.id, playerName);
+    }
+
     public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
                                            List<CardType> excludedTypes) {
         ChoiceContext.CardTypeOnEnterChoice choiceContext =
@@ -1754,10 +1765,18 @@ public class PlayerInputService {
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
             CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.DESERT,
-            CardSubtype.CAVE,
-            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.AURA,
-            CardSubtype.EQUIPMENT, CardSubtype.LOCUS
-    );
+            CardSubtype.CAVE, CardSubtype.GATE, CardSubtype.LOCUS,
+            CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.TREASURE,
+            CardSubtype.CLUE, CardSubtype.BLOOD, CardSubtype.MAP,
+            CardSubtype.LANDER, CardSubtype.FOOD, CardSubtype.POWERSTONE,
+            CardSubtype.TOY, CardSubtype.SHARD, CardSubtype.VEHICLE,
+            CardSubtype.SPACECRAFT, CardSubtype.PLANET, CardSubtype.BOOK,
+            CardSubtype.LESSON, CardSubtype.TRAP, CardSubtype.SHRINE,
+            CardSubtype.ARCANE, CardSubtype.OMEN, CardSubtype.SIEGE,
+            CardSubtype.ROLE, CardSubtype.CASE, CardSubtype.RUNE,
+            CardSubtype.PLAN, CardSubtype.ROOM, CardSubtype.FORTIFICATION,
+            CardSubtype.CURSE, CardSubtype.CARTOUCHE, CardSubtype.SAGA,
+            CardSubtype.SPHERE, CardSubtype.MIRRODIN, CardSubtype.SERRAS_REALM);
 
     static {
         NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());

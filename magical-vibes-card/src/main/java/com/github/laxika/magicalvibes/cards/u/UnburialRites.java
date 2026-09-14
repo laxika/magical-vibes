@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "MM3", collectorNumber = "85")
 @CardRegistration(set = "HA3", collectorNumber = "14")
 @CardRegistration(set = "2X2", collectorNumber = "95")
+@CardRegistration(set = "SIS", collectorNumber = "36")
 public class UnburialRites extends Card {
 
     public UnburialRites() {

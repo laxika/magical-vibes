@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RIX", collectorNumber = "126")
+@CardRegistration(set = "GN2", collectorNumber = "46")
 public class CrestedHerdcaller extends Card {
 
     public CrestedHerdcaller() {

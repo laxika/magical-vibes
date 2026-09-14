@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "219")
+@CardRegistration(set = "BRR", collectorNumber = "26")
 public class KeeningStone extends Card {
 
     public KeeningStone() {

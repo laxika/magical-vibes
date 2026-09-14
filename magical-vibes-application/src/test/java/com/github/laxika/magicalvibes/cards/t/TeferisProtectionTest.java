@@ -25,6 +25,7 @@ class TeferisProtectionTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLife(player1, 10);
         castProtection();
+        assertThat(gqs.canPlayerLifeChange(gd, player1.getId())).isFalse();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(bears);
@@ -45,6 +46,7 @@ class TeferisProtectionTest extends BaseCardTest {
     void lifeGainIsPreventedUntilNextTurn() {
         harness.setLife(player1, 10);
         castProtection();
+        assertThat(gqs.canPlayerLifeChange(gd, player1.getId())).isFalse();
 
         harness.setHand(player1, List.of(new CentaurHealer()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -62,6 +64,7 @@ class TeferisProtectionTest extends BaseCardTest {
     void effectsEndAtNextTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castProtection();
+        assertThat(gqs.canPlayerLifeChange(gd, player1.getId())).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -78,6 +81,7 @@ class TeferisProtectionTest extends BaseCardTest {
         assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).doesNotContain(player1.getId());
         assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).doesNotContain(player1.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gqs.canPlayerLifeChange(gd, player1.getId())).isTrue();
     }
 
     private void castProtection() {

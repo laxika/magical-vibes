@@ -129,6 +129,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColor
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsEffect;
@@ -190,10 +191,10 @@ import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMult
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDeathtouchToControllerSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreationReplacementEffect;
@@ -244,6 +245,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
@@ -871,7 +873,7 @@ public class GameQueryService {
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
         if (card.getSubtypes().contains(subtype)) return true;
         if (card.hasType(CardType.CREATURE) && isCreatureSubtype(subtype)
-                && (hasSelfAllCreatureTypesEffect(card)
+                && (card.hasKeyword(Keyword.CHANGELING) || hasSelfAllCreatureTypesEffect(card)
                 || selfAllZoneGrantedSubtypes(card).contains(subtype))) return true;
         if (gameData == null || cardOwnerId == null) return false;
         if (!card.hasType(CardType.CREATURE)) return false;
@@ -3991,7 +3993,12 @@ public class GameQueryService {
     private boolean hasGlobalToughnessAssignEffect(GameData gameData) {
         for (List<Permanent> bf : gameData.playerBattlefields.values()) {
             for (Permanent p : bf) {
+                UUID controllerId = findPermanentController(gameData, p.getId());
+                List<CardEffect> activeEffects = new ArrayList<>();
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    collectActiveStaticEffects(gameData, p, controllerId, effect, activeEffects);
+                }
+                for (CardEffect effect : activeEffects) {
                     if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
                             && acdt.scope() == GrantScope.ALL_CREATURES) {
                         return true;
@@ -4888,18 +4895,21 @@ public class GameQueryService {
 
     // --- Protection & evasion ---
 
-    /** Returns {@code true} if the target permanent has protection from the source's controller. */
+    /** Returns {@code true} if the target permanent has durable protection from the source's controller. */
     public boolean hasProtectionFromOpponents(GameData gameData, Permanent target, UUID sourceControllerId) {
-        if (target == null || sourceControllerId == null
-                || !target.isProtectionFromOpponentsPermanently()
-                || target.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (target == null || sourceControllerId == null || target.isLosesAllAbilitiesUntilEndOfTurn()) {
             return false;
         }
         StaticBonus bonus = computeStaticBonus(gameData, target);
         if (bonus.losesAllAbilities()) {
             return false;
         }
-        return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId);
+        if (target.isProtectionFromOpponentsPermanently()
+                && target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)) {
+            return true;
+        }
+        return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)
+                && hasActiveStaticEffect(gameData, target, ProtectionFromChosenPlayerEffect.class);
     }
 
     private boolean hasProtectionFromOpponentCreature(GameData gameData, Permanent target, Permanent source) {
@@ -7627,7 +7637,8 @@ public class GameQueryService {
 
     /** Returns whether the permanent currently has the Flagbearer creature subtype. */
     public boolean isFlagbearer(GameData gameData, Permanent permanent) {
-        return effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.FLAGBEARER);
+        return predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                new PermanentHasSubtypePredicate(CardSubtype.FLAGBEARER));
     }
 
     /** Returns whether an opponent of {@code playerId} controls a Flagbearer. */
@@ -7759,9 +7770,9 @@ public class GameQueryService {
 
     /**
      * Returns the damage multiplier that applies to damage dealt to {@code recipientPlayerId} or to a
-     * permanent that player controls, based on {@link DoubleDamageToOpponentsAndTheirPermanentsEffect}
-     * permanents controlled by that player's opponents (Gisela, Blade of Goldnight). Multiple instances
-     * stack multiplicatively. Returns {@code 1} when no such permanent is on the battlefield.
+     * permanent that player controls, based on opponent-recipient damage multipliers controlled by
+     * that player's opponents (such as Gisela, Blade of Goldnight). Multiple instances stack
+     * multiplicatively. Returns {@code 1} when no such permanent is on the battlefield.
      *
      * <p>Recipient-scoped, so it is applied where the recipient is known: the two player damage entry
      * points and the two permanent damage entry points.
@@ -7818,8 +7829,9 @@ public class GameQueryService {
                         || p.getId().equals(recipientPermanentId))) {
                     multiplier[0] *= 2;
                 } else if (!recipientPlayerId.equals(controllerId)
-                        && effect instanceof DoubleDamageToOpponentsAndTheirPermanentsEffect) {
-                    multiplier[0] *= 2;
+                        && effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
+                        && (recipientPermanentId == null || multiplyingEffect.appliesToPermanents())) {
+                    multiplier[0] *= multiplyingEffect.damageMultiplier();
                 } else if (!recipientPlayerId.equals(controllerId)
                         && sourceControllerId != null
                         && sourceControllerId.equals(controllerId)

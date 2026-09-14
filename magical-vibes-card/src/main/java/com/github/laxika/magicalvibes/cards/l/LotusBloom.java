@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "259")
 @CardRegistration(set = "MMA", collectorNumber = "208")
+@CardRegistration(set = "TSR", collectorNumber = "270")
 public class LotusBloom extends Card {
 
     public LotusBloom() {

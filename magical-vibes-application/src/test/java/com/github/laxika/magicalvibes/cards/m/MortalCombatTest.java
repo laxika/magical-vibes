@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MortalCombat.class, GrizzlyBears.class, Plains.class, MindRot.class})
 class MortalCombatTest extends BaseCardTest {
 
     private List<Card> createCreatureCards(int count) {
@@ -135,7 +137,7 @@ class MortalCombatTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         // Opponent removes creatures from graveyard before resolution (simulating interaction)
-        gd.playerGraveyards.get(player1.getId()).subList(0, 5).clear(); // remove 5, leaving 15
+        harness.setGraveyard(player1, createCreatureCards(15));
 
         harness.passBothPriorities(); // resolve trigger
 

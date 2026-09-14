@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "151")
 @CardRegistration(set = "IMA", collectorNumber = "225")
+@CardRegistration(set = "BRR", collectorNumber = "43")
 public class PristineTalisman extends Card {
 
     public PristineTalisman() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdNauseamEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "63")
+@CardRegistration(set = "2XM", collectorNumber = "76")
 public class AdNauseam extends Card {
 
     public AdNauseam() {

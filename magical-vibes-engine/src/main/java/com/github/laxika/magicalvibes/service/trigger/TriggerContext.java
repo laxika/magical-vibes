@@ -248,7 +248,14 @@ public sealed interface TriggerContext {
 
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
-                                          int damageDealt, boolean combatDamage) implements TriggerContext {}
+                                          int damageDealt, boolean combatDamage,
+                                          Permanent damagedCreature, UUID damagedCreatureControllerId)
+            implements TriggerContext {
+        public CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
+                                              int damageDealt, boolean combatDamage) {
+            this(damageSource, damagedCreatureId, damageDealt, combatDamage, null, null);
+        }
+    }
 
     /** Context for a creature fighting another creature. */
     record CreatureFights(Permanent fightingCreature) implements TriggerContext {}

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "1")
 @CardRegistration(set = "MMA", collectorNumber = "2")
+@CardRegistration(set = "TSR", collectorNumber = "1")
 public class AmrouScout extends Card {
 
     public AmrouScout() {

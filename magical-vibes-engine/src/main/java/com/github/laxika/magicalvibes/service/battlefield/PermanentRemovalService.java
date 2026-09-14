@@ -1265,6 +1265,12 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                for (StackEntry entry : gameData.stack) {
+                    if (entry.getDeclaredTargetIds().contains(target.getId())) {
+                        entry.getLastKnownTargetColors().put(target.getId(),
+                                Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
+                    }
+                }
                 snapshotBeheldPower(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
@@ -1996,6 +2002,21 @@ public class PermanentRemovalService {
         }
         for (PendingExileReturn pending : captured) {
             returnPendingExiledCard(gameData, sourcePermanentId, pending);
+        }
+    }
+
+    /** Returns cards exiled until an opponent of the new monarch becomes monarch. */
+    public void returnExileReturnsOnOpponentBecomesMonarch(GameData gameData, UUID monarchPlayerId) {
+        List<PendingExileReturn> pendingReturns = new ArrayList<>();
+        gameData.exileReturnOnOpponentBecomesMonarch.entrySet().removeIf(entry -> {
+            if (entry.getKey().equals(monarchPlayerId)) {
+                return false;
+            }
+            pendingReturns.addAll(entry.getValue());
+            return true;
+        });
+        for (PendingExileReturn pending : pendingReturns) {
+            returnPendingExiledCard(gameData, null, pending);
         }
     }
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "209")
+@CardRegistration(set = "ANB", collectorNumber = "93")
 public class EpicProportions extends Card {
 
     public EpicProportions() {

@@ -1,18 +1,22 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.k.KrisMage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.github.laxika.magicalvibes.model.ManaColor.COLORLESS;
+import static com.github.laxika.magicalvibes.model.ManaColor.RED;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReveredElder.class, FreshVolunteers.class, KrisMage.class})
 class ReveredElderTest extends BaseCardTest {
 
     @Test
@@ -25,27 +29,45 @@ class ReveredElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
     @DisplayName("The next 1 damage to Revered Elder is prevented")
     void preventsNextDamage() {
         Permanent elder = addReadyElder();
-        Permanent attacker = addReadyCreature(player2, 2, 2);
+        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
         harness.addMana(player1, COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(elder.getMarkedDamage()).isEqualTo(1);
+        assertThat(elder.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("The prevention shield also prevents noncombat damage")
+    void preventsNoncombatDamage() {
+        Permanent elder = addReadyElder();
+        addCreatureReady(player2, new KrisMage());
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+        harness.addMana(player1, COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, RED, 1);
+        harness.activateAbility(player2, 0, 0, null, elder.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(elder.getMarkedDamage()).isZero();
         assertThat(elder.getDamagePreventionShield()).isZero();
     }
 
@@ -65,23 +87,6 @@ class ReveredElderTest extends BaseCardTest {
     }
 
     private Permanent addReadyElder() {
-        return addReadyCreature(player1, new ReveredElder());
-    }
-
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new ReveredElder());
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "120")
+@CardRegistration(set = "TSR", collectorNumber = "127")
 public class NetherTraitor extends Card {
 
     public NetherTraitor() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "91")
 @CardRegistration(set = "M15", collectorNumber = "140")
+@CardRegistration(set = "SIS", collectorNumber = "41")
 public class ForgeDevil extends Card {
 
     public ForgeDevil() {

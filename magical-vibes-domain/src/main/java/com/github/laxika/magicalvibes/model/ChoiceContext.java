@@ -869,6 +869,9 @@ public sealed interface ChoiceContext {
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing land or nonland at resolution for a spell with no permanent to store it on. */
+    record SpellLandOrNonlandChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing a color at resolution for a spell with no permanent to store it on. */
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "PLC", collectorNumber = "60")
+@CardRegistration(set = "TSR", collectorNumber = "83")
 public class RiptidePilferer extends Card {
 
     public RiptidePilferer() {

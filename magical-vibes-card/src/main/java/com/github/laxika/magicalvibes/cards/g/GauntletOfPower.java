@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 
 @CardRegistration(set = "TSP", collectorNumber = "255")
 @CardRegistration(set = "MPS", collectorNumber = "12")
+@CardRegistration(set = "TSR", collectorNumber = "267")
 public class GauntletOfPower extends Card {
 
     public GauntletOfPower() {

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,48 +14,109 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RithsGrove.class, TerminalMoraine.class, AlphaKavu.class})
 class RithsGroveTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the ETB cost returns a non-Lair land and keeps Rith's Grove")
     void acceptsEtbCostByReturningNonLairLand() {
-        harness.addToBattlefield(player1, new Plains());
-        playAndResolveEtb();
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        RithsGrove enteringGrove = playAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Rith's Grove");
-        harness.assertNotOnBattlefield(player1, "Plains");
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getName().equals("Plains"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == enteringGrove)
+                .noneMatch(permanent -> permanent == moraine);
+        assertThat(gd.playerHands.get(player1.getId())).contains(moraine.getCard());
     }
 
     @Test
     @DisplayName("Rith's Grove is sacrificed when only a Lair land is available")
     void sacrificesWhenOnlyLairLandIsAvailable() {
-        harness.addToBattlefield(player1, new RithsGrove());
-        playAndResolveEtb();
+        Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new RithsGrove());
+        RithsGrove enteringGrove = playAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Rith's Grove")))
-                .hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Rith's Grove")))
-                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(existingLair)
+                .noneMatch(permanent -> permanent.getCard() == enteringGrove);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(enteringGrove)
+                .noneMatch(card -> card == existingLair.getCard());
     }
 
     @Test
     @DisplayName("Declining the ETB cost sacrifices Rith's Grove")
     void decliningEtbCostSacrificesSource() {
-        harness.addToBattlefield(player1, new Plains());
-        playAndResolveEtb();
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        RithsGrove enteringGrove = playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotOnBattlefield(player1, "Rith's Grove");
-        harness.assertInGraveyard(player1, "Rith's Grove");
-        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(moraine)
+                .noneMatch(permanent -> permanent.getCard() == enteringGrove);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enteringGrove);
+    }
+
+    @Test
+    @DisplayName("Rith's Grove is sacrificed when no land is available to return")
+    void sacrificesWhenNoLandIsAvailable() {
+        RithsGrove enteringGrove = playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == enteringGrove);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enteringGrove);
+    }
+
+    @Test
+    @DisplayName("Accepting the ETB cost with multiple eligible lands returns only the chosen land")
+    void acceptsEtbCostWithMultipleEligibleLands() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        RithsGrove enteringGrove = playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(secondLand)
+                .noneMatch(permanent -> permanent == firstLand)
+                .anyMatch(permanent -> permanent.getCard() == enteringGrove);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(firstLand.getCard())
+                .doesNotContain(secondLand.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's non-Lair land cannot pay the ETB cost")
+    void ignoresOpponentControlledNonLairLand() {
+        harness.addToBattlefield(player2, new TerminalMoraine());
+        RithsGrove enteringGrove = playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == enteringGrove);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enteringGrove);
+        harness.assertOnBattlefield(player2, "Terminal Moraine");
+    }
+
+    @Test
+    @DisplayName("A non-Lair nonland permanent cannot pay the ETB cost")
+    void ignoresNonLandPermanents() {
+        harness.addToBattlefield(player1, new AlphaKavu());
+        RithsGrove enteringGrove = playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == enteringGrove);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enteringGrove);
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
     }
 
     @Test
@@ -80,9 +143,11 @@ class RithsGroveTest extends BaseCardTest {
         assertThat(grove.isTapped()).isTrue();
     }
 
-    private void playAndResolveEtb() {
-        harness.setHand(player1, List.of(new RithsGrove()));
+    private RithsGrove playAndResolveEtb() {
+        RithsGrove grove = new RithsGrove();
+        harness.setHand(player1, List.of(grove));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
+        return grove;
     }
 }

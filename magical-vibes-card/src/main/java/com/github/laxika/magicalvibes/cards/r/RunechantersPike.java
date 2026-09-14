@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "231")
+@CardRegistration(set = "BRR", collectorNumber = "48")
 public class RunechantersPike extends Card {
 
     public RunechantersPike() {

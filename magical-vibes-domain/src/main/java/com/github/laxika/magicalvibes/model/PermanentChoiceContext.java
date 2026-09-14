@@ -202,6 +202,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Highcliff Felidar: the controller chooses a greatest-power creature for one opponent. */
+    record EachOpponentChoosesGreatestPowerCreatureToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
     /** A player chooses a matching permanent to exile during a resolving effect. */
     record ExileChosenPermanent(UUID choosingPlayerId, String sourceCardName, String permanentLabel)
             implements PermanentChoiceContext {}
@@ -1139,6 +1148,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}
 
+    /** Brudiclad: choose a token whose copiable characteristics the other controlled tokens copy. */
+    record BrudicladTokenChoice(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Choose the creature whose copiable characteristics will be used. */
     record PolymorphousRushCreatureChoice(UUID controllerId,
                                            MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)
@@ -1504,6 +1516,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
+    record ChoosePlayerAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                               boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                               List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                               List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChoosePlayerAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
 
     record ChooseNonlandPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                          boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,

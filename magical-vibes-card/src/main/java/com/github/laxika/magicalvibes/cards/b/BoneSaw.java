@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CON", collectorNumber = "135")
 @CardRegistration(set = "OGW", collectorNumber = "161")
+@CardRegistration(set = "BRR", collectorNumber = "7")
 public class BoneSaw extends Card {
 
     public BoneSaw() {

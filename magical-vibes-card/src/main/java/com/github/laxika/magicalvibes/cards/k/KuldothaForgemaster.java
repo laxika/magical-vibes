@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "169")
 @CardRegistration(set = "TD2", collectorNumber = "14")
+@CardRegistration(set = "2XM", collectorNumber = "266")
 public class KuldothaForgemaster extends Card {
 
     public KuldothaForgemaster() {

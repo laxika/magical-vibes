@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "106")
 @CardRegistration(set = "MMA", collectorNumber = "127")
+@CardRegistration(set = "TSR", collectorNumber = "185")
 public class RiftElemental extends Card {
 
     public RiftElemental() {

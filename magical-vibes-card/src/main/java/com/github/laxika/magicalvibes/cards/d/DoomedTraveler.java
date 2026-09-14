@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "DDQ", collectorNumber = "7")
 @CardRegistration(set = "IMA", collectorNumber = "16")
 @CardRegistration(set = "2X2", collectorNumber = "9")
+@CardRegistration(set = "SIS", collectorNumber = "5")
 public class DoomedTraveler extends Card {
 
     public DoomedTraveler() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "108")
+@CardRegistration(set = "TSR", collectorNumber = "115")
 public class FacelessDevourer extends Card {
 
     public FacelessDevourer() {

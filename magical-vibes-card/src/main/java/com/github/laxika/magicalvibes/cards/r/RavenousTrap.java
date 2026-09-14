@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "109")
+@CardRegistration(set = "2XM", collectorNumber = "103")
 public class RavenousTrap extends Card {
 
     public RavenousTrap() {

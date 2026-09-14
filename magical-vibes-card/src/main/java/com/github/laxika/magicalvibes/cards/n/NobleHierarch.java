@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "CON", collectorNumber = "87")
 @CardRegistration(set = "MM2", collectorNumber = "151")
 @CardRegistration(set = "UMA", collectorNumber = "174")
+@CardRegistration(set = "2XM", collectorNumber = "177")
 public class NobleHierarch extends Card {
 
     public NobleHierarch() {

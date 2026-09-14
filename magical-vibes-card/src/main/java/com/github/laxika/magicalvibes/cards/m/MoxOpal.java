@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "179")
 @CardRegistration(set = "MPS", collectorNumber = "19")
 @CardRegistration(set = "MM2", collectorNumber = "223")
+@CardRegistration(set = "2XM", collectorNumber = "275")
 public class MoxOpal extends Card {
 
     public MoxOpal() {
