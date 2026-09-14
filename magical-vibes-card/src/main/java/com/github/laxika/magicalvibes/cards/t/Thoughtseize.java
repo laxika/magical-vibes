@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "MP2", collectorNumber = "45")
 @CardRegistration(set = "2XM", collectorNumber = "109")
 @CardRegistration(set = "TSR", collectorNumber = "334")
+@CardRegistration(set = "OTP", collectorNumber = "20")
+@CardRegistration(set = "OTP", collectorNumber = "70")
 public class Thoughtseize extends Card {
 
     public Thoughtseize() {

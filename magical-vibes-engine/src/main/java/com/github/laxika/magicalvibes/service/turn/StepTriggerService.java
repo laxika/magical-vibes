@@ -2666,7 +2666,8 @@ public class StepTriggerService {
         UUID activePlayerId = gameData.activePlayerId;
 
         // The starting player skips their entire draw step on turn 1 (rule 103.7a)
-        if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)) {
+        if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)
+                && gameData.additionalBeginningPhaseReturnStep == null) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));

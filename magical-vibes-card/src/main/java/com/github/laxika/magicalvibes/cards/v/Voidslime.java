@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "137")
 @CardRegistration(set = "GK2", collectorNumber = "127")
+@CardRegistration(set = "OTP", collectorNumber = "60")
 public class Voidslime extends Card {
 
     public Voidslime() {

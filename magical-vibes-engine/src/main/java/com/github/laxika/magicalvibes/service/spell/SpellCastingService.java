@@ -2761,13 +2761,17 @@ public class SpellCastingService {
         boolean selectingModalBackFace = physicalHandCard.isModalDoubleFaced()
                 && physicalHandCard.getBackFaceCard() != null
                 && effectiveXValue == 1;
+        boolean castingTransformedAlternateCost = usingAlternateCost
+                && physicalHandCard.getCastingOption(AlternateHandCast.class)
+                .map(AlternateHandCast::castTransformed)
+                .orElse(false);
         if (adventure && (physicalHandCard.getBackFaceCard() == null
                 || physicalHandCard.getCastingOption(AdventureCast.class).isEmpty())) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
         Card handCardForTiming = adventure
                 ? physicalHandCard.getBackFaceCard()
-                : selectingModalBackFace
+                : selectingModalBackFace || castingTransformedAlternateCost
                 ? physicalHandCard.getBackFaceCard()
                 : physicalHandCard;
         if (usingBestowCost) {
@@ -2801,7 +2805,8 @@ public class SpellCastingService {
             // Re-check with convoke if card has convoke keyword
             List<Card> handCheck = gameData.playerHands.get(playerId);
             Card cardCheck = handCheck.get(cardIndex);
-            Card selectedFaceCheck = selectingModalBackFace ? cardCheck.getBackFaceCard() : cardCheck;
+            Card selectedFaceCheck = selectingModalBackFace || castingTransformedAlternateCost
+                    ? cardCheck.getBackFaceCard() : cardCheck;
             boolean suppliedExiledCardTarget = targetId != null
                     && cardCheck.getEffects(EffectSlot.SPELL).stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
@@ -2837,7 +2842,8 @@ public class SpellCastingService {
             } else if (suppliedCounterDistribution) {
                 // An explicitly supplied distribution may legally be empty when the effect says
                 // "any number". Its assignments are validated below.
-            } else if (selectingModalBackFace && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
+            } else if ((selectingModalBackFace || castingTransformedAlternateCost)
+                    && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0)) {
                 // The generic hand query admits either face; casting validates the selected face.
             } else if (adventure && cardCheck.getBackFaceCard() != null
@@ -3050,7 +3056,8 @@ public class SpellCastingService {
             targetIds = List.copyOf(combinedTargetIds);
             dividedDamageTargetGroupSizes = List.of(damageTargetIds.size(), otherTargetCount);
         }
-        boolean castModalBackFace = selectingModalBackFace && !playingModalBackLand && modeEncoding == 1;
+        boolean castModalBackFace = castingTransformedAlternateCost
+                || (selectingModalBackFace && !playingModalBackLand && modeEncoding == 1);
         // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
         // the cost the playability pre-check cleared — that check only needs *some* mode to be
         // affordable — so the mode actually chosen has to be paid for here.

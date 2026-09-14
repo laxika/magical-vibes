@@ -27,8 +27,15 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  */
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                           boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                          boolean targetedOpponent, DynamicAmount dynamicCount)
+                                          boolean targetedOpponent, DynamicAmount dynamicCount,
+                                          boolean markWithIntelCounters)
         implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+
+    public ExileTopCardsToSourceEffect(int count, boolean faceDown,
+                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
+                                       boolean targetedOpponent, DynamicAmount dynamicCount) {
+        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount, false);
+    }
 
     /** Face-down exile from the controller's own library (Colfenor's Plans). */
     public ExileTopCardsToSourceEffect(int count) {
@@ -56,7 +63,15 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
     public ExileTopCardsToSourceEffect(DynamicAmount dynamicCount, boolean faceDown,
                                        boolean toGraveyardOnControlLoss, LibraryScope scope,
                                        boolean targetedOpponent) {
-        this(0, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount);
+        this(dynamicCount, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, false);
+    }
+
+    /** Combat-damage variant that marks each newly exiled card with an intel counter. */
+    public ExileTopCardsToSourceEffect(DynamicAmount dynamicCount, boolean faceDown,
+                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
+                                       boolean targetedOpponent, boolean markWithIntelCounters) {
+        this(0, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
+                markWithIntelCounters);
     }
 
     @Override

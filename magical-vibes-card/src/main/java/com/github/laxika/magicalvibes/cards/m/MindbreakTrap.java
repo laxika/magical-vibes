@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileEachTargetSpellEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "57")
+@CardRegistration(set = "OTP", collectorNumber = "12")
+@CardRegistration(set = "OTP", collectorNumber = "68")
 public class MindbreakTrap extends Card {
 
     public MindbreakTrap() {

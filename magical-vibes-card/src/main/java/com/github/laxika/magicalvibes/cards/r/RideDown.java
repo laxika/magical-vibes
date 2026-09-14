@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "194")
 @CardRegistration(set = "EMN", collectorNumber = "188")
 @CardRegistration(set = "SIR", collectorNumber = "241")
+@CardRegistration(set = "OTP", collectorNumber = "52")
 public class RideDown extends Card {
 
     public RideDown() {

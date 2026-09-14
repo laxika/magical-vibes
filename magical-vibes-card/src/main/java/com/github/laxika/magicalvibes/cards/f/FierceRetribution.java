@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "13")
+@CardRegistration(set = "OTP", collectorNumber = "2")
 public class FierceRetribution extends Card {
 
     public FierceRetribution() {
