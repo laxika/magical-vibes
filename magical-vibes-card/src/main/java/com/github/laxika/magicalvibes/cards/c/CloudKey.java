@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "160")
 @CardRegistration(set = "TSR", collectorNumber = "265")
+@CardRegistration(set = "BRR", collectorNumber = "12")
 public class CloudKey extends Card {
 
     public CloudKey() {
