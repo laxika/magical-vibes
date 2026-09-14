@@ -1264,6 +1264,12 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                for (StackEntry entry : gameData.stack) {
+                    if (entry.getDeclaredTargetIds().contains(target.getId())) {
+                        entry.getLastKnownTargetColors().put(target.getId(),
+                                Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
+                    }
+                }
                 snapshotBeheldPower(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
