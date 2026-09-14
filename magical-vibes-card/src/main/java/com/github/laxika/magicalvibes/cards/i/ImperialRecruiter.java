@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "113")
 @CardRegistration(set = "ME2", collectorNumber = "130")
+@CardRegistration(set = "A25", collectorNumber = "136")
 public class ImperialRecruiter extends Card {
 
     public ImperialRecruiter() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "47")
+@CardRegistration(set = "DDT", collectorNumber = "20")
 public class TidalWarrior extends Card {
 
     public TidalWarrior() {

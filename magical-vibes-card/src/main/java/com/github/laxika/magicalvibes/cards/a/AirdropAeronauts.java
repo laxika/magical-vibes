@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "5")
+@CardRegistration(set = "KLR", collectorNumber = "5")
 public class AirdropAeronauts extends Card {
 
     public AirdropAeronauts() {

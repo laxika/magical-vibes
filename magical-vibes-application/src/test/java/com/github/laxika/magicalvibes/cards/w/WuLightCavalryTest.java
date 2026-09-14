@@ -21,8 +21,7 @@ class WuLightCavalryTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WuInfantry());
         addCreatureReady(player1, new WuLightCavalry());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(
@@ -37,8 +36,7 @@ class WuLightCavalryTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new WuLightCavalry());
         addCreatureReady(player1, new WuLightCavalry());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

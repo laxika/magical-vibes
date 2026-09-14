@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "24")
+@CardRegistration(set = "KLR", collectorNumber = "26")
 public class PropellerPioneer extends Card {
 
     public PropellerPioneer() {

@@ -29,10 +29,16 @@ class FlashOfDefianceTest extends BaseCardTest {
         Permanent blue = harness.addToBattlefieldAndReturn(player2, new Aquamoeba());
         castFromHand();
 
-        assertThat(ownGreen.isCantBlockThisTurn()).isTrue();
-        assertThat(green.isCantBlockThisTurn()).isTrue();
-        assertThat(white.isCantBlockThisTurn()).isTrue();
-        assertThat(blue.isCantBlockThisTurn()).isFalse();
+        Permanent attacker = addCreatureReady(player1, new Aquamoeba());
+        Permanent opposingAttacker = addCreatureReady(player2, new Aquamoeba());
+        assertThat(bls.canBlockAttacker(gd, ownGreen, opposingAttacker,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, green, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, white, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, blue, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test
@@ -92,7 +98,9 @@ class FlashOfDefianceTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(green.isCantBlockThisTurn()).isTrue();
+        Permanent attacker = addCreatureReady(player1, new Aquamoeba());
+        assertThat(bls.canBlockAttacker(gd, green, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         harness.assertNotInGraveyard(player1, "Flash of Defiance");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -114,14 +122,17 @@ class FlashOfDefianceTest extends BaseCardTest {
     @DisplayName("The restriction wears off at the end of the turn")
     void restrictionWearsOffAtEndOfTurn() {
         Permanent green = harness.addToBattlefieldAndReturn(player2, new ArrogantWurm());
+        Permanent attacker = addCreatureReady(player1, new Aquamoeba());
         castFromHand();
 
-        assertThat(green.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, green, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(green.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, green, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     private void castFromHand() {

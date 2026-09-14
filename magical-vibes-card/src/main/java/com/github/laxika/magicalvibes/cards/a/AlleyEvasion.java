@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "6")
+@CardRegistration(set = "KLR", collectorNumber = "6")
 public class AlleyEvasion extends Card {
 
     public AlleyEvasion() {

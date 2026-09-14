@@ -480,6 +480,10 @@ public class ChoiceHandlerService {
             handleSpellCardTypeChoice(gameData, player, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellLandOrNonlandChoice) {
+            handleSpellLandOrNonlandChoice(gameData, player, colorName, colorChoice.options());
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
             handleSpellColorChoice(gameData, player, colorName);
             return;
@@ -808,6 +812,12 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
+        if (perm == null && gameData.pendingEffectResolutionEntry != null) {
+            Permanent snapshot = gameData.pendingEffectResolutionEntry.getSourcePermanentSnapshot();
+            if (snapshot != null && snapshot.getId().equals(permanentId)) {
+                snapshot.setChosenColor(color);
+            }
+        }
         if (perm != null) {
             perm.setChosenColor(color);
 
@@ -3212,13 +3222,9 @@ public class ChoiceHandlerService {
                             .build());
         }
 
-        // A card is "of that color" per its actual color (Scryfall colors array, honouring
-        // hybrid/multicolor). Lands are excluded: the oracle loader derives a colorless land's
-        // "colors" from its color identity (e.g. Forest -> green), but a Forest is a colorless card
-        // and must not be discarded. Genuinely colored lands (color indicator) don't exist this era.
         List<Card> toDiscard = hand == null ? List.of()
                 : new ArrayList<>(hand.stream()
-                        .filter(c -> !c.hasType(CardType.LAND) && c.getColors().contains(color))
+                        .filter(c -> gameQueryService.getEffectiveCardColors(gameData, c).contains(color))
                         .toList());
         if (!toDiscard.isEmpty()) {
             gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
@@ -3840,6 +3846,22 @@ public class ChoiceHandlerService {
         String logEntry = player.getUsername() + " chooses " + cardType.getDisplayName().toLowerCase() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses card type {} for a spell", gameData.id, player.getUsername(), cardType);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSpellLandOrNonlandChoice(GameData gameData, Player player, String choice,
+                                                 List<String> options) {
+        if (!options.contains(choice)) {
+            throw new IllegalArgumentException("Invalid land or nonland choice: " + choice);
+        }
+
+        gameData.chosenSpellLandOrNonland = choice.equals("LAND");
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + choice.toLowerCase() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(), choice.toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -6025,5 +6047,4 @@ public class ChoiceHandlerService {
         return builder;
     }
 }
-
 

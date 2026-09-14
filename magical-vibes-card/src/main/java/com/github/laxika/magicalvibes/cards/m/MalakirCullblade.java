@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "108")
+@CardRegistration(set = "ANB", collectorNumber = "51")
 public class MalakirCullblade extends Card {
 
     public MalakirCullblade() {

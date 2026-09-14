@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "154")
 @CardRegistration(set = "PC2", collectorNumber = "59")
+@CardRegistration(set = "PCA", collectorNumber = "59")
 public class BrambleElemental extends Card {
 
     public BrambleElemental() {

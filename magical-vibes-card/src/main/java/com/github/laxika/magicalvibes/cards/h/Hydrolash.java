@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "59")
+@CardRegistration(set = "GNT", collectorNumber = "22")
 public class Hydrolash extends Card {
 
     public Hydrolash() {

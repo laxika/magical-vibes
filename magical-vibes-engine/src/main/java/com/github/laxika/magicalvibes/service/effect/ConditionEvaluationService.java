@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFro
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsFewerCreaturesThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasAtLeastOpponents;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsPrimeNumberOfLands;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledSourcesDealtDamageThisTurn;
@@ -721,6 +722,11 @@ public class ConditionEvaluationService {
                     controllerHasMoreCardsInHandThanEachOpponent(gameData, ctx.controllerId());
             case ControllerControlsFewerCreaturesThanEachOpponent ignored ->
                     controllerControlsFewerCreaturesThanEachOpponent(gameData, ctx.controllerId());
+            case ControllerHasAtLeastOpponents c ->
+                    ctx.controllerId() != null
+                            && gameData.orderedPlayerIds.stream()
+                            .filter(playerId -> !playerId.equals(ctx.controllerId()))
+                            .count() >= c.minimum();
             case AnOpponentHasMoreCardsInHandThanController ignored ->
                     anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
@@ -1982,9 +1988,10 @@ public class ConditionEvaluationService {
 
     /** True when the stack entry's source card object is still in its controller's graveyard. */
     private boolean isSourceCardInGraveyard(GameData gameData, ConditionContext ctx) {
-        if (ctx.controllerId() == null || ctx.sourceCard() == null) return false;
-        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
-        return graveyard != null && graveyard.contains(ctx.sourceCard());
+        if (ctx.sourceCard() == null) return false;
+        return gameData.playerGraveyards.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(card -> card.getId().equals(ctx.sourceCard().getId()));
     }
 
     /** True when the source card is still exiled with a positive time-counter entry. */

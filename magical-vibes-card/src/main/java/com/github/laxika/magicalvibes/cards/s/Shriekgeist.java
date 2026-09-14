@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "DKA", collectorNumber = "49")
+@CardRegistration(set = "IMA", collectorNumber = "72")
 public class Shriekgeist extends Card {
 
     public Shriekgeist() {

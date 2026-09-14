@@ -16,6 +16,9 @@ import java.util.List;
 @CardRegistration(set = "VMA", collectorNumber = "218")
 @CardRegistration(set = "GVL", collectorNumber = "11")
 @CardRegistration(set = "DDL", collectorNumber = "59")
+@CardRegistration(set = "A25", collectorNumber = "178")
+@CardRegistration(set = "DDU", collectorNumber = "14")
+@CardRegistration(set = "HA3", collectorNumber = "21")
 public class KrosanTusker extends Card {
 
     public KrosanTusker() {

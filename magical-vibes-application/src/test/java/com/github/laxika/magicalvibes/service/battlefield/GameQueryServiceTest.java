@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFr
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
@@ -123,6 +124,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
@@ -179,7 +185,7 @@ class GameQueryServiceTest {
     void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
         ReflectionTestUtils.setField(gqs, "landPlayPermissionService",
                 new com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService(
-                        new com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver(
+                        new StaticEffectConditionResolver(
                                 conditionEvaluationService)));
         var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
         Card card = new Card();
@@ -230,6 +236,9 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
         ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
+        ReflectionTestUtils.setField(gqs, "staticEffectConditionResolver",
+                new StaticEffectConditionResolver(
+                        conditionEvaluationService));
         ReflectionTestUtils.setField(gqs, "amountEvaluationService",
                 new AmountEvaluationService(evaluator, gqs));
 
@@ -261,6 +270,42 @@ class GameQueryServiceTest {
                 creature, new CardTypePredicate(CardType.CREATURE), UUID.randomUUID())).isTrue();
         assertThat(gqs.matchesCardPredicate(
                 creature, new CardTypePredicate(CardType.LAND), UUID.randomUUID())).isFalse();
+    }
+
+    @Test
+    void landManaReplacementEndsWhenItsSourceLosesAbilities() {
+        Card card = new Card();
+        card.addEffect(EffectSlot.STATIC, new ReplaceLandManaWithColorEffect(ManaColor.BLACK));
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        assertThat(gqs.fixedLandManaColor(gd, null)).isEqualTo(ManaColor.BLACK);
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        assertThat(gqs.fixedLandManaColor(gd, null)).isNull();
+    }
+
+    @Test
+    void combatDamagePreventionEndsWhenItsSourceLosesAbilities() {
+        Card card = new Card();
+        card.setType(CardType.CREATURE);
+        card.addEffect(EffectSlot.STATIC, new PreventAllCombatDamageToAndBySelfEffect());
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, source, true)).isTrue();
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        assertThat(gqs.isPreventedFromDealingDamage(gd, source, true)).isFalse();
+    }
+
+    @Test
+    void creatureDependentDamageFloorDoesNotRaiseLife() {
+        Card card = new Card();
+        card.setType(CardType.CREATURE);
+        card.addEffect(EffectSlot.STATIC, new DamageLifeFloorEffect(1, LifeFloorCondition.CONTROLS_A_CREATURE));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+        assertThat(gqs.damageLifeFloor(gd, player1Id, 1)).isEqualTo(1);
+        assertThat(gqs.damageLifeFloor(gd, player1Id, 0)).isZero();
     }
 
     @Test
@@ -2318,6 +2363,17 @@ class GameQueryServiceTest {
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id, player1Id)).isEqualTo(1);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player2Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("source-and-player multiplier excludes opponent permanents")
+        void sourceAndPlayerMultiplierExcludesOpponentPermanents() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Goblin Goliath", new DoubleControllerDamageToOpponentsEffect()));
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id,
+                    UUID.randomUUID())).isEqualTo(1);
         }
 
         @Test

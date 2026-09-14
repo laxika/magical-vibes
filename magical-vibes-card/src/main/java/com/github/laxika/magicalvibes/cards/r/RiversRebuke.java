@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "71")
+@CardRegistration(set = "GN2", collectorNumber = "24")
 public class RiversRebuke extends Card {
 
     public RiversRebuke() {

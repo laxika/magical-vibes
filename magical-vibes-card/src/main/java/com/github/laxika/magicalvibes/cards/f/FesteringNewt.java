@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "98")
+@CardRegistration(set = "IMA", collectorNumber = "90")
 public class FesteringNewt extends Card {
 
     private static final String BOGBREW_WITCH = "Bogbrew Witch";

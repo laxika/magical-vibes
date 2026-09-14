@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrcishOriflamme.class, GrizzlyBears.class})
+@CardUsed({OrcishOriflamme.class, GrizzlyBears.class, Opalescence.class})
 class OrcishOriflammeTest extends BaseCardTest {
 
     @Test
@@ -55,7 +55,6 @@ class OrcishOriflammeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    @CardUsed(Opalescence.class)
     @Test
     void animatedOriflammeAlsoBuffsItselfWhileAttacking() {
         harness.addToBattlefield(player1, new Opalescence());

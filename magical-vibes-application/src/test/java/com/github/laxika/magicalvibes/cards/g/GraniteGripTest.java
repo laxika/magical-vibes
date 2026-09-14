@@ -29,7 +29,6 @@ class GraniteGripTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Granite Grip");
     }
 
     @Test
@@ -44,7 +43,7 @@ class GraniteGripTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Granite Grip")
+                .anyMatch(p -> p.getCard() instanceof GraniteGrip
                         && bears.getId().equals(p.getAttachedTo()));
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -62,17 +61,18 @@ class GraniteGripTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         // Add one mountain — +1/+0
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent firstMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         // Add second mountain — +2/+0
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent secondMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         // Remove all mountains — back to base
-        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Mountain"));
+        gd.playerBattlefields.get(player1.getId()).remove(firstMountain);
+        gd.playerBattlefields.get(player1.getId()).remove(secondMountain);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -129,11 +129,9 @@ class GraniteGripTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Granite Grip")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new GraniteGrip()));
         harness.addMana(player1, ManaColor.RED, 3);
-
-        Permanent land = findPermanent(player1, "Forest");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)

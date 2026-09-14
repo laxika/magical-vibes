@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 
 @CardRegistration(set = "LGN", collectorNumber = "74")
+@CardRegistration(set = "EMA", collectorNumber = "90")
 public class HavocDemon extends Card {
 
     public HavocDemon() {

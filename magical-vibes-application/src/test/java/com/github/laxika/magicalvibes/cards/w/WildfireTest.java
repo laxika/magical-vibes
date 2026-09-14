@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AncientSilverback;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
 import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
@@ -10,15 +12,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Wildfire.class, Forest.class, Mountain.class, ShivanHellkite.class, ThunderingGiant.class})
+@CardUsed({AncientSilverback.class, Forest.class, GrizzlyBears.class, Mountain.class, ShivanHellkite.class, ThunderingGiant.class, Wildfire.class})
 class WildfireTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -31,11 +31,6 @@ class WildfireTest extends BaseCardTest {
     private void castWildfire() {
         harness.castFromHand(player1, new Wildfire(), "{4}{R}{R}");
         harness.passBothPriorities();
-    }
-
-    private long landCount(Player player) {
-        return countPermanents(player, "Mountain")
-                + countPermanents(player, "Forest");
     }
 
     @Test
@@ -97,20 +92,25 @@ class WildfireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A player with no lands still has their creatures dealt damage")
-    void playerWithNoLandsStillHasCreaturesDamaged() {
-        harness.addToBattlefield(player1, new ShivanHellkite());
-        harness.addToBattlefield(player2, new ThunderingGiant());
+    @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
+    void dealsFourDamageToEachCreature() {
+        addLands(4);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientSilverback());
 
         castWildfire();
 
-        harness.assertOnBattlefield(player1, "Shivan Hellkite");
-        harness.assertNotOnBattlefield(player2, "Thundering Giant");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
-    void dealsFourDamageToEachCreature() {
+    void dealsFourDamageToEachCreatureUpstreamReview() {
         addLands(4);
         harness.addToBattlefield(player1, new ThunderingGiant());
         harness.addToBattlefield(player2, new ThunderingGiant());
@@ -123,5 +123,41 @@ class WildfireTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Thundering Giant");
         harness.assertNotOnBattlefield(player2, "Thundering Giant");
         harness.assertOnBattlefield(player2, "Shivan Hellkite");
+    }
+
+    @Test
+    @DisplayName("Still deals damage when no player has lands to sacrifice")
+    void dealsDamageWhenNoLandsAreAvailable() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AncientSilverback());
+        harness.addToBattlefield(player2, new AncientSilverback());
+
+        castWildfire();
+
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ancient Silverback");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    private long landCount(Player player) {
+        return countPermanents(player, "Mountain")
+                + countPermanents(player, "Forest");
+    }
+
+    @Test
+    @DisplayName("A player with no lands still has their creatures dealt damage")
+    void playerWithNoLandsStillHasCreaturesDamaged() {
+        harness.addToBattlefield(player1, new ShivanHellkite());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+
+        castWildfire();
+
+        harness.assertOnBattlefield(player1, "Shivan Hellkite");
+        harness.assertNotOnBattlefield(player2, "Thundering Giant");
     }
 }

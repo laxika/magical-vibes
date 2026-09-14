@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
+import com.github.laxika.magicalvibes.model.Permanent;
 
 /**
  * Shared draw/discard/reveal/choice helpers used by every PlayerInteraction effect handler
@@ -127,14 +128,27 @@ public class PlayerInteractionSupport {
                                            int xValue, Integer eventValue, UUID sourceEquipmentCardId,
                                            UUID sourceCardId, CardEffect thenEffect, CardPredicate thenCondition,
                                            UUID blockingAttackerId, Predicate<Card> additionalFilter, UUID sourcePermanentId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, eventValue, sourceEquipmentCardId,
+                sourceCardId, thenEffect, thenCondition, blockingAttackerId, additionalFilter, sourcePermanentId, null);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
+                                           int xValue, Integer eventValue, UUID sourceEquipmentCardId,
+                                           UUID sourceCardId, CardEffect thenEffect, CardPredicate thenCondition,
+                                           UUID blockingAttackerId, Predicate<Card> additionalFilter, UUID sourcePermanentId,
+                                           Permanent sourcePermanentSnapshot) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card handCard = hand.get(i);
-                if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), sourceCardId,
-                        gameData, playerId)) {
+                boolean matches = sourcePermanentSnapshot == null
+                        ? predicateEvaluationService.matchesCardPredicate(
+                                handCard, effect.predicate(), sourceCardId, gameData, playerId)
+                        : predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), sourceCardId,
+                                gameData, playerId, sourcePermanentId, null, xValue, sourcePermanentSnapshot);
+                if (!matches) {
                     continue;
                 }
                 if (!additionalFilter.test(handCard)) {
@@ -728,10 +742,7 @@ public class PlayerInteractionSupport {
         }
 
         if (revealHand) {
-            GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
-            appendCardList(revealBuilder, hand);
-            revealBuilder.text(".");
-            gameLogService.append(gameData, revealBuilder.build());
+            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
         } else {
             cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
         }
@@ -747,7 +758,7 @@ public class PlayerInteractionSupport {
                 typeMatches = includedTypes.contains(handCard.getType())
                         || handCard.getAdditionalTypes().stream().anyMatch(includedTypes::contains);
             } else {
-                typeMatches = !excludedTypes.contains(handCard.getType());
+                typeMatches = excludedTypes.stream().noneMatch(handCard::hasType);
             }
             if (typeMatches
                     && (filter == null || predicateEvaluationService.matchesCardPredicate(

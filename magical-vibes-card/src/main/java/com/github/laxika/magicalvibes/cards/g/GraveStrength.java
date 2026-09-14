@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FRF", collectorNumber = "71")
+@CardRegistration(set = "UMA", collectorNumber = "101")
 public class GraveStrength extends Card {
 
     public GraveStrength() {

@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -45,23 +44,26 @@ class BirdsOfParadiseTest extends BaseCardTest {
         assertThat(choice.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     }
 
-    @ParameterizedTest(name = "Choosing {0} adds exactly one mana of that color")
-    @EnumSource(value = ManaColor.class, mode = EnumSource.Mode.EXCLUDE, names = "COLORLESS")
+    @Test
     @DisplayName("Choosing a color adds exactly one mana of that color")
-    void choosingColorAddsMana(ManaColor manaColor) {
-        Permanent birds = addCreatureReady(player1, new BirdsOfParadise());
-        var manaPool = gd.playerManaPools.get(player1.getId());
+    void choosingColorAddsMana() {
+        for (String color : List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN")) {
+            harness = new GameTestHarness();
+            player1 = harness.getPlayer1();
+            gd = harness.getGameData();
+            harness.skipMulligan();
 
-        harness.activateAbility(player1, 0, null, null);
-        int before = manaPool.get(manaColor);
-        int totalBefore = manaPool.getTotalAllMana();
+            Permanent birds = addCreatureReady(player1, new BirdsOfParadise());
+            ManaColor manaColor = ManaColor.valueOf(color);
 
-        harness.handleListChoice(player1, manaColor.name());
+            harness.activateAbility(player1, 0, null, null);
+            int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
 
-        assertThat(manaPool.get(manaColor)).isEqualTo(before + 1);
-        assertThat(manaPool.getTotalAllMana()).isEqualTo(totalBefore + 1);
-        assertThat(birds.isTapped()).isTrue();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+            harness.handleListChoice(player1, color);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
     }
 
     @Test
@@ -87,14 +89,32 @@ class BirdsOfParadiseTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @ParameterizedTest(name = "Choosing {0} adds exactly one mana of that color")
+    @EnumSource(value = ManaColor.class, mode = EnumSource.Mode.EXCLUDE, names = "COLORLESS")
+    @DisplayName("Choosing a color adds exactly one mana of that color")
+    void choosingColorAddsMana(ManaColor manaColor) {
+        Permanent birds = addCreatureReady(player1, new BirdsOfParadise());
+        var manaPool = gd.playerManaPools.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        int before = manaPool.get(manaColor);
+        int totalBefore = manaPool.getTotalAllMana();
+
+        harness.handleListChoice(player1, manaColor.name());
+
+        assertThat(manaPool.get(manaColor)).isEqualTo(before + 1);
+        assertThat(manaPool.getTotalAllMana()).isEqualTo(totalBefore + 1);
+        assertThat(birds.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     @Test
     @DisplayName("Flying prevents a nonflying creature from blocking Birds of Paradise")
     void flyingPreventsNonflyingCreatureFromBlocking() {
         addCreatureReady(player1, new BirdsOfParadise());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))

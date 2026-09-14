@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 // Lifelink is a keyword ability auto-loaded from Scryfall and handled by the combat services.
 @CardRegistration(set = "ALA", collectorNumber = "188")
+@CardRegistration(set = "MM3", collectorNumber = "180")
 public class RhoxWarMonk extends Card {
 }

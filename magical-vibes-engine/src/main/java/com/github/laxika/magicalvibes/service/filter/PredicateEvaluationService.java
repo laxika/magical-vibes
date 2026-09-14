@@ -426,6 +426,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (source == null) {
+                    source = sourcePermanentSnapshot;
+                }
                 if (source == null || source.getChosenSubtype() == null
                         || p.creatureOnly() && !card.hasType(CardType.CREATURE)) {
                     yield false;
@@ -2987,7 +2990,8 @@ public class PredicateEvaluationService {
     }
 
     private boolean hasManaAbility(GameData gameData, Permanent permanent) {
-        return PotentialManaService.hasOnTapManaEffects(permanent.getCard())
+        return ((gameData == null || !gameQueryService.hasLostAllAbilities(gameData, permanent))
+                && PotentialManaService.hasOnTapManaEffects(permanent.getCard()))
                 || effectiveActivatedAbilities(gameData, permanent).stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
     }

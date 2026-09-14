@@ -1,19 +1,22 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.c.Castle;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IntrepidHero.class, ThunderingGiant.class, ArgothianSwine.class, Forest.class})
+@CardUsed({AirElemental.class, ArgothianSwine.class, Castle.class, Forest.class, HillGiant.class, IntrepidHero.class, ThunderingGiant.class})
 class IntrepidHeroTest extends BaseCardTest {
 
     private Permanent setup() {
@@ -38,12 +41,45 @@ class IntrepidHeroTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy a high-power creature it controls")
+    void destroysOwnHighPowerCreature() {
+        Permanent hero = setup();
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
+
+        harness.activateAbility(player1, idxOf(hero), 0, null, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
     @DisplayName("Cannot target a creature with power less than 4")
     void cannotTargetLowPowerCreature() {
         Permanent hero = setup();
         Permanent swine = harness.addToBattlefieldAndReturn(player2, new ArgothianSwine());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, swine.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent hero = setup();
+        harness.addToBattlefield(player2, new Castle());
+        UUID castleId = harness.getPermanentId(player2, "Castle");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, castleId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        Permanent hero = setup();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -83,14 +119,5 @@ class IntrepidHeroTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Thundering Giant");
         harness.assertNotInGraveyard(player2, "Thundering Giant");
-    }
-
-    @Test
-    @DisplayName("Cannot target a player")
-    void cannotTargetPlayer() {
-        Permanent hero = setup();
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, player2.getId()))
-                .isInstanceOf(IllegalStateException.class);
     }
 }

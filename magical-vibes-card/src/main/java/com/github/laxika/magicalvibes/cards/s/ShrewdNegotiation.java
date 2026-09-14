@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "64")
+@CardRegistration(set = "KLR", collectorNumber = "66")
 public class ShrewdNegotiation extends Card {
 
     public ShrewdNegotiation() {

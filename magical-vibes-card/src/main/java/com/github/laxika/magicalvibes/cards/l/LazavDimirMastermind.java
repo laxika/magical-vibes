@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpp
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "174")
+@CardRegistration(set = "GK1", collectorNumber = "16")
 public class LazavDimirMastermind extends Card {
 
     public LazavDimirMastermind() {

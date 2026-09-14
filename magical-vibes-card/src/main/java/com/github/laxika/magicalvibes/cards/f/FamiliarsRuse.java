@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 
 @CardRegistration(set = "LRW", collectorNumber = "64")
+@CardRegistration(set = "MM3", collectorNumber = "37")
 public class FamiliarsRuse extends Card {
 
     public FamiliarsRuse() {

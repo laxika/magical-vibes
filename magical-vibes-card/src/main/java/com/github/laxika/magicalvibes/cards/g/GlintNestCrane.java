@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "50")
+@CardRegistration(set = "KLR", collectorNumber = "50")
 public class GlintNestCrane extends Card {
 
     public GlintNestCrane() {

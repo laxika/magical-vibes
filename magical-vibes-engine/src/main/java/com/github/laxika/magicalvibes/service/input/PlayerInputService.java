@@ -271,6 +271,12 @@ public class PlayerInputService {
         beginTargetedCardChoice(gameData, playerId, validIndices, prompt, targetId, null);
     }
 
+    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                        String prompt, UUID targetId, boolean declinable) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
+                playerId, new ArrayList<>(validIndices), targetId, prompt, null, null, declinable));
+    }
+
     /**
      * Variant where declining the choice exiles the given permanent (e.g. Evershrike: "You may put an
      * Aura ... onto the battlefield attached to it. If you don't, exile this creature.").
@@ -1215,6 +1221,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card type", gameData.id, playerName);
+    }
+
+    public void beginSpellLandOrNonlandChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellLandOrNonlandChoice choiceContext =
+                new ChoiceContext.SpellLandOrNonlandChoice(playerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, List.of("LAND", "NONLAND"),
+                "Choose land or nonland."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose land or nonland", gameData.id, playerName);
     }
 
     public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
@@ -2503,5 +2520,4 @@ public class PlayerInputService {
                 next.description(), next.manaCost()));
     }
 }
-
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BullHippo;
 import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,10 +9,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GloriousAnthem.class, GorillaWarrior.class, PouncingJaguar.class})
+@CardUsed({BullHippo.class, GloriousAnthem.class, GorillaWarrior.class, GrizzlyBears.class, PouncingJaguar.class})
 class GloriousAnthemTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -63,6 +63,22 @@ class GloriousAnthemTest extends BaseCardTest {
     @DisplayName("Buffs all own creatures regardless of subtype")
     void buffsAllOwnCreaturesRegardlessOfSubtype() {
         harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BullHippo());
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent hippo = findPermanent(player1, "Bull Hippo");
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hippo)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hippo)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Buffs all own creatures regardless of subtype")
+    void buffsAllOwnCreaturesRegardlessOfSubtypeUpstreamReview() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
         Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
         Permanent jaguar = harness.addToBattlefieldAndReturn(player1, new PouncingJaguar());
 
@@ -107,6 +123,24 @@ class GloriousAnthemTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Glorious Anthem resolves onto battlefield")
     void bonusAppliesOnResolve() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    // ===== Bonus applies on resolve =====
+
+    @Test
+    @DisplayName("Bonus applies when Glorious Anthem resolves onto battlefield")
+    void bonusAppliesOnResolveUpstreamReview() {
         Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
 
         assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(3);
@@ -138,4 +172,3 @@ class GloriousAnthemTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(3);
     }
 }
-

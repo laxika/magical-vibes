@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "117")
+@CardRegistration(set = "MM3", collectorNumber = "78")
 public class MorticianBeetle extends Card {
 
     public MorticianBeetle() {

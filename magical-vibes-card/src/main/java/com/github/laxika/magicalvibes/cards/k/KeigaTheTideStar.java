@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "72")
 @CardRegistration(set = "MMA", collectorNumber = "48")
+@CardRegistration(set = "IMA", collectorNumber = "63")
 public class KeigaTheTideStar extends Card {
 
     public KeigaTheTideStar() {

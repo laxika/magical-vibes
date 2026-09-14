@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 @CardRegistration(set = "M12", collectorNumber = "125")
 @CardRegistration(set = "M14", collectorNumber = "133")
 @CardRegistration(set = "M20", collectorNumber = "130")
+@CardRegistration(set = "A25", collectorNumber = "124")
+@CardRegistration(set = "MM3", collectorNumber = "92")
 public class ChandrasOutrage extends Card {
 
     public ChandrasOutrage() {

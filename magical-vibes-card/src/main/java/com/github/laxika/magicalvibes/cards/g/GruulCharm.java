@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "169")
+@CardRegistration(set = "GK2", collectorNumber = "92")
 public class GruulCharm extends Card {
 
     public GruulCharm() {

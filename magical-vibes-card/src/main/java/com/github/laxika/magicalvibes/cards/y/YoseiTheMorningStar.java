@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  */
 @CardRegistration(set = "CHK", collectorNumber = "50")
 @CardRegistration(set = "MMA", collectorNumber = "35")
+@CardRegistration(set = "IMA", collectorNumber = "39")
 public class YoseiTheMorningStar extends Card {
 
     public YoseiTheMorningStar() {

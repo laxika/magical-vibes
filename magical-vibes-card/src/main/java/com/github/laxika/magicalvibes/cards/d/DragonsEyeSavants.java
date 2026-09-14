@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "38")
+@CardRegistration(set = "A25", collectorNumber = "54")
 public class DragonsEyeSavants extends Card {
 
     public DragonsEyeSavants() {

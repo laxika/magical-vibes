@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "77")
+@CardRegistration(set = "IMA", collectorNumber = "100")
 public class NoxiousDragon extends Card {
 
     public NoxiousDragon() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "134")
 @CardRegistration(set = "RNA", collectorNumber = "93")
+@CardRegistration(set = "ANB", collectorNumber = "68")
 public class BurnBright extends Card {
 
     public BurnBright() {

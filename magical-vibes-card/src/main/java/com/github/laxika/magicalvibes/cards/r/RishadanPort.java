@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "324")
+@CardRegistration(set = "A25", collectorNumber = "246")
 public class RishadanPort extends Card {
 
     public RishadanPort() {

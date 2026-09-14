@@ -235,6 +235,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
+import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Thin orchestrator that detects trigger events, iterates permanents/effect-slots,
@@ -258,6 +262,8 @@ public class TriggerCollectionService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    @Autowired
+    private ObjectProvider<StateTriggerService> stateTriggerService;
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
@@ -1713,6 +1719,7 @@ public class TriggerCollectionService {
         int discardedCount = gameData.discardEventCardCount;
         gameData.discardEventPlayerId = null;
         gameData.discardEventCardCount = 0;
+        stateTriggerService.getObject().checkStateTriggers(gameData);
         if (discardingPlayerId != null && discardedCount > 0) {
             boolean triggered = checkDiscardEventTriggers(gameData, discardingPlayerId, discardedCount);
             if (triggered) {
@@ -1987,6 +1994,20 @@ public class TriggerCollectionService {
         for (Permanent perm : List.copyOf(gameData.playerBattlefields.getOrDefault(rollingPlayerId, List.of()))) {
             dispatchSlot(gameData, perm, rollingPlayerId, EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
                     new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true));
+        }
+        if (gameData.planechase == null || gameData.planechase.controllerId == null
+                || !gameData.planechase.controllerId.equals(rollingPlayerId)) {
+            return;
+        }
+        UUID planarControllerId = gameData.planechase.controllerId;
+        TriggerContext context = new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true);
+        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+            for (CardEffect effect : object.getCard().getEffects(
+                    EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)) {
+                registry.dispatch(new TriggerMatchContext(gameData, null, planarControllerId, effect,
+                                object.getCard(), object.copy()),
+                        EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, effect, context);
+            }
         }
     }
 
@@ -2313,6 +2334,17 @@ public class TriggerCollectionService {
             return;
         }
         CardEffect damageEffect = toQueue instanceof MayEffect may ? may.wrapped() : toQueue;
+        if (damageEffect instanceof TapChosenPermanentEffect tap
+                && tap.chooseFromDamagedPlayer()) {
+            CardEffect targeted = tap.forDamagedPlayer(damagedPlayerId);
+            if (toQueue instanceof MayEffect may) {
+                targeted = new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer());
+            }
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    source.getCard(), controllerId, List.of(targeted),
+                    source.getId(), controllerId, damagedPlayerId));
+            return;
+        }
         if (damageEffect instanceof com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect destroy) {
             if (damageDealt >= destroy.minimumDamage()) {
                 CardEffect targeted = destroy.forDamagedPlayer(damagedPlayerId);
@@ -3070,6 +3102,19 @@ public class TriggerCollectionService {
             }
         });
 
+        if (gameData.planechase != null && gameData.planechase.controllerId != null) {
+            UUID planarControllerId = gameData.planechase.controllerId;
+            for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+                for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
+                    var match = new TriggerMatchContext(gameData, null, planarControllerId, effect,
+                            object.getCard(), object.copy());
+                    if (registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
+                        anyTriggered[0] = true;
+                    }
+                }
+            }
+        }
+
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {
                 if (!(floating.effect() instanceof AddOneOfEachManaTypeProducedByLandEffect effect)
@@ -3627,11 +3672,11 @@ public class TriggerCollectionService {
         }
 
         Set<UUID> targetedPlayers = new HashSet<>();
-        Set<UUID> targetControllersWithAllyTrigger = new HashSet<>();
+        Set<UUID> targetsWithAllyTrigger = new HashSet<>();
 
         for (UUID targetId : targetIds) {
             if (gameData.playerIds.contains(targetId)) {
-                if (targetControllersWithAllyTrigger.add(targetId)) {
+                if (targetsWithAllyTrigger.add(targetId)) {
                     collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, spellEntry);
                 }
                 if (targetedPlayers.add(targetId)) {
@@ -3647,7 +3692,7 @@ public class TriggerCollectionService {
             UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
             if (controllerId == null) continue;
 
-            if (targetControllersWithAllyTrigger.add(controllerId)) {
+            if (targetsWithAllyTrigger.add(targetId)) {
                 collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
             }
             collectAllyPermanentBecomesTargetOfOpponentTriggers(gameData, controllerId, spellEntry);
@@ -3765,11 +3810,11 @@ public class TriggerCollectionService {
         }
 
         Set<UUID> targetedPlayers = new HashSet<>();
-        Set<UUID> targetControllersWithAllyTrigger = new HashSet<>();
+        Set<UUID> targetsWithAllyTrigger = new HashSet<>();
 
         for (UUID targetId : targetIds) {
             if (gameData.playerIds.contains(targetId)) {
-                if (targetControllersWithAllyTrigger.add(targetId)) {
+                if (targetsWithAllyTrigger.add(targetId)) {
                     collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, abilityEntry);
                 }
                 if (targetedPlayers.add(targetId)) {
@@ -3784,7 +3829,7 @@ public class TriggerCollectionService {
             UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
 
             if (controllerId != null) {
-                if (targetControllersWithAllyTrigger.add(controllerId)) {
+                if (targetsWithAllyTrigger.add(targetId)) {
                     collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
                 }
                 collectAllyPermanentBecomesTargetOfOpponentTriggers(gameData, controllerId, abilityEntry);
@@ -5918,6 +5963,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(controllerId)) return;
             for (EffectRegistration registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)) {
+                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) break;
                 CardEffect effect = registration.effect();
                 if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
                 CardEffect resolved = effect;
@@ -8811,6 +8857,7 @@ public class TriggerCollectionService {
      * owner when the card is black.
      */
     public void checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId, Card card) {
+        if (card.isToken()) return;
         if (card.getColors() == null || !card.getColors().contains(CardColor.BLACK)) return;
 
         var ctx = new TriggerContext.BlackCardOpponentGraveyard(graveyardOwnerId, card);
@@ -9517,7 +9564,7 @@ public class TriggerCollectionService {
         if (!wasCreature) return;
         UUID leavingId = leavingPermanent.getId();
 
-        gameData.forEachPermanent((ownerId, perm) -> {
+        java.util.function.BiConsumer<UUID, Permanent> collect = (ownerId, perm) -> {
             if (perm.getId().equals(leavingId)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD)) {
@@ -9546,7 +9593,13 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} triggers on another creature leaving the battlefield ({})",
                         gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
             }
-        });
+        };
+        if (gameData.permanentLeaveNotificationDepth > 0) {
+            gameData.permanentLeaveBatchWatchers.forEach((id, permanent) -> collect.accept(
+                    gameData.permanentLeaveBatchWatcherControllers.get(id), permanent));
+        } else {
+            gameData.forEachPermanent(collect);
+        }
 
         if (gameData.planechase == null || leavingControllerId == null) {
             return;
@@ -10891,6 +10944,36 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires "whenever another permanent enters under your control" triggers. */
+    public void checkAllyPermanentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
+        if (enteringPermanent == null) return;
+
+        TriggerContext.PermanentEnters context = new TriggerContext.PermanentEnters(
+                enteringCard,
+                controllerId,
+                null,
+                1 + gameQueryService.countETBExtraTriggers(
+                        gameData, controllerId, controllerId, enteringCard),
+                enteringPermanent.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent permanent : new ArrayList<>(battlefield)) {
+            if (permanent.getCard() == enteringCard || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            List<CardEffect> effects = new ArrayList<>(
+                    permanent.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, permanent, EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD));
+            for (CardEffect effect : effects) {
+                dispatchEnter(gameData, permanent, controllerId,
+                        EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD, effect, context);
+            }
+        }
+    }
+
     /** "Whenever a creature enters under an opponent's control" (ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD). */
     public void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;
@@ -11674,7 +11757,6 @@ public class TriggerCollectionService {
                 }
             }
         }
-
 
     }
 

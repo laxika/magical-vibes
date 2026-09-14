@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "34")
 @CardRegistration(set = "DDN", collectorNumber = "49")
+@CardRegistration(set = "MM3", collectorNumber = "14")
 public class LoneMissionary extends Card {
 
     public LoneMissionary() {

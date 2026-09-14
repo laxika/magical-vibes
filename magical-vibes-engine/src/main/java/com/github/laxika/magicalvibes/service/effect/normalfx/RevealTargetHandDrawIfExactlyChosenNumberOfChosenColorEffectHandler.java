@@ -32,6 +32,9 @@ public class RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffectHandler
         playerInteractionSupport.resolveRevealHand(gameData, entry.getTargetId());
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null || source.getChosenColor() == null || source.getChosenNumber() <= 0) {
             return;
         }
@@ -39,7 +42,7 @@ public class RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffectHandler
         CardColor chosenColor = source.getChosenColor();
         List<Card> hand = gameData.playerHands.getOrDefault(entry.getTargetId(), List.of());
         long matchingCards = hand.stream()
-                .filter(card -> card.getColors().contains(chosenColor))
+                .filter(card -> gameQueryService.getEffectiveCardColors(gameData, card).contains(chosenColor))
                 .count();
         if (matchingCards == source.getChosenNumber()) {
             playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), 1);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VIS", collectorNumber = "13")
 @CardRegistration(set = "DDL", collectorNumber = "30")
+@CardRegistration(set = "UMA", collectorNumber = "26")
 public class MiraculousRecovery extends Card {
 
     public MiraculousRecovery() {

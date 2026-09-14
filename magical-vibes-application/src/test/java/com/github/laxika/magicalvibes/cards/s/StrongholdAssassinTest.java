@@ -42,6 +42,21 @@ class StrongholdAssassinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy a nonblack creature controlled by its own controller")
+    void destroysOwnNonblackTarget() {
+        Permanent assassin = setup();
+        Permanent fodder = addCreatureReady(player1, new SkyshroudTroopers());
+        Permanent target = addCreatureReady(player1, new SkyshroudTroopers());
+
+        harness.activateAbility(player1, idxOf(assassin), 0, null, target.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud Troopers");
+        harness.assertInGraveyard(player1, "Skyshroud Troopers");
+    }
+
+    @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
         Permanent assassin = setup();

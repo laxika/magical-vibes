@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDr
 import com.github.laxika.magicalvibes.model.effect.RevealTopPlanarCardsAndTriggerChaosEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "30")
+@CardRegistration(set = "OPCA", collectorNumber = "63")
 public class PoolsOfBecoming extends Card {
 
     public PoolsOfBecoming() {

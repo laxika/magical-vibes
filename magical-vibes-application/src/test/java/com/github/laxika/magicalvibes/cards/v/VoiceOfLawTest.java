@@ -64,8 +64,7 @@ class VoiceOfLawTest extends BaseCardTest {
         addCreatureReady(player1, new VoiceOfLaw());
         addCreatureReady(player2, new ShivanHellkite());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -78,8 +77,7 @@ class VoiceOfLawTest extends BaseCardTest {
         addCreatureReady(player1, new ShivanHellkite());
         Permanent voice = addCreatureReady(player2, new VoiceOfLaw());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 

@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "36")
 @CardRegistration(set = "PC2", collectorNumber = "29")
+@CardRegistration(set = "PCA", collectorNumber = "29")
 public class WhirlpoolWarrior extends Card {
 
     public WhirlpoolWarrior() {

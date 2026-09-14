@@ -51,6 +51,10 @@ public class MillBottomCardThenPutOntoBattlefieldIfMatchesEffectHandler implemen
                 gameData.playerIdToName.get(controllerId) + " puts ", bottomCard,
                 " from the bottom of their library into their graveyard."));
 
+        Integer sourcePower = entry.getTriggeringPermanentPowerAtTrigger();
+        if (sourcePower == null && entry.getSourcePermanentSnapshot() != null) {
+            sourcePower = entry.getSourcePermanentSnapshot().getEffectivePower();
+        }
         boolean matches = predicateEvaluationService.matchesCardPredicate(
                 bottomCard,
                 e.filter(),
@@ -58,7 +62,7 @@ public class MillBottomCardThenPutOntoBattlefieldIfMatchesEffectHandler implemen
                 gameData,
                 controllerId,
                 entry.getSourcePermanentId(),
-                entry.getTriggeringPermanentPowerAtTrigger(),
+                sourcePower,
                 entry.getXValue(),
                 entry.getSourcePermanentSnapshot());
         if (matches) {

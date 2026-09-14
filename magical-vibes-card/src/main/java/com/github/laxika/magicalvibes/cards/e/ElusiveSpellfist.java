@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "53")
+@CardRegistration(set = "IMA", collectorNumber = "54")
 public class ElusiveSpellfist extends Card {
 
     public ElusiveSpellfist() {

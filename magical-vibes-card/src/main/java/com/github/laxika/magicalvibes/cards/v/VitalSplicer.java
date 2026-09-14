@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "126")
+@CardRegistration(set = "MM3", collectorNumber = "145")
 public class VitalSplicer extends Card {
 
     public VitalSplicer() {

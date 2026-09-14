@@ -38,8 +38,7 @@ class FogTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fog()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.preventAllCombatDamage).isTrue();
     }
@@ -55,8 +54,7 @@ class FogTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         declareAttackers(player1, List.of(0, 1));
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -79,12 +77,25 @@ class FogTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Does not prevent noncombat damage to creatures")
+    void doesNotPreventNoncombatDamageToCreatures() {
+        Permanent target = addCreatureReady(player2, new GiantMantis());
+        harness.setHand(player1, List.of(new Fog(), new Incinerate()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -93,8 +104,7 @@ class FogTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fog()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.preventAllCombatDamage).isTrue();
         harness.forceStep(TurnStep.END_STEP);
@@ -110,8 +120,7 @@ class FogTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fog()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Fog");

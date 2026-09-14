@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "123")
+@CardRegistration(set = "KLR", collectorNumber = "180")
 public class RishkarsExpertise extends Card {
 
     public RishkarsExpertise() {

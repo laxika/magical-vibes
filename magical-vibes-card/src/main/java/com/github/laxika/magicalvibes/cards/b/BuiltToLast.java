@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "7")
+@CardRegistration(set = "KLR", collectorNumber = "11")
 public class BuiltToLast extends Card {
 
     public BuiltToLast() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "87")
+@CardRegistration(set = "KLR", collectorNumber = "95")
 public class LiveFast extends Card {
 
     public LiveFast() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "202")
+@CardRegistration(set = "DDT", collectorNumber = "56")
 public class BrittleEffigy extends Card {
 
     public BrittleEffigy() {

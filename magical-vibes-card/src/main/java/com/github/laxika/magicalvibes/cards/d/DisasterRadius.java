@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "141")
+@CardRegistration(set = "E02", collectorNumber = "26")
 public class DisasterRadius extends Card {
 
     public DisasterRadius() {
