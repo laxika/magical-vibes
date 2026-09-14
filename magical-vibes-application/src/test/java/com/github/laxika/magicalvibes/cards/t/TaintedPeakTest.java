@@ -77,9 +77,6 @@ class TaintedPeakTest extends BaseCardTest {
     }
 
     private Permanent addReadyPeak(Player player) {
-        Permanent perm = new Permanent(new TaintedPeak());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new TaintedPeak());
     }
 }

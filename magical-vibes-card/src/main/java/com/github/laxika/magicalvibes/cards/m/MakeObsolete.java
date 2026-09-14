@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "89")
+@CardRegistration(set = "KLR", collectorNumber = "97")
 public class MakeObsolete extends Card {
 
     public MakeObsolete() {

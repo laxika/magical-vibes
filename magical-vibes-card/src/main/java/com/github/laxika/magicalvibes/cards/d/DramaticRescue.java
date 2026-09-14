@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "156")
+@CardRegistration(set = "GK2", collectorNumber = "12")
 public class DramaticRescue extends Card {
 
     public DramaticRescue() {

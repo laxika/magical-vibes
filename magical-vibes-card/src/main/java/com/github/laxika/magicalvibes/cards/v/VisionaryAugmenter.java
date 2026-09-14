@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "34")
+@CardRegistration(set = "KLR", collectorNumber = "36")
 public class VisionaryAugmenter extends Card {
 
     public VisionaryAugmenter() {

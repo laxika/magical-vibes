@@ -656,6 +656,8 @@ public class GameData {
     public CardType chosenSpellPermanentType;
     /** Resolution-time card type choice for a spell with no permanent to store it on. */
     public CardType chosenSpellCardType;
+    /** Resolution-time land/nonland choice for a spell with no permanent to store it on. */
+    public Boolean chosenSpellLandOrNonland;
     /** Resolution-time Turnabout action choice: true to tap, false to untap. */
     public Boolean turnaboutTap;
     /**
@@ -968,6 +970,8 @@ public class GameData {
     public final Set<UUID> playersWithAllPlayerDamagePreventedUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players with protection from everything until the beginning of their next turn. */
     public final Set<UUID> playersWithProtectionFromEverythingUntilNextTurn = ConcurrentHashMap.newKeySet();
+    /** Players whose life totals can't change until the beginning of their next turn. */
+    public final Set<UUID> playersWithLifeTotalCantChangeUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players whose opponents' creatures cannot deal damage this turn (Thwart the Enemy). */
@@ -1633,6 +1637,9 @@ public class GameData {
      * {@code ExileFreeCastQueueSupport.putRemainderIntoOwnersGraveyards}.
      */
     public final List<UUID> pendingExileFreeCastRemainderToGraveyard = new ArrayList<>();
+
+    /** Cards exiled by a free-cast process that should return to their owner's library bottom. */
+    public final List<UUID> pendingExileFreeCastRemainderToLibraryBottom = new ArrayList<>();
 
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
@@ -4667,6 +4674,7 @@ public class GameData {
         copy.chosenSpellManaValueParity = this.chosenSpellManaValueParity;
         copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
         copy.chosenSpellCardType = this.chosenSpellCardType;
+        copy.chosenSpellLandOrNonland = this.chosenSpellLandOrNonland;
         copy.turnaboutTap = this.turnaboutTap;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.pendingDrawRevealDiscardDrawCounts.putAll(this.pendingDrawRevealDiscardDrawCounts);
@@ -4856,6 +4864,8 @@ public class GameData {
                 .addAll(this.playersWithWhiteManaAsAnyColorThisTurn);
         copy.playersWithProtectionFromEverythingUntilNextTurn
                 .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
+        copy.playersWithLifeTotalCantChangeUntilNextTurn
+                .addAll(this.playersWithLifeTotalCantChangeUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersWithDamageFromOpponentCreaturesPrevented.addAll(this.playersWithDamageFromOpponentCreaturesPrevented);
         copy.playersWithCombatDamageFromTargetOpponentCreaturesPrevented
@@ -5804,6 +5814,7 @@ public class GameData {
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
+        copy.pendingExileFreeCastRemainderToLibraryBottom.addAll(this.pendingExileFreeCastRemainderToLibraryBottom);
         copy.pendingSpellweaverVoluteReattachment = this.pendingSpellweaverVoluteReattachment;
 
         // --- Turn-scoped counters ---

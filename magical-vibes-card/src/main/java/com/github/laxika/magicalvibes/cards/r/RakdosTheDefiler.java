@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "DIS", collectorNumber = "129")
+@CardRegistration(set = "GK2", collectorNumber = "71")
 public class RakdosTheDefiler extends Card {
 
     public RakdosTheDefiler() {

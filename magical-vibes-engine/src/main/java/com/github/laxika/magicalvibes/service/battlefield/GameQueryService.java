@@ -191,10 +191,10 @@ import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMult
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDeathtouchToControllerSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreationReplacementEffect;
@@ -1185,7 +1185,8 @@ public class GameQueryService {
      * {@link LifeTotalCantChangeEffect} is present on their battlefield).
      */
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
-        return !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
+        return !gameData.playersWithLifeTotalCantChangeUntilNextTurn.contains(playerId)
+                && !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
     }
 
     /**
@@ -7761,9 +7762,9 @@ public class GameQueryService {
 
     /**
      * Returns the damage multiplier that applies to damage dealt to {@code recipientPlayerId} or to a
-     * permanent that player controls, based on {@link DoubleDamageToOpponentsAndTheirPermanentsEffect}
-     * permanents controlled by that player's opponents (Gisela, Blade of Goldnight). Multiple instances
-     * stack multiplicatively. Returns {@code 1} when no such permanent is on the battlefield.
+     * permanent that player controls, based on opponent-recipient damage multipliers controlled by
+     * that player's opponents (such as Gisela, Blade of Goldnight). Multiple instances stack
+     * multiplicatively. Returns {@code 1} when no such permanent is on the battlefield.
      *
      * <p>Recipient-scoped, so it is applied where the recipient is known: the two player damage entry
      * points and the two permanent damage entry points.
@@ -7820,8 +7821,9 @@ public class GameQueryService {
                         || p.getId().equals(recipientPermanentId))) {
                     multiplier[0] *= 2;
                 } else if (!recipientPlayerId.equals(controllerId)
-                        && effect instanceof DoubleDamageToOpponentsAndTheirPermanentsEffect) {
-                    multiplier[0] *= 2;
+                        && effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
+                        && (recipientPermanentId == null || multiplyingEffect.appliesToPermanents())) {
+                    multiplier[0] *= multiplyingEffect.damageMultiplier();
                 } else if (!recipientPlayerId.equals(controllerId)
                         && sourceControllerId != null
                         && sourceControllerId.equals(controllerId)

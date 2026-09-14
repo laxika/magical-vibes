@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "60")
 @CardRegistration(set = "TSR", collectorNumber = "314")
+@CardRegistration(set = "KLR", collectorNumber = "61")
 public class ParadoxicalOutcome extends Card {
 
     public ParadoxicalOutcome() {

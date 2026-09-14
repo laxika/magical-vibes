@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "112")
 @CardRegistration(set = "MPS", collectorNumber = "4")
+@CardRegistration(set = "KLR", collectorNumber = "120")
 public class CombustibleGearhulk extends Card {
 
     public CombustibleGearhulk() {

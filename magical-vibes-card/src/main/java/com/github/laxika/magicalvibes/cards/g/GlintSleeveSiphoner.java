@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "62")
+@CardRegistration(set = "KLR", collectorNumber = "92")
 public class GlintSleeveSiphoner extends Card {
 
     public GlintSleeveSiphoner() {

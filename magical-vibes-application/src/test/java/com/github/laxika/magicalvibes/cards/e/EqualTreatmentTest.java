@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,21 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EqualTreatment.class, Blaze.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({EqualTreatment.class, AvenTrooper.class, Blaze.class, SerraAngel.class})
 class EqualTreatmentTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws a card")
     void drawsACard() {
-        harness.setHand(player1, List.of(new EqualTreatment()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new AvenTrooper()));
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new EqualTreatment(), "{1}{W}");
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Aven Trooper");
     }
 
     @Test
@@ -41,6 +39,21 @@ class EqualTreatmentTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.castSorcery(player2, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Replaces larger damage to a player with two")
+    void replacesLargerDamageToPlayerWithTwo() {
+        castEqualTreatment();
+        harness.setHand(player2, List.of(new Blaze()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, 3, player1.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
@@ -64,7 +77,7 @@ class EqualTreatmentTest extends BaseCardTest {
     @DisplayName("Replaces combat damage with two")
     void replacesCombatDamage() {
         castEqualTreatment();
-        GrizzlyBears attacker = new GrizzlyBears();
+        AvenTrooper attacker = new AvenTrooper();
         addCreatureReady(player2, attacker);
         harness.setLife(player1, 20);
 
@@ -74,12 +87,23 @@ class EqualTreatmentTest extends BaseCardTest {
         harness.assertLife(player1, 18);
     }
 
-    private void castEqualTreatment() {
-        harness.setHand(player1, List.of(new EqualTreatment()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+    @Test
+    @DisplayName("Stops replacing damage after the turn ends")
+    void replacementExpiresAtEndOfTurn() {
+        castEqualTreatment();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Blaze()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0);
+        harness.castSorcery(player2, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    private void castEqualTreatment() {
+        harness.castFromHand(player1, new EqualTreatment(), "{1}{W}");
         harness.passBothPriorities();
     }
 }

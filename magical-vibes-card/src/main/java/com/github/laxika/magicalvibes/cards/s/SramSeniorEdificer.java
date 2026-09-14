@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "23")
 @CardRegistration(set = "TSR", collectorNumber = "303")
+@CardRegistration(set = "KLR", collectorNumber = "32")
 public class SramSeniorEdificer extends Card {
 
     public SramSeniorEdificer() {

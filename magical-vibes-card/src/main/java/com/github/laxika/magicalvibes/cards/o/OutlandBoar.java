@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "132")
+@CardRegistration(set = "KLR", collectorNumber = "201")
 public class OutlandBoar extends Card {
 
     public OutlandBoar() {

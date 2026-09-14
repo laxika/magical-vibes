@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "EMA", collectorNumber = "182")
 @CardRegistration(set = "VMA", collectorNumber = "228")
 @CardRegistration(set = "DDS", collectorNumber = "49")
+@CardRegistration(set = "HA3", collectorNumber = "22")
 public class RoarOfTheWurm extends Card {
 
     public RoarOfTheWurm() {

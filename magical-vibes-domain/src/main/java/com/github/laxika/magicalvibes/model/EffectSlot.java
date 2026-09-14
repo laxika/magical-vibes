@@ -23,6 +23,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
     /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */
     ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** "Whenever another permanent you control enters"; excludes the watcher's own entry. */
+    ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
     /** "Whenever this creature or another creature you control enters, …" — like
      *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
      *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})

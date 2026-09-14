@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "189")
 @CardRegistration(set = "DDM", collectorNumber = "50")
+@CardRegistration(set = "GK2", collectorNumber = "114")
 public class VinelasherKudzu extends Card {
 
     public VinelasherKudzu() {

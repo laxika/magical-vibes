@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "143")
+@CardRegistration(set = "ANB", collectorNumber = "105")
 public class StonyStrength extends Card {
 
     public StonyStrength() {

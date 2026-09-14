@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +52,26 @@ class NecravolverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("White kicker gains life when Necravolver deals combat damage to a creature")
+    void whiteKickerGainsLifeFromDamageToCreature() {
+        Permanent attacker = castWithWhiteKicker();
+        Permanent blocker = addCreatureReady(player2, new Necravolver());
+
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        prepareAttacker(attacker);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player2, "Necravolver");
+    }
+
+    @Test
     @DisplayName("Both kickers apply both sets of effects")
     void bothKickers() {
         Permanent necravolver = castWithBothKickers();
@@ -70,10 +89,7 @@ class NecravolverTest extends BaseCardTest {
     }
 
     private Permanent castNecravolver() {
-        addMana(ManaColor.COLORLESS, 2);
-        addMana(ManaColor.BLACK, 1);
-        harness.setHand(player1, List.of(new Necravolver()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Necravolver(), "{2}{B}");
         harness.passBothPriorities();
         return findNecravolver();
     }
@@ -119,10 +135,7 @@ class NecravolverTest extends BaseCardTest {
     }
 
     private void resolveCombatAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
     }
 

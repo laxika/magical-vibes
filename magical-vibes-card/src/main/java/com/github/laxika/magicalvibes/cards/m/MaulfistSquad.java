@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "91")
+@CardRegistration(set = "KLR", collectorNumber = "99")
 public class MaulfistSquad extends Card {
 
     public MaulfistSquad() {

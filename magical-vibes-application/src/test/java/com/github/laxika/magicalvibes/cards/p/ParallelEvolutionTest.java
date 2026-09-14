@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BaskingRootwalla;
+import com.github.laxika.magicalvibes.cards.c.CabalCoffers;
+import com.github.laxika.magicalvibes.cards.s.SkywingAven;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,59 +17,61 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ParallelEvolution.class)
+@CardUsed({ParallelEvolution.class, BaskingRootwalla.class, SkywingAven.class, CabalCoffers.class})
 class ParallelEvolutionTest extends BaseCardTest {
 
-    private void addToken(Player player, String name, CardType type) {
-        Card card = new Card();
+    private void addToken(Player player, Card card) {
         card.setToken(true);
-        card.setName(name);
-        card.setType(type);
-        card.setSubtypes(List.of(CardSubtype.SAPROLING));
-        if (type == CardType.CREATURE) {
-            card.setPower(1);
-            card.setToughness(1);
-        }
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        harness.addToBattlefield(player, card);
+    }
+
+    private List<Permanent> findTokens(Player player, String name) {
+        return findPermanents(player, name).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
     }
 
     private long countTokens(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .count();
+        return findTokens(player, name).size();
     }
 
     @Test
-    @DisplayName("Copies creature tokens on every battlefield, but not noncreature tokens")
+    @DisplayName("Copies each creature token on every battlefield, but not nontokens or noncreature tokens")
     void copiesCreatureTokensOnEveryBattlefield() {
-        addToken(player1, "Saproling", CardType.CREATURE);
-        addToken(player2, "Saproling", CardType.CREATURE);
-        addToken(player1, "Treasure", CardType.ARTIFACT);
-        harness.setHand(player1, List.of(new ParallelEvolution()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        addToken(player1, new BaskingRootwalla());
+        addToken(player2, new SkywingAven());
+        addToken(player1, new CabalCoffers());
+        harness.addToBattlefield(player1, new BaskingRootwalla());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ParallelEvolution(), "{3}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(countTokens(player1, "Saproling")).isEqualTo(2);
-        assertThat(countTokens(player2, "Saproling")).isEqualTo(2);
-        assertThat(countTokens(player1, "Treasure")).isEqualTo(1);
+        assertThat(countTokens(player1, "Basking Rootwalla")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Basking Rootwalla")).hasSize(3);
+        assertThat(findTokens(player1, "Basking Rootwalla")).allSatisfy(token -> {
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+        });
+        assertThat(countTokens(player2, "Skywing Aven")).isEqualTo(2);
+        assertThat(findTokens(player2, "Skywing Aven")).allSatisfy(token -> {
+            assertThat(token.getCard().getPower()).isEqualTo(2);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
+        });
+        assertThat(countTokens(player1, "Cabal Coffers")).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Flashback copies creature tokens and exiles Parallel Evolution")
     void flashbackCopiesCreatureTokensAndExilesSpell() {
-        addToken(player1, "Saproling", CardType.CREATURE);
+        addToken(player1, new BaskingRootwalla());
         harness.setGraveyard(player1, List.of(new ParallelEvolution()));
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(countTokens(player1, "Saproling")).isEqualTo(2);
+        assertThat(countTokens(player1, "Basking Rootwalla")).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Parallel Evolution");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Parallel Evolution"));

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "17")
 @CardRegistration(set = "JUD", collectorNumber = "20")
+@CardRegistration(set = "HA5", collectorNumber = "4")
 public class RayOfRevelation extends Card {
 
     public RayOfRevelation() {

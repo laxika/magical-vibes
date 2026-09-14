@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "344")
+@CardRegistration(set = "ANB", collectorNumber = "109")
 public class WoodlandMystic extends Card {
 
     public WoodlandMystic() {

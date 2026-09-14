@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "12")
+@CardRegistration(set = "GK2", collectorNumber = "30")
 public class MartyredRusalka extends Card {
 
     public MartyredRusalka() {

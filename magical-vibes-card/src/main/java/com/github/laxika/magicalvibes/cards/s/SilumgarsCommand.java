@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "232")
+@CardRegistration(set = "HA5", collectorNumber = "19")
 public class SilumgarsCommand extends Card {
 
     public SilumgarsCommand() {

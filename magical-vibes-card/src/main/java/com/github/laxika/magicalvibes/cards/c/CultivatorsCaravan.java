@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "203")
+@CardRegistration(set = "KLR", collectorNumber = "230")
 public class CultivatorsCaravan extends Card {
 
     public CultivatorsCaravan() {

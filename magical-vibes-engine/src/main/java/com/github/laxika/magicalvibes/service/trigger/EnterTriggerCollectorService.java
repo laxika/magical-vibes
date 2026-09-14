@@ -305,6 +305,27 @@ public class EnterTriggerCollectorService {
         return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);
     }
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    private boolean handleAllyPermanentEnterPermanentConditional(TriggerMatchContext match,
+                                                                   TriggeringPermanentConditionalEffect conditional,
+                                                                   TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (!match.controllerId().equals(pe.enteringControllerId())) return false;
+        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
+        if (enteringPermanent == null) return false;
+
+        FilterContext filterContext = FilterContext.of(match.gameData())
+                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentSnapshot(match.permanent());
+        if (!predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, conditional.predicate(),
+                filterContext)) {
+            return false;
+        }
+        return enqueueAllyPermanentEnter(match, conditional.wrapped(), pe);
+    }
+
     private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext.PermanentEnters pe) {
         if (effect instanceof ConditionalEffect conditional
@@ -351,6 +372,52 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    private boolean enqueueAllyPermanentEnter(TriggerMatchContext match, CardEffect effect,
+                                              TriggerContext.PermanentEnters pe) {
+        if (effect instanceof MayEffect may) {
+            return handleEnterMay(match, may, pe);
+        }
+        if (effect instanceof ConditionalEffect conditional
+                && conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        match.permanent().getCard(), match.controllerId(),
+                        new ArrayList<>(List.of(effect)), match.permanent().getId(), enteringPermanentId));
+            }
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} ally-permanent-enters trigger awaiting target selection",
+                    match.gameData().id, match.permanent().getCard().getName());
+            return true;
+        }
+
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} ally-permanent-enters trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     private Permanent findEnteringPermanent(com.github.laxika.magicalvibes.model.GameData gameData,
                                             TriggerContext.PermanentEnters pe) {
         if (pe.mayPayTargetCardId() == null) return null;
@@ -368,6 +435,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
@@ -739,6 +807,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "178")
+@CardRegistration(set = "STA", collectorNumber = "61")
 public class GrowthSpiral extends Card {
 
     public GrowthSpiral() {

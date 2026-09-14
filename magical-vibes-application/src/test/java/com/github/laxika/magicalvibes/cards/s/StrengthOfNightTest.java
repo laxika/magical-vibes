@@ -63,24 +63,24 @@ class StrengthOfNightTest extends BaseCardTest {
         int toughness = gqs.getEffectiveToughness(gd, ownZombie);
 
         castStrengthOfNight(true);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, ownZombie)).isEqualTo(power);
         assertThat(gqs.getEffectiveToughness(gd, ownZombie)).isEqualTo(toughness);
     }
 
     private void castStrengthOfNight(boolean kicked) {
+        if (!kicked) {
+            harness.castFromHand(player1, new StrengthOfNight(), "{2}{G}");
+            harness.passBothPriorities();
+            return;
+        }
+
         harness.setHand(player1, java.util.List.of(new StrengthOfNight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        if (kicked) {
-            harness.addMana(player1, ManaColor.BLACK, 1);
-            harness.castKickedInstant(player1, 0);
-        } else {
-            harness.castInstant(player1, 0);
-        }
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castKickedInstant(player1, 0);
         harness.passBothPriorities();
     }
 }

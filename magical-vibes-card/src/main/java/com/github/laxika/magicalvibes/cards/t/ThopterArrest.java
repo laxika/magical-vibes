@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "25")
+@CardRegistration(set = "KLR", collectorNumber = "34")
 public class ThopterArrest extends Card {
 
     public ThopterArrest() {

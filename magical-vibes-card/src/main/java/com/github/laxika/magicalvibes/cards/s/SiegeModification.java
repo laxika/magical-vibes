@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "99")
+@CardRegistration(set = "KLR", collectorNumber = "145")
 public class SiegeModification extends Card {
 
     public SiegeModification() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "125")
+@CardRegistration(set = "KLR", collectorNumber = "138")
 public class QuicksmithGenius extends Card {
 
     public QuicksmithGenius() {

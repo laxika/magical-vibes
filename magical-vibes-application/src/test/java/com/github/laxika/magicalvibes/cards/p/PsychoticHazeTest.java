@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.cards.u.Unhinge;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PsychoticHaze.class, GrizzlyBears.class, RavensCrime.class})
+@CardUsed({PsychoticHaze.class, PardicCollaborator.class, Unhinge.class})
 class PsychoticHazeTest extends BaseCardTest {
 
     @Test
@@ -23,19 +22,17 @@ class PsychoticHazeTest extends BaseCardTest {
     void dealsDamageToEachCreatureAndPlayer() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent player1Bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent player2Bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new PsychoticHaze()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        Permanent player1Collaborator = harness.addToBattlefieldAndReturn(player1, new PardicCollaborator());
+        Permanent player2Collaborator = harness.addToBattlefieldAndReturn(player2, new PardicCollaborator());
+        harness.castFromHand(player1, new PsychoticHaze(), "{2}{B}{B}");
 
-        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(player1Bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(player2Bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(player1Collaborator.getMarkedDamage()).isEqualTo(1);
+        assertThat(player2Collaborator.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -59,16 +56,31 @@ class PsychoticHazeTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(haze.getId()));
     }
 
+    @Test
+    @DisplayName("Puts the discarded card into its owner's graveyard when madness is declined")
+    void declinesMadnessCast() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        discardPsychoticHaze();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player1, "Psychotic Haze");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private PsychoticHaze discardPsychoticHaze() {
         PsychoticHaze haze = new PsychoticHaze();
         harness.setHand(player1, List.of(haze));
-        harness.setHand(player2, List.of(new RavensCrime()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Unhinge()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return haze;
     }
