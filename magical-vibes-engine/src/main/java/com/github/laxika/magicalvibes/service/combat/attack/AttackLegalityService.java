@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackTargetRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -237,6 +238,9 @@ public class AttackLegalityService {
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (protectedPlayerId == null) return true;
+        if (cantAttackCardOwner(attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
+            return false;
+        }
         // Restrictions come from static abilities of the protected player's permanents (Form of the
         // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
         // "until your next turn" shield, which persists independently of its source permanent).
@@ -282,6 +286,21 @@ public class AttackLegalityService {
             }
         }
         return true;
+    }
+
+    private boolean cantAttackCardOwner(Permanent attacker, Permanent targetPermanent,
+                                        boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
+        boolean restrictionPresent = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackCardOwnerEffect.class::isInstance);
+        if (!restrictionPresent || attacker.getOriginalCard().getOwnerId() == null) {
+            return false;
+        }
+        if (targetIsPlayer) {
+            return attacker.getOriginalCard().getOwnerId().equals(targetId);
+        }
+        return targetPermanent != null
+                && targetPermanent.getCard().hasType(CardType.PLANESWALKER)
+                && attacker.getOriginalCard().getOwnerId().equals(protectedPlayerId);
     }
 
     private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {

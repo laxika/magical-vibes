@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "EMA", collectorNumber = "175")
 @CardRegistration(set = "GNT", collectorNumber = "46")
 @CardRegistration(set = "GN3", collectorNumber = "101")
+@CardRegistration(set = "SLC", collectorNumber = "12")
+@CardRegistration(set = "SLC", collectorNumber = "39")
 public class LlanowarElves extends Card {
 
     public LlanowarElves() {
