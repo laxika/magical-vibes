@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "212")
+@CardRegistration(set = "TSR", collectorNumber = "371")
 public class Arcades extends Card {
 
     public Arcades() {

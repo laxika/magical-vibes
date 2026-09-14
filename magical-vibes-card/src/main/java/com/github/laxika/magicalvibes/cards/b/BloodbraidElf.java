@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 @CardRegistration(set = "PC2", collectorNumber = "84")
 @CardRegistration(set = "EMA", collectorNumber = "197")
 @CardRegistration(set = "PCA", collectorNumber = "84")
+@CardRegistration(set = "TSR", collectorNumber = "372")
 public class BloodbraidElf extends Card {
 
     public BloodbraidElf() {

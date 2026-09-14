@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "NPH", collectorNumber = "42")
 @CardRegistration(set = "2XM", collectorNumber = "61")
 @CardRegistration(set = "2XM", collectorNumber = "341")
+@CardRegistration(set = "HA6", collectorNumber = "2")
 public class PhyrexianMetamorph extends Card {
 
     public PhyrexianMetamorph() {

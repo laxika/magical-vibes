@@ -21,7 +21,8 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
                        List<Integer> energyCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
-                       List<Integer> speeds, DayNight dayNight, PlanechaseView planechase) {
+                       List<Integer> speeds, DayNight dayNight, PlanechaseView planechase,
+                       UUID monarchPlayerId) {
     public JoinGame(UUID id, String gameName, GameStatus status,
                        List<String> playerNames, List<UUID> playerIds, List<GameLogEntryView> gameLog,
                        TurnStep currentStep, UUID activePlayerId, int turnNumber, UUID priorityPlayerId,
@@ -31,7 +32,7 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<Integer> energyCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
                        List<Integer> speeds, DayNight dayNight) {
-        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, stack, graveyards, speeds, dayNight, null);
+        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, stack, graveyards, speeds, dayNight, null, null);
     }
 
 }

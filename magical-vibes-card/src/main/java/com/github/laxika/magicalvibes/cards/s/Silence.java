@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTu
 @CardRegistration(set = "M10", collectorNumber = "31")
 @CardRegistration(set = "M11", collectorNumber = "30")
 @CardRegistration(set = "M14", collectorNumber = "35")
+@CardRegistration(set = "TSR", collectorNumber = "302")
 public class Silence extends Card {
 
     public Silence() {

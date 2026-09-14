@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "57")
+@CardRegistration(set = "TSR", collectorNumber = "62")
 public class DrainingWhelk extends Card {
 
     public DrainingWhelk() {

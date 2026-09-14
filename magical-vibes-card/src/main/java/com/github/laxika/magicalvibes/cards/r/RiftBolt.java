@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "MMA", collectorNumber = "126")
 @CardRegistration(set = "IMA", collectorNumber = "143")
 @CardRegistration(set = "DDS", collectorNumber = "17")
+@CardRegistration(set = "TSR", collectorNumber = "184")
 public class RiftBolt extends Card {
 
     public RiftBolt() {

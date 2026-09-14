@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 
 @CardRegistration(set = "PLC", collectorNumber = "71")
 @CardRegistration(set = "MMA", collectorNumber = "84")
+@CardRegistration(set = "TSR", collectorNumber = "114")
 public class Extirpate extends Card {
 
     public Extirpate() {

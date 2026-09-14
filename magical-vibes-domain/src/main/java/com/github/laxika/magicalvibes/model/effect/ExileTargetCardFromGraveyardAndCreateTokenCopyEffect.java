@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -36,6 +37,8 @@ import java.util.Set;
  *                          {@code additionalSubtypes} instead of added to the copied types
  * @param removeLegendary   when {@code true}, the token copy does not have the legendary supertype
  * @param trackWithSource   when {@code true}, the exiled card is tracked with the source permanent
+ * @param additionalTypes   card types added to the token copy in addition to its copied types
+ * @param sacrificeAtEndStep when {@code true}, sacrifice the token at the beginning of the next end step
  */
 public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         CardPredicate filter,
@@ -52,7 +55,9 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         CardSubtype exileOtherControlledTokensOfSubtype,
         boolean replaceSubtypes,
         boolean removeLegendary,
-        boolean trackWithSource
+        boolean trackWithSource,
+        Set<CardType> additionalTypes,
+        boolean sacrificeAtEndStep
 ) implements CardEffect {
 
     /** Compact form without Eternalize-style P/T/color overrides (Séance). */
@@ -63,7 +68,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             boolean grantHaste,
             boolean exileAtEndStep) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
-                null, null, null, Set.of(), false, false, null, false, false, false);
+                null, null, null, Set.of(), false, false, null, false, false, false, Set.of(), false);
     }
 
     /** Compact form that can optionally track the exiled card with the source permanent. */
@@ -75,7 +80,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             boolean exileAtEndStep,
             boolean trackWithSource) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
-                null, null, null, Set.of(), false, false, null, false, false, trackWithSource);
+                null, null, null, Set.of(), false, false, null, false, false, trackWithSource, Set.of(), false);
     }
 
     /** Compact form that can optionally remove legendary and track the exiled card with the source. */
@@ -89,7 +94,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             boolean trackWithSource) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
                 null, null, null, Set.of(), false, false, null, false,
-                removeLegendary, trackWithSource);
+                removeLegendary, trackWithSource, Set.of(), false);
     }
 
     /** Eternalize-style transform without extra keywords or the companion Zombie token (The Scarab God). */
@@ -103,7 +108,8 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             Integer powerOverride,
             Integer toughnessOverride) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
-                colorOverride, powerOverride, toughnessOverride, Set.of(), false, false, null, false, false, false);
+                colorOverride, powerOverride, toughnessOverride, Set.of(), false, false, null, false, false, false,
+                Set.of(), false);
     }
 
     /** Full form retaining the original copy-creation options. */
@@ -120,7 +126,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             boolean createZombieTokenWithExiledCardStats) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, additionalKeywords,
-                createZombieTokenWithExiledCardStats, false, null, false, false, false);
+                createZombieTokenWithExiledCardStats, false, null, false, false, false, Set.of(), false);
     }
 
     /** Full form retaining the original copy-creation options and replacing creature types. */
@@ -140,7 +146,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, additionalKeywords,
                 createZombieTokenWithExiledCardStats, targetPutIntoGraveyardFromAnywhereThisTurn,
-                exileOtherControlledTokensOfSubtype, false, false, false);
+                exileOtherControlledTokensOfSubtype, false, false, false, Set.of(), false);
     }
 
     /** Full form retaining the original canonical constructor signature. */
@@ -161,7 +167,21 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, additionalKeywords,
                 createZombieTokenWithExiledCardStats, targetPutIntoGraveyardFromAnywhereThisTurn,
-                exileOtherControlledTokensOfSubtype, replaceSubtypes, false, false);
+                exileOtherControlledTokensOfSubtype, replaceSubtypes, false, false, Set.of(), false);
+    }
+
+    /** Copy form that adds card types and can sacrifice the created token at the next end step. */
+    public ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+            CardPredicate filter,
+            boolean ownGraveyardOnly,
+            List<CardSubtype> additionalSubtypes,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            Set<CardType> additionalTypes,
+            boolean sacrificeAtEndStep) {
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                null, null, null, Set.of(), false, false, null, false, false, false,
+                additionalTypes, sacrificeAtEndStep);
     }
 
     @Override

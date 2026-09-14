@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "63")
+@CardRegistration(set = "TSR", collectorNumber = "102")
 public class BigGameHunter extends Card {
 
     public BigGameHunter() {

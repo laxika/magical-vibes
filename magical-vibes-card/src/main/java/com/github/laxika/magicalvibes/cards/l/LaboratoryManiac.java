@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "61")
+@CardRegistration(set = "TSR", collectorNumber = "309")
 @CardRegistration(set = "INR", collectorNumber = "71")
 @CardRegistration(set = "INR", collectorNumber = "304")
 @CardRegistration(set = "INR", collectorNumber = "359")

@@ -1997,6 +1997,21 @@ public class PermanentRemovalService {
         }
     }
 
+    /** Returns cards exiled until an opponent of the new monarch becomes monarch. */
+    public void returnExileReturnsOnOpponentBecomesMonarch(GameData gameData, UUID monarchPlayerId) {
+        List<PendingExileReturn> pendingReturns = new ArrayList<>();
+        gameData.exileReturnOnOpponentBecomesMonarch.entrySet().removeIf(entry -> {
+            if (entry.getKey().equals(monarchPlayerId)) {
+                return false;
+            }
+            pendingReturns.addAll(entry.getValue());
+            return true;
+        });
+        for (PendingExileReturn pending : pendingReturns) {
+            returnPendingExiledCard(gameData, null, pending);
+        }
+    }
+
     private UUID returnPendingExiledCard(GameData gameData, UUID sourcePermanentId,
                                          PendingExileReturn pending) {
         Card exiledCard = pending.card();
