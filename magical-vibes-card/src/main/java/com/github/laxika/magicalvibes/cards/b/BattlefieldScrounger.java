@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottom
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "106")
+@CardRegistration(set = "DMR", collectorNumber = "150")
 public class BattlefieldScrounger extends Card {
 
     public BattlefieldScrounger() {

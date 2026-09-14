@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "PLS", collectorNumber = "104")
+@CardRegistration(set = "DMR", collectorNumber = "189")
 public class DralnusCrusade extends Card {
 
     public DralnusCrusade() {

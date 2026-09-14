@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "UDS", collectorNumber = "53")
+@CardRegistration(set = "DMR", collectorNumber = "75")
 public class BodySnatcher extends Card {
 
     public BodySnatcher() {

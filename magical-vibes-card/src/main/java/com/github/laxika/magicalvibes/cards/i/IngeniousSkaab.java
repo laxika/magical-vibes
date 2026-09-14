@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "66")
+@CardRegistration(set = "SIR", collectorNumber = "75")
 @CardRegistration(set = "2X2", collectorNumber = "52")
 public class IngeniousSkaab extends Card {
 

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "31")
+@CardRegistration(set = "SIR", collectorNumber = "35")
 public class IroncladSlayer extends Card {
 
     public IroncladSlayer() {

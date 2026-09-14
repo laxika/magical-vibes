@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "15")
 @CardRegistration(set = "V17", collectorNumber = "5")
+@CardRegistration(set = "SIR", collectorNumber = "17")
 public class BrunaTheFadingLight extends Card {
 
     public BrunaTheFadingLight() {

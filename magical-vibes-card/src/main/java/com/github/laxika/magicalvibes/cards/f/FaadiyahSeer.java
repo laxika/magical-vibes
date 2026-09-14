@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardRevealDiscardUnlessLa
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "146")
+@CardRegistration(set = "DMR", collectorNumber = "160")
 public class FaadiyahSeer extends Card {
 
     public FaadiyahSeer() {

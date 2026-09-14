@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "43")
 @CardRegistration(set = "VMA", collectorNumber = "83")
+@CardRegistration(set = "DMR", collectorNumber = "61")
 public class ObsessiveSearch extends Card {
 
     public ObsessiveSearch() {

@@ -1,4 +1,5 @@
 # EFFECTS_QUICK_REFERENCE
+- `CopyThisSpellForControllerEffect()` — copies the spell currently resolving for its controller and offers that player a "choose new targets for the copy" prompt; use with `ConditionalEffect` and `MayEffect` for Sevinne's Reclamation.
 - `GoadEquippedCreatureEffect()` - STATIC Equipment requirement: the creature this Equipment is attached to is goaded while attached; attack validation enforces the "attacks a player other than you if able" portion. Used by Bloodthirsty Blade.
 - `TargetPlayerSacrificesCreatureOrCreatesTokenEffect(CreateTokenEffect tokenTemplate)` - non-targeting combat-damage trigger; the damaged player sacrifices a legal creature of their choice, or the source controller creates the supplied token if no sacrifice is possible. Used by Wasitora, Nekoru Queen.
 - `PreserveCountersOnZoneChangeEffect()` â€” static marker for a permanent whose counters remain as its card changes zones, except when it moves to a hand or library; battlefield zone-transition services carry the counters onto the new permanent.

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeNextInstantSorceryUncounterableThisTurnEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "104")
+@CardRegistration(set = "DMR", collectorNumber = "132")
 public class Overmaster extends Card {
 
     public Overmaster() {

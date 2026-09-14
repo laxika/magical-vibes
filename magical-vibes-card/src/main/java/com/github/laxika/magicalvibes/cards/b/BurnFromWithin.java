@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "148")
+@CardRegistration(set = "SIR", collectorNumber = "147")
 public class BurnFromWithin extends Card {
 
     public BurnFromWithin() {

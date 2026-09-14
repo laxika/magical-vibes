@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "187")
 @CardRegistration(set = "EMA", collectorNumber = "117")
+@CardRegistration(set = "DMR", collectorNumber = "112")
 public class Avarax extends Card {
 
     public Avarax() {

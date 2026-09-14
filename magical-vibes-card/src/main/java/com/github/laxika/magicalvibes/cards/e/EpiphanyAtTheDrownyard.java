@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "59")
+@CardRegistration(set = "SIR", collectorNumber = "65")
 public class EpiphanyAtTheDrownyard extends Card {
 
     public EpiphanyAtTheDrownyard() {

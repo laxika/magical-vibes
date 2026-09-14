@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "LGN", collectorNumber = "106")
+@CardRegistration(set = "DMR", collectorNumber = "130")
 public class MacetailHystrodon extends Card {
 
     public MacetailHystrodon() {

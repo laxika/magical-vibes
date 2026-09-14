@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONS", collectorNumber = "267")
+@CardRegistration(set = "DMR", collectorNumber = "164")
 public class InvigoratingBoon extends Card {
 
     private static final String PROMPT = "Put a +1/+1 counter on target creature?";
