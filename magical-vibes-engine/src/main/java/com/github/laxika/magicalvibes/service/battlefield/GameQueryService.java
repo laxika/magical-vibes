@@ -3223,6 +3223,7 @@ public class GameQueryService {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, permanent, controllerId)) {
                     if (effect instanceof CounterReplacementEffect replacement
+                            && !replacement.appliesToAllPermanents()
                             && replacement.appliesTo(counterType, affectedPermanentIsCreature,
                             affectedPermanentIsArtifact, permanent, affectedPermanent)) {
                         result = replacement.replace(counterType, result);
@@ -3230,12 +3231,37 @@ public class GameQueryService {
                 }
             }
         }
+        result = applyGlobalCounterReplacements(gameData, counterType, result,
+                affectedPermanentIsCreature, affectedPermanentIsArtifact);
         result = applyPlanarCounterReplacements(gameData, controllerId, counterType, result,
                 affectedPermanentIsCreature, affectedPermanentIsArtifact);
         if (affectedPermanentIsEntering) {
             result = applyEnteringPermanentReplacements(counterType, result, affectedPermanent);
         }
         return limitCounters(gameData, affectedPermanent, controllerId, counterType, result);
+    }
+
+    private int applyGlobalCounterReplacements(GameData gameData, CounterType counterType, int count,
+                                               boolean affectedPermanentIsCreature,
+                                               boolean affectedPermanentIsArtifact) {
+        if (count <= 0) {
+            return count;
+        }
+        final int[] result = {count};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, source, sourceControllerId)) {
+                    if (effect instanceof CounterReplacementEffect replacement
+                            && replacement.appliesToAllPermanents()
+                            && replacement.appliesTo(counterType, affectedPermanentIsCreature,
+                            affectedPermanentIsArtifact)) {
+                        result[0] = replacement.replace(counterType, result[0]);
+                    }
+                }
+            }
+        });
+        return result[0];
     }
 
     private int applyEnteringPermanentReplacements(CounterType counterType, int count,
@@ -3289,6 +3315,7 @@ public class GameQueryService {
                             && replacement.appliesToNonCreatureVehicles()) {
                         result = replacement.replace(result);
                     } else if (effect instanceof CounterReplacementEffect replacement
+                            && !replacement.appliesToAllPermanents()
                             && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true,
                             permanent, affectedPermanent)) {
                         result = replacement.replace(CounterType.PLUS_ONE_PLUS_ONE, result);
@@ -3296,6 +3323,8 @@ public class GameQueryService {
                 }
             }
         }
+        result = applyGlobalCounterReplacements(gameData, CounterType.PLUS_ONE_PLUS_ONE, result,
+                false, true);
         result = applyPlanarCounterReplacements(gameData, controllerId,
                 CounterType.PLUS_ONE_PLUS_ONE, result, false, true);
         if (affectedPermanentIsEntering) {
@@ -3360,7 +3389,9 @@ public class GameQueryService {
                         gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
-                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
+                    if (replacement.appliesToAllPermanents()) {
+                        applies = replacement.appliesTo(counterType, creature, artifact);
+                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
                             && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
                         applies = sourceControlsAffected;
                     } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
@@ -8154,9 +8185,9 @@ public class GameQueryService {
         int[] adjustedAmount = {amount};
         List<TokenCreationReplacementEffect> replacements = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (!playerId.equals(effectiveControllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof TokenCreationReplacementEffect replacement
+                        && (playerId.equals(effectiveControllerId) || replacement.appliesToAllPlayers())
                         && replacement.appliesTo(tokenSubtypes)
                         && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                             || !multiply.creatureTokensOnly() || creatureToken)) {

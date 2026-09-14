@@ -153,6 +153,7 @@ public enum CardSet {
     SET_WAR("WAR"),
     SET_ELD("ELD"),
     SET_WOE("WOE"),
+    SET_WOT("WOT"),
     SET_SOS("SOS"),
     SET_SS2("SS2"),
     SET_SS3("SS3"),

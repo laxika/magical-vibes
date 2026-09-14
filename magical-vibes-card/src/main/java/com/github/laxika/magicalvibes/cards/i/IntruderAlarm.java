@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "86")
 @CardRegistration(set = "STH", collectorNumber = "34")
+@CardRegistration(set = "WOT", collectorNumber = "21")
 public class IntruderAlarm extends Card {
 
     public IntruderAlarm() {
