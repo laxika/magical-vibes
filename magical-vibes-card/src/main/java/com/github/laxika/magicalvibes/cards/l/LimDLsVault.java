@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LimDulsVaultEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "107")
 @CardRegistration(set = "ME1", collectorNumber = "148")
+@CardRegistration(set = "SLC", collectorNumber = "1996")
 public class LimDLsVault extends Card {
 
     public LimDLsVault() {

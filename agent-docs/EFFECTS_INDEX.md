@@ -1,4 +1,6 @@
 # EFFECTS_INDEX
+| `CantAttackCardOwnerEffect` | `()` | static self restriction: this creature can't attack its card owner or planeswalkers that player controls; enforced by `AttackLegalityService`. Xantcha, Sleeper Agent |
+| `SourcePermanentControllerLosesLifeEffect` | `(int amount)` | activated-ability effect: the source permanent's current controller loses `amount`; uses the controller captured on activation as last-known information if the source leaves before resolution. Xantcha, Sleeper Agent |
 | `FlipCoinForTriggeringSpellAndCounterOnLossEffect` | `()` | flips for the caster of the spell that caused the trigger and counters that spell if the caster loses; targets the triggering spell and emits the caster's coin-flip win/loss triggers. Used by Mirrored Depths |
 | `RevealTopCardOfTargetPlayerMayCastFreeEffect` | `()` | target player reveals the top card of their library; if it is a nonland card, the ability controller may cast it without paying its mana cost. Lands and declined cards remain on top. Used by Mirrored Depths |
 `RevealTopCardMayPlayFreeEffect` also accepts an optional `UUID libraryOwnerId` when its controller is casting from another player's library.

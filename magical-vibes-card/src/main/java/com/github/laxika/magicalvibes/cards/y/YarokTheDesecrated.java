@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "220")
+@CardRegistration(set = "SLC", collectorNumber = "25")
+@CardRegistration(set = "SLC", collectorNumber = "52")
 public class YarokTheDesecrated extends Card {
 
     public YarokTheDesecrated() {

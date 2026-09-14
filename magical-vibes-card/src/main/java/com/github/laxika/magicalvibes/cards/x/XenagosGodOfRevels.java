@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "156")
+@CardRegistration(set = "SLD", collectorNumber = "81")
 public class XenagosGodOfRevels extends Card {
 
     public XenagosGodOfRevels() {
