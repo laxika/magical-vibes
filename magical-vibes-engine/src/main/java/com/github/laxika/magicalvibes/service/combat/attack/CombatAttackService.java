@@ -1122,10 +1122,16 @@ public class CombatAttackService {
                             }
                         } else if (needsTarget) {
                             // Multi-target / "up to N" attack triggers (Archon of the Triumvirate):
-                            // reuse the ETB slot-by-slot picker — AttackTriggerTarget collects only one.
+                            // multi-group and dynamic groups use the slot-by-slot picker; a static
+                            // single group is handled by the ordinary attack-trigger target flow.
                             Card attackCard = attacker.getCard();
+                            boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
+                                    && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
+                                    && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
+                                    && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
                             if (attackCard.getSpellTargets().size() > 1
-                                    || etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)) {
+                                    || (!staticSingleMultiTargetGroup
+                                    && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
                                 gameData.queueInteraction(
                                         new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                 attackCard, playerId, otherEffects, attacker.getId(),

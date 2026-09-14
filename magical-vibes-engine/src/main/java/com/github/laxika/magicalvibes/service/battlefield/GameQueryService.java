@@ -3989,7 +3989,12 @@ public class GameQueryService {
     private boolean hasGlobalToughnessAssignEffect(GameData gameData) {
         for (List<Permanent> bf : gameData.playerBattlefields.values()) {
             for (Permanent p : bf) {
+                UUID controllerId = findPermanentController(gameData, p.getId());
+                List<CardEffect> activeEffects = new ArrayList<>();
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    collectActiveStaticEffects(gameData, p, controllerId, effect, activeEffects);
+                }
+                for (CardEffect effect : activeEffects) {
                     if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
                             && acdt.scope() == GrantScope.ALL_CREATURES) {
                         return true;

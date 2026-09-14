@@ -109,6 +109,9 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                     && gameData.orderedPlayerIds.contains(entry.getTargetId())
                     ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
+            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
+                    .filter(id -> !id.equals(controllerId))
+                    .toList();
         };
     }
 

@@ -487,6 +487,8 @@ public class GameData {
     /** Tracks exiled card UUIDs that have hatching counters (The Dragon-Kami Reborn). */
     public final Set<UUID> exiledCardsWithHatchingCounters = ConcurrentHashMap.newKeySet();
     public final Set<UUID> exiledCardsWithStudyCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have kick counters (Zethi, Arcane Blademaster). */
+    public final Set<UUID> exiledCardsWithKickCounters = ConcurrentHashMap.newKeySet();
     /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
     public final Map<UUID, UUID> lukkaExileCastPermissions = new ConcurrentHashMap<>();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
@@ -2079,6 +2081,9 @@ public class GameData {
     /** Tracks which permanents have been dealt noncombat damage this turn. */
     public final Set<UUID> permanentsDealtNoncombatDamageThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks which permanents have been dealt excess damage this turn, surviving regeneration. */
+    public final Set<UUID> permanentsDealtExcessDamageThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks the total damage actually dealt to each permanent this turn. Prevented damage is not
      *  included, and the total survives regeneration. Cleared at start of new turn. */
     public final Map<UUID, Integer> damageDealtToPermanentsThisTurn = new ConcurrentHashMap<>();
@@ -2109,6 +2114,13 @@ public class GameData {
         }
         recordDamageToPermanent(permanentId, amount);
         permanentsDealtNoncombatDamageThisTurn.add(permanentId);
+    }
+
+    /** Records that a permanent was dealt excess damage this turn. */
+    public void recordPermanentDealtExcessDamageThisTurn(UUID permanentId) {
+        if (permanentId != null) {
+            permanentsDealtExcessDamageThisTurn.add(permanentId);
+        }
     }
 
     /** Records actual damage dealt to a permanent by a particular source object this turn. */
@@ -4207,6 +4219,7 @@ public class GameData {
             exiledCardsWithCollectionCounters.remove(cardId);
             exiledCardsWithHatchingCounters.remove(cardId);
             exiledCardsWithStudyCounters.remove(cardId);
+            exiledCardsWithKickCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             plottedCardIds.remove(cardId);
@@ -4357,6 +4370,7 @@ public class GameData {
         removedIds.forEach(exiledCardScreamCounters::remove);
         removedIds.forEach(exiledCardRefineCounters::remove);
         removedIds.forEach(exiledCardsWithStudyCounters::remove);
+        removedIds.forEach(exiledCardsWithKickCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
         removedIds.forEach(cardId -> {
@@ -5146,6 +5160,7 @@ public class GameData {
         copy.handSizeAtTurnStart.putAll(this.handSizeAtTurnStart);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         copy.permanentsDealtNoncombatDamageThisTurn.addAll(this.permanentsDealtNoncombatDamageThisTurn);
+        copy.permanentsDealtExcessDamageThisTurn.addAll(this.permanentsDealtExcessDamageThisTurn);
         copy.damageDealtToPermanentsThisTurn.putAll(this.damageDealtToPermanentsThisTurn);
         this.damageDealtToPermanentsBySourceThisTurn.forEach((k, v) -> {
             Map<UUID, Integer> sources = new ConcurrentHashMap<>();
@@ -5234,6 +5249,7 @@ public class GameData {
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.exiledCardsWithStudyCounters.addAll(this.exiledCardsWithStudyCounters);
+        copy.exiledCardsWithKickCounters.addAll(this.exiledCardsWithKickCounters);
         copy.lukkaExileCastPermissions.putAll(this.lukkaExileCastPermissions);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);

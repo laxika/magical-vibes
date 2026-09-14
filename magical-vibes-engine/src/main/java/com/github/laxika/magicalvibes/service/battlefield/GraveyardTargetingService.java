@@ -232,6 +232,12 @@ public class GraveyardTargetingService {
      */
     public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                       List<CardEffect> allEffects, ExileGraveyardCardsEffect exile) {
+        handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, allEffects, exile, exile.count());
+    }
+
+    public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                      List<CardEffect> allEffects, ExileGraveyardCardsEffect exile,
+                                                      int maximumTargets) {
         CardPredicate filter = exile.filter();
         GraveyardSearchScope scope = exile.targetSpec().graveyardScope().orElseThrow();
 
@@ -262,7 +268,7 @@ public class GraveyardTargetingService {
             return;
         }
 
-        int maxTargets = Math.min(exile.count(), matchingCards.size());
+        int maxTargets = Math.min(Math.min(exile.count(), Math.max(0, maximumTargets)), matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);

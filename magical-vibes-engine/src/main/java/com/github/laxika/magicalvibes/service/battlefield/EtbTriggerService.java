@@ -840,11 +840,13 @@ public class EtbTriggerService {
         // choose the graveyard target as the trigger goes on the stack.
         for (CardEffect effect : graveyardCardsExileEffects) {
             ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
+            int maximumTargets = maximumGraveyardCardExileTargets(card, exile, gameData, controllerId,
+                    xValue, repeatedAdditionalCosts);
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 List<CardEffect> effects = combinesGraveyardCardExileWithOtherEffects
                         ? mandatoryEffects : List.of(effect);
                 graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
-                        gameData, controllerId, card, effects, exile);
+                        gameData, controllerId, card, effects, exile, maximumTargets);
             }
         }
 
@@ -986,6 +988,23 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private int maximumGraveyardCardExileTargets(Card card, ExileGraveyardCardsEffect effect,
+                                                  GameData gameData, UUID controllerId, int xValue,
+                                                  List<String> repeatedAdditionalCosts) {
+        int maximumTargets = effect.count();
+        int targetIndex = card.getEffectTargetIndex(effect);
+        if (targetIndex < 0 || targetIndex >= card.getSpellTargets().size()) {
+            return maximumTargets;
+        }
+        SpellTarget target = card.getSpellTargets().get(targetIndex);
+        if (target.getDynamicMaxTargets() == null) {
+            return maximumTargets;
+        }
+        return Math.min(maximumTargets, Math.max(0, amountEvaluationService.evaluate(gameData,
+                target.getDynamicMaxTargets(), new AmountContext(controllerId, null, null, xValue, 0,
+                        false, null, repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card))));
     }
 
     private int minimumGraveyardTargets(Card card, CardEffect effect) {
