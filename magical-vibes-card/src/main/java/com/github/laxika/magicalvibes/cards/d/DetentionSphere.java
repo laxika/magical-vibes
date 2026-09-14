@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "155")
 @CardRegistration(set = "GK2", collectorNumber = "10")
+@CardRegistration(set = "OTP", collectorNumber = "43")
 public class DetentionSphere extends Card {
 
     public DetentionSphere() {

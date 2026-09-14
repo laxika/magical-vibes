@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "74")
+@CardRegistration(set = "WOT", collectorNumber = "34")
+@CardRegistration(set = "WOT", collectorNumber = "75")
+@CardRegistration(set = "WOT", collectorNumber = "95")
 public class PollutedBonds extends Card {
 
     public PollutedBonds() {

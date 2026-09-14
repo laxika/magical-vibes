@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "230")
+@CardRegistration(set = "WOT", collectorNumber = "57")
+@CardRegistration(set = "WOT", collectorNumber = "82")
+@CardRegistration(set = "WOT", collectorNumber = "102")
 public class NaturesWill extends Card {
 
     public NaturesWill() {

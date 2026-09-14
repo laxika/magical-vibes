@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "90")
+@CardRegistration(set = "WOT", collectorNumber = "28")
 public class DarkTutelage extends Card {
 
     public DarkTutelage() {

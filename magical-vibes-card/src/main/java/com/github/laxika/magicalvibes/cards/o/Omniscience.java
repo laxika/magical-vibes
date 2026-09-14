@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 @CardRegistration(set = "FDN", collectorNumber = "161")
 @CardRegistration(set = "FDN", collectorNumber = "312")
 @CardRegistration(set = "FDN", collectorNumber = "379")
+@CardRegistration(set = "WOT", collectorNumber = "24")
+@CardRegistration(set = "WOT", collectorNumber = "70")
+@CardRegistration(set = "WOT", collectorNumber = "90")
 public class Omniscience extends Card {
 
     public Omniscience() {
