@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.cards.s.Singe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -92,7 +94,8 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
         addAbilityMana();
 
         activateMischief();
-        harness.inMutationScope(() -> stepTriggerService().handleEndStepTriggers(gd));
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(singe);
         resolveAllTriggers();

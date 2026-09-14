@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "180")
+@CardRegistration(set = "2X2", collectorNumber = "144")
 public class ElvishRejuvenator extends Card {
 
     public ElvishRejuvenator() {

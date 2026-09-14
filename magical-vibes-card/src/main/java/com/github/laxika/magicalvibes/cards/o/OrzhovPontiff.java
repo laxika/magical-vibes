@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "124")
 @CardRegistration(set = "GK2", collectorNumber = "43")
+@CardRegistration(set = "2X2", collectorNumber = "261")
 public class OrzhovPontiff extends Card {
 
     public OrzhovPontiff() {

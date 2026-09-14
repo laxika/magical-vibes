@@ -125,7 +125,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
-| ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java` | CopyCreatureCardInGraveyardOnEnterEffect(name, power, toughness, additionalSubtypes) — the chosen card remains in its graveyard until the reflexive exile trigger resolves |
+| ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java` | CopyCreatureCardInGraveyardOnEnterEffect(name, power, toughness, additionalSubtypes) — the chosen card remains in its graveyard until the reflexive exile trigger resolves; use the boolean overload for The Mimeoplasm's two-card exile and other-card-power counter choice |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
 | ETB copy with added subtype + granted trigger | `p/PhantasmalImage.java` | CopyPermanentOnEnterEffect(filter, typeLabel, Set.of(ILLUSION), Map.of(ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.of(new SacrificeSelfEffect()))) |

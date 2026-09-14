@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "2X2", collectorNumber = "235")
 @CardRegistration(set = "2XM", collectorNumber = "204")
 public class KaaliaOfTheVast extends Card {
 

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MomentOfSilence.class, FreshVolunteers.class})
 class MomentOfSilenceTest extends BaseCardTest {
 
     @Test
@@ -35,8 +36,7 @@ class MomentOfSilenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MomentOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
@@ -46,9 +46,7 @@ class MomentOfSilenceTest extends BaseCardTest {
     @Test
     @DisplayName("The flagged player jumps from precombat main straight to postcombat main")
     void flaggedPlayerSkipsCombat() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        addCreatureReady(player2, new FreshVolunteers());
 
         gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
         harness.forceActivePlayer(player2);
@@ -67,9 +65,29 @@ class MomentOfSilenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MomentOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A skip cast after combat does not carry into the next turn")
+    void skipExpiresAtEndOfTurn() {
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new MomentOfSilence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.currentStep.getPhaseName()).isEqualTo("Combat Phase");
     }
 }

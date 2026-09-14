@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "177")
 @CardRegistration(set = "GK1", collectorNumber = "67")
+@CardRegistration(set = "2X2", collectorNumber = "245")
 public class LotlethTroll extends Card {
 
     public LotlethTroll() {

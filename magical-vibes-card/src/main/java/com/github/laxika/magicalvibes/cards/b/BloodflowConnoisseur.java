@@ -10,6 +10,8 @@ import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "87")
 @CardRegistration(set = "UMA", collectorNumber = "86")
+@CardRegistration(set = "2X2", collectorNumber = "71")
+@CardRegistration(set = "SIS", collectorNumber = "26")
 public class BloodflowConnoisseur extends Card {
 
     public BloodflowConnoisseur() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "APC", collectorNumber = "116")
 @CardRegistration(set = "DDJ", collectorNumber = "27")
 @CardRegistration(set = "VMA", collectorNumber = "257")
+@CardRegistration(set = "2X2", collectorNumber = "265")
 public class PropheticBolt extends Card {
 
     public PropheticBolt() {

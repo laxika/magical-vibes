@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "LCI", collectorNumber = "410d")
 @CardRegistration(set = "LCI", collectorNumber = "410e")
 @CardRegistration(set = "LCI", collectorNumber = "410f")
+@CardRegistration(set = "2X2", collectorNumber = "320")
 public class CavernOfSouls extends Card {
 
     public CavernOfSouls() {

@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "140")
 @CardRegistration(set = "AKR", collectorNumber = "247")
+@CardRegistration(set = "2X2", collectorNumber = "260")
 public class NicolBolasGodPharaoh extends Card {
 
     public NicolBolasGodPharaoh() {

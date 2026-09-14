@@ -93,6 +93,7 @@ public enum CardSet {
     SET_RAV("RAV"),
     SET_ISD("ISD"),
     SET_SOI("SOI"),
+    SET_SIS("SIS"),
     SET_MID("MID"),
     SET_VOW("VOW"),
     SET_DKA("DKA"),
@@ -261,9 +262,11 @@ public enum CardSet {
     SET_HA2("HA2"),
     SET_HA3("HA3"),
     SET_HA5("HA5"),
+    SET_2X2("2X2"),
     SET_HA6("HA6"),
     SET_Q06("Q06"),
     SET_EA1("EA1"),
+    SET_EA2("EA2"),
     SET_EA3("EA3");
 
     @Getter

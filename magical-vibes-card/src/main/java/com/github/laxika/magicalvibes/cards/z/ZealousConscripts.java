@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "AVR", collectorNumber = "166")
 @CardRegistration(set = "MM3", collectorNumber = "116")
 @CardRegistration(set = "TSR", collectorNumber = "354")
+@CardRegistration(set = "SIS", collectorNumber = "47")
 public class ZealousConscripts extends Card {
 
     public ZealousConscripts() {

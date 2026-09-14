@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
+import com.github.laxika.magicalvibes.cards.p.PalaceJailer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSea
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilOpponentBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -175,6 +177,20 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd, new SuspectEffect(GrantScope.SELF), aiPlayerId))
                 .isNull();
+    }
+
+    @Test
+    void monarchDurationExileClassifiesAsHarmfulRemoval() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd,
+                new ExileTargetPermanentUntilOpponentBecomesMonarchEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classifyCard(gd, new PalaceJailer(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
     }
 
     @Test

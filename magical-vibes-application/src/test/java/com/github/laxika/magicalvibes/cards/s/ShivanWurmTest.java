@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
-import com.github.laxika.magicalvibes.cards.c.CloudCover;
+import com.github.laxika.magicalvibes.cards.a.ArcticMerfolk;
+import com.github.laxika.magicalvibes.cards.d.DromarsCavern;
+import com.github.laxika.magicalvibes.cards.q.QuirionExplorer;
+import com.github.laxika.magicalvibes.cards.m.MoggSentry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,18 +18,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShivanWurm.class, AlphaKavu.class, SlingshotGoblin.class,
-        StormscapeFamiliar.class, CloudCover.class})
+@CardUsed({ShivanWurm.class, QuirionExplorer.class, MoggSentry.class, SaprazzanRaider.class,
+        ArcticMerfolk.class, DromarsCavern.class})
 class ShivanWurmTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB offers a red or green creature you control, including itself")
     void etbOffersRedOrGreenCreaturesYouControl() {
-        UUID greenId = harness.addToBattlefieldAndReturn(player1, new AlphaKavu()).getId();
-        UUID redId = harness.addToBattlefieldAndReturn(player1, new SlingshotGoblin()).getId();
-        UUID blueId = harness.addToBattlefieldAndReturn(player1, new StormscapeFamiliar()).getId();
-        UUID opponentRedId = harness.addToBattlefieldAndReturn(player2, new SlingshotGoblin()).getId();
-        harness.addToBattlefield(player1, new CloudCover());
+        UUID greenId = harness.addToBattlefieldAndReturn(player1, new QuirionExplorer()).getId();
+        UUID redId = harness.addToBattlefieldAndReturn(player1, new MoggSentry()).getId();
+        UUID blueId = harness.addToBattlefieldAndReturn(player1, new SaprazzanRaider()).getId();
+        UUID opponentRedId = harness.addToBattlefieldAndReturn(player2, new MoggSentry()).getId();
+        harness.addToBattlefield(player1, new DromarsCavern());
 
         castShivanWurm();
         resolveUntilPermanentChoice();
@@ -47,17 +49,17 @@ class ShivanWurmTest extends BaseCardTest {
     @Test
     @DisplayName("ETB returns the chosen red or green creature to its owner's hand")
     void chosenCreatureReturnsToHand() {
-        harness.addToBattlefield(player1, new AlphaKavu());
-        UUID redId = harness.addToBattlefieldAndReturn(player1, new SlingshotGoblin()).getId();
-        harness.addToBattlefield(player1, new StormscapeFamiliar());
+        harness.addToBattlefield(player1, new QuirionExplorer());
+        UUID redId = harness.addToBattlefieldAndReturn(player1, new MoggSentry()).getId();
+        harness.addToBattlefield(player1, new SaprazzanRaider());
 
         castShivanWurm();
         resolveUntilPermanentChoice();
         harness.handlePermanentChosen(player1, redId);
 
-        harness.assertInHand(player1, "Slingshot Goblin");
-        harness.assertOnBattlefield(player1, "Alpha Kavu");
-        harness.assertOnBattlefield(player1, "Stormscape Familiar");
+        harness.assertInHand(player1, "Mogg Sentry");
+        harness.assertOnBattlefield(player1, "Quirion Explorer");
+        harness.assertOnBattlefield(player1, "Saprazzan Raider");
         harness.assertOnBattlefield(player1, "Shivan Wurm");
     }
 

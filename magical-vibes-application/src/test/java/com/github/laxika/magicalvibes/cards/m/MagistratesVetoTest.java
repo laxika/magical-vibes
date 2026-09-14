@@ -1,80 +1,83 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.DrakeHatchling;
+import com.github.laxika.magicalvibes.cards.g.Groundskeeper;
+import com.github.laxika.magicalvibes.cards.j.JhovallRider;
+import com.github.laxika.magicalvibes.cards.k.KyrenSniper;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MagistratesVeto.class, JhovallRider.class, DrakeHatchling.class,
+        Groundskeeper.class, KyrenSniper.class})
 class MagistratesVetoTest extends BaseCardTest {
 
     @Test
     @DisplayName("White creatures cannot block")
     void whiteCreaturesCannotBlock() {
-        assertCannotBlock(CardColor.WHITE);
+        assertCannotBlock(new JhovallRider());
     }
 
     @Test
     @DisplayName("Blue creatures cannot block")
     void blueCreaturesCannotBlock() {
-        assertCannotBlock(CardColor.BLUE);
+        assertCannotBlock(new DrakeHatchling());
+    }
+
+    @Test
+    @DisplayName("White creatures cannot block an opponent's attacker")
+    void whiteCreaturesCannotBlockOpponentsAttacker() {
+        harness.addToBattlefield(player1, new MagistratesVeto());
+        Permanent blocker = addCreatureReady(player1, new JhovallRider());
+        Permanent attacker = addCreatureReady(player2, new KyrenSniper());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("White creatures and blue creatures can't block");
+        assertThat(blocker.isBlocking()).isFalse();
     }
 
     @Test
     @DisplayName("Creatures that are neither white nor blue can block")
     void otherColorsCanBlock() {
         harness.addToBattlefield(player1, new MagistratesVeto());
-        Permanent attacker = addReadyCreature(player1, CardColor.RED);
+        Permanent attacker = addCreatureReady(player1, new KyrenSniper());
         attacker.setAttacking(true);
-        addReadyCreature(player2, CardColor.GREEN);
+        Permanent blocker = addCreatureReady(player2, new Groundskeeper());
 
-        beginBlock();
+        prepareDeclareBlockers();
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private void assertCannotBlock(CardColor blockerColor) {
+    private void assertCannotBlock(Card blocker) {
         harness.addToBattlefield(player1, new MagistratesVeto());
-        Permanent attacker = addReadyCreature(player1, CardColor.RED);
+        Permanent attacker = addCreatureReady(player1, new KyrenSniper());
         attacker.setAttacking(true);
-        addReadyCreature(player2, blockerColor);
+        addCreatureReady(player2, blocker);
 
-        beginBlock();
+        prepareDeclareBlockers();
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, attackerIndex))))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReadyCreature(Player player, CardColor color) {
-        Card card = new Card();
-        card.setName("Test " + color + " Creature");
-        card.setType(CardType.CREATURE);
-        card.setColor(color);
-        card.setColors(List.of(color));
-        card.setPower(2);
-        card.setToughness(2);
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void beginBlock() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("White creatures and blue creatures can't block");
     }
 }

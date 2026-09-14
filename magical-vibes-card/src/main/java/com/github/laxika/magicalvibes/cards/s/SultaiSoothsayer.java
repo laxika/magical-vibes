@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "205")
+@CardRegistration(set = "2X2", collectorNumber = "279")
 public class SultaiSoothsayer extends Card {
 
     public SultaiSoothsayer() {

@@ -1183,7 +1183,8 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player's life total is allowed to change (i.e. no
-     * {@link LifeTotalCantChangeEffect} is present on their battlefield).
+     * {@link LifeTotalCantChangeEffect} is present on their battlefield and no temporary player
+     * effect prevents life-total changes).
      */
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
         return !gameData.playersWithLifeTotalCantChangeUntilNextTurn.contains(playerId)
@@ -7997,7 +7998,7 @@ public class GameQueryService {
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
                 .anyMatch(OpponentsCantCastOrActivateDuringYourTurnEffect.class::isInstance));
     }
 
@@ -8010,7 +8011,7 @@ public class GameQueryService {
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
                 .anyMatch(effect -> effect instanceof OpponentsCantCastOrActivateDuringYourTurnEffect restriction
                         && restriction.restrictsActivatedAbilities()));
     }

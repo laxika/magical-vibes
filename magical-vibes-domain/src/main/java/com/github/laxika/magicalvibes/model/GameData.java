@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
@@ -65,7 +66,10 @@ public class GameData {
     public final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, String> playerIdToName = new ConcurrentHashMap<>();
     public final Map<UUID, String> playerDeckChoices = new ConcurrentHashMap<>();
-    public final Map<UUID, List<Card>> playerDecks = new ConcurrentHashMap<>();
+    /** Counters retained by a card-specific zone-change ability while the card is off the battlefield. */
+    public final Map<UUID, Map<CounterType, Integer>> countersPreservedAcrossZoneChanges =
+            new ConcurrentHashMap<>();
+    public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** Cards owned by each player that began outside the game, such as a sideboard. */
     public final Map<UUID, List<Card>> playerSideboards = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerHands = new ConcurrentHashMap<>();
@@ -315,6 +319,7 @@ public class GameData {
     /** Players for whom Melira's poison replacement effect has already applied this turn. */
     public final Set<UUID> playersAffectedByMeliraPoisonReplacementThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> playerExperienceCounters = new ConcurrentHashMap<>();
     /** Persistent speed values; absent means the player has not started their engines. */
     public final Map<UUID, Integer> playerSpeeds = new ConcurrentHashMap<>();
     /** Players whose speed has already increased during the current turn. */
@@ -3997,7 +4002,84 @@ public class GameData {
     public void addCardToHand(UUID playerId, Card card) {
         cardsRevealedInHandUntilOwnerNextTurn.remove(card.getId());
         cardsCantBePlayedInHandUntilOwnerNextTurn.remove(card.getId());
+        countersPreservedAcrossZoneChanges.remove(card.getId());
         playerHands.get(playerId).add(card);
+    }
+
+    private List<Card> asLibrary(List<Card> cards) {
+        if (cards instanceof LibraryCardList) {
+            return cards;
+        }
+        LibraryCardList wrapped = new LibraryCardList();
+        wrapped.addAllWithoutClearing(cards);
+        return wrapped;
+    }
+
+    private final class LibraryMap extends ConcurrentHashMap<UUID, List<Card>> {
+
+        @Override
+        public List<Card> put(UUID key, List<Card> value) {
+            return super.put(key, asLibrary(value));
+        }
+
+        @Override
+        public List<Card> putIfAbsent(UUID key, List<Card> value) {
+            return super.putIfAbsent(key, asLibrary(value));
+        }
+
+        @Override
+        public List<Card> computeIfAbsent(UUID key,
+                                          Function<? super UUID, ? extends List<Card>> mappingFunction) {
+            return super.computeIfAbsent(key, ignored -> asLibrary(mappingFunction.apply(key)));
+        }
+
+        @Override
+        public void putAll(Map<? extends UUID, ? extends List<Card>> map) {
+            map.forEach(this::put);
+        }
+    }
+
+    private final class LibraryCardList extends ArrayList<Card> {
+
+        private void forgetPreservedCounters(Card card) {
+            if (card != null) {
+                countersPreservedAcrossZoneChanges.remove(card.getId());
+            }
+        }
+
+        private boolean addAllWithoutClearing(Collection<? extends Card> cards) {
+            return super.addAll(cards);
+        }
+
+        @Override
+        public boolean add(Card card) {
+            forgetPreservedCounters(card);
+            return super.add(card);
+        }
+
+        @Override
+        public void add(int index, Card card) {
+            forgetPreservedCounters(card);
+            super.add(index, card);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends Card> cards) {
+            cards.forEach(this::forgetPreservedCounters);
+            return super.addAll(cards);
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends Card> cards) {
+            cards.forEach(this::forgetPreservedCounters);
+            return super.addAll(index, cards);
+        }
+
+        @Override
+        public Card set(int index, Card card) {
+            forgetPreservedCounters(card);
+            return super.set(index, card);
+        }
     }
 
     /**
@@ -5094,6 +5176,7 @@ public class GameData {
         copy.playersAffectedByMeliraPoisonReplacementThisTurn
                 .addAll(this.playersAffectedByMeliraPoisonReplacementThisTurn);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);
+        copy.playerExperienceCounters.putAll(this.playerExperienceCounters);
         copy.playerSpeeds.putAll(this.playerSpeeds);
         copy.playersWhoseSpeedIncreasedThisTurn.addAll(this.playersWhoseSpeedIncreasedThisTurn);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
@@ -5253,6 +5336,8 @@ public class GameData {
 
         // --- Map<UUID, List<Card>> (shared Card refs) ---
         this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, new ArrayList<>(v)));
+        this.countersPreservedAcrossZoneChanges.forEach((k, v) ->
+                copy.countersPreservedAcrossZoneChanges.put(k, new EnumMap<>(v)));
         this.playerSideboards.forEach((k, v) -> copy.playerSideboards.put(k, new ArrayList<>(v)));
         this.playerHands.forEach((k, v) -> copy.playerHands.put(k, new ArrayList<>(v)));
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
@@ -5547,6 +5632,9 @@ public class GameData {
         copy.cloneOperation.graveyardCopyChoicePending = this.cloneOperation.graveyardCopyChoicePending;
         copy.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 this.cloneOperation.exileCopiedGraveyardCardAfterEntry;
+        copy.cloneOperation.exileTwoAndAddOtherPowerCounters =
+                this.cloneOperation.exileTwoAndAddOtherPowerCounters;
+        copy.cloneOperation.selectedGraveyardCopyCardIds = this.cloneOperation.selectedGraveyardCopyCardIds;
         copy.cloneOperation.copyColor = this.cloneOperation.copyColor;
         copy.cloneOperation.removedSupertypesOverride = this.cloneOperation.removedSupertypesOverride;
         copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;
@@ -5559,6 +5647,9 @@ public class GameData {
         copy.cloneOperation.graveyardCopyChoicePending = this.cloneOperation.graveyardCopyChoicePending;
         copy.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 this.cloneOperation.exileCopiedGraveyardCardAfterEntry;
+        copy.cloneOperation.exileTwoAndAddOtherPowerCounters =
+                this.cloneOperation.exileTwoAndAddOtherPowerCounters;
+        copy.cloneOperation.selectedGraveyardCopyCardIds = this.cloneOperation.selectedGraveyardCopyCardIds;
 
         copy.landCopyOperation.physicalCard = this.landCopyOperation.physicalCard;
         copy.landCopyOperation.enteringCard = this.landCopyOperation.enteringCard;

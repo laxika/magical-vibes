@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Gush.class, Island.class, Forest.class})
 class GushTest extends BaseCardTest {
 
     @Test
@@ -52,6 +55,39 @@ class GushTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Gush()));
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void alternateCostRejectsNonIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new Gush()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(island.getId(), forest.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("does not match");
+    }
+
+    @Test
+    void alternateCostRequiresIslandsTheCasterControls() {
+        Permanent ownIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent opposingIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new Gush()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(ownIsland.getId(), opposingIsland.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void alternateCostRejectsReturningTheSameIslandTwice() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Gush()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(island.getId(), island.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

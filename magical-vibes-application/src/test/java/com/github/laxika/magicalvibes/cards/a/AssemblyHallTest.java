@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AssemblyHall.class, Forest.class, GrizzlyBears.class})
 class AssemblyHallTest extends BaseCardTest {
 
     @Test
@@ -70,6 +72,24 @@ class AssemblyHallTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThatThrownBy(() -> harness.handleListChoice(player1, "Forest"))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pays and taps even when no creature card is available to reveal")
+    void paysAndTapsWhenNoCreatureCardIsInHand() {
+        addAssemblyHallAndMana();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        activateAndResolve();
+
+        assertThat(findPermanent(player1, "Assembly Hall").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
     }
 
     private void addAssemblyHallAndMana() {

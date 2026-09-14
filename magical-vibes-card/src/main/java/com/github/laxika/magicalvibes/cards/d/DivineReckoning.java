@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureDestroyRestEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "10")
+@CardRegistration(set = "SIS", collectorNumber = "4")
 public class DivineReckoning extends Card {
 
     public DivineReckoning() {

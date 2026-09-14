@@ -7643,7 +7643,8 @@ public class SpellCastingService {
                 || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize;
         boolean isRetrace = !graveyardAbilitiesSuppressed
-                && card.getCastingOption(Retrace.class).isPresent()
+                && (card.getCastingOption(Retrace.class).isPresent()
+                || castingPermissionService.hasGrantedRetrace(gameData, playerId, card))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize && !isJumpStart;
         boolean grantedFlashback = !graveyardAbilitiesSuppressed
                 && flashbackOpt.isEmpty()
@@ -9443,7 +9444,7 @@ public class SpellCastingService {
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-        if (!castingPermissionService.canCastWithTiming(gameData, playerId, card,
+        if (!castingPermissionService.canCastWithTimingFromLibraryTop(gameData, playerId, card,
                 isActivePlayer, isMainPhase, gameData.stack.isEmpty())) {
             throw new IllegalStateException("Card is not playable");
         }
