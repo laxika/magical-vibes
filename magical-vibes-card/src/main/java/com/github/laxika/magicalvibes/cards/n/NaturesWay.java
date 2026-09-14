@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "162")
 @CardRegistration(set = "DDU", collectorNumber = "20")
+@CardRegistration(set = "KLR", collectorNumber = "171")
 public class NaturesWay extends Card {
 
     public NaturesWay() {

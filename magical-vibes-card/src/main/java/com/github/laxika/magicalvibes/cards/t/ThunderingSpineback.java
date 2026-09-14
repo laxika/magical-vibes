@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "210")
+@CardRegistration(set = "GN2", collectorNumber = "53")
 public class ThunderingSpineback extends Card {
 
     public ThunderingSpineback() {

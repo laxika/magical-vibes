@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "67")
 @CardRegistration(set = "MPS", collectorNumber = "2")
+@CardRegistration(set = "KLR", collectorNumber = "70")
 public class TorrentialGearhulk extends Card {
 
     public TorrentialGearhulk() {

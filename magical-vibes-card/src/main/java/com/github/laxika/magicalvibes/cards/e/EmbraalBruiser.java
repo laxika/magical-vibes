@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "79")
+@CardRegistration(set = "KLR", collectorNumber = "82")
 public class EmbraalBruiser extends Card {
 
     public EmbraalBruiser() {

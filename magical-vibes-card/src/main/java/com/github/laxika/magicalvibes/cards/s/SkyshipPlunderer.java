@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindToTargetEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "46")
+@CardRegistration(set = "KLR", collectorNumber = "67")
 public class SkyshipPlunderer extends Card {
 
     public SkyshipPlunderer() {

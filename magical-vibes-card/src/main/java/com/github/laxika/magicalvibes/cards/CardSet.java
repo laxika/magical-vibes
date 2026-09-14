@@ -64,6 +64,7 @@ public enum CardSet {
     SET_M19("M19"),
     SET_OANA("OANA"),
     SET_M20("M20"),
+    SET_ANB("ANB"),
     SET_M21("M21"),
     SET_MMQ("MMQ"),
     SET_ORI("ORI"),
@@ -133,6 +134,7 @@ public enum CardSet {
     SET_FRF("FRF"),
     SET_DTK("DTK"),
     SET_KLD("KLD"),
+    SET_KLR("KLR"),
     SET_KHM("KHM"),
     SET_NEO("NEO"),
     SET_AER("AER"),
@@ -196,6 +198,7 @@ public enum CardSet {
     SET_PLS("PLS"),
     SET_PLC("PLC"),
     SET_STX("STX"),
+    SET_STA("STA"),
     SET_SNC("SNC"),
     SET_TDM("TDM"),
     SET_TMT("TMT"),
@@ -244,6 +247,7 @@ public enum CardSet {
     SET_PD3("PD3"),
     SET_MD1("MD1"),
     SET_G17("G17"),
+    SET_GN2("GN2"),
     SET_GK2("GK2"),
     SET_GNT("GNT"),
     SET_GS1("GS1"),
@@ -253,7 +257,8 @@ public enum CardSet {
     SET_HA2("HA2"),
     SET_HA3("HA3"),
     SET_HA5("HA5"),
-    SET_HA6("HA6");
+    SET_HA6("HA6"),
+    SET_Q06("Q06");
 
     @Getter
     private final String code;

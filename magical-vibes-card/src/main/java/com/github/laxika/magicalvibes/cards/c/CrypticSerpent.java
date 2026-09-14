@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "48")
 @CardRegistration(set = "AKR", collectorNumber = "57")
+@CardRegistration(set = "GN2", collectorNumber = "18")
 public class CrypticSerpent extends Card {
 
     public CrypticSerpent() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureAttackingControlle
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "OANA", collectorNumber = "3")
+@CardRegistration(set = "ANB", collectorNumber = "6")
 public class ConfrontTheAssault extends Card {
 
     public ConfrontTheAssault() {

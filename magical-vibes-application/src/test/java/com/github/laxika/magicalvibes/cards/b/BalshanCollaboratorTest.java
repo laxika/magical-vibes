@@ -44,6 +44,21 @@ class BalshanCollaboratorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability does not require Balshan Collaborator to be untapped")
+    void abilityDoesNotRequireTapping() {
+        Permanent collaborator = addCreatureReady(player1, new BalshanCollaborator());
+        collaborator.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
+        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
+        assertThat(collaborator.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Balshan Collaborator's ability requires black mana")
     void cannotActivateWithoutBlackMana() {
         addCreatureReady(player1, new BalshanCollaborator());

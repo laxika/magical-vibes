@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,21 +14,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Unhinge.class, GrizzlyBears.class})
+@CardUsed({Unhinge.class, AvenTrooper.class})
 class UnhingeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target player discards a card and the controller draws a card")
     void targetPlayerDiscardsAndControllerDraws() {
-        Card discarded = new GrizzlyBears();
-        Card drawn = new GrizzlyBears();
+        Card discarded = new AvenTrooper();
+        Card drawn = new AvenTrooper();
         harness.setHand(player1, List.of(new Unhinge()));
         harness.setHand(player2, List.of(discarded));
         harness.setLibrary(player1, List.of(drawn));
         addUnhingeMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -41,16 +40,15 @@ class UnhingeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target its controller")
     void canTargetController() {
-        Card discarded = new GrizzlyBears();
-        Card remaining = new GrizzlyBears();
-        Card drawn = new GrizzlyBears();
+        Card discarded = new AvenTrooper();
+        Card remaining = new AvenTrooper();
+        Card drawn = new AvenTrooper();
         Card spell = new Unhinge();
         harness.setHand(player1, List.of(spell, discarded, remaining));
         harness.setLibrary(player1, List.of(drawn));
         addUnhingeMana();
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
@@ -59,14 +57,30 @@ class UnhingeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still draws when the target player has no cards to discard")
+    void drawsWhenTargetHasEmptyHand() {
+        Card drawn = new AvenTrooper();
+        harness.setHand(player1, List.of(new Unhinge()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        addUnhingeMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AvenTrooper());
         harness.setHand(player1, List.of(new Unhinge()));
         addUnhingeMana();
 
         assertThatThrownBy(() -> harness.castSorcery(
-                player1, 0, harness.getPermanentId(player2, "Grizzly Bears")))
+                player1, 0, harness.getPermanentId(player2, "Aven Trooper")))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MOM", collectorNumber = "19")
 @CardRegistration(set = "BFZ", collectorNumber = "32")
 @CardRegistration(set = "GNT", collectorNumber = "13")
+@CardRegistration(set = "KLR", collectorNumber = "24")
 public class InspiredCharge extends Card {
 
     public InspiredCharge() {

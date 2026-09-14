@@ -24,5 +24,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "JVC", collectorNumber = "13")
 @CardRegistration(set = "W17", collectorNumber = "7")
 @CardRegistration(set = "GNT", collectorNumber = "19")
+@CardRegistration(set = "ANB", collectorNumber = "23")
 public class AirElemental extends Card {
 }

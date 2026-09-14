@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "137")
+@CardRegistration(set = "KLR", collectorNumber = "209")
 public class TezzeretTheSchemer extends Card {
 
     private static final String EMBLEM_TEXT =

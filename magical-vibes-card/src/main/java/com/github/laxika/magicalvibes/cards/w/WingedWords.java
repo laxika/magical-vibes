@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "80")
+@CardRegistration(set = "ANB", collectorNumber = "43")
 public class WingedWords extends Card {
 
     public WingedWords() {

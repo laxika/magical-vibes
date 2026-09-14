@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "233")
+@CardRegistration(set = "KLR", collectorNumber = "271")
 public class SkySkiff extends Card {
 
     public SkySkiff() {

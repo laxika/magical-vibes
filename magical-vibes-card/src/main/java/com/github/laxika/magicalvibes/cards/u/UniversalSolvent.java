@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "178")
+@CardRegistration(set = "KLR", collectorNumber = "273")
 public class UniversalSolvent extends Card {
 
     public UniversalSolvent() {

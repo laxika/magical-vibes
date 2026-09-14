@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M20", collectorNumber = "149")
 @CardRegistration(set = "TPR", collectorNumber = "142")
 @CardRegistration(set = "BRB", collectorNumber = "42")
+@CardRegistration(set = "ANB", collectorNumber = "77")
 public class ManiacalRage extends Card {
 
     public ManiacalRage() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "332")
+@CardRegistration(set = "ANB", collectorNumber = "75")
 public class ImmortalPhoenix extends Card {
 
     public ImmortalPhoenix() {

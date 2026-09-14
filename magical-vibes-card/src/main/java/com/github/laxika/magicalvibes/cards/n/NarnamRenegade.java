@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "117")
+@CardRegistration(set = "KLR", collectorNumber = "170")
 public class NarnamRenegade extends Card {
 
     public NarnamRenegade() {

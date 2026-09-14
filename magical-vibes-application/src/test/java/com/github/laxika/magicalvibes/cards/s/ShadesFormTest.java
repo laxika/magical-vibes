@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChainersEdict;
+import com.github.laxika.magicalvibes.cards.h.HellBentRaider;
+import com.github.laxika.magicalvibes.cards.t.TaintedIsle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,13 +18,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShadesForm.class, GrizzlyBears.class, DoomBlade.class, FountainOfYouth.class})
+@CardUsed({ShadesForm.class, HellBentRaider.class, ChainersEdict.class, TaintedIsle.class})
 class ShadesFormTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Shade's Form attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HellBentRaider());
         castShadesForm(player1, creature);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -36,11 +36,11 @@ class ShadesFormTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted creature can pay black mana for +1/+1 until end of turn")
     void grantedAbilityBoostsUntilEndOfTurn() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new HellBentRaider());
         castShadesForm(player1, creature);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -55,13 +55,27 @@ class ShadesFormTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent controlling the enchanted creature can activate the granted ability")
+    void enchantedCreatureControllerCanActivateGrantedAbility() {
+        Permanent creature = addCreatureReady(player2, new HellBentRaider());
+        castShadesForm(player1, creature);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("When the enchanted opponent creature dies, it returns under the Aura controller's control")
     void returnsOpponentCreatureUnderAuraControllersControl() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new HellBentRaider());
         Card creatureCard = creature.getCard();
         castShadesForm(player1, creature);
 
-        killCreature(player1, creature);
+        killCreature(player1, player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(creatureCard.getId()));
@@ -77,7 +91,7 @@ class ShadesFormTest extends BaseCardTest {
     @Test
     @DisplayName("Shade's Form cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
-        Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new TaintedIsle());
         harness.setHand(player1, List.of(new ShadesForm()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -94,14 +108,14 @@ class ShadesFormTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void killCreature(Player caster, Permanent creature) {
+    private void killCreature(Player caster, Player creatureController) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new DoomBlade()));
-        harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.setHand(caster, List.of(new ChainersEdict()));
+        harness.addMana(caster, ManaColor.BLACK, 1);
+        harness.addMana(caster, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(caster, 0, creatureController.getId());
         harness.passBothPriorities();
     }
 }

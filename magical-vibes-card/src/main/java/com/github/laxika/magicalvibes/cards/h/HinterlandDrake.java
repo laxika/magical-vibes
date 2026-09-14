@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "34")
+@CardRegistration(set = "KLR", collectorNumber = "51")
 public class HinterlandDrake extends Card {
 
     public HinterlandDrake() {

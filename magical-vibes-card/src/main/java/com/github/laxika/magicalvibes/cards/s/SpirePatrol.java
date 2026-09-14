@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "136")
+@CardRegistration(set = "KLR", collectorNumber = "208")
 public class SpirePatrol extends Card {
 
     public SpirePatrol() {

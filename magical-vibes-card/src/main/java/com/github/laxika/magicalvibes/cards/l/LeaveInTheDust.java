@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "AER", collectorNumber = "37")
+@CardRegistration(set = "KLR", collectorNumber = "54")
 public class LeaveInTheDust extends Card {
 
     public LeaveInTheDust() {

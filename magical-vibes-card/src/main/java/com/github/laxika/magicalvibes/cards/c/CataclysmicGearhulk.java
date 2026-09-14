@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "9")
 @CardRegistration(set = "MPS", collectorNumber = "1")
+@CardRegistration(set = "KLR", collectorNumber = "12")
 public class CataclysmicGearhulk extends Card {
 
     public CataclysmicGearhulk() {

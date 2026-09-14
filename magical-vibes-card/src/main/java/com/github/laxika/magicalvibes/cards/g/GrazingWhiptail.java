@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "190")
+@CardRegistration(set = "GN2", collectorNumber = "48")
 public class GrazingWhiptail extends Card {
 }

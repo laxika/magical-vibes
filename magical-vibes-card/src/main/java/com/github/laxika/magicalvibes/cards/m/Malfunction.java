@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "55")
+@CardRegistration(set = "KLR", collectorNumber = "55")
 public class Malfunction extends Card {
 
     public Malfunction() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "210")
+@CardRegistration(set = "STA", collectorNumber = "46")
 @CardRegistration(set = "M21", collectorNumber = "165")
 @CardRegistration(set = "ONE", collectorNumber = "151")
 @CardRegistration(set = "ELD", collectorNumber = "146")
