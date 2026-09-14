@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "314")
 @CardRegistration(set = "TSP", collectorNumber = "251")
+@CardRegistration(set = "2XM", collectorNumber = "239")
 @CardRegistration(set = "TSR", collectorNumber = "263")
+@CardRegistration(set = "BRR", collectorNumber = "11")
 public class ChromaticStar extends Card {
 
     public ChromaticStar() {

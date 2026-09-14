@@ -155,6 +155,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
 
+    /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
+     * creates the fallback token when no legal sacrifice is possible. */
+    record TargetPlayerSacrificesCreatureOrCreatesToken(
+            UUID sacrificingPlayerId, StackEntry resolvingEntry, CreateTokenEffect tokenTemplate)
+            implements PermanentChoiceContext {}
+
     /** A targeted player chooses a permanent to sacrifice before taking mana-value damage. */
     record TargetPlayerSacrificesPermanentThenDealsManaValueDamage(
             UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)
@@ -1141,6 +1147,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Deepfathom Echo: choose another creature the source controller controls to copy until end of turn. */
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}
+
+    /** Brudiclad: choose a token whose copiable characteristics the other controlled tokens copy. */
+    record BrudicladTokenChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     /** Choose the creature whose copiable characteristics will be used. */
     record PolymorphousRushCreatureChoice(UUID controllerId,

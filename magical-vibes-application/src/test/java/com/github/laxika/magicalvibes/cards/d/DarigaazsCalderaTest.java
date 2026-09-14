@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,48 +13,85 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DarigaazsCaldera.class, TerminalMoraine.class})
 class DarigaazsCalderaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the ETB cost returns a non-Lair land and keeps Darigaaz's Caldera")
     void acceptsEtbCostByReturningNonLairLand() {
-        harness.addToBattlefield(player1, new Plains());
-        playAndResolveEtb();
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        DarigaazsCaldera enteringCaldera = playAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Darigaaz's Caldera");
-        harness.assertNotOnBattlefield(player1, "Plains");
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getName().equals("Plains"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == enteringCaldera)
+                .noneMatch(permanent -> permanent == moraine);
+        assertThat(gd.playerHands.get(player1.getId())).contains(moraine.getCard());
     }
 
     @Test
     @DisplayName("Darigaaz's Caldera is sacrificed when only a Lair land is available")
     void sacrificesWhenOnlyLairLandIsAvailable() {
-        harness.addToBattlefield(player1, new DarigaazsCaldera());
-        playAndResolveEtb();
+        Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new DarigaazsCaldera());
+        DarigaazsCaldera enteringCaldera = playAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Darigaaz's Caldera")))
-                .hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Darigaaz's Caldera")))
-                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(existingLair)
+                .noneMatch(permanent -> permanent.getCard() == enteringCaldera);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(enteringCaldera)
+                .noneMatch(card -> card == existingLair.getCard());
     }
 
     @Test
     @DisplayName("Declining the ETB cost sacrifices Darigaaz's Caldera")
     void decliningEtbCostSacrificesSource() {
-        harness.addToBattlefield(player1, new Plains());
-        playAndResolveEtb();
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        DarigaazsCaldera enteringCaldera = playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotOnBattlefield(player1, "Darigaaz's Caldera");
-        harness.assertInGraveyard(player1, "Darigaaz's Caldera");
-        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(moraine)
+                .noneMatch(permanent -> permanent.getCard() == enteringCaldera);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enteringCaldera);
+    }
+
+    @Test
+    @DisplayName("Accepting the ETB cost with multiple eligible lands returns only the chosen land")
+    void acceptsEtbCostWithMultipleEligibleLands() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        DarigaazsCaldera enteringCaldera = playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(secondLand)
+                .noneMatch(permanent -> permanent == firstLand)
+                .anyMatch(permanent -> permanent.getCard() == enteringCaldera);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(firstLand.getCard())
+                .doesNotContain(secondLand.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's non-Lair land cannot pay the ETB cost")
+    void ignoresOpponentControlledNonLairLand() {
+        harness.addToBattlefield(player2, new TerminalMoraine());
+        DarigaazsCaldera enteringCaldera = playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == enteringCaldera);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enteringCaldera);
+        harness.assertOnBattlefield(player2, "Terminal Moraine");
     }
 
     @Test
@@ -80,9 +118,11 @@ class DarigaazsCalderaTest extends BaseCardTest {
         assertThat(caldera.isTapped()).isTrue();
     }
 
-    private void playAndResolveEtb() {
-        harness.setHand(player1, List.of(new DarigaazsCaldera()));
+    private DarigaazsCaldera playAndResolveEtb() {
+        DarigaazsCaldera caldera = new DarigaazsCaldera();
+        harness.setHand(player1, List.of(caldera));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
+        return caldera;
     }
 }

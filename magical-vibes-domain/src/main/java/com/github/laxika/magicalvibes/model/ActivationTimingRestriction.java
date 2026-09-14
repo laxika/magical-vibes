@@ -24,6 +24,8 @@ public enum ActivationTimingRestriction {
     ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED,
     /** Activate only during the declare blockers step (any player). General Jarkeld. */
     ONLY_DURING_DECLARE_BLOCKERS,
+    /** Activate during combat, after blockers have been declared. Trap Runner. */
+    ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED,
     /**
      * Activate only during the declare blockers step and only if at least one creature is blocking
      * this creature. Grizzled Wolverine.

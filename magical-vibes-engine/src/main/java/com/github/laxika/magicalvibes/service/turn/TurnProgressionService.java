@@ -283,6 +283,8 @@ public class TurnProgressionService {
         if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
             next = TurnStep.POSTCOMBAT_MAIN;
+            gameData.skipCombatPhaseExpirationsThisTurn.computeIfPresent(gameData.activePlayerId,
+                    (playerId, count) -> count > 1 ? count - 1 : null);
             int remaining = gameData.skipNextCombatPhaseCount.get(gameData.activePlayerId) - 1;
             if (remaining > 0) {
                 gameData.skipNextCombatPhaseCount.put(gameData.activePlayerId, remaining);
@@ -850,6 +852,7 @@ public class TurnProgressionService {
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.permanentsDealtNoncombatDamageThisTurn.clear();
+        gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.damageDealtToPermanentsBySourceThisTurn.clear();
         gameData.damageSourceNamesThisTurn.clear();

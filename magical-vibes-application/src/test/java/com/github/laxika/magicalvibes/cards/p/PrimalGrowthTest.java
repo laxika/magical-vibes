@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrimalGrowth.class, Forest.class, GrizzlyBears.class})
 class PrimalGrowthTest extends BaseCardTest {
 
     @Test
@@ -33,7 +33,7 @@ class PrimalGrowthTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().remainingCount()).isEqualTo(1);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
@@ -57,8 +57,8 @@ class PrimalGrowthTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().remainingCount()).isEqualTo(2);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
@@ -78,6 +78,45 @@ class PrimalGrowthTest extends BaseCardTest {
                 player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
+    }
+
+    @Test
+    @DisplayName("Kicker cannot sacrifice a noncreature permanent")
+    void kickerCannotSacrificeNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new PrimalGrowth()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrificeNoKickerTarget(
+                player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("With kicker, it may put only one basic land onto the battlefield")
+    void withKickerMayPutOnlyOneBasicLandOntoBattlefield() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrimalGrowth()));
+        addMana();
+        harness.castKickedSorceryWithSacrificeNoKickerTarget(player1, 0, null, sacrifice.getId());
+
+        Forest chosen = new Forest();
+        Forest remaining = new Forest();
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen, remaining, nonland));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .hasSize(1)
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(remaining, nonland);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castPrimalGrowth() {

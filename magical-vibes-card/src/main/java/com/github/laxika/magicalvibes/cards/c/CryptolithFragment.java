@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "260")
 @CardRegistration(set = "INR", collectorNumber = "472")
 @CardRegistration(set = "EMN", collectorNumber = "193")
+@CardRegistration(set = "SIR", collectorNumber = "248")
 public class CryptolithFragment extends Card {
 
     public CryptolithFragment() {

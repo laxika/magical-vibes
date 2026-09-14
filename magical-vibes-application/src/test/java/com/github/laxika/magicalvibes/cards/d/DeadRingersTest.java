@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
 import com.github.laxika.magicalvibes.cards.m.MournfulZombie;
 import com.github.laxika.magicalvibes.cards.s.SpectralLynx;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -83,6 +84,25 @@ class DeadRingersTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(remaining.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(remaining.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Remembers a departed target's changed color rather than its printed color")
+    void remembersChangedColorOfDepartedTarget() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
+        castDeadRingersOnStack(List.of(departed.getId(), remaining.getId()));
+
+        harness.inMutationScope(() -> {
+            departed.setColorOverridden(true);
+            departed.getTransientColors().add(CardColor.BLUE);
+        });
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Coastal Drake");
+        harness.assertInGraveyard(player2, "Coastal Drake");
     }
 
     @Test

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.ConquerorsGalleon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -40,10 +40,9 @@ class LagorinSoulOfAlacriaTest extends BaseCardTest {
         lagorin.setSaddled(true);
 
         declareAttackers(List.of(indexOf(lagorin)));
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        harness.handlePermanentChosen(player1, mount.getId());
-        harness.handlePermanentChosen(player1, vehicle.getId());
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(mount.getId(), vehicle.getId()));
         harness.passBothPriorities();
 
         assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -58,7 +57,7 @@ class LagorinSoulOfAlacriaTest extends BaseCardTest {
         lagorin.setSaddled(true);
 
         declareAttackers(List.of(indexOf(lagorin)));
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -73,7 +72,7 @@ class LagorinSoulOfAlacriaTest extends BaseCardTest {
 
         declareAttackers(List.of(indexOf(lagorin)));
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

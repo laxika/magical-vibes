@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FDN", collectorNumber = "243")
 @CardRegistration(set = "FDN", collectorNumber = "430")
 @CardRegistration(set = "FDN", collectorNumber = "440")
+@CardRegistration(set = "2X2", collectorNumber = "258")
 public class MuldrothaTheGravetide extends Card {
 
     public MuldrothaTheGravetide() {

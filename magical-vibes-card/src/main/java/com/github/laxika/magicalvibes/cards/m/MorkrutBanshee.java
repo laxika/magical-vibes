@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "110")
 @CardRegistration(set = "INR", collectorNumber = "125")
+@CardRegistration(set = "2XM", collectorNumber = "99")
 public class MorkrutBanshee extends Card {
 
     public MorkrutBanshee() {

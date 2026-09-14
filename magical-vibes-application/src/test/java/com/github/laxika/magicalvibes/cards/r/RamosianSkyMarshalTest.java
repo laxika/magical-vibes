@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.d.DefiantVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.a.AerialCaravan;
+import com.github.laxika.magicalvibes.cards.j.JhovallQueen;
+import com.github.laxika.magicalvibes.cards.s.SoothingBalm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,18 +16,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RamosianSkyMarshal.class, RappellingScouts.class, JhovallQueen.class,
+        AerialCaravan.class, SoothingBalm.class})
 class RamosianSkyMarshalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Only Rebel permanent cards with mana value 6 or less are offered")
     void searchOffersOnlyMatchingRebelPermanents() {
         addReadySkyMarshal();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new RamosianSkyMarshal(),
-                new DefiantVanguard(),
-                new GrizzlyBears(),
-                new HolyDay()));
+                new RappellingScouts(),
+                new JhovallQueen(),
+                new AerialCaravan(),
+                new SoothingBalm()));
 
         activateSkyMarshal();
 
@@ -36,30 +38,28 @@ class RamosianSkyMarshalTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards())
                 .extracting(Card::getName)
-                .containsExactly("Ramosian Sky Marshal", "Defiant Vanguard");
+                .containsExactly("Ramosian Sky Marshal", "Rappelling Scouts", "Jhovall Queen");
     }
 
     @Test
     @DisplayName("The chosen Rebel permanent enters the battlefield")
     void putsChosenRebelOntoBattlefield() {
         addReadySkyMarshal();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new DefiantVanguard());
+        harness.setLibrary(player1, List.of(new RappellingScouts()));
 
         activateSkyMarshal();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
-                .containsExactly("Ramosian Sky Marshal", "Defiant Vanguard");
+                .containsExactly("Ramosian Sky Marshal", "Rappelling Scouts");
     }
 
     @Test
     @DisplayName("No matching Rebel leaves the library search without a choice")
     void noMatchingRebelFound() {
         addReadySkyMarshal();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new GrizzlyBears(), new HolyDay()));
+        harness.setLibrary(player1, List.of(new AerialCaravan(), new SoothingBalm()));
 
         activateSkyMarshal();
 
@@ -69,11 +69,22 @@ class RamosianSkyMarshalTest extends BaseCardTest {
                 .containsExactly("Ramosian Sky Marshal");
     }
 
-    private void addReadySkyMarshal() {
-        harness.addToBattlefield(player1, new RamosianSkyMarshal());
-        Permanent skyMarshal = findPermanent(player1, "Ramosian Sky Marshal");
-        skyMarshal.setSummoningSick(false);
+    @Test
+    @DisplayName("Activating the ability pays seven generic mana and taps Ramosian Sky Marshal")
+    void activationPaysManaAndTapsSkyMarshal() {
+        Permanent skyMarshal = addReadySkyMarshal();
+        harness.setLibrary(player1, List.of());
+
+        activateSkyMarshal();
+
+        assertThat(skyMarshal.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    private Permanent addReadySkyMarshal() {
+        Permanent skyMarshal = addCreatureReady(player1, new RamosianSkyMarshal());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
+        return skyMarshal;
     }
 
     private void activateSkyMarshal() {

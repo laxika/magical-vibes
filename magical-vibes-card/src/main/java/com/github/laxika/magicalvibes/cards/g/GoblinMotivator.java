@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "143")
+@CardRegistration(set = "GN3", collectorNumber = "80")
 public class GoblinMotivator extends Card {
 
     public GoblinMotivator() {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "129")
+@CardRegistration(set = "2XM", collectorNumber = "201")
 @CardRegistration(set = "KLR", collectorNumber = "197")
 public class HiddenStockpile extends Card {
 

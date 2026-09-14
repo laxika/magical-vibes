@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "41")
+@CardRegistration(set = "SIR", collectorNumber = "43")
 public class SigardasAid extends Card {
 
     public SigardasAid() {

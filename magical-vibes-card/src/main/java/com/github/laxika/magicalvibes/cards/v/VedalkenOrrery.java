@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "163")
+@CardRegistration(set = "2X2", collectorNumber = "317")
 public class VedalkenOrrery extends Card {
 
     public VedalkenOrrery() {

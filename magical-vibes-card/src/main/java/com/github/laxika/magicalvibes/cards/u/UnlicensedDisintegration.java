@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "187")
+@CardRegistration(set = "2XM", collectorNumber = "224")
 @CardRegistration(set = "KLR", collectorNumber = "211")
 public class UnlicensedDisintegration extends Card {
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "92")
+@CardRegistration(set = "2XM", collectorNumber = "126")
 @CardRegistration(set = "HA4", collectorNumber = "13")
 public class GoblinGaveleer extends Card {
 

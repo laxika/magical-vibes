@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "69")
+@CardRegistration(set = "DMR", collectorNumber = "40")
 public class AvenFateshaper extends Card {
 
     public AvenFateshaper() {

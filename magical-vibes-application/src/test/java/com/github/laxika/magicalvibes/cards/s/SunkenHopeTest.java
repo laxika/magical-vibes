@@ -8,21 +8,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SunkenHope.class, GrizzlyBears.class})
 class SunkenHopeTest extends BaseCardTest {
 
     private Permanent addCreature(Player player) {
-        Card card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     // ===== Triggering during controller's upkeep =====
@@ -96,7 +92,6 @@ class SunkenHopeTest extends BaseCardTest {
     @DisplayName("Does nothing when active player controls no creatures")
     void doesNothingWithNoCreatures() {
         harness.addToBattlefield(player1, new SunkenHope());
-        harness.setHand(player1, List.of());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -172,7 +167,7 @@ class SunkenHopeTest extends BaseCardTest {
     @DisplayName("Controller's upkeep does not force opponent to bounce")
     void controllersUpkeepDoesNotAffectOpponent() {
         harness.addToBattlefield(player1, new SunkenHope());
-        Permanent myCreature = addCreature(player1);
+        addCreature(player1);
         Permanent theirCreature = addCreature(player2);
 
         advanceToUpkeep(player1);
@@ -182,6 +177,22 @@ class SunkenHopeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         // Opponent's creature should not be in valid choices
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(theirCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Returns a controlled creature to its owner's hand")
+    void returnsControlledCreatureToItsOwnersHand() {
+        harness.addToBattlefield(player1, new SunkenHope());
+        Card ownedByPlayer2 = new GrizzlyBears();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent creature = addCreatureReady(player1, ownedByPlayer2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 }
 

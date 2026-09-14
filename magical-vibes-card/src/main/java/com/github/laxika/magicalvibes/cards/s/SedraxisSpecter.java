@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "ALA", collectorNumber = "192")
 @CardRegistration(set = "MM3", collectorNumber = "181")
+@CardRegistration(set = "2X2", collectorNumber = "273")
 public class SedraxisSpecter extends Card {
 
     public SedraxisSpecter() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "UDS", collectorNumber = "74")
+@CardRegistration(set = "DMR", collectorNumber = "104")
 public class TwistedExperiment extends Card {
 
     public TwistedExperiment() {

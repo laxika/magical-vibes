@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStep
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "221")
+@CardRegistration(set = "SLC", collectorNumber = "27")
 public class AlhammarretsArchive extends Card {
 
     public AlhammarretsArchive() {

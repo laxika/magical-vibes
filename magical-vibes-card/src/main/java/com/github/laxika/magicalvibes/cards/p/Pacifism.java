@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "A25", collectorNumber = "28")
 @CardRegistration(set = "EMA", collectorNumber = "23")
 @CardRegistration(set = "ANB", collectorNumber = "16")
+@CardRegistration(set = "DMR", collectorNumber = "19")
 public class Pacifism extends Card {
 
     public Pacifism() {

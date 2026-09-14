@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "262")
+@CardRegistration(set = "BRR", collectorNumber = "60")
 public class ThornOfAmethyst extends Card {
 
     public ThornOfAmethyst() {

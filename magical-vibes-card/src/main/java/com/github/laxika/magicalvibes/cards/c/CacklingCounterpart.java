@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MM3", collectorNumber = "32")
 @CardRegistration(set = "INR", collectorNumber = "55")
 @CardRegistration(set = "INR", collectorNumber = "353")
+@CardRegistration(set = "SIS", collectorNumber = "14")
 public class CacklingCounterpart extends Card {
 
     public CacklingCounterpart() {

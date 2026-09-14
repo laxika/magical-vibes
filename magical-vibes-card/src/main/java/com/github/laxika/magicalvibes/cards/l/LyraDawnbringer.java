@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "26")
+@CardRegistration(set = "DMR", collectorNumber = "13")
+@CardRegistration(set = "DMR", collectorNumber = "266")
 public class LyraDawnbringer extends Card {
 
     public LyraDawnbringer() {

@@ -154,6 +154,9 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureThenDrawsPower(
                     gameData, permanentId, targetPlayerSacrifice);
+        } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureOrCreatesToken targetPlayerSacrificeOrToken) {
+            battlefieldHandler.handleTargetPlayerSacrificesCreatureOrCreatesToken(
+                    gameData, permanentId, targetPlayerSacrificeOrToken);
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesPermanentThenDealsManaValueDamage targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesPermanentThenDealsManaValueDamage(
                     gameData, permanentId, targetPlayerSacrifice);
@@ -269,6 +272,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
         } else if (context instanceof PermanentChoiceContext.DeepfathomEchoCreatureChoice deepfathomEcho) {
             battlefieldHandler.handleDeepfathomEchoCreatureChoice(gameData, permanentId, deepfathomEcho);
+        } else if (context instanceof PermanentChoiceContext.BrudicladTokenChoice brudicladToken) {
+            battlefieldHandler.handleBrudicladTokenChoice(gameData, permanentId, brudicladToken);
         } else if (context instanceof PermanentChoiceContext.PolymorphousRushCreatureChoice polymorphousRush) {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {

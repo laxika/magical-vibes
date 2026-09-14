@@ -5108,6 +5108,15 @@ public class AbilityActivationService {
                 ? context.ability()
                 : resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
+        List<CardEffect> activationEffects = abilityEffects;
+        if (ability.isModalChoiceAtActivation()) {
+            if (context.xValue() == null) {
+                throw new IllegalStateException("Modal ability activation has no selected mode");
+            }
+            int modeIndex = ability.modalEffectAtActivation()
+                    .decodeModeIndices(context.xValue()).getFirst();
+            activationEffects = EffectResolution.resolveEffects(abilityEffects, null, modeIndex);
+        }
         if (!abilityEffects.contains(context.costEffect())) {
             if (!(context.costEffect() instanceof CostEffect)) {
                 throw new IllegalStateException("Activated ability no longer has the required cost");
@@ -5179,7 +5188,7 @@ public class AbilityActivationService {
         Integer costDerivedXValue = trackedSacrificedManaValue(context.costEffect(), chosen);
         if (costDerivedXValue != null) {
             targetLegalityService.validateActivatedAbilityTargetingAfterCostSelection(
-                    gameData, playerId, ability, abilityEffects, context.targetId(), context.targetZone(),
+                    gameData, playerId, ability, activationEffects, context.targetId(), context.targetZone(),
                     sourcePermanent.getCard(), costDerivedXValue);
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
@@ -5233,7 +5242,7 @@ public class AbilityActivationService {
 
         int finalXValue = updatedXValue != null ? updatedXValue : (context.xValue() != null ? context.xValue() : 0);
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
-        completeActivationAndRecordWithChosenPermanents(gameData, player, sourcePermanent, ability, abilityEffects,
+        completeActivationAndRecordWithChosenPermanents(gameData, player, sourcePermanent, ability, activationEffects,
                 finalXValue, context.targetId(), context.targetZone(), nonTargeting, effectiveIndex,
                 context.targetIds(), null, chosenCostPermanentIds, null, null);
     }
@@ -6978,6 +6987,12 @@ public class AbilityActivationService {
                 if (!gameQueryService.isPlayerBeingAttacked(gameData, playerId)) {
                     throw new IllegalStateException("This ability can only be activated if you've been attacked this step");
                 }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED
+                    && gameData.currentStep != TurnStep.DECLARE_BLOCKERS
+                    && gameData.currentStep != TurnStep.COMBAT_DAMAGE
+                    && gameData.currentStep != TurnStep.END_OF_COMBAT) {
+                throw new IllegalStateException("This ability can only be activated during combat after declare blockers");
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS) {
                 if (gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {

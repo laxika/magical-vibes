@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "40")
+@CardRegistration(set = "DMR", collectorNumber = "52")
 public class GlintwingInvoker extends Card {
 
     public GlintwingInvoker() {

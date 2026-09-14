@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VMA", collectorNumber = "154")
+@CardRegistration(set = "2X2", collectorNumber = "105")
 @CardRegistration(set = "STA", collectorNumber = "36")
 public class ChaosWarp extends Card {
 

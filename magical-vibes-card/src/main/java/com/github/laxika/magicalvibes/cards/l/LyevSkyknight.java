@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "179")
 @CardRegistration(set = "GK2", collectorNumber = "16")
+@CardRegistration(set = "2X2", collectorNumber = "246")
 public class LyevSkyknight extends Card {
 
     public LyevSkyknight() {

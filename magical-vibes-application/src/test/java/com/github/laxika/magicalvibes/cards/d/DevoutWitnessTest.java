@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.h.HengeGuardian;
+import com.github.laxika.magicalvibes.cards.i.IronLance;
+import com.github.laxika.magicalvibes.cards.n.NoblePurpose;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DevoutWitness.class, FreshVolunteers.class, HengeGuardian.class, IronLance.class, NoblePurpose.class})
 class DevoutWitnessTest extends BaseCardTest {
 
     @Test
@@ -29,9 +32,39 @@ class DevoutWitnessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(witness.isTapped()).isTrue();
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Iron Lance");
+        harness.assertInGraveyard(player2, "Iron Lance");
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact creature")
+    void destroysTargetArtifactCreature() {
+        addReadyWitness(player1);
+        Permanent target = addCreatureReady(player2, new HengeGuardian());
+        prepareActivation();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Henge Guardian");
+        harness.assertInGraveyard(player2, "Henge Guardian");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by its controller")
+    void destroysOwnArtifact() {
+        addReadyWitness(player1);
+        Permanent target = addReadyArtifact(player1);
+        prepareActivation();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Iron Lance");
+        harness.assertInGraveyard(player1, "Iron Lance");
     }
 
     @Test
@@ -45,17 +78,17 @@ class DevoutWitnessTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Noble Purpose");
+        harness.assertInGraveyard(player2, "Noble Purpose");
     }
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addReadyWitness(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new FreshVolunteers());
         prepareMana();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FreshVolunteers()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -75,7 +108,7 @@ class DevoutWitnessTest extends BaseCardTest {
 
     private void prepareActivation() {
         prepareMana();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FreshVolunteers()));
     }
 
     private void prepareMana() {
@@ -88,10 +121,10 @@ class DevoutWitnessTest extends BaseCardTest {
     }
 
     private Permanent addReadyArtifact(Player player) {
-        return addCreatureReady(player, new LeoninScimitar());
+        return addCreatureReady(player, new IronLance());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return addCreatureReady(player, new GloriousAnthem());
+        return addCreatureReady(player, new NoblePurpose());
     }
 }

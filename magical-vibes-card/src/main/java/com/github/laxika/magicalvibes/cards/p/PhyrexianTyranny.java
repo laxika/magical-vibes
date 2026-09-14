@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 
 @CardRegistration(set = "PLS", collectorNumber = "118")
+@CardRegistration(set = "2X2", collectorNumber = "262")
 public class PhyrexianTyranny extends Card {
 
     public PhyrexianTyranny() {

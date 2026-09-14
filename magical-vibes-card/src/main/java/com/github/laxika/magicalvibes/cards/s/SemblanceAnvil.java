@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "201")
+@CardRegistration(set = "BRR", collectorNumber = "52")
 public class SemblanceAnvil extends Card {
 
     public SemblanceAnvil() {

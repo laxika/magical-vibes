@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "ZNR", collectorNumber = "188")
+@CardRegistration(set = "GN3", collectorNumber = "100")
 public class JoragaVisionary extends Card {
 
     public JoragaVisionary() {

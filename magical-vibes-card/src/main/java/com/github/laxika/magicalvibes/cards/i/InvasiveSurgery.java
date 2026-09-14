@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "68")
+@CardRegistration(set = "SIR", collectorNumber = "76")
 public class InvasiveSurgery extends Card {
 
     public InvasiveSurgery() {

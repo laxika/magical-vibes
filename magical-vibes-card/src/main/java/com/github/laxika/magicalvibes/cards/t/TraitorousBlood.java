@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "166")
+@CardRegistration(set = "SIS", collectorNumber = "45")
 public class TraitorousBlood extends Card {
 
     public TraitorousBlood() {
