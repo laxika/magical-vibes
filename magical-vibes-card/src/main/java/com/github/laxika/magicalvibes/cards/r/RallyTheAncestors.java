@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "22")
+@CardRegistration(set = "EA1", collectorNumber = "2")
 public class RallyTheAncestors extends Card {
 
     public RallyTheAncestors() {

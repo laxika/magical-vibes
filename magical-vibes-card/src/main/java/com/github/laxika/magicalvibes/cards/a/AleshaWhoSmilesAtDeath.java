@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "90")
+@CardRegistration(set = "EA1", collectorNumber = "8")
 public class AleshaWhoSmilesAtDeath extends Card {
 
     public AleshaWhoSmilesAtDeath() {
