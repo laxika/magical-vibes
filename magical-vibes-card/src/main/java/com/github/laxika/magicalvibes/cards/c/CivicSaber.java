@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "RTR", collectorNumber = "227")
+@CardRegistration(set = "2X2", collectorNumber = "300")
 public class CivicSaber extends Card {
 
     public CivicSaber() {

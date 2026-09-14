@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -39,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpells
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemGrantsCastingOptionEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstMatchingSpellFlashGrant;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
@@ -958,6 +959,18 @@ public class CastingPermissionService {
 
     public boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        return canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty, false);
+    }
+
+    public boolean canCastWithTimingFromLibraryTop(GameData gameData, UUID playerId, Card card,
+                                                   boolean isActivePlayer, boolean isMainPhase,
+                                                   boolean stackEmpty) {
+        return canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty, true);
+    }
+
+    private boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
+                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
+                                      boolean fromLibraryTop) {
         if (isSorcerySpeedOnlyForPlayer(gameData, playerId)) {
             return sorceryTimingAvailable(gameData, playerId);
         }
@@ -969,6 +982,7 @@ public class CastingPermissionService {
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card)
+                || (fromLibraryTop && hasTopLibraryFlashGrant(gameData, playerId, card))
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card)
                 || hasAvailableFlashAlternateCast(gameData, playerId, card)
@@ -1001,6 +1015,26 @@ public class CastingPermissionService {
                             && restriction.appliesTo(sourceControllerId, playerId)) {
                         return true;
                     }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasTopLibraryFlashGrant(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
+                        && allow.grantsFlash()
+                        && matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
+                        && (!allow.oncePerTurn()
+                        || !gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId()))
+                        && canPayTopLibraryAdditionalCosts(gameData, playerId, allow)) {
+                    return true;
                 }
             }
         }
@@ -1624,18 +1658,32 @@ public class CastingPermissionService {
         for (Emblem emblem : gameData.emblems) {
             if (!emblem.controllerId().equals(playerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof EmblemGrantsFlashbackEffect egf) {
-                    for (CardType type : egf.cardTypes()) {
-                        if (card.hasType(type)) {
-                            return card.getManaCost() == null
-                                    ? Optional.empty()
-                                    : Optional.of(new FlashbackCast(card.getManaCost()));
-                        }
-                    }
+                if (effect instanceof EmblemGrantsCastingOptionEffect grant
+                        && grant.cardTypes().stream().anyMatch(card::hasType)
+                        && grant.castingOption(card).orElse(null) instanceof FlashbackCast flashback) {
+                    return Optional.of(flashback);
                 }
             }
         }
         return Optional.empty();
+    }
+
+    public boolean hasGrantedRetrace(GameData gameData, UUID playerId, Card card) {
+        if (!isCastableSpellCard(card)
+                || !playerId.equals(gameQueryService.findGraveyardOwnerById(gameData, card.getId()))) {
+            return false;
+        }
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(playerId)) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof EmblemGrantsCastingOptionEffect grant
+                        && grant.cardTypes().stream().anyMatch(card::hasType)
+                        && grant.castingOption(card).orElse(null) instanceof Retrace) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private Optional<FlashbackCast> flashbackOption(Card card, GrantFlashbackToGraveyardCardsEffect grant) {

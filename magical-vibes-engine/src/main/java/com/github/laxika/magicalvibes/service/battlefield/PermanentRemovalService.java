@@ -394,6 +394,7 @@ public class PermanentRemovalService {
      * @param controllerId the player who controlled the permanent on the battlefield
      */
     public void processAlreadyRemovedToGraveyard(GameData gameData, Permanent target, UUID controllerId) {
+        ZoneChangeCounterSupport.preserve(gameData, target);
         snapshotChosenPermanentStats(gameData, target,
                 gameQueryService.getEffectivePower(gameData, target),
                 gameQueryService.getEffectiveToughness(gameData, target));
@@ -1289,6 +1290,7 @@ public class PermanentRemovalService {
                     }
                 }
                 battlefield.remove(target);
+                ZoneChangeCounterSupport.preserve(gameData, target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand));
             }

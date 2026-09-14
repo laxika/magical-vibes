@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "142")
 @CardRegistration(set = "INR", collectorNumber = "312")
 @CardRegistration(set = "EMN", collectorNumber = "118")
+@CardRegistration(set = "2X2", collectorNumber = "104")
 public class BedlamReveler extends Card {
 
     public BedlamReveler() {

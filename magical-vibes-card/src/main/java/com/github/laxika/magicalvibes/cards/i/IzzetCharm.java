@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "MM3", collectorNumber = "171")
 @CardRegistration(set = "DDJ", collectorNumber = "21")
 @CardRegistration(set = "GK1", collectorNumber = "41")
+@CardRegistration(set = "2X2", collectorNumber = "230")
 public class IzzetCharm extends Card {
 
     public IzzetCharm() {

@@ -253,7 +253,8 @@ public enum CardSet {
     SET_HA1("HA1"),
     SET_HA2("HA2"),
     SET_HA3("HA3"),
-    SET_HA5("HA5");
+    SET_HA5("HA5"),
+    SET_2X2("2X2");
 
     @Getter
     private final String code;

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "127")
+@CardRegistration(set = "2X2", collectorNumber = "100")
 public class AbbotOfKeralKeep extends Card {
 
     public AbbotOfKeralKeep() {

@@ -210,9 +210,6 @@ public class BattlefieldPlacementService {
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             becomeDayAsEntersEffectHandler.applyDayboundEntryFace(gameData, permanent);
         }
-        Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
-        int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
-        int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
             return;
         }
@@ -222,6 +219,10 @@ public class BattlefieldPlacementService {
         if (!applyEntryCostReplacement(gameData, controllerId, permanent)) {
             return;
         }
+        ZoneChangeCounterSupport.restore(gameData, permanent);
+        Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
+        int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
+        int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan = null;

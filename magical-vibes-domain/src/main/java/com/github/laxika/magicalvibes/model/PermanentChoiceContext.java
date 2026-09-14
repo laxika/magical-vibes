@@ -155,6 +155,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
 
+    /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
+     * creates the fallback token when no legal sacrifice is possible. */
+    record TargetPlayerSacrificesCreatureOrCreatesToken(
+            UUID sacrificingPlayerId, StackEntry resolvingEntry, CreateTokenEffect tokenTemplate)
+            implements PermanentChoiceContext {}
+
     /** A targeted player chooses a permanent to sacrifice before taking mana-value damage. */
     record TargetPlayerSacrificesPermanentThenDealsManaValueDamage(
             UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)

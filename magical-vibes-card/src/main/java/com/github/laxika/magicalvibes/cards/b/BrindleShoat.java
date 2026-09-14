@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "VMA", collectorNumber = "199")
 @CardRegistration(set = "PC2", collectorNumber = "60")
 @CardRegistration(set = "PCA", collectorNumber = "60")
+@CardRegistration(set = "2X2", collectorNumber = "139")
 public class BrindleShoat extends Card {
 
     public BrindleShoat() {

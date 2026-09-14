@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "161")
 @CardRegistration(set = "MMA", collectorNumber = "117")
+@CardRegistration(set = "2X2", collectorNumber = "111")
 public class GreaterGargadon extends Card {
 
     public GreaterGargadon() {

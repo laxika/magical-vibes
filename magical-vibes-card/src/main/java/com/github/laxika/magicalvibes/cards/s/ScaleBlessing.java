@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "35")
+@CardRegistration(set = "2X2", collectorNumber = "27")
 public class ScaleBlessing extends Card {
 
     public ScaleBlessing() {

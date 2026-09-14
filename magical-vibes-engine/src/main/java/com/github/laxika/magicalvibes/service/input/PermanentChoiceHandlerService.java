@@ -154,6 +154,9 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureThenDrawsPower(
                     gameData, permanentId, targetPlayerSacrifice);
+        } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureOrCreatesToken targetPlayerSacrificeOrToken) {
+            battlefieldHandler.handleTargetPlayerSacrificesCreatureOrCreatesToken(
+                    gameData, permanentId, targetPlayerSacrificeOrToken);
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesPermanentThenDealsManaValueDamage targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesPermanentThenDealsManaValueDamage(
                     gameData, permanentId, targetPlayerSacrifice);

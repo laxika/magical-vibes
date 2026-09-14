@@ -1181,10 +1181,12 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player's life total is allowed to change (i.e. no
-     * {@link LifeTotalCantChangeEffect} is present on their battlefield).
+     * {@link LifeTotalCantChangeEffect} is present on their battlefield and no temporary player
+     * effect prevents life-total changes).
      */
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
-        return !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
+        return !gameData.playersWithLifeTotalCantChangeUntilNextTurn.contains(playerId)
+                && !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
     }
 
     /**

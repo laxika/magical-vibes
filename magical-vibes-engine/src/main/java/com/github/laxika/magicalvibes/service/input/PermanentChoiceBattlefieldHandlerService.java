@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAtt
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
@@ -166,6 +167,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler targetPlayerSacrificesCreatureThenDrawsPowerHandler;
+    private final TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler targetPlayerSacrificesCreatureOrCreatesTokenHandler;
     private final TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler targetPlayerSacrificesPermanentThenDealsManaValueDamageHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
@@ -659,6 +661,19 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         targetPlayerSacrificesCreatureThenDrawsPowerHandler.sacrificeAndDraw(
                 gameData, target, context.sacrificingPlayerId(), context.drawingPlayerId(), context.sourceCard());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTargetPlayerSacrificesCreatureOrCreatesToken(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.TargetPlayerSacrificesCreatureOrCreatesToken context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target creature no longer exists");
+        }
+
+        targetPlayerSacrificesCreatureOrCreatesTokenHandler.sacrificeOrCreateToken(
+                gameData, target, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

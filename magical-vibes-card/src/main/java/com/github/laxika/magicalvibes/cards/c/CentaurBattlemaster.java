@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "154")
+@CardRegistration(set = "2X2", collectorNumber = "140")
 public class CentaurBattlemaster extends Card {
 
     public CentaurBattlemaster() {

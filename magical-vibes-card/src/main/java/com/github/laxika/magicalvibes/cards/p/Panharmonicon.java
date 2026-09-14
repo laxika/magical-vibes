@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "226")
 @CardRegistration(set = "KLR", collectorNumber = "258")
+@CardRegistration(set = "2X2", collectorNumber = "310")
 public class Panharmonicon extends Card {
 
     public Panharmonicon() {

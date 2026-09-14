@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "72")
 @CardRegistration(set = "A25", collectorNumber = "113")
+@CardRegistration(set = "2X2", collectorNumber = "96")
 public class Unearth extends Card {
 
     public Unearth() {

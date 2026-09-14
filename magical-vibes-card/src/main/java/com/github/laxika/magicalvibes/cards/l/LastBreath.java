@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SHM", collectorNumber = "11")
 @CardRegistration(set = "THS", collectorNumber = "22")
 @CardRegistration(set = "MMQ", collectorNumber = "27")
+@CardRegistration(set = "2X2", collectorNumber = "15")
 public class LastBreath extends Card {
 
     public LastBreath() {

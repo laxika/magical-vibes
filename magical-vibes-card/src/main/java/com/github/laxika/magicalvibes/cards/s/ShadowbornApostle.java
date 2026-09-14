@@ -21,6 +21,7 @@ import java.util.List;
  * sacrificed Apostles may include this one — the cost does not exclude the source.
  */
 @CardRegistration(set = "M14", collectorNumber = "114")
+@CardRegistration(set = "2X2", collectorNumber = "89")
 public class ShadowbornApostle extends Card {
 
     public ShadowbornApostle() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "42")
+@CardRegistration(set = "2X2", collectorNumber = "59")
 public class MistfireAdept extends Card {
 
     public MistfireAdept() {
