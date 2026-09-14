@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "65")
+@CardRegistration(set = "SIR", collectorNumber = "73")
 public class GeralfsMasterpiece extends Card {
 
     public GeralfsMasterpiece() {

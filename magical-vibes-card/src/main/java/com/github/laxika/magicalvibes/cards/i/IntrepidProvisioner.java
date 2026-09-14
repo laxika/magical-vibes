@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "205")
 @CardRegistration(set = "SOI", collectorNumber = "213")
+@CardRegistration(set = "SIR", collectorNumber = "203")
 public class IntrepidProvisioner extends Card {
 
     public IntrepidProvisioner() {

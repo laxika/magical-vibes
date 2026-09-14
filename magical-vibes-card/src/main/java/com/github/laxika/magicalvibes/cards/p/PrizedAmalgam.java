@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFrom
 @CardRegistration(set = "SOI", collectorNumber = "249")
 @CardRegistration(set = "2X2", collectorNumber = "264")
 @CardRegistration(set = "TSR", collectorNumber = "382")
+@CardRegistration(set = "SIR", collectorNumber = "240")
 public class PrizedAmalgam extends Card {
 
     public PrizedAmalgam() {

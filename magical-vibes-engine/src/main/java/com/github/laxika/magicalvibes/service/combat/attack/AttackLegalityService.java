@@ -696,6 +696,35 @@ public class AttackLegalityService {
         }
 
         Set<UUID> validTargetIds = getValidAttackTargetIds(gameData, creatureControllerId);
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent sourcePermanent : battlefield) {
+                FilterContext context = FilterContext.of(gameData)
+                        .withSourceCardId(sourcePermanent.getOriginalCard().getId())
+                        .withSourceControllerId(sourceControllerId);
+                for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof CombatAttackRequirementEffect requirement)
+                            || !requirement.requiresAttackAtOtherPlayerIfAble()
+                            || !isCombatAttackRequirementApplicable(
+                            gameData, creature, sourcePermanent, requirement, context)) {
+                        continue;
+                    }
+
+                    boolean canAttackOtherPlayer = validTargetIds.stream()
+                            .filter(gameData.playerIds::contains)
+                            .filter(id -> !sourceControllerId.equals(id))
+                            .anyMatch(id -> canAttackDefender(gameData, creature, id));
+                    if (canAttackOtherPlayer
+                            && (!gameData.playerIds.contains(targetId)
+                            || targetId.equals(sourceControllerId))) {
+                        return true;
+                    }
+                }
+            }
+        }
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
                     || !requirement.requiresAttackAtOtherPlayerIfAble()

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "141")
+@CardRegistration(set = "SIR", collectorNumber = "176")
 public class ShredsOfSanity extends Card {
 
     public ShredsOfSanity() {

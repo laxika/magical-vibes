@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "267")
+@CardRegistration(set = "SIR", collectorNumber = "262")
 public class TrueFaithCenser extends Card {
 
     public TrueFaithCenser() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "135")
 @CardRegistration(set = "EMN", collectorNumber = "109")
+@CardRegistration(set = "SIR", collectorNumber = "136")
 public class TreeOfPerdition extends Card {
 
     public TreeOfPerdition() {

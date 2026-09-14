@@ -1,5 +1,6 @@
 # EFFECTS_INDEX
 | `CopyThisSpellForControllerEffect` | `()` | copies the spell currently resolving onto the stack under that spell's controller, then offers that player the standard "choose new targets for the copy" prompt. Used by Sevinne's Reclamation. Honors `cantBeCopied` |
+| `GoadEquippedCreatureEffect` | `()` | static Equipment combat requirement: the creature hosting the source Equipment is goaded while attached; attack validation counts the requirement and rejects an attack at the Equipment controller when another player is a legal attack target. Used by Bloodthirsty Blade |
 | `CantAttackCardOwnerEffect` | `()` | static self restriction: this creature can't attack its card owner or planeswalkers that player controls; enforced by `AttackLegalityService`. Xantcha, Sleeper Agent |
 | `SourcePermanentControllerLosesLifeEffect` | `(int amount)` | activated-ability effect: the source permanent's current controller loses `amount`; uses the controller captured on activation as last-known information if the source leaves before resolution. Xantcha, Sleeper Agent |
 | `TargetPlayerSacrificesCreatureOrCreatesTokenEffect` | `(CreateTokenEffect tokenTemplate)` | non-targeting combat-damage trigger; the damaged player sacrifices a creature or the source controller creates the fallback token. Used by Wasitora, Nekoru Queen |

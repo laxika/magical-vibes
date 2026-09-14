@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "107")
+@CardRegistration(set = "SIR", collectorNumber = "108")
 public class DiregrafColossus extends Card {
 
     public DiregrafColossus() {

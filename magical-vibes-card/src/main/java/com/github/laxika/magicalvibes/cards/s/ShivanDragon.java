@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "W16", collectorNumber = "13")
 @CardRegistration(set = "W17", collectorNumber = "22")
 @CardRegistration(set = "DMR", collectorNumber = "135")
+@CardRegistration(set = "GN3", collectorNumber = "87")
 @CardRegistration(set = "SLC", collectorNumber = "1993")
 public class ShivanDragon extends Card {
 
