@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "25")
+@CardRegistration(set = "A25", collectorNumber = "23")
 public class LuminarchAscension extends Card {
 
     public LuminarchAscension() {

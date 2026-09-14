@@ -3,35 +3,45 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.r.RazorfootGriffin;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Squall.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class,
+        RazorfootGriffin.class, SkyshroudFalcon.class})
 class SquallTest extends BaseCardTest {
 
     private void castSquall() {
-        harness.setHand(player1, List.of(new Squall()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Squall(), "{2}{G}");
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Squall destroys a flying creature with 2 or less toughness")
     void destroysSmallFlyer() {
-        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.addToBattlefield(player2, new RazorfootGriffin());
 
         castSquall();
 
-        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Razorfoot Griffin");
+    }
+
+    @Test
+    @DisplayName("Squall damages flying creatures controlled by both players")
+    void damagesFlyingCreaturesControlledByBothPlayers() {
+        harness.addToBattlefield(player1, new SkyshroudFalcon());
+        harness.addToBattlefield(player2, new SkyshroudFalcon());
+
+        castSquall();
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud Falcon");
+        harness.assertNotOnBattlefield(player2, "Skyshroud Falcon");
     }
 
     @Test

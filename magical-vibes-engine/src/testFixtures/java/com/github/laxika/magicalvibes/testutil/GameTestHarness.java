@@ -1353,6 +1353,12 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, damageAssignments);
     }
 
+    public void castSorcery(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                             Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, damageAssignments, targetIds, List.of());
+    }
+
     /** Cast an X instant whose damage is divided as you choose (Fire Covenant). */
     public void castInstantForX(Player player, int cardIndex, int xValue, Map<UUID, Integer> damageAssignments) {
         ensurePriority(player);
@@ -1725,6 +1731,11 @@ public class GameTestHarness {
         gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId, xValue);
     }
 
+    public void activateHandAbilityWithMultiTargets(Player player, int handCardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.activateHandAbility(gameData, player, handCardIndex, 0, null, null, targetIds);
+    }
+
     public void activateExiledAbility(Player player, UUID exiledCardId) {
         ensurePriority(player);
         gameService.activateExiledAbility(gameData, player, exiledCardId, 0, null, null);
@@ -1733,6 +1744,13 @@ public class GameTestHarness {
     public void activateHandAbilityWithGraveyardTargets(Player player, int handCardIndex, List<UUID> graveyardCardIds) {
         ensurePriority(player);
         gameService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, 0, graveyardCardIds);
+    }
+
+    public void activateHandAbilityWithGraveyardTargets(Player player, int handCardIndex, int xValue,
+                                                        List<UUID> graveyardCardIds) {
+        ensurePriority(player);
+        gameService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, 0, xValue,
+                graveyardCardIds);
     }
 
     public void handlePermanentChosen(Player player, UUID permanentId) {
@@ -1823,6 +1841,22 @@ public class GameTestHarness {
      */
     public void passUntil(TurnStep targetStep) {
         passUntil(null, targetStep);
+    }
+
+    /** Runs an action with a temporary priority stop, preserving each player's configured stops. */
+    public void withAutoStop(TurnStep step, Runnable action) {
+        Map<UUID, Set<TurnStep>> originalStops = new HashMap<>(gameData.playerAutoStopSteps);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Set<TurnStep> stops = new HashSet<>(originalStops.getOrDefault(playerId, Set.of()));
+            stops.add(step);
+            gameData.playerAutoStopSteps.put(playerId, stops);
+        }
+        try {
+            action.run();
+        } finally {
+            gameData.playerAutoStopSteps.clear();
+            gameData.playerAutoStopSteps.putAll(originalStops);
+        }
     }
 
     /**

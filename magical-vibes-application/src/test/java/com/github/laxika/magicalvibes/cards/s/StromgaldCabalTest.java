@@ -29,11 +29,8 @@ class StromgaldCabalTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         KjeldoranWarrior victim = new KjeldoranWarrior();
-        harness.setHand(player2, List.of(victim));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, victim, "{W}");
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, victim.getId());
@@ -46,6 +43,25 @@ class StromgaldCabalTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Kjeldoran Warrior");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own white spell")
+    void countersItsControllersOwnWhiteSpell() {
+        StromgaldCabal cabal = new StromgaldCabal();
+        var cabalPermanent = addCreatureReady(player1, cabal);
+        harness.setLife(player1, 20);
+
+        KjeldoranWarrior victim = new KjeldoranWarrior();
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, victim, "{W}");
+        harness.activateAbility(player1, 0, null, victim.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kjeldoran Warrior");
+        assertThat(gd.stack).isEmpty();
+        assertThat(cabalPermanent.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -79,11 +95,8 @@ class StromgaldCabalTest extends BaseCardTest {
         var cabalPermanent = addCreatureReady(player1, cabal);
 
         KjeldoranWarrior victim = new KjeldoranWarrior();
-        harness.setHand(player2, List.of(victim));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, victim, "{W}");
         harness.passPriority(player2);
         harness.setLife(player1, 0);
 
@@ -128,11 +141,8 @@ class StromgaldCabalTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         BalduvianBears bears = new BalduvianBears();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, bears, "{1}{G}");
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))

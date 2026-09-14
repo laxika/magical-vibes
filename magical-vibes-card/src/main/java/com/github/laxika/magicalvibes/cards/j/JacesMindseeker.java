@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "61")
+@CardRegistration(set = "DDM", collectorNumber = "19")
 public class JacesMindseeker extends Card {
 
     public JacesMindseeker() {

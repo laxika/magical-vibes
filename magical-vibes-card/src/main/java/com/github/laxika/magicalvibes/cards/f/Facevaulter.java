@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "111")
+@CardRegistration(set = "MMA", collectorNumber = "85")
 public class Facevaulter extends Card {
 
     public Facevaulter() {

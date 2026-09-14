@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "85")
+@CardRegistration(set = "V14", collectorNumber = "5")
 public class DecreeOfAnnihilation extends Card {
 
     public DecreeOfAnnihilation() {

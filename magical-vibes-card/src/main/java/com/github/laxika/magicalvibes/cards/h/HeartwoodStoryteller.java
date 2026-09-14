@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "127")
+@CardRegistration(set = "TSR", collectorNumber = "209")
 public class HeartwoodStoryteller extends Card {
 
     public HeartwoodStoryteller() {

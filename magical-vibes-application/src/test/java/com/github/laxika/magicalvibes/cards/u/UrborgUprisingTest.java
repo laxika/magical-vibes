@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DegaDisciple;
+import com.github.laxika.magicalvibes.cards.j.JadedResponse;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,20 +12,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UrborgUprising.class, Forest.class, GrizzlyBears.class})
+@CardUsed({UrborgUprising.class, DegaDisciple.class, JadedResponse.class})
 class UrborgUprisingTest extends BaseCardTest {
 
     @Test
     void returnsUpToTwoCreaturesAndDrawsACard() {
-        Card creature1 = new GrizzlyBears();
-        Card creature2 = new GrizzlyBears();
-        Card drawnCard = new Forest();
-        harness.setGraveyard(player1, List.of(creature1, creature2, new Forest()));
+        Card creature1 = new DegaDisciple();
+        Card creature2 = new DegaDisciple();
+        Card drawnCard = new JadedResponse();
+        harness.setGraveyard(player1, List.of(creature1, creature2, new JadedResponse()));
         harness.setLibrary(player1, List.of(drawnCard));
-        harness.setHand(player1, List.of(new UrborgUprising()));
-        addMana();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new UrborgUprising(), "{4}{B}");
         harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
         harness.passBothPriorities();
 
@@ -37,13 +34,11 @@ class UrborgUprisingTest extends BaseCardTest {
 
     @Test
     void onlyCreatureCardsCanBeReturned() {
-        Card creature = new GrizzlyBears();
-        Card land = new Forest();
-        harness.setGraveyard(player1, List.of(creature, land));
-        harness.setHand(player1, List.of(new UrborgUprising()));
-        addMana();
+        Card creature = new DegaDisciple();
+        Card noncreature = new JadedResponse();
+        harness.setGraveyard(player1, List.of(creature, noncreature));
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new UrborgUprising(), "{4}{B}");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
@@ -52,24 +47,70 @@ class UrborgUprisingTest extends BaseCardTest {
 
     @Test
     void choosingNoCreaturesStillDrawsACard() {
-        Card creature = new GrizzlyBears();
-        Card drawnCard = new Forest();
+        Card creature = new DegaDisciple();
+        Card drawnCard = new JadedResponse();
         harness.setGraveyard(player1, List.of(creature));
         harness.setLibrary(player1, List.of(drawnCard));
-        harness.setHand(player1, List.of(new UrborgUprising()));
-        addMana();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new UrborgUprising(), "{4}{B}");
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(drawnCard.getId());
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dega Disciple");
     }
 
-    private void addMana() {
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+    @Test
+    void returningOnlyOneCreatureStillDrawsACard() {
+        Card creature = new DegaDisciple();
+        Card drawnCard = new JadedResponse();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.castFromHand(player1, new UrborgUprising(), "{4}{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(creature.getId(), drawnCard.getId());
+        harness.assertNotInGraveyard(player1, "Dega Disciple");
+    }
+
+    @Test
+    void noCreatureCardsInGraveyardStillAllowsTheDraw() {
+        Card noncreature = new JadedResponse();
+        Card drawnCard = new JadedResponse();
+        harness.setGraveyard(player1, List.of(noncreature));
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.castFromHand(player1, new UrborgUprising(), "{4}{B}");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(drawnCard.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(noncreature.getId());
+    }
+
+    @Test
+    void onlyTheControllersGraveyardCanBeChosen() {
+        Card ownCreature = new DegaDisciple();
+        Card opponentCreature = new DegaDisciple();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        harness.castFromHand(player1, new UrborgUprising(), "{4}{B}");
+
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dega Disciple");
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(opponentCreature.getId());
     }
 }

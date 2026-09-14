@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "129")
+@CardRegistration(set = "A25", collectorNumber = "127")
 public class CrimsonMage extends Card {
 
     public CrimsonMage() {

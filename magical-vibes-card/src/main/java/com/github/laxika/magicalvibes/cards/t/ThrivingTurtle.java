@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "66")
+@CardRegistration(set = "KLR", collectorNumber = "69")
 public class ThrivingTurtle extends Card {
 
     public ThrivingTurtle() {

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,13 +18,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DiminishingReturnsTest extends BaseCardTest {
 
     private void castDiminishingReturns() {
-        harness.setHand(player1, List.of(new DiminishingReturns()));
         harness.setHand(player2, List.of());
         fillLibrary(player1, 20);
         fillLibrary(player2, 20);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DiminishingReturns(), "{2}{U}{U}");
         harness.passBothPriorities();
     }
 
@@ -61,14 +58,11 @@ class DiminishingReturnsTest extends BaseCardTest {
     void handAndGraveyardShuffledIntoLibrary() {
         Card graveyardCard = new DiminishingReturns();
         Card handCard = new DiminishingReturns();
-        harness.setHand(player1, List.of(new DiminishingReturns()));
         harness.setHand(player2, List.of(handCard));
         harness.setGraveyard(player2, List.of(graveyardCard));
         fillLibrary(player1, 20);
         fillLibrary(player2, 20);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DiminishingReturns(), "{2}{U}{U}");
         harness.passBothPriorities();
 
         harness.handleXValueChosen(player1, 0);
@@ -104,14 +98,10 @@ class DiminishingReturnsTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles only the cards available when the controller's library is short")
     void exilesOnlyAvailableCards() {
-        harness.setHand(player1, List.of(new DiminishingReturns()));
         harness.setHand(player2, List.of());
         fillLibrary(player1, 5);
         fillLibrary(player2, 7);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DiminishingReturns(), "{2}{U}{U}");
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
         harness.handleXValueChosen(player2, 0);
@@ -126,14 +116,10 @@ class DiminishingReturnsTest extends BaseCardTest {
     @DisplayName("The active player chooses their draw amount first")
     void activePlayerChoosesFirst() {
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of(new DiminishingReturns()));
         fillLibrary(player1, 20);
         fillLibrary(player2, 20);
         harness.forceActivePlayer(player2);
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new DiminishingReturns(), "{2}{U}{U}");
         harness.passBothPriorities();
 
         PendingInteraction.XValueChoice firstChoice =
@@ -148,6 +134,30 @@ class DiminishingReturnsTest extends BaseCardTest {
         assertThat(secondChoice).isNotNull();
         assertThat(secondChoice.playerId()).isEqualTo(player1.getId());
         harness.handleXValueChosen(player1, 0);
+    }
+
+    @Test
+    @DisplayName("An empty-library loss waits until both players finish drawing")
+    void emptyLibraryLossWaitsUntilBothPlayersFinishDrawing() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of());
+        fillLibrary(player2, 20);
+
+        harness.castFromHand(player1, new DiminishingReturns(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.handleXValueChosen(player1, 7);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        PendingInteraction.XValueChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
+
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 
     private void fillLibrary(com.github.laxika.magicalvibes.model.Player player, int count) {

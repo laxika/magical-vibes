@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -133,7 +134,12 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 && (!exchange.requireSharedArtifactOrCreatureType()
                         || gameQueryService.sharesArtifactOrCreatureType(gameData, ownTarget, opponentTarget))
                 && (!exchange.requireSharedCardType()
-                        || gameQueryService.sharesCardType(gameData, ownTarget, opponentTarget));
+                        || gameQueryService.sharesCardType(gameData, ownTarget, opponentTarget))
+                && (entry.getMultiTargetConstraint()
+                        != MultiTargetConstraint.CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT
+                        || gameData.combatDamageToPlayersThisCombat
+                        .getOrDefault(ownTarget.getId(), java.util.Set.of())
+                        .contains(opponentController));
         if (!stillLegal) {
             logFizzle(gameData, entry, exchange, ownTarget);
             return;
@@ -204,7 +210,8 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                            ExchangeControlOfTargetPermanentsEffect exchange, Permanent source) {
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s exchange has no effect (a target is no longer legal)."));
         log.info("Game {} - {} exchange fizzles (illegal target)", gameData.id, entry.getCard().getName());
-        if (!exchange.sacrificeSourceIfNoExchange() || source == null) {
+        if (!exchange.sacrificeSourceIfNoExchange() || source == null
+                || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
             return;
         }
         if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "204")
+@CardRegistration(set = "MM3", collectorNumber = "130")
+@CardRegistration(set = "TSR", collectorNumber = "217")
 public class MightOfOldKrosa extends Card {
 
     public MightOfOldKrosa() {

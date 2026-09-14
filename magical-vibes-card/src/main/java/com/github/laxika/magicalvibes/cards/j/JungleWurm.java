@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "224")
+@CardRegistration(set = "VMA", collectorNumber = "217")
 public class JungleWurm extends Card {
 
     public JungleWurm() {

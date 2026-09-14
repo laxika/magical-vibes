@@ -1,32 +1,28 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
+import com.github.laxika.magicalvibes.cards.d.DwarvenRuins;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.StripMine;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, Island.class, Mountain.class, Plains.class, StripMine.class, UntamedWilds.class})
+@CardUsed({CityOfBrass.class, DwarvenRuins.class, Forest.class, Island.class, Mountain.class, Plains.class, UntamedWilds.class})
 class UntamedWildsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Presents basic lands with destination battlefield (untapped)")
     void resolvingPresentsBasicLandsToBattlefield() {
-        setupAndCast();
-        setupLibrary();
-
-        harness.passBothPriorities();
+        castAndOpenLibrarySearch();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -35,7 +31,7 @@ class UntamedWildsTest extends BaseCardTest {
                         || c instanceof Forest
                         || c instanceof Island
                         || c instanceof Mountain)
-                .noneMatch(StripMine.class::isInstance);
+                .noneMatch(CityOfBrass.class::isInstance);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
@@ -43,10 +39,7 @@ class UntamedWildsTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen basic land enters the battlefield untapped")
     void chosenBasicLandEntersUntapped() {
-        setupAndCast();
-        setupLibrary();
-
-        harness.passBothPriorities();
+        castAndOpenLibrarySearch();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
         harness.handleCardChosen(player1, 0);
@@ -60,14 +53,26 @@ class UntamedWildsTest extends BaseCardTest {
     @Test
     @DisplayName("Player can fail to find")
     void canFailToFind() {
-        setupAndCast();
-        setupLibrary();
-
-        harness.passBothPriorities();
+        castAndOpenLibrarySearch();
 
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Failing to find leaves the library unchanged and shuffles")
+    void failingToFindLeavesLibraryUnchangedAndShuffles() {
+        setupAndCast();
+        setupLibrary();
+        List<Card> libraryBefore = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(libraryBefore);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -100,7 +105,7 @@ class UntamedWildsTest extends BaseCardTest {
 
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(
-                new Plains(), new Forest(), new Island(), new Mountain(), new StripMine()));
+                new Plains(), new Forest(), new Island(), new Mountain(), new CityOfBrass()));
     }
 
     @Test
@@ -134,5 +139,24 @@ class UntamedWildsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gameLogContains("it is empty")).isTrue();
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Chosen basic land leaves the library and the library is shuffled")
+    void chosenBasicLandLeavesLibraryAndShuffles() {
+        castAndOpenLibrarySearch();
+
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(chosenCard);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    private void castAndOpenLibrarySearch() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
     }
 }

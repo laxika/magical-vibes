@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "85")
+@CardRegistration(set = "MM3", collectorNumber = "63")
+@CardRegistration(set = "MP2", collectorNumber = "39")
+@CardRegistration(set = "TSR", collectorNumber = "106")
 public class Damnation extends Card {
 
     public Damnation() {

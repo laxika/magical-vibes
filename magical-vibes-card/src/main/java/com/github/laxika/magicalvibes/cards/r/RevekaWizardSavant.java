@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "37")
+@CardRegistration(set = "ME3", collectorNumber = "49")
 public class RevekaWizardSavant extends Card {
 
     public RevekaWizardSavant() {

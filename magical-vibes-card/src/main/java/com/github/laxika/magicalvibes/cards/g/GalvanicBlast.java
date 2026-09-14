@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "91")
+@CardRegistration(set = "DDU", collectorNumber = "45")
+@CardRegistration(set = "2XM", collectorNumber = "125")
 public class GalvanicBlast extends Card {
 
     public GalvanicBlast() {

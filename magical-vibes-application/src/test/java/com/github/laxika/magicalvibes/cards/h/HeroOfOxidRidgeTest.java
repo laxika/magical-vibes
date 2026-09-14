@@ -44,7 +44,8 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(elves.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, elves, hero,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -56,7 +57,8 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, bears, hero,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test
@@ -70,9 +72,12 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ownElves.isCantBlockThisTurn()).isTrue();
-        assertThat(oppElves.isCantBlockThisTurn()).isTrue();
-        assertThat(oppBears.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, ownElves, oppBears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppElves, hero,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, oppBears, hero,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test

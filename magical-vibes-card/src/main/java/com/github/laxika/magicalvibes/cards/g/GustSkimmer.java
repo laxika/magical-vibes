@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "108")
+@CardRegistration(set = "MM2", collectorNumber = "217")
 public class GustSkimmer extends Card {
 
     public GustSkimmer() {

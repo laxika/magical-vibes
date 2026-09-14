@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "89")
+@CardRegistration(set = "ME3", collectorNumber = "136")
 public class Tracker extends Card {
 
     public Tracker() {

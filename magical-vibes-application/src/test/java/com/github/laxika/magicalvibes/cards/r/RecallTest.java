@@ -74,6 +74,45 @@ class RecallTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can return cards that were discarded by Recall")
+    void returnsCardsDiscardedByRecall() {
+        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears(), new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 5); // X=2 => 5 mana
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 1);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Grizzly Bears", "Island");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Recall"));
+    }
+
+    @Test
+    @DisplayName("Still exiles Recall when X is positive but the controller has no cards to discard")
+    void positiveXWithEmptyHandStillExilesRecall() {
+        harness.setHand(player1, List.of(new Recall()));
+        harness.addMana(player1, ManaColor.BLUE, 3); // X=1 => 3 mana
+
+        harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Recall"));
+        harness.assertNotInGraveyard(player1, "Recall");
+    }
+
+    @Test
     @DisplayName("X=0 discards and returns nothing but still exiles Recall")
     void zeroXDiscardsNothing() {
         harness.setHand(player1, List.of(new Recall(), new GrizzlyBears()));

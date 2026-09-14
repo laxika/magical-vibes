@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, Pariah.class})
 class UnderworldDreamsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -93,11 +95,9 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UnderworldDreams());
         harness.setLife(player2, 20);
 
-        Permanent enchantedCreature = new Permanent(new GrizzlyBears());
-        enchantedCreature.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(enchantedCreature);
+        Permanent enchantedCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent pariah = new Permanent(new Pariah());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariah.setAttachedTo(enchantedCreature.getId());
         gd.playerBattlefields.get(player2.getId()).add(pariah);
 

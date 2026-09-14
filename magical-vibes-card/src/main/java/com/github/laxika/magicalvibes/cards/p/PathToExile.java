@@ -18,6 +18,13 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "15")
 @CardRegistration(set = "DDI", collectorNumber = "23")
+@CardRegistration(set = "MD1", collectorNumber = "3")
+@CardRegistration(set = "MMA", collectorNumber = "25")
+@CardRegistration(set = "E02", collectorNumber = "3")
+@CardRegistration(set = "MM3", collectorNumber = "17")
+@CardRegistration(set = "SS2", collectorNumber = "3")
+@CardRegistration(set = "2XM", collectorNumber = "25")
+@CardRegistration(set = "TSR", collectorNumber = "299")
 public class PathToExile extends Card {
 
     public PathToExile() {

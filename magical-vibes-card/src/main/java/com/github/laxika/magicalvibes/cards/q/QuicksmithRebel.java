@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "93")
+@CardRegistration(set = "KLR", collectorNumber = "139")
 public class QuicksmithRebel extends Card {
 
     public QuicksmithRebel() {

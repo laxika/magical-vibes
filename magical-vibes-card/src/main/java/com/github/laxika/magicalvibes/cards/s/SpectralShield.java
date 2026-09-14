@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ICE", collectorNumber = "302")
+@CardRegistration(set = "ME3", collectorNumber = "176")
 public class SpectralShield extends Card {
 
     public SpectralShield() {

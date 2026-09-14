@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "45")
+@CardRegistration(set = "DDQ", collectorNumber = "21")
 public class Topplegeist extends Card {
 
     public Topplegeist() {

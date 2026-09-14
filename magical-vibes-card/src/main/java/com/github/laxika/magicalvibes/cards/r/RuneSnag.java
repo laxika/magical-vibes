@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "46")
+@CardRegistration(set = "UMA", collectorNumber = "68")
 public class RuneSnag extends Card {
 
     public RuneSnag() {

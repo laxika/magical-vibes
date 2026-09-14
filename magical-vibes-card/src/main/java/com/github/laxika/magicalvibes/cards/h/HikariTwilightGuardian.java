@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "12")
+@CardRegistration(set = "MM2", collectorNumber = "18")
 public class HikariTwilightGuardian extends Card {
 
     public HikariTwilightGuardian() {

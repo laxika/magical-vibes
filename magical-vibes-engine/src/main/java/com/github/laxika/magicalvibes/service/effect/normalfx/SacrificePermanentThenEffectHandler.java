@@ -43,6 +43,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(controllerId)
                 .withSourcePermanentId(entry.getSourcePermanentId())
+                .withTargetCardId(targetCardId(entry))
                 .withTriggeringPermanentId(entry.getTriggeringPermanentId());
 
         List<UUID> validIds = new ArrayList<>();
@@ -74,5 +75,15 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
         log.info("Game {} - {} choosing {} to sacrifice for {}",
                 gameData.id, playerName, e.permanentDescription(), entry.getCard().getName());
     
+    }
+
+    private UUID targetCardId(StackEntry entry) {
+        if (entry.getTargetId() != null) {
+            return entry.getTargetId();
+        }
+        if (entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+            return entry.getTargetCardIds().getFirst();
+        }
+        return null;
     }
 }

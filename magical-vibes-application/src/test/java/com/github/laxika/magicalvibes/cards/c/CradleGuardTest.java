@@ -1,14 +1,20 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CradleGuard.class, GorillaWarrior.class})
 class CradleGuardTest extends BaseCardTest {
 
     @Test
@@ -52,12 +58,29 @@ class CradleGuardTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cradle Guard");
     }
 
+    @Test
+    void trampleDealsExcessCombatDamage() {
+        addCreatureReady(player1, new CradleGuard());
+        Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 2));
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player2, "Gorilla Warrior");
+    }
+
     private void castAndResolveCradleGuard() {
         harness.setHand(player1, List.of(new CradleGuard()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

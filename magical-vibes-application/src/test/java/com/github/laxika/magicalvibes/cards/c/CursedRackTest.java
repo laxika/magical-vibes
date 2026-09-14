@@ -19,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CursedRack.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class})
+@CardUsed({CursedRack.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class,
+        StealArtifact.class})
 class CursedRackTest extends BaseCardTest {
 
     @Test
@@ -106,7 +107,6 @@ class CursedRackTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(StealArtifact.class)
     void chosenOpponentRemainsAffectedAfterControlChange() {
         Permanent rack = harness.addToBattlefieldAndReturn(player1, new CursedRack());
         harness.forceActivePlayer(player2);

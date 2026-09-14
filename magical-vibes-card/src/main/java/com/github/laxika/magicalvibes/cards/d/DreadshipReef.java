@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "271")
+@CardRegistration(set = "TSR", collectorNumber = "276")
 public class DreadshipReef extends Card {
 
     public DreadshipReef() {

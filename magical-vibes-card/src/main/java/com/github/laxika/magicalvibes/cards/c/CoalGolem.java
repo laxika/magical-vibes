@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "99")
+@CardRegistration(set = "ME3", collectorNumber = "193")
 public class CoalGolem extends Card {
 
     public CoalGolem() {

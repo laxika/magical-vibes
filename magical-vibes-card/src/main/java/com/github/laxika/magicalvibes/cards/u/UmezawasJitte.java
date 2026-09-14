@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "163")
+@CardRegistration(set = "V16", collectorNumber = "14")
 public class UmezawasJitte extends Card {
 
     public UmezawasJitte() {

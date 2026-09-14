@@ -15,6 +15,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MischievousPoltergeist.class, StripedBears.class})
 class MischievousPoltergeistTest extends BaseCardTest {
+    @Test
+    void canStackMultipleRegenerationShields() {
+        Permanent poltergeist = addCreatureReady(player1, new MischievousPoltergeist());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        poltergeist.tap();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(poltergeist.getRegenerationShield()).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("Flying prevents non-flying creatures from blocking")
@@ -22,8 +36,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         Permanent poltergeist = addCreatureReady(player1, new MischievousPoltergeist());
         Permanent blocker = addCreatureReady(player2, new StripedBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(poltergeist);

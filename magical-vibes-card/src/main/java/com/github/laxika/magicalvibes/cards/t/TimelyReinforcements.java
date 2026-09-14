@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "40")
+@CardRegistration(set = "HA3", collectorNumber = "5")
 public class TimelyReinforcements extends Card {
 
     public TimelyReinforcements() {

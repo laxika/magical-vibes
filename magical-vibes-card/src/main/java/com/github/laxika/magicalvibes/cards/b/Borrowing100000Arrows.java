@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "35")
+@CardRegistration(set = "ME3", collectorNumber = "31")
+@CardRegistration(set = "A25", collectorNumber = "45")
 public class Borrowing100000Arrows extends Card {
 
     public Borrowing100000Arrows() {

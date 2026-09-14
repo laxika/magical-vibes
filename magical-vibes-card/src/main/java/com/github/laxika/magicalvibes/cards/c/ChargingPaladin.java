@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 @CardRegistration(set = "TPR", collectorNumber = "9")
 @CardRegistration(set = "S99", collectorNumber = "12")
 @CardRegistration(set = "DDC", collectorNumber = "4")
+@CardRegistration(set = "DVD", collectorNumber = "4")
 public class ChargingPaladin extends Card {
 
     public ChargingPaladin() {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BOK", collectorNumber = "70")
+@CardRegistration(set = "MMA", collectorNumber = "88")
 public class HorobisWhisper extends Card {
 
     public HorobisWhisper() {

@@ -37,7 +37,7 @@ class DeliberateTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomCard, nextCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, bottomCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Deliberate");
     }

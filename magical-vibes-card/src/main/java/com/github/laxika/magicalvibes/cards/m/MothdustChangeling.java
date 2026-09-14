@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "42")
+@CardRegistration(set = "MMA", collectorNumber = "53")
 public class MothdustChangeling extends Card {
 
     public MothdustChangeling() {

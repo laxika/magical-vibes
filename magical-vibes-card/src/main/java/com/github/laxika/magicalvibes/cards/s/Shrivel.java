@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "116")
 @CardRegistration(set = "ROE", collectorNumber = "126")
+@CardRegistration(set = "MM2", collectorNumber = "95")
 public class Shrivel extends Card {
 
     public Shrivel() {

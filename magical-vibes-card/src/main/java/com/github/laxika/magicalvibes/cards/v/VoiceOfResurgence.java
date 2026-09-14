@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "114")
+@CardRegistration(set = "MM3", collectorNumber = "200")
+@CardRegistration(set = "2XM", collectorNumber = "227")
 public class VoiceOfResurgence extends Card {
 
     public VoiceOfResurgence() {

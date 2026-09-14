@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "210")
+@CardRegistration(set = "KLR", collectorNumber = "237")
 public class ElectrostaticPummeler extends Card {
 
     public ElectrostaticPummeler() {

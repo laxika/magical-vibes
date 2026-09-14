@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "21")
+@CardRegistration(set = "MM3", collectorNumber = "19")
+@CardRegistration(set = "HA2", collectorNumber = "2")
 public class RangerOfEos extends Card {
 
     public RangerOfEos() {

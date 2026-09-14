@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "312")
 @CardRegistration(set = "DDC", collectorNumber = "58")
+@CardRegistration(set = "DDJ", collectorNumber = "78")
+@CardRegistration(set = "VMA", collectorNumber = "292")
+@CardRegistration(set = "DVD", collectorNumber = "58")
+@CardRegistration(set = "HA2", collectorNumber = "19")
 public class BarrenMoor extends Card {
 
     public BarrenMoor() {

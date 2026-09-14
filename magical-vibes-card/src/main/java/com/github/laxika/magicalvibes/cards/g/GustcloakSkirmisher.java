@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "38")
+@CardRegistration(set = "DDO", collectorNumber = "13")
 public class GustcloakSkirmisher extends Card {
 
     public GustcloakSkirmisher() {

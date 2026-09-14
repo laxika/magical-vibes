@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "59")
+@CardRegistration(set = "DDQ", collectorNumber = "25")
 public class GryffVanguard extends Card {
 
     public GryffVanguard() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "234")
+@CardRegistration(set = "EMA", collectorNumber = "158")
 public class ArgothianEnchantress extends Card {
 
     public ArgothianEnchantress() {

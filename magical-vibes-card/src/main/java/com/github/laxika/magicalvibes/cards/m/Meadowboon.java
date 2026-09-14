@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "17")
+@CardRegistration(set = "MMA", collectorNumber = "22")
 public class Meadowboon extends Card {
 
     public Meadowboon() {

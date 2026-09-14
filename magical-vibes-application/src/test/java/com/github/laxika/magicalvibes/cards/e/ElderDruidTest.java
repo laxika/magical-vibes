@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.u.UrzasBauble;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElderDruid.class, BalduvianBears.class, Forest.class, UrzasBauble.class, EnergyStorm.class})
+@CardUsed({ElderDruid.class, BalduvianBears.class, SnowCoveredForest.class, UrzasBauble.class, EnergyStorm.class})
 class ElderDruidTest extends BaseCardTest {
 
     // ===== Tap branch =====
@@ -79,6 +79,38 @@ class ElderDruidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not automatically untap a target tapped before resolution")
+    void doesNotAutomaticallyUntapTargetTappedBeforeResolution() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        addDruidMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can choose to untap a target tapped before resolution")
+    void canChooseToUntapTargetTappedBeforeResolution() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        addDruidMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
@@ -230,6 +262,35 @@ class ElderDruidTest extends BaseCardTest {
         assertThat(druid.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Can decline untapping a target that becomes tapped before resolution")
+    void canDeclineUntappingTargetThatBecomesTappedBeforeResolution() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        addDruidMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canChooseToUntapTargetThatBecomesTappedBeforeResolution() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        addDruidMana(player1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
     // ===== Helpers =====
 
     private void addDruidMana(Player player) {
@@ -242,7 +303,7 @@ class ElderDruidTest extends BaseCardTest {
     }
 
     private Permanent addReadyLand(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Forest());
+        return harness.addToBattlefieldAndReturn(player, new SnowCoveredForest());
     }
 
     private Permanent addReadyArtifact(Player player) {

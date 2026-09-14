@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -123,7 +124,10 @@ public class StaticEffectSupport {
                     || (pairedId != null && context.target().getId().equals(pairedId));
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
-            return context.targetOnSameBattlefield() && context.target().isTapped();
+            return context.targetOnSameBattlefield() && context.target().isTapped()
+                    && !context.target().getId().equals(context.sourceId())
+                    && isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifactEffect(context.gameData()))
+                    && matchesStaticFilter(context, context.target(), filter);
         }
         if (scope == GrantScope.OWN_UNTAPPED_CREATURES) {
             if (!context.targetOnSameBattlefield() || context.target().isTapped()) return false;
@@ -284,7 +288,8 @@ public class StaticEffectSupport {
                 accumulator.addGrantedSubtype(subtype);
             }
             accumulator.addKeywords(animate.grantedKeywords());
-        } else if (wrapped instanceof SetCardTypesEffect set && set.scope() == GrantScope.SELF) {
+        } else if (wrapped instanceof SetCardTypesEffect set && set.scope() == GrantScope.SELF
+                && (set.duration() != EffectDuration.WHILE_ATTACHED || context.source().isAttached())) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());
         }

@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "63")
+@CardRegistration(set = "DDM", collectorNumber = "26")
+@CardRegistration(set = "MM2", collectorNumber = "55")
+@CardRegistration(set = "TSR", collectorNumber = "316")
 public class Remand extends Card {
 
     public Remand() {

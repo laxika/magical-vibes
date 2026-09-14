@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.n.NobleElephant;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlightedShaman.class, Forest.class, NobleElephant.class, Swamp.class})
+@CardUsed({BlightedShaman.class, Forest.class, GrizzlyBears.class, Swamp.class})
 class BlightedShamanTest extends BaseCardTest {
 
     // ===== {T}, Sacrifice a Swamp: Target creature gets +1/+1 =====
@@ -23,7 +25,7 @@ class BlightedShamanTest extends BaseCardTest {
     void sacrificeSwampGivesPlusOne() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new NobleElephant());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         // permanentIndex 0 = Shaman, abilityIndex 0 = sacrifice a Swamp; only 1 Swamp → auto-sacrifice
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -43,7 +45,7 @@ class BlightedShamanTest extends BaseCardTest {
     void sacrificeCreatureGivesPlusTwo() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
         // Only creature player1 controls is the Shaman → the sacrifice cost auto-picks it.
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new NobleElephant());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         // abilityIndex 1 = sacrifice a creature
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -61,8 +63,8 @@ class BlightedShamanTest extends BaseCardTest {
     @DisplayName("The creature-sacrifice ability can sacrifice another creature and leave the Shaman on the battlefield")
     void sacrificeCreatureCanChooseAnotherCreature() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
-        Permanent fodder = addCreatureReady(player1, new NobleElephant());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new NobleElephant());
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
@@ -83,7 +85,7 @@ class BlightedShamanTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
         harness.addToBattlefield(player1, new Swamp());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new NobleElephant());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -98,13 +100,30 @@ class BlightedShamanTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    void sacrificeSwampCanSacrificeSourceWhenItIsASwamp() {
+        Permanent shaman = addCreatureReady(player1, new BlightedShaman());
+        shaman.getGrantedCardTypes().add(CardType.LAND);
+        shaman.getGrantedSubtypes().add(CardSubtype.SWAMP);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(shaman.getCard().getId()));
+    }
+
     // ===== Cost cannot be paid without a Swamp =====
 
     @Test
     @DisplayName("The Swamp ability cannot be activated without a Swamp to sacrifice")
     void cannotActivateSwampAbilityWithoutSwamp() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new NobleElephant());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 0, null, target.getId())
@@ -118,7 +137,7 @@ class BlightedShamanTest extends BaseCardTest {
     void cannotActivateSwampAbilityWithForest() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new NobleElephant());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 0, null, target.getId())

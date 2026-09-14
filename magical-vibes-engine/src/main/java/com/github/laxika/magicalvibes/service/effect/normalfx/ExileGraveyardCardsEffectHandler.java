@@ -237,6 +237,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (e.putKickCounters()) {
+            exiledCards.forEach(card -> gameData.exiledCardsWithKickCounters.add(card.getId()));
+        }
+
         if (controllerGraveyard) {
             entry.setEventValue(exiledCards.size());
         } else if (e.eventValueFilter() != null) {
@@ -256,7 +260,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry,
                                             ExileGraveyardCardsEffect effect) {
-        List<UUID> targetCardIds = entry.getTargetCardIds();
+        List<UUID> targetCardIds = entry.getTargetCardIdsForEffect(effect);
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
 
         if (targetCardIds == null || targetCardIds.isEmpty()) {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "248")
+@CardRegistration(set = "UMA", collectorNumber = "253")
+@CardRegistration(set = "2XM", collectorNumber = "327")
 public class ThespiansStage extends Card {
 
     public ThespiansStage() {

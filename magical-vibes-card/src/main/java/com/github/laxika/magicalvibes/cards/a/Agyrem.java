@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "3")
+@CardRegistration(set = "OPCA", collectorNumber = "11")
 public class Agyrem extends Card {
 
     public Agyrem() {

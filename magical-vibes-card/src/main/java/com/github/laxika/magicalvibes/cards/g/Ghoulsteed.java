@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "113")
+@CardRegistration(set = "UMA", collectorNumber = "97")
 public class Ghoulsteed extends Card {
 
     public Ghoulsteed() {

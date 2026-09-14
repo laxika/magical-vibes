@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
@@ -144,6 +145,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
@@ -428,6 +430,17 @@ public class AmountEvaluationService {
                 }
                 yield source == null ? 0 : source.getTimesMutated();
             }
+            case TimesSourceAbilityResolvedThisTurn ignored -> {
+                UUID sourceId = ctx.stackEntry() != null
+                        ? ctx.stackEntry().getSourcePermanentId()
+                        : ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId();
+                if (sourceId == null && ctx.stackEntry() != null
+                        && ctx.stackEntry().getSourcePermanentSnapshot() != null) {
+                    sourceId = ctx.stackEntry().getSourcePermanentSnapshot().getId();
+                }
+                yield sourceId == null
+                        ? 0 : gameData.permanentAbilityResolutionsThisTurn.getOrDefault(sourceId, 0);
+            }
             case CreaturesDevoured ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCreatures().size();
             case DevouredCreaturesOfSubtype d ->
@@ -456,6 +469,8 @@ public class AmountEvaluationService {
                     greatestOpponentHandSize(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
+            case OpponentsAttackedThisTurn ignored ->
+                    opponentsAttackedThisTurn(gameData, ctx);
             case OpponentsWhoLostLifeThisTurn ignored ->
                     opponentsWhoLostLifeThisTurn(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->
@@ -1804,12 +1819,17 @@ public class AmountEvaluationService {
 
         List<Set<CardSubtype>> creatureTypes = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) {
+            // Party can define power in layer 7. Read the already applied type and
+            // ability layers instead of recursively assembling that power again.
+            var state = LayerSystemService.activeStateFor(permanent.getId());
+            if (!(state != null ? state.getCardTypes().contains(CardType.CREATURE)
+                    : gameQueryService.isCreature(gameData, permanent))) {
                 continue;
             }
-            Set<CardSubtype> types = new HashSet<>(
-                    gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
-            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+            Set<CardSubtype> types = new HashSet<>(state != null ? state.getSubtypes()
+                    : gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
+            if (state != null ? state.getKeywords().contains(Keyword.CHANGELING)
+                    : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
                 types.addAll(PARTY_ROLES);
             }
             creatureTypes.add(types);
@@ -2133,6 +2153,19 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
                     && gameData.lifeLostThisTurn.getOrDefault(playerId, 0) > 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsAttackedThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int count = 0;
+        for (Map.Entry<UUID, Set<UUID>> entry : gameData.playersWhoAttackedPlayersThisTurn.entrySet()) {
+            if (gameData.orderedPlayerIds.contains(entry.getKey())
+                    && !entry.getKey().equals(ctx.controllerId())
+                    && entry.getValue().contains(ctx.controllerId())) {
                 count++;
             }
         }

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "149")
+@CardRegistration(set = "DDO", collectorNumber = "34")
 public class KioraTheCrashingWave extends Card {
 
     private static final String EMBLEM_TEXT =

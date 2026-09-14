@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "134")
+@CardRegistration(set = "MMA", collectorNumber = "170")
 public class ToothAndNail extends Card {
 
     public ToothAndNail() {

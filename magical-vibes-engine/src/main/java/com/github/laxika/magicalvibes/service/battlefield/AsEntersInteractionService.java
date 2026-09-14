@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
@@ -134,6 +135,15 @@ public class AsEntersInteractionService {
                                                  List<String> repeatedAdditionalCosts,
                                                  List<UUID> convokeCreatureIds) {
         controllerId = resolveTokenControllerForEntry(gameData, controllerId, card);
+
+        // Placement can be prevented by a replacement effect or deferred for an as-enters choice.
+        // In either case, do not run entry abilities or treat an existing permanent as the new one.
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield == null || controllerBattlefield.stream().noneMatch(permanent ->
+                permanent.getCard().getId().equals(card.getId())
+                        || permanent.getOriginalCard().getId().equals(card.getId()))) {
+            return;
+        }
 
         boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
@@ -255,6 +265,23 @@ public class AsEntersInteractionService {
             }
         }
 
+        boolean needsPlayerChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChoosePlayerOnEnterEffect.class::isInstance);
+        if (needsPlayerChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
+            if (!validPlayerIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChoosePlayerAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                                convokeCreatureIds));
+                playerInputService.beginPlayerChoice(gameData, controllerId, validPlayerIds,
+                        "Choose a player.");
+                return;
+            }
+        }
+
         boolean needsPrimalClayFormChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
         if (needsPrimalClayFormChoice) {
@@ -295,7 +322,12 @@ public class AsEntersInteractionService {
         if (modeChoice != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            if (justEntered.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+            if (modeChoice.eachPlayer()) {
+                if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                        gameData, card, justEntered.getId(), modeChoice.modes())) {
+                    return;
+                }
+            } else if (justEntered.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
                 playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
                         justEntered.getId(), modeChoice.modes());
                 return;
@@ -390,21 +422,24 @@ public class AsEntersInteractionService {
         // Devour (CR 702.82a): "As this creature enters, you may sacrifice any number of creatures.
         // It enters with N times that many +1/+1 counters on it." As-enters replacement, resolved
         // before ETB triggers. Prompt the controller to sacrifice any of their other creatures.
+        List<Permanent> enteringBattlefieldForDevour = gameData.playerBattlefields.get(controllerId);
+        Permanent devourEnteringPermanent = enteringBattlefieldForDevour.get(enteringBattlefieldForDevour.size() - 1);
         DevourEffect devour = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof DevourEffect)
                 .map(e -> (DevourEffect) e)
                 .findFirst().orElse(null);
+        if (devour == null && devourEnteringPermanent.getGrantedDevour() > 0) {
+            devour = new DevourEffect(devourEnteringPermanent.getGrantedDevour());
+        }
         if (devour != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
-            List<UUID> sacrificeable = bf.stream()
-                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
+            List<UUID> sacrificeable = enteringBattlefieldForDevour.stream()
+                    .filter(p -> p != devourEnteringPermanent && gameQueryService.isCreature(gameData, p))
                     .map(Permanent::getId)
                     .toList();
             if (!sacrificeable.isEmpty()) {
                 playerInputService.beginMultiPermanentChoice(gameData, controllerId,
                         new ArrayList<>(sacrificeable), sacrificeable.size(),
-                        new MultiPermanentChoiceContext.DevourSacrifice(justEntered.getId(), devour.multiplier(),
+                        new MultiPermanentChoiceContext.DevourSacrifice(devourEnteringPermanent.getId(), devour.multiplier(),
                                 controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
                         card.getName() + " — Devour: sacrifice any number of creatures.");
                 return;

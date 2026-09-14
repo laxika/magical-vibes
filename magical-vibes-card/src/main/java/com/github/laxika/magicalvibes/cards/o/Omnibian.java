@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "119")
+@CardRegistration(set = "GK2", collectorNumber = "121")
 public class Omnibian extends Card {
 
     public Omnibian() {

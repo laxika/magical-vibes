@@ -28,8 +28,7 @@ class SerpentWarriorTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, lifeBefore - 3);
@@ -42,8 +41,7 @@ class SerpentWarriorTest extends BaseCardTest {
         int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         harness.assertLife(player1, player1LifeBefore - 3);
         harness.assertLife(player2, player2LifeBefore);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "133")
+@CardRegistration(set = "KLR", collectorNumber = "148")
 public class SpiresideInfiltrator extends Card {
 
     public SpiresideInfiltrator() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "149")
+@CardRegistration(set = "KLR", collectorNumber = "231")
 public class DaredevilDragster extends Card {
 
     public DaredevilDragster() {

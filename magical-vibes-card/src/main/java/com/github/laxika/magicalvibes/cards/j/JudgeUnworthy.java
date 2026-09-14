@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "9")
+@CardRegistration(set = "TSR", collectorNumber = "21")
 public class JudgeUnworthy extends Card {
 
     public JudgeUnworthy() {

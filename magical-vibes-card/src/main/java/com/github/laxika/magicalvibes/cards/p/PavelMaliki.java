@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "248")
+@CardRegistration(set = "ME3", collectorNumber = "165")
 public class PavelMaliki extends Card {
 
     public PavelMaliki() {

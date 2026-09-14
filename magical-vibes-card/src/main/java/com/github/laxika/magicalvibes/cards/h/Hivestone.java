@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "256")
+@CardRegistration(set = "TSR", collectorNumber = "268")
 public class Hivestone extends Card {
 
     public Hivestone() {

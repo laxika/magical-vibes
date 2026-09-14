@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "29")
+@CardRegistration(set = "UMA", collectorNumber = "40")
 public class TethmosHighPriest extends Card {
 
     public TethmosHighPriest() {

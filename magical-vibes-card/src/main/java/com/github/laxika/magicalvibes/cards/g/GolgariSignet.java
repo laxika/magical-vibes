@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "262")
+@CardRegistration(set = "MM3", collectorNumber = "220")
+@CardRegistration(set = "DDJ", collectorNumber = "66")
+@CardRegistration(set = "GK1", collectorNumber = "73")
 public class GolgariSignet extends Card {
 
     public GolgariSignet() {

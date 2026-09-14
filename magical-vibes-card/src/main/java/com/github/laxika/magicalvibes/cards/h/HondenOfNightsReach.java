@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "116")
+@CardRegistration(set = "EMA", collectorNumber = "91")
+@CardRegistration(set = "HA3", collectorNumber = "12")
 public class HondenOfNightsReach extends Card {
 
     public HondenOfNightsReach() {

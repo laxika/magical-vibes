@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
+import com.github.laxika.magicalvibes.cards.v.Vengeance;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,12 +16,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrudgeSkeletons.class, GrizzlyBears.class, ProdigalSorcerer.class, RoyalAssassin.class,
+@CardUsed({DrudgeSkeletons.class, GrizzlyBears.class, ProdigalSorcerer.class, Vengeance.class,
         WrathOfGod.class})
 class DrudgeSkeletonsTest extends BaseCardTest {
 
@@ -170,17 +169,18 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if Drudge Skeletons is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
-        addCreatureReady(player1, new DrudgeSkeletons());
+    @DisplayName("Ability does nothing if Drudge Skeletons leaves the battlefield before resolution")
+    void abilityDoesNothingIfSourceLeavesBattlefield() {
+        Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, skelePerm));
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
     }
 
     @Test
@@ -217,6 +217,22 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
         harness.assertInGraveyard(player1, "Drudge Skeletons");
+    }
+
+    @Test
+    @DisplayName("Regeneration removes damage marked on Drudge Skeletons")
+    void regenerationRemovesMarkedDamage() {
+        Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
+        skelePerm.setRegenerationShield(1);
+        skelePerm.setBlocking(true);
+        skelePerm.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(skelePerm.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -262,9 +278,13 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         skelePerm.setRegenerationShield(1);
         skelePerm.tap();
 
-        addCreatureReady(player2, new RoyalAssassin());
-        harness.activateAbility(player2, 0, null, skelePerm.getId());
-        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Vengeance()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player2, 0, 0, skelePerm.getId());
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
@@ -278,7 +298,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         skelePerm.setRegenerationShield(1);
 
         addCreatureReady(player2, new ProdigalSorcerer());
-        declareAttackers(List.of(0));
 
         harness.activateAbility(player2, 0, null, skelePerm.getId());
         harness.passBothPriorities();
@@ -294,7 +313,6 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
 
         addCreatureReady(player2, new ProdigalSorcerer());
-        declareAttackers(List.of(0));
 
         harness.activateAbility(player2, 0, null, skelePerm.getId());
         harness.passBothPriorities();

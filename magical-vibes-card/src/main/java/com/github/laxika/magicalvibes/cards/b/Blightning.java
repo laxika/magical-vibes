@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "ALA", collectorNumber = "156")
+@CardRegistration(set = "DDK", collectorNumber = "69")
+@CardRegistration(set = "A25", collectorNumber = "198")
 public class Blightning extends Card {
 
     public Blightning() {

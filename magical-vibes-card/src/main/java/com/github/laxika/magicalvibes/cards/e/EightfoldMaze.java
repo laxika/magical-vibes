@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "2")
+@CardRegistration(set = "ME3", collectorNumber = "9")
 public class EightfoldMaze extends Card {
 
     public EightfoldMaze() {

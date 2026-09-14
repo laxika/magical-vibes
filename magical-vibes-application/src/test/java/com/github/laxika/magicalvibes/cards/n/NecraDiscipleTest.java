@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NecraDisciple.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({NecraDisciple.class, GarrukWildspeaker.class, GrizzlyBears.class, Plains.class, Shock.class})
 class NecraDiscipleTest extends BaseCardTest {
 
     @Test
@@ -47,8 +49,7 @@ class NecraDiscipleTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
@@ -66,10 +67,27 @@ class NecraDiscipleTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("White ability can target a planeswalker")
+    void whiteAbilityCanTargetPlaneswalker() {
+        addReadyDisciple(player1);
+        Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        garruk.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, garruk.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, garruk.getId());
+
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test

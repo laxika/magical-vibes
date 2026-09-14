@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "96")
+@CardRegistration(set = "DDK", collectorNumber = "27")
 public class Unmake extends Card {
 
     public Unmake() {

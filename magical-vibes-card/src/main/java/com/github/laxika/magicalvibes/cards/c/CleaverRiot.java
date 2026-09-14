@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M13", collectorNumber = "125")
+@CardRegistration(set = "DDT", collectorNumber = "36")
 public class CleaverRiot extends Card {
 
     public CleaverRiot() {

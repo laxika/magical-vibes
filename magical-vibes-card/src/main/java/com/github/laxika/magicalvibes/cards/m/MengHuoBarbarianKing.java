@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "PTK", collectorNumber = "142")
+@CardRegistration(set = "ME3", collectorNumber = "128")
 public class MengHuoBarbarianKing extends Card {
 
     public MengHuoBarbarianKing() {

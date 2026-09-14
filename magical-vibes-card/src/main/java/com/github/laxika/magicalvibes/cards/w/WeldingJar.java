@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "274")
+@CardRegistration(set = "2XM", collectorNumber = "307")
 public class WeldingJar extends Card {
 
     public WeldingJar() {

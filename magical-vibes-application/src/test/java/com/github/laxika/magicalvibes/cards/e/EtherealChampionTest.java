@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
-import com.github.laxika.magicalvibes.cards.g.GrangerGuildmage;
-import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EtherealChampion.class, FemerefArchers.class, GrangerGuildmage.class, Incinerate.class})
+@CardUsed({EtherealChampion.class, FemerefArchers.class, ProdigalSorcerer.class, Shock.class})
 class EtherealChampionTest extends BaseCardTest {
 
     @Test
@@ -37,13 +37,12 @@ class EtherealChampionTest extends BaseCardTest {
     @DisplayName("The next 1 noncombat damage dealt to the Champion is prevented")
     void preventsNoncombatDamage() {
         Permanent champion = addCreatureReady(player1, new EtherealChampion());
-        Permanent damageSource = addCreatureReady(player1, new GrangerGuildmage());
-        harness.addMana(player1, ManaColor.RED, 1);
+        Permanent damageSource = addCreatureReady(player1, new ProdigalSorcerer());
 
         harness.activateAbility(player1, indexOf(player1, champion), null, null);
         harness.passBothPriorities();
 
-        // Granger Guildmage pings the Champion for 1; that 1 damage is prevented.
+        // Prodigal Sorcerer pings the Champion for 1; that 1 damage is prevented.
         harness.activateAbility(player1, indexOf(player1, damageSource), null, champion.getId());
         harness.passBothPriorities();
 
@@ -55,9 +54,8 @@ class EtherealChampionTest extends BaseCardTest {
     @DisplayName("Damage to another player is not prevented by the self-only shield")
     void doesNotPreventDamageToAnotherRecipient() {
         Permanent champion = addCreatureReady(player1, new EtherealChampion());
-        Permanent damageSource = addCreatureReady(player1, new GrangerGuildmage());
+        Permanent damageSource = addCreatureReady(player1, new ProdigalSorcerer());
         int opponentLifeBefore = gd.getLife(player2.getId());
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, indexOf(player1, champion), null, null);
         harness.passBothPriorities();
@@ -66,6 +64,23 @@ class EtherealChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
+        assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage to another creature is not prevented by the self-only shield")
+    void doesNotPreventDamageToAnotherCreature() {
+        Permanent champion = addCreatureReady(player1, new EtherealChampion());
+        Permanent otherCreature = addCreatureReady(player1, new FemerefArchers());
+        Permanent damageSource = addCreatureReady(player1, new ProdigalSorcerer());
+
+        harness.activateAbility(player1, indexOf(player1, champion), null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, damageSource), null, otherCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
         assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
     }
 
@@ -79,13 +94,11 @@ class EtherealChampionTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, champion), null, null);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Incinerate()));
+        harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, champion.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, champion.getId());
 
-        assertThat(champion.getMarkedDamage()).isEqualTo(1);
+        assertThat(champion.getMarkedDamage()).isEqualTo(0);
         assertThat(champion.getDamagePreventionShield()).isEqualTo(0);
     }
 
@@ -99,11 +112,8 @@ class EtherealChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // player2 attacks with a 2/2; the Champion blocks and takes 2 combat damage
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, champion), 0)));
         harness.passBothPriorities();
 

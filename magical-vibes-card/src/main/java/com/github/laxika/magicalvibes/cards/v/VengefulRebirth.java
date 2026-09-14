@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "62")
+@CardRegistration(set = "MM2", collectorNumber = "188")
+@CardRegistration(set = "UMA", collectorNumber = "209")
 public class VengefulRebirth extends Card {
 
     public VengefulRebirth() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "261")
+@CardRegistration(set = "ME3", collectorNumber = "178")
 public class SunastianFalconer extends Card {
 
     public SunastianFalconer() {

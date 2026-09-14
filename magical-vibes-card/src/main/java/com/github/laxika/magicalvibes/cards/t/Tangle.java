@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "213")
+@CardRegistration(set = "VMA", collectorNumber = "237")
 public class Tangle extends Card {
 
     public Tangle() {

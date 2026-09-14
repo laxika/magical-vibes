@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "207")
+@CardRegistration(set = "MM3", collectorNumber = "208")
 public class Giantbaiting extends Card {
 
     public Giantbaiting() {

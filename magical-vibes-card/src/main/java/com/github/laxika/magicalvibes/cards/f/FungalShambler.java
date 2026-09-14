@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class FungalShambler extends Card {
 
     public FungalShambler() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, SequenceEffect.of(
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, SequenceEffect.of(
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false)));
     }

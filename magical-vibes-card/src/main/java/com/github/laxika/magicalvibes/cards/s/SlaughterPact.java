@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "78")
+@CardRegistration(set = "MMA", collectorNumber = "97")
+@CardRegistration(set = "MP2", collectorNumber = "44")
+@CardRegistration(set = "TSR", collectorNumber = "138")
 public class SlaughterPact extends Card {
 
     public SlaughterPact() {

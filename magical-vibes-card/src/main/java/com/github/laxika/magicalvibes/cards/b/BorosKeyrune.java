@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "227")
+@CardRegistration(set = "GK1", collectorNumber = "96")
 public class BorosKeyrune extends Card {
 
     public BorosKeyrune() {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "275")
+@CardRegistration(set = "UMA", collectorNumber = "247")
 public class MistveilPlains extends Card {
 
     public MistveilPlains() {

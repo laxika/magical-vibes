@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "56")
+@CardRegistration(set = "DDM", collectorNumber = "9")
+@CardRegistration(set = "DDT", collectorNumber = "12")
 public class MerfolkWayfinder extends Card {
 
     public MerfolkWayfinder() {

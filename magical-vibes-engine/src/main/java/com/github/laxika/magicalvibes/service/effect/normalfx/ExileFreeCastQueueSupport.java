@@ -23,7 +23,10 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -123,6 +126,30 @@ public class ExileFreeCastQueueSupport {
             graveyardService.addCardToGraveyard(gameData, entry.ownerId(), entry.card());
             gameLogService.append(gameData, GameLog.cardThen(entry.card(), " is put into its owner's graveyard."));
         }
+    }
+
+    public void queueRemainderToLibraryBottom(GameData gameData, List<UUID> cardIds) {
+        gameData.pendingExileFreeCastRemainderToLibraryBottom.clear();
+        gameData.pendingExileFreeCastRemainderToLibraryBottom.addAll(cardIds);
+    }
+
+    public void putRemainderIntoLibraryBottom(GameData gameData) {
+        List<UUID> remainder = new ArrayList<>(gameData.pendingExileFreeCastRemainderToLibraryBottom);
+        gameData.pendingExileFreeCastRemainderToLibraryBottom.clear();
+        Map<UUID, List<Card>> cardsByOwner = new HashMap<>();
+        for (UUID cardId : remainder) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry == null || !gameData.removeFromExile(cardId)) {
+                continue;
+            }
+            cardsByOwner.computeIfAbsent(entry.ownerId(), ignored -> new ArrayList<>()).add(entry.card());
+        }
+        cardsByOwner.forEach((ownerId, cards) -> {
+            Collections.shuffle(cards);
+            gameData.playerDecks.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).addAll(cards);
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(ownerId)
+                    + " puts the uncast cards on the bottom of their library in a random order."));
+        });
     }
 
 
@@ -429,6 +456,7 @@ public class ExileFreeCastQueueSupport {
     private void finishFreeCastProcess(GameData gameData) {
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
+        putRemainderIntoLibraryBottom(gameData);
         if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
             return;
         }

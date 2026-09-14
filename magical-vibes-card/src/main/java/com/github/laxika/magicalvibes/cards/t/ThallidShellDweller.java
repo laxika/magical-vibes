@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "226")
+@CardRegistration(set = "MMA", collectorNumber = "169")
+@CardRegistration(set = "TSR", collectorNumber = "237")
 public class ThallidShellDweller extends Card {
 
     public ThallidShellDweller() {

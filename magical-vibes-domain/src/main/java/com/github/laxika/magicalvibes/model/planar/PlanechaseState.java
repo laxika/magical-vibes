@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /** Mutable planar state, accessed under the owning game's monitor. */
@@ -13,6 +15,7 @@ public final class PlanechaseState {
     public final List<Card> deck = new ArrayList<>();
     public final List<PlanarObject> faceUp = new ArrayList<>();
     public final Map<UUID, Integer> specialActionRolls = new HashMap<>();
+    public final Set<UUID> blankRollChaosSources = new HashSet<>();
     public UUID controllerId;
     public int rollTurn = -1;
     public long rollSequence;
@@ -36,6 +39,7 @@ public final class PlanechaseState {
         copy.deck.addAll(deck);
         faceUp.forEach(object -> copy.faceUp.add(object.copy()));
         copy.specialActionRolls.putAll(specialActionRolls);
+        copy.blankRollChaosSources.addAll(blankRollChaosSources);
         copy.controllerId = controllerId;
         copy.rollTurn = rollTurn;
         copy.rollSequence = rollSequence;

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "153")
+@CardRegistration(set = "MM3", collectorNumber = "135")
+@CardRegistration(set = "TSR", collectorNumber = "228")
 public class SealOfPrimordium extends Card {
 
     public SealOfPrimordium() {

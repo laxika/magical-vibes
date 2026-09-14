@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "57")
+@CardRegistration(set = "MMA", collectorNumber = "39")
 public class DampenThought extends Card {
 
     public DampenThought() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "96")
+@CardRegistration(set = "DDS", collectorNumber = "50")
+@CardRegistration(set = "GK2", collectorNumber = "84")
 public class SkarrganPitSkulk extends Card {
 
     public SkarrganPitSkulk() {

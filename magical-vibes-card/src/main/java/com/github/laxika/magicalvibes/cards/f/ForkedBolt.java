@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "146")
+@CardRegistration(set = "DDP", collectorNumber = "60")
 public class ForkedBolt extends Card {
 
     public ForkedBolt() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "12")
+@CardRegistration(set = "DDQ", collectorNumber = "9")
 public class ElderCathar extends Card {
 
     public ElderCathar() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "63")
+@CardRegistration(set = "UMA", collectorNumber = "82")
 public class WhirlwindAdept extends Card {
 
     public WhirlwindAdept() {

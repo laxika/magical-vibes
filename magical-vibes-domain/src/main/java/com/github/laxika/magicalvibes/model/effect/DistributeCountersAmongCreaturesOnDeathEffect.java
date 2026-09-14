@@ -25,10 +25,20 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * @param anyCreature             when {@code true}, any creature on the battlefield may receive
  *                                counters (Jugan); when {@code false}, only creatures the trigger's
  *                                controller controls (Vastwood Hydra).
+ * @param countFromSourcePower    when {@code true}, the collector snapshots the dying creature's
+ *                                effective power rather than its counter count.
+ * @param optional                when {@code true}, the collector wraps the distribution in a
+ *                                "you may" choice.
  */
 public record DistributeCountersAmongCreaturesOnDeathEffect(
-        CounterType counterType, int count, boolean countFromSourceCounters, boolean anyCreature)
+        CounterType counterType, int count, boolean countFromSourceCounters, boolean anyCreature,
+        boolean countFromSourcePower, boolean optional)
         implements CardEffect {
+
+    public DistributeCountersAmongCreaturesOnDeathEffect(
+            CounterType counterType, int count, boolean countFromSourceCounters, boolean anyCreature) {
+        this(counterType, count, countFromSourceCounters, anyCreature, false, true);
+    }
 
     /**
      * "You may distribute a number of {@code counterType} counters equal to the number of
@@ -38,6 +48,16 @@ public record DistributeCountersAmongCreaturesOnDeathEffect(
     public static DistributeCountersAmongCreaturesOnDeathEffect fromDyingSourceCountersAmongControlledCreatures(
             CounterType counterType) {
         return new DistributeCountersAmongCreaturesOnDeathEffect(counterType, 0, true, false);
+    }
+
+    /**
+     * "Whenever this dies, its controller distributes a number of +1/+1 counters equal to its
+     * power among any number of creatures they control" (Grand Ossuary).
+     */
+    public static DistributeCountersAmongCreaturesOnDeathEffect fromDyingSourcePowerAmongControlledCreatures(
+            CounterType counterType) {
+        return new DistributeCountersAmongCreaturesOnDeathEffect(
+                counterType, 0, false, false, true, false);
     }
 
     /**

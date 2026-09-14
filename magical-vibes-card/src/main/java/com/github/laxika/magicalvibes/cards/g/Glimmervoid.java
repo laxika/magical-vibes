@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "281")
+@CardRegistration(set = "MMA", collectorNumber = "223")
+@CardRegistration(set = "2XM", collectorNumber = "319")
 public class Glimmervoid extends Card {
 
     public Glimmervoid() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "135")
+@CardRegistration(set = "MM2", collectorNumber = "210")
 public class EtchedMonstrosity extends Card {
 
     public EtchedMonstrosity() {

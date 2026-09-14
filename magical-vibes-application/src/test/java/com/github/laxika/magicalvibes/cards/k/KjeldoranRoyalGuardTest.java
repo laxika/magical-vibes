@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfantryVeteran;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,30 +11,24 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KjeldoranRoyalGuard.class, GrizzlyBears.class, ScrybSprites.class})
+@CardUsed({GrizzlyBears.class, InfantryVeteran.class, KjeldoranRoyalGuard.class, LlanowarElves.class, Shock.class})
 class KjeldoranRoyalGuardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting puts it on the stack as creature spell")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new KjeldoranRoyalGuard()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KjeldoranRoyalGuard(), "{3}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -41,10 +38,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new KjeldoranRoyalGuard()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KjeldoranRoyalGuard(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -57,8 +51,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void activatingAbilityPutsOnStack() {
         addGuardReady(player2);
         addUnblockedAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
 
@@ -72,8 +65,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void activatingAbilityTapsGuard() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
 
@@ -85,9 +77,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void resolvingAbilitySetsRedirect() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities(); // resolves ability
@@ -100,9 +90,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void unblockedDamageRedirectedToGuard() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1); // Grizzly Bears 2/2
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         // Activate and resolve ability
         harness.activateAbility(player2, 0, null, null);
@@ -123,9 +111,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1); // 2/2
         addUnblockedAttacker(player1); // 2/2 — total 4 damage
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -145,9 +131,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         addUnblockedAttacker(player1);
         addUnblockedAttacker(player1);
         addUnblockedAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -167,9 +151,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         addUnblockedAttacker(player1, Keyword.FIRST_STRIKE); // 2/2 first strike
         addUnblockedAttacker(player1); // 2/2
         addUnblockedAttacker(player1); // 2/2
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -188,9 +170,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // 4 damage marked earlier this turn (e.g. a burn spell); Guard is 2/5
         guard.setMarkedDamage(4);
         addUnblockedAttacker(player1); // 2/2 — 2 redirected damage
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -207,9 +187,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void deathtouchRedirectedDamageDestroysGuard() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1, Keyword.DEATHTOUCH); // 2/2 deathtouch
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -226,9 +204,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void redirectedDamageStillGrantsLifelink() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1, Keyword.LIFELINK);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -244,9 +220,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void doesNotRedirectDamageDealtToOpponent() {
         Permanent guard = addGuardReady(player1);
         addUnblockedAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -260,7 +234,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Blocked creatures deal damage normally, not redirected")
     void blockedCreatureDamageNotRedirected() {
-        Permanent guard = addGuardReady(player2);
+        addGuardReady(player2);
 
         // Add a creature that will be blocked
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -271,9 +245,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0); // blocks attacker at index 0
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         // Guard is at index 0, blocker is at index 1
         harness.activateAbility(player2, 0, null, null);
@@ -305,9 +277,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
@@ -329,7 +299,34 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, attackerCard);
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new ScrybSprites());
+        Permanent blocker = addCreatureReady(player2, new LlanowarElves());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        prepareDeclareBlockers(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 1
+        ));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Trample damage from a blocked creature is not redirected")
+    void trampleDamageFromBlockedCreatureIsNotRedirectedUpstreamReview() {
+        addGuardReady(player2);
+
+        GrizzlyBears attackerCard = new GrizzlyBears();
+        attackerCard.setKeywords(Set.of(Keyword.TRAMPLE));
+        Permanent attacker = addCreatureReady(player1, attackerCard);
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new InfantryVeteran());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -368,9 +365,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void redirectClearsAtEndOfTurn() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities(); // resolve ability
@@ -390,18 +385,76 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     void guardRemovedBeforeCombat() {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1); // 2/2
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        // Set redirect directly (as if ability had resolved), then remove the guard
-        gd.combatDamageRedirectTarget = guard.getId();
+        // Resolve the ability, then remove its source before combat.
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
         gd.playerBattlefields.get(player2.getId()).remove(guard);
 
         resolveCombat();
 
         // Redirect target gone → damage goes to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Guard removed before combat means damage goes to player")
+    void guardRemovedBeforeCombatUpstreamReview() {
+        Permanent guard = addGuardReady(player2);
+        addUnblockedAttacker(player1); // 2/2
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        // Set redirect directly (as if ability had resolved), then remove the guard
+        gd.combatDamageRedirectTarget = guard.getId();
+        gd.combatDamageRedirectPlayer = player2.getId();
+        gd.playerBattlefields.get(player2.getId()).remove(guard);
+
+        resolveCombat();
+
+        // Redirect target gone → damage goes to player
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Activating one Guard redirects damage to that Guard")
+    void activatingOneGuardRedirectsToThatGuard() {
+        Permanent otherGuard = addGuardReady(player2);
+        Permanent activatedGuard = addGuardReady(player2);
+        addUnblockedAttacker(player1);
+        prepareDeclareBlockers(player1);
+
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(otherGuard.getMarkedDamage()).isZero();
+        assertThat(activatedGuard.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Combat-only redirect does not replace noncombat damage")
+    void noncombatDamageIsNotRedirected() {
+        Permanent guard = addGuardReady(player2);
+        prepareDeclareBlockers(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, guard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(guard);
+        assertThat(guard.getMarkedDamage()).isEqualTo(2);
     }
 
     private Permanent addGuardReady(Player player) {
@@ -417,5 +470,26 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         perm.setAttacking(true);
         return perm;
     }
-}
 
+    @Test
+    @DisplayName("Ability still uses the Guard if it changes controller before resolution")
+    void abilityStillUsesGuardAfterControllerChangesBeforeResolution() {
+        Permanent guard = addGuardReady(player2);
+        addUnblockedAttacker(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+
+        gd.playerBattlefields.get(player2.getId()).remove(guard);
+        gd.playerBattlefields.get(player1.getId()).add(guard);
+
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(guard);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(guard.getMarkedDamage()).isEqualTo(2);
+    }
+}

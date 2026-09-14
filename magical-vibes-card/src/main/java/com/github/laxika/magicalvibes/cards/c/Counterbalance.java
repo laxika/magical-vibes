@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "31")
+@CardRegistration(set = "MP2", collectorNumber = "9")
 public class Counterbalance extends Card {
 
     public Counterbalance() {

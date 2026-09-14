@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "184")
+@CardRegistration(set = "DDL", collectorNumber = "26")
+@CardRegistration(set = "UMA", collectorNumber = "153")
+@CardRegistration(set = "EMA", collectorNumber = "152")
 public class UndyingRage extends Card {
 
     public UndyingRage() {

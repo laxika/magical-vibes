@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "252")
+@CardRegistration(set = "SLU", collectorNumber = "12")
 public class BlightstepPathway extends Card {
 
     public BlightstepPathway() {

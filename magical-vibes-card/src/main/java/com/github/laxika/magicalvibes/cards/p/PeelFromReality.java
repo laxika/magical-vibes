@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "AVR", collectorNumber = "71")
 @CardRegistration(set = "M15", collectorNumber = "74")
 @CardRegistration(set = "RAV", collectorNumber = "61")
+@CardRegistration(set = "DDO", collectorNumber = "40")
 public class PeelFromReality extends Card {
 
     public PeelFromReality() {

@@ -48,13 +48,10 @@ class ChainerDementiaMasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gqs.getEffectiveColors(gd, returned)).contains(CardColor.GREEN, CardColor.BLACK);
+        assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
         assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.BEAR)).isTrue();
         assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.NIGHTMARE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
@@ -67,6 +64,8 @@ class ChainerDementiaMasterTest extends BaseCardTest {
     void leavesBattlefieldExilesNightmares() {
         Permanent chainer = harness.addToBattlefieldAndReturn(player1, new ChainerDementiaMaster());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent opposingNightmare = harness.addToBattlefieldAndReturn(player2, new Nightmare());
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(creature));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -84,7 +83,8 @@ class ChainerDementiaMasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears).doesNotContain(nightmare);
-        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingNightmare);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature, opposingNightmare.getCard());
     }
 
     @Test

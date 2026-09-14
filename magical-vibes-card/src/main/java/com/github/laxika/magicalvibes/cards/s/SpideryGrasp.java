@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "204")
 @CardRegistration(set = "AKH", collectorNumber = "188")
+@CardRegistration(set = "GN2", collectorNumber = "51")
 public class SpideryGrasp extends Card {
 
     public SpideryGrasp() {

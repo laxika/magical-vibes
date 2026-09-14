@@ -37,14 +37,12 @@ class BrowseTest extends BaseCardTest {
         addReadyBrowse(player1);
         payMana(player1);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card top0 = new GrizzlyBears();
         Card top1 = new GrizzlyBears();
         Card top2 = new GrizzlyBears();
         Card top3 = new GrizzlyBears();
         Card top4 = new GrizzlyBears();
-        deck.addAll(List.of(top0, top1, top2, top3, top4));
+        harness.setLibrary(player1, List.of(top0, top1, top2, top3, top4));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -53,6 +51,27 @@ class BrowseTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(top0, top1, top3, top4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With fewer than five cards, one is chosen and the rest are exiled")
+    void shortLibraryStillChoosesAndExilesRest() {
+        addReadyBrowse(player1);
+        payMana(player1);
+
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -81,10 +100,8 @@ class BrowseTest extends BaseCardTest {
         addReadyBrowse(player1);
         payMana(player1);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card only = new GrizzlyBears();
-        deck.add(only);
+        harness.setLibrary(player1, List.of(only));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -99,7 +116,7 @@ class BrowseTest extends BaseCardTest {
     void emptyLibrary() {
         addReadyBrowse(player1);
         payMana(player1);
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

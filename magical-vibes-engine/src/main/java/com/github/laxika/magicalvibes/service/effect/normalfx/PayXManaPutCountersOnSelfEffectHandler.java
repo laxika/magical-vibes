@@ -59,7 +59,7 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
                                 + " (tap mana sources, then choose X again)."));
                 log.info("Game {} - {} cannot yet pay X={} for {} — re-prompting",
                         gameData.id, playerName, chosenValue, cardName);
-                beginXPrompt(gameData, controllerId, cardName);
+                beginXPrompt(gameData, controllerId, cardName, e.useTriggeringPermanent());
                 return;
             }
 
@@ -67,7 +67,9 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
             gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
             log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
 
-            UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            UUID selfId = e.useTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                    ? entry.getTriggeringPermanentId()
+                    : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             Permanent self = gameQueryService.findPermanentById(gameData, selfId);
             if (self != null) {
                 permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), chosenValue);
@@ -80,12 +82,14 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
             log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id, playerName, cardName);
             return;
         }
-        beginXPrompt(gameData, controllerId, cardName);
+        beginXPrompt(gameData, controllerId, cardName, e.useTriggeringPermanent());
     }
 
-    private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {
+    private void beginXPrompt(GameData gameData, UUID controllerId, String cardName,
+                               boolean useTriggeringPermanent) {
         int maxX = maxPotentialX(gameData, controllerId);
-        String prompt = "Pay {X} for " + cardName + "? Put X counters on it.";
+        String destination = useTriggeringPermanent ? "that creature" : "it";
+        String prompt = "Pay {X} for " + cardName + "? Put X counters on " + destination + ".";
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true));
     }

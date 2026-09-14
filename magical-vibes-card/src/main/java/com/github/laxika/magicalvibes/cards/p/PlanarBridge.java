@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "171")
+@CardRegistration(set = "MPS", collectorNumber = "45")
+@CardRegistration(set = "KLR", collectorNumber = "262")
 public class PlanarBridge extends Card {
 
     public PlanarBridge() {

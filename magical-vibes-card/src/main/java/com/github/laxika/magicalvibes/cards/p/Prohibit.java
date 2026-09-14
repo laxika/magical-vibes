@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "INV", collectorNumber = "67")
+@CardRegistration(set = "DDM", collectorNumber = "25")
 public class Prohibit extends Card {
 
     public Prohibit() {

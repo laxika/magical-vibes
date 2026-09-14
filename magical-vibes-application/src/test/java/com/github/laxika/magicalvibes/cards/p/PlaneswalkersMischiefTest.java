@@ -92,10 +92,10 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
         addAbilityMana();
 
         activateMischief();
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.inMutationScope(() -> stepTriggerService().handleEndStepTriggers(gd));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(singe);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(singe);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(singe);

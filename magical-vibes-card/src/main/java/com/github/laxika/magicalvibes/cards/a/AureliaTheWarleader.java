@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "143")
+@CardRegistration(set = "V15", collectorNumber = "4")
+@CardRegistration(set = "GK1", collectorNumber = "77")
 public class AureliaTheWarleader extends Card {
 
     public AureliaTheWarleader() {

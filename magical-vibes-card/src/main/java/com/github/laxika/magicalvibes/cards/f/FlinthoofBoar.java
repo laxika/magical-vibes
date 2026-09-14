@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "171")
+@CardRegistration(set = "EMA", collectorNumber = "166")
 public class FlinthoofBoar extends Card {
 
     public FlinthoofBoar() {

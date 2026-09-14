@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Transcendence.class, Shock.class})
+@CardUsed({Transcendence.class, FieryTemper.class})
 class TranscendenceTest extends BaseCardTest {
 
     @Test
@@ -22,14 +22,14 @@ class TranscendenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Transcendence());
         harness.setLife(player1, 1);
 
-        castShockAtPlayer1(false);
+        castFieryTemperAtPlayer1(false);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(-1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-2);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(4);
     }
 
     @Test
@@ -38,9 +38,9 @@ class TranscendenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Transcendence());
         harness.setLife(player1, 10);
 
-        castShockAtPlayer1(true);
+        castFieryTemperAtPlayer1(true);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(12);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(13);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
@@ -64,8 +64,8 @@ class TranscendenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Transcendence());
         harness.setLife(player1, 19);
 
-        castShockAtPlayer1(true);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        castFieryTemperAtPlayer1(true);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
         harness.passBothPriorities();
@@ -73,15 +73,33 @@ class TranscendenceTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
-    private void castShockAtPlayer1(boolean resolveLifeGainTrigger) {
+    @Test
+    @DisplayName("Opponent life loss does not trigger Transcendence")
+    void opponentLifeLossDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Transcendence());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(7);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    private void castFieryTemperAtPlayer1(boolean resolveLifeGainTrigger) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         if (resolveLifeGainTrigger) {
             harness.passBothPriorities();
         }

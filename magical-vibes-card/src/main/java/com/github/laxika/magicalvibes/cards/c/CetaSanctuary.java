@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -27,16 +27,9 @@ public class CetaSanctuary extends Card {
         var controlsRedAndGreen = new AllOf(List.of(controlsRed, controlsGreen));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
-                controlsRedAndGreen,
+                new AnyOf(List.of(controlsRed, controlsGreen)),
                 SequenceEffect.of(
-                        new DrawCardEffect(2),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
-                new AllOf(List.of(
-                        new AnyOf(List.of(controlsRed, controlsGreen)),
-                        new NotCondition(controlsRedAndGreen))),
-                SequenceEffect.of(
-                        new DrawCardEffect(1),
+                        new DrawCardEffect(new FixedIfCondition(controlsRedAndGreen, 2, 1)),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
     }
 }

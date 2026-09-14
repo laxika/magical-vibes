@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "95")
+@CardRegistration(set = "DDN", collectorNumber = "7")
 public class HellraiserGoblin extends Card {
 
     public HellraiserGoblin() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AquaticIncursion.class, CoralMerfolk.class, GrizzlyBears.class})
 class AquaticIncursionTest extends BaseCardTest {
 
     @Test
@@ -45,8 +47,8 @@ class AquaticIncursionTest extends BaseCardTest {
     @Test
     @DisplayName("The ability makes a target Merfolk unblockable this turn")
     void makesTargetMerfolkUnblockable() {
-        Permanent incursion = addReadyIncursion(player1);
-        Permanent merfolk = addReadyCreature(player1, new CoralMerfolk());
+        Permanent incursion = addCreatureReady(player1, new AquaticIncursion());
+        Permanent merfolk = addCreatureReady(player1, new CoralMerfolk());
         addAquaticIncursionMana(player1);
 
         harness.activateAbility(player1, battlefieldIndex(player1, incursion), null, merfolk.getId());
@@ -64,25 +66,13 @@ class AquaticIncursionTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot target a non-Merfolk creature")
     void cannotTargetNonMerfolkCreature() {
-        Permanent incursion = addReadyIncursion(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent incursion = addCreatureReady(player1, new AquaticIncursion());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         addAquaticIncursionMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, incursion), null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReadyIncursion(Player player) {
-        Permanent incursion = harness.addToBattlefieldAndReturn(player, new AquaticIncursion());
-        incursion.setSummoningSick(false);
-        return incursion;
-    }
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {

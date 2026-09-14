@@ -44,6 +44,21 @@ class DarajaGriffinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a black creature you control")
+    void canTargetBlackCreatureYouControl() {
+        setupGriffin();
+        Permanent target = addCreatureReady(player1, new ScatheZombies());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Daraja Griffin");
+        harness.assertInGraveyard(player1, "Daraja Griffin");
+        harness.assertNotOnBattlefield(player1, "Scathe Zombies");
+        harness.assertInGraveyard(player1, "Scathe Zombies");
+    }
+
+    @Test
     @DisplayName("Cannot target a black noncreature permanent")
     void cannotTargetBlackNoncreaturePermanent() {
         setupGriffin();

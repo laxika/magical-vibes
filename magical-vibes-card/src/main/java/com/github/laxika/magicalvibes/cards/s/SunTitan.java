@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "35")
 @CardRegistration(set = "M12", collectorNumber = "39")
+@CardRegistration(set = "DDL", collectorNumber = "1")
 public class SunTitan extends Card {
 
     public SunTitan() {

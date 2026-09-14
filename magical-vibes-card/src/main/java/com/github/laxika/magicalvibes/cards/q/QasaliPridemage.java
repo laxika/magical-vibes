@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "75")
 @CardRegistration(set = "DDH", collectorNumber = "10")
+@CardRegistration(set = "TSR", collectorNumber = "383")
 public class QasaliPridemage extends Card {
 
     public QasaliPridemage() {

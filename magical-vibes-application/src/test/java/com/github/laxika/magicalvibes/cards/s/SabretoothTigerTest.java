@@ -1,39 +1,57 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-@CardUsed({SabretoothTiger.class, BalduvianBears.class})
+@CardUsed({BalduvianBears.class, GrizzlyBears.class, HillGiant.class, SabretoothTiger.class})
 class SabretoothTigerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has first strike on the battlefield")
-    void hasFirstStrikeOnBattlefield() {
-        Permanent tiger = harness.addToBattlefieldAndReturn(player1, new SabretoothTiger());
+    @DisplayName("First strike does not prevent regular combat damage")
+    void firstStrikeDoesNotPreventRegularCombatDamage() {
+        addCreatureReady(player1, new SabretoothTiger());
+        addCreatureReady(player2, new HillGiant());
 
-        assertThat(gqs.hasKeyword(gd, tiger, Keyword.FIRST_STRIKE)).isTrue();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Sabretooth Tiger");
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
     @DisplayName("First strike kills a 2/2 blocker before regular combat damage")
     void firstStrikeKillsBlockerBeforeRegularDamage() {
-        Permanent attacker = addCreatureReady(player1, new SabretoothTiger());
-        attacker.setAttacking(true);
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player1, new SabretoothTiger());
+        addCreatureReady(player2, new GrizzlyBears());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Sabretooth Tiger");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("First strike kills a 2/2 blocker before regular combat damage")
+    void firstStrikeKillsBlockerBeforeRegularDamageUpstreamReview() {
+        addCreatureReady(player1, new SabretoothTiger());
+        addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Sabretooth Tiger");
         harness.assertInGraveyard(player2, "Balduvian Bears");

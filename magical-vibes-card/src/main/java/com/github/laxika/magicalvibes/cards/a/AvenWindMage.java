@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "45")
+@CardRegistration(set = "GN2", collectorNumber = "16")
 public class AvenWindMage extends Card {
 
     public AvenWindMage() {

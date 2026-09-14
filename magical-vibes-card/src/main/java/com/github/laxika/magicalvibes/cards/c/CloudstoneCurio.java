@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "257")
+@CardRegistration(set = "MPS", collectorNumber = "10")
 public class CloudstoneCurio extends Card {
 
     public CloudstoneCurio() {

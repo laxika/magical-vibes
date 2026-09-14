@@ -34,7 +34,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean grantHaste,
         boolean sacrificeAtEndStep,
         int minTargets
-) implements CardEffect {
+) implements AggregateManaValueTargetEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter) {
@@ -223,6 +223,11 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
 
     public boolean hasTotalManaValueCap() {
         return maxTotalManaValue > 0 || dynamicMaxTotalManaValue != null;
+    }
+
+    @Override
+    public boolean hasAggregateManaValueLimit() {
+        return hasTotalManaValueCap();
     }
 
     @Override

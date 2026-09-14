@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToSourceOrHandEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "1")
+@CardRegistration(set = "PC2", collectorNumber = "3")
+@CardRegistration(set = "PCA", collectorNumber = "3")
 public class AuratouchedMage extends Card {
 
     public AuratouchedMage() {

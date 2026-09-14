@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "26")
+@CardRegistration(set = "MMA", collectorNumber = "181")
 public class MindFuneral extends Card {
 
     public MindFuneral() {

@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "146")
+@CardRegistration(set = "ME3", collectorNumber = "109")
 public class RagingMinotaur extends Card {
 }

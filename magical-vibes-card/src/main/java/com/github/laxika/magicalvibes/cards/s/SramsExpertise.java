@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "24")
+@CardRegistration(set = "KLR", collectorNumber = "33")
 public class SramsExpertise extends Card {
 
     public SramsExpertise() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "20")
+@CardRegistration(set = "DDO", collectorNumber = "19")
 public class MortalsArdor extends Card {
 
     public MortalsArdor() {

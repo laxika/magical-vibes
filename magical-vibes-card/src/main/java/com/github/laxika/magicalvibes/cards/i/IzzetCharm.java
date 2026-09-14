@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "172")
+@CardRegistration(set = "MM3", collectorNumber = "171")
+@CardRegistration(set = "DDJ", collectorNumber = "21")
+@CardRegistration(set = "GK1", collectorNumber = "41")
+@CardRegistration(set = "2XM", collectorNumber = "202")
 public class IzzetCharm extends Card {
 
     public IzzetCharm() {

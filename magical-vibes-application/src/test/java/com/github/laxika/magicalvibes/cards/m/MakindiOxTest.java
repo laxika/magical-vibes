@@ -40,6 +40,7 @@ class MakindiOxTest extends BaseCardTest {
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new Forest()));
 
+        harness.forceActivePlayer(player2);
         harness.playLand(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();

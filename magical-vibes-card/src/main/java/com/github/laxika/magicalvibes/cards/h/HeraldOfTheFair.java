@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "18")
+@CardRegistration(set = "KLR", collectorNumber = "22")
 public class HeraldOfTheFair extends Card {
 
     public HeraldOfTheFair() {

@@ -60,6 +60,25 @@ class LostSoulTest extends BaseCardTest {
     }
 
     @Test
+    void canBeBlockedWhenOnlyAttackerControlsSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new LostSoul());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Lost Soul cannot be blocked when a defending land becomes a Swamp")
     void cannotBeBlockedWhenDefendingLandBecomesSwamp() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());

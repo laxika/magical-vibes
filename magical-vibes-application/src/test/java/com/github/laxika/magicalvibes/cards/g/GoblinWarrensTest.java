@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.o.OrcishCaptain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinWarrens.class, GoblinHero.class, OrcishCaptain.class})
+@CardUsed({GoblinWarrens.class, GoblinHero.class, GrizzlyBears.class})
 class GoblinWarrensTest extends BaseCardTest {
 
     @Test
@@ -90,13 +89,44 @@ class GoblinWarrensTest extends BaseCardTest {
     void cannotActivateWithoutTwoGoblins() {
         Permanent warrens = harness.addToBattlefieldAndReturn(player1, new GoblinWarrens());
         harness.addToBattlefield(player1, new GoblinHero());
-        harness.addToBattlefield(player1, new OrcishCaptain());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(warrens), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough permanents to sacrifice");
+    }
+
+    @Test
+    @DisplayName("A non-Goblin cannot be chosen when paying the sacrifice cost")
+    void cannotChooseNonGoblinAsCost() {
+        Permanent warrens = harness.addToBattlefieldAndReturn(player1, new GoblinWarrens());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent otherGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent thirdGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent nonGoblin = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(warrens), null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, otherGoblin.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(goblin.getCard(), otherGoblin.getCard())
+                .doesNotContain(nonGoblin.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(thirdGoblin, nonGoblin);
+        assertThat(findPermanents(player1, "Goblin"))
+                .hasSize(3)
+                .allSatisfy(perm -> assertThat(perm.getCard().isToken()).isTrue());
     }
 
     @Test

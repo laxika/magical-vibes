@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "38")
+@CardRegistration(set = "ME3", collectorNumber = "33")
 public class CaptureOfJingzhou extends Card {
 
     public CaptureOfJingzhou() {

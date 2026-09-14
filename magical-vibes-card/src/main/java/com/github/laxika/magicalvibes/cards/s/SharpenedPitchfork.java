@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "232")
+@CardRegistration(set = "DDQ", collectorNumber = "32")
 public class SharpenedPitchfork extends Card {
 
     public SharpenedPitchfork() {

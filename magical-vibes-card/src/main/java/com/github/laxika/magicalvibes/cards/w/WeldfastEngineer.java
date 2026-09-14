@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "139")
+@CardRegistration(set = "KLR", collectorNumber = "214")
 public class WeldfastEngineer extends Card {
 
     public WeldfastEngineer() {

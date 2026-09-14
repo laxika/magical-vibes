@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "75")
+@CardRegistration(set = "VMA", collectorNumber = "142")
+@CardRegistration(set = "STA", collectorNumber = "34")
 public class TendrilsOfAgony extends Card {
 
     public TendrilsOfAgony() {

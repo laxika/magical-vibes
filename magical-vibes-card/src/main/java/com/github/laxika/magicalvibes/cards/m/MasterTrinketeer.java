@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "21")
+@CardRegistration(set = "KLR", collectorNumber = "25")
 public class MasterTrinketeer extends Card {
 
     public MasterTrinketeer() {

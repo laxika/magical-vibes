@@ -52,9 +52,7 @@ class HavenwoodBattlegroundTest extends BaseCardTest {
     @Test
     @DisplayName("Tap and sacrifice ability cannot be activated while the land is tapped")
     void sacrificeAbilityRequiresUntappedLand() {
-        HavenwoodBattleground card = new HavenwoodBattleground();
-        harness.addToBattlefield(player1, card);
-        findPermanent(player1, "Havenwood Battleground").tap();
+        harness.addToBattlefieldAndReturn(player1, new HavenwoodBattleground()).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(RuntimeException.class);

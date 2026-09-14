@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.Twiddle;
+import com.github.laxika.magicalvibes.cards.m.ManaShort;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blight.class, Forest.class, GrizzlyBears.class, Twiddle.class})
+@CardUsed({Blight.class, Forest.class, GrizzlyBears.class, ManaShort.class})
 class BlightTest extends BaseCardTest {
 
     // ===== Casting and targeting =====
@@ -37,6 +37,20 @@ class BlightTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(land.getId());
+    }
+
+    @Test
+    @DisplayName("Can cast Blight targeting an opponent's land")
+    void canTargetOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Blight()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(land.getId());
     }
 
     @Test
@@ -91,7 +105,7 @@ class BlightTest extends BaseCardTest {
         addLandWithAura();
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Forest");
     }
@@ -102,7 +116,7 @@ class BlightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Blight"));
         assertThat(gd.pendingManaAbilityTriggers)
@@ -111,25 +125,45 @@ class BlightTest extends BaseCardTest {
     }
 
     @Test
-    void tappingOpponentsLandWithTwiddleDestroysIt() {
+    @DisplayName("Tapping an opponent's enchanted land with Mana Short destroys only that land")
+    void tappingOpponentsLandWithManaShortDestroysOnlyThatLand() {
         Permanent land = addLandWithAura(player2);
-        harness.setHand(player1, List.of(new Twiddle()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new ManaShort()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.forceActivePlayer(player1);
 
-        harness.castInstant(player1, 0, land.getId());
+        harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        resolveStackFully();
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player2, Forest.class.getSimpleName());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(land)
+                .contains(otherLand);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Mana from the enchanted land can pay for a spell before Blight resolves")
+    void enchantedLandManaCanPayForSpellBeforeTriggerResolves() {
+        Permanent enchantedLand = addLandWithAura();
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(otherLand));
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .doesNotContain(enchantedLand)
+                .contains(otherLand)
+                .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
+    }
 
     /**
-     * Places a Forest on {@code landController}'s battlefield (index 0) with a Blight controlled by
-     * player1 attached (index 1 on player1's battlefield).
+     * Places a Forest on {@code landController}'s battlefield with a Blight controlled by player1
+     * attached to it.
      *
      * @return the Forest permanent
      */
@@ -146,14 +180,5 @@ class BlightTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         return land;
-    }
-
-    /**
-     * Drives priority until the stack and any deferred mana-ability triggers are fully resolved.
-     */
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
     }
 }

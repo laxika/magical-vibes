@@ -18,36 +18,52 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param trackSacrificedToughness when true, the sacrificed permanent's effective toughness is
  *                                 snapshotted into the ability's xValue at payment
  *                                 (Korozda Guildmage)
+ * @param optional                when true, a spell may pay this cost by sacrificing zero or one
+ *                                 matching permanent
  */
 public record SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
                                      boolean trackSacrificedPower,
                                      boolean trackSacrificedManaValue,
                                      boolean trackSacrificedToughness,
-                                     boolean recordSacrificedPermanentSnapshot) implements CostEffect {
+                                     boolean recordSacrificedPermanentSnapshot,
+                                     boolean optional) implements CostEffect {
     public SacrificePermanentCost(PermanentPredicate filter, String description) {
-        this(filter, description, true, false, false, false, false);
+        this(filter, description, true, false, false, false, false, false);
     }
 
     public SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource) {
-        this(filter, description, excludeSource, false, false, false, false);
+        this(filter, description, excludeSource, false, false, false, false, false);
     }
 
     public SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
                                   boolean trackSacrificedPower) {
-        this(filter, description, excludeSource, trackSacrificedPower, false, false, false);
+        this(filter, description, excludeSource, trackSacrificedPower, false, false, false, false);
     }
 
     public SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
                                   boolean trackSacrificedPower, boolean trackSacrificedManaValue,
                                   boolean trackSacrificedToughness) {
         this(filter, description, excludeSource, trackSacrificedPower, trackSacrificedManaValue,
-                trackSacrificedToughness, false);
+                trackSacrificedToughness, false, false);
+    }
+
+    public SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
+                                  boolean trackSacrificedPower, boolean trackSacrificedManaValue,
+                                  boolean trackSacrificedToughness,
+                                  boolean recordSacrificedPermanentSnapshot) {
+        this(filter, description, excludeSource, trackSacrificedPower, trackSacrificedManaValue,
+                trackSacrificedToughness, recordSacrificedPermanentSnapshot, false);
     }
 
     /** Preserves the sacrificed permanent's battlefield characteristics for a later effect. */
     public static SacrificePermanentCost withPermanentSnapshot(PermanentPredicate filter,
                                                                 String description) {
-        return new SacrificePermanentCost(filter, description, true, false, false, false, true);
+        return new SacrificePermanentCost(filter, description, true, false, false, false, true, false);
+    }
+
+    /** Creates an optional spell cost that sacrifices zero or one matching permanent. */
+    public static SacrificePermanentCost optional(PermanentPredicate filter, String description) {
+        return new SacrificePermanentCost(filter, description, false, false, false, false, false, true);
     }
 
     public boolean recordsSacrificedPermanentSnapshot() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "92")
 @CardRegistration(set = "M15", collectorNumber = "141")
+@CardRegistration(set = "DDT", collectorNumber = "38")
 public class FoundryStreetDenizen extends Card {
 
     public FoundryStreetDenizen() {

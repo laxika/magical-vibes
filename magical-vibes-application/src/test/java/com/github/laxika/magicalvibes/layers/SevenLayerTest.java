@@ -348,6 +348,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A copied characteristic-defining ability evaluates in the copy's own context")
+        @CardUsed({Maro.class, Clone.class, GrizzlyBears.class})
         void copiedCdaEvaluatesInNewContext() {
             Permanent maro = addReady(player2, new Maro());
 
@@ -565,7 +566,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Changing a landwalk word on a lord changes the walk ability it grants")
-        @CardUsed({GoblinKing.class, RagingGoblin.class})
+        @CardUsed({GoblinKing.class, RagingGoblin.class, MindBend.class})
         void textChangeRewritesGrantedLandwalk() {
             Permanent king = addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -630,7 +631,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A text change with no duration persists across turns")
-        @CardUsed({GoblinKing.class, RagingGoblin.class})
+        @CardUsed({GoblinKing.class, RagingGoblin.class, MindBend.class})
         void textChangePersistsAcrossTurns() {
             Permanent king = addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -658,7 +659,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Sequential text changes compose in timestamp order")
-        @CardUsed({GoblinKing.class, RagingGoblin.class})
+        @CardUsed({GoblinKing.class, RagingGoblin.class, MindBend.class})
         void sequentialTextChangesCompose() {
             Permanent king = addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -1022,6 +1023,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Losing all abilities removes a P/T-defining CDA: the creature becomes 0/0 and dies")
+        @CardUsed({Maro.class, GrizzlyBears.class, MerfolkTrickster.class})
         void loseAllRemovesPTDefiningCda() {
             harness.setHand(player1, cards(3));
             Permanent maro = addReady(player1, new Maro());
@@ -1105,6 +1107,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A */* CDA tracks its controller's hand size continuously")
+        @CardUsed({Maro.class, GrizzlyBears.class})
         void cdaTracksControllerHandSize() {
             Permanent maro = addReady(player1, new Maro());
 
@@ -1117,6 +1120,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A one-shot pump (7c) applies on top of the CDA value (7a)")
+        @CardUsed({Maro.class, GrizzlyBears.class, GiantGrowth.class})
         void cdaPlusOneShotPump() {
             Permanent maro = addReady(player1, new Maro());
             harness.setHand(player1, cards(1));
@@ -1129,6 +1133,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A 7b setter overrides the CDA regardless of the CDA changing afterwards")
+        @CardUsed({Maro.class, GrizzlyBears.class, Diminish.class})
         void basePTSetterOverridesCda() {
             Permanent maro = addReady(player1, new Maro());
             harness.setHand(player1, cards(1));
@@ -1169,6 +1174,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A CDA creature at 0 toughness dies to state-based actions")
+        @CardUsed({Maro.class})
         void cdaZeroTriggersSba() {
             Permanent maro = addReady(player1, new Maro());
             harness.setHand(player1, List.of());
@@ -1196,6 +1202,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Counters (7c) apply on top of the CDA value (7a)")
+        @CardUsed({Maro.class, GrizzlyBears.class})
         void cdaPlusCounters() {
             Permanent maro = addReady(player1, new Maro());
             maro.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -1512,6 +1519,8 @@ class SevenLayerTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Layer 7d: P/T switching")
+    @CardUsed({CoralMerfolk.class, TwistedImage.class, GiantGrowth.class, Diminish.class,
+            Lignify.class, Clone.class, TurtleshellChangeling.class})
     class Layer7dSwitch {
 
         @Test

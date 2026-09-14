@@ -84,9 +84,7 @@ class CetavolverTest extends BaseCardTest {
     }
 
     private Permanent castCetavolver() {
-        addBaseMana();
-        harness.setHand(player1, List.of(new Cetavolver()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Cetavolver(), "{1}{U}");
         harness.passBothPriorities();
         return findCetavolver();
     }

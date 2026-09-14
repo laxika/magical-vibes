@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
  * +1/+1 counter on it".
  */
 @CardRegistration(set = "RTR", collectorNumber = "105")
+@CardRegistration(set = "GK2", collectorNumber = "58")
+@CardRegistration(set = "IMA", collectorNumber = "146")
 public class SplatterThug extends Card {
 
     public SplatterThug() {

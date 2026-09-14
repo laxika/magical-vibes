@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "135")
 @CardRegistration(set = "DD2", collectorNumber = "46")
+@CardRegistration(set = "JVC", collectorNumber = "46")
 public class OxiddaGolem extends Card {
 
     public OxiddaGolem() {

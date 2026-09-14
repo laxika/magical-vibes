@@ -63,6 +63,20 @@ class StormShamanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be activated while tapped")
+    void canBeActivatedWhileTapped() {
+        Permanent shaman = addCreatureReady(player1, new StormShaman());
+        shaman.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shaman.getPowerModifier()).isEqualTo(1);
+        assertThat(shaman.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         Permanent shaman = addCreatureReady(player1, new StormShaman());

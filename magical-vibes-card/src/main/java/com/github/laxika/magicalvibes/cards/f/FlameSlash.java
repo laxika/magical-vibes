@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "145")
+@CardRegistration(set = "DDK", collectorNumber = "60")
 public class FlameSlash extends Card {
 
     public FlameSlash() {

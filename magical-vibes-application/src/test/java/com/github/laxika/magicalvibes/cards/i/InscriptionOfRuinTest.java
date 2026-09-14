@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,8 @@ class InscriptionOfRuinTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .contains(creature.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Inscription of Ruin");
     }
 
     @Test
@@ -65,10 +67,11 @@ class InscriptionOfRuinTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
         Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new InscriptionOfRuin()));
-        addMana(6);
+        addMana(7);
 
-        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{0, 1, 2},
-                List.of(player2.getId(), reanimated.getId(), destroyed.getId()), List.of());
+        gs.playCard(gd, player1, 0, ChooseOneEffect.encodeModeSelection(1, 3, new int[]{0, 1, 2}),
+                null, null, List.of(player2.getId(), reanimated.getId(), destroyed.getId()),
+                List.of(), false, null, null, null, null, null, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);

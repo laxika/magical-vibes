@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "61")
+@CardRegistration(set = "DDL", collectorNumber = "58")
 public class ValleyRannet extends Card {
 
     public ValleyRannet() {

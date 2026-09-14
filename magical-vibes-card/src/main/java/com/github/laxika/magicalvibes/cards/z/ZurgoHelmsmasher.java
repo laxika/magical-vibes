@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "214")
+@CardRegistration(set = "DDN", collectorNumber = "1")
 public class ZurgoHelmsmasher extends Card {
 
     public ZurgoHelmsmasher() {

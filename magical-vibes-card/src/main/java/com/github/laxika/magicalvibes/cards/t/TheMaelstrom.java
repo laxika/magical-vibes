@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "23")
+@CardRegistration(set = "OPCA", collectorNumber = "49")
 public class TheMaelstrom extends Card {
 
     public TheMaelstrom() {

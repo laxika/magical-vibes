@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "226")
 @CardRegistration(set = "CHR", collectorNumber = "47")
 @CardRegistration(set = "DRK", collectorNumber = "62")
+@CardRegistration(set = "ME3", collectorNumber = "98")
 public class FireDrake extends Card {
 
     public FireDrake() {

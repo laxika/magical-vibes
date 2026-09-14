@@ -15,6 +15,7 @@ public sealed interface DynamicAmount permits
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
         AttachmentsOnSource,
         AttachedPermanentColorCount,
+        TimesSourceAbilityResolvedThisTurn,
         BasicLandTypesAmongControlledLands,
         CardTypesAmongSpellsCastThisTurn,
         CardTypesAmongControlledPermanents,
@@ -133,6 +134,7 @@ public sealed interface DynamicAmount permits
         Min,
         OpponentPoisonCounters,
         OpponentsWithMoreCardsInHandThanController,
+        OpponentsAttackedThisTurn,
         OpponentsWhoLostLifeThisTurn,
         OtherAttackersSharingCreatureTypeWithTarget,
         PartySize,
@@ -184,4 +186,9 @@ public sealed interface DynamicAmount permits
         WebSlingingReturnedCreatureManaValue,
         XValue,
         CardTypesAmongCardsDiscardedThisResolution {
+
+    /**
+     * Whether evaluating this amount requires the source ability's resolution count to be tracked.
+     */
+    default boolean requiresAbilityResolutionCount() { return false; }
 }

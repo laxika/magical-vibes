@@ -51,4 +51,17 @@ class LonghornFirebeastTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Longhorn Firebeast");
         harness.assertInGraveyard(player1, "Longhorn Firebeast");
     }
+
+    @Test
+    @DisplayName("Opponent accepts even when the damage is prevented, so Firebeast is sacrificed")
+    void acceptingStillSacrificesWhenDamageIsPrevented() {
+        castAndResolveToChoice();
+        gd.playersWithAllDamagePrevented.add(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Longhorn Firebeast");
+        harness.assertInGraveyard(player1, "Longhorn Firebeast");
+    }
 }

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "124")
+@CardRegistration(set = "KLR", collectorNumber = "136")
 public class PiaNalaar extends Card {
 
     public PiaNalaar() {

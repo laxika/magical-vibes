@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "21")
 @CardRegistration(set = "AKR", collectorNumber = "27")
+@CardRegistration(set = "MP2", collectorNumber = "5")
 public class OketraTheTrue extends Card {
 
     public OketraTheTrue() {

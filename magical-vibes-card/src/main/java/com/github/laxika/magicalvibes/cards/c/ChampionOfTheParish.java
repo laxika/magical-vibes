@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "6")
+@CardRegistration(set = "DDQ", collectorNumber = "4")
 public class ChampionOfTheParish extends Card {
 
     public ChampionOfTheParish() {

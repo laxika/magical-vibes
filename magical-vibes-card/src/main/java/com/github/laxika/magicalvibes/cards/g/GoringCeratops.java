@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "XLN", collectorNumber = "13")
+@CardRegistration(set = "ANB", collectorNumber = "8")
 public class GoringCeratops extends Card {
 
     public GoringCeratops() {

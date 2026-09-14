@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "59")
+@CardRegistration(set = "DDK", collectorNumber = "16")
 public class RevenantPatriarch extends Card {
 
     public RevenantPatriarch() {

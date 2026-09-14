@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Thoughtleech.class, Island.class, Forest.class})
+@CardUsed({Thoughtleech.class, Island.class, Forest.class, Twiddle.class})
 class ThoughtleechTest extends BaseCardTest {
 
     // "Whenever an Island an opponent controls becomes tapped, you may gain 1 life."
@@ -25,10 +26,65 @@ class ThoughtleechTest extends BaseCardTest {
 
         tap(island);
 
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Each opponent's Island tap creates its own may trigger")
+    void eachOpponentIslandTapCreatesIndependentTrigger() {
+        harness.addToBattlefield(player1, new Thoughtleech());
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        tap(firstIsland);
+        tap(secondIsland);
+
+        assertThat(gd.stack).hasSize(2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("An effect that taps an opponent's Island also triggers Thoughtleech")
+    void effectTapOfOpponentIslandTriggers() {
+        harness.addToBattlefield(player1, new Thoughtleech());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, java.util.List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castInstant(player1, 0, island.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(island.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Thoughtleech does not trigger after losing all abilities")
+    void doesNotTriggerWhenItLosesAllAbilities() {
+        Permanent thoughtleech = harness.addToBattlefieldAndReturn(player1, new Thoughtleech());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        thoughtleech.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        tap(island);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
@@ -58,7 +114,7 @@ class ThoughtleechTest extends BaseCardTest {
 
         tap(island);
 
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);

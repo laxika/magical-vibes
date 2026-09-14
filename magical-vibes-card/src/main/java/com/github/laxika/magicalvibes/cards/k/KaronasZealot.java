@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageFromSourceCr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SCG", collectorNumber = "18")
+@CardRegistration(set = "A25", collectorNumber = "18")
 public class KaronasZealot extends Card {
 
     public KaronasZealot() {

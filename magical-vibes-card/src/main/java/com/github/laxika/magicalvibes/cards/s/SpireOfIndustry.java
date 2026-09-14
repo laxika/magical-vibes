@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "184")
+@CardRegistration(set = "KLR", collectorNumber = "285")
 public class SpireOfIndustry extends Card {
 
     public SpireOfIndustry() {

@@ -331,8 +331,10 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, plains.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("basic land");
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(plains);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     // ===== After resolution =====

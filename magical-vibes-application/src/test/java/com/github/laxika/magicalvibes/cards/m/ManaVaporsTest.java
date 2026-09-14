@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaVapors.class, Forest.class, GrizzlyBears.class})
 class ManaVaporsTest extends BaseCardTest {
 
     @Test
@@ -31,6 +33,19 @@ class ManaVaporsTest extends BaseCardTest {
 
         assertThat(forest.isTapped()).isTrue();
         assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Also affects lands that enter before the target's next untap step")
+    void landsEnteringBeforeNextUntapStepDoNotUntap() {
+        castAndResolve(player2.getId());
+
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+
+        advanceToNextTurn(player1);
+
+        assertThat(forest.isTapped()).isTrue();
     }
 
     @Test
@@ -69,8 +84,7 @@ class ManaVaporsTest extends BaseCardTest {
     private void castAndResolve(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new ManaVapors()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -79,8 +93,7 @@ class ManaVaporsTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 }

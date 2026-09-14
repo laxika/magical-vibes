@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "281")
+@CardRegistration(set = "V12", collectorNumber = "14")
+@CardRegistration(set = "TSR", collectorNumber = "289")
 public class Vesuva extends Card {
 
     public Vesuva() {

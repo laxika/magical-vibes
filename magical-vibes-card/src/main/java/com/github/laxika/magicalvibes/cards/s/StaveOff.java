@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "36")
+@CardRegistration(set = "DDN", collectorNumber = "61")
 public class StaveOff extends Card {
 
     public StaveOff() {

@@ -31,6 +31,9 @@ import java.util.List;
 @CardRegistration(set = "CST", collectorNumber = "20")
 @CardRegistration(set = "3ED", collectorNumber = "17")
 @CardRegistration(set = "ME2", collectorNumber = "10")
+@CardRegistration(set = "ME3", collectorNumber = "7")
+@CardRegistration(set = "IMA", collectorNumber = "15")
+@CardRegistration(set = "A25", collectorNumber = "12")
 public class Disenchant extends Card {
 
     public Disenchant() {

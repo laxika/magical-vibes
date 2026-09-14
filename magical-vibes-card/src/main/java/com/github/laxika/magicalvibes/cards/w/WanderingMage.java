@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "111")
+@CardRegistration(set = "ME3", collectorNumber = "186")
 public class WanderingMage extends Card {
 
     public WanderingMage() {

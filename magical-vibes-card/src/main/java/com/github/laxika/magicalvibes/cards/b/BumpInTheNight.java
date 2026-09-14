@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "92")
+@CardRegistration(set = "DDK", collectorNumber = "57")
 public class BumpInTheNight extends Card {
 
     public BumpInTheNight() {

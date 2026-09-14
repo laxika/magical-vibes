@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 // Trample and Persist are loaded from Scryfall; Persist is handled by
 // PermanentRemovalService.collectPersistTrigger + PersistReturnEffect.
 @CardRegistration(set = "SHM", collectorNumber = "135")
+@CardRegistration(set = "MMA", collectorNumber = "174")
+@CardRegistration(set = "UMA", collectorNumber = "195")
 public class WoodfallPrimus extends Card {
 
     public WoodfallPrimus() {

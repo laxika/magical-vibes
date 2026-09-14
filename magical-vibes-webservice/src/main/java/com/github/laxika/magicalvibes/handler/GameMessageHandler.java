@@ -561,9 +561,12 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            if (request.graveyardCardIds() != null && !request.graveyardCardIds().isEmpty()) {
+            if (request.targetIds() != null) {
+                gameService.activateHandAbility(gameData, player, request.handCardIndex(),
+                        request.abilityIndex(), request.targetId(), request.xValue(), request.targetIds());
+            } else if (request.graveyardCardIds() != null && !request.graveyardCardIds().isEmpty()) {
                 gameService.activateHandAbilityWithGraveyardTargets(gameData, player, request.handCardIndex(),
-                        request.abilityIndex(), request.graveyardCardIds());
+                        request.abilityIndex(), request.xValue(), request.graveyardCardIds());
             } else {
                 gameService.activateHandAbility(gameData, player, request.handCardIndex(), request.abilityIndex(), request.targetId(), request.xValue());
             }

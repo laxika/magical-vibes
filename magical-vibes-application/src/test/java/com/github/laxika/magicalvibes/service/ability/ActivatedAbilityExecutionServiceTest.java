@@ -402,6 +402,20 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
+        void creatureWithGrantedLandTypeFiresLandManaTriggers() {
+            Permanent permanent = addReadyPermanent(player1Id, createCard("Creature Land", CardType.CREATURE));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.GREEN, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {G}.");
+            stubIsCreature(permanent, true);
+            when(gameQueryService.isLand(gameData, permanent)).thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, permanent, ability, effects, 0, null, null, false);
+
+            verify(triggerCollectionService).checkLandTapTriggers(
+                    eq(gameData), eq(player1Id), eq(permanent.getId()), any());
+        }
+
+        @Test
         @DisplayName("Mana ability taps the permanent when tap cost is required")
         void manaAbilityTapsPermanent() {
             Card card = createCard("Test Mana Land", CardType.LAND);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "7")
+@CardRegistration(set = "GK1", collectorNumber = "78")
 public class BorosElite extends Card {
 
     public BorosElite() {

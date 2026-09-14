@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 @CardRegistration(set = "5ED", collectorNumber = "97")
 @CardRegistration(set = "HML", collectorNumber = "30a")
 @CardRegistration(set = "HML", collectorNumber = "30b")
+@CardRegistration(set = "ME3", collectorNumber = "39")
 public class LabyrinthMinotaur extends Card {
 
     public LabyrinthMinotaur() {

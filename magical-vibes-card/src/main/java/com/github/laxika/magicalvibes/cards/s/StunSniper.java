@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "100")
+@CardRegistration(set = "DDL", collectorNumber = "7")
 public class StunSniper extends Card {
 
     public StunSniper() {

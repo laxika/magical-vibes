@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "227")
+@CardRegistration(set = "DDP", collectorNumber = "34")
 public class TurntimberGrove extends Card {
 
     public TurntimberGrove() {

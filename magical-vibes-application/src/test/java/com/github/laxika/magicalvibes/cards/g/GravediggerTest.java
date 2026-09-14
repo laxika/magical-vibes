@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gravedigger.class, TrainedArmodon.class, LowlandGiant.class, Shatter.class})
+@CardUsed({Gravedigger.class, LowlandGiant.class, Shatter.class, TrainedArmodon.class})
 class GravediggerTest extends BaseCardTest {
 
     private void castGravedigger() {
@@ -110,6 +110,23 @@ class GravediggerTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Trained Armodon");
         harness.assertNotInGraveyard(player1, "Trained Armodon");
+    }
+
+    @Test
+    @DisplayName("A targeted creature removed from the graveyard before resolution makes the ability fizzle")
+    void targetRemovedBeforeResolutionFizzesAbility() {
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castGravedigger();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Gravedigger");
     }
 
     @Test

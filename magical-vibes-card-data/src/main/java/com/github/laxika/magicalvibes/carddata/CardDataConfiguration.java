@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +21,15 @@ public class CardDataConfiguration {
      * definitions and stays framework-free.
      */
     @Bean
-    RandomDeckGenerator randomDeckGenerator(CardRegistry cardRegistry) {
-        return new RandomDeckGenerator(cardRegistry);
+    RandomDeckGenerator randomDeckGenerator(
+            CardRegistry cardRegistry,
+            @Value("${oracle.data-load-mode:EAGER}") OracleLoadMode loadMode) {
+        RandomDeckGenerator generator = new RandomDeckGenerator(cardRegistry);
+        // The registry has finished loading before this bean is created. Warm the derived pool
+        // during normal startup, while preserving on-demand loading in the test context.
+        if (loadMode == OracleLoadMode.EAGER) {
+            generator.initializeCardPool();
+        }
+        return generator;
     }
 }

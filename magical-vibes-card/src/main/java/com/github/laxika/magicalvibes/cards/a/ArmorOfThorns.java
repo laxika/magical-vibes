@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MIR", collectorNumber = "206")
+@CardRegistration(set = "VMA", collectorNumber = "194")
 public class ArmorOfThorns extends Card {
 
     public ArmorOfThorns() {

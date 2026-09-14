@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PCY", collectorNumber = "136")
+@CardRegistration(set = "VMA", collectorNumber = "264")
 public class ChimericIdol extends Card {
 
     public ChimericIdol() {

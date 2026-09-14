@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 
 @CardRegistration(set = "SOI", collectorNumber = "142")
+@CardRegistration(set = "UMA", collectorNumber = "118")
 public class TwinsOfMaurerEstate extends Card {
 
     public TwinsOfMaurerEstate() {

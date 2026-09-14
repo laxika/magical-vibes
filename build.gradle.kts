@@ -82,7 +82,8 @@ subprojects {
                 systemProperty("junit.jupiter.execution.timeout.threaddump.enabled", "true")
             }
             maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
-            jvmArgs("-Xmx1g", "-XX:+UseParallelGC")
+            maxHeapSize = "3g"
+            jvmArgs("-XX:+UseParallelGC")
             forkEvery = 2000
             systemProperty(
                 "oracle.data-provider",

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "6")
+@CardRegistration(set = "DDN", collectorNumber = "27")
+@CardRegistration(set = "DDO", collectorNumber = "6")
 public class DauntlessOnslaught extends Card {
 
     public DauntlessOnslaught() {

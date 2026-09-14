@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToLifeLostThisTurn;
 
 @CardRegistration(set = "SHM", collectorNumber = "81")
+@CardRegistration(set = "2XM", collectorNumber = "113")
 public class WoundReflection extends Card {
 
     public WoundReflection() {

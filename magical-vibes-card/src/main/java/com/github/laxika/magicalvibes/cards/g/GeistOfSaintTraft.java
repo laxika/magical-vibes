@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "213")
+@CardRegistration(set = "DDQ", collectorNumber = "1")
+@CardRegistration(set = "2XM", collectorNumber = "197")
 public class GeistOfSaintTraft extends Card {
 
     public GeistOfSaintTraft() {

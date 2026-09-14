@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "125")
+@CardRegistration(set = "MMA", collectorNumber = "91")
 public class MarshFlitter extends Card {
 
     public MarshFlitter() {

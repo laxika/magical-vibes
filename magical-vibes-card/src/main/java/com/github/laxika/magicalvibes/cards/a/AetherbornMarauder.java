@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MoveCountersFromControlledPermanentsToSourceEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "71")
+@CardRegistration(set = "KLR", collectorNumber = "76")
 public class AetherbornMarauder extends Card {
 
     public AetherbornMarauder() {

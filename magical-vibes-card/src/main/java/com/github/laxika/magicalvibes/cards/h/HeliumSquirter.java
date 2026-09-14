@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "26")
+@CardRegistration(set = "MM2", collectorNumber = "47")
 public class HeliumSquirter extends Card {
 
     public HeliumSquirter() {

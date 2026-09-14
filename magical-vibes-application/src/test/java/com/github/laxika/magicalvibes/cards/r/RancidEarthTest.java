@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +51,22 @@ class RancidEarthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Threshold is checked before destroying a land you control")
+    void thresholdDoesNotTurnOnFromDestroyedLand() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        cast(player1);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -63,9 +80,13 @@ class RancidEarthTest extends BaseCardTest {
     }
 
     private void cast() {
+        cast(player2);
+    }
+
+    private void cast(Player targetPlayer) {
         harness.setHand(player1, List.of(new RancidEarth()));
         addMana();
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
+        harness.castSorcery(player1, 0, harness.getPermanentId(targetPlayer, "Forest"));
         harness.passBothPriorities();
     }
 
@@ -75,8 +96,12 @@ class RancidEarthTest extends BaseCardTest {
     }
 
     private List<Card> graveyardWithSevenCards() {
-        return List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        return graveyardWithCards(7);
+    }
+
+    private List<Card> graveyardWithCards(int count) {
+        return java.util.stream.IntStream.range(0, count)
+                .mapToObj(ignored -> (Card) new GrizzlyBears())
+                .toList();
     }
 }

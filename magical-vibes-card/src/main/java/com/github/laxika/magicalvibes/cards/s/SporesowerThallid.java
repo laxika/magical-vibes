@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "220")
+@CardRegistration(set = "MMA", collectorNumber = "162")
+@CardRegistration(set = "TSR", collectorNumber = "231")
 public class SporesowerThallid extends Card {
 
     public SporesowerThallid() {

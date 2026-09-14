@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
  * ({@link UnleashEffect}) and "can't block as long as it has a +1/+1 counter on it".
  */
 @CardRegistration(set = "RTR", collectorNumber = "62")
+@CardRegistration(set = "IMA", collectorNumber = "86")
 public class DeadReveler extends Card {
 
     public DeadReveler() {

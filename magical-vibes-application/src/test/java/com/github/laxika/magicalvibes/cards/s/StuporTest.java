@@ -40,8 +40,7 @@ class StuporTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Stupor()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Random discard already removed one card; now the target chooses the second discard.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -63,8 +62,7 @@ class StuporTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Stupor()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // The single card is discarded at random; no chosen discard remains.
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -79,8 +77,7 @@ class StuporTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Stupor()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

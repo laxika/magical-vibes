@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "82")
 @CardRegistration(set = "DTK", collectorNumber = "124")
+@CardRegistration(set = "GK2", collectorNumber = "36")
 public class UltimatePrice extends Card {
 
     public UltimatePrice() {

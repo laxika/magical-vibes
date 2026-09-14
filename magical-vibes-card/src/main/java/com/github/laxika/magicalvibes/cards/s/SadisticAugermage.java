@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPutsCardFromHandOnTopOfLibraryEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "103")
+@CardRegistration(set = "DDM", collectorNumber = "52")
 public class SadisticAugermage extends Card {
 
     public SadisticAugermage() {

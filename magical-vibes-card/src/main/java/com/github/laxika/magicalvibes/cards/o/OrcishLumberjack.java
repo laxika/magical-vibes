@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "ICE", collectorNumber = "210")
 @CardRegistration(set = "CST", collectorNumber = "36")
 @CardRegistration(set = "ME2", collectorNumber = "142")
+@CardRegistration(set = "VMA", collectorNumber = "179")
+@CardRegistration(set = "DDL", collectorNumber = "44")
 public class OrcishLumberjack extends Card {
 
     public OrcishLumberjack() {

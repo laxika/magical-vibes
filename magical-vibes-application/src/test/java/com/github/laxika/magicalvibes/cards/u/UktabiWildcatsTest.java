@@ -56,6 +56,25 @@ class UktabiWildcatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing the only Forest leaves no creature to regenerate")
+    void cannotRegenerateAfterSacrificingOnlyForest() {
+        Permanent wildcats = addWildcatsReady(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, wildcatsIndex(player1), null, null);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Uktabi Wildcats");
+        harness.assertInGraveyard(player1, "Uktabi Wildcats");
+
+        harness.passBothPriorities();
+
+        assertThat(wildcats.getRegenerationShield()).isZero();
+    }
+
+    @Test
     @DisplayName("{G}, Sacrifice a Forest grants a regeneration shield")
     void regenerationSacrificesForestAndGrantsShield() {
         Permanent wildcats = addWildcatsReady(player1);
@@ -66,10 +85,14 @@ class UktabiWildcatsTest extends BaseCardTest {
         harness.activateAbility(player1, wildcatsIndex(player1), null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, forest1.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(wildcats.isTapped()).isFalse();
+
         harness.passBothPriorities();
 
         assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Forest");
         // One Forest left → still on the battlefield as a 1/1
         assertThat(gqs.getEffectivePower(gd, wildcats)).isEqualTo(1);
     }
@@ -99,6 +122,7 @@ class UktabiWildcatsTest extends BaseCardTest {
     @DisplayName("Cannot activate the regeneration ability with no Forest to sacrifice")
     void cannotActivateWithoutForest() {
         addWildcatsReady(player1);
+        harness.addToBattlefield(player1, new Plains());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, wildcatsIndex(player1), null, null))
@@ -110,6 +134,17 @@ class UktabiWildcatsTest extends BaseCardTest {
     void cannotActivateWithoutGreenMana() {
         addWildcatsReady(player1);
         harness.addToBattlefield(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, wildcatsIndex(player1), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the regeneration ability with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addWildcatsReady(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, wildcatsIndex(player1), null, null))
                 .isInstanceOf(IllegalStateException.class);

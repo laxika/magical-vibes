@@ -549,6 +549,16 @@ public class PotentialManaService {
                     fixed.merge(ManaProductionSupport.effectiveColor(gameData, null, permanent,
                             manaEffect.color()), amount, Integer::sum);
                 }
+            } else if (effect instanceof AwardAnyColorManaEffect anyColor
+                    && anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY) {
+                int amount = estimateManaAmount(anyColor.amount(), permanent, gameData);
+                if (amount > 0) {
+                    for (ManaColor color : ManaProductionSupport.commanderColorIdentity(gameData, playerId)) {
+                        EnumMap<ManaColor, Integer> option = new EnumMap<>(ManaColor.class);
+                        option.put(color, amount);
+                        conditionalOptions.add(option);
+                    }
+                }
             } else if (specialAction && effect instanceof AwardRestrictedManaEffect restricted
                     && restricted.restriction() instanceof ManaRestriction.Powerstone) {
                 int amount = estimateManaAmount(restricted.amount(), permanent, gameData);

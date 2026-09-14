@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "147")
+@CardRegistration(set = "MM3", collectorNumber = "127")
+@CardRegistration(set = "TSR", collectorNumber = "204")
 public class GaeasAnthem extends Card {
 
     public GaeasAnthem() {

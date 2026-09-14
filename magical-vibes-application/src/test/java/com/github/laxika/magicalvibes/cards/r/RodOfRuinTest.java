@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.a.AjaniMentorOfHeroes;
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfTolvada;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TheBrokenSky;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,15 +18,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RodOfRuin.class, GrizzlyBears.class, LlanowarElves.class, Plains.class})
+@CardUsed({GrizzlyBears.class, LlanowarElves.class, Plains.class, RodOfRuin.class})
 class RodOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -225,6 +226,37 @@ class RodOfRuinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @CardUsed({InvasionOfTolvada.class, TheBrokenSky.class})
+    @Test
+    @DisplayName("Deals 1 damage to a target battle")
+    void deals1DamageToBattle() {
+        addReadyRod(player1);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfTolvada());
+        battle.setCounterCount(CounterType.DEFENSE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Invasion of Tolvada");
+    }
+
+    @CardUsed({AwakenedSkyclave.class, InvasionOfZendikar.class})
+    @Test
+    @DisplayName("Deals 1 damage to a target battle")
+    void deals1DamageToBattleUpstreamReview() {
+        addReadyRod(player1);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
     }
 
     @Test

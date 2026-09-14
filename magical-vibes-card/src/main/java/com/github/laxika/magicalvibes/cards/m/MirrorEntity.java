@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerTo
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "31")
+@CardRegistration(set = "MM2", collectorNumber = "26")
+@CardRegistration(set = "TSR", collectorNumber = "297")
 public class MirrorEntity extends Card {
 
     public MirrorEntity() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "142")
+@CardRegistration(set = "ME3", collectorNumber = "95")
 public class Disharmony extends Card {
 
     public Disharmony() {

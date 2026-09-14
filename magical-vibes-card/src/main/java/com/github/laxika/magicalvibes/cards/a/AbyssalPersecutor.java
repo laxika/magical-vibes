@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "47")
+@CardRegistration(set = "IMA", collectorNumber = "78")
 public class AbyssalPersecutor extends Card {
 
     public AbyssalPersecutor() {

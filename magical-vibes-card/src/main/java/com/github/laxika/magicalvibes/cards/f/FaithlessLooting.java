@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "87")
+@CardRegistration(set = "DDK", collectorNumber = "59")
 @CardRegistration(set = "INR", collectorNumber = "151")
+@CardRegistration(set = "UMA", collectorNumber = "128")
+@CardRegistration(set = "EMA", collectorNumber = "128")
+@CardRegistration(set = "STA", collectorNumber = "38")
 public class FaithlessLooting extends Card {
 
     public FaithlessLooting() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "9")
+@CardRegistration(set = "DDL", collectorNumber = "10")
 public class FreewindEquenaut extends Card {
 
     public FreewindEquenaut() {

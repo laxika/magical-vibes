@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "233")
 @CardRegistration(set = "ONS", collectorNumber = "316")
+@CardRegistration(set = "EXP", collectorNumber = "16")
+@CardRegistration(set = "ZNE", collectorNumber = "1")
 public class FloodedStrand extends Card {
 
     public FloodedStrand() {

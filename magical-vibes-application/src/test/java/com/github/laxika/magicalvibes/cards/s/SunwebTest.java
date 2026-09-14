@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.EtherealChampion;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KarooMeerkat;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,15 +11,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sunweb.class, PearlDragon.class, KarooMeerkat.class})
+@CardUsed({EtherealChampion.class, GiantGrowth.class, GorillaChieftain.class, GrizzlyBears.class, KarooMeerkat.class, PearlDragon.class, Sunweb.class})
 class SunwebTest extends BaseCardTest {
 
     @Test
@@ -29,7 +31,8 @@ class SunwebTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Sunweb");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Sunweb);
     }
 
     @Test
@@ -37,10 +40,36 @@ class SunwebTest extends BaseCardTest {
     void canBlockHighPowerCreature() {
         Permanent sunweb = addCreatureReady(player2, new Sunweb());
 
-        Permanent atkPerm = addCreatureReady(player1, new PearlDragon()); // 4/4 flying
+        addCreatureReady(player1, new PearlDragon()); // 4/4 flying
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sunweb.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sunweb can block a creature with power exactly 3")
+    void canBlockPowerExactlyThree() {
+        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+
+        Permanent atkPerm = addCreatureReady(player1, new EtherealChampion()); // 3/4
         atkPerm.setAttacking(true);
 
         prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sunweb.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sunweb can block a creature with power exactly 3")
+    void canBlockPowerExactlyThreeUpstreamReview() {
+        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+
+        addCreatureReady(player1, new GorillaChieftain()); // 3/3
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -52,10 +81,8 @@ class SunwebTest extends BaseCardTest {
     void cannotBlockLowPowerCreature() {
         addCreatureReady(player2, new Sunweb());
 
-        Permanent atkPerm = addCreatureReady(player1, new KarooMeerkat()); // 2/1
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,5 +97,22 @@ class SunwebTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Sunweb can block a creature whose effective power is raised above 2")
+    void canBlockCreatureAfterPowerBoost() {
+        Permanent sunweb = addCreatureReady(player2, new Sunweb());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sunweb.isBlocking()).isTrue();
     }
 }

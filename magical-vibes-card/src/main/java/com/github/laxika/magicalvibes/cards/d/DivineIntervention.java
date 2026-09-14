@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "8")
+@CardRegistration(set = "ME3", collectorNumber = "8")
 public class DivineIntervention extends Card {
 
     public DivineIntervention() {

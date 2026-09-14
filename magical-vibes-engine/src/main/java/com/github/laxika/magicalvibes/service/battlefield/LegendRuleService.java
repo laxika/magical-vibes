@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledSubtypeLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -56,6 +57,7 @@ public class LegendRuleService {
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2 && !hasGlobalExemption(gameData)
+                    && !hasControlledPermanentsExemption(gameData, controllerId)
                     && !allExempt(gameData, battlefield, entry.getKey())) {
                 List<UUID> nonExemptPermanents = entry.getValue().stream()
                         .filter(id -> findPermanent(battlefield, id)
@@ -79,6 +81,13 @@ public class LegendRuleService {
                 .flatMap(List::stream)
                 .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
+    }
+
+    private boolean hasControlledPermanentsExemption(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream()
+                .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ControlledPermanentsLegendRuleExemptionEffect.class::isInstance);
     }
 
     /**

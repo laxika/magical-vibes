@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "247")
+@CardRegistration(set = "TSR", collectorNumber = "369")
 public class TimeOfNeed extends Card {
 
     public TimeOfNeed() {

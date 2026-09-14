@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Fervor.class, ArdentMilitia.class})
+@CardUsed({ArdentMilitia.class, Fervor.class, Opalescence.class})
 class FervorTest extends BaseCardTest {
 
     @Test
@@ -33,6 +33,15 @@ class FervorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fervor does not grant haste to noncreature permanents")
+    void noncreaturePermanentsDoNotHaveHaste() {
+        Permanent fervor = harness.addToBattlefieldAndReturn(player1, new Fervor());
+
+        assertThat(gqs.isCreature(gd, fervor)).isFalse();
+        assertThat(gqs.hasKeyword(gd, fervor, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Fervor's haste grant ends when Fervor leaves the battlefield")
     void hasteGrantEndsWhenFervorLeavesBattlefield() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArdentMilitia());
@@ -50,6 +59,17 @@ class FervorTest extends BaseCardTest {
     void animatedFervorHasHaste() {
         Permanent fervor = harness.addToBattlefieldAndReturn(player1, new Fervor());
         harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, fervor)).isTrue();
+        assertThat(gqs.hasKeyword(gd, fervor, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("An animated Fervor also has haste when it is a creature you control")
+    void fervorEnteringAfterOpalescenceHasHaste() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent fervor = harness.addToBattlefieldAndReturn(player1, new Fervor());
 
         assertThat(gqs.isCreature(gd, fervor)).isTrue();
         assertThat(gqs.hasKeyword(gd, fervor, Keyword.HASTE)).isTrue();

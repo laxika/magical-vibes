@@ -29,6 +29,7 @@ import java.util.List;
 @CardRegistration(set = "CHR", collectorNumber = "118")
 @CardRegistration(set = "CHR", collectorNumber = "119")
 @CardRegistration(set = "CHR", collectorNumber = "120")
+@CardRegistration(set = "2XM", collectorNumber = "330")
 public class UrzasPowerPlant extends Card {
 
     public UrzasPowerPlant() {
