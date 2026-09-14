@@ -591,6 +591,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever any player gains one or more life. */
     ON_ANY_PLAYER_GAINS_LIFE,
     ON_CONTROLLER_GAINS_LIFE,
+    /** Triggers whenever this permanent's controller becomes the monarch. */
+    ON_CONTROLLER_BECOMES_MONARCH,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
     ON_OPPONENT_GAINS_LIFE,
     /** Triggers whenever this permanent's controller gets one or more energy counters. */

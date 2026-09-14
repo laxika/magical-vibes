@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSp
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedAtLeastThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
@@ -242,6 +243,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesO
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
@@ -708,6 +710,8 @@ public class ConditionEvaluationService {
                             && sourcePermanent(gameData, ctx).getTimesRegeneratedThisTurn() > 0;
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
+            case NoMonarch ignored ->
+                    gameData.monarchPlayerId == null;
             case AttachedPermanentControllerControlsNoOther c ->
                     attachedPermanentControllerControlsNoOther(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
@@ -1155,6 +1159,8 @@ public class ConditionEvaluationService {
                     ctx.castDuringMainPhase();
             case ControllerTurn ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
+            case ControllerIsMonarch ignored ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.monarchPlayerId);
             case ControllerMainPhase ignored ->
                     ctx.controllerId() != null
                             && ctx.controllerId().equals(gameData.activePlayerId)

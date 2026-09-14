@@ -203,6 +203,7 @@ public enum CardSet {
     SET_SNC("SNC"),
     SET_TDM("TDM"),
     SET_TMT("TMT"),
+    SET_BOT("BOT"),
     SET_APC("APC"),
     SET_DKM("DKM"),
     SET_SPM("SPM"),

@@ -159,6 +159,8 @@ public class TurnProgressionService {
 
         TurnStep next = gameData.currentStep.next();
         boolean nextUpkeepIsAdditional = false;
+        boolean additionalBeginningPhaseUpkeep = gameData.currentStep == TurnStep.UNTAP
+                && gameData.additionalBeginningPhaseUntapInProgress;
 
         if (gameData.currentStep == TurnStep.UPKEEP && gameData.additionalUpkeepsRemaining > 0) {
             next = TurnStep.UPKEEP;
@@ -175,7 +177,7 @@ public class TurnProgressionService {
                 }
                 next = TurnStep.DRAW;
             } else if (gameData.currentStep == TurnStep.UNTAP) {
-                next = TurnStep.PRECOMBAT_MAIN;
+                next = additionalBeginningPhaseUpkeep ? TurnStep.DRAW : TurnStep.PRECOMBAT_MAIN;
             }
             logSkippedPhase(gameData, "upkeep");
         }
@@ -260,6 +262,22 @@ public class TurnProgressionService {
             }
         }
 
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.additionalBeginningPhasesAfterCombat > 0) {
+            gameData.additionalBeginningPhaseReturnStep = next;
+            next = TurnStep.UNTAP;
+            gameData.additionalBeginningPhasesAfterCombat--;
+        } else if (gameData.currentStep == TurnStep.DRAW
+                && gameData.additionalBeginningPhaseReturnStep != null) {
+            if (gameData.additionalBeginningPhasesAfterCombat > 0) {
+                next = TurnStep.UNTAP;
+                gameData.additionalBeginningPhasesAfterCombat--;
+            } else {
+                next = gameData.additionalBeginningPhaseReturnStep;
+                gameData.additionalBeginningPhaseReturnStep = null;
+            }
+        }
+
         // Blinding Angel: the active player skips their next combat phase — jump straight from the
         // precombat main phase to the postcombat main phase.
         if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
@@ -289,7 +307,8 @@ public class TurnProgressionService {
 
         if (next != null) {
             gameData.currentStep = next;
-            gameData.currentUpkeepIsAdditional = next == TurnStep.UPKEEP && nextUpkeepIsAdditional;
+            gameData.currentUpkeepIsAdditional = next == TurnStep.UPKEEP
+                    && (nextUpkeepIsAdditional || additionalBeginningPhaseUpkeep);
             if (next == TurnStep.UPKEEP) {
                 gameData.markUpkeepStart();
             }
@@ -299,6 +318,11 @@ public class TurnProgressionService {
             invalidateForAllPlayers(gameData);
 
             if (gameData.status == GameStatus.FINISHED) return;
+
+            if (next == TurnStep.UNTAP) {
+                beginAdditionalBeginningPhase(gameData);
+                return;
+            }
 
             stepTriggerService.processPendingExileReturns(gameData, next);
 
@@ -859,6 +883,9 @@ public class TurnProgressionService {
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;
         gameData.additionalUpkeepReturnStep = null;
+        gameData.additionalBeginningPhasesAfterCombat = 0;
+        gameData.additionalBeginningPhaseReturnStep = null;
+        gameData.additionalBeginningPhaseUntapInProgress = false;
         gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.clear();
         gameData.combatPhasesThisTurn = 0;
         gameData.endStepsThisTurn = 0;
@@ -1003,7 +1030,11 @@ public class TurnProgressionService {
             return;
         }
 
-        completeTurnAdvance(gameData);
+        if (gameData.additionalBeginningPhaseUntapInProgress) {
+            completeAdditionalBeginningPhaseUntap(gameData);
+        } else {
+            completeTurnAdvance(gameData);
+        }
     }
 
     /**
@@ -1023,7 +1054,61 @@ public class TurnProgressionService {
             return;
         }
 
-        completeTurnAdvance(gameData);
+        if (gameData.additionalBeginningPhaseUntapInProgress) {
+            completeAdditionalBeginningPhaseUntap(gameData);
+        } else {
+            completeTurnAdvance(gameData);
+        }
+    }
+
+    private void beginAdditionalBeginningPhase(GameData gameData) {
+        gameData.additionalBeginningPhaseUntapInProgress = true;
+        UUID activePlayerId = gameData.activePlayerId;
+        String activePlayerName = gameData.playerIdToName.get(activePlayerId);
+        boolean skipUntapStep = false;
+        int queuedUntapSkips = gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
+        if (queuedUntapSkips > 0) {
+            if (queuedUntapSkips == 1) {
+                gameData.skipNextUntapStepCount.remove(activePlayerId);
+            } else {
+                gameData.skipNextUntapStepCount.put(activePlayerId, queuedUntapSkips - 1);
+            }
+            skipUntapStep = true;
+            gameLogService.append(gameData, GameLog.text(activePlayerName + " skips their untap step."));
+        }
+
+        if (skipUntapStep || untapStepService.playersSkipUntapStepApplies(gameData)) {
+            untapStepService.untapPermanents(gameData, activePlayerId, null, true);
+        } else if (untapStepService.storageMatrixRestrictionApplies(gameData, activePlayerId)) {
+            playerInputService.beginStorageMatrixUntapChoice(gameData, activePlayerId);
+            invalidateForAllPlayers(gameData);
+            return;
+        } else {
+            java.util.Optional<com.github.laxika.magicalvibes.model.effect.StaticOrbEffect> untapRestriction =
+                    untapStepService.bindingUntapRestriction(gameData, activePlayerId);
+            if (untapRestriction.isPresent()) {
+                com.github.laxika.magicalvibes.model.effect.StaticOrbEffect effect = untapRestriction.get();
+                playerInputService.beginStaticOrbUntapChoice(gameData, activePlayerId,
+                        untapStepService.staticOrbUntapCandidates(gameData, activePlayerId, effect),
+                        effect.maxUntap(), effect.filter());
+                invalidateForAllPlayers(gameData);
+                return;
+            }
+            untapStepService.untapPermanents(gameData, activePlayerId);
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+        completeAdditionalBeginningPhaseUntap(gameData);
+    }
+
+    /** Finishes the untap step of an inserted beginning phase and advances to its upkeep. */
+    public void completeAdditionalBeginningPhaseUntap(GameData gameData) {
+        untapStepService.finishUntapStep(gameData, gameData.activePlayerId);
+        advanceStep(gameData);
+        gameData.additionalBeginningPhaseUntapInProgress = false;
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

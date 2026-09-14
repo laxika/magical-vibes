@@ -175,6 +175,9 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             } else {
                 exileService.exileCard(gameData, playerId, card, sourcePermanentId);
             }
+            if (e.markWithIntelCounters()) {
+                gameData.exiledCardsWithIntelCounters.add(card.getId());
+            }
             for (AllowCastFromCardsExiledWithSourceEffect permission : persistentPermissions) {
                 if (permission.filter() == null || (predicateEvaluationService != null
                         && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))) {
