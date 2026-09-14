@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "215")
+@CardRegistration(set = "TSR", collectorNumber = "227")
 public class ScrybRanger extends Card {
 
     public ScrybRanger() {

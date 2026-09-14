@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "121")
 @CardRegistration(set = "MMA", collectorNumber = "120")
 @CardRegistration(set = "IMA", collectorNumber = "136")
+@CardRegistration(set = "TSR", collectorNumber = "346")
 public class KikiJikiMirrorBreaker extends Card {
 
     public KikiJikiMirrorBreaker() {

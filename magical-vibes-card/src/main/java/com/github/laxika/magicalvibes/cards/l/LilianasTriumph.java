@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "98")
+@CardRegistration(set = "TSR", collectorNumber = "327")
 public class LilianasTriumph extends Card {
 
     public LilianasTriumph() {

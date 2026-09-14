@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "PLC", collectorNumber = "116")
 @CardRegistration(set = "MM2", collectorNumber = "108")
 @CardRegistration(set = "MMA", collectorNumber = "107")
+@CardRegistration(set = "TSR", collectorNumber = "157")
 public class BruteForce extends Card {
 
     public BruteForce() {

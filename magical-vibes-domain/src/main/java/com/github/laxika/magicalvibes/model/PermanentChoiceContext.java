@@ -1508,6 +1508,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
 
+    record ChoosePlayerAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                               boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                               List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                               List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChoosePlayerAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
+
     record ChooseNonlandPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                          boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
                                          List<UUID> targetIds, List<String> repeatedAdditionalCosts,

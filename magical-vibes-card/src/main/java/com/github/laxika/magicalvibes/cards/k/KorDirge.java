@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectTargetCreatureDamageF
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "87")
+@CardRegistration(set = "TSR", collectorNumber = "120")
 public class KorDirge extends Card {
 
     public KorDirge() {

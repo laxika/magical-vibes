@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "111")
+@CardRegistration(set = "TSR", collectorNumber = "117")
 public class GorgonRecluse extends Card {
 
     public GorgonRecluse() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 
 @CardRegistration(set = "PLC", collectorNumber = "23")
 @CardRegistration(set = "EMA", collectorNumber = "5")
+@CardRegistration(set = "TSR", collectorNumber = "11")
 public class Calciderm extends Card {
 
     public Calciderm() {

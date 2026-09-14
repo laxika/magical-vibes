@@ -181,6 +181,7 @@ public enum CardSet {
     SET_TPR("TPR"),
     SET_TSP("TSP"),
     SET_TSB("TSB"),
+    SET_TSR("TSR"),
     SET_ME1("ME1"),
     SET_ME2("ME2"),
     SET_VMA("VMA"),
@@ -257,6 +258,7 @@ public enum CardSet {
     SET_HA2("HA2"),
     SET_HA3("HA3"),
     SET_HA5("HA5"),
+    SET_HA6("HA6"),
     SET_Q06("Q06"),
     SET_EA1("EA1");
 

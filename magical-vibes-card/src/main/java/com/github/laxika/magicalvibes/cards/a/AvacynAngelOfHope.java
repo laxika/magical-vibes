@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "INR", collectorNumber = "477")
 @CardRegistration(set = "V15", collectorNumber = "5")
 @CardRegistration(set = "IMA", collectorNumber = "11")
+@CardRegistration(set = "HA6", collectorNumber = "1")
 public class AvacynAngelOfHope extends Card {
 
     public AvacynAngelOfHope() {

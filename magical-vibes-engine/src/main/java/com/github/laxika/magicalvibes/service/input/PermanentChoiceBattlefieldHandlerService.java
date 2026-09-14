@@ -2556,6 +2556,32 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
     }
 
+    public void handleChoosePlayerAsEnter(GameData gameData, UUID chosenPlayerId,
+                                          PermanentChoiceContext.ChoosePlayerAsEnter context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+        if (entering == null) {
+            throw new IllegalStateException("Entering permanent no longer exists");
+        }
+        if (!gameData.playerIds.contains(chosenPlayerId)) {
+            throw new IllegalStateException("Chosen player no longer exists");
+        }
+
+        entering.getProtectionFromPlayerIdsPermanently().clear();
+        entering.getProtectionFromPlayerIdsPermanently().add(chosenPlayerId);
+        gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
+                " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
+        log.info("Game {} - {} chooses player {}", gameData.id,
+                entering.getCard().getName(), gameData.playerIdToName.get(chosenPlayerId));
+
+        battlefieldEntryService.processCreatureETBEffects(
+                gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
+                context.etbMode(), context.xValue(), context.kicked(), context.targetIds(),
+                context.repeatedAdditionalCosts(), context.convokeCreatureIds());
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
     public void handleChooseNonlandPermanentAsEnter(
             GameData gameData, UUID chosenPermanentId,
             PermanentChoiceContext.ChooseNonlandPermanentAsEnter context) {

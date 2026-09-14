@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnL
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "45")
+@CardRegistration(set = "TSR", collectorNumber = "81")
 public class RealityAcid extends Card {
 
     public RealityAcid() {

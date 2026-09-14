@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "M12", collectorNumber = "188")
 @CardRegistration(set = "MM2", collectorNumber = "156")
 @CardRegistration(set = "IMA", collectorNumber = "183")
+@CardRegistration(set = "TSR", collectorNumber = "365")
 public class PrimevalTitan extends Card {
 
     public PrimevalTitan() {

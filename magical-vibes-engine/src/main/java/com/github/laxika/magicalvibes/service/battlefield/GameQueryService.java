@@ -129,6 +129,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColor
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsEffect;
@@ -4887,18 +4888,21 @@ public class GameQueryService {
 
     // --- Protection & evasion ---
 
-    /** Returns {@code true} if the target permanent has protection from the source's controller. */
+    /** Returns {@code true} if the target permanent has durable protection from the source's controller. */
     public boolean hasProtectionFromOpponents(GameData gameData, Permanent target, UUID sourceControllerId) {
-        if (target == null || sourceControllerId == null
-                || !target.isProtectionFromOpponentsPermanently()
-                || target.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (target == null || sourceControllerId == null || target.isLosesAllAbilitiesUntilEndOfTurn()) {
             return false;
         }
         StaticBonus bonus = computeStaticBonus(gameData, target);
         if (bonus.losesAllAbilities()) {
             return false;
         }
-        return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId);
+        if (target.isProtectionFromOpponentsPermanently()
+                && target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)) {
+            return true;
+        }
+        return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)
+                && hasActiveStaticEffect(gameData, target, ProtectionFromChosenPlayerEffect.class);
     }
 
     private boolean hasProtectionFromOpponentCreature(GameData gameData, Permanent target, Permanent source) {

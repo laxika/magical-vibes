@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "50")
+@CardRegistration(set = "TSR", collectorNumber = "93")
 public class Timebender extends Card {
 
     public Timebender() {
