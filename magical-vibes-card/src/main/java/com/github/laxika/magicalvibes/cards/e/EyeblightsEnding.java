@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "110")
 @CardRegistration(set = "DPA", collectorNumber = "25")
 @CardRegistration(set = "EMA", collectorNumber = "88")
+@CardRegistration(set = "2X2", collectorNumber = "75")
 public class EyeblightsEnding extends Card {
 
     public EyeblightsEnding() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "RTR", collectorNumber = "158")
 @CardRegistration(set = "DDJ", collectorNumber = "56")
+@CardRegistration(set = "2X2", collectorNumber = "204")
 public class DregMangler extends Card {
 
     public DregMangler() {

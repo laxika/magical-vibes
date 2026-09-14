@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 @CardRegistration(set = "EMN", collectorNumber = "53")
 @CardRegistration(set = "RAV", collectorNumber = "41")
 @CardRegistration(set = "IKO", collectorNumber = "45")
+@CardRegistration(set = "SIR", collectorNumber = "57")
 public class Convolute extends Card {
 
     public Convolute() {

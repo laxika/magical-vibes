@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "110")
+@CardRegistration(set = "2X2", collectorNumber = "133")
 public class Ambuscade extends Card {
 
     public Ambuscade() {

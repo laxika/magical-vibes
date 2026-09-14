@@ -1651,6 +1651,19 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Split Decision: the current player voted for denial or duplication. */
+    record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                             Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DENIAL = "Denial";
+        public static final String DUPLICATION = "Duplication";
+        public static final List<String> OPTIONS = List.of(DENIAL, DUPLICATION);
+
+        public VoteForDenialOrDuplicationChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
     /** Tyrant's Choice: the current player voted for death or torture. */
     record TyrantsChoiceChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {

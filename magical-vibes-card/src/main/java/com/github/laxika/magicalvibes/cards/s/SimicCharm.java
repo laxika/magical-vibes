@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "195")
+@CardRegistration(set = "EA3", collectorNumber = "10")
 public class SimicCharm extends Card {
 
     public SimicCharm() {

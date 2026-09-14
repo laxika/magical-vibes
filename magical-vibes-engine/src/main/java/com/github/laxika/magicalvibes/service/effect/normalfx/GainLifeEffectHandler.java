@@ -46,6 +46,9 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
             // "its controller gains life …" (e.g. Condemn): route to the target permanent's
             // controller. No legal target -> no one gains, matching the effect's fizzle behaviour.
             UUID targetControllerId = controllerOfTarget(gameData, entry.getTargetId());
+            if (targetControllerId == null) {
+                targetControllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
+            }
             if (targetControllerId != null) {
                 lifeSupport.applyGainLife(gameData, targetControllerId, amount);
             }

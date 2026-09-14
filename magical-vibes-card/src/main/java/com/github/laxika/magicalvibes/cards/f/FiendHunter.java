@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "DDQ", collectorNumber = "11")
 @CardRegistration(set = "UMA", collectorNumber = "17")
 @CardRegistration(set = "A25", collectorNumber = "14")
+@CardRegistration(set = "SIS", collectorNumber = "8")
 public class FiendHunter extends Card {
 
     public FiendHunter() {

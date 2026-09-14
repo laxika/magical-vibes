@@ -1,25 +1,28 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AlabasterWall;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SecurityDetail.class, AlabasterWall.class})
 class SecurityDetailTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates a 1/1 white Soldier when no creatures are controlled")
     void createsSoldierWithoutControlledCreatures() {
         Permanent detail = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
-        harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null);
@@ -38,7 +41,7 @@ class SecurityDetailTest extends BaseCardTest {
     @DisplayName("Cannot be activated while its controller controls a creature")
     void cannotActivateWithControlledCreature() {
         Permanent detail = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AlabasterWall());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -46,6 +49,19 @@ class SecurityDetailTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no creatures");
         assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can be activated while an opponent controls a creature")
+    void canActivateWithOpponentsCreature() {
+        Permanent detail = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
+        harness.addToBattlefield(player2, new AlabasterWall());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
     }
 
     @Test
@@ -64,5 +80,32 @@ class SecurityDetailTest extends BaseCardTest {
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    @DisplayName("Can be activated again on the next turn")
+    void canActivateAgainOnNextTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent detail = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null);
+        harness.passBothPriorities();
+        Permanent soldier = findPermanents(player1, "Soldier").getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(soldier);
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
     }
 }

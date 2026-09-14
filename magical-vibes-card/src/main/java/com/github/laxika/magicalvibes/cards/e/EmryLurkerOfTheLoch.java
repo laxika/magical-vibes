@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "43")
+@CardRegistration(set = "SLC", collectorNumber = "2019")
 @CardRegistration(set = "MUL", collectorNumber = "9")
 @CardRegistration(set = "MUL", collectorNumber = "74")
 @CardRegistration(set = "MUL", collectorNumber = "139")

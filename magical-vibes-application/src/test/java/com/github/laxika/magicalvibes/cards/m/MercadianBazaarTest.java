@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(MercadianBazaar.class)
 class MercadianBazaarTest extends BaseCardTest {
 
     @Test
@@ -21,7 +24,7 @@ class MercadianBazaarTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findPermanent(player1, "Mercadian Bazaar").isTapped()).isTrue();
     }
@@ -87,6 +90,17 @@ class MercadianBazaarTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(redMana()).isZero();
         assertThat(bazaar.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The mana ability cannot be activated while Mercadian Bazaar is tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent bazaar = addBazaarWithCounters(3);
+        bazaar.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     private Permanent addBazaarWithCounters(int counters) {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXP", collectorNumber = "4")
+@CardRegistration(set = "EA3", collectorNumber = "21")
 public class CinderGlade extends Card {
 
     public CinderGlade() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllPermanentsOfChosenColorToHandEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "87")
+@CardRegistration(set = "2X2", collectorNumber = "67")
 public class WashOut extends Card {
 
     public WashOut() {

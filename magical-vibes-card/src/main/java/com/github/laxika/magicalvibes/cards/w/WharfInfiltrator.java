@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "80")
+@CardRegistration(set = "SIR", collectorNumber = "96")
 public class WharfInfiltrator extends Card {
 
     public WharfInfiltrator() {

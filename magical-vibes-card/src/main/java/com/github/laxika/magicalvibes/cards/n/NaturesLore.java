@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "DDD", collectorNumber = "17")
 @CardRegistration(set = "VMA", collectorNumber = "220")
 @CardRegistration(set = "GVL", collectorNumber = "17")
+@CardRegistration(set = "DMR", collectorNumber = "170")
 public class NaturesLore extends Card {
 
     public NaturesLore() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "138")
+@CardRegistration(set = "2X2", collectorNumber = "185")
 public class BloodwaterEntity extends Card {
 
     public BloodwaterEntity() {

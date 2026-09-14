@@ -159,18 +159,25 @@ public class MayCopyHandlerService {
                     .flatMap(List::stream)
                     .filter(card -> card.hasType(CardType.CREATURE))
                     .toList();
-            if (!creatureCards.isEmpty()) {
+            int requiredCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
+            if (creatureCards.size() >= requiredCards) {
                 playerInputService.beginMultiGraveyardChoice(
-                        gameData, ability.controllerId(), creatureCards, 1, 1,
-                        "Choose a creature card in a graveyard to copy.");
+                        gameData, ability.controllerId(), creatureCards, requiredCards, requiredCards,
+                        copyEffect.exileTwoAndAddOtherPowerCounters()
+                                ? "Choose two creature cards from graveyards."
+                                : "Choose a creature card in a graveyard to copy.");
                 gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + " accepts — choosing a creature card in a graveyard to copy."));
+                        player.getUsername() + (copyEffect.exileTwoAndAddOtherPowerCounters()
+                                ? " accepts — choosing two creature cards from graveyards."
+                                : " accepts — choosing a creature card in a graveyard to copy.")));
                 return;
             }
         }
 
         String message = accepted
-                ? player.getUsername() + " has no creature card to copy; it enters without copying."
+                ? player.getUsername() + (copyEffect.exileTwoAndAddOtherPowerCounters()
+                        ? " has fewer than two creature cards to exile; it enters without copying."
+                        : " has no creature card to copy; it enters without copying.")
                 : player.getUsername() + " declines to copy a creature card from a graveyard. ";
         gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(), " enters without copying."));
         finishCloneEntryWithoutFurtherChoice(gameData);

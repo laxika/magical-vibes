@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "119")
+@CardRegistration(set = "SIR", collectorNumber = "107")
 public class KindlyStranger extends Card {
 
     public KindlyStranger() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "185")
+@CardRegistration(set = "2X2", collectorNumber = "234")
 @CardRegistration(set = "MUL", collectorNumber = "45")
 @CardRegistration(set = "MUL", collectorNumber = "110")
 @CardRegistration(set = "MUL", collectorNumber = "175")

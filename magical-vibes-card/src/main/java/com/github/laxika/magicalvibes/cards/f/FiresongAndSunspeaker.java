@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffe
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "280")
+@CardRegistration(set = "2X2", collectorNumber = "215")
 @CardRegistration(set = "MUL", collectorNumber = "39")
 @CardRegistration(set = "MUL", collectorNumber = "104")
 @CardRegistration(set = "MUL", collectorNumber = "169")

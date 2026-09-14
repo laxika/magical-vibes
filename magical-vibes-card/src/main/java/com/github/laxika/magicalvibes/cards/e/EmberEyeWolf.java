@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "154")
+@CardRegistration(set = "SIR", collectorNumber = "152")
 public class EmberEyeWolf extends Card {
 
     public EmberEyeWolf() {

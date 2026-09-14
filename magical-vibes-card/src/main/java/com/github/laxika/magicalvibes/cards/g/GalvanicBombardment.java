@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "129")
+@CardRegistration(set = "SIR", collectorNumber = "157")
 public class GalvanicBombardment extends Card {
 
     public GalvanicBombardment() {

@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExperienceCountersEffectHandler implements NormalEffectHandlerBean {
 
-    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,13 +28,21 @@ public class ExperienceCountersEffectHandler implements NormalEffectHandlerBean 
         ExperienceCountersEffect experience = (ExperienceCountersEffect) effect;
         int amount = amountEvaluationService.evaluate(gameData, experience.amount(),
                 AmountContext.forStackEntry(entry, null));
-        if (amount <= 0) {
+        if (amount == 0) {
             return;
         }
 
-        gameData.playerExperienceCounters.merge(entry.getControllerId(), amount, Integer::sum);
+        int current = gameData.playerExperienceCounters.getOrDefault(entry.getControllerId(), 0);
+        int updated = Math.max(0, current + amount);
+        int changed = updated - current;
+        if (changed == 0) {
+            return;
+        }
+
+        gameData.playerExperienceCounters.put(entry.getControllerId(), updated);
         String playerName = gameData.playerIdToName.getOrDefault(entry.getControllerId(), "Player");
-        gameLogService.append(gameData, GameLog.text(playerName + " gets " + amount
-                + " experience counter" + (amount == 1 ? "." : "s.")));
+        String action = changed > 0 ? "gets " + changed : "loses " + -changed;
+        gameLogService.append(gameData,
+                GameLog.text(playerName + " " + action + " experience counter(s)."));
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "213")
+@CardRegistration(set = "GN3", collectorNumber = "119")
 public class RingOfThune extends Card {
 
     public RingOfThune() {

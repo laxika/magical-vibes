@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "244")
+@CardRegistration(set = "SIR", collectorNumber = "232")
 public class FeveredVisions extends Card {
 
     public FeveredVisions() {

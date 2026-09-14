@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SandSquid.class, WildJhovall.class, Forest.class})
 class SandSquidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability taps the target creature")
     void resolvingAbilityTapsTargetCreature() {
-        addReadySandSquid(player1);
-        Permanent targetCreature = addReadyCreature(player2);
+        addCreatureReady(player1, new SandSquid());
+        Permanent targetCreature = addCreatureReady(player2, new WildJhovall());
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
@@ -31,8 +33,8 @@ class SandSquidTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        addReadySandSquid(player1);
-        Permanent land = addReadyLand(player2);
+        addCreatureReady(player1, new SandSquid());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -42,8 +44,8 @@ class SandSquidTest extends BaseCardTest {
     @Test
     @DisplayName("The target creature remains tapped while Sand Squid remains tapped")
     void targetCreatureDoesNotUntapWhileSandSquidRemainsTapped() {
-        Permanent sandSquid = addReadySandSquid(player1);
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent sandSquid = addCreatureReady(player1, new SandSquid());
+        Permanent targetCreature = addCreatureReady(player2, new WildJhovall());
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
@@ -56,8 +58,8 @@ class SandSquidTest extends BaseCardTest {
     @Test
     @DisplayName("The target creature untaps after Sand Squid untaps")
     void targetCreatureUntapsAfterSandSquidUntaps() {
-        Permanent sandSquid = addReadySandSquid(player1);
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent sandSquid = addCreatureReady(player1, new SandSquid());
+        Permanent targetCreature = addCreatureReady(player2, new WildJhovall());
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
@@ -69,35 +71,44 @@ class SandSquidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target creature remains locked when the controller declines to untap Sand Squid")
+    void targetCreatureRemainsLockedWhenSandSquidStaysTapped() {
+        Permanent sandSquid = addCreatureReady(player1, new SandSquid());
+        Permanent targetCreature = addCreatureReady(player2, new WildJhovall());
+
+        harness.activateAbility(player1, 0, null, targetCreature.getId());
+        harness.passBothPriorities();
+        advanceToNextTurn(player1);
+        advanceToNextTurnWithMayChoice(player2, false);
+        advanceToNextTurn(player1);
+
+        assertThat(sandSquid.isTapped()).isTrue();
+        assertThat(targetCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The target creature untaps after Sand Squid leaves the battlefield")
+    void targetCreatureUntapsAfterSandSquidLeavesBattlefield() {
+        Permanent sandSquid = addCreatureReady(player1, new SandSquid());
+        Permanent targetCreature = addCreatureReady(player2, new WildJhovall());
+
+        harness.activateAbility(player1, 0, null, targetCreature.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(sandSquid);
+        advanceToNextTurn(player1);
+
+        assertThat(targetCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The controller may choose not to untap Sand Squid")
     void mayChooseNotToUntap() {
-        Permanent sandSquid = addReadySandSquid(player1);
+        Permanent sandSquid = addCreatureReady(player1, new SandSquid());
         sandSquid.tap();
 
         advanceToNextTurnWithMayChoice(player2, false);
 
         assertThat(sandSquid.isTapped()).isTrue();
-    }
-
-    private Permanent addReadySandSquid(Player player) {
-        Permanent permanent = new Permanent(new SandSquid());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyLand(Player player) {
-        Permanent permanent = new Permanent(new Forest());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

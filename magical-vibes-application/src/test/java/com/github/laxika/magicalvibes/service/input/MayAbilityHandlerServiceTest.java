@@ -83,6 +83,8 @@ class MayAbilityHandlerServiceTest {
         gameQueryService = mock(GameQueryService.class);
         playerInputService = mock(PlayerInputService.class);
         validTargetService = mock(ValidTargetService.class);
+        when(validTargetService.isValidTriggeredAbilityPermanentTarget(
+                any(), any(), anyList(), any(), any(), any())).thenReturn(true);
         mayEffectHandlerRegistry = mock(MayEffectHandlerRegistry.class);
         effectResolutionService = mock(EffectResolutionService.class);
 
@@ -166,6 +168,21 @@ class MayAbilityHandlerServiceTest {
 
         verify(playerInputService, org.mockito.Mockito.never())
                 .beginPermanentChoice(any(), any(), anyList(), anyString());
+    }
+
+    @Test
+    void matchingCreatureRejectedByTargetingRestrictionsIsNotOffered() {
+        Permanent bear = permanent("Grizzly Bears", CardType.CREATURE);
+        Permanent restricted = permanent("Untargetable creature", CardType.CREATURE);
+        gd.playerBattlefields.get(PLAYER1_ID).addAll(List.of(bear, restricted));
+        when(gameQueryService.isCreature(gd, bear)).thenReturn(true);
+        when(gameQueryService.isCreature(gd, restricted)).thenReturn(true);
+        when(validTargetService.isValidTriggeredAbilityPermanentTarget(
+                eq(gd), any(), anyList(), any(), eq(restricted), eq(PLAYER1_ID))).thenReturn(false);
+
+        acceptMayAbility(specEffect(TargetPredicates.creature()));
+
+        assertThat(offeredTargets()).containsExactly(bear.getId());
     }
 
     @Test

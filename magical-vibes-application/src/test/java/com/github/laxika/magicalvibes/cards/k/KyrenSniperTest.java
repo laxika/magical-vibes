@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KyrenSniper.class, LilianaVess.class, FreshVolunteers.class})
 class KyrenSniperTest extends BaseCardTest {
 
     @Test
@@ -63,15 +65,33 @@ class KyrenSniperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A creature is not a legal target")
-    void cannotTargetCreature() {
+    @DisplayName("A planeswalker controlled by the controller is a legal target")
+    void canTargetOwnPlaneswalker() {
         harness.addToBattlefield(player1, new KyrenSniper());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         advanceToUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .doesNotContain(bears.getId());
+                .contains(liliana.getId());
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A creature is not a legal target")
+    void cannotTargetCreature() {
+        harness.addToBattlefield(player1, new KyrenSniper());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(volunteers.getId());
     }
 
     @Test

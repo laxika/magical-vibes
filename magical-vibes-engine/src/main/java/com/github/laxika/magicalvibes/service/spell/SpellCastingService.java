@@ -3225,6 +3225,9 @@ public class SpellCastingService {
 
             var sacCost = altCast.getCost(SacrificePermanentsCost.class);
             if (sacCost.isPresent()) {
+                if (new HashSet<>(alternateCostSacrificePermanentIds).size() != alternateCostSacrificePermanentIds.size()) {
+                    throw new IllegalStateException("Cannot sacrifice the same permanent more than once");
+                }
                 if (alternateCostSacrificePermanentIds.size() != sacCost.get().count()) {
                     throw new IllegalStateException("Must sacrifice exactly " + sacCost.get().count() + " permanents");
                 }
@@ -3976,6 +3979,9 @@ public class SpellCastingService {
                         .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
                         .filter(ReturnTargetCardsFromGraveyardToHandEffect::xScaled)
                         .findFirst().orElse(null);
+        // Targets are chosen from the zone as it existed before paying additional costs.
+        List<UUID> graveyardIdsBeforeCosts = xScaledToHandEffect == null ? List.of()
+                : gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream().map(Card::getId).toList();
         if (xScaledToHandEffect != null && effectiveXValue > 0) {
             var matchingCards = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(
@@ -4919,7 +4925,8 @@ public class SpellCastingService {
                 if (resolvedXValue > 0) {
                     graveyardTargetingService.handleExactNGraveyardSpellTargeting(
                             gameData, playerId, card, entryType, resolvedXValue,
-                            graveyardToHandEffect.filter(), "to your hand");
+                            graveyardToHandEffect.filter(), "to your hand", filteredSpellEffects,
+                            GraveyardSearchScope.CONTROLLERS_GRAVEYARD, graveyardIdsBeforeCosts);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // X=0: no targets, but the spell still resolves (losing 0 life)
@@ -5255,7 +5262,7 @@ public class SpellCastingService {
                             preventDivided.amount(),
                             com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
                     int totalPrevention = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                    if (totalPrevention != expectedPrevention) {
+                    if (!damageAssignments.isEmpty() && totalPrevention != expectedPrevention) {
                         throw new IllegalStateException("Prevention assignments must sum to " + expectedPrevention);
                     }
                     if (damageAssignments.size() > expectedPrevention) {
@@ -7643,7 +7650,8 @@ public class SpellCastingService {
                 || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize;
         boolean isRetrace = !graveyardAbilitiesSuppressed
-                && card.getCastingOption(Retrace.class).isPresent()
+                && (card.getCastingOption(Retrace.class).isPresent()
+                || castingPermissionService.hasGrantedRetrace(gameData, playerId, card))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize && !isJumpStart;
         boolean grantedFlashback = !graveyardAbilitiesSuppressed
                 && flashbackOpt.isEmpty()
@@ -8714,6 +8722,11 @@ public class SpellCastingService {
                 && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
             throw new IllegalStateException("Card is not playable");
         }
+        if (card.hasType(CardType.LAND)
+                ? castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
+                : castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())) {
+            throw new IllegalStateException("Card is not playable");
+        }
         boolean directExilePlayPermission = castingPermissionService.hasExilePlayPermission(
                 gameData, playerId, exileCardId);
         OptionalInt sourceCounterCost = castingPermissionService.findAdditionalCounterCostFromSource(
@@ -9386,6 +9399,10 @@ public class SpellCastingService {
             return;
         }
 
+        if (castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())) {
+            throw new IllegalStateException("Card is not playable");
+        }
+
         // Grafdigger's Cage etc.: players can't cast spells from libraries.
         if (!gameQueryService.canPlayerCastSpellsFromZone(gameData, playerId, Zone.LIBRARY)) {
             throw new IllegalStateException("Spells can't be cast from libraries");
@@ -9443,7 +9460,7 @@ public class SpellCastingService {
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-        if (!castingPermissionService.canCastWithTiming(gameData, playerId, card,
+        if (!castingPermissionService.canCastWithTimingFromLibraryTop(gameData, playerId, card,
                 isActivePlayer, isMainPhase, gameData.stack.isEmpty())) {
             throw new IllegalStateException("Card is not playable");
         }

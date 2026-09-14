@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "60")
+@CardRegistration(set = "SIR", collectorNumber = "70")
 public class Fogwalker extends Card {
 
     public Fogwalker() {

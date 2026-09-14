@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfSourceEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "165")
+@CardRegistration(set = "SIR", collectorNumber = "209")
 public class PermeatingMass extends Card {
 
     public PermeatingMass() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "110")
+@CardRegistration(set = "DMR", collectorNumber = "72")
 public class VeiledSerpent extends Card {
 
     public VeiledSerpent() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "188")
+@CardRegistration(set = "SIS", collectorNumber = "52")
 public class HollowhengeScavenger extends Card {
 
     public HollowhengeScavenger() {

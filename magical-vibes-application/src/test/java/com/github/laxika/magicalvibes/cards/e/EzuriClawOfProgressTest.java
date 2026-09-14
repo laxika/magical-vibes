@@ -17,6 +17,54 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EzuriClawOfProgressTest extends BaseCardTest {
 
     @Test
+    void gainsExperienceForCreatureWithPowerTwoOrLess() {
+        harness.addToBattlefield(player1, new EzuriClawOfProgress());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 1);
+    }
+
+    @Test
+    void doesNotGainExperienceForLargerOrOpponentsCreatures() {
+        harness.addToBattlefield(player1, new EzuriClawOfProgress());
+
+        harness.enterBattlefieldAndReturn(player1, new HillGiant());
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerExperienceCounters).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    void putsPlusOneCountersEqualToExperienceOnAnotherCreatureAtCombat() {
+        harness.addToBattlefield(player1, new EzuriClawOfProgress());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotTargetEzuriForItsCombatAbility() {
+        Permanent ezuri = harness.addToBattlefieldAndReturn(player1, new EzuriClawOfProgress());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        gd.playerExperienceCounters.put(player1.getId(), 1);
+
+        advanceToBeginningOfCombat(player1);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ezuri.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void gainsExperienceForSmallCreaturesOnly() {
         harness.addToBattlefield(player1, new EzuriClawOfProgress());
 
@@ -35,7 +83,7 @@ class EzuriClawOfProgressTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.playerExperienceCounters.put(player1.getId(), 3);
 
-        advanceToCombat(player1);
+        advanceToBeginningOfCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -48,13 +96,13 @@ class EzuriClawOfProgressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         gd.playerExperienceCounters.put(player1.getId(), 1);
 
-        advanceToCombat(player1);
+        advanceToBeginningOfCombat(player1);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ezuri.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void advanceToCombat(Player activePlayer) {
+    private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -108,6 +108,9 @@ public class MultiPermanentChoiceHandlerService {
             .AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
             attachAnyNumberOfControlledEquipmentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
+            attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseEquipmentToUnattachEffectHandler chooseEquipmentToUnattachEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DestroyUpToOneAttachedPermanentEffectHandler destroyUpToOneAttachedPermanentHandler;
@@ -615,6 +618,10 @@ public class MultiPermanentChoiceHandlerService {
             handleTransformAnyNumber(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature ctx) {
             attachAnyNumberOfControlledEquipmentHandler.completeChoice(gameData, playerId, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledAurasAndEquipmentToSource ctx) {
+            attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler.completeChoice(
+                    gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.UnattachEquipmentFromControlledCreature ctx) {
             chooseEquipmentToUnattachEffectHandler.completeChoice(gameData, permanentIds, ctx);
