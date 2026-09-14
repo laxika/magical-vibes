@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "APC", collectorNumber = "127")
+@CardRegistration(set = "2XM", collectorNumber = "229")
 public class YavimayasEmbrace extends Card {
 
     public YavimayasEmbrace() {

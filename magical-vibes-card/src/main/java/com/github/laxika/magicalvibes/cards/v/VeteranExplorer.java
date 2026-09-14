@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect;
 
 @CardRegistration(set = "WTH", collectorNumber = "144")
+@CardRegistration(set = "2XM", collectorNumber = "186")
 public class VeteranExplorer extends Card {
 
     public VeteranExplorer() {

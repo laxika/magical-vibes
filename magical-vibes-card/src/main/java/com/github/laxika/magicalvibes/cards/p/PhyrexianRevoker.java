@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "122")
 @CardRegistration(set = "M15", collectorNumber = "225")
+@CardRegistration(set = "2XM", collectorNumber = "282")
 public class PhyrexianRevoker extends Card {
 
     public PhyrexianRevoker() {

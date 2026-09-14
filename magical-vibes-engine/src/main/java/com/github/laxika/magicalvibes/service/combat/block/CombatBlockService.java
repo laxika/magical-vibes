@@ -1163,8 +1163,7 @@ public class CombatBlockService {
         for (int idx : attackerIndices) {
             Permanent attacker = attackerBattlefield.get(idx);
             boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (mustBeBlocked) {
                 mustBeBlockedIndices.add(idx);
@@ -2333,8 +2332,7 @@ public class CombatBlockService {
             Permanent attacker = attackerBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
             boolean hasRequirement = attacker.isMustBeBlockedThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (hasRequirement) {
                 mustBeBlockedAttackerIndices.add(i);

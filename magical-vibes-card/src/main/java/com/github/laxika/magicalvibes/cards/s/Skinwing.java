@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "133")
+@CardRegistration(set = "2XM", collectorNumber = "288")
 public class Skinwing extends Card {
 
     public Skinwing() {

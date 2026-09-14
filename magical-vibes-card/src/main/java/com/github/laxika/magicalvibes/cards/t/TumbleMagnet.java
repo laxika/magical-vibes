@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 @CardRegistration(set = "SOM", collectorNumber = "218")
 @CardRegistration(set = "MM2", collectorNumber = "233")
+@CardRegistration(set = "2XM", collectorNumber = "304")
 public class TumbleMagnet extends Card {
 
     public TumbleMagnet() {

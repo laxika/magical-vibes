@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.d.DarigaazsCaldera;
+import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,48 +14,84 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrosissCatacombs.class, DarigaazsCaldera.class, TerminalMoraine.class})
 class CrosissCatacombsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the ETB cost returns a non-Lair land and keeps Crosis's Catacombs")
     void acceptsEtbCostByReturningNonLairLand() {
-        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new TerminalMoraine());
         playAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Crosis's Catacombs");
-        harness.assertNotOnBattlefield(player1, "Plains");
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Terminal Moraine");
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getName().equals("Terminal Moraine"));
     }
 
     @Test
     @DisplayName("Crosis's Catacombs is sacrificed when only a Lair land is available")
     void sacrificesWhenOnlyLairLandIsAvailable() {
-        harness.addToBattlefield(player1, new CrosissCatacombs());
-        playAndResolveEtb();
+        Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new DarigaazsCaldera());
+        CrosissCatacombs enteringCatacombs = playAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Crosis's Catacombs")))
-                .hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Crosis's Catacombs")))
-                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent == existingLair)
+                .noneMatch(permanent -> permanent.getCard() == enteringCatacombs);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card == enteringCatacombs)
+                .noneMatch(card -> card == existingLair.getCard());
     }
 
     @Test
     @DisplayName("Declining the ETB cost sacrifices Crosis's Catacombs")
     void decliningEtbCostSacrificesSource() {
-        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new TerminalMoraine());
         playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Crosis's Catacombs");
         harness.assertInGraveyard(player1, "Crosis's Catacombs");
-        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Terminal Moraine");
+    }
+
+    @Test
+    @DisplayName("Accepting the ETB cost with multiple eligible lands returns only the chosen land")
+    void acceptsEtbCostWithMultipleEligibleLands() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        CrosissCatacombs enteringCatacombs = playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent == secondLand)
+                .noneMatch(permanent -> permanent == firstLand)
+                .anyMatch(permanent -> permanent.getCard() == enteringCatacombs);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card == firstLand.getCard())
+                .noneMatch(card -> card == secondLand.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's non-Lair land cannot pay the ETB cost")
+    void ignoresOpponentControlledNonLairLand() {
+        harness.addToBattlefield(player2, new TerminalMoraine());
+        CrosissCatacombs enteringCatacombs = playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == enteringCatacombs);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card == enteringCatacombs);
+        harness.assertOnBattlefield(player2, "Terminal Moraine");
     }
 
     @Test
@@ -80,9 +118,11 @@ class CrosissCatacombsTest extends BaseCardTest {
         assertThat(catacombs.isTapped()).isTrue();
     }
 
-    private void playAndResolveEtb() {
-        harness.setHand(player1, List.of(new CrosissCatacombs()));
+    private CrosissCatacombs playAndResolveEtb() {
+        CrosissCatacombs catacombs = new CrosissCatacombs();
+        harness.setHand(player1, List.of(catacombs));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
+        return catacombs;
     }
 }

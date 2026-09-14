@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "77")
+@CardRegistration(set = "2XM", collectorNumber = "95")
 public class GlazeFiend extends Card {
 
     public GlazeFiend() {

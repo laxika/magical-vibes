@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseLandOfEachBasicTypeThen
 @CardRegistration(set = "V10", collectorNumber = "13")
 @CardRegistration(set = "MPS", collectorNumber = "49")
 @CardRegistration(set = "A25", collectorNumber = "233")
+@CardRegistration(set = "2XM", collectorNumber = "292")
 public class SunderingTitan extends Card {
 
     public SunderingTitan() {

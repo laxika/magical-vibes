@@ -124,7 +124,10 @@ public class StaticEffectSupport {
                     || (pairedId != null && context.target().getId().equals(pairedId));
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
-            return context.targetOnSameBattlefield() && context.target().isTapped();
+            return context.targetOnSameBattlefield() && context.target().isTapped()
+                    && !context.target().getId().equals(context.sourceId())
+                    && isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifactEffect(context.gameData()))
+                    && matchesStaticFilter(context, context.target(), filter);
         }
         if (scope == GrantScope.OWN_UNTAPPED_CREATURES) {
             if (!context.targetOnSameBattlefield() || context.target().isTapped()) return false;

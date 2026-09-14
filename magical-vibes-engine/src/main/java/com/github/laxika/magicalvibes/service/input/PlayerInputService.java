@@ -1765,10 +1765,18 @@ public class PlayerInputService {
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
             CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.DESERT,
-            CardSubtype.CAVE,
-            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.AURA,
-            CardSubtype.EQUIPMENT, CardSubtype.LOCUS
-    );
+            CardSubtype.CAVE, CardSubtype.GATE, CardSubtype.LOCUS,
+            CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.TREASURE,
+            CardSubtype.CLUE, CardSubtype.BLOOD, CardSubtype.MAP,
+            CardSubtype.LANDER, CardSubtype.FOOD, CardSubtype.POWERSTONE,
+            CardSubtype.TOY, CardSubtype.SHARD, CardSubtype.VEHICLE,
+            CardSubtype.SPACECRAFT, CardSubtype.PLANET, CardSubtype.BOOK,
+            CardSubtype.LESSON, CardSubtype.TRAP, CardSubtype.SHRINE,
+            CardSubtype.ARCANE, CardSubtype.OMEN, CardSubtype.SIEGE,
+            CardSubtype.ROLE, CardSubtype.CASE, CardSubtype.RUNE,
+            CardSubtype.PLAN, CardSubtype.ROOM, CardSubtype.FORTIFICATION,
+            CardSubtype.CURSE, CardSubtype.CARTOUCHE, CardSubtype.SAGA,
+            CardSubtype.SPHERE, CardSubtype.MIRRODIN, CardSubtype.SERRAS_REALM);
 
     static {
         NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
