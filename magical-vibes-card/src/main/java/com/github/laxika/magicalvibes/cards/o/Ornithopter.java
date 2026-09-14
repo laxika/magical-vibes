@@ -19,5 +19,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MPS", collectorNumber = "42")
 @CardRegistration(set = "HA1", collectorNumber = "18")
 @CardRegistration(set = "KLR", collectorNumber = "255")
+@CardRegistration(set = "BRR", collectorNumber = "37")
 public class Ornithopter extends Card {
 }

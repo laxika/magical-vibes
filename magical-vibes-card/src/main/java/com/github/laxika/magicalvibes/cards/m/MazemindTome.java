@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "232")
+@CardRegistration(set = "BRR", collectorNumber = "30")
 public class MazemindTome extends Card {
 
     public MazemindTome() {

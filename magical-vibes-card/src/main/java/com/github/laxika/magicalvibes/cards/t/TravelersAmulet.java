@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "HOU", collectorNumber = "167")
 @CardRegistration(set = "INR", collectorNumber = "273")
 @CardRegistration(set = "RIX", collectorNumber = "184")
+@CardRegistration(set = "SIS", collectorNumber = "73")
 @CardRegistration(set = "THS", collectorNumber = "221")
 @CardRegistration(set = "THB", collectorNumber = "240")
 public class TravelersAmulet extends Card {

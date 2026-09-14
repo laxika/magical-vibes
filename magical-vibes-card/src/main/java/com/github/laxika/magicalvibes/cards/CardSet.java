@@ -56,6 +56,7 @@ public enum CardSet {
     SET_BLB("BLB"),
     SET_DSK("DSK"),
     SET_BRO("BRO"),
+    SET_BRR("BRR"),
     SET_MOM("MOM"),
     SET_MAT("MAT"),
     SET_ONE("ONE"),
@@ -92,6 +93,7 @@ public enum CardSet {
     SET_RAV("RAV"),
     SET_ISD("ISD"),
     SET_SOI("SOI"),
+    SET_SIS("SIS"),
     SET_MID("MID"),
     SET_VOW("VOW"),
     SET_DKA("DKA"),
@@ -262,7 +264,8 @@ public enum CardSet {
     SET_HA5("HA5"),
     SET_HA6("HA6"),
     SET_Q06("Q06"),
-    SET_EA1("EA1");
+    SET_EA1("EA1"),
+    SET_EA2("EA2");
 
     @Getter
     private final String code;
