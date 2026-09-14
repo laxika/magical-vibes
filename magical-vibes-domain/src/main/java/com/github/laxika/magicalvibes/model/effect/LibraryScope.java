@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Whose libraries an {@link ExileTopCardsToSourceEffect} exiles from.
+ * Whose libraries a source-linked library exile effect exiles from.
  *
  * <ul>
  *   <li>{@link #CONTROLLER} — only the effect's controller exiles, read from the stack entry's
@@ -14,6 +14,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *       otherwise the sole opponent in a two-player game (Grimoire Thief).</li>
  *   <li>{@link #EACH_PLAYER} — every player exiles, in {@code orderedPlayerIds} order
  *       (Knowledge Pool).</li>
+ *   <li>{@link #EACH_OPPONENT} — every player except the effect's controller exiles, in
+ *       {@code orderedPlayerIds} order (Arvinox, the Mind Flail).</li>
  * </ul>
  *
  * <p>Distinct from {@link LibraryOwner}, which is about <em>inspecting</em> a library and whose
@@ -26,5 +28,6 @@ public enum LibraryScope {
     CONTROLLER,
     TARGET_PLAYER,
     TARGET_OPPONENT,
-    EACH_PLAYER
+    EACH_PLAYER,
+    EACH_OPPONENT
 }

@@ -27,10 +27,9 @@ class NefashuTest extends BaseCardTest {
         }
 
         declareAttackers(List.of(0));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        for (int i = 0; i < 5; i++) {
-            harness.handlePermanentChosen(player1, targets.get(i).getId());
-        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, targets.subList(0, 5).stream()
+                .map(Permanent::getId).toList());
         resolveAllTriggers();
 
         assertThat(targets.subList(0, 5)).allSatisfy(target -> {
@@ -48,7 +47,7 @@ class NefashuTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(target.getPowerModifier()).isZero();
@@ -64,7 +63,7 @@ class NefashuTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).contains(creature.getId()).doesNotContain(artifact.getId());
     }
 }

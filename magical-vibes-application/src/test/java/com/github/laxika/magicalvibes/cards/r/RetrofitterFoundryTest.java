@@ -97,4 +97,69 @@ class RetrofitterFoundryTest extends BaseCardTest {
     private int indexOf(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
+
+    @Test
+    @DisplayName("The Servo ability creates a 1/1 colorless artifact creature token")
+    void createsServoToken() {
+        Permanent foundry = addFoundryReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(foundry), 1, null, null);
+        harness.passBothPriorities();
+
+        Permanent servo = findPermanent(player1, "Servo");
+        assertThat(servo.getCard().getPower()).isEqualTo(1);
+        assertThat(servo.getCard().getToughness()).isEqualTo(1);
+        assertThat(servo.getCard().getColor()).isNull();
+        assertThat(servo.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(servo.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+        assertThat(servo.getCard().getSubtypes()).contains(CardSubtype.SERVO);
+        assertThat(foundry.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a Servo creates a Thopter")
+    void sacrificesServoForThopter() {
+        Permanent foundry = addFoundryReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, indexOf(foundry), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(foundry), 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent servo = findPermanent(player1, "Servo");
+        harness.activateAbility(player1, indexOf(foundry), 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(servo);
+        Permanent thopter = findPermanent(player1, "Thopter");
+        assertThat(thopter.getCard().getKeywords()).contains(Keyword.FLYING);
+        assertThat(foundry.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a Thopter creates a 4/4 Construct")
+    void sacrificesThopterForConstruct() {
+        Permanent foundry = addFoundryReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.activateAbility(player1, indexOf(foundry), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(foundry), 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(foundry), 2, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(foundry), 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(foundry), 3, null, null);
+        harness.passBothPriorities();
+
+        Permanent construct = findPermanent(player1, "Construct");
+        assertThat(construct.getCard().getPower()).isEqualTo(4);
+        assertThat(construct.getCard().getToughness()).isEqualTo(4);
+        assertThat(construct.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+        assertThat(construct.getCard().getSubtypes()).contains(CardSubtype.CONSTRUCT);
+    }
 }

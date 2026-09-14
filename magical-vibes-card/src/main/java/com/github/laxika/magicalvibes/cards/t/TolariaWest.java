@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "173")
 @CardRegistration(set = "V16", collectorNumber = "13")
+@CardRegistration(set = "TSR", collectorNumber = "286")
 public class TolariaWest extends Card {
 
     public TolariaWest() {

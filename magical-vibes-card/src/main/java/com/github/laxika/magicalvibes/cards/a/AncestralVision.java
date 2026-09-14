@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "DD2", collectorNumber = "21")
 @CardRegistration(set = "JVC", collectorNumber = "21")
 @CardRegistration(set = "IMA", collectorNumber = "42")
+@CardRegistration(set = "TSR", collectorNumber = "52")
 public class AncestralVision extends Card {
 
     public AncestralVision() {

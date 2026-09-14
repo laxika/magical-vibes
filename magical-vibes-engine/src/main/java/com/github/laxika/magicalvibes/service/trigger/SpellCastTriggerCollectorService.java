@@ -2306,9 +2306,11 @@ public class SpellCastTriggerCollectorService {
         if (trigger.onlyDuringControllerTurn()
                 && !match.controllerId().equals(match.gameData().activePlayerId)) return false;
 
+        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
+        Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(),
                 sourceOriginalCardId,
-                match.gameData(), castingPlayerId)) return false;
+                match.gameData(), castingPlayerId, null, null, spellXValue)) return false;
 
         if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(match.gameData(), trigger, castingPlayerId)) {
             return false;
@@ -2351,7 +2353,6 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
-        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         if (triggeringSpell != null) {
             StackEntry spellSnapshot = new StackEntry(triggeringSpell);
             resolved = resolved.stream()

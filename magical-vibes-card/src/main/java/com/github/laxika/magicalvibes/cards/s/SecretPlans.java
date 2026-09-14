@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "198")
+@CardRegistration(set = "TSR", collectorNumber = "385")
 public class SecretPlans extends Card {
 
     public SecretPlans() {

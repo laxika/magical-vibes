@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.l.LaquatussChampion;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,13 +13,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AngelOfRetribution.class, GrizzlyBears.class})
+@CardUsed({AngelOfRetribution.class, Aquamoeba.class, LaquatussChampion.class})
 class AngelOfRetributionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking Angel of Retribution")
     void flyingPreventsGroundBlocker() {
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new Aquamoeba());
         Permanent angel = addCreatureReady(player1, new AngelOfRetribution());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
@@ -38,32 +34,35 @@ class AngelOfRetributionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("First strike defeats an equally sized creature before it deals combat damage")
+    @DisplayName("Flying does not prevent Angel of Retribution from blocking a ground creature")
+    void flyingDoesNotPreventBlockingGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new Aquamoeba());
+        Permanent angel = addCreatureReady(player2, new AngelOfRetribution());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(angel);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(angel.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("First strike defeats Laquatus's Champion before it deals regular combat damage")
     void firstStrikeDealsDamageBeforeRegularCombatDamage() {
-        Card attackerCard = new Card();
-        attackerCard.setName("Five Power Creature");
-        attackerCard.setType(CardType.CREATURE);
-        attackerCard.setManaCost("{5}");
-        attackerCard.setColor(CardColor.GREEN);
-        attackerCard.setPower(5);
-        attackerCard.setToughness(5);
+        Permanent attacker = addCreatureReady(player1, new LaquatussChampion());
+        Permanent angel = addCreatureReady(player2, new AngelOfRetribution());
 
-        Permanent attacker = new Permanent(attackerCard);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
 
-        Permanent angel = new Permanent(new AngelOfRetribution());
-        angel.setSummoningSick(false);
-        angel.setBlocking(true);
-        angel.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(angel);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(angel);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(angel);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "KTK", collectorNumber = "199")
+@CardRegistration(set = "2X2", collectorNumber = "276")
 public class SidisiBroodTyrant extends Card {
 
     public SidisiBroodTyrant() {

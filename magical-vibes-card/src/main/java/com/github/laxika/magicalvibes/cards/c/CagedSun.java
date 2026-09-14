@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEf
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "132")
+@CardRegistration(set = "BRR", collectorNumber = "9")
 public class CagedSun extends Card {
 
     public CagedSun() {

@@ -2106,6 +2106,22 @@ public class GraveyardReturnSupport {
                                          List<Permanent> simultaneouslyEntered,
                                          Set<Keyword> additionalKeywords, boolean enterTapped,
                                          boolean removeLegendary) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste,
+                exileAtEndStep, colorOverride, powerOverride, toughnessOverride, replaceSubtypes,
+                grantHasteUntilEndOfTurn, simultaneouslyEntered, additionalKeywords, enterTapped,
+                removeLegendary, Set.of(), false);
+    }
+
+    /** Variant that adds card types to the copied token and can sacrifice it at the next end step. */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                         List<Permanent> simultaneouslyEntered,
+                                         Set<Keyword> additionalKeywords, boolean enterTapped,
+                                         boolean removeLegendary, Set<CardType> additionalTypes,
+                                         boolean sacrificeAtEndStep) {
         UUID controllerId = entry.getControllerId();
         List<CardSubtype> tokenSubtypes = new ArrayList<>();
         if (!replaceSubtypes && sourceCard.getSubtypes() != null) {
@@ -2125,7 +2141,16 @@ public class GraveyardReturnSupport {
             Card tokenCard = new Card();
             tokenCard.setName(sourceCard.getName());
             tokenCard.setType(sourceCard.getType());
-            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+            EnumSet<CardType> tokenAdditionalTypes = EnumSet.noneOf(CardType.class);
+            if (sourceCard.getAdditionalTypes() != null) {
+                tokenAdditionalTypes.addAll(sourceCard.getAdditionalTypes());
+            }
+            if (additionalTypes != null) {
+                additionalTypes.stream()
+                        .filter(type -> type != sourceCard.getType())
+                        .forEach(tokenAdditionalTypes::add);
+            }
+            tokenCard.setAdditionalTypes(tokenAdditionalTypes);
             tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
             tokenCard.setToken(true);
             if (colorOverride != null) {
@@ -2188,6 +2213,9 @@ public class GraveyardReturnSupport {
 
             if (exileAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+            }
+            if (sacrificeAtEndStep) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
 
             boolean hasHaste = grantHaste || grantHasteUntilEndOfTurn;

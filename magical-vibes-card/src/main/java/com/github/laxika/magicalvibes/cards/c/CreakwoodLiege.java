@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "117")
 @CardRegistration(set = "MM2", collectorNumber = "191")
+@CardRegistration(set = "2X2", collectorNumber = "197")
 public class CreakwoodLiege extends Card {
 
     public CreakwoodLiege() {

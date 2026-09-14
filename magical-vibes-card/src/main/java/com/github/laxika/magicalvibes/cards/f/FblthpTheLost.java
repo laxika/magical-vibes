@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "50")
+@CardRegistration(set = "TSR", collectorNumber = "308")
 public class FblthpTheLost extends Card {
 
     public FblthpTheLost() {

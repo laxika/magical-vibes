@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 
 @CardRegistration(set = "RNA", collectorNumber = "22")
+@CardRegistration(set = "2X2", collectorNumber = "31")
 public class SmotheringTithe extends Card {
 
     public SmotheringTithe() {

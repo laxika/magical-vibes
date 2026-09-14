@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "2")
+@CardRegistration(set = "SIS", collectorNumber = "1")
 public class AngelOfFlightAlabaster extends Card {
 
     public AngelOfFlightAlabaster() {

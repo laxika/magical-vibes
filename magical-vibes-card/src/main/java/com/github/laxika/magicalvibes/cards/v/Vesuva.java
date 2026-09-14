@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "V12", collectorNumber = "14")
 @CardRegistration(set = "SLC", collectorNumber = "22")
 @CardRegistration(set = "SLC", collectorNumber = "49")
+@CardRegistration(set = "TSR", collectorNumber = "289")
 public class Vesuva extends Card {
 
     public Vesuva() {

@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrosissCatacombs;
+import com.github.laxika.magicalvibes.cards.g.Gainsay;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PlaneswalkersFury.class, Gainsay.class, CrosissCatacombs.class})
 class PlaneswalkersFuryTest extends BaseCardTest {
 
     @Test
     void dealsDamageEqualToRevealedManaValue() {
         harness.addToBattlefieldAndReturn(player1, new PlaneswalkersFury());
-        GrizzlyBears revealed = new GrizzlyBears();
+        Gainsay revealed = new Gainsay();
         harness.setHand(player2, List.of(revealed));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -46,7 +48,8 @@ class PlaneswalkersFuryTest extends BaseCardTest {
     @Test
     void landHasZeroManaValue() {
         harness.addToBattlefieldAndReturn(player1, new PlaneswalkersFury());
-        harness.setHand(player2, List.of(new Forest()));
+        CrosissCatacombs land = new CrosissCatacombs();
+        harness.setHand(player2, List.of(land));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
         int lifeBefore = gd.getLife(player2.getId());
@@ -68,9 +71,19 @@ class PlaneswalkersFuryTest extends BaseCardTest {
     }
 
     @Test
+    void requiresThreeGenericAndOneRedMana() {
+        harness.addToBattlefieldAndReturn(player1, new PlaneswalkersFury());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void onlyActivatesAtSorcerySpeed() {
         harness.addToBattlefieldAndReturn(player1, new PlaneswalkersFury());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Gainsay()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);

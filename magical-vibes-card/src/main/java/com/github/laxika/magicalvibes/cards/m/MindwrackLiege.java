@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "104")
+@CardRegistration(set = "2X2", collectorNumber = "255")
 public class MindwrackLiege extends Card {
 
     public MindwrackLiege() {

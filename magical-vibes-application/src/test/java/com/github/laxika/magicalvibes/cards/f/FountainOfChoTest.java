@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(FountainOfCho.class)
 class FountainOfChoTest extends BaseCardTest {
 
     @Test
@@ -50,5 +53,43 @@ class FountainOfChoTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
         assertThat(fountain.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
         assertThat(fountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing zero storage counters produces no mana but still taps the land")
+    void removingZeroCountersProducesNoMana() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfCho());
+        fountain.setCounterCount(CounterType.STORAGE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "0");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(fountain.getCounterCount(CounterType.STORAGE)).isEqualTo(3);
+        assertThat(fountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating with no storage counters produces no mana and no choice")
+    void activatingWithNoCountersProducesNoMana() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfCho());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(fountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The mana ability cannot be activated while Fountain of Cho is tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfCho());
+        fountain.setCounterCount(CounterType.STORAGE, 3);
+        fountain.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 }

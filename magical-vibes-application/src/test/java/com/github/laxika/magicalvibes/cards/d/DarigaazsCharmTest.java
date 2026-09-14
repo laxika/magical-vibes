@@ -8,16 +8,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DarigaazsCharm.class, FountainOfYouth.class, GiantGrowth.class, GrizzlyBears.class})
 class DarigaazsCharmTest extends BaseCardTest {
 
     private void addBRG() {
@@ -56,6 +57,18 @@ class DarigaazsCharmTest extends BaseCardTest {
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, instant.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
+
+        @Test
+        @DisplayName("Cannot target a creature card in an opponent's graveyard")
+        void cannotTargetOpponentsCreatureCard() {
+            Card creature = new GrizzlyBears();
+            harness.setGraveyard(player2, List.of(creature));
+            harness.setHand(player1, List.of(new DarigaazsCharm()));
+            addBRG();
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, creature.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 
     @Nested
@@ -73,6 +86,20 @@ class DarigaazsCharmTest extends BaseCardTest {
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         }
+
+        @Test
+        @DisplayName("Deals 3 damage to a creature")
+        void damagesCreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new DarigaazsCharm()));
+            addBRG();
+
+            harness.castInstant(player1, 0, 1, target.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
+        }
     }
 
     @Nested
@@ -82,15 +109,13 @@ class DarigaazsCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Boosts a creature until end of turn")
         void boostsCreatureUntilEndOfTurn() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
             harness.setHand(player1, List.of(new DarigaazsCharm()));
             addBRG();
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 2, targetId);
+            harness.castInstant(player1, 0, 2, bears.getId());
             harness.passBothPriorities();
 
-            Permanent bears = findPermanent(player1, "Grizzly Bears");
             assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
             assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
 
@@ -103,14 +128,27 @@ class DarigaazsCharmTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Cannot target a noncreature permanent")
-        void cannotTargetNoncreaturePermanent() {
-            harness.addToBattlefield(player1, new FountainOfYouth());
+        @DisplayName("Can target an opponent's creature")
+        void boostsOpponentCreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             harness.setHand(player1, List.of(new DarigaazsCharm()));
             addBRG();
 
-            UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, targetId))
+            harness.castInstant(player1, 0, 2, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("Cannot target a noncreature permanent")
+        void cannotTargetNoncreaturePermanent() {
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+            harness.setHand(player1, List.of(new DarigaazsCharm()));
+            addBRG();
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("creature");
         }

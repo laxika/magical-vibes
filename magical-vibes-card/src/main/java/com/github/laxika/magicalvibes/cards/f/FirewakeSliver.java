@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "238")
+@CardRegistration(set = "TSR", collectorNumber = "252")
 public class FirewakeSliver extends Card {
 
     public FirewakeSliver() {

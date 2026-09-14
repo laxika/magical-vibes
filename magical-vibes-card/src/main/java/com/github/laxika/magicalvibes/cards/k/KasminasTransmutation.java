@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "57")
+@CardRegistration(set = "2X2", collectorNumber = "54")
 public class KasminasTransmutation extends Card {
 
     public KasminasTransmutation() {

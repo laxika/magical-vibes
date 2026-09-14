@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "184")
+@CardRegistration(set = "2X2", collectorNumber = "222")
 public class GrimFlayer extends Card {
 
     public GrimFlayer() {

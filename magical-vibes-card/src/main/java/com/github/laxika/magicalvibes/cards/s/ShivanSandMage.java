@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "108")
+@CardRegistration(set = "TSR", collectorNumber = "189")
 public class ShivanSandMage extends Card {
 
     public ShivanSandMage() {

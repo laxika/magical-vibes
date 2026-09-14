@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DwellOnThePast.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed(DwellOnThePast.class)
 class DwellOnThePastTest extends BaseCardTest {
 
     private void castDwell(UUID targetPlayerId) {
@@ -28,7 +26,7 @@ class DwellOnThePastTest extends BaseCardTest {
     @Test
     @DisplayName("Shuffles the chosen cards from the target player's graveyard into their library")
     void shufflesChosenCardsIntoLibrary() {
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new LightningBolt()));
+        harness.setGraveyard(player2, List.of(new DwellOnThePast(), new DwellOnThePast()));
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
 
         castDwell(player2.getId());
@@ -47,7 +45,8 @@ class DwellOnThePastTest extends BaseCardTest {
     @DisplayName("Caps the selection at four cards")
     void capsSelectionAtFourCards() {
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new LightningBolt(), new GrizzlyBears(), new LightningBolt(), new GrizzlyBears()));
+                new DwellOnThePast(), new DwellOnThePast(), new DwellOnThePast(),
+                new DwellOnThePast(), new DwellOnThePast()));
 
         castDwell(player1.getId());
 
@@ -58,9 +57,30 @@ class DwellOnThePastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Moves only the four selected cards when five are available")
+    void movesOnlyFourSelectedCards() {
+        List<Card> graveyardCards = List.of(
+                new DwellOnThePast(), new DwellOnThePast(), new DwellOnThePast(),
+                new DwellOnThePast(), new DwellOnThePast());
+        harness.setGraveyard(player2, graveyardCards);
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castDwell(player2.getId());
+
+        harness.handleMultipleCardsChosen(player1, graveyardCards.stream()
+                .limit(4)
+                .map(Card::getId)
+                .toList());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCards.getLast());
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore + 4);
+    }
+
+    @Test
     @DisplayName("Choosing zero cards leaves the graveyard unchanged")
     void choosingZeroCardsLeavesGraveyardUnchanged() {
-        Card card = new GrizzlyBears();
+        Card card = new DwellOnThePast();
         harness.setGraveyard(player1, List.of(card));
         int librarySizeBefore = gd.playerDecks.get(player1.getId()).size();
 

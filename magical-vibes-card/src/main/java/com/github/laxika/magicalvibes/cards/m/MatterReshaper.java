@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "6")
+@CardRegistration(set = "EA2", collectorNumber = "2")
 public class MatterReshaper extends Card {
 
     public MatterReshaper() {

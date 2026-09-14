@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaEchoesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "218")
+@CardRegistration(set = "2XM", collectorNumber = "136")
 public class ManaEchoes extends Card {
 
     public ManaEchoes() {

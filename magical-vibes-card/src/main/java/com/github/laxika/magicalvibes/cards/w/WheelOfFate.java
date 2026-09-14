@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "187")
+@CardRegistration(set = "TSR", collectorNumber = "198")
 public class WheelOfFate extends Card {
 
     public WheelOfFate() {

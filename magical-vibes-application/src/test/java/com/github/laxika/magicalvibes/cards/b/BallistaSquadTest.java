@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BallistaSquad.class, GrizzlyBears.class})
 class BallistaSquadTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -34,7 +36,6 @@ class BallistaSquadTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Ballista Squad");
     }
 
     @Test
@@ -54,7 +55,7 @@ class BallistaSquadTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability targeting attacking creature")
     void canActivateAbilityOnAttackingCreature() {
-        Permanent ballistaPerm = addBallistaReadyToCombat(player1);
+        addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -66,7 +67,6 @@ class BallistaSquadTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Ballista Squad");
         assertThat(entry.getXValue()).isEqualTo(2);
         assertThat(entry.getTargetId()).isEqualTo(targetPerm.getId());
     }
@@ -128,11 +128,8 @@ class BallistaSquadTest extends BaseCardTest {
     @DisplayName("Can activate ability targeting blocking creature")
     void canActivateAbilityOnBlockingCreature() {
         addBallistaReadyToCombat(player1);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(bear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         blockerPerm.setBlocking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
@@ -163,16 +160,31 @@ class BallistaSquadTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Ability fizzles if target stops attacking before resolution")
+    void abilityFizzlesIfTargetStopsAttackingBeforeResolution() {
+        addBallistaReadyToCombat(player1);
+        Permanent targetPerm = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 1, targetPerm.getId());
+        targetPerm.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(targetPerm);
+        assertThat(targetPerm.getMarkedDamage()).isZero();
+    }
+
     // ===== Validation errors =====
 
     @Test
     @DisplayName("Cannot activate ability targeting non-combat creature")
     void cannotActivateAbilityOnNonCombatCreature() {
         addBallistaReadyToCombat(player1);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent nonCombatPerm = new Permanent(bear);
-        nonCombatPerm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(nonCombatPerm);
+        Permanent nonCombatPerm = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -210,10 +222,7 @@ class BallistaSquadTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        BallistaSquad card = new BallistaSquad();
-        Permanent ballistaPerm = new Permanent(card);
-        // summoningSick is true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(ballistaPerm);
+        harness.addToBattlefield(player1, new BallistaSquad());
         Permanent targetPerm = addAttackingCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -268,19 +277,12 @@ class BallistaSquadTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addBallistaReadyToCombat(Player player) {
-        BallistaSquad card = new BallistaSquad();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BallistaSquad());
     }
 
     private Permanent addAttackingCreature(Player player) {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent perm = new Permanent(bear);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 public class AllNonlandPermanentsAreChosenColorSelfEffectHandler
         extends AllNonlandPermanentsAreChosenColorEffectHandler {
 
+    public AllNonlandPermanentsAreChosenColorSelfEffectHandler(StaticEffectSupport support) {
+        super(support);
+    }
+
     @Override
     public boolean selfOnly() {
         return true;

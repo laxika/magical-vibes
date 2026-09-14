@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "125")
+@CardRegistration(set = "2X2", collectorNumber = "97")
 public class VampireSovereign extends Card {
 
     public VampireSovereign() {

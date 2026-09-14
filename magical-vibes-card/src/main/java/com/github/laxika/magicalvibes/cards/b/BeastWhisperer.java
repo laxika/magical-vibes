@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "123")
+@CardRegistration(set = "TSR", collectorNumber = "356")
 public class BeastWhisperer extends Card {
 
     public BeastWhisperer() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "126")
+@CardRegistration(set = "TSR", collectorNumber = "132")
 public class PsychoticEpisode extends Card {
 
     public PsychoticEpisode() {

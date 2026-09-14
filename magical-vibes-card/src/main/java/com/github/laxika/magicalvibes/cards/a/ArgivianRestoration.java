@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WTH", collectorNumber = "34")
 @CardRegistration(set = "DDF", collectorNumber = "69")
+@CardRegistration(set = "2XM", collectorNumber = "42")
 public class ArgivianRestoration extends Card {
 
     public ArgivianRestoration() {

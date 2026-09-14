@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "245")
+@CardRegistration(set = "TSR", collectorNumber = "260")
 public class SaffiEriksdotter extends Card {
 
     public SaffiEriksdotter() {

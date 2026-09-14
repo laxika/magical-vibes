@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "94")
+@CardRegistration(set = "TSR", collectorNumber = "152")
 public class ArcBlade extends Card {
 
     public ArcBlade() {

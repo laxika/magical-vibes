@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "FUT", collectorNumber = "64")
+@CardRegistration(set = "TSR", collectorNumber = "105")
 public class CutthroatIlDal extends Card {
 
     public CutthroatIlDal() {

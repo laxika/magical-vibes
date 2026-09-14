@@ -101,7 +101,8 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
                 e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
                 e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
-                new ArrayList<>(), e.additionalKeywords(), false, e.removeLegendary());
+                new ArrayList<>(), e.additionalKeywords(), false, e.removeLegendary(),
+                e.additionalTypes(), e.sacrificeAtEndStep());
 
         if (e.exileOtherControlledTokensOfSubtype() != null) {
             Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()

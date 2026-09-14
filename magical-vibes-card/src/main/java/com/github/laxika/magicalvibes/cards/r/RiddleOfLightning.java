@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "107")
 @CardRegistration(set = "FUT", collectorNumber = "105")
+@CardRegistration(set = "TSR", collectorNumber = "183")
 public class RiddleOfLightning extends Card {
 
     public RiddleOfLightning() {
