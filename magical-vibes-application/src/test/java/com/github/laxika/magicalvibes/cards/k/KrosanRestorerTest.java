@@ -67,6 +67,58 @@ class KrosanRestorerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Threshold ability may choose zero targets and still taps Krosan Restorer")
+    void thresholdAllowsZeroTargets() {
+        Permanent restorer = addCreatureReady(player1, new KrosanRestorer());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(restorer.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threshold counts cards only in the activating player's graveyard")
+    void thresholdRequiresCardsInActivatingPlayersGraveyard() {
+        Permanent restorer = addCreatureReady(player1, new KrosanRestorer());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        harness.setGraveyard(player2, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("seven or more cards");
+        assertThat(restorer.isTapped()).isFalse();
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threshold ability rejects choosing the same land more than once")
+    void thresholdRejectsDuplicateTargets() {
+        addCreatureReady(player1, new KrosanRestorer());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(land.getId(), land.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("different");
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Threshold ability requires seven cards in the graveyard")
     void thresholdRequiresSevenGraveyardCards() {
         addCreatureReady(player1, new KrosanRestorer());
