@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "166")
 @CardRegistration(set = "THS", collectorNumber = "145")
+@CardRegistration(set = "EA1", collectorNumber = "11")
 public class TitansStrength extends Card {
 
     public TitansStrength() {

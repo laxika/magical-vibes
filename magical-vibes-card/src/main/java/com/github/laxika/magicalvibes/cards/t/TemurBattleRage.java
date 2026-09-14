@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "116")
 @CardRegistration(set = "2XM", collectorNumber = "146")
+@CardRegistration(set = "EA1", collectorNumber = "10")
 @CardRegistration(set = "TSR", collectorNumber = "351")
 public class TemurBattleRage extends Card {
 
