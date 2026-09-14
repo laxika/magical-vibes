@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "87")
+@CardRegistration(set = "TSR", collectorNumber = "94")
 public class TolarianSentinel extends Card {
 
     public TolarianSentinel() {

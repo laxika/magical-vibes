@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "122")
 @CardRegistration(set = "MMA", collectorNumber = "93")
+@CardRegistration(set = "TSR", collectorNumber = "129")
 public class Phthisis extends Card {
 
     public Phthisis() {

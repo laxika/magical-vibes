@@ -487,6 +487,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
+        } else if (context instanceof PermanentChoiceContext.ChoosePlayerAsEnter cpae) {
+            battlefieldHandler.handleChoosePlayerAsEnter(gameData, permanentId, cpae);
         } else if (context instanceof PermanentChoiceContext.ChooseNonlandPermanentAsEnter ncpae) {
             battlefieldHandler.handleChooseNonlandPermanentAsEnter(gameData, permanentId, ncpae);
         } else if (context instanceof PermanentChoiceContext.ChooseEquipmentToAttachAsEnter equipmentChoice) {

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "151")
 @CardRegistration(set = "UMA", collectorNumber = "126")
+@CardRegistration(set = "TSR", collectorNumber = "160")
 public class Conflagrate extends Card {
 
     public Conflagrate() {

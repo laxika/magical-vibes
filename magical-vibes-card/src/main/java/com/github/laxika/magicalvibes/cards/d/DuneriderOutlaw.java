@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "86")
+@CardRegistration(set = "TSR", collectorNumber = "112")
 public class DuneriderOutlaw extends Card {
 
     public DuneriderOutlaw() {

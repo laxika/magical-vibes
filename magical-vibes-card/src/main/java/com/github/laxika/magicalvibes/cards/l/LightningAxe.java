@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 @CardRegistration(set = "INR", collectorNumber = "398")
 @CardRegistration(set = "SOI", collectorNumber = "170")
 @CardRegistration(set = "TSP", collectorNumber = "168")
+@CardRegistration(set = "TSR", collectorNumber = "174")
 public class LightningAxe extends Card {
 
     public LightningAxe() {

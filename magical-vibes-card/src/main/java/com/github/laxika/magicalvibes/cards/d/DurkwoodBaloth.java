@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "TSP", collectorNumber = "193")
 @CardRegistration(set = "MMA", collectorNumber = "142")
 @CardRegistration(set = "IMA", collectorNumber = "160")
+@CardRegistration(set = "TSR", collectorNumber = "200")
 public class DurkwoodBaloth extends Card {
 
     public DurkwoodBaloth() {

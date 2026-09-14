@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "133")
+@CardRegistration(set = "TSR", collectorNumber = "215")
 public class LifeAndLimb extends Card {
 
     private static final PermanentAnyOfPredicate FOREST_OR_SAPROLING = new PermanentAnyOfPredicate(List.of(
