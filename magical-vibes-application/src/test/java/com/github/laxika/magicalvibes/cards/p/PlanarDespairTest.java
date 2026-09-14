@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,18 +13,14 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlanarDespair.class, Forest.class, Island.class, Mountain.class, HillGiant.class})
+@CardUsed({PlanarDespair.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class,
+        HillGiant.class, MahamotiDjinn.class})
 class PlanarDespairTest extends BaseCardTest {
 
     private void castPlanarDespair() {
-        harness.setHand(player1, List.of(new PlanarDespair()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PlanarDespair(), "{3}{B}{B}");
         harness.passBothPriorities();
     }
 
@@ -60,6 +57,39 @@ class PlanarDespairTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts all five basic land types")
+    void countsAllFiveBasicLandTypes() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent djinn = harness.addToBattlefieldAndReturn(player2, new MahamotiDjinn());
+
+        castPlanarDespair();
+
+        assertThat(gqs.getEffectivePower(gd, djinn)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, djinn)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Has no effect when the caster controls no basic land types")
+    void zeroDomainDoesNothing() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castPlanarDespair();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test

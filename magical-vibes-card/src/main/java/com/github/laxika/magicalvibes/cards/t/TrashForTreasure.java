@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "109")
 @CardRegistration(set = "2XM", collectorNumber = "148")
+@CardRegistration(set = "HA5", collectorNumber = "14")
 public class TrashForTreasure extends Card {
 
     public TrashForTreasure() {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,14 +11,15 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenTrooper.class, GrizzlyBears.class})
+@CardUsed(AvenTrooper.class)
 class AvenTrooperTest extends BaseCardTest {
 
     @Test
     void discardingACardAndPayingManaBoostsAvenTrooper() {
         Permanent trooper = addCreatureReady(player1, new AvenTrooper());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AvenTrooper()));
         prepareAbilityActivation();
 
         harness.activateAbility(player1, 0, null, null);
@@ -29,25 +29,33 @@ class AvenTrooperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(3);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Aven Trooper");
     }
 
     @Test
     void boostWearsOffAtEndOfTurn() {
         Permanent trooper = addCreatureReady(player1, new AvenTrooper());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AvenTrooper()));
         prepareAbilityActivation();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateWithoutACardToDiscard() {
+        addCreatureReady(player1, new AvenTrooper());
+        harness.setHand(player1, List.of());
+        prepareAbilityActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void prepareAbilityActivation() {

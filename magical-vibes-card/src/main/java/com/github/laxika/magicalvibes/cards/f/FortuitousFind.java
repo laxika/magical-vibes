@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "81")
+@CardRegistration(set = "KLR", collectorNumber = "86")
 public class FortuitousFind extends Card {
 
     public FortuitousFind() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "122")
+@CardRegistration(set = "KLR", collectorNumber = "179")
 public class RishkarPeemaRenegade extends Card {
 
     public RishkarPeemaRenegade() {

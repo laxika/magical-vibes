@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "227")
+@CardRegistration(set = "HA5", collectorNumber = "18")
 public class OjutaisCommand extends Card {
 
     public OjutaisCommand() {

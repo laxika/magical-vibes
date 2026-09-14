@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "2")
+@CardRegistration(set = "HA4", collectorNumber = "1")
 public class AdornedPouncer extends Card {
 
     public AdornedPouncer() {

@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "17")
 @CardRegistration(set = "2XM", collectorNumber = "18")
+@CardRegistration(set = "KLR", collectorNumber = "21")
 public class GlintSleeveArtisan extends Card {
 
     public GlintSleeveArtisan() {

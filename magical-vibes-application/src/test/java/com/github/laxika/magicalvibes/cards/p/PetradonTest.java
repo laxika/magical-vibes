@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.c.ChainersEdict;
+import com.github.laxika.magicalvibes.cards.t.TaintedPeak;
+import com.github.laxika.magicalvibes.cards.t.TaintedWood;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,42 +14,102 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Petradon.class, DoomBlade.class, Forest.class, Mountain.class})
+@CardUsed({Petradon.class, ChainersEdict.class, TaintedPeak.class, TaintedWood.class})
 class PetradonTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB exiles two target lands and tracks them with Petradon")
     void etbExilesTwoTargetLands() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        Permanent wood = harness.addToBattlefieldAndReturn(player2, new TaintedWood());
 
-        Permanent petradon = castAndResolvePetradon(forest, mountain);
+        Permanent petradon = castAndResolvePetradon(peak, wood);
 
-        harness.assertNotOnBattlefield(player2, "Forest");
-        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        harness.assertNotOnBattlefield(player2, "Tainted Wood");
         assertThat(gd.getCardsExiledByPermanent(petradon.getId()))
                 .extracting(card -> card.getName())
-                .containsExactlyInAnyOrder("Forest", "Mountain");
+                .containsExactlyInAnyOrder("Tainted Peak", "Tainted Wood");
+    }
+
+    @Test
+    @DisplayName("ETB cannot target a nonland permanent")
+    void etbCannotTargetNonlandPermanent() {
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        Permanent wood = harness.addToBattlefieldAndReturn(player2, new TaintedWood());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Petradon());
+
+        castPetradonSpell();
+        harness.handlePermanentChosen(player1, peak.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, wood.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        harness.assertNotOnBattlefield(player2, "Tainted Wood");
+        harness.assertOnBattlefield(player2, "Petradon");
+    }
+
+    @Test
+    @DisplayName("ETB cannot target the same land twice")
+    void etbCannotTargetSameLandTwice() {
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        Permanent wood = harness.addToBattlefieldAndReturn(player2, new TaintedWood());
+
+        castPetradonSpell();
+        harness.handlePermanentChosen(player1, peak.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, peak.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, wood.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        harness.assertNotOnBattlefield(player2, "Tainted Wood");
+    }
+
+    @Test
+    @DisplayName("ETB still exiles the remaining land when one target leaves before resolution")
+    void etbExilesRemainingLandWhenOneTargetLeavesBeforeResolution() {
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        Permanent wood = harness.addToBattlefieldAndReturn(player2, new TaintedWood());
+
+        castPetradonSpell();
+        harness.handlePermanentChosen(player1, peak.getId());
+        harness.handlePermanentChosen(player1, wood.getId());
+        Permanent petradon = findPermanent(player1, "Petradon");
+
+        gd.playerBattlefields.get(player2.getId()).remove(peak);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(petradon.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Tainted Wood");
+        harness.assertNotOnBattlefield(player2, "Tainted Wood");
     }
 
     @Test
     @DisplayName("The exiled lands return under their owners' control when Petradon leaves")
     void exiledLandsReturnWhenPetradonLeaves() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        Permanent petradon = castAndResolvePetradon(forest, mountain);
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        Permanent wood = harness.addToBattlefieldAndReturn(player2, new TaintedWood());
+        Permanent petradon = castAndResolvePetradon(peak, wood);
 
-        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.setHand(player1, List.of(new ChainersEdict()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, petradon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Petradon");
-        harness.assertOnBattlefield(player2, "Forest");
-        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Tainted Peak");
+        harness.assertOnBattlefield(player2, "Tainted Wood");
         assertThat(gd.getCardsExiledByPermanent(petradon.getId())).isEmpty();
     }
 
@@ -74,12 +134,7 @@ class PetradonTest extends BaseCardTest {
     }
 
     private Permanent castAndResolvePetradon(Permanent firstLand, Permanent secondLand) {
-        harness.setHand(player1, List.of(new Petradon()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        castPetradonSpell();
         harness.handlePermanentChosen(player1, firstLand.getId());
         harness.handlePermanentChosen(player1, secondLand.getId());
         harness.passBothPriorities();
@@ -87,10 +142,16 @@ class PetradonTest extends BaseCardTest {
         return findPermanent(player1, "Petradon");
     }
 
+    private void castPetradonSpell() {
+        harness.setHand(player1, List.of(new Petradon()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+    }
+
     private Permanent addReadyPetradon() {
-        Permanent petradon = new Permanent(new Petradon());
-        petradon.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(petradon);
-        return petradon;
+        return addCreatureReady(player1, new Petradon());
     }
 }

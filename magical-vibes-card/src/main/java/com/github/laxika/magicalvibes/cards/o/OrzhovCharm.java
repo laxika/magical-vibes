@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "185")
+@CardRegistration(set = "GK2", collectorNumber = "42")
 public class OrzhovCharm extends Card {
 
     public OrzhovCharm() {

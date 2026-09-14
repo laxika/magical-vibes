@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "106")
+@CardRegistration(set = "KLR", collectorNumber = "114")
 public class AethertorchRenegade extends Card {
 
     public AethertorchRenegade() {

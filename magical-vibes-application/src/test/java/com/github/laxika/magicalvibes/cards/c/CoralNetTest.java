@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AbunaAcolyte;
-import com.github.laxika.magicalvibes.cards.b.BogImp;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
+import com.github.laxika.magicalvibes.cards.c.CabalTorturer;
+import com.github.laxika.magicalvibes.cards.k.KrosanConstrictor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoralNet.class, AbunaAcolyte.class, BogImp.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CoralNet.class, AvenTrooper.class, CabalTorturer.class, KrosanConstrictor.class})
 class CoralNetTest extends BaseCardTest {
 
     private Permanent attachTo(Permanent creature) {
@@ -30,8 +29,8 @@ class CoralNetTest extends BaseCardTest {
     @Test
     @DisplayName("Can enchant green and white creatures")
     void canEnchantGreenAndWhiteCreatures() {
-        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new AbunaAcolyte());
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new KrosanConstrictor());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
 
         harness.setHand(player1, List.of(new CoralNet(), new CoralNet()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -46,7 +45,7 @@ class CoralNetTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a creature that is neither green nor white")
     void cannotEnchantBlackCreature() {
-        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new BogImp());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new CabalTorturer());
 
         harness.setHand(player1, List.of(new CoralNet()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -59,9 +58,9 @@ class CoralNetTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature's controller may discard at upkeep to keep it")
     void mayDiscardAtUpkeepToKeepEnchantedCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KrosanConstrictor());
         attachTo(creature);
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new CoralNet()));
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -70,22 +69,36 @@ class CoralNetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Krosan Constrictor");
+        harness.assertInGraveyard(player2, "Coral Net");
     }
 
     @Test
     @DisplayName("Enchanted creature is sacrificed when its controller declines to discard")
     void sacrificesEnchantedCreatureWhenDiscardIsDeclined() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KrosanConstrictor());
         attachTo(creature);
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new CoralNet()));
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Krosan Constrictor");
+        harness.assertInGraveyard(player2, "Krosan Constrictor");
+    }
+
+    @Test
+    @DisplayName("Enchanted creature is sacrificed immediately when its controller has no card to discard")
+    void sacrificesEnchantedCreatureWhenControllerHasNoCardToDiscard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KrosanConstrictor());
+        attachTo(creature);
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Krosan Constrictor");
+        harness.assertInGraveyard(player2, "Krosan Constrictor");
     }
 }

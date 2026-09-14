@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "119")
+@CardRegistration(set = "ANB", collectorNumber = "86")
 public class StormStrike extends Card {
 
     public StormStrike() {

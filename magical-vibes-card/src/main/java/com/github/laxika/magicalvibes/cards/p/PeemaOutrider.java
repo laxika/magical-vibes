@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "166")
+@CardRegistration(set = "KLR", collectorNumber = "176")
 public class PeemaOutrider extends Card {
 
     public PeemaOutrider() {

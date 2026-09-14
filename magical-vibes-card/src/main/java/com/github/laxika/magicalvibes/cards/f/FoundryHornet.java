@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "59")
+@CardRegistration(set = "KLR", collectorNumber = "87")
 public class FoundryHornet extends Card {
 
     public FoundryHornet() {

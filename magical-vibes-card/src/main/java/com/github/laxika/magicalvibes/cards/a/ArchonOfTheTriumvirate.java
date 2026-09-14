@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "142")
+@CardRegistration(set = "GK2", collectorNumber = "7")
 public class ArchonOfTheTriumvirate extends Card {
 
     public ArchonOfTheTriumvirate() {

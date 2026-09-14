@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "232")
+@CardRegistration(set = "GK2", collectorNumber = "75")
 public class RakdosKeyrune extends Card {
 
     public RakdosKeyrune() {

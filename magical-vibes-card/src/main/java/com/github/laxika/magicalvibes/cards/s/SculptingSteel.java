@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MRD", collectorNumber = "238")
 @CardRegistration(set = "MPS", collectorNumber = "23")
 @CardRegistration(set = "2XM", collectorNumber = "286")
+@CardRegistration(set = "KLR", collectorNumber = "302")
 public class SculptingSteel extends Card {
 
     public SculptingSteel() {

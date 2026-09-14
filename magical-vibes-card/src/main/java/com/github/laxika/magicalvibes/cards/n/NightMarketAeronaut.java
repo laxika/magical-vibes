@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "67")
+@CardRegistration(set = "KLR", collectorNumber = "102")
 public class NightMarketAeronaut extends Card {
 
     public NightMarketAeronaut() {

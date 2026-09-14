@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "KLD", collectorNumber = "16")
+@CardRegistration(set = "KLR", collectorNumber = "20")
 public class GearshiftAce extends Card {
 
     public GearshiftAce() {

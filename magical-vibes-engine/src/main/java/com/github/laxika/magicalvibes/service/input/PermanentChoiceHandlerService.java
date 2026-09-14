@@ -497,6 +497,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBlightCreatureChoice(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentBlightsCreature blight) {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy) {
+            battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToDestroy(gameData, permanentId, destroy);
         } else if (context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken) {
             battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
                     sacrificeOrToken);

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.cards.c.CripplingFatigue;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MysticFamiliar.class, GrizzlyBears.class, Terror.class})
+@CardUsed({MysticFamiliar.class, CripplingFatigue.class})
 class MysticFamiliarTest extends BaseCardTest {
 
     @Test
@@ -75,12 +74,12 @@ class MysticFamiliarTest extends BaseCardTest {
         fillGraveyard(player1, 7);
         Permanent familiar = addFamiliar(player1);
 
-        harness.setHand(player2, List.of(new Terror()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new CripplingFatigue()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, familiar.getId(), null))
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, familiar.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -92,7 +91,7 @@ class MysticFamiliarTest extends BaseCardTest {
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new CripplingFatigue());
         }
         harness.setGraveyard(player, cards);
     }

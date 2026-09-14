@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnuridScavenger.class, DarkBanishing.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({AnuridScavenger.class, DarkBanishing.class, GrizzlyBears.class, HillGiant.class, ScatheZombies.class})
 class AnuridScavengerTest extends BaseCardTest {
 
     @Test
@@ -85,5 +87,37 @@ class AnuridScavengerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, scavenger.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents black creatures from blocking it")
+    void protectionFromBlackPreventsBlocking() {
+        Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
+        Permanent zombies = addCreatureReady(player2, new ScatheZombies());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(zombies),
+                gd.playerBattlefields.get(player1.getId()).indexOf(scavenger)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents combat damage from black creatures")
+    void protectionFromBlackPreventsCombatDamage() {
+        Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
+        Permanent zombies = addCreatureReady(player2, new ScatheZombies());
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(scavenger),
+                gd.playerBattlefields.get(player2.getId()).indexOf(zombies))));
+        harness.passBothPriorities();
+
+        assertThat(scavenger.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(zombies);
     }
 }

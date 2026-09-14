@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "171")
+@CardRegistration(set = "KLR", collectorNumber = "183")
 public class ThrivingRhino extends Card {
 
     public ThrivingRhino() {

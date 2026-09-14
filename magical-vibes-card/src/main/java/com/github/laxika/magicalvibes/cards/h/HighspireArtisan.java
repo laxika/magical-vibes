@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "157")
+@CardRegistration(set = "KLR", collectorNumber = "162")
 public class HighspireArtisan extends Card {
 
     public HighspireArtisan() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "39")
 @CardRegistration(set = "2XM", collectorNumber = "59")
+@CardRegistration(set = "KLR", collectorNumber = "56")
 public class MetallicRebuke extends Card {
 
     public MetallicRebuke() {

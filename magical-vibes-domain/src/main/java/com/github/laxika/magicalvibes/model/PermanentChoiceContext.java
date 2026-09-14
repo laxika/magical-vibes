@@ -196,6 +196,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Highcliff Felidar: the controller chooses a greatest-power creature for one opponent. */
+    record EachOpponentChoosesGreatestPowerCreatureToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
+
     /** A player chooses a matching permanent to exile during a resolving effect. */
     record ExileChosenPermanent(UUID choosingPlayerId, String sourceCardName, String permanentLabel)
             implements PermanentChoiceContext {}

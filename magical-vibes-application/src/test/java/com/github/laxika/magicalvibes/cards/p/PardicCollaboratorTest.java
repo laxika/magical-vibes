@@ -29,6 +29,49 @@ class PardicCollaboratorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can be activated repeatedly while black mana remains")
+    void abilityCanBeActivatedRepeatedly() {
+        Permanent collaborator = addCollaboratorReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(collaborator.getEffectivePower()).isEqualTo(4);
+        assertThat(collaborator.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The ability boosts only the Pardic Collaborator whose ability was activated")
+    void abilityBoostsOnlyItsSource() {
+        Permanent collaborator = addCollaboratorReady(player1);
+        Permanent otherCollaborator = addCollaboratorReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(collaborator.getEffectivePower()).isEqualTo(3);
+        assertThat(collaborator.getEffectiveToughness()).isEqualTo(3);
+        assertThat(otherCollaborator.getEffectivePower()).isEqualTo(2);
+        assertThat(otherCollaborator.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Activating the ability does not tap Pardic Collaborator")
+    void abilityDoesNotTapSource() {
+        Permanent collaborator = addCollaboratorReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(collaborator.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The boost wears off during cleanup")
     void boostWearsOffAtEndOfTurn() {
         Permanent collaborator = addCollaboratorReady(player1);

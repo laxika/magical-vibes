@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "70")
+@CardRegistration(set = "HA3", collectorNumber = "11")
 public class GempalmPolluter extends Card {
 
     public GempalmPolluter() {

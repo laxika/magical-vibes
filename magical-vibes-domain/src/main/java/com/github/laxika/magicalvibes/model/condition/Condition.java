@@ -114,6 +114,7 @@ public sealed interface Condition permits
         ControllerHasMoreLifeThanAnOpponent,
         ControllerControlsMoreLandsThanOpponent,
         ControllerControlsMorePermanentsThanEachOtherPlayer,
+        ControllerHasAtLeastOpponents,
         ControllerHasNoLandCardsInHand,
         ControllerHandEmpty,
         ControllerLifeAtLeast,

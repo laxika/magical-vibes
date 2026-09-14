@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "56")
 @CardRegistration(set = "2XM", collectorNumber = "83")
+@CardRegistration(set = "KLR", collectorNumber = "79")
 public class DefiantSalvager extends Card {
 
     public DefiantSalvager() {

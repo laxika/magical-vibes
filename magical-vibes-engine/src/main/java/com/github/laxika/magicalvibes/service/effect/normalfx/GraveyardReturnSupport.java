@@ -1546,6 +1546,7 @@ public class GraveyardReturnSupport {
                 }
 
                 Permanent permanent = new Permanent(card);
+                initializePlaneswalkerLoyalty(permanent, card);
                 if (enterWithCounter != null) {
                     permanent.setCounterCount(enterWithCounter, 1);
                 }
@@ -1579,6 +1580,7 @@ public class GraveyardReturnSupport {
             }
 
             Permanent permanent = new Permanent(card);
+            initializePlaneswalkerLoyalty(permanent, card);
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
             if (batch.enterTapped()) {
                 permanent.tap();
@@ -1614,6 +1616,7 @@ public class GraveyardReturnSupport {
                 continue;
             }
             Permanent permanent = new Permanent(card);
+            initializePlaneswalkerLoyalty(permanent, card);
             permanent.setEnteredFromGraveyardOwnerId(controllerId);
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
@@ -1627,6 +1630,7 @@ public class GraveyardReturnSupport {
                 continue;
             }
             Permanent permanent = new Permanent(card);
+            initializePlaneswalkerLoyalty(permanent, card);
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(permanent);

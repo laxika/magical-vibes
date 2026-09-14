@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "183")
+@CardRegistration(set = "GK2", collectorNumber = "41")
 public class OneThousandLashes extends Card {
 
     public OneThousandLashes() {

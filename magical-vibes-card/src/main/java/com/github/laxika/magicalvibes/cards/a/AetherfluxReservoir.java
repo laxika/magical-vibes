@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "192")
+@CardRegistration(set = "KLR", collectorNumber = "217")
 public class AetherfluxReservoir extends Card {
 
     public AetherfluxReservoir() {

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "196")
 @CardRegistration(set = "M14", collectorNumber = "215")
 @CardRegistration(set = "2XM", collectorNumber = "284")
+@CardRegistration(set = "HA3", collectorNumber = "25")
 public class RatchetBomb extends Card {
 
     public RatchetBomb() {

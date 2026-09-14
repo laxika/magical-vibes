@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 import java.util.Set;
 
-@CardRegistration(set = "ANA", collectorNumber = "40")
 @CardRegistration(set = "XANA", collectorNumber = "40")
+@CardRegistration(set = "ANB", collectorNumber = "70")
 public class GoblinGangLeader extends Card {
 
     public GoblinGangLeader() {
