@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "56")
 @CardRegistration(set = "HOP", collectorNumber = "13")
+@CardRegistration(set = "TSR", collectorNumber = "84")
 public class SarcomiteMyr extends Card {
 
     public SarcomiteMyr() {

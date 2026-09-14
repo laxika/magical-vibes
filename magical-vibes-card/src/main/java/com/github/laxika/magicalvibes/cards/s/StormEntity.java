@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "122")
+@CardRegistration(set = "TSR", collectorNumber = "193")
 public class StormEntity extends Card {
 
     public StormEntity() {

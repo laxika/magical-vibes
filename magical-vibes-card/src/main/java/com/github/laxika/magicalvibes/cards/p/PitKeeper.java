@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "123")
 @CardRegistration(set = "MM3", collectorNumber = "81")
+@CardRegistration(set = "TSR", collectorNumber = "130")
 public class PitKeeper extends Card {
 
     public PitKeeper() {

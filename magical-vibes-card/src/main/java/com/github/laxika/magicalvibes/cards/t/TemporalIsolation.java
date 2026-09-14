@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchan
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "43")
+@CardRegistration(set = "TSR", collectorNumber = "48")
 public class TemporalIsolation extends Card {
 
     public TemporalIsolation() {

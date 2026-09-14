@@ -178,6 +178,7 @@ public enum CardSet {
     SET_TPR("TPR"),
     SET_TSP("TSP"),
     SET_TSB("TSB"),
+    SET_TSR("TSR"),
     SET_ME1("ME1"),
     SET_ME2("ME2"),
     SET_VMA("VMA"),

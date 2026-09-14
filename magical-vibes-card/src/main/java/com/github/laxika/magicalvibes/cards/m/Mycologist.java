@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "27")
+@CardRegistration(set = "TSR", collectorNumber = "29")
 public class Mycologist extends Card {
 
     public Mycologist() {

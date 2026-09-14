@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "200")
 @CardRegistration(set = "FUT", collectorNumber = "159")
+@CardRegistration(set = "TSR", collectorNumber = "262")
 public class AkromasMemorial extends Card {
 
     public AkromasMemorial() {

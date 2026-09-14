@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "60")
+@CardRegistration(set = "TSR", collectorNumber = "314")
 public class ParadoxicalOutcome extends Card {
 
     public ParadoxicalOutcome() {

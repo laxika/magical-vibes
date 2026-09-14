@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "154")
+@CardRegistration(set = "TSR", collectorNumber = "248")
 public class CauterySliver extends Card {
 
     public CauterySliver() {

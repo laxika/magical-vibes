@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "106")
 @CardRegistration(set = "DDS", collectorNumber = "18")
+@CardRegistration(set = "TSR", collectorNumber = "188")
 public class ShivanMeteor extends Card {
 
     public ShivanMeteor() {
