@@ -17,7 +17,7 @@ class GiverOfRunesTest extends BaseCardTest {
     @Test
     @DisplayName("Grants protection from a chosen color to another creature you control")
     void grantsProtectionFromChosenColor() {
-        Permanent giver = harness.addToBattlefieldAndReturn(player1, new GiverOfRunes());
+        Permanent giver = addCreatureReady(player1, new GiverOfRunes());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -31,7 +31,7 @@ class GiverOfRunesTest extends BaseCardTest {
     @Test
     @DisplayName("Can grant protection from colorless")
     void grantsProtectionFromColorless() {
-        harness.addToBattlefield(player1, new GiverOfRunes());
+        addCreatureReady(player1, new GiverOfRunes());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -45,7 +45,7 @@ class GiverOfRunesTest extends BaseCardTest {
     @Test
     @DisplayName("Protection wears off at end of turn")
     void protectionWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new GiverOfRunes());
+        addCreatureReady(player1, new GiverOfRunes());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -62,7 +62,7 @@ class GiverOfRunesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target Giver of Runes itself")
     void cannotTargetItself() {
-        harness.addToBattlefield(player1, new GiverOfRunes());
+        addCreatureReady(player1, new GiverOfRunes());
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, null, harness.getPermanentId(player1, "Giver of Runes")))
@@ -72,7 +72,7 @@ class GiverOfRunesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's creature")
     void cannotTargetOpponentCreature() {
-        harness.addToBattlefield(player1, new GiverOfRunes());
+        addCreatureReady(player1, new GiverOfRunes());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
