@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "106")
+@CardRegistration(set = "OTP", collectorNumber = "27")
 public class Skullcrack extends Card {
 
     public Skullcrack() {
