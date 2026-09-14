@@ -215,6 +215,7 @@ public class DamageTriggerCollectorService {
             PutCountersOnSourceEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
         if (dc.damageSource() == null || dc.damageDealt() <= 0) return false;
+        if (!match.permanent().getId().equals(dc.damageSource().getId())) return true;
 
         Permanent source = dc.damageSource();
         GameData gameData = match.gameData();

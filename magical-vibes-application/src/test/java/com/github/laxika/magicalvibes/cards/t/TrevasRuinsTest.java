@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,12 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TrevasRuins.class, TerminalMoraine.class, AlphaKavu.class})
 class TrevasRuinsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the ETB cost returns a non-Lair land and keeps the source")
     void acceptsEtbCostByReturningNonLairLand() {
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
         TrevasRuins ruins = new TrevasRuins();
         playAndResolveEtb(ruins);
 
@@ -26,29 +28,29 @@ class TrevasRuinsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == ruins)
-                .doesNotContain(plains);
-        assertThat(gd.playerHands.get(player1.getId())).contains(plains.getCard());
+                .doesNotContain(moraine);
+        assertThat(gd.playerHands.get(player1.getId())).contains(moraine.getCard());
     }
 
     @Test
     @DisplayName("The source is sacrificed when only a Lair land is available")
     void sacrificesWhenOnlyLairLandIsAvailable() {
-        harness.addToBattlefield(player1, new TrevasRuins());
-        playAndResolveEtb(new TrevasRuins());
+        Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new TrevasRuins());
+        TrevasRuins enteringRuins = playAndResolveEtb(new TrevasRuins());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof TrevasRuins))
-                .hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(card -> card instanceof TrevasRuins))
-                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(existingLair)
+                .noneMatch(permanent -> permanent.getCard() == enteringRuins);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(enteringRuins)
+                .noneMatch(card -> card == existingLair.getCard());
     }
 
     @Test
     @DisplayName("Declining the ETB cost sacrifices the source")
     void decliningEtbCostSacrificesSource() {
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
         TrevasRuins ruins = new TrevasRuins();
         playAndResolveEtb(ruins);
 
@@ -56,8 +58,66 @@ class TrevasRuinsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() == ruins)
-                .anyMatch(permanent -> permanent == plains);
+                .anyMatch(permanent -> permanent == moraine);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(ruins);
+    }
+
+    @Test
+    @DisplayName("The source is sacrificed when no land is available to return")
+    void sacrificesWhenNoLandIsAvailable() {
+        TrevasRuins ruins = playAndResolveEtb(new TrevasRuins());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == ruins);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ruins);
+    }
+
+    @Test
+    @DisplayName("Accepting the ETB cost with multiple eligible lands returns only the chosen land")
+    void acceptsEtbCostWithMultipleEligibleLands() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        TrevasRuins ruins = playAndResolveEtb(new TrevasRuins());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(secondLand)
+                .doesNotContain(firstLand)
+                .anyMatch(permanent -> permanent.getCard() == ruins);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(firstLand.getCard())
+                .doesNotContain(secondLand.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's non-Lair land cannot pay the ETB cost")
+    void ignoresOpponentControlledNonLairLand() {
+        harness.addToBattlefield(player2, new TerminalMoraine());
+        TrevasRuins ruins = playAndResolveEtb(new TrevasRuins());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == ruins);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ruins);
+        harness.assertOnBattlefield(player2, "Terminal Moraine");
+    }
+
+    @Test
+    @DisplayName("A non-Lair nonland permanent cannot pay the ETB cost")
+    void ignoresNonLandPermanents() {
+        harness.addToBattlefield(player1, new AlphaKavu());
+        TrevasRuins ruins = playAndResolveEtb(new TrevasRuins());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == ruins);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ruins);
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
     }
 
     @Test
@@ -84,9 +144,10 @@ class TrevasRuinsTest extends BaseCardTest {
         assertThat(ruins.isTapped()).isTrue();
     }
 
-    private void playAndResolveEtb(TrevasRuins ruins) {
+    private TrevasRuins playAndResolveEtb(TrevasRuins ruins) {
         harness.setHand(player1, List.of(ruins));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
+        return ruins;
     }
 }

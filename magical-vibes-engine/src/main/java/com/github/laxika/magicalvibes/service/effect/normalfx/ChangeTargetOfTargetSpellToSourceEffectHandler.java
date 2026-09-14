@@ -46,7 +46,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
             return;
         }
 
-        if (targetSpell.isSingleTarget()) {
+        if (targetSpell.isSingleTarget() && targetSpell.getTargetCardIds().isEmpty()) {
             if (sourcePermanentId.equals(targetSpell.getTargetId())) {
                 gameLogService.append(gameData,
                         GameLog.cardTextCard(targetSpell.getCard(), " already targets ", entry.getCard(), "."));

@@ -1,23 +1,37 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(GoblinGame.class)
 class GoblinGameTest extends BaseCardTest {
+
+    @Test
+    void eachPlayerMustHideAtLeastOneItem() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castGoblinGame();
+
+        assertThatThrownBy(() -> harness.handleXValueChosen(player1, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("between 1 and");
+
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player2, 1);
+
+        harness.assertLife(player1, 9);
+        harness.assertLife(player2, 9);
+    }
 
     @Test
     void eachPlayerLosesTheirCountThenFewestLosesHalfRoundedUp() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new GoblinGame()));
-        harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.RED, 7);
 
         castGoblinGame();
 
@@ -33,9 +47,6 @@ class GoblinGameTest extends BaseCardTest {
     void tiedFewestPlayersEachLoseHalfTheirLife() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new GoblinGame()));
-        harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.RED, 7);
 
         castGoblinGame();
 
@@ -50,9 +61,6 @@ class GoblinGameTest extends BaseCardTest {
     void negativeLifeTotalsAreNotChangedByTheFewestPlayersHalf() {
         harness.setLife(player1, 1);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new GoblinGame()));
-        harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.RED, 7);
 
         castGoblinGame();
 
@@ -64,7 +72,7 @@ class GoblinGameTest extends BaseCardTest {
     }
 
     private void castGoblinGame() {
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinGame(), "{5}{R}{R}");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
     }

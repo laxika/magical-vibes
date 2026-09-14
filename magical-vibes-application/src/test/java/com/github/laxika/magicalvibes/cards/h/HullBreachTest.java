@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.m.ManaCylix;
+import com.github.laxika.magicalvibes.cards.w.WarpedDevotion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,32 +16,33 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HullBreach.class, ManaCylix.class, WarpedDevotion.class})
 class HullBreachTest extends BaseCardTest {
 
     @Test
     void destroysTargetArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        cast(0, harness.getPermanentId(player2, "Fountain of Youth"));
+        harness.addToBattlefield(player2, new ManaCylix());
+        cast(0, harness.getPermanentId(player2, "Mana Cylix"));
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Mana Cylix");
+        harness.assertInGraveyard(player2, "Mana Cylix");
     }
 
     @Test
     void destroysTargetEnchantment() {
-        harness.addToBattlefield(player2, new AngelicChorus());
-        cast(1, harness.getPermanentId(player2, "Angelic Chorus"));
+        harness.addToBattlefield(player2, new WarpedDevotion());
+        cast(1, harness.getPermanentId(player2, "Warped Devotion"));
 
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Warped Devotion");
+        harness.assertInGraveyard(player2, "Warped Devotion");
     }
 
     @Test
     void destroysTargetArtifactAndEnchantment() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        harness.addToBattlefield(player2, new AngelicChorus());
-        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
-        UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.addToBattlefield(player2, new ManaCylix());
+        harness.addToBattlefield(player2, new WarpedDevotion());
+        UUID artifactId = harness.getPermanentId(player2, "Mana Cylix");
+        UUID enchantmentId = harness.getPermanentId(player2, "Warped Devotion");
 
         harness.setHand(player1, List.of(new HullBreach()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -48,8 +50,8 @@ class HullBreachTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, 2, List.of(artifactId, enchantmentId));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Mana Cylix");
+        harness.assertNotOnBattlefield(player2, "Warped Devotion");
     }
 
     @Test
@@ -58,8 +60,7 @@ class HullBreachTest extends BaseCardTest {
         card.setName("Test Relic");
         card.setType(CardType.ARTIFACT);
         card.setAdditionalTypes(Set.of(CardType.ENCHANTMENT));
-        Permanent permanent = new Permanent(card);
-        gd.playerBattlefields.get(player2.getId()).add(permanent);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, card);
 
         harness.setHand(player1, List.of(new HullBreach()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -72,12 +73,16 @@ class HullBreachTest extends BaseCardTest {
 
     @Test
     void rejectsWrongTargetTypeForEachMode() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new ManaCylix());
+        harness.addToBattlefield(player2, new WarpedDevotion());
         harness.setHand(player1, List.of(new HullBreach()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID artifactId = harness.getPermanentId(player2, "Mana Cylix");
+        UUID enchantmentId = harness.getPermanentId(player2, "Warped Devotion");
 
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, enchantmentId))
+                .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, artifactId))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 2, List.of(artifactId, artifactId)))

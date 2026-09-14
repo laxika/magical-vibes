@@ -23,8 +23,10 @@ public class GrantKeywordEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
         boolean scopeMatch = switch (grant.scope()) {
-            case ALL_PERMANENTS -> support.matchesStaticFilter(context, context.target(), grant.filter());
+            case ALL_PERMANENTS -> !context.target().getId().equals(context.sourceId())
+                    && support.matchesStaticFilter(context, context.target(), grant.filter());
             case OWN_PERMANENTS -> context.targetOnSameBattlefield()
+                    && !context.target().getId().equals(context.sourceId())
                     && support.matchesStaticFilter(context, context.target(), grant.filter());
             case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->
                     support.matchesLandScope(context, grant.scope(), grant.filter());

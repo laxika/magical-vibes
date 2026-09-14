@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,6 +58,13 @@ class ChainerDementiaMasterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
+        assertThat(creature.getColors()).containsExactly(CardColor.GREEN);
     }
 
     @Test

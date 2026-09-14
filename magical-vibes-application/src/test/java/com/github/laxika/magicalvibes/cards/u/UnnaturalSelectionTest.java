@@ -54,7 +54,10 @@ class UnnaturalSelectionTest extends BaseCardTest {
         activate(target);
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
 
-        assertThat(choice.options()).doesNotContain(CardSubtype.TREASURE.name());
+        assertThat(choice.options()).contains(CardSubtype.ZOMBIE.name(), CardSubtype.FLAGBEARER.name())
+                .doesNotContain(CardSubtype.TREASURE.name(), CardSubtype.AURA.name(),
+                        CardSubtype.SAGA.name(), CardSubtype.JACE.name(), CardSubtype.LAIR.name(),
+                        CardSubtype.ARCANE.name(), CardSubtype.SIEGE.name());
     }
 
     @Test
