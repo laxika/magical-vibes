@@ -53,7 +53,7 @@ class BloodforgedBattleAxeTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
         blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        blocker.addBlockingTarget(1);
 
         resolveCombat();
 

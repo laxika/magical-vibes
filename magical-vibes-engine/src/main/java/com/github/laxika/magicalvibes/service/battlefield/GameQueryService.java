@@ -7998,7 +7998,7 @@ public class GameQueryService {
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
                 .anyMatch(OpponentsCantCastOrActivateDuringYourTurnEffect.class::isInstance));
     }
 
@@ -8011,7 +8011,7 @@ public class GameQueryService {
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
                 .anyMatch(effect -> effect instanceof OpponentsCantCastOrActivateDuringYourTurnEffect restriction
                         && restriction.restrictsActivatedAbilities()));
     }

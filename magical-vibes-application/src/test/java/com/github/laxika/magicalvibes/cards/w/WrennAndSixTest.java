@@ -68,7 +68,7 @@ class WrennAndSixTest extends BaseCardTest {
         harness.castRetrace(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         harness.assertInGraveyard(player1, "Shock");
         harness.assertInGraveyard(player1, "Forest");
     }

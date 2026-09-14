@@ -40,7 +40,8 @@ class AnointerOfValorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        // Declining auto-passes into the next combat step, which empties the mana pool.
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test

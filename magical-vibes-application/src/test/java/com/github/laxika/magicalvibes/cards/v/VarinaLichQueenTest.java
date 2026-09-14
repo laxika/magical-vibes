@@ -53,6 +53,7 @@ class VarinaLichQueenTest extends BaseCardTest {
     void nonZombieAttackDoesNotTrigger() {
         addCreatureReady(player1, new VarinaLichQueen());
         addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
         declareAttackers(List.of(1));
