@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "CHR", collectorNumber = "90")
 @CardRegistration(set = "LEG", collectorNumber = "270")
 @CardRegistration(set = "ME3", collectorNumber = "187")
+@CardRegistration(set = "DMR", collectorNumber = "205")
 public class XiraArien extends Card {
 
     public XiraArien() {

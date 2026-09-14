@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "37")
+@CardRegistration(set = "DMR", collectorNumber = "17")
 public class NomadDecoy extends Card {
 
     public NomadDecoy() {

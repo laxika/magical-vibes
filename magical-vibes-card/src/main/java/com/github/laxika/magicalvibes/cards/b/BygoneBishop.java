@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "8")
+@CardRegistration(set = "SIR", collectorNumber = "18")
 public class BygoneBishop extends Card {
 
     public BygoneBishop() {

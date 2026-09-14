@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "107")
 @CardRegistration(set = "IMA", collectorNumber = "101")
+@CardRegistration(set = "SLC", collectorNumber = "15")
+@CardRegistration(set = "SLC", collectorNumber = "42")
 public class ObNixilisTheFallen extends Card {
 
     public ObNixilisTheFallen() {

@@ -63,12 +63,17 @@ class TrapRunnerTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
         addCreatureReady(player2, new FreshVolunteers());
         declareAttackersAndPrepareBlockers(List.of(1));
-        gs.declareBlockers(gd, player2, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.isBlockedWithoutBlockers()).isFalse();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
 
-        harness.activateAbility(player1, battlefieldIndex(trapRunner), null, attacker.getId());
-        harness.passBothPriorities();
+            harness.activateAbility(player1, battlefieldIndex(trapRunner), null, attacker.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
     }

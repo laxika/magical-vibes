@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "VIS", collectorNumber = "145")
+@CardRegistration(set = "DMR", collectorNumber = "224")
 public class HelmOfAwakening extends Card {
 
     public HelmOfAwakening() {

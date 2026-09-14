@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "300")
+@CardRegistration(set = "DMR", collectorNumber = "230")
 public class LotusBlossom extends Card {
 
     public LotusBlossom() {

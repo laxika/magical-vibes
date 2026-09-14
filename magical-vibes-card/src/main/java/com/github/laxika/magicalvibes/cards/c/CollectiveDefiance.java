@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "149")
 @CardRegistration(set = "EMN", collectorNumber = "123")
+@CardRegistration(set = "SIR", collectorNumber = "148")
 public class CollectiveDefiance extends Card {
 
     public CollectiveDefiance() {

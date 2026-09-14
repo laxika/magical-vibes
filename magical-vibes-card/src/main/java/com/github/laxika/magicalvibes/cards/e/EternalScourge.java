@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "7")
+@CardRegistration(set = "SIR", collectorNumber = "7")
 public class EternalScourge extends Card {
 
     public EternalScourge() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "IMA", collectorNumber = "58")
+@CardRegistration(set = "GN3", collectorNumber = "29")
 public class IllusoryAmbusher extends Card {
 
     public IllusoryAmbusher() {

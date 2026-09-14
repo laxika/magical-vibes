@@ -81,8 +81,7 @@ class ChameleonSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
 
-        Permanent spirit = findPermanent(player1, "Chameleon Spirit");
-        assertThat(gqs.getEffectivePower(gd, spirit)).isZero();
-        assertThat(gqs.getEffectiveToughness(gd, spirit)).isZero();
+        harness.assertNotOnBattlefield(player1, "Chameleon Spirit");
+        harness.assertInGraveyard(player1, "Chameleon Spirit");
     }
 }

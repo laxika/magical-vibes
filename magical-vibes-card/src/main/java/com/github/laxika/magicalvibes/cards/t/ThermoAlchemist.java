@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "EMN", collectorNumber = "147")
 @CardRegistration(set = "MID", collectorNumber = "164")
 @CardRegistration(set = "UMA", collectorNumber = "151")
+@CardRegistration(set = "SIR", collectorNumber = "180")
 public class ThermoAlchemist extends Card {
 
     public ThermoAlchemist() {

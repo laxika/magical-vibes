@@ -25,7 +25,6 @@ class MisstepTest extends BaseCardTest {
 
         castMisstep(player2.getId());
 
-        assertThat(targetCreature.getSkipUntapCount()).isEqualTo(1);
 
         advanceToUpkeep(player2);
         assertThat(targetCreature.isTapped()).isTrue();
@@ -71,7 +70,8 @@ class MisstepTest extends BaseCardTest {
 
         castMisstep(player1.getId());
 
-        assertThat(ownCreature.getSkipUntapCount()).isEqualTo(1);
+        advanceToUpkeep(player1);
+        assertThat(ownCreature.isTapped()).isTrue();
     }
 
     @Test

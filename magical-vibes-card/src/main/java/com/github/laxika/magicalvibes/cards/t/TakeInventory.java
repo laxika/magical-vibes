@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "76")
+@CardRegistration(set = "SIR", collectorNumber = "93")
 public class TakeInventory extends Card {
 
     public TakeInventory() {

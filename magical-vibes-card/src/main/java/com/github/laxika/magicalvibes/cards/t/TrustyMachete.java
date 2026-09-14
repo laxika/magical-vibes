@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "209")
+@CardRegistration(set = "GN3", collectorNumber = "121")
 public class TrustyMachete extends Card {
 
     public TrustyMachete() {

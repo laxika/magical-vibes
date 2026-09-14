@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "134")
+@CardRegistration(set = "SLC", collectorNumber = "11")
+@CardRegistration(set = "SLC", collectorNumber = "38")
 public class KrarkClanIronworks extends Card {
 
     public KrarkClanIronworks() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "207")
+@CardRegistration(set = "SIR", collectorNumber = "197")
 public class GrafMole extends Card {
 
     public GrafMole() {

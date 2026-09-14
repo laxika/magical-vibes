@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "287")
+@CardRegistration(set = "DMR", collectorNumber = "188")
 public class Decimate extends Card {
 
     public Decimate() {

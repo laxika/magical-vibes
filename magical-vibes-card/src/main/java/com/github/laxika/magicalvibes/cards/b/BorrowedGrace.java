@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "14")
+@CardRegistration(set = "SIR", collectorNumber = "15")
 public class BorrowedGrace extends Card {
 
     public BorrowedGrace() {

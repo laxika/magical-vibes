@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "126")
+@CardRegistration(set = "DMR", collectorNumber = "155")
 public class DeadwoodTreefolk extends Card {
 
     public DeadwoodTreefolk() {

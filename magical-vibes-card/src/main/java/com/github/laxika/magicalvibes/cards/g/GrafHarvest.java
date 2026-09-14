@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "90")
+@CardRegistration(set = "SIR", collectorNumber = "114")
 public class GrafHarvest extends Card {
 
     public GrafHarvest() {

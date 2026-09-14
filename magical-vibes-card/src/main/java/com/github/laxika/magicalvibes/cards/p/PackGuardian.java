@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "211")
 @CardRegistration(set = "INR", collectorNumber = "416")
 @CardRegistration(set = "SOI", collectorNumber = "221")
+@CardRegistration(set = "SIR", collectorNumber = "208")
 public class PackGuardian extends Card {
 
     public PackGuardian() {

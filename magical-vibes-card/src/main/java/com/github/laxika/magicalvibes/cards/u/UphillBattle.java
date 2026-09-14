@@ -12,6 +12,6 @@ import java.util.Set;
 public class UphillBattle extends Card {
 
     public UphillBattle() {
-        addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE), true));
+        addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE), true, null, true));
     }
 }

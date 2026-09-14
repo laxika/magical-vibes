@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "TOR", collectorNumber = "100")
 @CardRegistration(set = "PD2", collectorNumber = "1")
 @CardRegistration(set = "2XM", collectorNumber = "129")
+@CardRegistration(set = "DMR", collectorNumber = "126")
 public class GrimLavamancer extends Card {
 
     public GrimLavamancer() {
