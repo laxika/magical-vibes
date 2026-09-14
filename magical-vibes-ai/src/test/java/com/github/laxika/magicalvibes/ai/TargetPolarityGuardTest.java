@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
+import com.github.laxika.magicalvibes.cards.j.JeeringHomunculus;
 import com.github.laxika.magicalvibes.cards.p.PalaceJailer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -191,6 +192,16 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
         assertThat(classifier.classifyCard(gd, new PalaceJailer(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+    }
+
+    @Test
+    void optionalGoadTargetsOpposingCreatures() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(harness.getGameData(),
+                new JeeringHomunculus(), harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL);
     }
 
     @Test
