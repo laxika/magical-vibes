@@ -474,6 +474,7 @@ public class CastingPermissionService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GlobalLandPlayRestrictionEffect restriction
                             && countMatchingPermanents(gameData, restriction.filter())

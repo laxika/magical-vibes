@@ -6985,6 +6985,12 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated if you've been attacked this step");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED
+                    && gameData.currentStep != TurnStep.DECLARE_BLOCKERS
+                    && gameData.currentStep != TurnStep.COMBAT_DAMAGE
+                    && gameData.currentStep != TurnStep.END_OF_COMBAT) {
+                throw new IllegalStateException("This ability can only be activated during combat after declare blockers");
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS) {
                 if (gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {
                     throw new IllegalStateException("This ability can only be activated during the declare blockers step");

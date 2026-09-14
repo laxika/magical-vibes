@@ -499,7 +499,11 @@ public class CombatBlockService {
                         }
                     } else if (e instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
                         addResolvedCombatOpponentBoost(gameData, resolvedBlockEffects, conditional,
-                                List.of(attacker));
+                                hasOncePerBlockEffect
+                                        ? blockerAssignments.stream()
+                                                .filter(a -> a.blockerIndex() == assignment.blockerIndex())
+                                                .map(a -> attackerBattlefield.get(a.attackerIndex())).toList()
+                                        : List.of(attacker));
                     } else if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                         if (hasEquipmentAttached(gameData, attacker)) {
                             resolvedBlockEffects.add(e);
@@ -2460,7 +2464,9 @@ public class CombatBlockService {
         if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
             return false;
         }
-        if (gameQueryService.getBlockManaTax(gameData, blocker, attacker) > 0) {
+        if (gameQueryService.getBlockManaTax(gameData, blocker, attacker) > 0
+                || gameQueryService.getGlobalBlockManaTax(gameData, blocker) > 0
+                || gameQueryService.getGlobalBlockLifeTax(gameData, blocker, attacker) > 0) {
             return false;
         }
 

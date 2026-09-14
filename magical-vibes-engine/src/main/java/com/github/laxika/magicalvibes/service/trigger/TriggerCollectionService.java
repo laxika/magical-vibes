@@ -3196,6 +3196,7 @@ public class TriggerCollectionService {
             if (battlefield == null) continue;
 
             for (Permanent perm : new ArrayList<>(battlefield)) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_RETURNED_TO_HAND);
                 if (effects.isEmpty()) continue;
 
@@ -3795,7 +3796,7 @@ public class TriggerCollectionService {
 
         List<UUID> targetIds = new ArrayList<>();
         if (abilityEntry.getTargetId() != null
-                && abilityEntry.getTargetZone() == null
+                && (abilityEntry.getTargetZone() == null || abilityEntry.getTargetZone() == Zone.BATTLEFIELD)
                 && !abilityEntry.isNonTargeting()) {
             targetIds.add(abilityEntry.getTargetId());
         }

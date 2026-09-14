@@ -14,7 +14,7 @@ public class TurbulentDreams extends Card {
 
     public TurbulentDreams() {
         addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Targets must be nonland permanents"
         ), 100).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());

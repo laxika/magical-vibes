@@ -886,6 +886,8 @@ public class PermanentRemovalService {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
+                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -902,6 +904,8 @@ public class PermanentRemovalService {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
+                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }

@@ -78,7 +78,7 @@ class KeldonMantleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 2, null, null);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
