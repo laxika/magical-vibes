@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "174")
+@CardRegistration(set = "ANB", collectorNumber = "98")
 public class IlysianCaryatid extends Card {
 
     public IlysianCaryatid() {

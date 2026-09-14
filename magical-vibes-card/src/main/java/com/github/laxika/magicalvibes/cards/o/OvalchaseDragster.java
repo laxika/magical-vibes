@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "225")
+@CardRegistration(set = "KLR", collectorNumber = "256")
 public class OvalchaseDragster extends Card {
 
     public OvalchaseDragster() {

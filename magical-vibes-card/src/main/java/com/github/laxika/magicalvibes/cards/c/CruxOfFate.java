@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "65")
+@CardRegistration(set = "STA", collectorNumber = "25")
 public class CruxOfFate extends Card {
 
     public CruxOfFate() {

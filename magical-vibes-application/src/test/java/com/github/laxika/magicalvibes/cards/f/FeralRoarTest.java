@@ -26,7 +26,7 @@ class FeralRoarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(bears.getEffectivePower()).isEqualTo(6);
@@ -41,7 +41,7 @@ class FeralRoarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -60,7 +60,7 @@ class FeralRoarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, plains.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

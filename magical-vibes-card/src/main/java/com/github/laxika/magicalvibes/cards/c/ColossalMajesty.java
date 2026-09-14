@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "173")
+@CardRegistration(set = "ANB", collectorNumber = "92")
 public class ColossalMajesty extends Card {
 
     public ColossalMajesty() {

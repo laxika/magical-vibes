@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AngelOfRetribution;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,21 +14,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VengefulDreams.class, GrizzlyBears.class})
+@CardUsed({VengefulDreams.class, AngelOfRetribution.class})
 class VengefulDreamsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles exactly X target attacking creatures after discarding X cards")
     void exilesExactlyXAttackingCreatures() {
-        Permanent first = addCreatureReady(player1, new GrizzlyBears());
-        Permanent second = addCreatureReady(player1, new GrizzlyBears());
-        Permanent remaining = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent first = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent second = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent remaining = addCreatureReady(player1, new AngelOfRetribution());
+        addCreatureReady(player2, new AngelOfRetribution());
         declareAttackers(List.of(0, 1, 2));
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new VengefulDreams(), new GrizzlyBears(), new GrizzlyBears()));
+        prepareDeclareBlockers();
+        harness.setHand(player2, List.of(new VengefulDreams(), new AngelOfRetribution(), new AngelOfRetribution()));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.castInstantForXWithDiscards(player2, 0, 2,
@@ -43,6 +41,74 @@ class VengefulDreamsTest extends BaseCardTest {
                 .extracting(Permanent::getId)
                 .containsExactly(remaining.getId());
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires exactly X attacking creature targets")
+    void requiresExactlyXAttackingCreatureTargets() {
+        Permanent attacker = addCreatureReady(player1, new AngelOfRetribution());
+        addCreatureReady(player2, new AngelOfRetribution());
+        declareAttackers(List.of(0));
+
+        prepareDeclareBlockers();
+        harness.setHand(player2, List.of(
+                new VengefulDreams(), new AngelOfRetribution(), new AngelOfRetribution()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castInstantForXWithDiscards(player2, 0, 2,
+                List.of(attacker.getId()), List.of(1, 2)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exiles the remaining legal target when another target leaves before resolution")
+    void exilesRemainingLegalTargetWhenAnotherLeavesBeforeResolution() {
+        Permanent surviving = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent removed = addCreatureReady(player1, new AngelOfRetribution());
+        addCreatureReady(player2, new AngelOfRetribution());
+        declareAttackers(List.of(0, 1));
+
+        prepareDeclareBlockers();
+        harness.setHand(player2, List.of(
+                new VengefulDreams(), new AngelOfRetribution(), new AngelOfRetribution()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castInstantForXWithDiscards(player2, 0, 2,
+                List.of(surviving.getId(), removed.getId()), List.of(1, 2));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(surviving.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast for X without enough cards to discard")
+    void cannotCastWithoutEnoughCardsToDiscard() {
+        Permanent attacker = addCreatureReady(player1, new AngelOfRetribution());
+        addCreatureReady(player2, new AngelOfRetribution());
+        declareAttackers(List.of(0));
+
+        prepareDeclareBlockers();
+        harness.setHand(player2, List.of(new VengefulDreams()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castInstantForXWithDiscards(player2, 0, 1,
+                List.of(attacker.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Vengeful Dreams");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test
@@ -61,14 +127,13 @@ class VengefulDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttackingCreature() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent bystander = addCreatureReady(player1, new AngelOfRetribution());
+        addCreatureReady(player2, new AngelOfRetribution());
         declareAttackers(List.of(0));
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new VengefulDreams(), new GrizzlyBears()));
+        prepareDeclareBlockers();
+        harness.setHand(player2, List.of(new VengefulDreams(), new AngelOfRetribution()));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castInstantForXWithDiscards(player2, 0, 1,

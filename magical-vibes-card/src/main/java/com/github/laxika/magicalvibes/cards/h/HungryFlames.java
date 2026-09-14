@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "84")
+@CardRegistration(set = "KLR", collectorNumber = "129")
 public class HungryFlames extends Card {
 
     public HungryFlames() {

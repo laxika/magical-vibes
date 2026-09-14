@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "74")
+@CardRegistration(set = "KLR", collectorNumber = "111")
 public class YahenniUndyingPartisan extends Card {
 
     public YahenniUndyingPartisan() {

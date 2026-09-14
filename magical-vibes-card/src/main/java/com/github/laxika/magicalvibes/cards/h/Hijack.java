@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "148")
 @CardRegistration(set = "KLD", collectorNumber = "118")
+@CardRegistration(set = "KLR", collectorNumber = "128")
 public class Hijack extends Card {
 
     public Hijack() {

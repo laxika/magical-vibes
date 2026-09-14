@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CabalTorturer;
+import com.github.laxika.magicalvibes.cards.m.MortalCombat;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,19 +16,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoBlightcutter.class, BlackKnight.class, DoomBlade.class, Shock.class})
+@CardUsed({NantukoBlightcutter.class, CabalTorturer.class, MortalCombat.class})
 class NantukoBlightcutterTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has protection from black")
+    @DisplayName("Protection from black prevents a black ability from targeting it")
     void hasProtectionFromBlack() {
-        harness.addToBattlefield(player1, new NantukoBlightcutter());
-        Permanent blightcutter = findBlightcutter();
+        Permanent blightcutter = harness.addToBattlefieldAndReturn(player1, new NantukoBlightcutter());
+        addCreatureReady(player2, new CabalTorturer());
+        harness.addMana(player2, ManaColor.BLACK, 1);
 
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, blightcutter.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, blightcutter.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -39,13 +35,10 @@ class NantukoBlightcutterTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 for each black permanent opponents control at threshold")
     void boostsForOpponentsBlackPermanentsAtThreshold() {
         harness.setGraveyard(player1, graveyardCards(7));
-        harness.addToBattlefield(player1, new NantukoBlightcutter());
-        harness.addToBattlefield(player1, new BlackKnight());
-        harness.addToBattlefield(player2, new BlackKnight());
-        harness.addToBattlefield(player2, new BlackKnight());
-
-        GameData gd = harness.getGameData();
-        Permanent blightcutter = findBlightcutter();
+        Permanent blightcutter = harness.addToBattlefieldAndReturn(player1, new NantukoBlightcutter());
+        harness.addToBattlefield(player1, new CabalTorturer());
+        harness.addToBattlefield(player2, new CabalTorturer());
+        harness.addToBattlefield(player2, new MortalCombat());
 
         assertThat(gqs.getEffectivePower(gd, blightcutter)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, blightcutter)).isEqualTo(4);
@@ -55,12 +48,21 @@ class NantukoBlightcutterTest extends BaseCardTest {
     @DisplayName("Does not boost below threshold")
     void doesNotBoostBelowThreshold() {
         harness.setGraveyard(player1, graveyardCards(6));
-        harness.addToBattlefield(player1, new NantukoBlightcutter());
-        harness.addToBattlefield(player2, new BlackKnight());
-        harness.addToBattlefield(player2, new BlackKnight());
+        Permanent blightcutter = harness.addToBattlefieldAndReturn(player1, new NantukoBlightcutter());
+        harness.addToBattlefield(player2, new CabalTorturer());
+        harness.addToBattlefield(player2, new CabalTorturer());
 
-        GameData gd = harness.getGameData();
-        Permanent blightcutter = findBlightcutter();
+        assertThat(gqs.getEffectivePower(gd, blightcutter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blightcutter)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not enable threshold")
+    void opponentGraveyardDoesNotEnableThreshold() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.setGraveyard(player2, graveyardCards(7));
+        Permanent blightcutter = harness.addToBattlefieldAndReturn(player1, new NantukoBlightcutter());
+        harness.addToBattlefield(player2, new CabalTorturer());
 
         assertThat(gqs.getEffectivePower(gd, blightcutter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, blightcutter)).isEqualTo(2);
@@ -69,12 +71,8 @@ class NantukoBlightcutterTest extends BaseCardTest {
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Shock());
+            cards.add(new CabalTorturer());
         }
         return cards;
-    }
-
-    private Permanent findBlightcutter() {
-        return findPermanent(player1, "Nantuko Blightcutter");
     }
 }

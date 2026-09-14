@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "81")
+@CardRegistration(set = "STA", collectorNumber = "23")
 public class WhirlwindDenial extends Card {
 
     public WhirlwindDenial() {

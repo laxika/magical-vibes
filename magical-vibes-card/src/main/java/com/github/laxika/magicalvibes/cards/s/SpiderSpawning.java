@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "ISD", collectorNumber = "203")
 @CardRegistration(set = "INR", collectorNumber = "216")
 @CardRegistration(set = "INR", collectorNumber = "419")
+@CardRegistration(set = "HA4", collectorNumber = "17")
 @CardRegistration(set = "UMA", collectorNumber = "183")
 public class SpiderSpawning extends Card {
 

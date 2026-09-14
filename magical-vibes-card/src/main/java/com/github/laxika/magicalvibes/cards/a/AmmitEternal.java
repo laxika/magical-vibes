@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "57")
+@CardRegistration(set = "HA4", collectorNumber = "8")
 public class AmmitEternal extends Card {
 
     public AmmitEternal() {

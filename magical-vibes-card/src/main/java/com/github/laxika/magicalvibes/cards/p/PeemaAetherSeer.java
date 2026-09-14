@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "119")
+@CardRegistration(set = "KLR", collectorNumber = "175")
 public class PeemaAetherSeer extends Card {
 
     public PeemaAetherSeer() {

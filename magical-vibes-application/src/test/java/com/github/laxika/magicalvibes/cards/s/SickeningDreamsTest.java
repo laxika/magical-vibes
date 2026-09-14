@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.a.AngelOfRetribution;
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SickeningDreams.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({SickeningDreams.class, AvenTrooper.class, AngelOfRetribution.class})
 class SickeningDreamsTest extends BaseCardTest {
 
     @Test
@@ -26,10 +25,10 @@ class SickeningDreamsTest extends BaseCardTest {
     void discardsXAndDealsDamageToCreaturesAndPlayers() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefield(player1, new AvenTrooper());
+        Permanent angelOfRetribution = harness.addToBattlefieldAndReturn(player2, new AngelOfRetribution());
         harness.setHand(player1, new ArrayList<>(List.of(
-                new SickeningDreams(), new Forest(), new Forest())));
+                new SickeningDreams(), new AvenTrooper(), new AvenTrooper())));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -38,12 +37,13 @@ class SickeningDreamsTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(hillGiant.getMarkedDamage()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Aven Trooper");
+        assertThat(angelOfRetribution.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Sickening Dreams", "Forest", "Forest", "Grizzly Bears");
+                .containsExactlyInAnyOrder(
+                        "Sickening Dreams", "Aven Trooper", "Aven Trooper", "Aven Trooper");
     }
 
     @Test
@@ -51,9 +51,9 @@ class SickeningDreamsTest extends BaseCardTest {
     void zeroXDoesNothing() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        harness.setHand(player1, new ArrayList<>(List.of(new SickeningDreams(), new Forest())));
+        harness.addToBattlefield(player1, new AvenTrooper());
+        Permanent angelOfRetribution = harness.addToBattlefieldAndReturn(player2, new AngelOfRetribution());
+        harness.setHand(player1, new ArrayList<>(List.of(new SickeningDreams(), new AvenTrooper())));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -62,17 +62,17 @@ class SickeningDreamsTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(hillGiant.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Aven Trooper");
+        assertThat(angelOfRetribution.getMarkedDamage()).isZero();
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Forest");
+                .containsExactly("Aven Trooper");
     }
 
     @Test
     @DisplayName("Casting is rejected when the hand cannot cover X discards")
     void cannotCastWithoutEnoughCardsToDiscard() {
-        harness.setHand(player1, new ArrayList<>(List.of(new SickeningDreams(), new Forest())));
+        harness.setHand(player1, new ArrayList<>(List.of(new SickeningDreams(), new AvenTrooper())));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
