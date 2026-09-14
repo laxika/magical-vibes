@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "75")
 @CardRegistration(set = "MMA", collectorNumber = "83")
+@CardRegistration(set = "2XM", collectorNumber = "92")
 public class ExecutionersCapsule extends Card {
 
     public ExecutionersCapsule() {

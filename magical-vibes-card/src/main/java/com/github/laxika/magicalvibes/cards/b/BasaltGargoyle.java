@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "145")
+@CardRegistration(set = "TSR", collectorNumber = "153")
 public class BasaltGargoyle extends Card {
 
     public BasaltGargoyle() {

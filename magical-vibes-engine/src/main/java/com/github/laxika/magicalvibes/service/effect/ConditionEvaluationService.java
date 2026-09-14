@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -390,7 +391,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -865,6 +865,9 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
+            case AttackedTargetIsOpponent ignored ->
+                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
+                            && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null
@@ -1470,7 +1473,7 @@ public class ConditionEvaluationService {
                                 gameData, source, ctx.controllerId());
             }
             case ColorMostCommonAmongAllPermanents c ->
-                    ColorMostCommonAmongAllPermanents.isMostCommon(gameData, c.color());
+                    isMostCommonPermanentColor(gameData, c.color());
             case CardsExiledThisTurn ignored -> gameData.cardsExiledThisTurn > 0;
             case AllNonartifactCreaturesShareColor ignored ->
                     allNonartifactCreaturesShareColor(gameData);
@@ -1770,6 +1773,17 @@ public class ConditionEvaluationService {
                 .max()
                 .orElse(0);
         return targetSpell.getCard().getManaValue() + targetSpell.getXValue() <= greatestManaValue;
+    }
+
+    private boolean isMostCommonPermanentColor(GameData gameData, CardColor color) {
+        Map<CardColor, Integer> counts = new java.util.EnumMap<>(CardColor.class);
+        gameData.forEachPermanent((playerId, permanent) -> {
+            for (CardColor currentColor : gameQueryService.colorsForStaticEvaluation(permanent)) {
+                counts.merge(currentColor, 1, Integer::sum);
+            }
+        });
+        int colorCount = counts.getOrDefault(color, 0);
+        return counts.values().stream().allMatch(count -> colorCount >= count);
     }
 
     private boolean targetSpellSharesColorWithControlledCreature(GameData gameData, ConditionContext ctx) {

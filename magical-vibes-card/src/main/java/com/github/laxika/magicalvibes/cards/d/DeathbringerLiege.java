@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "85")
+@CardRegistration(set = "2X2", collectorNumber = "200")
 public class DeathbringerLiege extends Card {
 
     public DeathbringerLiege() {

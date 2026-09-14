@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "140")
+@CardRegistration(set = "TSR", collectorNumber = "244")
 public class UtopiaMycon extends Card {
 
     public UtopiaMycon() {

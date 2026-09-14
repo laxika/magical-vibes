@@ -27,6 +27,7 @@ import java.util.Set;
  * cannot carry per-mode targeting).
  */
 @CardRegistration(set = "ORI", collectorNumber = "53")
+@CardRegistration(set = "2X2", collectorNumber = "46")
 public class DiscipleOfTheRing extends Card {
 
     private static final String COST = "{1}";

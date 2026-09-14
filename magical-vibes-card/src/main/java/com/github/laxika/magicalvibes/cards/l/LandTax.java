@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "BRB", collectorNumber = "35")
 @CardRegistration(set = "LEG", collectorNumber = "26")
 @CardRegistration(set = "ME3", collectorNumber = "17")
+@CardRegistration(set = "2XM", collectorNumber = "20")
 public class LandTax extends Card {
 
     public LandTax() {

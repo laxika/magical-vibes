@@ -130,6 +130,9 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                     && gameData.orderedPlayerIds.contains(entry.getTargetId())
                     ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
+            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
+                    .filter(id -> !id.equals(controllerId))
+                    .toList();
             case TARGET_OPPONENT -> {
                 // Combat-damage triggers bind the damaged player as the target, while attack
                 // triggers retain the attacked player or planeswalker in attackedTargetId.

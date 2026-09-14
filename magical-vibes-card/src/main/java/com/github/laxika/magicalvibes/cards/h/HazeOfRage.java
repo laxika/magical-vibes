@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "100")
+@CardRegistration(set = "TSR", collectorNumber = "169")
 public class HazeOfRage extends Card {
 
     public HazeOfRage() {

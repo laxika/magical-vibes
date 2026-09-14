@@ -48,7 +48,7 @@ class SqueesRevengeTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, chosenNumber);
     }
 

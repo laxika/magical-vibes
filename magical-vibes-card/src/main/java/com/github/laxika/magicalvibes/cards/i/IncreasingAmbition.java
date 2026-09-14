@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "69")
+@CardRegistration(set = "SIS", collectorNumber = "32")
 public class IncreasingAmbition extends Card {
 
     public IncreasingAmbition() {

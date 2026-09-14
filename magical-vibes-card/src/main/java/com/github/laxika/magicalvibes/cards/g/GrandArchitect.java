@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "33")
 @CardRegistration(set = "TD2", collectorNumber = "10")
+@CardRegistration(set = "2XM", collectorNumber = "53")
 public class GrandArchitect extends Card {
 
     public GrandArchitect() {

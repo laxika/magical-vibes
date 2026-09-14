@@ -17,11 +17,11 @@ import java.util.List;
 @CardRegistration(set = "SHM", collectorNumber = "11")
 @CardRegistration(set = "THS", collectorNumber = "22")
 @CardRegistration(set = "MMQ", collectorNumber = "27")
+@CardRegistration(set = "2X2", collectorNumber = "15")
 public class LastBreath extends Card {
 
     public LastBreath() {
         // Exile target creature with power 2 or less. Its controller gains 4 life.
-        // Gain life resolves first so the target's controller is read before it leaves the battlefield.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -29,7 +29,7 @@ public class LastBreath extends Card {
                 )),
                 "Target must be a creature with power 2 or less"
         ))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new Fixed(4), GainLifeRecipient.TARGET_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new Fixed(4), GainLifeRecipient.TARGET_CONTROLLER));
     }
 }

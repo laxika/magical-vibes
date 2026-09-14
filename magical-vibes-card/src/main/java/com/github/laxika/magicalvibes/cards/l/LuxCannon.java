@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "173")
+@CardRegistration(set = "2XM", collectorNumber = "268")
 public class LuxCannon extends Card {
 
     public LuxCannon() {

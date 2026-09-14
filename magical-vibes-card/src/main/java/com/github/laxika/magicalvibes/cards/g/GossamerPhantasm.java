@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "55")
+@CardRegistration(set = "TSR", collectorNumber = "70")
 public class GossamerPhantasm extends Card {
 
     public GossamerPhantasm() {

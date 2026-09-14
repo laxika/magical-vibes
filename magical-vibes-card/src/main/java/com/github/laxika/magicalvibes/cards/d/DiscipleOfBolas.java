@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureGainL
 
 
 @CardRegistration(set = "M13", collectorNumber = "88")
+@CardRegistration(set = "2XM", collectorNumber = "85")
 public class DiscipleOfBolas extends Card {
 
     public DiscipleOfBolas() {

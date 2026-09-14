@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 
 @CardRegistration(set = "NPH", collectorNumber = "74")
 @CardRegistration(set = "MM2", collectorNumber = "99")
+@CardRegistration(set = "2X2", collectorNumber = "94")
 public class SurgicalExtraction extends Card {
 
     public SurgicalExtraction() {

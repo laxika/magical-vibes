@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "XLN", collectorNumber = "254")
 @CardRegistration(set = "MID", collectorNumber = "262")
 @CardRegistration(set = "THB", collectorNumber = "242")
+@CardRegistration(set = "TSR", collectorNumber = "407")
 public class FieldOfRuin extends Card {
 
     public FieldOfRuin() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefi
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "188")
+@CardRegistration(set = "2X2", collectorNumber = "309")
 public class NimDeathmantle extends Card {
 
     public NimDeathmantle() {

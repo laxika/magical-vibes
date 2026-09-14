@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "278")
+@CardRegistration(set = "TSR", collectorNumber = "284")
 public class Swarmyard extends Card {
 
     public Swarmyard() {

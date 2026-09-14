@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "224")
 @CardRegistration(set = "HA5", collectorNumber = "20")
+@CardRegistration(set = "2X2", collectorNumber = "239")
 public class KolaghansCommand extends Card {
 
     public KolaghansCommand() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "120")
+@CardRegistration(set = "2X2", collectorNumber = "219")
 public class GloryscaleViashino extends Card {
 
     public GloryscaleViashino() {

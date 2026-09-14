@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "6")
+@CardRegistration(set = "ANB", collectorNumber = "4")
 public class BondOfDiscipline extends Card {
 
     public BondOfDiscipline() {

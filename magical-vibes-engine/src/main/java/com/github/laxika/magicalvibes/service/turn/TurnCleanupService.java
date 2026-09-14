@@ -106,6 +106,12 @@ public class TurnCleanupService {
         resetEndOfTurnModifiers(gameData);
         expireControlAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
+        gameData.skipCombatPhaseExpirationsThisTurn.forEach((playerId, count) ->
+                gameData.skipNextCombatPhaseCount.computeIfPresent(playerId,
+                        (id, total) -> total > count ? total - count : null));
+        gameData.skipCombatPhaseExpirationsThisTurn.clear();
+        gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class);
         gameData.controlLossUnattachTriggers.clear();
         gameData.controlLossTapTriggers.clear();
     }

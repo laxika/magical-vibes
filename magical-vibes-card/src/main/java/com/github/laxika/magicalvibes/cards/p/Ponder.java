@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "68")
 @CardRegistration(set = "LRW", collectorNumber = "79")
 @CardRegistration(set = "M12", collectorNumber = "73")
+@CardRegistration(set = "TSR", collectorNumber = "315")
 public class Ponder extends Card {
 
     public Ponder() {

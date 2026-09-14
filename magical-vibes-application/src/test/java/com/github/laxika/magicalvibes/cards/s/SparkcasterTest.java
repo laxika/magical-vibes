@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -12,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,15 +20,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Sparkcaster.class, AlphaKavu.class, SlingshotGoblin.class, StormscapeFamiliar.class})
 class SparkcasterTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB offers only red or green creatures you control, including itself")
     void etbOffersOnlyRedOrGreenCreaturesYouControl() {
-        UUID greenId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
-        UUID redId = harness.addToBattlefieldAndReturn(player1, new RagingGoblin()).getId();
-        UUID blueId = harness.addToBattlefieldAndReturn(player1, new CloudSprite()).getId();
-        harness.addToBattlefield(player2, new RagingGoblin());
+        UUID greenId = harness.addToBattlefieldAndReturn(player1, new AlphaKavu()).getId();
+        UUID redId = harness.addToBattlefieldAndReturn(player1, new SlingshotGoblin()).getId();
+        UUID blueId = harness.addToBattlefieldAndReturn(player1, new StormscapeFamiliar()).getId();
+        harness.addToBattlefield(player2, new SlingshotGoblin());
 
         castSparkcaster(player2.getId());
         resolveUntilPermanentChoice();
@@ -44,16 +44,28 @@ class SparkcasterTest extends BaseCardTest {
     @Test
     @DisplayName("ETB returns the chosen red or green creature and deals 1 damage to the target player")
     void etbReturnsChosenCreatureAndDamagesPlayer() {
-        UUID goblinId = harness.addToBattlefieldAndReturn(player1, new RagingGoblin()).getId();
+        UUID goblinId = harness.addToBattlefieldAndReturn(player1, new SlingshotGoblin()).getId();
         harness.setLife(player2, 20);
 
         castSparkcaster(player2.getId());
         resolveUntilPermanentChoice();
         harness.handlePermanentChosen(player1, goblinId);
 
-        harness.assertInHand(player1, "Raging Goblin");
+        harness.assertInHand(player1, "Slingshot Goblin");
         harness.assertOnBattlefield(player1, "Sparkcaster");
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("ETB damage can target Sparkcaster's controller")
+    void etbDamagesItsController() {
+        harness.setLife(player1, 20);
+
+        castSparkcaster(player1.getId());
+        resolveUntilPermanentChoice();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sparkcaster"));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }
 
     @Test
@@ -72,7 +84,7 @@ class SparkcasterTest extends BaseCardTest {
     @Test
     @DisplayName("ETB damage cannot target a creature")
     void etbCannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlphaKavu());
         prepareSparkcaster();
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creature.getId()))

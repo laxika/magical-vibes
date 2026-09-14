@@ -1383,7 +1383,8 @@ public class GameActionAvailabilityService {
             // Retrace (CR 702.81): castable from the graveyard for its normal mana cost if the
             // player has a land card in hand to discard as the additional cost.
             boolean isRetrace = !graveyardAbilitiesSuppressed
-                    && card.getCastingOption(Retrace.class).isPresent()
+                    && (card.getCastingOption(Retrace.class).isPresent()
+                    || castingPermissionService.hasGrantedRetrace(gameData, playerId, card))
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize

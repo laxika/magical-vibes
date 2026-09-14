@@ -578,6 +578,8 @@ public class AttackLegalityService {
 
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
+                    && (floatingEffect.affectedPermanentId() == null
+                    || creature.getId().equals(floatingEffect.affectedPermanentId()))
                     && predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {
@@ -707,6 +709,8 @@ public class AttackLegalityService {
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
                     || !requirement.requiresAttackAtOtherPlayerIfAble()
+                    || (floatingEffect.affectedPermanentId() != null
+                    && !creature.getId().equals(floatingEffect.affectedPermanentId()))
                     || !predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {

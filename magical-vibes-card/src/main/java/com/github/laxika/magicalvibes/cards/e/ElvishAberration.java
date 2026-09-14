@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "A25", collectorNumber = "167")
 @CardRegistration(set = "DDU", collectorNumber = "4")
 @CardRegistration(set = "VMA", collectorNumber = "206")
+@CardRegistration(set = "2XM", collectorNumber = "165")
 public class ElvishAberration extends Card {
 
     public ElvishAberration() {

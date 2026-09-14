@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SaprazzanHeir.class, FreshVolunteers.class})
 class SaprazzanHeirTest extends BaseCardTest {
 
     @Test
@@ -19,7 +21,7 @@ class SaprazzanHeirTest extends BaseCardTest {
     void acceptingTriggerDrawsThreeCards() {
         Permanent heir = addHeir();
         heir.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new FreshVolunteers());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         declareBlock();
@@ -37,7 +39,7 @@ class SaprazzanHeirTest extends BaseCardTest {
     void decliningTriggerDrawsNothing() {
         Permanent heir = addHeir();
         heir.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new FreshVolunteers());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         declareBlock();
@@ -53,8 +55,8 @@ class SaprazzanHeirTest extends BaseCardTest {
     void multipleBlockersCreateOneTrigger() {
         Permanent heir = addHeir();
         heir.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new FreshVolunteers());
+        addCreatureReady(player2, new FreshVolunteers());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         declareBlock(List.of(

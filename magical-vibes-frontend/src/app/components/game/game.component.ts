@@ -491,6 +491,7 @@ export class GameComponent implements OnInit, OnDestroy {
       ...g,
       status: state.status,
       planechase: state.planechase ?? null,
+      monarchPlayerId: state.monarchPlayerId ?? null,
       activePlayerId: state.activePlayerId,
       turnNumber: state.turnNumber,
       currentStep: state.currentStep,

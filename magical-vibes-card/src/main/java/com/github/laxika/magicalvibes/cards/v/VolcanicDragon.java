@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ATH", collectorNumber = "51")
 @CardRegistration(set = "S99", collectorNumber = "122")
 @CardRegistration(set = "XANA", collectorNumber = "45")
+@CardRegistration(set = "ANB", collectorNumber = "88")
 public class VolcanicDragon extends Card {
 
     public VolcanicDragon() {

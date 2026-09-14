@@ -114,6 +114,11 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Selects multiple permanent targets for an attack trigger. */
+    record AttackTriggerTargets(PermanentChoiceContext.AttackTriggerTarget pending, int minTargets)
+            implements MultiPermanentChoiceContext {
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total)
             implements MultiPermanentChoiceContext {
@@ -457,6 +462,18 @@ public sealed interface MultiPermanentChoiceContext {
             StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
         public EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
+    /** The controller and a target opponent each choose a creature before both are sacrificed. */
+    record ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public ControllerAndTargetPlayerChooseCreaturesThenSacrifice {
             remainingChoosers = java.util.List.copyOf(remainingChoosers);
             accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
         }

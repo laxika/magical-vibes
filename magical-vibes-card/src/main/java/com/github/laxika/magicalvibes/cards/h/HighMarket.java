@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "320")
 @CardRegistration(set = "V12", collectorNumber = "9")
+@CardRegistration(set = "2XM", collectorNumber = "321")
 public class HighMarket extends Card {
 
     public HighMarket() {

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTargetLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Shared application of turn-scoped mana-production replacement effects. */
@@ -51,5 +54,17 @@ public final class ManaProductionSupport {
     public static void add(GameData gameData, UUID sourceControllerId, Permanent source,
                            ManaPool pool, ManaColor color, int amount) {
         pool.add(effectiveColor(gameData, sourceControllerId, source, color), amount);
+    }
+
+    /** Returns the five colors present in the activating player's commander color identity. */
+    public static List<ManaColor> commanderColorIdentity(GameData gameData, UUID playerId) {
+        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+        if (commandZone == null || commandZone.isEmpty()) {
+            return List.of();
+        }
+        return ManaColor.COLORS.stream()
+                .filter(color -> commandZone.stream()
+                        .anyMatch(card -> card.getColorIdentity().contains(CardColor.valueOf(color.name()))))
+                .toList();
     }
 }

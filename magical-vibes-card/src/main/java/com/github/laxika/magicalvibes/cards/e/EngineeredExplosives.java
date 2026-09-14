@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "MMA", collectorNumber = "204")
 @CardRegistration(set = "MPS", collectorNumber = "36")
 @CardRegistration(set = "UMA", collectorNumber = "227")
+@CardRegistration(set = "2XM", collectorNumber = "252")
 public class EngineeredExplosives extends Card {
 
     public EngineeredExplosives() {

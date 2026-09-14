@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "163")
 @CardRegistration(set = "EXP", collectorNumber = "42")
+@CardRegistration(set = "EA2", collectorNumber = "22")
 public class ManaConfluence extends Card {
 
     public ManaConfluence() {

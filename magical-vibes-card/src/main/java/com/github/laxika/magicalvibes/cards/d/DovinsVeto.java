@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "193")
+@CardRegistration(set = "TSR", collectorNumber = "375")
 public class DovinsVeto extends Card {
 
     public DovinsVeto() {

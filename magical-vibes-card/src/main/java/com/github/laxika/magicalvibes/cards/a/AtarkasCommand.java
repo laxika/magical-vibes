@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "213")
 @CardRegistration(set = "HA5", collectorNumber = "21")
+@CardRegistration(set = "2X2", collectorNumber = "176")
 public class AtarkasCommand extends Card {
 
     public AtarkasCommand() {

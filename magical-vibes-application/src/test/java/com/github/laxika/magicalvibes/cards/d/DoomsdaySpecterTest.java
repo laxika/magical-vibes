@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
-import com.github.laxika.magicalvibes.cards.f.FoulFamiliar;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.a.AmphibiousKavu;
+import com.github.laxika.magicalvibes.cards.n.NightscapeFamiliar;
+import com.github.laxika.magicalvibes.cards.s.Singe;
+import com.github.laxika.magicalvibes.cards.s.StormscapeFamiliar;
+import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,24 +14,23 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DoomsdaySpecter.class, CloudSprite.class, FoulFamiliar.class, GrizzlyBears.class,
-        Island.class, LightningBolt.class})
+@CardUsed({DoomsdaySpecter.class, StormscapeFamiliar.class, NightscapeFamiliar.class,
+        AmphibiousKavu.class, TerminalMoraine.class, DaringLeap.class, Singe.class})
 class DoomsdaySpecterTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB prompts to return a blue or black creature you control")
     void etbPromptsForBlueOrBlackCreature() {
-        UUID blueId = harness.addToBattlefieldAndReturn(player1, new CloudSprite()).getId();
-        UUID blackId = harness.addToBattlefieldAndReturn(player1, new FoulFamiliar()).getId();
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Island());
-        harness.addToBattlefield(player2, new CloudSprite());
+        UUID blueId = harness.addToBattlefieldAndReturn(player1, new StormscapeFamiliar()).getId();
+        UUID blackId = harness.addToBattlefieldAndReturn(player1, new NightscapeFamiliar()).getId();
+        harness.addToBattlefield(player1, new AmphibiousKavu());
+        harness.addToBattlefield(player1, new TerminalMoraine());
+        harness.addToBattlefield(player2, new StormscapeFamiliar());
 
         castAndResolveSpell();
 
@@ -45,20 +43,32 @@ class DoomsdaySpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a matching creature returns it to its owner's hand")
     void chosenCreatureReturnsToHand() {
-        UUID familiarId = harness.addToBattlefieldAndReturn(player1, new FoulFamiliar()).getId();
+        UUID familiarId = harness.addToBattlefieldAndReturn(player1, new NightscapeFamiliar()).getId();
 
         castAndResolveSpell();
         harness.handlePermanentChosen(player1, familiarId);
 
-        harness.assertInHand(player1, "Foul Familiar");
+        harness.assertInHand(player1, "Nightscape Familiar");
         harness.assertOnBattlefield(player1, "Doomsday Specter");
+    }
+
+    @Test
+    @DisplayName("ETB can return Doomsday Specter itself")
+    void etbCanReturnItself() {
+        castAndResolveSpell();
+
+        UUID specterId = harness.getPermanentId(player1, "Doomsday Specter");
+        harness.handlePermanentChosen(player1, specterId);
+
+        harness.assertInHand(player1, "Doomsday Specter");
+        harness.assertNotOnBattlefield(player1, "Doomsday Specter");
     }
 
     @Test
     @DisplayName("Combat damage lets the controller choose a card for the damaged player to discard")
     void combatDamagePromptsControllerChoiceAndDiscardsChosenCard() {
         addAttackingSpecter(player1);
-        harness.setHand(player2, new ArrayList<>(List.of(new LightningBolt(), new Island())));
+        harness.setHand(player2, List.of(new DaringLeap(), new Singe()));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -73,8 +83,8 @@ class DoomsdaySpecterTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        harness.assertInGraveyard(player2, "Lightning Bolt");
-        harness.assertInHand(player2, "Island");
+        harness.assertInGraveyard(player2, "Daring Leap");
+        harness.assertInHand(player2, "Singe");
     }
 
     @Test
@@ -90,20 +100,14 @@ class DoomsdaySpecterTest extends BaseCardTest {
     }
 
     private void castAndResolveSpell() {
-        harness.setHand(player1, List.of(new DoomsdaySpecter()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DoomsdaySpecter(), "{2}{U}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
     private Permanent addAttackingSpecter(Player player) {
-        Permanent specter = new Permanent(new DoomsdaySpecter());
-        specter.setSummoningSick(false);
+        Permanent specter = addCreatureReady(player, new DoomsdaySpecter());
         specter.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(specter);
         return specter;
     }
 }

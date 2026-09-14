@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "249")
+@CardRegistration(set = "2X2", collectorNumber = "264")
+@CardRegistration(set = "TSR", collectorNumber = "382")
 public class PrizedAmalgam extends Card {
 
     public PrizedAmalgam() {

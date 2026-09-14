@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "130")
 @CardRegistration(set = "UMA", collectorNumber = "157")
+@CardRegistration(set = "TSR", collectorNumber = "358")
 public class BecomeImmense extends Card {
 
     public BecomeImmense() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "OANA", collectorNumber = "4")
+@CardRegistration(set = "ANB", collectorNumber = "11")
 public class InspiringCommander extends Card {
 
     public InspiringCommander() {
