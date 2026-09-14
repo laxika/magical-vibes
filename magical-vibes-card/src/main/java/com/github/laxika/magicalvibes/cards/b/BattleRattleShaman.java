@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "FDN", collectorNumber = "533")
 @CardRegistration(set = "IMA", collectorNumber = "117")
 @CardRegistration(set = "MM3", collectorNumber = "89")
+@CardRegistration(set = "2XM", collectorNumber = "116")
 public class BattleRattleShaman extends Card {
 
     public BattleRattleShaman() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "105")
+@CardRegistration(set = "2XM", collectorNumber = "144")
 public class SkinbrandGoblin extends Card {
 
     public SkinbrandGoblin() {

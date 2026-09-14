@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "MRD", collectorNumber = "181")
+@CardRegistration(set = "2XM", collectorNumber = "259")
 public class GolemSkinGauntlets extends Card {
 
     public GolemSkinGauntlets() {

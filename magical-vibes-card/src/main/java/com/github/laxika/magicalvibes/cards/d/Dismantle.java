@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DismantleEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DST", collectorNumber = "57")
+@CardRegistration(set = "2XM", collectorNumber = "123")
 public class Dismantle extends Card {
 
     public Dismantle() {

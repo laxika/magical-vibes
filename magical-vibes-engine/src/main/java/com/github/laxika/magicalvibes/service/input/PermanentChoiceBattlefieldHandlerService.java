@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
@@ -177,6 +178,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             .ChooseControlledArtifactOrCreatureTokenCopyEffectHandler chooseControlledArtifactOrCreatureTokenCopyEffectHandler;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
+    private final OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler brudicladTokenHandler;
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
     private final AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler attachTargetAuraWithSameControllerHandler;
     private final PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler guardDogsHandler;
@@ -1463,6 +1465,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleDeepfathomEchoCreatureChoice(GameData gameData, UUID chosenPermanentId,
                                                    PermanentChoiceContext.DeepfathomEchoCreatureChoice context) {
         deepfathomEchoHandler.completeChoice(gameData, chosenPermanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleBrudicladTokenChoice(GameData gameData, UUID chosenPermanentId,
+                                           PermanentChoiceContext.BrudicladTokenChoice context) {
+        brudicladTokenHandler.completeChoice(gameData, chosenPermanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

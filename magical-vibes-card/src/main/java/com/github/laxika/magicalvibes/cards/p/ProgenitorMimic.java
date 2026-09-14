@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "92")
+@CardRegistration(set = "2XM", collectorNumber = "212")
 public class ProgenitorMimic extends Card {
 
     public ProgenitorMimic() {

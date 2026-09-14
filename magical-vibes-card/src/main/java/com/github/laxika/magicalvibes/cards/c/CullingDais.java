@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "148")
 @CardRegistration(set = "MM2", collectorNumber = "207")
+@CardRegistration(set = "2XM", collectorNumber = "246")
 public class CullingDais extends Card {
 
     public CullingDais() {

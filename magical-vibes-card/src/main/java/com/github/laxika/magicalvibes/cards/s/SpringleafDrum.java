@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "261")
 @CardRegistration(set = "ECL", collectorNumber = "260")
 @CardRegistration(set = "BNG", collectorNumber = "162")
+@CardRegistration(set = "2XM", collectorNumber = "291")
 public class SpringleafDrum extends Card {
 
     public SpringleafDrum() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "250")
+@CardRegistration(set = "2XM", collectorNumber = "167")
 public class Exploration extends Card {
 
     public Exploration() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "24")
+@CardRegistration(set = "2XM", collectorNumber = "34")
 public class TemperedSteel extends Card {
 
     public TemperedSteel() {

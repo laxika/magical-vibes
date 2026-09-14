@@ -1133,6 +1133,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}
 
+    /** Brudiclad: choose a token whose copiable characteristics the other controlled tokens copy. */
+    record BrudicladTokenChoice(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Choose the creature whose copiable characteristics will be used. */
     record PolymorphousRushCreatureChoice(UUID controllerId,
                                            MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)

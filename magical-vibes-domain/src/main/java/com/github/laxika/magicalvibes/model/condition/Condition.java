@@ -38,6 +38,7 @@ public sealed interface Condition permits
         AnyOf,
         AttachedPermanentControllerControlsNoOther,
         AttackedTargetMatches,
+        AttackedTargetIsOpponent,
         TargetPermanentAttackedTargetMatches,
         AttackedWithCreaturesThisTurn,
         AttackedWithCreaturesOfSubtypeThisTurn,

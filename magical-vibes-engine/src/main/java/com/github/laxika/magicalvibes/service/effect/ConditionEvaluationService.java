@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -859,6 +860,9 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
+            case AttackedTargetIsOpponent ignored ->
+                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
+                            && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null

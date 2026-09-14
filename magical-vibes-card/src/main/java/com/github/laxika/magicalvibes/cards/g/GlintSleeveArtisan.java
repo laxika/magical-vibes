@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "17")
+@CardRegistration(set = "2XM", collectorNumber = "18")
 public class GlintSleeveArtisan extends Card {
 
     public GlintSleeveArtisan() {

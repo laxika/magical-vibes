@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "57")
+@CardRegistration(set = "2XM", collectorNumber = "93")
 public class FatalPush extends Card {
 
     public FatalPush() {
