@@ -54,6 +54,7 @@ class GameSetupServiceAllRandomTest {
 
             assertThat(gd.playerHands.get(player.getId())).hasSize(7);
             assertThat(allCards).hasSize(RandomDeckGenerator.DECK_SIZE);
+            assertThat(allCards).extracting(Card::getId).doesNotHaveDuplicates();
             assertThat(allCards).allSatisfy(card -> assertThat(card.getOwnerId()).isEqualTo(player.getId()));
 
             long basicLands = allCards.stream()
@@ -109,6 +110,12 @@ class GameSetupServiceAllRandomTest {
                 .containsEntry(creator.getId(), "10e-white-theme-deck")
                 .containsEntry(joiner.getId(), "10e-red-theme-deck");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText).toList()).contains("Carol is playing with 10E White Theme Deck.");
+
+        for (Player player : List.of(creator, joiner)) {
+            assertThat(gd.playerHands.get(player.getId())).hasSize(7);
+            assertThat(gd.playerDecks.get(player.getId()))
+                    .doesNotContainAnyElementsOf(gd.playerHands.get(player.getId()));
+        }
 
         gameRegistry.remove(gd.id);
     }
