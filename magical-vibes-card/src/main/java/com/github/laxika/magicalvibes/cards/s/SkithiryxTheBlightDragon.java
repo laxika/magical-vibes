@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "79")
+@CardRegistration(set = "2XM", collectorNumber = "107")
 public class SkithiryxTheBlightDragon extends Card {
 
     public SkithiryxTheBlightDragon() {

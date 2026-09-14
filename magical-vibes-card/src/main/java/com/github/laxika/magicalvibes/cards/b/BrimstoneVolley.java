@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "132")
 @CardRegistration(set = "SIS", collectorNumber = "38")
+@CardRegistration(set = "2XM", collectorNumber = "120")
 public class BrimstoneVolley extends Card {
 
     public BrimstoneVolley() {

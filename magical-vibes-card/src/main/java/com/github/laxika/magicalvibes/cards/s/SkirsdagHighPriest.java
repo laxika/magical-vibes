@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "ISD", collectorNumber = "117")
 @CardRegistration(set = "INR", collectorNumber = "132")
 @CardRegistration(set = "SIS", collectorNumber = "34")
+@CardRegistration(set = "2XM", collectorNumber = "106")
 public class SkirsdagHighPriest extends Card {
 
     public SkirsdagHighPriest() {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "191")
+@CardRegistration(set = "2XM", collectorNumber = "230")
 public class AccomplishedAutomaton extends Card {
 
     public AccomplishedAutomaton() {

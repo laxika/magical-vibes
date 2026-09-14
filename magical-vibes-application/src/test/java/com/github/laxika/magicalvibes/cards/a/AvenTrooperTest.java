@@ -37,12 +37,18 @@ class AvenTrooperTest extends BaseCardTest {
         Permanent trooper = addCreatureReady(player1, new AvenTrooper());
         harness.setHand(player1, List.of(new AvenTrooper()));
         prepareAbilityActivation();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(3);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(1);

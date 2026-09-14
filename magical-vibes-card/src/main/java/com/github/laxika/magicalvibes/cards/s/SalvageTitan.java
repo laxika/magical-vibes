@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "84")
+@CardRegistration(set = "2XM", collectorNumber = "104")
 public class SalvageTitan extends Card {
 
     public SalvageTitan() {

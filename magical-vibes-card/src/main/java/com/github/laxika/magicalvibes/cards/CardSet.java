@@ -46,6 +46,7 @@ public enum CardSet {
     SET_M14("M14"),
     SET_HA4("HA4"),
     SET_MMA("MMA"),
+    SET_2XM("2XM"),
     SET_IMA("IMA"),
     SET_MPS("MPS"),
     SET_THS("THS"),
@@ -152,6 +153,7 @@ public enum CardSet {
     SET_SS2("SS2"),
     SET_SS3("SS3"),
     SET_SLU("SLU"),
+    SET_SLX("SLX"),
     SET_SUM("SUM"),
     SET_S00("S00"),
     SET_S99("S99"),
@@ -260,7 +262,8 @@ public enum CardSet {
     SET_HA3("HA3"),
     SET_HA5("HA5"),
     SET_HA6("HA6"),
-    SET_Q06("Q06");
+    SET_Q06("Q06"),
+    SET_EA1("EA1");
 
     @Getter
     private final String code;

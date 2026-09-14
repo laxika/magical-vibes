@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "221")
+@CardRegistration(set = "2XM", collectorNumber = "273")
 public class MetalspinnersPuzzleknot extends Card {
 
     public MetalspinnersPuzzleknot() {

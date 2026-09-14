@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -99,9 +101,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
 
-        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(nextEffect ->
-                nextEffect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look
-                        && amountEvaluationService.referencesEventValue(look.count()));
+        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         Permanent excessTarget = null;
         boolean targetIsCreature = false;
         boolean targetIsPlaneswalker = false;
@@ -160,5 +160,16 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         }
         gameOutcomeService.checkWinCondition(gameData);
 
+    }
+
+    private boolean referencesExcessDamage(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditional.condition() instanceof EventValueAtLeast
+                    || referencesExcessDamage(conditional.wrapped());
+        }
+        if (effect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look) {
+            return amountEvaluationService.referencesEventValue(look.count());
+        }
+        return false;
     }
 }

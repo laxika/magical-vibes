@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "127")
+@CardRegistration(set = "2XM", collectorNumber = "220")
 public class SphinxSummoner extends Card {
 
     public SphinxSummoner() {
