@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.g.GoblinSkyRaider;
+import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,39 +13,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EndemicPlague.class, GrizzlyBears.class, LlanowarElves.class, RagingGoblin.class})
+@CardUsed({EndemicPlague.class, ElvishWarrior.class, WirewoodElf.class, GoblinSkyRaider.class,
+        GlorySeeker.class})
 class EndemicPlagueTest extends BaseCardTest {
 
     @Test
-    void destroysAllCreaturesSharingTheSacrificedCreatureType() {
-        Permanent sacrificed = addCreatureReady(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
-        harness.addToBattlefield(player1, new RagingGoblin());
+    void destroysAllCreaturesSharingAnySacrificedCreatureType() {
+        Permanent sacrificed = addCreatureReady(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new WirewoodElf());
+        harness.addToBattlefield(player2, new GoblinSkyRaider());
+        harness.addToBattlefield(player2, new GlorySeeker());
         prepareCast();
 
         harness.castSorceryWithSacrifice(player1, 0, sacrificed.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
-        harness.assertOnBattlefield(player1, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player1, "Wirewood Elf");
+        harness.assertNotOnBattlefield(player2, "Goblin Sky Raider");
+        harness.assertOnBattlefield(player2, "Glory Seeker");
     }
 
     @Test
     void destructionDoesNotAllowRegeneration() {
-        Permanent sacrificed = addCreatureReady(player1, new GrizzlyBears());
-        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent sacrificed = addCreatureReady(player1, new ElvishWarrior());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new WirewoodElf());
         matchingCreature.setRegenerationShield(1);
         prepareCast();
 
         harness.castSorceryWithSacrifice(player1, 0, sacrificed.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Wirewood Elf");
+        harness.assertInGraveyard(player2, "Wirewood Elf");
     }
 
     @Test

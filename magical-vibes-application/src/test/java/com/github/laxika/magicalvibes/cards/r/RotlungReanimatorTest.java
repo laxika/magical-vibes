@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CabalArchon;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.i.Infest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RotlungReanimator.class, CabalArchon.class, GrizzlyBears.class, Shock.class})
+@CardUsed({RotlungReanimator.class, CabalArchon.class, GlorySeeker.class, Infest.class, Shock.class})
 class RotlungReanimatorTest extends BaseCardTest {
 
     @Test
@@ -47,12 +48,42 @@ class RotlungReanimatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates a Zombie when an ally's Cleric dies")
+    void createsZombieWhenAllysClericDies() {
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.addToBattlefield(player1, new CabalArchon());
+
+        killWithShock(player2, player1, "Cabal Archon");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(zombieTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creates one Zombie for each Cleric that dies simultaneously")
+    void createsOneZombiePerClericThatDiesSimultaneously() {
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.addToBattlefield(player1, new CabalArchon());
+
+        harness.castFromHand(player1, new Infest(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(zombieTokens(player1)).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Does not trigger when a non-Cleric dies")
     void doesNotTriggerForNonCleric() {
         harness.addToBattlefield(player1, new RotlungReanimator());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GlorySeeker());
 
-        killWithShock(player2, player1, "Grizzly Bears");
+        killWithShock(player2, player1, "Glory Seeker");
 
         assertThat(gd.stack).isEmpty();
         assertThat(zombieTokens(player1)).isEmpty();
@@ -68,8 +99,7 @@ class RotlungReanimatorTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 
     private List<Permanent> zombieTokens(com.github.laxika.magicalvibes.model.Player player) {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.d.DaruHealer;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GangrenousGoliath.class, InspiringCleric.class, GrizzlyBears.class})
+@CardUsed({GangrenousGoliath.class, DaruHealer.class, GlorySeeker.class})
 class GangrenousGoliathTest extends BaseCardTest {
 
     @Test
@@ -55,12 +55,37 @@ class GangrenousGoliathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(goliath));
         addClerics(player1, 2);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new GlorySeeker());
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("It cannot use Clerics controlled by another player")
+    void cannotUseOpponentsClerics() {
+        GangrenousGoliath goliath = new GangrenousGoliath();
+        harness.setGraveyard(player1, List.of(goliath));
+        addClerics(player1, 2);
+        addClerics(player2, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Its graveyard ability returns only Gangrenous Goliath")
+    void returnsOnlyItsSourceFromGraveyard() {
+        GangrenousGoliath goliath = new GangrenousGoliath();
+        GlorySeeker otherCard = new GlorySeeker();
+        harness.setGraveyard(player1, List.of(goliath, otherCard));
+        addClerics(player1, 3);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gangrenous Goliath");
+        harness.assertInGraveyard(player1, "Glory Seeker");
     }
 
     @Test
@@ -82,9 +107,7 @@ class GangrenousGoliathTest extends BaseCardTest {
 
     private void addClerics(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent cleric = new Permanent(new InspiringCleric());
-            cleric.setSummoningSick(false);
-            gd.playerBattlefields.get(player.getId()).add(cleric);
+            addCreatureReady(player, new DaruHealer());
         }
     }
 

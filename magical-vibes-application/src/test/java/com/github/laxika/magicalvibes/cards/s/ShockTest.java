@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -20,7 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraNalaar.class, GrizzlyBears.class, Mountain.class, Shock.class})
+@CardUsed({AwakenedSkyclave.class, ChandraNalaar.class, GrizzlyBears.class,
+        InvasionOfZendikar.class, Mountain.class, Shock.class})
 class ShockTest extends BaseCardTest {
 
     @Test
@@ -67,6 +70,21 @@ class ShockTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, chandra.getId());
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({AwakenedSkyclave.class, InvasionOfZendikar.class})
+    @DisplayName("Shock deals 2 damage to target battle")
+    void deals2DamageToBattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, battle.getId());
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Invasion of Zendikar");
     }
 
     @Test
@@ -153,4 +171,3 @@ class ShockTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shock");
     }
 }
-

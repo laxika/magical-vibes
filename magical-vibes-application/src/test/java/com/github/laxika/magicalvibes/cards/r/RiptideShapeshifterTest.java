@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.g.GoblinSledder;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,21 +18,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiptideShapeshifter.class, AvianChangeling.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({RiptideShapeshifter.class, AvianChangeling.class, Forest.class, GrafdiggersCage.class,
+        GlorySeeker.class, GoblinSledder.class, PsychogenicProbe.class})
 class RiptideShapeshifterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chooses a creature type, finds a matching creature, and shuffles the other reveals")
     void findsCreatureOfChosenType() {
         Permanent shapeshifter = addCreatureReady(player1, new RiptideShapeshifter());
-        Card nonmatching = new HillGiant();
-        Card matching = new GrizzlyBears();
+        Card nonmatching = new GlorySeeker();
+        Card matching = new GoblinSledder();
         harness.setLibrary(player1, List.of(nonmatching, matching));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player1, "GOBLIN");
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shapeshifter);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -64,10 +67,61 @@ class RiptideShapeshifterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player1, "GOBLIN");
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(nonmatching.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).contains(nonmatching);
+    }
+
+    @Test
+    @DisplayName("Resolves without finding a creature when the library is empty")
+    void emptyLibrary() {
+        addCreatureReady(player1, new RiptideShapeshifter());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+
+        harness.assertNotOnBattlefield(player1, "Riptide Shapeshifter");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not put the found creature onto the battlefield through Grafdigger's Cage")
+    void foundCreatureCannotEnterThroughGrafdiggersCage() {
+        addCreatureReady(player1, new RiptideShapeshifter());
+        harness.addToBattlefield(player1, new GrafdiggersCage());
+        Card matching = new GoblinSledder();
+        harness.setLibrary(player1, List.of(matching));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(matching);
+    }
+
+    @Test
+    @DisplayName("Shuffling the rest into the library triggers a shuffle ability")
+    void shufflingRestTriggersShuffleAbility() {
+        addCreatureReady(player1, new RiptideShapeshifter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        Card nonmatching = new GlorySeeker();
+        Card matching = new GoblinSledder();
+        harness.setLibrary(player1, List.of(nonmatching, matching));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 }

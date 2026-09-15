@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TrueBeliever.class, Shock.class, GlorySeeker.class, GoblinSharpshooter.class})
 class TrueBelieverTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -86,8 +89,8 @@ class TrueBelieverTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,21 +102,21 @@ class TrueBelieverTest extends BaseCardTest {
     void canTargetSelfWhenOpponentHasShroud() {
         harness.addToBattlefield(player2, new TrueBeliever());
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(40);
+        harness.assertLife(player1, 18);
     }
 
     @Test
     @DisplayName("Player with True Believer cannot be targeted even by their own spells")
     void cannotTargetSelfWithSpellWhenOwnTrueBelieverOnField() {
         harness.addToBattlefield(player1, new TrueBeliever());
-        harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -140,13 +143,27 @@ class TrueBelieverTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(40);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Opponent cannot target player with an ability when True Believer is on battlefield")
+    void opponentCannotTargetPlayerWithAbility() {
+        harness.addToBattlefield(player1, new TrueBeliever());
+        addCreatureReady(player2, new GoblinSharpshooter());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 
     // ===== Shroud does not protect the creature itself =====
@@ -155,12 +172,18 @@ class TrueBelieverTest extends BaseCardTest {
     @DisplayName("True Believer grants shroud to the player, not to creatures")
     void shroudProtectsPlayerNotCreatures() {
         harness.addToBattlefield(player1, new TrueBeliever());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GlorySeeker());
 
-        // Spells can still target creatures on the battlefield
-        // (shroud on True Believer gives the player shroud, not the creatures)
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
     }
 
     // ===== Multiple True Believers =====
@@ -175,8 +198,8 @@ class TrueBelieverTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -199,8 +222,8 @@ class TrueBelieverTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
