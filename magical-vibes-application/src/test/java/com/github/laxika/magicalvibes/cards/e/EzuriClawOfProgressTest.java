@@ -64,6 +64,44 @@ class EzuriClawOfProgressTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void gainsExperienceForSmallCreaturesOnly() {
+        harness.addToBattlefield(player1, new EzuriClawOfProgress());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(1);
+
+        harness.enterBattlefieldAndReturn(player1, new HillGiant());
+        harness.passBothPriorities();
+        assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void putsOneCounterPerExperienceCounterOnAnotherControlledCreatureAtCombat() {
+        harness.addToBattlefield(player1, new EzuriClawOfProgress());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.playerExperienceCounters.put(player1.getId(), 3);
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void cannotTargetEzuriWithItsBeginningOfCombatAbility() {
+        Permanent ezuri = harness.addToBattlefieldAndReturn(player1, new EzuriClawOfProgress());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        gd.playerExperienceCounters.put(player1.getId(), 1);
+
+        advanceToBeginningOfCombat(player1);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ezuri.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

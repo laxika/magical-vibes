@@ -68,6 +68,9 @@ public class BolsterEffectHandler implements NormalEffectHandlerBean {
                 .toList();
 
         if (leastToughnessCreatures.size() == 1) {
+            if (bolster.recordChoice()) {
+                entry.setChosenPermanentId(leastToughnessCreatures.getFirst().getId());
+            }
             permanentCounterSupport.placeCounterOnPermanent(gameData, entry,
                     leastToughnessCreatures.getFirst(), CounterType.PLUS_ONE_PLUS_ONE, amount);
             return;
@@ -75,7 +78,10 @@ public class BolsterEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> eligibleIds = leastToughnessCreatures.stream().map(Permanent::getId).toList();
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, 1,
-                new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(
+                bolster.recordChoice()
+                        ? new MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference(
+                        CounterType.PLUS_ONE_PLUS_ONE, amount)
+                        : new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(
                         CounterType.PLUS_ONE_PLUS_ONE, amount),
                 "Choose a creature to bolster.");
     }

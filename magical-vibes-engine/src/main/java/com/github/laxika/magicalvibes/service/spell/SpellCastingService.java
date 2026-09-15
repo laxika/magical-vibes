@@ -2761,13 +2761,17 @@ public class SpellCastingService {
         boolean selectingModalBackFace = physicalHandCard.isModalDoubleFaced()
                 && physicalHandCard.getBackFaceCard() != null
                 && effectiveXValue == 1;
+        boolean castingTransformedAlternateCost = usingAlternateCost
+                && physicalHandCard.getCastingOption(AlternateHandCast.class)
+                .map(AlternateHandCast::castTransformed)
+                .orElse(false);
         if (adventure && (physicalHandCard.getBackFaceCard() == null
                 || physicalHandCard.getCastingOption(AdventureCast.class).isEmpty())) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
         Card handCardForTiming = adventure
                 ? physicalHandCard.getBackFaceCard()
-                : selectingModalBackFace
+                : selectingModalBackFace || castingTransformedAlternateCost
                 ? physicalHandCard.getBackFaceCard()
                 : physicalHandCard;
         if (usingBestowCost) {
@@ -2801,7 +2805,8 @@ public class SpellCastingService {
             // Re-check with convoke if card has convoke keyword
             List<Card> handCheck = gameData.playerHands.get(playerId);
             Card cardCheck = handCheck.get(cardIndex);
-            Card selectedFaceCheck = selectingModalBackFace ? cardCheck.getBackFaceCard() : cardCheck;
+            Card selectedFaceCheck = selectingModalBackFace || castingTransformedAlternateCost
+                    ? cardCheck.getBackFaceCard() : cardCheck;
             boolean suppliedExiledCardTarget = targetId != null
                     && cardCheck.getEffects(EffectSlot.SPELL).stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
@@ -2837,7 +2842,8 @@ public class SpellCastingService {
             } else if (suppliedCounterDistribution) {
                 // An explicitly supplied distribution may legally be empty when the effect says
                 // "any number". Its assignments are validated below.
-            } else if (selectingModalBackFace && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
+            } else if ((selectingModalBackFace || castingTransformedAlternateCost)
+                    && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0)) {
                 // The generic hand query admits either face; casting validates the selected face.
             } else if (adventure && cardCheck.getBackFaceCard() != null
@@ -3050,7 +3056,8 @@ public class SpellCastingService {
             targetIds = List.copyOf(combinedTargetIds);
             dividedDamageTargetGroupSizes = List.of(damageTargetIds.size(), otherTargetCount);
         }
-        boolean castModalBackFace = selectingModalBackFace && !playingModalBackLand && modeEncoding == 1;
+        boolean castModalBackFace = castingTransformedAlternateCost
+                || (selectingModalBackFace && !playingModalBackLand && modeEncoding == 1);
         // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
         // the cost the playability pre-check cleared — that check only needs *some* mode to be
         // affordable — so the mode actually chosen has to be paid for here.
@@ -7934,7 +7941,7 @@ public class SpellCastingService {
         }
         if (isGraveyardCast) {
             validateGraveyardCastAdditionalCosts(gameData, playerId, card, graveyardCastOpt.orElseThrow(),
-                    retraceDiscardHandCardIndex, exileGraveyardCardIndices);
+                    retraceDiscardHandCardIndex, discardHandCardIndices, exileGraveyardCardIndices);
         }
         if (isGrantedCyclingGraveyardCast) {
             validateGraveyardCastAdditionalCosts(gameData, player, filteredGraveyardAdditionalCosts,
@@ -7964,7 +7971,7 @@ public class SpellCastingService {
                 flashbackOpt, effectiveXValue, exileGraveyardCardIndices);
         if (isGraveyardCast) {
             payGraveyardCastAdditionalCosts(gameData, player, card, graveyardCastOpt.orElseThrow(),
-                    retraceDiscardHandCardIndex, exileGraveyardCardIndices);
+                    retraceDiscardHandCardIndex, discardHandCardIndices, exileGraveyardCardIndices);
         }
         if (isGrantedCyclingGraveyardCast) {
             payGraveyardCastAdditionalCosts(gameData, player, card, filteredGraveyardAdditionalCosts,
@@ -11456,15 +11463,16 @@ public class SpellCastingService {
     private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId, Card card,
                                                        GraveyardCast graveyardCast,
                                                        Integer discardHandCardIndex,
+                                                       List<Integer> discardHandCardIndices,
                                                        List<Integer> exileGraveyardCardIndices) {
         graveyardCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
             if (gameData.getLife(playerId) < lifeCost.amount()) {
                 throw new IllegalStateException("Not enough life to pay graveyard cast cost");
             }
         });
-        if (graveyardCast.getCost(DiscardCardCastingCost.class).isPresent()) {
-            validateGraveyardDiscardSelection(gameData, playerId, discardHandCardIndex);
-        }
+        validateGraveyardDiscardCosts(gameData, playerId, card,
+                graveyardCast.getCosts(DiscardCardCastingCost.class),
+                discardHandCardIndex, discardHandCardIndices);
         graveyardCast.getCost(ExileNCardsFromGraveyardCastingCost.class).ifPresent(exileCost -> {
             List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
             if (indices.size() != exileCost.count()) {
@@ -11557,6 +11565,41 @@ public class SpellCastingService {
         }
     }
 
+    private void validateGraveyardDiscardCosts(GameData gameData, UUID playerId, Card card,
+                                                List<DiscardCardCastingCost> discardCosts,
+                                                Integer discardHandCardIndex,
+                                                List<Integer> discardHandCardIndices) {
+        if (discardCosts.isEmpty()) {
+            return;
+        }
+        List<Integer> selectedIndices = discardCosts.size() == 1 && discardHandCardIndex != null
+                ? List.of(discardHandCardIndex)
+                : discardHandCardIndices == null ? List.of() : discardHandCardIndices;
+        String requiredMessage = discardCosts.size() == 1
+                ? "Must discard a card to cast from the graveyard"
+                : "Must discard " + discardCosts.size() + " cards to cast " + card.getName()
+                + " from the graveyard";
+        if (selectedIndices.size() != discardCosts.size()
+                || selectedIndices.stream().distinct().count() != selectedIndices.size()) {
+            throw new IllegalStateException(requiredMessage);
+        }
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        for (int i = 0; i < selectedIndices.size(); i++) {
+            int selectedIndex = selectedIndices.get(i);
+            if (selectedIndex < 0 || selectedIndex >= hand.size()) {
+                throw new IllegalStateException(requiredMessage);
+            }
+            DiscardCardCastingCost discardCost = discardCosts.get(i);
+            if (discardCost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(
+                    hand.get(selectedIndex), discardCost.predicate(), hand.get(selectedIndex).getId())) {
+                String label = discardCost.label() == null
+                        ? "cards matching the discard cost" : discardCost.label();
+                throw new IllegalStateException("Discarded card must be " + label);
+            }
+        }
+    }
+
     private void validateGraveyardDiscardSelection(GameData gameData, UUID playerId,
                                                    Integer discardHandCardIndex) {
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
@@ -11570,28 +11613,37 @@ public class SpellCastingService {
     private void payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
                                                   GraveyardCast graveyardCast,
                                                   Integer discardHandCardIndex,
+                                                  List<Integer> discardHandCardIndices,
                                                   List<Integer> exileGraveyardCardIndices) {
         UUID playerId = player.getId();
         ExileNCardsFromGraveyardCastingCost exileCost =
                 graveyardCast.getCost(ExileNCardsFromGraveyardCastingCost.class).orElse(null);
         if (exileCost != null) {
             validateGraveyardCastAdditionalCosts(gameData, playerId, card, graveyardCast,
-                    discardHandCardIndex, exileGraveyardCardIndices);
+                    discardHandCardIndex, discardHandCardIndices, exileGraveyardCardIndices);
         }
         graveyardCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
             lifeSupport.applyLifePayment(gameData, playerId, lifeCost.amount(), card.getName());
         });
-        if (graveyardCast.getCost(DiscardCardCastingCost.class).isPresent()) {
-            Card discarded = gameData.playerHands.get(playerId).remove((int) discardHandCardIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " discards ")
-                    .card(discarded)
-                    .text(" to cast ")
-                    .card(card)
-                    .text(" from the graveyard.")
-                    .build());
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        List<DiscardCardCastingCost> discardCosts = graveyardCast.getCosts(DiscardCardCastingCost.class);
+        if (!discardCosts.isEmpty()) {
+            List<Integer> selectedIndices = discardCosts.size() == 1 && discardHandCardIndex != null
+                    ? List.of(discardHandCardIndex)
+                    : discardHandCardIndices == null ? List.of() : discardHandCardIndices;
+            List<Integer> descendingIndices = new ArrayList<>(selectedIndices);
+            descendingIndices.sort(java.util.Comparator.reverseOrder());
+            for (int selectedIndex : descendingIndices) {
+                Card discarded = gameData.playerHands.get(playerId).remove(selectedIndex);
+                graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " discards ")
+                        .card(discarded)
+                        .text(" to cast ")
+                        .card(card)
+                        .text(" from the graveyard.")
+                        .build());
+                triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            }
         }
         if (exileCost != null) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);

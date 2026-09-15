@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "117")
+@CardRegistration(set = "MUL", collectorNumber = "14")
+@CardRegistration(set = "MUL", collectorNumber = "79")
+@CardRegistration(set = "MUL", collectorNumber = "144")
 public class HorobiDeathsWail extends Card {
 
     public HorobiDeathsWail() {

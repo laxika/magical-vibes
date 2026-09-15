@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "203")
+@CardRegistration(set = "OTP", collectorNumber = "53")
 public class SavageSmash extends Card {
 
     public SavageSmash() {

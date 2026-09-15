@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "14")
 @CardRegistration(set = "DDF", collectorNumber = "23")
+@CardRegistration(set = "OTP", collectorNumber = "3")
 public class JourneyToNowhere extends Card {
 
     public JourneyToNowhere() {
