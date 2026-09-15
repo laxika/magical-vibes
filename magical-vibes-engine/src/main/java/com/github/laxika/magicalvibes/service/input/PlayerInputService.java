@@ -361,7 +361,7 @@ public class PlayerInputService {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
         int remaining = context.total() - assigned;
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
-        List<String> options = counterAssignmentOptions(remaining, remainingTargets);
+        List<String> options = counterAssignmentOptions(remaining, remainingTargets, false);
         String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
@@ -373,15 +373,17 @@ public class PlayerInputService {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
         int remaining = context.total() - assigned;
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
-        List<String> options = counterAssignmentOptions(remaining, remainingTargets);
+        List<String> options = counterAssignmentOptions(remaining, remainingTargets,
+                context.allowsPartialDistribution());
         String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
                 "Choose how many " + counterLabel + " counters to put on the target creature."));
     }
 
-    private static List<String> counterAssignmentOptions(int remaining, int remainingTargets) {
-        int minForTarget = remainingTargets == 1 ? remaining : 1;
+    private static List<String> counterAssignmentOptions(int remaining, int remainingTargets,
+                                                          boolean allowsPartialDistribution) {
+        int minForTarget = !allowsPartialDistribution && remainingTargets == 1 ? remaining : 1;
         int maxForTarget = remaining - (remainingTargets - 1);
         return IntStream.rangeClosed(minForTarget, maxForTarget)
                 .mapToObj(Integer::toString)

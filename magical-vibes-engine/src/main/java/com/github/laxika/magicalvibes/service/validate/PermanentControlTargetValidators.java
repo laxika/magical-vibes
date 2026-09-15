@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPerm
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentWithSameControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -74,6 +75,11 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(TargetPlayerGainsControlOfSourceCreatureEffect.class)
     public void validateTargetPlayerGainsControlOfSourceCreature(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
+    }
+
+    @ValidatesTarget(TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect.class)
+    public void validateTargetPlayerGainsControlOfSourcePermanentUntilEndOfTurn(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 }

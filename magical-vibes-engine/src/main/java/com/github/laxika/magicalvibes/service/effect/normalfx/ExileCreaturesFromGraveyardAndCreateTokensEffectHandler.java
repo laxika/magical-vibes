@@ -60,10 +60,13 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             cardIdsToExile = entry.getTargetCardIds();
         }
 
+        List<UUID> graveyardOwners = e.targetPlayerGraveyard()
+                ? List.of(entry.getTargetId())
+                : e.graveyardScope().graveyardOwners(gameData.orderedPlayerIds, controllerId);
         List<Card> exiledCards = new ArrayList<>();
         for (UUID cardId : cardIdsToExile) {
-            Card card = gameData.playerGraveyards.getOrDefault(
-                    e.targetPlayerGraveyard() ? entry.getTargetId() : controllerId, List.of()).stream()
+            Card card = graveyardOwners.stream()
+                    .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
                     .filter(candidate -> candidate.getId().equals(cardId) && candidate.hasType(CardType.CREATURE))
                     .findFirst().orElse(null);
             if (card != null) {

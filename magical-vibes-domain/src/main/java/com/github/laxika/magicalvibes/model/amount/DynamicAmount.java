@@ -186,6 +186,7 @@ public sealed interface DynamicAmount permits
         UnlockedRoomDoorsCount,
         WebSlingingReturnedCreatureManaValue,
         XValue,
+        TriggeringSpellTargetCount,
         CardTypesAmongCardsDiscardedThisResolution {
 
     /**

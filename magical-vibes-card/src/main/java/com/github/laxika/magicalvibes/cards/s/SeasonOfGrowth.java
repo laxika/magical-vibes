@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPre
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "191")
+@CardRegistration(set = "WOT", collectorNumber = "61")
 public class SeasonOfGrowth extends Card {
 
     public SeasonOfGrowth() {

@@ -914,7 +914,11 @@ public class GameQueryService {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (!bonus.landSubtypeOverriding()) {
-            addLandTypes(result, permanent.getCard().getSubtypes());
+            if (permanent.isFaceDown()) {
+                addLandTypes(result, permanent.getFaceDownSubtypes());
+            } else {
+                addLandTypes(result, permanent.getCard().getSubtypes());
+            }
             addLandTypes(result, permanent.getGrantedSubtypes());
         }
         addLandTypes(result, bonus.grantedSubtypes());
@@ -924,6 +928,28 @@ public class GameQueryService {
         return result;
     }
 
+    /** Returns the mana colors granted intrinsically by the permanent's effective basic land types. */
+    public Set<ManaColor> intrinsicBasicLandManaColors(GameData gameData, Permanent permanent) {
+        if (permanent == null || !isLand(gameData, permanent)) {
+            return Set.of();
+        }
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        for (CardSubtype subtype : effectiveBasicLandTypes(gameData, permanent)) {
+            ManaColor color = switch (subtype) {
+                case PLAINS -> ManaColor.WHITE;
+                case ISLAND -> ManaColor.BLUE;
+                case SWAMP -> ManaColor.BLACK;
+                case MOUNTAIN -> ManaColor.RED;
+                case FOREST -> ManaColor.GREEN;
+                default -> null;
+            };
+            if (color != null) {
+                colors.add(color);
+            }
+        }
+        return colors;
+    }
+
     public Set<CardSubtype> landTypesOf(Card card) {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         addLandTypes(result, card.getSubtypes());
@@ -931,6 +957,14 @@ public class GameQueryService {
     }
 
     private void addLandTypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {
+        for (CardSubtype subtype : subtypes) {
+            if (LAND_SUBTYPES.contains(subtype)) {
+                target.add(subtype);
+            }
+        }
+    }
+
+    private void addLandTypes(Set<CardSubtype> target, Set<CardSubtype> subtypes) {
         for (CardSubtype subtype : subtypes) {
             if (LAND_SUBTYPES.contains(subtype)) {
                 target.add(subtype);
@@ -3189,6 +3223,7 @@ public class GameQueryService {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, permanent, controllerId)) {
                     if (effect instanceof CounterReplacementEffect replacement
+                            && !replacement.appliesToAllPermanents()
                             && replacement.appliesTo(counterType, affectedPermanentIsCreature,
                             affectedPermanentIsArtifact, permanent, affectedPermanent)) {
                         result = replacement.replace(counterType, result);
@@ -3196,12 +3231,37 @@ public class GameQueryService {
                 }
             }
         }
+        result = applyGlobalCounterReplacements(gameData, counterType, result,
+                affectedPermanentIsCreature, affectedPermanentIsArtifact);
         result = applyPlanarCounterReplacements(gameData, controllerId, counterType, result,
                 affectedPermanentIsCreature, affectedPermanentIsArtifact);
         if (affectedPermanentIsEntering) {
             result = applyEnteringPermanentReplacements(counterType, result, affectedPermanent);
         }
         return limitCounters(gameData, affectedPermanent, controllerId, counterType, result);
+    }
+
+    private int applyGlobalCounterReplacements(GameData gameData, CounterType counterType, int count,
+                                               boolean affectedPermanentIsCreature,
+                                               boolean affectedPermanentIsArtifact) {
+        if (count <= 0) {
+            return count;
+        }
+        final int[] result = {count};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, source, sourceControllerId)) {
+                    if (effect instanceof CounterReplacementEffect replacement
+                            && replacement.appliesToAllPermanents()
+                            && replacement.appliesTo(counterType, affectedPermanentIsCreature,
+                            affectedPermanentIsArtifact)) {
+                        result[0] = replacement.replace(counterType, result[0]);
+                    }
+                }
+            }
+        });
+        return result[0];
     }
 
     private int applyEnteringPermanentReplacements(CounterType counterType, int count,
@@ -3255,6 +3315,7 @@ public class GameQueryService {
                             && replacement.appliesToNonCreatureVehicles()) {
                         result = replacement.replace(result);
                     } else if (effect instanceof CounterReplacementEffect replacement
+                            && !replacement.appliesToAllPermanents()
                             && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true,
                             permanent, affectedPermanent)) {
                         result = replacement.replace(CounterType.PLUS_ONE_PLUS_ONE, result);
@@ -3262,6 +3323,8 @@ public class GameQueryService {
                 }
             }
         }
+        result = applyGlobalCounterReplacements(gameData, CounterType.PLUS_ONE_PLUS_ONE, result,
+                false, true);
         result = applyPlanarCounterReplacements(gameData, controllerId,
                 CounterType.PLUS_ONE_PLUS_ONE, result, false, true);
         if (affectedPermanentIsEntering) {
@@ -3326,7 +3389,9 @@ public class GameQueryService {
                         gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
-                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
+                    if (replacement.appliesToAllPermanents()) {
+                        applies = replacement.appliesTo(counterType, creature, artifact);
+                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
                             && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
                         applies = sourceControlsAffected;
                     } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
@@ -8120,9 +8185,9 @@ public class GameQueryService {
         int[] adjustedAmount = {amount};
         List<TokenCreationReplacementEffect> replacements = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (!playerId.equals(effectiveControllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof TokenCreationReplacementEffect replacement
+                        && (playerId.equals(effectiveControllerId) || replacement.appliesToAllPlayers())
                         && replacement.appliesTo(tokenSubtypes)
                         && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                             || !multiply.creatureTokensOnly() || creatureToken)) {
