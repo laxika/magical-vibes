@@ -10,15 +10,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Regeneration.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Forest.class, GrizzlyBears.class, Regeneration.class})
 class RegenerationTest extends BaseCardTest {
 
     @Test
@@ -86,6 +84,18 @@ class RegenerationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new Regeneration()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a land")
+    void cannotEnchantALandUpstreamReview() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new Regeneration()));
@@ -149,8 +159,27 @@ class RegenerationTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(CrownOfTheAges.class)
+    @DisplayName("A regeneration shield prevents only one destruction")
+    void shieldPreventsOnlyOneDestruction() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regenAura = harness.addToBattlefieldAndReturn(player1, new Regeneration());
+        regenAura.setAttachedTo(bears.getId());
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
+    }
+
+    @Test
     @DisplayName("Regeneration ability uses the creature enchanted when it resolves")
+    @CardUsed(CrownOfTheAges.class)
     void abilityUsesCreatureEnchantedWhenItResolves() {
         harness.addToBattlefieldAndReturn(player1, new CrownOfTheAges());
         Permanent originallyEnchanted = addCreatureReady(player1, new GrizzlyBears());

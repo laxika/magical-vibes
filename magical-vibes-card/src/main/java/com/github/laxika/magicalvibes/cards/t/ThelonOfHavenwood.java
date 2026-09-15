@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "227")
+@CardRegistration(set = "TSR", collectorNumber = "238")
 public class ThelonOfHavenwood extends Card {
 
     public ThelonOfHavenwood() {

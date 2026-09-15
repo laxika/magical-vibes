@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "210")
+@CardRegistration(set = "GK2", collectorNumber = "102")
 public class ZhurTaaSwine extends Card {
 
     public ZhurTaaSwine() {

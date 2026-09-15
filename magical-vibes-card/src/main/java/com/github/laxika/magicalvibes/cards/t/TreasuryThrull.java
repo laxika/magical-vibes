@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "201")
+@CardRegistration(set = "GK2", collectorNumber = "46")
 public class TreasuryThrull extends Card {
 
     public TreasuryThrull() {

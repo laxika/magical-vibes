@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "137")
+@CardRegistration(set = "DMR", collectorNumber = "243")
 public class DarigaazsCaldera extends Card {
 
     public DarigaazsCaldera() {

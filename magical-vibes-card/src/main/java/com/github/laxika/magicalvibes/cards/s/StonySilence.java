@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "36")
+@CardRegistration(set = "MM3", collectorNumber = "25")
 public class StonySilence extends Card {
 
     public StonySilence() {

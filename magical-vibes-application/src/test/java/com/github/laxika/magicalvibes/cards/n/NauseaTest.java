@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FugitiveWizard.class, GrizzlyBears.class, Nausea.class})
+@CardUsed({EagerCadet.class, GrizzlyBears.class, Nausea.class})
 class NauseaTest extends BaseCardTest {
 
     @Test
@@ -49,13 +49,13 @@ class NauseaTest extends BaseCardTest {
     @Test
     @DisplayName("Kills 1-toughness creatures")
     void killsOneToughnessCreatures() {
-        harness.addToBattlefield(player2, new FugitiveWizard()); // 1/1
+        harness.addToBattlefield(player2, new EagerCadet()); // 1/1
 
         harness.castFromHand(player1, new Nausea(), "{1}{B}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
-        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Eager Cadet");
+        harness.assertInGraveyard(player2, "Eager Cadet");
     }
 
     @Test
@@ -70,8 +70,7 @@ class NauseaTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);

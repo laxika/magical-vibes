@@ -14,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 
-@CardUsed({RisingWaters.class, KorHaven.class, SpinelessThug.class})
+@CardUsed({RisingWaters.class, KorHaven.class, SpinelessThug.class, Forest.class})
 class RisingWatersTest extends BaseCardTest {
 
     @Test
@@ -36,7 +37,7 @@ class RisingWatersTest extends BaseCardTest {
     void activePlayerUntapsOwnLand() {
         harness.addToBattlefield(player1, new RisingWaters());
         Permanent landA = addTapped(player1, new KorHaven());
-        Permanent landB = addTapped(player1, new KorHaven());
+        Permanent landB = addTapped(player1, new Forest());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

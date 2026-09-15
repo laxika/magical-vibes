@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "161")
+@CardRegistration(set = "GNT", collectorNumber = "41")
 public class SeismicElemental extends Card {
 
     public SeismicElemental() {

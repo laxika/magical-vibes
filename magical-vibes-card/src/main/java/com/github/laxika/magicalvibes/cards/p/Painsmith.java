@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "74")
+@CardRegistration(set = "2XM", collectorNumber = "102")
 public class Painsmith extends Card {
 
     public Painsmith() {

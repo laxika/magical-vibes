@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "VMA", collectorNumber = "248")
+@CardRegistration(set = "2X2", collectorNumber = "198")
 public class DacksDuplicate extends Card {
 
     public DacksDuplicate() {

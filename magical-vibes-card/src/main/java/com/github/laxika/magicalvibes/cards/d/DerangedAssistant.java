@@ -11,6 +11,8 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "52")
 @CardRegistration(set = "INR", collectorNumber = "61")
+@CardRegistration(set = "UMA", collectorNumber = "49")
+@CardRegistration(set = "2X2", collectorNumber = "45")
 public class DerangedAssistant extends Card {
 
     public DerangedAssistant() {

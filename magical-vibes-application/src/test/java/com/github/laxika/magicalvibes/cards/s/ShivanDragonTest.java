@@ -58,6 +58,33 @@ class ShivanDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability boosts only the Shivan Dragon that activated it")
+    void abilityOnlyBoostsSourceCreature() {
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Activating the ability does not tap Shivan Dragon")
+    void activatingAbilityDoesNotTap() {
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        dragon.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
         Permanent dragon = addCreatureReady(player1, new ShivanDragon());

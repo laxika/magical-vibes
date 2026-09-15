@@ -15,6 +15,6 @@ public class AbsoluteGrace extends Card {
 
     public AbsoluteGrace() {
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
-                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)), GrantScope.ALL_CREATURES));
+                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)), GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

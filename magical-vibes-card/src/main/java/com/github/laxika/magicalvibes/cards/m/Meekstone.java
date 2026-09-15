@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "307")
 @CardRegistration(set = "6ED", collectorNumber = "299")
@@ -18,6 +21,7 @@ public class Meekstone extends Card {
     public Meekstone() {
         // Creatures with power 3 or greater don't untap during their controllers' untap steps.
         addEffect(EffectSlot.STATIC,
-                new MatchingPermanentsDoesntUntapEffect(new PermanentPowerAtLeastPredicate(3)));
+                new MatchingPermanentsDoesntUntapEffect(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(3)))));
     }
 }

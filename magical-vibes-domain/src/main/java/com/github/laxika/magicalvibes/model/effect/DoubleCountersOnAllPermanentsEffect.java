@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public record DoubleCountersOnAllPermanentsEffect() implements CounterReplacementEffect {
 
     @Override
+    public boolean appliesToAllPermanents() {
+        return true;
+    }
+
+    @Override
     public int replace(CounterType counterType, int count) {
         return count > 0 ? count * 2 : count;
     }

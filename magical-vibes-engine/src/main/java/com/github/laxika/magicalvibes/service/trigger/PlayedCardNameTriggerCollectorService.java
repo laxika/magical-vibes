@@ -13,10 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceDrawAndTransformTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -64,6 +66,28 @@ public class PlayedCardNameTriggerCollectorService {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return lp.fromExile()
                 && collectTransform(match, lp.exiledSourcePermanentId(), lp.landCard());
+    }
+
+    @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleAnyPlayerCastsExiledCard(TriggerMatchContext match,
+            PlayedCardExiledWithSourceDrawAndTransformTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        return sc.castZone() == Zone.EXILE
+                && collectDrawAndTransform(match, sc.exiledSourcePermanentId(), sc.spellCard());
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    })
+    private boolean handlePlayerPlaysExiledCardLand(TriggerMatchContext match,
+            PlayedCardExiledWithSourceDrawAndTransformTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        return lp.fromExile()
+                && collectDrawAndTransform(match, lp.exiledSourcePermanentId(), lp.landCard());
     }
 
     @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
@@ -234,6 +258,29 @@ public class PlayedCardNameTriggerCollectorService {
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(new TransformSelfEffect())),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers when {} is played from exile",
+                match.gameData().id, sourceCard.getName(), playedCard.getName());
+        return true;
+    }
+
+    private boolean collectDrawAndTransform(TriggerMatchContext match, UUID exiledSourcePermanentId,
+                                            Card playedCard) {
+        if (!match.permanent().getId().equals(exiledSourcePermanentId)) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new DrawCardEffect(1), new TransformSelfEffect())),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);

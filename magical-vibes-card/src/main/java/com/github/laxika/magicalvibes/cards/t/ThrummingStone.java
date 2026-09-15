@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "142")
+@CardRegistration(set = "2X2", collectorNumber = "315")
 public class ThrummingStone extends Card {
 
     public ThrummingStone() {

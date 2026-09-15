@@ -77,9 +77,6 @@ class TaintedIsleTest extends BaseCardTest {
     }
 
     private Permanent addReadyIsle(Player player) {
-        Permanent perm = new Permanent(new TaintedIsle());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new TaintedIsle());
     }
 }

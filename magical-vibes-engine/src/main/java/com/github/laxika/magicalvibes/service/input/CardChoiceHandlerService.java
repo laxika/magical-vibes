@@ -143,9 +143,7 @@ public class CardChoiceHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
-            if (card.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
-            }
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
         } else {
             hand.add(cardIndex, card);
             gameLogService.append(gameData,
@@ -242,6 +240,10 @@ public class CardChoiceHandlerService {
         // only thing that would resume the entry parked in pendingEffectResolutionEntry, wedging
         // the game (and with it deferPlayerLossCheck) on a stale client answer. The copy below
         // stays as defence.
+        if (cardIndex == -1 && active instanceof PendingInteraction.TargetedHandCardChoice choice
+                && !choice.declinable()) {
+            return;
+        }
         if (cardIndex == -1 && cloaked) {
             throw new IllegalStateException("This card choice cannot be declined");
         }
@@ -1439,7 +1441,9 @@ public class CardChoiceHandlerService {
                 }
                 if (revealedHandChoice.returnAtNextEndStep()) {
                     gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                            exiled.getId(), targetPlayerId));
+                            exiled.getId(), targetPlayerId,
+                            gameData.pendingEffectResolutionEntry == null ? null
+                                    : gameData.pendingEffectResolutionEntry.getCard(), player.getId()));
                 }
             }
 
@@ -2063,6 +2067,13 @@ public class CardChoiceHandlerService {
         }
 
         // Deathrender: "…and attach this Equipment to it" — attach the source Equipment to the entered creature.
+        if (!cloaked && !faceDown && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, permanent, playerId,
+                    CounterType.LOYALTY, card.getLoyalty());
+            permanent.setCounterCount(CounterType.LOYALTY, loyalty);
+            permanent.setSummoningSick(false);
+        }
+
         if (attachEquipmentCardId != null) {
             attachSourceEquipmentToPermanent(gameData, attachEquipmentCardId, permanent);
         }
@@ -2294,5 +2305,4 @@ public class CardChoiceHandlerService {
         graveyardService.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
     }
 }
-
 

@@ -90,17 +90,13 @@ class AnavolverTest extends BaseCardTest {
     }
 
     private Permanent castAnavolver() {
-        addBaseMana();
-        harness.setHand(player1, List.of(new Anavolver()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Anavolver(), "{3}{G}");
         harness.passBothPriorities();
         return findAnavolver();
     }
 
     private void castWithBlueKicker() {
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, true, null, null, null, null,
-                List.of(), false);
+        harness.castKickedCreature(player1, 0);
     }
 
     private void castWithBlackKicker() {

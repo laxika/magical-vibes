@@ -1,0 +1,25 @@
+package com.github.laxika.magicalvibes.cards.f;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+
+import java.util.List;
+import java.util.Set;
+
+@CardRegistration(set = "MH1", collectorNumber = "223")
+public class FountainOfIchor extends Card {
+
+    public FountainOfIchor() {
+        addActivatedAbility(ManaAbilities.tapForAnyColor());
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{3}",
+                List.of(new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.DINOSAUR), Set.of())),
+                "{3}: This artifact becomes a 3/3 Dinosaur artifact creature until end of turn."
+        ));
+    }
+}

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "120")
+@CardRegistration(set = "DDU", collectorNumber = "9")
 public class EzurisArchers extends Card {
 
     public EzurisArchers() {

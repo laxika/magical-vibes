@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "158")
+@CardRegistration(set = "2X2", collectorNumber = "229")
 public class IntetTheDreamer extends Card {
 
     public IntetTheDreamer() {

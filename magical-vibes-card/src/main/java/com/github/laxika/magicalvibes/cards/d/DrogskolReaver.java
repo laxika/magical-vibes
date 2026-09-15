@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "137")
+@CardRegistration(set = "2X2", collectorNumber = "205")
 public class DrogskolReaver extends Card {
 
     public DrogskolReaver() {

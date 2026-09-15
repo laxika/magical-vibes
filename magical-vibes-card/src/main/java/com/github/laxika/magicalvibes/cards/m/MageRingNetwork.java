@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "249")
+@CardRegistration(set = "UMA", collectorNumber = "246")
 public class MageRingNetwork extends Card {
 
     public MageRingNetwork() {

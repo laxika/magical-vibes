@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "226")
 @CardRegistration(set = "TPR", collectorNumber = "170")
+@CardRegistration(set = "MH1", collectorNumber = "162")
 public class ElvishFury extends Card {
 
     public ElvishFury() {

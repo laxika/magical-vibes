@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "161")
+@CardRegistration(set = "UMA", collectorNumber = "145")
 public class RollingTemblor extends Card {
 
     public RollingTemblor() {

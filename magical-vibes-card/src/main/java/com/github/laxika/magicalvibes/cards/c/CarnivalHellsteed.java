@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
  * +1/+1 counter on it".
  */
 @CardRegistration(set = "RTR", collectorNumber = "147")
+@CardRegistration(set = "GK2", collectorNumber = "62")
 public class CarnivalHellsteed extends Card {
 
     public CarnivalHellsteed() {

@@ -16,8 +16,8 @@ import java.util.List;
 public class Equilibrium extends Card {
 
     public Equilibrium() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardTypePredicate(CardType.CREATURE),
-                        List.of(ReturnToHandEffect.target()), "{1}"));
+                        List.of(ReturnToHandEffect.target()), "{1}", TargetFilters.creature()));
     }
 }

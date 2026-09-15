@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "61")
+@CardRegistration(set = "MH1", collectorNumber = "65")
 public class RainOfRevelation extends Card {
 
     public RainOfRevelation() {

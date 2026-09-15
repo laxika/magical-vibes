@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "247")
+@CardRegistration(set = "SLC", collectorNumber = "6")
+@CardRegistration(set = "SLC", collectorNumber = "33")
 public class FieldOfTheDead extends Card {
 
     public FieldOfTheDead() {

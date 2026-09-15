@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "83")
+@CardRegistration(set = "KLR", collectorNumber = "90")
 public class FretworkColony extends Card {
 
     public FretworkColony() {

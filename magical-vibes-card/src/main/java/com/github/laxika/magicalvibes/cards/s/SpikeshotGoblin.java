@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "108")
+@CardRegistration(set = "A25", collectorNumber = "152")
 public class SpikeshotGoblin extends Card {
 
     public SpikeshotGoblin() {

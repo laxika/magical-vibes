@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "41")
+@CardRegistration(set = "EMA", collectorNumber = "66")
 public class PhyrexianIngester extends Card {
 
     public PhyrexianIngester() {

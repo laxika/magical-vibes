@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "147")
+@CardRegistration(set = "UMA", collectorNumber = "140")
 public class MoltenBirth extends Card {
 
     public MoltenBirth() {

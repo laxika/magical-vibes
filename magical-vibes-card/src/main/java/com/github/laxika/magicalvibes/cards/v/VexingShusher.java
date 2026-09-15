@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetSpellUncounterableE
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "222")
+@CardRegistration(set = "2XM", collectorNumber = "225")
 public class VexingShusher extends Card {
 
     public VexingShusher() {

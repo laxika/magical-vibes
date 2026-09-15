@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,16 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WebOfInertia.class, GrizzlyBears.class})
+@CardUsed({WebOfInertia.class, SuntailHawk.class})
 class WebOfInertiaTest extends BaseCardTest {
 
     @Test
     @DisplayName("The active opponent may exile a graveyard card to allow attacks")
     void activeOpponentMayExileCard() {
-        Card graveyardCard = new GrizzlyBears();
+        Card graveyardCard = new SuntailHawk();
         harness.setGraveyard(player2, List.of(graveyardCard));
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
 
@@ -39,8 +39,8 @@ class WebOfInertiaTest extends BaseCardTest {
     @Test
     @DisplayName("The active opponent chooses which card to exile when several are available")
     void activeOpponentChoosesGraveyardCard() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new SuntailHawk();
+        Card second = new SuntailHawk();
         harness.setGraveyard(player2, List.of(first, second));
         harness.addToBattlefield(player1, new WebOfInertia());
 
@@ -61,7 +61,7 @@ class WebOfInertiaTest extends BaseCardTest {
     @DisplayName("Declining the exile prevents the active opponent's creatures from attacking")
     void decliningPreventsAttacks() {
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
@@ -76,7 +76,7 @@ class WebOfInertiaTest extends BaseCardTest {
     void emptyGraveyardAppliesRestriction() {
         harness.setGraveyard(player2, List.of());
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, true);
@@ -90,7 +90,7 @@ class WebOfInertiaTest extends BaseCardTest {
     @DisplayName("The restriction expires at end of turn")
     void restrictionExpiresAtEndOfTurn() {
         harness.addToBattlefield(player1, new WebOfInertia());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new SuntailHawk());
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
@@ -102,11 +102,23 @@ class WebOfInertiaTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
     }
 
+    @Test
+    @DisplayName("The ability does not trigger on the Web controller's turn")
+    void doesNotTriggerOnControllerTurn() {
+        harness.addToBattlefield(player1, new WebOfInertia());
+        addCreatureReady(player1, new SuntailHawk());
+
+        resolveCombatTrigger(player1);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        declareAttackers(player1, List.of(1));
+    }
+
     private void resolveCombatTrigger(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 

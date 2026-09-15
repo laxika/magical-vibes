@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "118")
+@CardRegistration(set = "STA", collectorNumber = "37")
 public class ClaimTheFirstborn extends Card {
 
     public ClaimTheFirstborn() {

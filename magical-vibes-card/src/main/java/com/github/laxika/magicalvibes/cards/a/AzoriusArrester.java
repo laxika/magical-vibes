@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "RTR", collectorNumber = "5")
+@CardRegistration(set = "RVR", collectorNumber = "5")
 public class AzoriusArrester extends Card {
 
     public AzoriusArrester() {

@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "85")
+@CardRegistration(set = "KLR", collectorNumber = "130")
+@CardRegistration(set = "OTP", collectorNumber = "25")
+@CardRegistration(set = "OTP", collectorNumber = "72")
 public class IndomitableCreativity extends Card {
 
     public IndomitableCreativity() {

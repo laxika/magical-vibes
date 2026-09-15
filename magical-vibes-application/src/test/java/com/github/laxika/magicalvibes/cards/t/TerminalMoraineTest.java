@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TerminalMoraine.class, Forest.class, Plains.class, GrizzlyBears.class})
 class TerminalMoraineTest extends BaseCardTest {
 
     @Test
@@ -48,9 +49,27 @@ class TerminalMoraineTest extends BaseCardTest {
                 .allMatch(card -> card.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().hasType(CardType.LAND) && permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("Search ability may fail to find a basic land")
+    void mayFailToFindBasicLand() {
+        GrizzlyBears nonBasicCard = new GrizzlyBears();
+        harness.addToBattlefield(player1, new TerminalMoraine());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(nonBasicCard));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Terminal Moraine");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonBasicCard);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof Forest || permanent.getCard() instanceof Plains);
     }
 }

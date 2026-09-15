@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "212")
+@CardRegistration(set = "MUL", collectorNumber = "61")
+@CardRegistration(set = "MUL", collectorNumber = "126")
+@CardRegistration(set = "MUL", collectorNumber = "191")
 public class TeysaKarlov extends Card {
 
     public TeysaKarlov() {

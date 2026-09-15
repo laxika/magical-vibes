@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "82")
 @CardRegistration(set = "W17", collectorNumber = "15")
+@CardRegistration(set = "A25", collectorNumber = "80")
 public class BloodhunterBat extends Card {
 
     public BloodhunterBat() {

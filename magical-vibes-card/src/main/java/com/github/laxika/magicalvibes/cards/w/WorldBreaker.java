@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "126")
+@CardRegistration(set = "EA2", collectorNumber = "18")
 public class WorldBreaker extends Card {
 
     public WorldBreaker() {

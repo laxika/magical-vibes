@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "19")
+@CardRegistration(set = "GK2", collectorNumber = "4")
 public class StoicEphemera extends Card {
 
     public StoicEphemera() {

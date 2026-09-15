@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "161")
+@CardRegistration(set = "ANB", collectorNumber = "82")
+@CardRegistration(set = "UMA", collectorNumber = "142")
+@CardRegistration(set = "WOT", collectorNumber = "47")
 public class RaidBombardment extends Card {
 
     public RaidBombardment() {

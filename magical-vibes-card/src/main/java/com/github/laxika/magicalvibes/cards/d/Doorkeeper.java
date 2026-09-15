@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "37")
+@CardRegistration(set = "IMA", collectorNumber = "53")
 public class Doorkeeper extends Card {
 
     public Doorkeeper() {

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "24")
 @CardRegistration(set = "MMA", collectorNumber = "31")
+@CardRegistration(set = "2XM", collectorNumber = "32")
 public class StonehewerGiant extends Card {
 
     public StonehewerGiant() {

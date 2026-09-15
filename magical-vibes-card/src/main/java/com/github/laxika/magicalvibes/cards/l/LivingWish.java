@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "124")
+@CardRegistration(set = "A25", collectorNumber = "179")
 public class LivingWish extends Card {
 
     public LivingWish() {

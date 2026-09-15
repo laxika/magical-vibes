@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "208")
+@CardRegistration(set = "DMR", collectorNumber = "204")
 public class TianaShipsCaretaker extends Card {
 
     public TianaShipsCaretaker() {

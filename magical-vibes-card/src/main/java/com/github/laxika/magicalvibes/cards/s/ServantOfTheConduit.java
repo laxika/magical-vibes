@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "169")
+@CardRegistration(set = "KLR", collectorNumber = "182")
 public class ServantOfTheConduit extends Card {
 
     public ServantOfTheConduit() {

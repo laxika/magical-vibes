@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPe
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "68")
+@CardRegistration(set = "2XM", collectorNumber = "132")
 public class IonStorm extends Card {
 
     public IonStorm() {

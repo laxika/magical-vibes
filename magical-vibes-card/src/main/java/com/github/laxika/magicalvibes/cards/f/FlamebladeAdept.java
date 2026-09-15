@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "131")
+@CardRegistration(set = "HA4", collectorNumber = "12")
 public class FlamebladeAdept extends Card {
 
     public FlamebladeAdept() {

@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "184")
+@CardRegistration(set = "TSR", collectorNumber = "384")
+@CardRegistration(set = "GK2", collectorNumber = "68")
+@CardRegistration(set = "PA1", collectorNumber = "7")
 public class RakdosCharm extends Card {
 
     public RakdosCharm() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "179")
+@CardRegistration(set = "UMA", collectorNumber = "185")
 public class StaunchHeartedWarrior extends Card {
 
     public StaunchHeartedWarrior() {

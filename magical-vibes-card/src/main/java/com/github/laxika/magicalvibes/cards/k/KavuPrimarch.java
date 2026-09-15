@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "128")
 @CardRegistration(set = "MM2", collectorNumber = "146")
+@CardRegistration(set = "TSR", collectorNumber = "212")
+@CardRegistration(set = "DMR", collectorNumber = "167")
 public class KavuPrimarch extends Card {
 
     public KavuPrimarch() {

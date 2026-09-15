@@ -37,6 +37,18 @@ class TaintedFieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Colored mana ability does not use an opponent's Swamp")
+    void coloredManaRequiresControllerSwamp() {
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent field = addReadyField();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Swamp");
+        assertThat(field.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Tapping adds white or black mana while controlling a Swamp")
     void tappingAddsColoredManaWithSwamp() {
         harness.addToBattlefield(player1, new Swamp());
@@ -63,8 +75,6 @@ class TaintedFieldTest extends BaseCardTest {
     }
 
     private Permanent addReadyField() {
-        Permanent field = harness.addToBattlefieldAndReturn(player1, new TaintedField());
-        field.setSummoningSick(false);
-        return field;
+        return addCreatureReady(player1, new TaintedField());
     }
 }

@@ -21,6 +21,8 @@ import java.util.List;
  * exactly one ability triggers per discarded card.
  */
 @CardRegistration(set = "M15", collectorNumber = "122")
+@CardRegistration(set = "HA2", collectorNumber = "10")
+@CardRegistration(set = "WOT", collectorNumber = "38")
 public class WasteNot extends Card {
 
     public WasteNot() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "10")
+@CardRegistration(set = "OPCA", collectorNumber = "13")
 public class Aretopolis extends Card {
 
     public Aretopolis() {

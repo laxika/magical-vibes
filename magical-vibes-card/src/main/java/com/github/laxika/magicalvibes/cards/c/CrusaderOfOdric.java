@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "INR", collectorNumber = "18")
 @CardRegistration(set = "INR", collectorNumber = "338")
 @CardRegistration(set = "M13", collectorNumber = "10")
+@CardRegistration(set = "2XM", collectorNumber = "13")
 public class CrusaderOfOdric extends Card {
 
     public CrusaderOfOdric() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 
 @CardRegistration(set = "ISD", collectorNumber = "80")
 @CardRegistration(set = "DDQ", collectorNumber = "49")
+@CardRegistration(set = "UMA", collectorNumber = "72")
 public class StitchedDrake extends Card {
 
     public StitchedDrake() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ISD", collectorNumber = "73")
+@CardRegistration(set = "SIS", collectorNumber = "21")
 public class SelhoffOccultist extends Card {
 
     public SelhoffOccultist() {

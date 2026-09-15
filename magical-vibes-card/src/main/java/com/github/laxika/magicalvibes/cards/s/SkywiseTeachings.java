@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "79")
+@CardRegistration(set = "IMA", collectorNumber = "73")
 public class SkywiseTeachings extends Card {
 
     public SkywiseTeachings() {

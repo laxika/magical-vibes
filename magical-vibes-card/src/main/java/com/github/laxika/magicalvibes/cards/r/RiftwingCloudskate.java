@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "JVC", collectorNumber = "15")
 @CardRegistration(set = "MMA", collectorNumber = "62")
 @CardRegistration(set = "DDM", collectorNumber = "18")
+@CardRegistration(set = "TSR", collectorNumber = "82")
 public class RiftwingCloudskate extends Card {
 
     public RiftwingCloudskate() {

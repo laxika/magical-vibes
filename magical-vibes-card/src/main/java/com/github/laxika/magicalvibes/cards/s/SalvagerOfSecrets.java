@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "70")
+@CardRegistration(set = "GN2", collectorNumber = "25")
 public class SalvagerOfSecrets extends Card {
 
     public SalvagerOfSecrets() {

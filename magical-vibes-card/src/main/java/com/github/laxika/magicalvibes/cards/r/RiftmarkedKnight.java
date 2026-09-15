@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "14")
+@CardRegistration(set = "TSR", collectorNumber = "38")
 public class RiftmarkedKnight extends Card {
 
     public RiftmarkedKnight() {

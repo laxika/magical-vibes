@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FUT", collectorNumber = "38")
+@CardRegistration(set = "DMR", collectorNumber = "57")
 public class LeadenFists extends Card {
 
     public LeadenFists() {

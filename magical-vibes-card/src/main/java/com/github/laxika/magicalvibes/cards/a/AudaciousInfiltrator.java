@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "7")
+@CardRegistration(set = "KLR", collectorNumber = "8")
 public class AudaciousInfiltrator extends Card {
 
     public AudaciousInfiltrator() {

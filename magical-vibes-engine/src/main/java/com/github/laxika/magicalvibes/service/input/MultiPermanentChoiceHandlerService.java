@@ -108,6 +108,9 @@ public class MultiPermanentChoiceHandlerService {
             .AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
             attachAnyNumberOfControlledEquipmentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
+            attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseEquipmentToUnattachEffectHandler chooseEquipmentToUnattachEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DestroyUpToOneAttachedPermanentEffectHandler destroyUpToOneAttachedPermanentHandler;
@@ -147,6 +150,9 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerEffectHandler
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
+            controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPermanentEffectHandler
             eachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnHandler;
@@ -247,6 +253,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() < sagaTarget.minTargets()) {
             throw new IllegalStateException("Too few targets selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets attackTarget
+                && permanentIds.size() < attackTarget.minTargets()) {
+            throw new IllegalStateException("Too few targets selected");
+        }
         if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice
@@ -257,6 +267,10 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
@@ -567,6 +581,8 @@ public class MultiPermanentChoiceHandlerService {
             triggerHandler.handleEtbGraveyardCardTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets ctx) {
+            triggerHandler.handleAttackTrigger(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
             abilityActivationService.completeActivatedAbilitySacrificeAnyNumberCostChoice(
                     gameData, player, sacrificeContext, permanentIds);
@@ -602,6 +618,10 @@ public class MultiPermanentChoiceHandlerService {
             handleTransformAnyNumber(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature ctx) {
             attachAnyNumberOfControlledEquipmentHandler.completeChoice(gameData, playerId, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledAurasAndEquipmentToSource ctx) {
+            attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler.completeChoice(
+                    gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.UnattachEquipmentFromControlledCreature ctx) {
             chooseEquipmentToUnattachEffectHandler.completeChoice(gameData, permanentIds, ctx);
@@ -700,6 +720,11 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx) {
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler.completeChoice(
                     gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice ctx) {
+            controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler.completeChoice(gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }

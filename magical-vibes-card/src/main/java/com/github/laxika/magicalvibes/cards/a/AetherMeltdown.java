@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "36")
+@CardRegistration(set = "KLR", collectorNumber = "38")
 public class AetherMeltdown extends Card {
 
     public AetherMeltdown() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "108")
+@CardRegistration(set = "TSR", collectorNumber = "195")
 public class SulfurElemental extends Card {
 
     public SulfurElemental() {

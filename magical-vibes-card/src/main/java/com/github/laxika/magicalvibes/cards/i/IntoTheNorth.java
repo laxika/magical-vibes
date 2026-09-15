@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "111")
+@CardRegistration(set = "HA5", collectorNumber = "16")
 public class IntoTheNorth extends Card {
 
     public IntoTheNorth() {

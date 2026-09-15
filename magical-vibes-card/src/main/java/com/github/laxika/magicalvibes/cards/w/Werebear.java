@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "282")
+@CardRegistration(set = "EMA", collectorNumber = "191")
+@CardRegistration(set = "DMR", collectorNumber = "182")
 public class Werebear extends Card {
 
     public Werebear() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "8")
+@CardRegistration(set = "OPCA", collectorNumber = "22")
 public class TheEonFog extends Card {
 
     public TheEonFog() {

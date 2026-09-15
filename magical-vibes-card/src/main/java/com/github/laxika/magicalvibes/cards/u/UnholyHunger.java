@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "125")
+@CardRegistration(set = "UMA", collectorNumber = "120")
 public class UnholyHunger extends Card {
 
     public UnholyHunger() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "5")
+@CardRegistration(set = "2X2", collectorNumber = "7")
 public class BattlefieldPromotion extends Card {
 
     public BattlefieldPromotion() {

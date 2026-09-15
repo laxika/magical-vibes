@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "29")
+@CardRegistration(set = "EMA", collectorNumber = "41")
 public class CephalidSage extends Card {
 
     public CephalidSage() {

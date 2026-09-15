@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCreatureToBat
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 
 @CardRegistration(set = "WTH", collectorNumber = "4")
+@CardRegistration(set = "UMA", collectorNumber = "10")
 public class AngelicRenewal extends Card {
 
     public AngelicRenewal() {

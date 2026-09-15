@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "50")
+@CardRegistration(set = "TSR", collectorNumber = "54")
 public class BondedFetch extends Card {
 
     public BondedFetch() {

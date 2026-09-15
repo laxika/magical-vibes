@@ -1559,6 +1559,10 @@ public class DeathTriggerCollectorService {
         if (conditional.onlyIfNotSacrificed() && ag.wasSacrificed()) {
             return false;
         }
+        if (conditional.onlyIfNontoken()
+                && (ag.artifactCard() == null || ag.artifactCard().isToken())) {
+            return false;
+        }
         if (!match.controllerId().equals(ag.artifactControllerId())) {
             return false;
         }
@@ -2096,6 +2100,32 @@ public class DeathTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (nontoken permanent put into controller's graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    /**
+     * A source-relative sacrifice filter on an ally-death trigger compares against the permanent
+     * that died, using its last-known card types rather than the watching permanent's types.
+     */
+    @CollectsTrigger(value = SacrificePermanentsEffect.class,
+            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAllyPermanentGraveyardSacrifice(TriggerMatchContext match,
+            SacrificePermanentsEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
+        if (apg.dyingPermanent() == null) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)));
+        entry.setSourcePermanentSnapshot(new Permanent(apg.dyingPermanent()));
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (ally permanent put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

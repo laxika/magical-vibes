@@ -41,7 +41,6 @@ class RustScarabTest extends BaseCardTest {
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
-        harness.passBothPriorities();
     }
 
     @Test
@@ -52,10 +51,11 @@ class RustScarabTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FountainOfYouth());
 
         declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Fountain of Youth"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Fountain of Youth"));
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
@@ -69,9 +69,10 @@ class RustScarabTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelicChorus());
 
         declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Angelic Chorus"));
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Angelic Chorus"));
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertInGraveyard(player2, "Angelic Chorus");
@@ -85,6 +86,8 @@ class RustScarabTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FountainOfYouth());
 
         declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Fountain of Youth"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Fountain of Youth");
@@ -115,7 +118,8 @@ class RustScarabTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FountainOfYouth());
 
         declareBlock(attacker, blocker);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
 
         harness.assertOnBattlefield(player1, "Fountain of Youth");
     }

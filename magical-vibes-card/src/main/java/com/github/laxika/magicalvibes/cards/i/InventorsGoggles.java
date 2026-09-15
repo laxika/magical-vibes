@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "218")
+@CardRegistration(set = "DDU", collectorNumber = "55")
+@CardRegistration(set = "KLR", collectorNumber = "246")
 public class InventorsGoggles extends Card {
 
     public InventorsGoggles() {

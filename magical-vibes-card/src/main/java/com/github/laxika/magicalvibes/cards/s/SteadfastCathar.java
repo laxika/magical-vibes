@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "44")
+@CardRegistration(set = "SIR", collectorNumber = "46")
 public class SteadfastCathar extends Card {
 
     public SteadfastCathar() {

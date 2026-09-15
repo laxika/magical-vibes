@@ -13,6 +13,7 @@ import java.util.List;
  * {T}: Each creature attacks this turn if able.
  */
 @CardRegistration(set = "M14", collectorNumber = "141")
+@CardRegistration(set = "DDT", collectorNumber = "42")
 public class GoblinDiplomats extends Card {
 
     public GoblinDiplomats() {

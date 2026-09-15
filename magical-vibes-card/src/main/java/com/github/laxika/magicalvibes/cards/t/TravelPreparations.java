@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ISD", collectorNumber = "206")
 @CardRegistration(set = "INR", collectorNumber = "220")
 @CardRegistration(set = "INR", collectorNumber = "421")
+@CardRegistration(set = "UMA", collectorNumber = "188")
+@CardRegistration(set = "2X2", collectorNumber = "162")
+@CardRegistration(set = "SIS", collectorNumber = "57")
 public class TravelPreparations extends Card {
 
     public TravelPreparations() {

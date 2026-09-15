@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "131")
+@CardRegistration(set = "DMR", collectorNumber = "214")
 public class NightDay extends Card {
 
     public NightDay() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "231")
+@CardRegistration(set = "RVR", collectorNumber = "260")
 public class IllusionistsBracers extends Card {
 
     public IllusionistsBracers() {

@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,12 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeepwoodDrummer.class, Forest.class, GrizzlyBears.class})
 class DeepwoodDrummerTest extends BaseCardTest {
 
     @Test
     void activationBoostsTargetCreatureAndDiscardsACard() {
-        Permanent drummer = addReadyDrummer();
-        Permanent target = addReadyCreature(player2);
+        Permanent drummer = addCreatureReady(player1, new DeepwoodDrummer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         int basePower = gqs.getEffectivePower(gd, target);
@@ -37,8 +38,8 @@ class DeepwoodDrummerTest extends BaseCardTest {
 
     @Test
     void boostWearsOffAtEndOfTurn() {
-        addReadyDrummer();
-        Permanent target = addReadyCreature(player1);
+        addCreatureReady(player1, new DeepwoodDrummer());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         int basePower = gqs.getEffectivePower(gd, target);
@@ -58,10 +59,10 @@ class DeepwoodDrummerTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutCardToDiscard() {
-        addReadyDrummer();
+        addCreatureReady(player1, new DeepwoodDrummer());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,29 +71,13 @@ class DeepwoodDrummerTest extends BaseCardTest {
 
     @Test
     void cannotTargetNonCreaturePermanent() {
-        addReadyDrummer();
+        addCreatureReady(player1, new DeepwoodDrummer());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
-    }
-
-    private Permanent addReadyDrummer() {
-        return addReadyCreature(player1, new DeepwoodDrummer());
-    }
-
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        return addReadyCreature(player, new GrizzlyBears());
-    }
-
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

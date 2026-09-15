@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OHOP", collectorNumber = "19")
+@CardRegistration(set = "OPCA", collectorNumber = "40")
 public class IzzetSteamMaze extends Card {
 
     public IzzetSteamMaze() {

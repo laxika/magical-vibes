@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "111")
 @CardRegistration(set = "WAR", collectorNumber = "120")
+@CardRegistration(set = "KLR", collectorNumber = "118")
 public class ChandrasPyrohelix extends Card {
 
     public ChandrasPyrohelix() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "194")
+@CardRegistration(set = "UMA", collectorNumber = "200")
 public class GarnaTheBloodflame extends Card {
 
     public GarnaTheBloodflame() {

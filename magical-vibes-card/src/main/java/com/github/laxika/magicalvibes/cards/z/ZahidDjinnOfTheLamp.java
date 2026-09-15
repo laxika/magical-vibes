@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "76")
+@CardRegistration(set = "GNT", collectorNumber = "26")
 public class ZahidDjinnOfTheLamp extends Card {
 
     public ZahidDjinnOfTheLamp() {

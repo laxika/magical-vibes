@@ -35,6 +35,24 @@ class SacredGroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A mass-removal spell returns only your land to your battlefield")
+    void massRemovalReturnsOnlyYourLand() {
+        harness.addToBattlefield(player1, new SacredGround());
+        harness.addToBattlefield(player1, new VolrathsStronghold());
+        harness.addToBattlefield(player2, new VolrathsStronghold());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new Ruination(), "{3}{R}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertNotInGraveyard(player1, "Volrath's Stronghold");
+        harness.assertNotOnBattlefield(player2, "Volrath's Stronghold");
+        harness.assertInGraveyard(player2, "Volrath's Stronghold");
+    }
+
+    @Test
     @DisplayName("Your own spell destroying your own land does not trigger Sacred Ground")
     void ownSpellDestroyingOwnLandDoesNotTrigger() {
         harness.addToBattlefield(player1, new SacredGround());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "228")
+@CardRegistration(set = "KLR", collectorNumber = "263")
 public class PrakhataPillarBug extends Card {
 
     public PrakhataPillarBug() {

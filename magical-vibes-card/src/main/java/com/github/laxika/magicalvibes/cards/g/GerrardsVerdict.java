@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsThenGainLifeForEachCardTypeEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "102")
+@CardRegistration(set = "DMR", collectorNumber = "190")
 public class GerrardsVerdict extends Card {
 
     public GerrardsVerdict() {

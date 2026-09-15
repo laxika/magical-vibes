@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "75")
+@CardRegistration(set = "MUL", collectorNumber = "13")
+@CardRegistration(set = "MUL", collectorNumber = "78")
+@CardRegistration(set = "MUL", collectorNumber = "143")
 public class AyaraFirstOfLocthwain extends Card {
 
     public AyaraFirstOfLocthwain() {

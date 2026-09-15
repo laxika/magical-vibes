@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "77")
+@CardRegistration(set = "SIR", collectorNumber = "84")
 public class OngoingInvestigation extends Card {
 
     public OngoingInvestigation() {

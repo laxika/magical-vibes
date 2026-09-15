@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "43")
 @CardRegistration(set = "PC2", collectorNumber = "20")
+@CardRegistration(set = "PCA", collectorNumber = "20")
 public class MistbladeShinobi extends Card {
 
     public MistbladeShinobi() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "196")
+@CardRegistration(set = "GK1", collectorNumber = "9")
 public class CircuDimirLobotomist extends Card {
 
     public CircuDimirLobotomist() {

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "62")
 @CardRegistration(set = "PD3", collectorNumber = "12")
+@CardRegistration(set = "EMA", collectorNumber = "83")
 public class CabalTherapy extends Card {
 
     public CabalTherapy() {

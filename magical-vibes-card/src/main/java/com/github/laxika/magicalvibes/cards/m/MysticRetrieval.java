@@ -13,8 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "42")
+@CardRegistration(set = "SIS", collectorNumber = "20")
 @CardRegistration(set = "INR", collectorNumber = "77")
 @CardRegistration(set = "INR", collectorNumber = "363")
+@CardRegistration(set = "UMA", collectorNumber = "66")
 public class MysticRetrieval extends Card {
 
     public MysticRetrieval() {

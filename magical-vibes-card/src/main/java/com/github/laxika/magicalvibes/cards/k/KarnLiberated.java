@@ -14,6 +14,9 @@ import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "1")
 @CardRegistration(set = "MM2", collectorNumber = "4")
+@CardRegistration(set = "UMA", collectorNumber = "5")
+@CardRegistration(set = "2XM", collectorNumber = "1")
+@CardRegistration(set = "2XM", collectorNumber = "333")
 public class KarnLiberated extends Card {
 
     public KarnLiberated() {

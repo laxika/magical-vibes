@@ -10,6 +10,8 @@ import java.util.List;
 @CardRegistration(set = "TMP", collectorNumber = "290")
 @CardRegistration(set = "TPR", collectorNumber = "223")
 @CardRegistration(set = "MPS", collectorNumber = "39")
+@CardRegistration(set = "OTP", collectorNumber = "62")
+@CardRegistration(set = "OTP", collectorNumber = "79")
 public class Grindstone extends Card {
 
     public Grindstone() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "1")
 @CardRegistration(set = "DDF", collectorNumber = "20")
+@CardRegistration(set = "TSR", collectorNumber = "3")
 public class AngelOfSalvation extends Card {
 
     public AngelOfSalvation() {

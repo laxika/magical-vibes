@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "138")
 @CardRegistration(set = "DDI", collectorNumber = "19")
+@CardRegistration(set = "GK2", collectorNumber = "22")
 public class Windreaver extends Card {
 
     public Windreaver() {

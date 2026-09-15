@@ -1,22 +1,20 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.a.AetherSting;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TelepathicSpies.class, AetherSting.class})
+@CardUsed({AetherSting.class, GrizzlyBears.class, TelepathicSpies.class})
 class TelepathicSpiesTest extends BaseCardTest {
 
     @Test
@@ -63,15 +61,23 @@ class TelepathicSpiesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target self because self is not an opponent")
-    void cannotTargetSelf() {
+    @DisplayName("The ETB trigger cannot target its controller")
+    void cannotTargetItsController() {
         assertThatThrownBy(() -> castTelepathicSpies(player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("opponent");
     }
 
     private void castTelepathicSpies(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new TelepathicSpies()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0, targetPlayerId);
+    }
+
+    @Test
+    @DisplayName("Cannot target self because self is not an opponent")
+    void cannotTargetSelf() {
+        assertThatThrownBy(() -> castTelepathicSpies(player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

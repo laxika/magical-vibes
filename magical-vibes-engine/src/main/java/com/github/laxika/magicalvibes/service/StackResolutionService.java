@@ -157,6 +157,10 @@ public class StackResolutionService {
         if (gameData.stack.isEmpty()) return;
 
         StackEntry entry = gameData.stack.removeLast();
+        if (entry.getCard() != null && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+            gameData.spellsMadeUncounterable.remove(entry.getCard().getId());
+        }
         gameData.priorityPassedBy.clear();
 
         // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack
@@ -1286,7 +1290,7 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    physicalCard.getId(), ownerId));
+                    physicalCard.getId(), ownerId, entry.getCard(), entry.getControllerId()));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.isCastWithFlashback()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());

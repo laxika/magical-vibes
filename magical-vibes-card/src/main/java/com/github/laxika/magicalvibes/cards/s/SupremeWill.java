@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "49")
 @CardRegistration(set = "AKR", collectorNumber = "83")
+@CardRegistration(set = "GN3", collectorNumber = "40")
 public class SupremeWill extends Card {
 
     public SupremeWill() {

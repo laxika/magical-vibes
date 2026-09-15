@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "129")
+@CardRegistration(set = "DMR", collectorNumber = "213")
 public class IllusionReality extends Card {
 
     public IllusionReality() {

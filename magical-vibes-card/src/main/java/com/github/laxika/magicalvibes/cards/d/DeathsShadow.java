@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "WWK", collectorNumber = "57")
+@CardRegistration(set = "MM3", collectorNumber = "64")
+@CardRegistration(set = "2XM", collectorNumber = "82")
+@CardRegistration(set = "HA4", collectorNumber = "9")
 public class DeathsShadow extends Card {
 
     public DeathsShadow() {

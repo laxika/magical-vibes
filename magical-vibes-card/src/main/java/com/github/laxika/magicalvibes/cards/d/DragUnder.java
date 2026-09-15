@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "57")
 @CardRegistration(set = "W17", collectorNumber = "9")
+@CardRegistration(set = "SIR", collectorNumber = "62")
 public class DragUnder extends Card {
 
     public DragUnder() {

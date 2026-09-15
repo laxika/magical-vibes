@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGr
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "202")
+@CardRegistration(set = "GK1", collectorNumber = "12")
 public class DimirDoppelganger extends Card {
 
     public DimirDoppelganger() {

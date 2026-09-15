@@ -15,6 +15,9 @@ import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
 /**
  * Shared completion logic for input handler services.
@@ -34,6 +37,8 @@ public class InputCompletionService {
     private final StateBasedActionService stateBasedActionService;
     private final EffectResolutionService effectResolutionService;
     @Autowired
+    private InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
     private ObjectProvider<StackResolutionService> stackResolutionService;
     @Autowired
     @Lazy
@@ -41,6 +46,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private DrawService drawService;
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -67,10 +75,23 @@ public class InputCompletionService {
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        var queuedManaChoice = gameData.pendingInteractions.stream()
+                .filter(pending -> pending instanceof PendingInteraction.ColorChoice choice
+                        && !(choice.context() instanceof ChoiceContext.RegenerationShieldChoice))
+                .findFirst().orElse(null);
+        if (queuedManaChoice != null) {
+            gameData.pendingInteractions.removeFirstOccurrence(queuedManaChoice);
+            interactionHandlerRegistry.begin(gameData, queuedManaChoice);
+            return;
+        }
         if (gameData.pendingInteractions.stream().anyMatch(pending ->
-                pending instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice choice
-                        && choice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice)) {
+                pending instanceof PendingInteraction.ColorChoice choice
+                        && choice.context() instanceof ChoiceContext.RegenerationShieldChoice)) {
             stateBasedActionService.performStateBasedActions(gameData);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
+        if (!gameData.pendingAuctionEntries.isEmpty()) {
+            permanentAuctionService.resumePendingEntries(gameData);
             if (gameData.interaction.isAwaitingInput()) return;
         }
         if (!gameData.pendingCardDraws.isEmpty()) {

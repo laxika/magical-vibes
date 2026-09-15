@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "204")
+@CardRegistration(set = "RVR", collectorNumber = "231")
 public class TajicLegionsEdge extends Card {
 
     public TajicLegionsEdge() {

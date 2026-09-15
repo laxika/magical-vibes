@@ -73,8 +73,8 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
             return;
         }
 
-        boolean multipleOccurrences = !targetSpell.isSingleTarget();
-        List<UUID> validNewTargets = multipleOccurrences
+        boolean indexedTarget = targetSpell.getTargetId() == null || !targetSpell.isSingleTarget();
+        List<UUID> validNewTargets = indexedTarget
                 ? psychicBattleSupport.collectLegalAlternatives(gameData, targetSpell, 0)
                 : targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
         if (creatureTargetsOnly) {
@@ -88,7 +88,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         }
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(
-                targetSpell.getCard().getId(), multipleOccurrences ? 0 : null));
+                targetSpell.getCard().getId(), indexedTarget ? 0 : null));
         playerInputService.beginPermanentChoice(
                 gameData,
                 controllerId,

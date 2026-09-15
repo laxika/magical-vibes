@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,10 +11,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PitTrap.class, GoblinSpelunkers.class, PegasusCharger.class})
+@CardUsed({BalduvianBears.class, GoblinSpelunkers.class, KjeldoranSkyknight.class, PegasusCharger.class, PitTrap.class})
 class PitTrapTest extends BaseCardTest {
 
     private Permanent addReadyTrap(Player player) {
@@ -90,6 +91,36 @@ class PitTrapTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, idxOf(player1, trap), 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying the generic mana cost")
+    void cannotActivateWithoutMana() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addAttacker(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Does not destroy the target if it stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addAttacker(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 
     @Test

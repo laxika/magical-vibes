@@ -8,14 +8,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JalumTome.class, Forest.class})
+@CardUsed({Forest.class, JalumTome.class})
 class JalumTomeTest extends BaseCardTest {
 
     @Test
@@ -73,6 +71,28 @@ class JalumTomeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+    }
+
+    @Test
+    @DisplayName("The drawn card can be discarded when the hand starts empty")
+    void discardsDrawnCardWhenHandStartsEmpty() {
+        harness.addToBattlefield(player1, new JalumTome());
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawnCard);
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "88")
+@CardRegistration(set = "SIR", collectorNumber = "109")
 public class DuskFeaster extends Card {
 
     public DuskFeaster() {

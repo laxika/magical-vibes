@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "277")
+@CardRegistration(set = "EMA", collectorNumber = "188")
 @CardRegistration(set = "DDS", collectorNumber = "51")
+@CardRegistration(set = "2XM", collectorNumber = "181")
 public class SylvanMight extends Card {
 
     public SylvanMight() {

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "143")
+@CardRegistration(set = "MUL", collectorNumber = "15")
+@CardRegistration(set = "MUL", collectorNumber = "80")
+@CardRegistration(set = "MUL", collectorNumber = "145")
 public class SeizanPerverterOfTruth extends Card {
 
     public SeizanPerverterOfTruth() {

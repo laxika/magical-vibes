@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "203")
 @CardRegistration(set = "SOI", collectorNumber = "210")
+@CardRegistration(set = "SIR", collectorNumber = "201")
 public class HinterlandLogger extends Card {
 
     public HinterlandLogger() {

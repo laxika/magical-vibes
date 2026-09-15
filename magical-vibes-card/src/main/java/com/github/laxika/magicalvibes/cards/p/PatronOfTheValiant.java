@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "28")
+@CardRegistration(set = "GN2", collectorNumber = "10")
 public class PatronOfTheValiant extends Card {
 
     public PatronOfTheValiant() {

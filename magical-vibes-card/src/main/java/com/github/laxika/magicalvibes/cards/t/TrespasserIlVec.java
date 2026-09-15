@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "138")
+@CardRegistration(set = "TSR", collectorNumber = "147")
 public class TrespasserIlVec extends Card {
 
     public TrespasserIlVec() {

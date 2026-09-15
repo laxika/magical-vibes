@@ -11,6 +11,8 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "8")
 @CardRegistration(set = "PLS", collectorNumber = "116")
+@CardRegistration(set = "HA2", collectorNumber = "17")
+@CardRegistration(set = "2XM", collectorNumber = "210")
 public class MeddlingMage extends Card {
 
     public MeddlingMage() {

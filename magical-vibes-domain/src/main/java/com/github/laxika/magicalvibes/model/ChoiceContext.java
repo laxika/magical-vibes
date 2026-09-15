@@ -43,7 +43,15 @@ public sealed interface ChoiceContext {
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
-                                          int nextTargetIndex) implements ChoiceContext {
+                                          int nextTargetIndex, boolean allowsPartialDistribution) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, false);
+        }
 
         public CounterDistributionAssignment {
             effects = List.copyOf(effects);
@@ -869,6 +877,9 @@ public sealed interface ChoiceContext {
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing land or nonland at resolution for a spell with no permanent to store it on. */
+    record SpellLandOrNonlandChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing a color at resolution for a spell with no permanent to store it on. */
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
 
@@ -1635,6 +1646,19 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(TIME, KNOWLEDGE);
 
         public PleaForPowerChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Split Decision: the current player voted for denial or duplication. */
+    record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                             Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DENIAL = "Denial";
+        public static final String DUPLICATION = "Duplication";
+        public static final List<String> OPTIONS = List.of(DENIAL, DUPLICATION);
+
+        public VoteForDenialOrDuplicationChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             votes = Map.copyOf(votes);
         }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "32")
+@CardRegistration(set = "IMA", collectorNumber = "32")
 public class StalwartAven extends Card {
 
     public StalwartAven() {
