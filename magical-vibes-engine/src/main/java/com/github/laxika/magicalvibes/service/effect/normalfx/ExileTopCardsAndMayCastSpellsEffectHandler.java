@@ -31,6 +31,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -61,6 +62,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 : Math.max(0, amountEvaluationService.evaluate(gameData, e.manaValueLimit(),
                         AmountContext.forStackEntry(entry, null)));
         List<UUID> castableSpellIds = new ArrayList<>();
+        List<UUID> exiledThisProcess = new ArrayList<>();
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
             List<Card> deck = gameData.playerDecks.get(playerId);
@@ -72,6 +74,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 } else {
                     gameData.addToExile(playerId, card);
                 }
+                exiledThisProcess.add(card.getId());
                 gameLogService.append(gameData, GameLog.builder()
                         .text(playerName + " exiles ")
                         .card(card)
@@ -84,7 +87,15 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             }
         }
 
+        if (e.remainderToBottomRandomly()) {
+            gameData.pendingExileFreeCastRemainderToBottom.clear();
+            gameData.pendingExileFreeCastRemainderToBottom.addAll(exiledThisProcess);
+        }
+
         if (castableSpellIds.isEmpty()) {
+            if (e.remainderToBottomRandomly()) {
+                exileFreeCastQueueSupport.putRemainderOnOwnersLibrariesRandomly(gameData);
+            }
             log.info("Game {} - {} found no spells among the exiled cards", gameData.id, entry.getCard().getName());
             return;
         }

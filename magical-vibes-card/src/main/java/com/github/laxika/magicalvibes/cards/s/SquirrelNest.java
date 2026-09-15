@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "274")
+@CardRegistration(set = "MH1", collectorNumber = "182")
 public class SquirrelNest extends Card {
 
     public SquirrelNest() {

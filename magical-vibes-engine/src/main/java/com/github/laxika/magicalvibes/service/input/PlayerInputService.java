@@ -1212,8 +1212,12 @@ public class PlayerInputService {
     }
 
     public void beginSpellCardTypeChoice(GameData gameData, UUID playerId) {
+        beginSpellCardTypeChoice(gameData, playerId, List.of(CardType.values()));
+    }
+
+    public void beginSpellCardTypeChoice(GameData gameData, UUID playerId, List<CardType> allowedTypes) {
         ChoiceContext.SpellCardTypeChoice choiceContext = new ChoiceContext.SpellCardTypeChoice(playerId);
-        List<String> cardTypes = Arrays.stream(CardType.values())
+        List<String> cardTypes = allowedTypes.stream()
                 .map(CardType::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

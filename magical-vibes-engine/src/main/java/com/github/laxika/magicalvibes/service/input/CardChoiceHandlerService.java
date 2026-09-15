@@ -2069,6 +2069,13 @@ public class CardChoiceHandlerService {
         }
 
         // Deathrender: "…and attach this Equipment to it" — attach the source Equipment to the entered creature.
+        if (!cloaked && !faceDown && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, permanent, playerId,
+                    CounterType.LOYALTY, card.getLoyalty());
+            permanent.setCounterCount(CounterType.LOYALTY, loyalty);
+            permanent.setSummoningSick(false);
+        }
+
         if (attachEquipmentCardId != null) {
             attachSourceEquipmentToPermanent(gameData, attachEquipmentCardId, permanent);
         }

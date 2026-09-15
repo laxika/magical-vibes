@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDO", collectorNumber = "38")
 @CardRegistration(set = "JVC", collectorNumber = "8")
 @CardRegistration(set = "A25", collectorNumber = "64")
+@CardRegistration(set = "MH1", collectorNumber = "55")
 public class ManOWar extends Card {
 
     public ManOWar() {

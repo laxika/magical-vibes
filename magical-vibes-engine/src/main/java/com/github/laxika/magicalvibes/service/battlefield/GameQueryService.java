@@ -2015,9 +2015,9 @@ public class GameQueryService {
 
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
-     * or {@code 0} when no battlefield or turn-scoped life-floor effect currently applies.
-     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield or in their temporary
-     * player effects currently applies.
+     * or {@code 0} when no battlefield, emblem, or turn-scoped life-floor effect currently applies.
+     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield, in an emblem they
+     * control, or in their temporary player effects currently applies.
      * Callers must treat {@code 0} as "no floor" (do not clamp life to 0). Each such effect only
      * contributes its floor while its {@link LifeFloorCondition} holds, evaluated against the
      * player's state before the damage is applied ({@code currentLife}).
@@ -2039,6 +2039,14 @@ public class GameQueryService {
                 .getOrDefault(playerId, List.of())) {
             if (effect instanceof DamageLifeFloorEffect lifeFloor) {
                 floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
+            }
+        }
+        for (Emblem emblem : gameData.emblems) {
+            if (!playerId.equals(emblem.controllerId())) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof DamageLifeFloorEffect lifeFloor) {
+                    floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
+                }
             }
         }
         return floor;
@@ -2403,6 +2411,19 @@ public class GameQueryService {
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
                     }
+                }
+            }
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!Objects.equals(emblem.controllerId(), playerId)) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    return true;
                 }
             }
         }

@@ -23,7 +23,10 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -122,6 +125,30 @@ public class ExileFreeCastQueueSupport {
             gameData.removeFromExile(cardId);
             graveyardService.addCardToGraveyard(gameData, entry.ownerId(), entry.card());
             gameLogService.append(gameData, GameLog.cardThen(entry.card(), " is put into its owner's graveyard."));
+        }
+    }
+
+    /** Randomly puts every still-exiled card in the pending remainder into its owner's library. */
+    public void putRemainderOnOwnersLibrariesRandomly(GameData gameData) {
+        List<UUID> remainder = new ArrayList<>(gameData.pendingExileFreeCastRemainderToBottom);
+        gameData.pendingExileFreeCastRemainderToBottom.clear();
+        Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
+        for (UUID cardId : remainder) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry == null || !gameData.removeFromExile(cardId)) {
+                continue;
+            }
+            cardsByOwner.computeIfAbsent(entry.ownerId(), ignored -> new ArrayList<>())
+                    .add(entry.card());
+        }
+        for (Map.Entry<UUID, List<Card>> ownerCards : cardsByOwner.entrySet()) {
+            Collections.shuffle(ownerCards.getValue());
+            gameData.playerDecks.computeIfAbsent(ownerCards.getKey(), ignored -> new ArrayList<>())
+                    .addAll(ownerCards.getValue());
+            for (Card card : ownerCards.getValue()) {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is put on the bottom of its owner's library."));
+            }
         }
     }
 
@@ -344,8 +371,11 @@ public class ExileFreeCastQueueSupport {
                 }
                 boolean willGoToGraveyard = gameData.pendingExileFreeCastRemainderToGraveyard
                         .contains(physicalCard.getId());
+                boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToBottom
+                        .contains(physicalCard.getId());
                 gameLogService.append(gameData, GameLog.cardThen(physicalCard, willGoToGraveyard
                         ? " has no valid targets and will be put into the graveyard."
+                        : willGoToBottom ? " has no valid targets and will be put on the bottom of its owner's library."
                         : asCopy ? " has no valid targets."
                         : " has no valid targets and stays exiled."));
                 castNextFromQueue(gameData, playerId);
@@ -399,8 +429,10 @@ public class ExileFreeCastQueueSupport {
         if (asCopy) {
             gameData.removeFromExile(card.getId());
         }
+        boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToBottom.contains(card.getId());
         gameLogService.append(gameData, GameLog.cardThen(card, asCopy
                 ? " has an additional cast cost that can't be paid and ceases to exist."
+                : willGoToBottom ? " has an additional cast cost that can't be paid and will be put on the bottom of its owner's library."
                 : " has an additional cast cost that can't be paid and stays exiled."));
         castNextFromQueue(gameData, playerId);
     }
@@ -409,8 +441,10 @@ public class ExileFreeCastQueueSupport {
         if (asCopy) {
             gameData.removeFromExile(card.getId());
         }
+        boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToBottom.contains(card.getId());
         gameLogService.append(gameData, GameLog.cardThen(card, asCopy
                 ? " has no legal mode and ceases to exist."
+                : willGoToBottom ? " has no legal mode and will be put on the bottom of its owner's library."
                 : " has no legal mode and stays exiled."));
         castNextFromQueue(gameData, playerId);
     }
@@ -429,6 +463,7 @@ public class ExileFreeCastQueueSupport {
     private void finishFreeCastProcess(GameData gameData) {
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
+        putRemainderOnOwnersLibrariesRandomly(gameData);
         if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
             return;
         }

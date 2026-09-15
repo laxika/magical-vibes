@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "EMA", collectorNumber = "130")
 @CardRegistration(set = "JVC", collectorNumber = "49")
 @CardRegistration(set = "DDS", collectorNumber = "37")
+@CardRegistration(set = "MH1", collectorNumber = "122")
 public class Firebolt extends Card {
 
     public Firebolt() {

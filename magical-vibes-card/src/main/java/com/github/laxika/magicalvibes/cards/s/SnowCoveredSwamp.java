@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "KHM", collectorNumber = "280")
 @CardRegistration(set = "KHM", collectorNumber = "281")
 @CardRegistration(set = "ME2", collectorNumber = "243")
+@CardRegistration(set = "MH1", collectorNumber = "252")
 public class SnowCoveredSwamp extends Card {
 
     public SnowCoveredSwamp() {

@@ -1630,6 +1630,9 @@ public class GameData {
      */
     public final List<UUID> pendingExileFreeCastRemainderToGraveyard = new ArrayList<>();
 
+    /** Cards exiled by a free-cast process that should be randomly put on their owners' libraries' bottoms. */
+    public final List<UUID> pendingExileFreeCastRemainderToBottom = new ArrayList<>();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -5778,6 +5781,7 @@ public class GameData {
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
+        copy.pendingExileFreeCastRemainderToBottom.addAll(this.pendingExileFreeCastRemainderToBottom);
         copy.pendingSpellweaverVoluteReattachment = this.pendingSpellweaverVoluteReattachment;
 
         // --- Turn-scoped counters ---
