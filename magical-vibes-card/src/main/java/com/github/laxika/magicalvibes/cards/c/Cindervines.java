@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "161")
+@CardRegistration(set = "RVR", collectorNumber = "171")
 public class Cindervines extends Card {
 
     public Cindervines() {

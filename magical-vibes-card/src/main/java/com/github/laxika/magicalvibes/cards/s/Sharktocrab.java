@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "206")
+@CardRegistration(set = "RVR", collectorNumber = "222")
 public class Sharktocrab extends Card {
 
     public Sharktocrab() {

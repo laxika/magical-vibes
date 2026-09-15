@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "221")
+@CardRegistration(set = "RVR", collectorNumber = "244")
 public class BedeckBedazzle extends Card {
 
     public BedeckBedazzle() {

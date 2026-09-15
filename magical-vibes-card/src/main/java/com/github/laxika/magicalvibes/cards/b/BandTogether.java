@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerD
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "153")
+@CardRegistration(set = "RVR", collectorNumber = "132")
 public class BandTogether extends Card {
 
     public BandTogether() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "111")
+@CardRegistration(set = "RVR", collectorNumber = "185")
 public class GobhobblerRats extends Card {
 
     public GobhobblerRats() {

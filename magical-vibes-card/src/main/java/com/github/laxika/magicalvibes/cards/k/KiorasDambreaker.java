@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "58")
+@CardRegistration(set = "RVR", collectorNumber = "48")
 public class KiorasDambreaker extends Card {
 
     public KiorasDambreaker() {

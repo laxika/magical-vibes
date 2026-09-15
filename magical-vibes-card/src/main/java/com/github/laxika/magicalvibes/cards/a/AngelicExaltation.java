@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "2")
+@CardRegistration(set = "RVR", collectorNumber = "2")
 public class AngelicExaltation extends Card {
 
     public AngelicExaltation() {

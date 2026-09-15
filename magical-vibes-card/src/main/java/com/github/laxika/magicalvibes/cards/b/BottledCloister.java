@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIn
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "256")
+@CardRegistration(set = "RVR", collectorNumber = "252")
 public class BottledCloister extends Card {
 
     public BottledCloister() {

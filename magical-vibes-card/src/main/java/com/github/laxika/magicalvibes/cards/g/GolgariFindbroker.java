@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "175")
+@CardRegistration(set = "RVR", collectorNumber = "187")
 public class GolgariFindbroker extends Card {
 
     public GolgariFindbroker() {

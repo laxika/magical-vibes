@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "4")
+@CardRegistration(set = "RVR", collectorNumber = "4")
 public class ArrestersZeal extends Card {
 
     public ArrestersZeal() {

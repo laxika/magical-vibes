@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "57")
+@CardRegistration(set = "RVR", collectorNumber = "65")
 public class VedalkenMesmerist extends Card {
 
     public VedalkenMesmerist() {

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "229")
+@CardRegistration(set = "RVR", collectorNumber = "247")
 public class ResponseResurgence extends Card {
 
     public ResponseResurgence() {
