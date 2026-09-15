@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "239")
+@CardRegistration(set = "BRR", collectorNumber = "53")
 public class SigilOfValor extends Card {
 
     public SigilOfValor() {

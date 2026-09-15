@@ -1559,6 +1559,10 @@ public class DeathTriggerCollectorService {
         if (conditional.onlyIfNotSacrificed() && ag.wasSacrificed()) {
             return false;
         }
+        if (conditional.onlyIfNontoken()
+                && (ag.artifactCard() == null || ag.artifactCard().isToken())) {
+            return false;
+        }
         if (!match.controllerId().equals(ag.artifactControllerId())) {
             return false;
         }

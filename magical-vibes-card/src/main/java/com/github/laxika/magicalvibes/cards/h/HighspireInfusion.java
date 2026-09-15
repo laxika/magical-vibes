@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "111")
+@CardRegistration(set = "KLR", collectorNumber = "163")
 public class HighspireInfusion extends Card {
 
     public HighspireInfusion() {

@@ -250,6 +250,8 @@ public class CombatDamageService {
         // All combat damage is simultaneous, so the infect check must use pre-damage life.
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
 
+        applyPlayerDamage(gameData, state, defenderId);
+
         // Process lifelink before removing dead creatures
         processLifelink(gameData, state.combatDamageDealt);
         processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
@@ -264,7 +266,6 @@ public class CombatDamageService {
         // place combat casualties are determined (CR 704.5f/5g/5h/5i).
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         applyPendingDralnuReplacements(gameData, state);
-        applyPlayerDamage(gameData, state, defenderId);
         applyPlaneswalkerDamage(gameData, state);
         checkCombatExcessDamageTriggers(gameData, state, atkBf, defBf);
         processAllyDealtDamageToPlaneswalkerTriggers(gameData, state);
@@ -1189,8 +1190,12 @@ public class CombatDamageService {
                     if (effect instanceof GainLifeEqualToControlledCreatureCombatDamageEffect) {
                         UUID enchantmentControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                         if (controllerId.equals(enchantmentControllerId)) {
-                            lifeSupport.applyGainLife(gameData, controllerId, damageDealt, perm.getCard().getName(),
-                                    perm.getCard(), StackEntryType.TRIGGERED_ABILITY, controllerId);
+                            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(), controllerId, perm.getCard().getName() + "'s ability",
+                                    List.of(new com.github.laxika.magicalvibes.model.effect.GainLifeEffect(damageDealt)),
+                                    (UUID) null, perm.getId());
+                            trigger.setNonTargeting(true);
+                            gameData.enqueueTrigger(trigger);
                         }
                     }
                 }
@@ -1890,6 +1895,19 @@ public class CombatDamageService {
                             .mapToInt(Map.Entry::getValue)
                             .sum()
                             : damageDealt;
+                    if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
+                        firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
+                    }
+                    if (firedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        UUID graveyardOwnerId = firedEffect.targetSpec().graveyardScope().orElse(null)
+                                == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                perm.getCard(), attackerId, new ArrayList<>(List.of(firedEffect)), graveyardOwnerId,
+                                0, triggerDamage, 0, null, false, perm.getId()));
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
                     // against them (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(
@@ -2985,6 +3003,12 @@ public class CombatDamageService {
         state.damageToDefendingPlayer *= playerMultiplier;
         state.poisonDamageToDefendingPlayer *= playerMultiplier;
         artifactDamage *= playerMultiplier;
+        if (playerMultiplier != 1) {
+            state.combatDamageDealtToPlayer.replaceAll((source, amount) -> {
+                state.combatDamageDealt.merge(source, amount * (playerMultiplier - 1), Integer::sum);
+                return amount * playerMultiplier;
+            });
+        }
         // Malignus: the part of the damage dealt by sources whose damage can't be prevented is a floor
         // no prevention step below may go under. Redirection and replacement steps still see (and may
         // move) the whole amount, so the floor is re-clamped after each of them.
@@ -3023,6 +3047,9 @@ public class CombatDamageService {
             state.poisonDamageToDefendingPlayer = 0;
         } else if (damageSupport.applyCrumblingSanctuaryReplacement(gameData, defenderId,
                 state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer) > 0) {
+            state.combatDamageDealtToPlayer.forEach((source, amount) ->
+                    state.combatDamageDealt.computeIfPresent(source, (ignored, total) -> total - amount));
+            state.combatDamageDealtToPlayer.replaceAll((source, amount) -> 0);
             state.damageToDefendingPlayer = 0;
             state.poisonDamageToDefendingPlayer = 0;
         } else {

@@ -205,9 +205,14 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveAllPermanents(GameData gameData, StackEntry entry, TapPermanentsEffect e) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        UUID defendingPlayerId = attackedTargetId == null ? null
+                : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withDefendingPlayerId(defendingPlayerId);
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {

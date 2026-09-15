@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "UMA", collectorNumber = "234")
 @CardRegistration(set = "EMA", collectorNumber = "230")
 @CardRegistration(set = "E02", collectorNumber = "43")
+@CardRegistration(set = "TSR", collectorNumber = "272")
 public class PrismaticLens extends Card {
 
     public PrismaticLens() {

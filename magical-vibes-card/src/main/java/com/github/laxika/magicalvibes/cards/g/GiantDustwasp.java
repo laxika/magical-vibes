@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "129")
 @CardRegistration(set = "MMA", collectorNumber = "145")
+@CardRegistration(set = "TSR", collectorNumber = "206")
 public class GiantDustwasp extends Card {
 
     public GiantDustwasp() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -52,6 +53,25 @@ public class ExileCastTargetSupport {
             case BATTLE -> StackEntryType.BATTLE_SPELL;
             default -> StackEntryType.SORCERY_SPELL;
         };
+    }
+
+    public void queueAfterSuccessfulCast(GameData gameData, Card fallbackSourceCard, UUID controllerId,
+                                         UUID sourcePermanentId, CardEffect afterCastEffect) {
+        if (afterCastEffect == null || sourcePermanentId == null) {
+            return;
+        }
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Card sourceCard = sourcePermanent == null ? fallbackSourceCard : sourcePermanent.getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                List.of(afterCastEffect),
+                null,
+                sourcePermanentId);
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
     }
 
     /**

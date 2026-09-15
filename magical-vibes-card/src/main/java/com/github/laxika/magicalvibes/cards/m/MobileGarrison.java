@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "165")
+@CardRegistration(set = "KLR", collectorNumber = "253")
 public class MobileGarrison extends Card {
 
     public MobileGarrison() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "KTK", collectorNumber = "200")
 @CardRegistration(set = "CP3", collectorNumber = "5")
+@CardRegistration(set = "EA1", collectorNumber = "16")
 public class SiegeRhino extends Card {
 
     public SiegeRhino() {

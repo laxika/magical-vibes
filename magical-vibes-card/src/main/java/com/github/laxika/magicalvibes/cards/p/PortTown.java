@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "278")
+@CardRegistration(set = "SIR", collectorNumber = "273")
 public class PortTown extends Card {
 
     public PortTown() {

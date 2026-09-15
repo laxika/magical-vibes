@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "15")
+@CardRegistration(set = "TSR", collectorNumber = "17")
 public class ErrantDoomsayers extends Card {
 
     public ErrantDoomsayers() {

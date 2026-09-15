@@ -90,6 +90,28 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class ValidTargetServiceTest {
 
+    @Test
+    void optionalTriggeredAbilityCannotTargetShroud() {
+        Card source = new Card();
+        Permanent target = new Permanent(new Card());
+        when(gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)).thenReturn(true);
+
+        assertThat(validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, source,
+                List.of(new DealDamageToTargetCreatureEffect(1)), null, target, player1Id)).isFalse();
+    }
+
+    @Test
+    void optionalTriggeredAbilityCannotTargetAnOpponentsHexproofPermanent() {
+        Card source = new Card();
+        Permanent target = new Permanent(new Card());
+        when(gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)).thenReturn(false);
+        when(gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)).thenReturn(true);
+        when(gameQueryService.findPermanentController(gameData, target.getId())).thenReturn(player2Id);
+
+        assertThat(validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, source,
+                List.of(new DealDamageToTargetCreatureEffect(1)), null, target, player1Id)).isFalse();
+    }
+
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private TargetValidationService targetValidationService;

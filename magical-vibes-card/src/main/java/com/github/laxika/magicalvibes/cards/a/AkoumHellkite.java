@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubt
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "139")
+@CardRegistration(set = "GN2", collectorNumber = "36")
 public class AkoumHellkite extends Card {
 
     public AkoumHellkite() {

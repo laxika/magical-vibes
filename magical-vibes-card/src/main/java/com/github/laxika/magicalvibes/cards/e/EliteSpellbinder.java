@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "17")
+@CardRegistration(set = "SLC", collectorNumber = "2021")
+@CardRegistration(set = "SLC", collectorNumber = "83")
 public class EliteSpellbinder extends Card {
 
     public EliteSpellbinder() {

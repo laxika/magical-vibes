@@ -157,6 +157,10 @@ public class StackResolutionService {
         if (gameData.stack.isEmpty()) return;
 
         StackEntry entry = gameData.stack.removeLast();
+        if (entry.getCard() != null && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+            gameData.spellsMadeUncounterable.remove(entry.getCard().getId());
+        }
         gameData.priorityPassedBy.clear();
 
         // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack

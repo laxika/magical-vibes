@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "58")
+@CardRegistration(set = "KLR", collectorNumber = "59")
 public class NimbleInnovator extends Card {
 
     public NimbleInnovator() {

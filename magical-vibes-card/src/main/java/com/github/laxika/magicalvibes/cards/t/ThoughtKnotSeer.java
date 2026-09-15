@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "9")
+@CardRegistration(set = "EA2", collectorNumber = "3")
 public class ThoughtKnotSeer extends Card {
 
     public ThoughtKnotSeer() {

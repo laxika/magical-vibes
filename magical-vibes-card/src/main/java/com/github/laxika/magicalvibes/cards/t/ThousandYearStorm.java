@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantO
 
 @CardRegistration(set = "FDN", collectorNumber = "248")
 @CardRegistration(set = "GRN", collectorNumber = "207")
+@CardRegistration(set = "2X2", collectorNumber = "286")
 public class ThousandYearStorm extends Card {
 
     public ThousandYearStorm() {

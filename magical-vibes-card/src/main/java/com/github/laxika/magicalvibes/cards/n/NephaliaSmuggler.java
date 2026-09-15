@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "69")
 @CardRegistration(set = "DDQ", collectorNumber = "27")
+@CardRegistration(set = "2X2", collectorNumber = "61")
 public class NephaliaSmuggler extends Card {
 
     public NephaliaSmuggler() {

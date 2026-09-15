@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "176")
+@CardRegistration(set = "2X2", collectorNumber = "328")
 public class PillarOfTheParuns extends Card {
 
     public PillarOfTheParuns() {

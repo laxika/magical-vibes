@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "PC2", collectorNumber = "46")
 @CardRegistration(set = "UMA", collectorNumber = "134")
 @CardRegistration(set = "PCA", collectorNumber = "46")
+@CardRegistration(set = "2X2", collectorNumber = "113")
 public class HissingIguanar extends Card {
 
     public HissingIguanar() {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "239")
+@CardRegistration(set = "KLR", collectorNumber = "276")
 public class Whirlermaker extends Card {
 
     public Whirlermaker() {

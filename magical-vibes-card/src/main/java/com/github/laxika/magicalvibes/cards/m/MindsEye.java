@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "205")
 @CardRegistration(set = "MPS", collectorNumber = "18")
+@CardRegistration(set = "BRR", collectorNumber = "33")
 public class MindsEye extends Card {
 
     public MindsEye() {

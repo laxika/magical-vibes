@@ -16,6 +16,9 @@ public enum ManaSpendRestriction {
     /** No rider — "Add N mana of any one color" lands in the ordinary pool (Birds of Paradise). */
     NONE,
 
+    /** Choose a color in the activating player's commander's color identity (Command Tower). */
+    COMMANDER_COLOR_IDENTITY,
+
     /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
     SPELL_ONLY,
 

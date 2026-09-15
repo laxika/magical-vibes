@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "35")
 @CardRegistration(set = "ROE", collectorNumber = "41")
+@CardRegistration(set = "SIR", collectorNumber = "40")
 public class PuncturingLight extends Card {
 
     public PuncturingLight() {

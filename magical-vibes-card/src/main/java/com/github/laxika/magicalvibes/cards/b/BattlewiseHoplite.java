@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "189")
+@CardRegistration(set = "EA1", collectorNumber = "15")
 public class BattlewiseHoplite extends Card {
 
     public BattlewiseHoplite() {

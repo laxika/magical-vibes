@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "300")
+@CardRegistration(set = "2X2", collectorNumber = "148")
 public class GnarlbackRhino extends Card {
 
     public GnarlbackRhino() {

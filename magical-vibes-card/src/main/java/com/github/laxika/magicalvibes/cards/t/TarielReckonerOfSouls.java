@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "V15", collectorNumber = "15")
+@CardRegistration(set = "2X2", collectorNumber = "281")
 public class TarielReckonerOfSouls extends Card {
 
     public TarielReckonerOfSouls() {

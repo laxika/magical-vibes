@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "162")
+@CardRegistration(set = "KLR", collectorNumber = "249")
 public class LifecraftersBestiary extends Card {
 
     public LifecraftersBestiary() {

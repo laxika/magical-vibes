@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "141")
+@CardRegistration(set = "SIS", collectorNumber = "65")
 public class Immerwolf extends Card {
 
     public Immerwolf() {

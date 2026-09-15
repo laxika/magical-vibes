@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "137")
 @CardRegistration(set = "ONS", collectorNumber = "140")
+@CardRegistration(set = "2XM", collectorNumber = "88")
 public class DoomedNecromancer extends Card {
 
     public DoomedNecromancer() {

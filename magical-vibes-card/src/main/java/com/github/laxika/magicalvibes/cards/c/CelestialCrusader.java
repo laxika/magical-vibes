@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "7")
 @CardRegistration(set = "DDF", collectorNumber = "14")
+@CardRegistration(set = "TSR", collectorNumber = "13")
 public class CelestialCrusader extends Card {
 
     public CelestialCrusader() {

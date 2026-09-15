@@ -193,10 +193,12 @@ public class CloneService {
                                                            Card physicalCard, boolean transformed,
                                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect,
                                                            int xValue) {
-        boolean hasCreatureCard = gameData.playerGraveyards.values().stream()
+        long creatureCardCount = gameData.playerGraveyards.values().stream()
                 .flatMap(List::stream)
-                .anyMatch(graveyardCard -> graveyardCard.hasType(CardType.CREATURE));
-        if (!hasCreatureCard) {
+                .filter(graveyardCard -> graveyardCard.hasType(CardType.CREATURE))
+                .count();
+        int requiredCreatureCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
+        if (creatureCardCount < requiredCreatureCards) {
             return false;
         }
 
@@ -226,12 +228,17 @@ public class CloneService {
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = true;
+        gameData.cloneOperation.exileTwoAndAddOtherPowerCounters =
+                copyEffect.exileTwoAndAddOtherPowerCounters();
+        gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 card,
                 controllerId,
                 List.of(copyEffect),
-                card.getName() + " — You may have it enter as a copy of any creature card in a graveyard."
+                card.getName() + (copyEffect.exileTwoAndAddOtherPowerCounters()
+                        ? " — You may exile two creature cards from graveyards to copy one."
+                        : " — You may have it enter as a copy of any creature card in a graveyard.")
         ));
         playerInputService.processNextMayAbility(gameData);
         return true;
@@ -277,6 +284,8 @@ public class CloneService {
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
+        gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
+        gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
         CopyCreatureCardFromGraveyardOnEnterEffect copyEffect = findFixedGraveyardCopyEffect(card);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -423,6 +432,8 @@ public class CloneService {
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
+        gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
+        gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
 
         Permanent perm = new Permanent(physicalCard != null ? physicalCard : card);
         if (transformed) {

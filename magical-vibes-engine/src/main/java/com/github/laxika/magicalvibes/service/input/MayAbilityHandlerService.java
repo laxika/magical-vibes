@@ -852,7 +852,9 @@ public class MayAbilityHandlerService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (isLegalMayAbilityTarget(p, targetFilter, effectPredicate, specPredicate, ctx)) {
+                if (isLegalMayAbilityTarget(p, targetFilter, effectPredicate, specPredicate, ctx)
+                        && validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, ability.sourceCard(),
+                        ability.effects(), targetFilter, p, ability.controllerId())) {
                     validTargets.add(p.getId());
                 }
             }

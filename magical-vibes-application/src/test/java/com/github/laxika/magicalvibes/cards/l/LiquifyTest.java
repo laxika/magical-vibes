@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.f.FarWanderings;
+import com.github.laxika.magicalvibes.cards.g.Gloomdrifter;
+import com.github.laxika.magicalvibes.cards.o.ObsessiveSearch;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,60 +13,53 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Liquify.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({Liquify.class, FarWanderings.class, Gloomdrifter.class, ObsessiveSearch.class})
 class LiquifyTest extends BaseCardTest {
 
     @Test
     void canTargetSpellWithManaValueThreeOrLess() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        FarWanderings farWanderings = new FarWanderings();
+        harness.castFromHand(player1, farWanderings, "{2}{G}");
 
         harness.setHand(player2, List.of(new Liquify()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
+        harness.castInstant(player2, 0, farWanderings.getId());
 
         assertThat(harness.getGameData().stack).hasSize(2);
     }
 
     @Test
     void cannotTargetSpellWithManaValueFour() {
-        HillGiant giant = new HillGiant();
-        harness.setHand(player1, List.of(giant));
-        harness.addMana(player1, ManaColor.RED, 4);
+        Gloomdrifter gloomdrifter = new Gloomdrifter();
+        harness.castFromHand(player1, gloomdrifter, "{3}{B}");
 
         harness.setHand(player2, List.of(new Liquify()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, giant.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, gloomdrifter.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void countersAndExilesTargetSpellWithManaValueThreeOrLess() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        ObsessiveSearch obsessiveSearch = new ObsessiveSearch();
+        harness.castFromHand(player1, obsessiveSearch, "{U}");
 
         harness.setHand(player2, List.of(new Liquify()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
+        harness.castInstant(player2, 0, obsessiveSearch.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+                .anyMatch(card -> card.getName().equals("Obsessive Search"));
+        harness.assertNotInGraveyard(player1, "Obsessive Search");
+        harness.assertNotOnBattlefield(player1, "Obsessive Search");
         harness.assertInGraveyard(player2, "Liquify");
     }
 }

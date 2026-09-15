@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "18")
+@CardRegistration(set = "SIS", collectorNumber = "11")
 public class RequiemAngel extends Card {
 
     public RequiemAngel() {

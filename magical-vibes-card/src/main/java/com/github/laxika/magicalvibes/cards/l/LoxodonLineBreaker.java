@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * Loxodon Line Breaker — a vanilla 3/2 Elephant Soldier with no abilities.
  */
 @CardRegistration(set = "M19", collectorNumber = "24")
+@CardRegistration(set = "ANB", collectorNumber = "14")
 public class LoxodonLineBreaker extends Card {
 }

@@ -1,29 +1,24 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DestructiveFlow;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MoggSentry.class, MoggJailer.class, DestructiveFlow.class})
 class MoggSentryTest extends BaseCardTest {
 
     private void opponentCastsSpell() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new MoggJailer(), "{1}{R}");
     }
 
     @Test
@@ -33,11 +28,24 @@ class MoggSentryTest extends BaseCardTest {
 
         opponentCastsSpell();
 
-        StackEntry trigger = gd.stack.stream()
-                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
-                .findFirst().orElseThrow();
-        assertThat(trigger.getCard().getName()).isEqualTo("Mogg Sentry");
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(BoostSelfEffect.class);
+        assertThat(gd.stack)
+                .filteredOn(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Triggers when an opponent casts a noncreature spell")
+    void triggersWhenOpponentCastsNoncreatureSpell() {
+        harness.addToBattlefield(player1, new MoggSentry());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new DestructiveFlow(), "{B}{R}{G}");
+        harness.passBothPriorities();
+
+        assertThat(sentry().getPowerModifier()).isEqualTo(2);
+        assertThat(sentry().getToughnessModifier()).isEqualTo(2);
     }
 
     @Test
@@ -58,9 +66,7 @@ class MoggSentryTest extends BaseCardTest {
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new MoggSentry());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MoggJailer(), "{1}{R}");
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
     }

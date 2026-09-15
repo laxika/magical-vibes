@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "99")
+@CardRegistration(set = "KLR", collectorNumber = "105")
 public class RushOfVitality extends Card {
 
     public RushOfVitality() {

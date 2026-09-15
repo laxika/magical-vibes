@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "125")
+@CardRegistration(set = "SIR", collectorNumber = "125")
 public class MorkrutNecropod extends Card {
 
     public MorkrutNecropod() {

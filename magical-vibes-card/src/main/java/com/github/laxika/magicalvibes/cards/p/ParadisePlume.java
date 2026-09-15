@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredi
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "260")
+@CardRegistration(set = "TSR", collectorNumber = "271")
 public class ParadisePlume extends Card {
 
     public ParadisePlume() {

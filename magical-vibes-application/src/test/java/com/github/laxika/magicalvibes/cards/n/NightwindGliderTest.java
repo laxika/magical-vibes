@@ -1,33 +1,39 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.d.DrakeHatchling;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.l.LastBreath;
+import com.github.laxika.magicalvibes.cards.m.MoltingHarpy;
+import com.github.laxika.magicalvibes.cards.s.SnuffOut;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        NightwindGlider.class,
+        FreshVolunteers.class,
+        MoltingHarpy.class,
+        DrakeHatchling.class,
+        SnuffOut.class,
+        LastBreath.class
+})
 class NightwindGliderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking Nightwind Glider")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
-        Permanent glider = addReadyPermanent(player1, new NightwindGlider(), true);
-        Permanent blocker = addReadyPermanent(player2, new GrizzlyBears(), false);
+        Permanent glider = addCreatureReady(player1, new NightwindGlider());
+        glider.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
 
         prepareDeclareBlockers();
 
@@ -38,10 +44,26 @@ class NightwindGliderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A nonblack flying creature can block Nightwind Glider")
+    void nonblackFlyingCreatureCanBlock() {
+        Permanent glider = addCreatureReady(player1, new NightwindGlider());
+        glider.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DrakeHatchling());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, glider))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Protection from black prevents a black creature from blocking Nightwind Glider")
     void protectionFromBlackPreventsBlocking() {
-        Permanent glider = addReadyPermanent(player1, new NightwindGlider(), true);
-        Permanent blocker = addReadyPermanent(player2, createFlyingCreature("Black Dragon", 3, 3, CardColor.BLACK), false);
+        Permanent glider = addCreatureReady(player1, new NightwindGlider());
+        glider.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new MoltingHarpy());
 
         prepareDeclareBlockers();
 
@@ -54,69 +76,49 @@ class NightwindGliderTest extends BaseCardTest {
     @Test
     @DisplayName("Protection from black prevents combat damage from a black creature")
     void protectionFromBlackPreventsCombatDamage() {
-        Permanent attacker = addReadyPermanent(player1, createCreature("Black Knight", 3, 3, CardColor.BLACK), true);
-        Permanent glider = addReadyPermanent(player2, new NightwindGlider(), false);
+        Permanent attacker = addCreatureReady(player1, new MoltingHarpy());
+        attacker.setAttacking(true);
+        Permanent glider = addCreatureReady(player2, new NightwindGlider());
         glider.setBlocking(true);
         glider.addBlockingTarget(indexOf(player1, attacker));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
+        assertThat(glider.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Nightwind Glider");
     }
 
     @Test
     @DisplayName("Protection from black prevents targeting Nightwind Glider")
     void protectionFromBlackPreventsTargeting() {
-        Permanent glider = addReadyPermanent(player2, new NightwindGlider(), false);
-        addReadyPermanent(player2, new GrizzlyBears(), false);
+        Permanent glider = addCreatureReady(player2, new NightwindGlider());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Black Bolt", CardColor.BLACK, "{B}")));
+        harness.setHand(player1, List.of(new SnuffOut()));
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, glider.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, glider.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
 
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    @DisplayName("A white spell can target Nightwind Glider")
+    void nonblackSpellCanTargetNightwindGlider() {
+        Permanent glider = addCreatureReady(player2, new NightwindGlider());
+
+        harness.setHand(player1, List.of(new LastBreath()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, glider.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Nightwind Glider");
+        harness.assertLife(player2, 24);
     }
 
-    private static Card createFlyingCreature(String name, int power, int toughness, CardColor color) {
-        Card card = createCreature(name, power, toughness, color);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
-    private Permanent addReadyPermanent(Player player, Card card, boolean attacking) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(attacking);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private int indexOf(Player player, Permanent permanent) {
+    private int indexOf(com.github.laxika.magicalvibes.model.Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 }

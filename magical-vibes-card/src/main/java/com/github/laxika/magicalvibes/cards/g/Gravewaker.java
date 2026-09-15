@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "293")
 @CardRegistration(set = "M20", collectorNumber = "323")
+@CardRegistration(set = "GN3", collectorNumber = "53")
 public class Gravewaker extends Card {
 
     public Gravewaker() {

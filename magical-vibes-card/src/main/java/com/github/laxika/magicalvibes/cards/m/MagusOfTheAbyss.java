@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "70")
+@CardRegistration(set = "2XM", collectorNumber = "97")
 public class MagusOfTheAbyss extends Card {
 
     public MagusOfTheAbyss() {

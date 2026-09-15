@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Compulsion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoCalmer.class, AshnodsAltar.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({NantukoCalmer.class, Compulsion.class})
 class NantukoCalmerTest extends BaseCardTest {
 
     @Test
@@ -43,11 +41,20 @@ class NantukoCalmerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not get the threshold boost from an opponent's graveyard")
+    void opponentGraveyardDoesNotEnableThreshold() {
+        fillGraveyard(player2, 7);
+        Permanent calmer = harness.addToBattlefieldAndReturn(player1, new NantukoCalmer());
+
+        assertThat(gqs.getEffectivePower(gd, calmer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, calmer)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Pays mana, taps, and sacrifices itself to destroy an enchantment")
     void destroysTargetEnchantment() {
-        Permanent calmer = harness.addToBattlefieldAndReturn(player1, new NantukoCalmer());
-        calmer.setSummoningSick(false);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent calmer = addCreatureReady(player1, new NantukoCalmer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Compulsion());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -60,16 +67,15 @@ class NantukoCalmerTest extends BaseCardTest {
         assertThat(calmer.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player1, "Nantuko Calmer");
         harness.assertInGraveyard(player1, "Nantuko Calmer");
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Compulsion");
+        harness.assertInGraveyard(player2, "Compulsion");
     }
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent calmer = harness.addToBattlefieldAndReturn(player1, new NantukoCalmer());
-        calmer.setSummoningSick(false);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent calmer = addCreatureReady(player1, new NantukoCalmer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NantukoCalmer());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -83,7 +89,7 @@ class NantukoCalmerTest extends BaseCardTest {
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new AshnodsAltar());
+            cards.add(new NantukoCalmer());
         }
         harness.setGraveyard(player, cards);
     }

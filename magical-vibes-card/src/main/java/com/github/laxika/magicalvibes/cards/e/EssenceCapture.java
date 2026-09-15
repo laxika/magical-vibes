@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "37")
 @CardRegistration(set = "NEO", collectorNumber = "52")
+@CardRegistration(set = "OTP", collectorNumber = "10")
 public class EssenceCapture extends Card {
 
     public EssenceCapture() {

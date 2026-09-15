@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "179")
+@CardRegistration(set = "WOT", collectorNumber = "56")
 public class LeylineOfAbundance extends Card {
 
     public LeylineOfAbundance() {

@@ -237,6 +237,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (e.putKickCounters()) {
+            exiledCards.forEach(card -> gameData.exiledCardsWithKickCounters.add(card.getId()));
+        }
+
         if (controllerGraveyard) {
             entry.setEventValue(exiledCards.size());
         } else if (e.eventValueFilter() != null) {

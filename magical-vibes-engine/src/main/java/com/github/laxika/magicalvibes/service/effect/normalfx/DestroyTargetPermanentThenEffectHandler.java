@@ -84,6 +84,15 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         // destruction succeeds (indestructible / regeneration).
         boolean destroyed = destructionSupport.tryDestroyAndLog(
                 gameData, target, entry.getCard().getName(), e.cannotBeRegenerated());
+        // If destruction was replaced, read the surviving permanent's current characteristics.
+        if (gameQueryService.findPermanentById(gameData, target.getId()) != null) {
+            statValue = switch (e.stat()) {
+                case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
+                case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+                case MANA_VALUE -> target.getCard().getManaValue();
+                default -> statValue;
+            };
+        }
         if (e.stat() == EventStat.BASIC_LAND_SEARCH_COUNT) {
             statValue = wasLand && destroyed ? 2 : 1;
         }

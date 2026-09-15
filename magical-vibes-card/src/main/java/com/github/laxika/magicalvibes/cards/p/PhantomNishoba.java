@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "140")
+@CardRegistration(set = "DMR", collectorNumber = "193")
 public class PhantomNishoba extends Card {
 
     public PhantomNishoba() {

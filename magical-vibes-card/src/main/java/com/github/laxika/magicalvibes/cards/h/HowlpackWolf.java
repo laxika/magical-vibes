@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "164")
+@CardRegistration(set = "SIR", collectorNumber = "162")
 public class HowlpackWolf extends Card {
 
     public HowlpackWolf() {

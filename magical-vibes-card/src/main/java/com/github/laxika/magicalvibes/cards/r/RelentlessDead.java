@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "131")
+@CardRegistration(set = "SIR", collectorNumber = "130")
 public class RelentlessDead extends Card {
 
     public RelentlessDead() {

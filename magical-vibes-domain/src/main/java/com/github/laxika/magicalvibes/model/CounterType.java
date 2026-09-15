@@ -145,6 +145,7 @@ public enum CounterType {
     SKEWER,
     SLEIGHT,
     SLEEP,
+    SLUMBER,
     SLIME,
     SHRED,
     SOOT,

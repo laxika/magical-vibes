@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "225")
+@CardRegistration(set = "SIR", collectorNumber = "211")
 public class SageOfAncientLore extends Card {
 
     public SageOfAncientLore() {

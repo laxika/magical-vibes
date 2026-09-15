@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,47 +21,57 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Afterlife.class, FemerefScouts.class, Forest.class})
+@CardUsed({Afterlife.class, FreshVolunteers.class, Forest.class})
 class AfterlifeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target creature and gives its controller a 1/1 white flying Spirit")
     void destroysCreatureAndCreatesTokenForController() {
-        harness.addToBattlefield(player2, new FemerefScouts());
-        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers()).getId();
 
         castAfterlife(targetId);
 
-        harness.assertNotOnBattlefield(player2, "Femeref Scouts");
-        harness.assertInGraveyard(player2, "Femeref Scouts");
+        harness.assertNotOnBattlefield(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
         assertSpiritToken(player2);
     }
 
     @Test
     @DisplayName("Target creature can't be regenerated")
     void targetCannotBeRegenerated() {
-        harness.addToBattlefield(player2, new FemerefScouts());
-        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
-        Permanent scouts = gd.playerBattlefields.get(player2.getId()).stream()
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers()).getId();
+        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId)).findFirst().orElseThrow();
-        scouts.setRegenerationShield(1);
+        target.setRegenerationShield(1);
 
         castAfterlife(targetId);
 
-        harness.assertNotOnBattlefield(player2, "Femeref Scouts");
-        harness.assertInGraveyard(player2, "Femeref Scouts");
+        harness.assertNotOnBattlefield(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+        assertSpiritToken(player2);
     }
 
     @Test
     @DisplayName("Can target own creature — its controller gets the Spirit token")
     void canTargetOwnCreature() {
-        harness.addToBattlefield(player1, new FemerefScouts());
-        UUID targetId = harness.getPermanentId(player1, "Femeref Scouts");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers()).getId();
 
         castAfterlife(targetId);
 
-        harness.assertNotOnBattlefield(player1, "Femeref Scouts");
+        harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
         assertSpiritToken(player1);
+    }
+
+    @Test
+    @DisplayName("Creates the Spirit token even when the target is indestructible")
+    void createsTokenWhenTargetIsIndestructible() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        castAfterlife(target.getId());
+
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        assertSpiritToken(player2);
     }
 
     @Test
@@ -82,8 +92,7 @@ class AfterlifeTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles when target leaves the battlefield before resolution — no token created")
     void fizzlesWhenTargetRemoved() {
-        harness.addToBattlefield(player2, new FemerefScouts());
-        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers()).getId();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -104,8 +113,7 @@ class AfterlifeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Afterlife()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void assertSpiritToken(com.github.laxika.magicalvibes.model.Player owner) {

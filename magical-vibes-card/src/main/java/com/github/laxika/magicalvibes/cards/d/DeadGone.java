@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "113")
+@CardRegistration(set = "TSR", collectorNumber = "161")
 public class DeadGone extends Card {
 
     public DeadGone() {

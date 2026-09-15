@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "FUT", collectorNumber = "139")
 @CardRegistration(set = "MMA", collectorNumber = "164")
 @CardRegistration(set = "A25", collectorNumber = "189")
+@CardRegistration(set = "TSR", collectorNumber = "234")
 public class SummonersPact extends Card {
 
     public SummonersPact() {

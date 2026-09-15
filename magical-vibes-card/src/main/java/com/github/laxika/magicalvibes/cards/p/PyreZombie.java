@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "261")
+@CardRegistration(set = "DMR", collectorNumber = "194")
 public class PyreZombie extends Card {
 
     public PyreZombie() {

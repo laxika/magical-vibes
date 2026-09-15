@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfChosenColorEqualTo
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "223")
+@CardRegistration(set = "EA2", collectorNumber = "24")
 public class NykthosShrineToNyx extends Card {
 
     public NykthosShrineToNyx() {

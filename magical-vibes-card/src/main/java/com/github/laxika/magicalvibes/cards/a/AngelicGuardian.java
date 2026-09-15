@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "302")
+@CardRegistration(set = "ANB", collectorNumber = "2")
 public class AngelicGuardian extends Card {
 
     public AngelicGuardian() {

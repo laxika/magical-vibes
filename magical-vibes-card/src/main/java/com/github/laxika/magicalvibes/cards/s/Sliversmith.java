@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "163")
+@CardRegistration(set = "TSR", collectorNumber = "273")
 public class Sliversmith extends Card {
 
     public Sliversmith() {

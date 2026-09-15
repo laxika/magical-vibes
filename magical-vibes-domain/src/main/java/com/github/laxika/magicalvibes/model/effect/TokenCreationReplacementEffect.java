@@ -18,6 +18,11 @@ public interface TokenCreationReplacementEffect extends CardEffect {
         return 0;
     }
 
+    /** Whether this replacement applies to token creation events controlled by any player. */
+    default boolean appliesToAllPlayers() {
+        return false;
+    }
+
     default boolean appliesTo(Collection<CardSubtype> tokenSubtypes) {
         return affectedSubtype() == null
                 || (tokenSubtypes != null && tokenSubtypes.contains(affectedSubtype()));

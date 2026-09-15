@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandT
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "201")
+@CardRegistration(set = "TSR", collectorNumber = "210")
 public class Hypergenesis extends Card {
 
     public Hypergenesis() {

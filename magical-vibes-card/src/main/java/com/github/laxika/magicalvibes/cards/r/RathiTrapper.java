@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "90")
 @CardRegistration(set = "MMA", collectorNumber = "94")
+@CardRegistration(set = "TSR", collectorNumber = "133")
 public class RathiTrapper extends Card {
 
     public RathiTrapper() {

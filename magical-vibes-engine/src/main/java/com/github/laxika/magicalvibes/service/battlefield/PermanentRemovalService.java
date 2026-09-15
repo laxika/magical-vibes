@@ -394,6 +394,7 @@ public class PermanentRemovalService {
      * @param controllerId the player who controlled the permanent on the battlefield
      */
     public void processAlreadyRemovedToGraveyard(GameData gameData, Permanent target, UUID controllerId) {
+        ZoneChangeCounterSupport.preserve(gameData, target);
         snapshotChosenPermanentStats(gameData, target,
                 gameQueryService.getEffectivePower(gameData, target),
                 gameQueryService.getEffectiveToughness(gameData, target));
@@ -885,6 +886,8 @@ public class PermanentRemovalService {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
+                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -901,6 +904,8 @@ public class PermanentRemovalService {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
+                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -1264,6 +1269,12 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                for (StackEntry entry : gameData.stack) {
+                    if (entry.getDeclaredTargetIds().contains(target.getId())) {
+                        entry.getLastKnownTargetColors().put(target.getId(),
+                                Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
+                    }
+                }
                 snapshotBeheldPower(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
@@ -1289,6 +1300,7 @@ public class PermanentRemovalService {
                     }
                 }
                 battlefield.remove(target);
+                ZoneChangeCounterSupport.preserve(gameData, target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand));
             }
@@ -1717,7 +1729,7 @@ public class PermanentRemovalService {
             }
             if (wasArtifact && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                        gameData, ownerId, controllerId, target.getCard().getManaValue(),
+                        gameData, ownerId, controllerId, target.getOriginalCard(), target.getCard().getManaValue(),
                         Map.copyOf(target.getCounters()), wasSacrificed);
             }
             if (wasEnchantment && !creatureDeathTriggersSuppressed) {
@@ -1994,6 +2006,21 @@ public class PermanentRemovalService {
         }
         for (PendingExileReturn pending : captured) {
             returnPendingExiledCard(gameData, sourcePermanentId, pending);
+        }
+    }
+
+    /** Returns cards exiled until an opponent of the new monarch becomes monarch. */
+    public void returnExileReturnsOnOpponentBecomesMonarch(GameData gameData, UUID monarchPlayerId) {
+        List<PendingExileReturn> pendingReturns = new ArrayList<>();
+        gameData.exileReturnOnOpponentBecomesMonarch.entrySet().removeIf(entry -> {
+            if (entry.getKey().equals(monarchPlayerId)) {
+                return false;
+            }
+            pendingReturns.addAll(entry.getValue());
+            return true;
+        });
+        for (PendingExileReturn pending : pendingReturns) {
+            returnPendingExiledCard(gameData, null, pending);
         }
     }
 

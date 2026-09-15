@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "181")
+@CardRegistration(set = "2X2", collectorNumber = "232")
 public class JeskaiCharm extends Card {
 
     public JeskaiCharm() {

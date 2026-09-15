@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "131")
+@CardRegistration(set = "KLR", collectorNumber = "200")
 public class OathOfAjani extends Card {
 
     public OathOfAjani() {

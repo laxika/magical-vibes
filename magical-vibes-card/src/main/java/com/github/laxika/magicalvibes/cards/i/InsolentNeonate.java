@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "168")
+@CardRegistration(set = "SIR", collectorNumber = "165")
 public class InsolentNeonate extends Card {
 
     public InsolentNeonate() {

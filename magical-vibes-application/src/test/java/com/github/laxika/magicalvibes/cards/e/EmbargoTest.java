@@ -1,31 +1,44 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Embargo.class, DeadlyInsect.class, Swamp.class})
 class EmbargoTest extends BaseCardTest {
 
     @Test
     @DisplayName("Nonland permanents do not untap, but lands do")
     void nonlandPermanentsDoNotUntap() {
         harness.addToBattlefield(player1, new Embargo());
-        Permanent creature = addReady(player2, new GrizzlyBears());
-        Permanent land = addReady(player2, new Forest());
+        Permanent creature = addCreatureReady(player2, new DeadlyInsect());
+        Permanent land = addCreatureReady(player2, new Swamp());
         creature.tap();
         land.tap();
 
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Embargo also prevents its controller's nonland permanents from untapping")
+    void controllerNonlandPermanentsDoNotUntap() {
+        harness.addToBattlefield(player1, new Embargo());
+        Permanent creature = addCreatureReady(player1, new DeadlyInsect());
+        creature.tap();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
     }
 
     @Test
@@ -37,7 +50,7 @@ class EmbargoTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -49,22 +62,6 @@ class EmbargoTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-    }
-
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
     }
 }

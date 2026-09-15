@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "164")
 @CardRegistration(set = "M15", collectorNumber = "169")
+@CardRegistration(set = "EA1", collectorNumber = "12")
 public class BackToNature extends Card {
 
     public BackToNature() {

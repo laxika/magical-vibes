@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "55")
+@CardRegistration(set = "SIR", collectorNumber = "60")
 public class DenyExistence extends Card {
 
     public DenyExistence() {

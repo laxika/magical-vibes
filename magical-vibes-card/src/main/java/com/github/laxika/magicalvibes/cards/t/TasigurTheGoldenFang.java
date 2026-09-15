@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "87")
 @CardRegistration(set = "UMA", collectorNumber = "117")
+@CardRegistration(set = "TSR", collectorNumber = "333")
 public class TasigurTheGoldenFang extends Card {
 
     public TasigurTheGoldenFang() {

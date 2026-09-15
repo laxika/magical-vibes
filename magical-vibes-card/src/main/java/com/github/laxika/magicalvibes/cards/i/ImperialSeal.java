@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "78")
 @CardRegistration(set = "ME2", collectorNumber = "96")
+@CardRegistration(set = "2X2", collectorNumber = "79")
 public class ImperialSeal extends Card {
 
     public ImperialSeal() {

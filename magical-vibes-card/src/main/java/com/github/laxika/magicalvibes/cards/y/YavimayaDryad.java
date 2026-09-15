@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "235")
+@CardRegistration(set = "TSR", collectorNumber = "247")
 public class YavimayaDryad extends Card {
 
     public YavimayaDryad() {

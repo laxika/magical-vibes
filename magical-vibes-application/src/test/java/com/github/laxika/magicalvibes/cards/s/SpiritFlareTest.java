@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.c.CentaurVeteran;
+import com.github.laxika.magicalvibes.cards.t.TerohsFaithful;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,85 +14,170 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpiritFlare.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({SpiritFlare.class, CentaurVeteran.class, TerohsFaithful.class})
 class SpiritFlareTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Taps the first target and deals its power to an attacking creature")
-    void tapsAndDealsPowerDamage() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+    @DisplayName("Taps your creature and deals damage equal to its power to an attacking creature")
+    void tapsYourCreatureAndDamagesAttacker() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
         attacker.setAttacking(true);
+        castFromHand(source, attacker);
 
-        castSpiritFlare(source, attacker);
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("Does not deal damage when the first target is tapped before resolution")
-    void doesNotDealDamageWhenFirstTargetBecomesTapped() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
-        attacker.setAttacking(true);
+    @DisplayName("Deals damage to a blocking creature")
+    void damagesBlocker() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent blocker = addCreatureReady(player2, new TerohsFaithful());
+        blocker.setBlocking(true);
+        castFromHand(source, blocker);
 
-        castSpiritFlare(source, attacker);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not deal damage when the source is tapped before resolution")
+    void doesNotDamageWhenSourceBecomesTapped() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        castFromHand(source, attacker);
+
         source.tap();
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
     @Test
-    @DisplayName("Requires an attacking or blocking creature an opponent controls as the second target")
-    void rejectsIllegalSecondTarget() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        harness.setHand(player1, List.of(new SpiritFlare()));
-        addMana(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+    @DisplayName("Does not deal damage when the first target leaves before resolution")
+    void doesNotDamageWhenFirstTargetLeaves() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        castFromHand(source, attacker);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(source.getId(), ownCreature.getId())))
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Taps the first target but deals no damage when the second target leaves")
+    void tapsFirstTargetWhenSecondTargetLeaves() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        castFromHand(source, attacker);
+
+        gd.playerBattlefields.get(player2.getId()).remove(attacker);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot target a tapped creature you control as the first target")
+    void cannotTargetTappedFirstCreature() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        source.tap();
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+
+        assertThatThrownBy(() -> castFromHand(source, attacker))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("attacking or blocking creature an opponent controls");
+                .hasMessageContaining("untapped creature you control");
     }
 
     @Test
-    @DisplayName("Flashback pays life and exiles Spirit Flare after resolving")
-    void flashbackPaysLifeAndExiles() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+    @DisplayName("Cannot target an opponent's creature as the first target")
+    void cannotTargetOpponentCreatureFirst() {
+        Permanent opponentCreature = addCreatureReady(player2, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+
+        assertThatThrownBy(() -> castFromHand(opponentCreature, attacker))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player as the first target")
+    void cannotTargetPlayerFirst() {
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(player1.getId(), attacker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target your own creature as the second target")
+    void cannotTargetOwnCreatureSecond() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent ownCombatCreature = addCreatureReady(player1, new TerohsFaithful());
+        ownCombatCreature.setAttacking(true);
+
+        assertThatThrownBy(() -> castFromHand(source, ownCombatCreature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("opponent controls");
+    }
+
+    @Test
+    @DisplayName("Cannot target a nonattacking and nonblocking creature as the second target")
+    void cannotTargetNonCombatCreature() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent bystander = addCreatureReady(player2, new TerohsFaithful());
+
+        assertThatThrownBy(() -> castFromHand(source, bystander))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacking or blocking creature");
+    }
+
+    @Test
+    @DisplayName("Flashback pays three life, resolves, and exiles Spirit Flare")
+    void flashbackPaysLifeResolvesAndExiles() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
         attacker.setAttacking(true);
         harness.setGraveyard(player1, List.of(new SpiritFlare()));
-        addMana(player1, true);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castFlashback(player1, 0, List.of(source.getId(), attacker.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.lifeLostThisTurn.get(player1.getId())).isEqualTo(3);
+        harness.assertLife(player1, 7);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
         harness.assertNotInGraveyard(player1, "Spirit Flare");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Spirit Flare"));
     }
 
-    private void castSpiritFlare(Permanent source, Permanent attacker) {
+    private void castFromHand(Permanent source, Permanent target) {
+        prepareSpell();
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+    }
+
+    private void prepareSpell() {
         harness.setHand(player1, List.of(new SpiritFlare()));
-        addMana(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.castInstant(player1, 0, List.of(source.getId(), attacker.getId()));
-    }
-
-    private void addMana(Player player) {
-        addMana(player, false);
-    }
-
-    private void addMana(Player player, boolean flashback) {
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.addMana(player, ManaColor.COLORLESS, flashback ? 1 : 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 }

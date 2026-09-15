@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "KLD", collectorNumber = "69")
+@CardRegistration(set = "KLR", collectorNumber = "72")
 public class WeldfastWingsmith extends Card {
 
     public WeldfastWingsmith() {
