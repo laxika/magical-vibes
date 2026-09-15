@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "153")
+@CardRegistration(set = "RVR", collectorNumber = "164")
 public class AureliaExemplarOfJustice extends Card {
 
     public AureliaExemplarOfJustice() {

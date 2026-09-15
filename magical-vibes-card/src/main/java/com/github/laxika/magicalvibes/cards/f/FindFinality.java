@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "225")
+@CardRegistration(set = "RVR", collectorNumber = "245")
 public class FindFinality extends Card {
 
     public FindFinality() {

@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "131")
 @CardRegistration(set = "GK2", collectorNumber = "19")
+@CardRegistration(set = "RVR", collectorNumber = "224")
 public class SkyHussar extends Card {
 
     public SkyHussar() {

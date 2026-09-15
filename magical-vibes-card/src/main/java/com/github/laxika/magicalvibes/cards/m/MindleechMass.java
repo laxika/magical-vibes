@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromTargetPlayerHandWithoutPayingManaCostEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "215")
+@CardRegistration(set = "RVR", collectorNumber = "201")
 public class MindleechMass extends Card {
 
     public MindleechMass() {

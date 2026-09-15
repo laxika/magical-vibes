@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "39")
+@CardRegistration(set = "RVR", collectorNumber = "47")
 public class KeymasterRogue extends Card {
 
     public KeymasterRogue() {

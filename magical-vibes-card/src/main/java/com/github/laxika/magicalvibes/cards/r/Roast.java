@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "151")
+@CardRegistration(set = "PA1", collectorNumber = "4")
 public class Roast extends Card {
 
     public Roast() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "210")
+@CardRegistration(set = "RVR", collectorNumber = "230")
 public class SunderShaman extends Card {
 
     public SunderShaman() {

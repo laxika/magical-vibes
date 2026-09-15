@@ -1402,6 +1402,9 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             permanent, ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
+                    if (isCreatureSource) {
+                        gameData.playerManaPools.get(playerId).addCreatureMana(manaColor, manaMultiplier);
+                    }
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
                     }

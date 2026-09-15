@@ -459,9 +459,6 @@ public class AmountEvaluationService {
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
                     // is a ConcurrentHashMap, which rejects null keys.
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
-            case ControllerExperienceCounters ignored ->
-                    ctx.controllerId() == null ? 0
-                            : gameData.playerExperienceCounters.getOrDefault(ctx.controllerId(), 0);
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
             case HighestLifeTotalAmongPlayers ignored ->
@@ -553,6 +550,9 @@ public class AmountEvaluationService {
             case TargetPlayerPoisonCounters ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerPoisonCounters.getOrDefault(ctx.targetPermanentId(), 0);
+            case ControllerExperienceCounters ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.playerExperienceCounters.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);

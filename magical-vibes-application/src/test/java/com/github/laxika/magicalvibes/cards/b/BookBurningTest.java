@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +12,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BookBurning.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BookBurning.class, BorderPatrol.class})
 class BookBurningTest extends BaseCardTest {
 
     @Test
     @DisplayName("A player accepting takes 6 damage and prevents the mill")
     void acceptingDamagePreventsMill() {
-        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(),
-                new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol(),
+                new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
         int lifeBefore = gd.getLife(player1.getId());
         castBookBurning(player2.getId());
 
@@ -35,8 +33,8 @@ class BookBurningTest extends BaseCardTest {
     @Test
     @DisplayName("All players declining mills six cards from the target player")
     void allPlayersDecliningMillsTarget() {
-        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(),
-                new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol(),
+                new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
         castBookBurning(player2.getId());
 
         harness.handleMayAbilityChosen(player1, false);
@@ -49,8 +47,8 @@ class BookBurningTest extends BaseCardTest {
     @Test
     @DisplayName("The first accepting player stops the remaining choices")
     void firstAcceptanceStopsChoices() {
-        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(),
-                new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol(),
+                new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
         int lifeBefore = gd.getLife(player2.getId());
         castBookBurning(player2.getId());
 
@@ -64,7 +62,7 @@ class BookBurningTest extends BaseCardTest {
     @Test
     @DisplayName("Requires a player target")
     void cannotTargetPermanent() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorderPatrol());
         harness.setHand(player1, List.of(new BookBurning()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);

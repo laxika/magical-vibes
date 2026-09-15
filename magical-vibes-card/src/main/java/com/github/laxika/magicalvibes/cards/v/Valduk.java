@@ -16,6 +16,9 @@ import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "148")
 @CardRegistration(set = "DMR", collectorNumber = "147")
+@CardRegistration(set = "MUL", collectorNumber = "24")
+@CardRegistration(set = "MUL", collectorNumber = "89")
+@CardRegistration(set = "MUL", collectorNumber = "154")
 public class Valduk extends Card {
 
     public Valduk() {

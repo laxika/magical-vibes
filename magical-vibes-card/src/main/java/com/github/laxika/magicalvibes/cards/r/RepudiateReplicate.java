@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "227")
+@CardRegistration(set = "RVR", collectorNumber = "249")
 public class RepudiateReplicate extends Card {
 
     public RepudiateReplicate() {

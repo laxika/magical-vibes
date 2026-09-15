@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "GTC", collectorNumber = "27")
 @CardRegistration(set = "A25", collectorNumber = "37")
 @CardRegistration(set = "MM3", collectorNumber = "27")
+@CardRegistration(set = "RVR", collectorNumber = "33")
 public class UrbisProtector extends Card {
 
     public UrbisProtector() {

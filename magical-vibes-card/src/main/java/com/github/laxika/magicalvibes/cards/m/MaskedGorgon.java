@@ -24,7 +24,7 @@ public class MaskedGorgon extends Card {
     public MaskedGorgon() {
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
                 new ProtectionFromSubtypesEffect(Set.of(CardSubtype.GORGON)),
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))))));

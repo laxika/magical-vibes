@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "173")
 @CardRegistration(set = "MMA", collectorNumber = "155")
+@CardRegistration(set = "RVR", collectorNumber = "150")
 public class MoldervineCloak extends Card {
 
     public MoldervineCloak() {
