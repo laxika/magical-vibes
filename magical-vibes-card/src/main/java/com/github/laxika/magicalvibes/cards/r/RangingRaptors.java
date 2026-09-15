@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "201")
+@CardRegistration(set = "GN2", collectorNumber = "49")
 public class RangingRaptors extends Card {
 
     public RangingRaptors() {

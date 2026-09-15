@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "13")
+@CardRegistration(set = "HA7", collectorNumber = "2")
 public class GiverOfRunes extends Card {
 
     public GiverOfRunes() {

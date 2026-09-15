@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "38")
+@CardRegistration(set = "TSR", collectorNumber = "36")
 public class RestoreBalance extends Card {
 
     public RestoreBalance() {

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,29 +13,44 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenFogbringer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AvenFogbringer.class, KrosanVerge.class, SuntailHawk.class})
 class AvenFogbringerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB returns the targeted land to its owner's hand")
     void etbReturnsTargetedLand() {
-        harness.addToBattlefield(player2, new Forest());
-        UUID targetId = harness.getPermanentId(player2, "Forest");
+        harness.addToBattlefield(player2, new KrosanVerge());
+        UUID targetId = harness.getPermanentId(player2, "Krosan Verge");
         castAvenFogbringer(targetId);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Forest");
-        harness.assertInHand(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Krosan Verge");
+        harness.assertInHand(player2, "Krosan Verge");
+        harness.assertOnBattlefield(player1, "Aven Fogbringer");
+    }
+
+    @Test
+    @DisplayName("ETB can target a land its controller owns")
+    void etbReturnsOwnLand() {
+        harness.addToBattlefield(player1, new KrosanVerge());
+        UUID targetId = harness.getPermanentId(player1, "Krosan Verge");
+        castAvenFogbringer(targetId);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Krosan Verge");
+        harness.assertInHand(player1, "Krosan Verge");
         harness.assertOnBattlefield(player1, "Aven Fogbringer");
     }
 
     @Test
     @DisplayName("ETB cannot target a creature")
     void etbRejectsCreatureTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new SuntailHawk());
+        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
         harness.setHand(player1, List.of(new AvenFogbringer()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

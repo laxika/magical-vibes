@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "224")
+@CardRegistration(set = "UMA", collectorNumber = "235")
+@CardRegistration(set = "SIS", collectorNumber = "74")
 public class VesselOfEndlessRest extends Card {
 
     public VesselOfEndlessRest() {

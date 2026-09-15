@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianTyranny;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EscapeRoutes.class, EliteVanguard.class, DrudgeSkeletons.class, GrizzlyBears.class,
+        PhyrexianTyranny.class})
 class EscapeRoutesTest extends BaseCardTest {
 
     @Test
@@ -59,6 +62,18 @@ class EscapeRoutesTest extends BaseCardTest {
     void cannotTargetOpponentsCreature() {
         addEscapeRoutes(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EliteVanguard());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a white or black creature you control");
+    }
+
+    @Test
+    @DisplayName("Cannot target a black noncreature permanent")
+    void cannotTargetBlackNoncreaturePermanent() {
+        addEscapeRoutes(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PhyrexianTyranny());
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

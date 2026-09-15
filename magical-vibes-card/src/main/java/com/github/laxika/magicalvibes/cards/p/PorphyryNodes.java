@@ -16,6 +16,7 @@ import java.util.List;
  * when there are no creatures on the battlefield.
  */
 @CardRegistration(set = "PLC", collectorNumber = "28")
+@CardRegistration(set = "TSR", collectorNumber = "32")
 public class PorphyryNodes extends Card {
 
     public PorphyryNodes() {

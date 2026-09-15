@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "162")
+@CardRegistration(set = "ANB", collectorNumber = "85")
 public class SiegeDragon extends Card {
 
     public SiegeDragon() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "145")
 @CardRegistration(set = "THB", collectorNumber = "141")
+@CardRegistration(set = "STA", collectorNumber = "41")
 public class Infuriate extends Card {
 
     public Infuriate() {

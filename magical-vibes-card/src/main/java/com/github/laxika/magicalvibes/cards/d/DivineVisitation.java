@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "10")
+@CardRegistration(set = "2X2", collectorNumber = "8")
+@CardRegistration(set = "RVR", collectorNumber = "16")
+@CardRegistration(set = "RVR", collectorNumber = "306")
 public class DivineVisitation extends Card {
 
     public DivineVisitation() {

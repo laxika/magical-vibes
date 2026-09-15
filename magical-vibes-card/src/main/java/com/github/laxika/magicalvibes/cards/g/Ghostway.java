@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "6")
+@CardRegistration(set = "RVR", collectorNumber = "19")
+@CardRegistration(set = "RVR", collectorNumber = "308")
 public class Ghostway extends Card {
 
     public Ghostway() {

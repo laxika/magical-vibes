@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M19", collectorNumber = "19")
+@CardRegistration(set = "OANA", collectorNumber = "5")
+@CardRegistration(set = "ANB", collectorNumber = "12")
 public class KnightsPledge extends Card {
 
     public KnightsPledge() {

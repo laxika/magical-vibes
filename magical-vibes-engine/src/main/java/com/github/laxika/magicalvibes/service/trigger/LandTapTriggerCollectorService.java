@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
@@ -52,7 +54,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -78,7 +79,6 @@ public class LandTapTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final LifeSupport lifeSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -194,13 +194,14 @@ public class LandTapTriggerCollectorService {
         if (!gameQueryService.effectiveBasicLandTypes(match.gameData(), tappedLand)
                 .contains(trigger.subtype())) return false;
 
-        lifeSupport.applyGainLife(match.gameData(), match.controllerId(), trigger.lifeAmount(),
-                match.permanent().getCard().getName(), match.permanent().getCard(),
-                StackEntryType.TRIGGERED_ABILITY, match.controllerId());
-
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + match.gameData().playerIdToName.get(match.controllerId())
-                        + " gains " + trigger.lifeAmount() + " life."));
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(new GainLifeEffect(trigger.lifeAmount()),
+                        "Gain " + trigger.lifeAmount() + " life?"))),
+                null, match.permanent().getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 
@@ -376,19 +377,27 @@ public class LandTapTriggerCollectorService {
         }
         if (producedColors.isEmpty()) return false;
 
-        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
-        producedColors.forEach(pool::add);
+        if (producedColors.size() > 1) {
+            List<ManaColor> choices = producedColors.stream().sorted().toList();
+            ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
+                    .fixedColorCombination(lt.tappingPlayerId(), false, 1, choices);
+            AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, match.gameData(),
+                    new PendingInteraction.ColorChoice(lt.tappingPlayerId(), null, null, choiceContext,
+                            choices.stream().map(Enum::name).toList(), "Choose a type of mana the land produced."));
+        } else {
+            match.gameData().playerManaPools.get(lt.tappingPlayerId()).add(producedColors.iterator().next());
+        }
 
         if (sourceCard == null) {
             gameLogService.append(match.gameData(), GameLog.text(
                     match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                            + " adds 1 additional mana of each type produced by the land."));
+                            + " adds 1 additional mana of a type produced by the land."));
             return true;
         }
 
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                        + " adds 1 additional mana of each type produced by the land."));
+                        + " adds 1 additional mana of a type produced by the land."));
         return true;
     }
 
@@ -572,12 +581,14 @@ public class LandTapTriggerCollectorService {
         if (!gameQueryService.hasEffectiveSubtype(match.gameData(), tappedLand, trigger.subtype())) return false;
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
-        // The tapping player is the land's controller and receives the additional mana.
-        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        UUID recipientId = trigger.controllerOnly() ? lt.tappingPlayerId()
+                : gameQueryService.findPermanentController(match.gameData(), tappedLand.getId());
+        if (recipientId == null) return false;
+        ManaPool pool = match.gameData().playerManaPools.get(recipientId);
         pool.add(trigger.color());
 
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                " triggers — " + match.gameData().playerIdToName.get(recipientId)
                         + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana."));
         return true;
     }

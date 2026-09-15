@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "72")
+@CardRegistration(set = "KLR", collectorNumber = "106")
 public class SlyRequisitioner extends Card {
 
     public SlyRequisitioner() {

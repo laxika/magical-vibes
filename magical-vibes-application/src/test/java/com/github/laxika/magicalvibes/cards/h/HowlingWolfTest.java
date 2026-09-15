@@ -1,19 +1,20 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HowlingWolf.class, Forest.class})
 class HowlingWolfTest extends BaseCardTest {
 
     @Test
@@ -72,13 +73,34 @@ class HowlingWolfTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         for (int i = 0; i < 3; i++) {
-            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
         assertThat(gd.playerHands.get(player1.getId()).stream()
                 .filter(card -> card.getName().equals("Howling Wolf")))
                 .hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The search cannot choose more than three Howling Wolves")
+    void searchIsCappedAtThreeCards() {
+        setupAndCast();
+        setupLibraryWithWolves(4);
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+        assertThat(gd.playerDecks.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Howling Wolf")))
+                .hasSize(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
@@ -92,8 +114,8 @@ class HowlingWolfTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -103,9 +125,7 @@ class HowlingWolfTest extends BaseCardTest {
     @DisplayName("No Howling Wolves in the library produces no search prompt")
     void noWolvesInLibraryProducesNoSearchPrompt() {
         setupAndCast();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         resolveToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
@@ -116,19 +136,17 @@ class HowlingWolfTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new HowlingWolf()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HowlingWolf(), "{2}{G}{G}");
     }
 
     private void setupLibraryWithWolves(int wolfCount) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
+        List<Card> library = new ArrayList<>();
         for (int i = 0; i < wolfCount; i++) {
-            deck.add(new HowlingWolf());
+            library.add(new HowlingWolf());
         }
-        deck.add(new GrizzlyBears());
-        deck.add(new GrizzlyBears());
+        library.add(new Forest());
+        library.add(new Forest());
+        harness.setLibrary(player1, library);
     }
 
     private void resolveToMayPrompt() {

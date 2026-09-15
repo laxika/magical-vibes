@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "244")
+@CardRegistration(set = "ZNE", collectorNumber = "27")
 public class PrismaticVista extends Card {
 
     public PrismaticVista() {

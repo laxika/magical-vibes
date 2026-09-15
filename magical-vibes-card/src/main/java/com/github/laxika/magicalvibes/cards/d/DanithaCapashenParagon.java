@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "12")
+@CardRegistration(set = "GN3", collectorNumber = "9")
 public class DanithaCapashenParagon extends Card {
 
     public DanithaCapashenParagon() {

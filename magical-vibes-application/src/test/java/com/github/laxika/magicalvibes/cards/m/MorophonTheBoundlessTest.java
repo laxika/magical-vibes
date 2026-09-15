@@ -71,10 +71,22 @@ class MorophonTheBoundlessTest extends BaseCardTest {
     void coloredReductionDoesNotPayGenericMana() {
         addMorophon(CardSubtype.BEAR);
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost remaining after Morophon's reduction")
+    void coloredManaPaysRemainingGenericCost() {
+        addMorophon(CardSubtype.BEAR);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test

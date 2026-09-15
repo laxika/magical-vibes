@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "133")
 @CardRegistration(set = "ME1", collectorNumber = "72")
+@CardRegistration(set = "DMR", collectorNumber = "89")
 public class HyalopterousLemure extends Card {
 
     public HyalopterousLemure() {

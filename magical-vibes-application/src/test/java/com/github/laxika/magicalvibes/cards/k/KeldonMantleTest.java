@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KeldonMantle.class, GrizzlyBears.class, FountainOfYouth.class})
 class KeldonMantleTest extends BaseCardTest {
 
     @Test
@@ -64,6 +66,21 @@ class KeldonMantleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Green ability still affects the creature if Keldon Mantle leaves before resolution")
+    void greenAbilityUsesEnchantedCreatureCapturedAtActivation() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new KeldonMantle());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 1, 2, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

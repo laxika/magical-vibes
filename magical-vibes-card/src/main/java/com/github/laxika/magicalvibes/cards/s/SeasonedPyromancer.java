@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "145")
+@CardRegistration(set = "2X2", collectorNumber = "123")
 public class SeasonedPyromancer extends Card {
 
     public SeasonedPyromancer() {

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LivingAirship.class, GrizzlyBears.class})
+@CardUsed({LivingAirship.class, LlanowarDead.class})
 class LivingAirshipTest extends BaseCardTest {
 
     @Test
@@ -25,15 +23,8 @@ class LivingAirshipTest extends BaseCardTest {
         Permanent airship = addAirshipReady(player1);
         Permanent blocker = addCreatureReady(player2, 2, 2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(airship)));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(airship)));
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0))))
@@ -65,6 +56,17 @@ class LivingAirshipTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot pay the green component of regeneration with only colorless mana")
+    void cannotActivateRegenerationWithoutGreenMana() {
+        addAirshipReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Living Airship from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent airship = addAirshipReady(player1);
@@ -75,11 +77,7 @@ class LivingAirshipTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, 5, 5);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Living Airship");
         Permanent survivedAirship = findPermanent(player1, "Living Airship");
@@ -95,7 +93,7 @@ class LivingAirshipTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
+        LlanowarDead card = new LlanowarDead();
         card.setPower(power);
         card.setToughness(toughness);
         Permanent perm = new Permanent(card);

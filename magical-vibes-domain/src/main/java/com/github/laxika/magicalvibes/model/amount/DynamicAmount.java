@@ -54,6 +54,7 @@ public sealed interface DynamicAmount permits
         BeheldPower,
         ChosenCreatureOrWarpedCardPower,
         ControllerLifeTotal,
+        ControllerExperienceCounters,
         ControllerSpeed,
         CompletedDungeonsCount,
         CountersOnLinkedPermanent,
@@ -135,6 +136,7 @@ public sealed interface DynamicAmount permits
         Min,
         OpponentPoisonCounters,
         OpponentsWithMoreCardsInHandThanController,
+        OpponentsAttackedThisTurn,
         OpponentsWhoLostLifeThisTurn,
         OtherAttackersSharingCreatureTypeWithTarget,
         PartySize,
@@ -185,6 +187,7 @@ public sealed interface DynamicAmount permits
         UnlockedRoomDoorsCount,
         WebSlingingReturnedCreatureManaValue,
         XValue,
+        TriggeringSpellTargetCount,
         CardTypesAmongCardsDiscardedThisResolution {
 
     /**

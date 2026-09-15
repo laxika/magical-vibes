@@ -156,16 +156,19 @@ public class PermanentAuctionService {
      * parked would wedge {@code GameData.deferPlayerLossCheck} for the rest of the game.
      */
     private void finishAuction(GameData gameData, List<PendingInteraction.PermanentAuctionPlacement> placed) {
-        // Enter-the-battlefield abilities fire after every card has been chosen (all entered as part
-        // of this resolution). Stop early if an ETB begins its own interaction — that interaction's
-        // own completion resumes the parked resolution.
-        for (PendingInteraction.PermanentAuctionPlacement placement : placed) {
+        gameData.pendingAuctionEntries.addAll(placed);
+        resumePendingEntries(gameData);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    /** Continues the auction's entry processing after an as-enters choice has been answered. */
+    public void resumePendingEntries(GameData gameData) {
+        while (!gameData.pendingAuctionEntries.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            PendingInteraction.PermanentAuctionPlacement placement = gameData.pendingAuctionEntries.removeFirst();
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, placement.controllerId(), placement.card(), null, false);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
         }
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "102")
+@CardRegistration(set = "TSR", collectorNumber = "109")
 public class DeathsporeThallid extends Card {
 
     public DeathsporeThallid() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "184")
+@CardRegistration(set = "OTP", collectorNumber = "33")
 public class Thornado extends Card {
 
     public Thornado() {
@@ -24,6 +25,7 @@ public class Thornado extends Card {
                 "Target must be a creature with flying"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
 
+        // Cycling {1}{G} ({1}{G}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{1}{G}");
     }
 }

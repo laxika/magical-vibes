@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackTargetRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -237,6 +238,9 @@ public class AttackLegalityService {
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (protectedPlayerId == null) return true;
+        if (cantAttackCardOwner(attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
+            return false;
+        }
         // Restrictions come from static abilities of the protected player's permanents (Form of the
         // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
         // "until your next turn" shield, which persists independently of its source permanent).
@@ -282,6 +286,21 @@ public class AttackLegalityService {
             }
         }
         return true;
+    }
+
+    private boolean cantAttackCardOwner(Permanent attacker, Permanent targetPermanent,
+                                        boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
+        boolean restrictionPresent = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackCardOwnerEffect.class::isInstance);
+        if (!restrictionPresent || attacker.getOriginalCard().getOwnerId() == null) {
+            return false;
+        }
+        if (targetIsPlayer) {
+            return attacker.getOriginalCard().getOwnerId().equals(targetId);
+        }
+        return targetPermanent != null
+                && targetPermanent.getCard().hasType(CardType.PLANESWALKER)
+                && attacker.getOriginalCard().getOwnerId().equals(protectedPlayerId);
     }
 
     private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {
@@ -578,6 +597,8 @@ public class AttackLegalityService {
 
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
+                    && (floatingEffect.affectedPermanentId() == null
+                    || creature.getId().equals(floatingEffect.affectedPermanentId()))
                     && predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {
@@ -675,9 +696,40 @@ public class AttackLegalityService {
         }
 
         Set<UUID> validTargetIds = getValidAttackTargetIds(gameData, creatureControllerId);
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent sourcePermanent : battlefield) {
+                FilterContext context = FilterContext.of(gameData)
+                        .withSourceCardId(sourcePermanent.getOriginalCard().getId())
+                        .withSourceControllerId(sourceControllerId);
+                for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof CombatAttackRequirementEffect requirement)
+                            || !requirement.requiresAttackAtOtherPlayerIfAble()
+                            || !isCombatAttackRequirementApplicable(
+                            gameData, creature, sourcePermanent, requirement, context)) {
+                        continue;
+                    }
+
+                    boolean canAttackOtherPlayer = validTargetIds.stream()
+                            .filter(gameData.playerIds::contains)
+                            .filter(id -> !sourceControllerId.equals(id))
+                            .anyMatch(id -> canAttackDefender(gameData, creature, id));
+                    if (canAttackOtherPlayer
+                            && (!gameData.playerIds.contains(targetId)
+                            || targetId.equals(sourceControllerId))) {
+                        return true;
+                    }
+                }
+            }
+        }
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
                     || !requirement.requiresAttackAtOtherPlayerIfAble()
+                    || (floatingEffect.affectedPermanentId() != null
+                    && !creature.getId().equals(floatingEffect.affectedPermanentId()))
                     || !predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {

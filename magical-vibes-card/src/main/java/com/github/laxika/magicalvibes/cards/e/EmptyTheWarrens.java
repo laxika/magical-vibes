@@ -14,6 +14,8 @@ import java.util.Set;
 @CardRegistration(set = "TSP", collectorNumber = "152")
 @CardRegistration(set = "MMA", collectorNumber = "112")
 @CardRegistration(set = "DDS", collectorNumber = "15")
+@CardRegistration(set = "TSR", collectorNumber = "162")
+@CardRegistration(set = "DMR", collectorNumber = "118")
 public class EmptyTheWarrens extends Card {
 
     public EmptyTheWarrens() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "54")
+@CardRegistration(set = "HA4", collectorNumber = "5")
 public class IcebergCancrix extends Card {
 
     public IcebergCancrix() {

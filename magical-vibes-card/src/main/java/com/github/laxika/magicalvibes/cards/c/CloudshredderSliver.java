@@ -12,10 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "195")
+@CardRegistration(set = "TSR", collectorNumber = "373")
 public class CloudshredderSliver extends Card {
 
     public CloudshredderSliver() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
+        // Cloudshredder Sliver is itself a Sliver, so ALL_OWN_CREATURES includes the source.
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                Set.of(Keyword.FLYING, Keyword.HASTE),
+                GrantScope.ALL_OWN_CREATURES,
+                new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "35")
+@CardRegistration(set = "KLR", collectorNumber = "52")
 public class IceOver extends Card {
 
     public IceOver() {

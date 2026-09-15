@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "137")
+@CardRegistration(set = "GNT", collectorNumber = "38")
 public class CaptivatingCrew extends Card {
 
     public CaptivatingCrew() {

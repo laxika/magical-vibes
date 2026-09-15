@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "56")
+@CardRegistration(set = "HA4", collectorNumber = "6")
 public class MaritLagesSlumber extends Card {
 
     public MaritLagesSlumber() {

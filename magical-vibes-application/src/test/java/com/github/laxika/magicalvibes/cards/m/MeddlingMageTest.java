@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.d.DromarsCavern;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MeddlingMage.class, MoggSentry.class, MoggJailer.class, DromarsCavern.class})
 class MeddlingMageTest extends BaseCardTest {
 
     // ===== Enters-the-battlefield card name choice =====
@@ -40,15 +41,34 @@ class MeddlingMageTest extends BaseCardTest {
     @DisplayName("Choosing a card name records it on the permanent")
     void choosingNameSetsOnPermanent() {
         harness.setHand(player1, List.of(new MeddlingMage()));
+        harness.setHand(player2, List.of(new MoggSentry()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Mogg Sentry");
 
         Permanent perm = findPermanent(player1, "Meddling Mage");
-        assertThat(perm.getChosenName()).isEqualTo("Grizzly Bears");
+        assertThat(perm.getChosenName()).isEqualTo("Mogg Sentry");
+    }
+
+    @Test
+    @DisplayName("Card name choice excludes land names")
+    void cardNameChoiceExcludesLandNames() {
+        harness.setHand(player1, List.of(new MeddlingMage()));
+        harness.setHand(player2, List.of(new MoggSentry(), new DromarsCavern()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains("Mogg Sentry").doesNotContain("Dromar's Cavern");
+
+        harness.handleListChoice(player1, "Mogg Sentry");
     }
 
     // ===== Static casting restriction =====
@@ -56,13 +76,13 @@ class MeddlingMageTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent cannot cast spells with the chosen name")
     void opponentCannotCastChosenName() {
-        addReadyMeddlingMage(player1, "Grizzly Bears");
+        addReadyMeddlingMage(player1, "Mogg Sentry");
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new MoggSentry()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -72,13 +92,13 @@ class MeddlingMageTest extends BaseCardTest {
     @Test
     @DisplayName("Controller also cannot cast spells with the chosen name")
     void controllerCannotCastChosenName() {
-        addReadyMeddlingMage(player1, "Grizzly Bears");
+        addReadyMeddlingMage(player1, "Mogg Sentry");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new MoggSentry()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -88,13 +108,13 @@ class MeddlingMageTest extends BaseCardTest {
     @Test
     @DisplayName("Spells with a different name can still be cast")
     void spellsWithDifferentNamesCanStillBeCast() {
-        addReadyMeddlingMage(player1, "Grizzly Bears");
+        addReadyMeddlingMage(player1, "Mogg Sentry");
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new HillGiant()));
-        harness.addMana(player2, ManaColor.RED, 4);
+        harness.setHand(player2, List.of(new MoggJailer()));
+        harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castCreature(player2, 0);
 
@@ -106,14 +126,14 @@ class MeddlingMageTest extends BaseCardTest {
     @Test
     @DisplayName("Casting restriction lifts when Meddling Mage leaves the battlefield")
     void castingRestrictionLiftsWhenSourceLeaves() {
-        Permanent mage = addReadyMeddlingMage(player1, "Grizzly Bears");
+        Permanent mage = addReadyMeddlingMage(player1, "Mogg Sentry");
         gd.playerBattlefields.get(player1.getId()).remove(mage);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new MoggSentry()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castCreature(player2, 0);
 
@@ -123,10 +143,8 @@ class MeddlingMageTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyMeddlingMage(Player player, String chosenName) {
-        MeddlingMage card = new MeddlingMage();
-        Permanent perm = new Permanent(card);
+        Permanent perm = addCreatureReady(player, new MeddlingMage());
         perm.setChosenName(chosenName);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

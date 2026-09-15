@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "100")
+@CardRegistration(set = "UMA", collectorNumber = "190")
 public class VerdantEidolon extends Card {
 
     public VerdantEidolon() {

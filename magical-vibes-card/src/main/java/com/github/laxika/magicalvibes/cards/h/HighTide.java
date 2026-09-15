@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeAddExtraManaUnt
 
 @CardRegistration(set = "ME1", collectorNumber = "35")
 @CardRegistration(set = "VMA", collectorNumber = "73")
+@CardRegistration(set = "DMR", collectorNumber = "54")
 public class HighTide extends Card {
 
     public HighTide() {

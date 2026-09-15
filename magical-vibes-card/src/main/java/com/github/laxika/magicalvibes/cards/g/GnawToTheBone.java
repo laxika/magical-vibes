@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "183")
+@CardRegistration(set = "SIS", collectorNumber = "50")
 public class GnawToTheBone extends Card {
 
     public GnawToTheBone() {

@@ -499,7 +499,11 @@ public class CombatBlockService {
                         }
                     } else if (e instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
                         addResolvedCombatOpponentBoost(gameData, resolvedBlockEffects, conditional,
-                                List.of(attacker));
+                                hasOncePerBlockEffect
+                                        ? blockerAssignments.stream()
+                                                .filter(a -> a.blockerIndex() == assignment.blockerIndex())
+                                                .map(a -> attackerBattlefield.get(a.attackerIndex())).toList()
+                                        : List.of(attacker));
                     } else if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                         if (hasEquipmentAttached(gameData, attacker)) {
                             resolvedBlockEffects.add(e);
@@ -1163,8 +1167,7 @@ public class CombatBlockService {
         for (int idx : attackerIndices) {
             Permanent attacker = attackerBattlefield.get(idx);
             boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (mustBeBlocked) {
                 mustBeBlockedIndices.add(idx);
@@ -2333,8 +2336,7 @@ public class CombatBlockService {
             Permanent attacker = attackerBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
             boolean hasRequirement = attacker.isMustBeBlockedThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (hasRequirement) {
                 mustBeBlockedAttackerIndices.add(i);
@@ -2462,7 +2464,9 @@ public class CombatBlockService {
         if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
             return false;
         }
-        if (gameQueryService.getBlockManaTax(gameData, blocker, attacker) > 0) {
+        if (gameQueryService.getBlockManaTax(gameData, blocker, attacker) > 0
+                || gameQueryService.getGlobalBlockManaTax(gameData, blocker) > 0
+                || gameQueryService.getGlobalBlockLifeTax(gameData, blocker, attacker) > 0) {
             return false;
         }
 
@@ -2656,6 +2660,7 @@ public class CombatBlockService {
         for (Permanent permanent : attackerBattlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
                         && (restriction.affectedCreatureFilter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
                         gameData, attacker, restriction.affectedCreatureFilter()))) {
@@ -2724,7 +2729,8 @@ public class CombatBlockService {
         for (int idx : uniqueBlockerIndices) {
             Permanent restricted = defenderBattlefield.get(idx);
             boolean hasRestriction = restricted.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
+                    .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance)
+                    && !gameQueryService.hasLostPrintedAbilities(gameData, restricted);
             if (!hasRestriction) {
                 continue;
             }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 /**
  * Exiles cards from a library, then lets the controller cast any number of the exiled spells
  * without paying their mana costs. The cast choices are made during resolution; uncast cards
- * remain exiled unless the effect requests random bottoming.
+ * normally remain exiled, or return to the owner's library bottom in random order when requested.
  */
 public record ExileTopCardsAndMayCastSpellsEffect(
         int count,
@@ -19,13 +19,12 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         CardPredicate castFilter,
         int maxCastCount,
         boolean targetedOpponent,
-        boolean remainderToBottomRandomly
+        boolean putUncastCardsOnBottomRandom
 ) implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     /** Exiles the top {@code count} cards of the controller's library. */
     public ExileTopCardsAndMayCastSpellsEffect(int count) {
-        this(count, null, LibraryScope.CONTROLLER, false, null, null,
-                Integer.MAX_VALUE, false, false);
+        this(count, null, LibraryScope.CONTROLLER, false, null, null, Integer.MAX_VALUE, false, false);
     }
 
     /** Exiles cards from a combat-damaged opponent's library and tracks them with the source. */
@@ -43,6 +42,14 @@ public record ExileTopCardsAndMayCastSpellsEffect(
                                                CardPredicate castFilter) {
         this(0, dynamicCount, scope, trackWithSource, manaValueLimit, castFilter,
                 Integer.MAX_VALUE, false, false);
+    }
+
+    /** Exiles the controller's top cards and caps the free-cast offer. */
+    public ExileTopCardsAndMayCastSpellsEffect(int count, DynamicAmount manaValueLimit,
+                                               CardPredicate castFilter, int maxCastCount,
+                                               boolean putUncastCardsOnBottomRandom) {
+        this(count, null, LibraryScope.CONTROLLER, false, manaValueLimit, castFilter,
+                maxCastCount, false, putUncastCardsOnBottomRandom);
     }
 
     /** Exiles a fixed number from a targeted opponent and caps the number of free casts. */

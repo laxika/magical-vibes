@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Index;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,21 +13,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SqueesRevenge.class, GrizzlyBears.class})
+@CardUsed({SqueesRevenge.class, Index.class})
 class SqueesRevengeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws two cards for each flip only when every chosen flip is won")
     void drawsOnlyAfterWinningEveryChosenFlip() {
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player1, List.of(new SqueesRevenge()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+                new Index(), new Index(), new Index(),
+                new Index(), new Index(), new Index()));
+        castAndChooseNumber(3);
 
         long flips = coinFlipLogs().size();
         boolean wonEveryFlip = flips == 3
@@ -38,16 +34,22 @@ class SqueesRevengeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing zero performs no flips and draws no cards")
     void choosingZeroDoesNothing() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Index(), new Index()));
+        castAndChooseNumber(0);
+
+        assertThat(coinFlipLogs()).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private void castAndChooseNumber(int chosenNumber) {
         harness.setHand(player1, List.of(new SqueesRevenge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-
-        assertThat(coinFlipLogs()).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        harness.handleXValueChosen(player1, chosenNumber);
     }
 
     private List<String> coinFlipLogs() {

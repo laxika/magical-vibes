@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "FDN", collectorNumber = "162")
 @CardRegistration(set = "BLB", collectorNumber = "67")
 @CardRegistration(set = "ELD", collectorNumber = "62")
+@CardRegistration(set = "GN3", collectorNumber = "37")
 public class RunAwayTogether extends Card {
 
     public RunAwayTogether() {

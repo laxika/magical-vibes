@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "DDD", collectorNumber = "5")
 @CardRegistration(set = "VMA", collectorNumber = "239")
 @CardRegistration(set = "GVL", collectorNumber = "5")
+@CardRegistration(set = "UMA", collectorNumber = "194")
 public class WildMongrel extends Card {
 
     public WildMongrel() {

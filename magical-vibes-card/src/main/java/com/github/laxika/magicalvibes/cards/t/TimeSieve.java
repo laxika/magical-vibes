@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "31")
+@CardRegistration(set = "2XM", collectorNumber = "223")
 public class TimeSieve extends Card {
 
     public TimeSieve() {

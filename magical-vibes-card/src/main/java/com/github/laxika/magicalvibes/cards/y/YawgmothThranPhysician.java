@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
+import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -16,9 +20,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "116")
+@CardRegistration(set = "TSR", collectorNumber = "336")
+@CardRegistration(set = "DMR", collectorNumber = "110")
 public class YawgmothThranPhysician extends Card {
 
     public YawgmothThranPhysician() {
+        addEffect(EffectSlot.STATIC, new ProtectionFromSubtypesEffect(Set.of(CardSubtype.HUMAN)));
+
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

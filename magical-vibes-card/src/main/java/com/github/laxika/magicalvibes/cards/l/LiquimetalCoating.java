@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentE
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "171")
+@CardRegistration(set = "BRR", collectorNumber = "28")
 public class LiquimetalCoating extends Card {
 
     public LiquimetalCoating() {

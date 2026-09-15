@@ -30,14 +30,12 @@ class DingusEggTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to the land's controller when their land is destroyed")
     void dealsToLandControllerWhenLandDestroyed() {
         harness.addToBattlefield(player1, new DingusEgg());
-        harness.addToBattlefield(player2, new Mountain());
+        UUID mountainId = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
         harness.setLife(player2, 20);
 
-        UUID mountainId = harness.getPermanentId(player2, "Mountain");
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, mountainId);
-        harness.passBothPriorities(); // Resolve Stone Rain — Mountain dies
+        harness.castAndResolveSorcery(player1, 0, mountainId); // Resolve Stone Rain — Mountain dies
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -99,17 +97,15 @@ class DingusEggTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to controller when their own land is destroyed")
     void dealsToSelfWhenOwnLandDestroyed() {
         harness.addToBattlefield(player1, new DingusEgg());
-        harness.addToBattlefield(player1, new Mountain());
+        UUID mountainId = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
         harness.setLife(player1, 20);
 
-        UUID mountainId = harness.getPermanentId(player1, "Mountain");
         harness.setHand(player2, List.of(new StoneRain()));
         harness.addMana(player2, ManaColor.RED, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castSorcery(player2, 0, mountainId);
-        harness.passBothPriorities(); // Resolve Stone Rain
+        harness.castAndResolveSorcery(player2, 0, mountainId); // Resolve Stone Rain
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Dingus Egg");
@@ -139,14 +135,12 @@ class DingusEggTest extends BaseCardTest {
     void twoEggsEachTrigger() {
         harness.addToBattlefield(player1, new DingusEgg());
         harness.addToBattlefield(player1, new DingusEgg());
-        harness.addToBattlefield(player2, new Mountain());
+        UUID mountainId = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
         harness.setLife(player2, 20);
 
-        UUID mountainId = harness.getPermanentId(player2, "Mountain");
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, mountainId);
-        harness.passBothPriorities(); // Resolve Stone Rain
+        harness.castAndResolveSorcery(player1, 0, mountainId); // Resolve Stone Rain
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack).allMatch(se -> se.getCard().getName().equals("Dingus Egg"));
@@ -181,13 +175,11 @@ class DingusEggTest extends BaseCardTest {
     @DisplayName("Trigger is logged when it fires")
     void triggerIsLogged() {
         harness.addToBattlefield(player1, new DingusEgg());
-        harness.addToBattlefield(player2, new Mountain());
+        UUID mountainId = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
 
-        UUID mountainId = harness.getPermanentId(player2, "Mountain");
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, mountainId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mountainId);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Dingus Egg") && log.contains("triggers"));

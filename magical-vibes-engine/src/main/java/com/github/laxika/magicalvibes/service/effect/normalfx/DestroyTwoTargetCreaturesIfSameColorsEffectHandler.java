@@ -34,22 +34,19 @@ public class DestroyTwoTargetCreaturesIfSameColorsEffectHandler implements Norma
             return;
         }
 
-        List<Permanent> declaredTargets = new ArrayList<>(2);
-        for (int i = 0; i < declaredTargetIds.size(); i++) {
-            if (!entry.isTargetLegal(i)) {
-                return;
-            }
-            UUID targetId = declaredTargetIds.get(i);
+        List<Set<CardColor>> targetColors = new ArrayList<>(2);
+        for (UUID targetId : declaredTargetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
+            Set<CardColor> colors = target != null
+                    ? gameQueryService.getEffectiveColors(gameData, target)
+                    : entry.getLastKnownTargetColors().get(targetId);
+            if (colors == null) {
                 return;
             }
-            declaredTargets.add(target);
+            targetColors.add(colors);
         }
 
-        Set<CardColor> firstColors = gameQueryService.getEffectiveColors(gameData, declaredTargets.getFirst());
-        Set<CardColor> secondColors = gameQueryService.getEffectiveColors(gameData, declaredTargets.get(1));
-        if (!firstColors.equals(secondColors)) {
+        if (!targetColors.getFirst().equals(targetColors.get(1))) {
             return;
         }
 

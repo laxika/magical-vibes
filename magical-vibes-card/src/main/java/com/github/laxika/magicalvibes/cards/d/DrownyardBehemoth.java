@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "4")
+@CardRegistration(set = "SIR", collectorNumber = "4")
 public class DrownyardBehemoth extends Card {
 
     public DrownyardBehemoth() {

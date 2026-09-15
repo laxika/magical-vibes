@@ -1,30 +1,27 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Telepathy.class, CoralMerfolk.class, GorillaWarrior.class})
+@CardUsed({AirElemental.class, CoralMerfolk.class, GorillaWarrior.class, GrizzlyBears.class, Telepathy.class})
 class TelepathyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Telepathy puts it on the stack as an enchantment spell")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Telepathy()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Telepathy(), "{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -37,10 +34,7 @@ class TelepathyTest extends BaseCardTest {
     @Test
     @DisplayName("Telepathy resolves onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new Telepathy()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Telepathy(), "{U}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -178,6 +172,35 @@ class TelepathyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Telepathy reveals opponent's hand after being cast and resolved")
+    void revealsHandAfterCasting() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new Telepathy(), "{U}");
+        harness.clearMessages();
+        harness.passBothPriorities();
+
+        // After resolving, the game state should include the revealed hand
+        List<String> p1Messages = harness.getConn1().getSentMessages();
+        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Telepathy reveals opponent's hand after being cast and resolved")
+    void revealsHandAfterCastingUpstreamReview() {
+        harness.setHand(player1, List.of(new Telepathy()));
+        harness.setHand(player2, List.of(new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0);
+        harness.clearMessages();
+        harness.passBothPriorities();
+
+        // After resolving, the game state should include the revealed hand
+        List<String> p1Messages = harness.getConn1().getSentMessages();
+        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
+    }
+
+    @Test
     @DisplayName("Telepathy does not reveal the opponent's hand while it is on the stack")
     void handIsNotRevealedBeforeResolution() {
         harness.setHand(player1, List.of(new Telepathy()));
@@ -192,21 +215,4 @@ class TelepathyTest extends BaseCardTest {
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
         assertThat(p1Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
     }
-
-    @Test
-    @DisplayName("Telepathy reveals opponent's hand after being cast and resolved")
-    void revealsHandAfterCasting() {
-        harness.setHand(player1, List.of(new Telepathy()));
-        harness.setHand(player2, List.of(new CoralMerfolk()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castEnchantment(player1, 0);
-        harness.clearMessages();
-        harness.passBothPriorities();
-
-        // After resolving, the game state should include the revealed hand
-        List<String> p1Messages = harness.getConn1().getSentMessages();
-        assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Coral Merfolk"));
-    }
 }
-

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "51")
+@CardRegistration(set = "RVR", collectorNumber = "55")
 public class Quasiduplicate extends Card {
 
     public Quasiduplicate() {

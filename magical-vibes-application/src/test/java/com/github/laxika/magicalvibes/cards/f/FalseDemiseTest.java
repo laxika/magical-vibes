@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
-import com.github.laxika.magicalvibes.cards.d.DeathSpark;
-import com.github.laxika.magicalvibes.cards.e.Exile;
 import com.github.laxika.magicalvibes.cards.g.GrafRats;
+import com.github.laxika.magicalvibes.cards.l.LastBreath;
 import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
-import com.github.laxika.magicalvibes.cards.s.SwampMosquito;
+import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
+import com.github.laxika.magicalvibes.cards.v.Vendetta;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,9 +23,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         FalseDemise.class,
-        DeathSpark.class,
-        Exile.class,
-        SwampMosquito.class,
+        LastBreath.class,
+        SteadfastGuard.class,
+        Vendetta.class,
         GrafRats.class,
         MidnightScavengers.class,
         ChitteringHost.class
@@ -35,7 +35,7 @@ class FalseDemiseTest extends BaseCardTest {
     @Test
     @DisplayName("When your own enchanted creature dies, it returns to the battlefield under your control")
     void returnsOwnCreatureUnderYourControl() {
-        Permanent creature = addCreatureReady(player1, new SwampMosquito());
+        Permanent creature = addCreatureReady(player1, new SteadfastGuard());
         Card creatureCard = creature.getCard();
 
         castFalseDemise(player1, creature);
@@ -51,7 +51,7 @@ class FalseDemiseTest extends BaseCardTest {
     @Test
     @DisplayName("When an opponent's enchanted creature dies, it returns under the Aura controller's control")
     void returnsOpponentCreatureUnderYourControl() {
-        Permanent creature = addCreatureReady(player2, new SwampMosquito());
+        Permanent creature = addCreatureReady(player2, new SteadfastGuard());
         Card creatureCard = creature.getCard();
 
         castFalseDemise(player1, creature);
@@ -75,7 +75,7 @@ class FalseDemiseTest extends BaseCardTest {
     @Test
     @DisplayName("False Demise goes to its owner's graveyard when the enchanted creature dies")
     void auraGoesToGraveyardOnDeath() {
-        Permanent creature = addCreatureReady(player2, new SwampMosquito());
+        Permanent creature = addCreatureReady(player2, new SteadfastGuard());
 
         castFalseDemise(player1, creature);
         killCreature(player1, creature);
@@ -87,8 +87,8 @@ class FalseDemiseTest extends BaseCardTest {
     @Test
     @DisplayName("A different creature's death does not trigger False Demise")
     void doesNotTriggerForDifferentCreature() {
-        Permanent enchantedCreature = addCreatureReady(player1, new SwampMosquito());
-        Permanent otherCreature = addCreatureReady(player1, new SwampMosquito());
+        Permanent enchantedCreature = addCreatureReady(player1, new SteadfastGuard());
+        Permanent otherCreature = addCreatureReady(player1, new SteadfastGuard());
         Card enchantedCreatureCard = enchantedCreature.getCard();
         Card otherCreatureCard = otherCreature.getCard();
 
@@ -105,18 +105,17 @@ class FalseDemiseTest extends BaseCardTest {
     @Test
     @DisplayName("Exiling the enchanted creature does not trigger False Demise")
     void doesNotTriggerWhenEnchantedCreatureIsExiled() {
-        Permanent creature = addCreatureReady(player1, new SwampMosquito());
+        Permanent creature = addCreatureReady(player1, new SteadfastGuard());
         Card creatureCard = creature.getCard();
 
         castFalseDemise(player1, creature);
 
-        creature.setAttacking(true);
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Exile()));
+        harness.setHand(player1, List.of(new LastBreath()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
@@ -185,8 +184,8 @@ class FalseDemiseTest extends BaseCardTest {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new DeathSpark()));
-        harness.addMana(caster, ManaColor.RED, 2);
+        harness.setHand(caster, List.of(new Vendetta()));
+        harness.addMana(caster, ManaColor.BLACK, 1);
         harness.castInstant(caster, 0, creature.getId());
         resolveAllTriggers();
     }

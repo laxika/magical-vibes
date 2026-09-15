@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "312")
+@CardRegistration(set = "DMR", collectorNumber = "237")
 public class Umbilicus extends Card {
 
     public Umbilicus() {

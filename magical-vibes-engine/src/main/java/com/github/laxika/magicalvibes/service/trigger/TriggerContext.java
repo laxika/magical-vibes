@@ -248,7 +248,14 @@ public sealed interface TriggerContext {
 
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
-                                          int damageDealt, boolean combatDamage) implements TriggerContext {}
+                                          int damageDealt, boolean combatDamage,
+                                          Permanent damagedCreature, UUID damagedCreatureControllerId)
+            implements TriggerContext {
+        public CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
+                                              int damageDealt, boolean combatDamage) {
+            this(damageSource, damagedCreatureId, damageDealt, combatDamage, null, null);
+        }
+    }
 
     /** Context for a creature fighting another creature. */
     record CreatureFights(Permanent fightingCreature) implements TriggerContext {}
@@ -340,7 +347,8 @@ public sealed interface TriggerContext {
     record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 
     /**
-     * Context for enter-the-battlefield triggers (ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+     * Context for enter-the-battlefield triggers (ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+     * ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
      * ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD).
      *

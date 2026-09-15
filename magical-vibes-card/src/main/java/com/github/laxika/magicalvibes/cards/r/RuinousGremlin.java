@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "128")
+@CardRegistration(set = "KLR", collectorNumber = "142")
 public class RuinousGremlin extends Card {
 
     public RuinousGremlin() {

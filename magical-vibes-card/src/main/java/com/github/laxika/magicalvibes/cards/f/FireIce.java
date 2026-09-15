@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "128")
 @CardRegistration(set = "DDJ", collectorNumber = "32")
+@CardRegistration(set = "UMA", collectorNumber = "225")
+@CardRegistration(set = "DMR", collectorNumber = "215")
 public class FireIce extends Card {
 
     public FireIce() {

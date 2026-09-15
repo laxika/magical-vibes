@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNoAbilitiesPredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "146")
+@CardRegistration(set = "TSR", collectorNumber = "220")
 public class MuragandaPetroglyphs extends Card {
 
     public MuragandaPetroglyphs() {

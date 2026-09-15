@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpells
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MH1", collectorNumber = "196")
+@CardRegistration(set = "HA4", collectorNumber = "19")
 public class CollectedConjuring extends Card {
 
     public CollectedConjuring() {

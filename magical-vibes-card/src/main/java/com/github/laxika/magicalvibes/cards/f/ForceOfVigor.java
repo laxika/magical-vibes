@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "164")
+@CardRegistration(set = "OTP", collectorNumber = "29")
+@CardRegistration(set = "OTP", collectorNumber = "73")
 public class ForceOfVigor extends Card {
 
     public ForceOfVigor() {

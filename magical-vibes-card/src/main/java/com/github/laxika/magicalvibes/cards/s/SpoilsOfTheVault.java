@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseNameExileTopRevealUntilNamedToHandEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "78")
+@CardRegistration(set = "UMA", collectorNumber = "116")
 public class SpoilsOfTheVault extends Card {
 
     public SpoilsOfTheVault() {

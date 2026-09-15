@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "85")
+@CardRegistration(set = "GK1", collectorNumber = "17")
 public class MirkoVoskMindDrinker extends Card {
 
     public MirkoVoskMindDrinker() {

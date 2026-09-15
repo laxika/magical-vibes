@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "FDN", collectorNumber = "199")
 @CardRegistration(set = "RAV", collectorNumber = "125")
 @CardRegistration(set = "DDN", collectorNumber = "2")
+@CardRegistration(set = "GK1", collectorNumber = "81")
 public class FrenziedGoblin extends Card {
 
     public FrenziedGoblin() {

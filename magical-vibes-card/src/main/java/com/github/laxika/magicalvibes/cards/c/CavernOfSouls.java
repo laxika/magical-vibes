@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "226")
+@CardRegistration(set = "UMA", collectorNumber = "237")
 @CardRegistration(set = "MM3", collectorNumber = "232")
+@CardRegistration(set = "ZNE", collectorNumber = "22")
 @CardRegistration(set = "LCI", collectorNumber = "269")
 @CardRegistration(set = "LCI", collectorNumber = "345")
 @CardRegistration(set = "LCI", collectorNumber = "410a")
@@ -22,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "LCI", collectorNumber = "410d")
 @CardRegistration(set = "LCI", collectorNumber = "410e")
 @CardRegistration(set = "LCI", collectorNumber = "410f")
+@CardRegistration(set = "2X2", collectorNumber = "320")
 public class CavernOfSouls extends Card {
 
     public CavernOfSouls() {

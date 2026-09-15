@@ -37,8 +37,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
             resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isTrue();
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                    logEntry.plainText().contains("reveals their hand")));
+            verify(cardRevealService).revealHandToAllPlayers(gd, player2Id);
             verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                     i instanceof PendingInteraction.RevealedHandChoice rhc
                             && rhc.choosingPlayerId().equals(player1Id)
@@ -77,8 +76,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                    logEntry.plainText().contains("reveals their hand")));
+            verify(cardRevealService).revealHandToAllPlayers(gd, player2Id);
             verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                     i instanceof PendingInteraction.RevealedHandChoice rhc
                             && rhc.choosingPlayerId().equals(player1Id)

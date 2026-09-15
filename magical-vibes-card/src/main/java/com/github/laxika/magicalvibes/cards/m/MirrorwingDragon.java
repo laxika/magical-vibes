@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 
 @CardRegistration(set = "INR", collectorNumber = "165")
 @CardRegistration(set = "EMN", collectorNumber = "136")
+@CardRegistration(set = "SIR", collectorNumber = "170")
 public class MirrorwingDragon extends Card {
 
     public MirrorwingDragon() {

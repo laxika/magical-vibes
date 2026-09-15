@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 
 @CardRegistration(set = "KTK", collectorNumber = "137")
+@CardRegistration(set = "UMA", collectorNumber = "170")
 public class HootingMandrills extends Card {
 
     public HootingMandrills() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "253")
 @CardRegistration(set = "DDF", collectorNumber = "55")
+@CardRegistration(set = "TSR", collectorNumber = "264")
 public class ClockworkHydra extends Card {
 
     public ClockworkHydra() {

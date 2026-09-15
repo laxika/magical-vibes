@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "277")
+@CardRegistration(set = "DMR", collectorNumber = "173")
 public class PrimalBoost extends Card {
 
     public PrimalBoost() {

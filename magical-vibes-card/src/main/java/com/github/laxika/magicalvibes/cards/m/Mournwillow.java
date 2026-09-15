@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "187")
+@CardRegistration(set = "SIR", collectorNumber = "237")
 public class Mournwillow extends Card {
 
     public Mournwillow() {

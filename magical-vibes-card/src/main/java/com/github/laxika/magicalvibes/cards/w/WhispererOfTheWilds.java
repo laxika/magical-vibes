@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "144")
+@CardRegistration(set = "2XM", collectorNumber = "187")
 public class WhispererOfTheWilds extends Card {
 
     public WhispererOfTheWilds() {

@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
@@ -1332,7 +1333,7 @@ public class TargetLegalityService {
                                                             UUID targetId, List<UUID> targetIds,
                                                             UUID controllerId, int xValue,
                                                             boolean kicked) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)) {
             return;
         }
         if (containsFlagbearer(gameData, targetId, targetIds)) {
@@ -1423,7 +1424,7 @@ public class TargetLegalityService {
                                                               List<UUID> targetIds, UUID controllerId,
                                                               int xValue, boolean kicked,
                                                               int firstGroupIndex) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)
                 || targetIds.stream().map(id -> gameQueryService.findPermanentById(gameData, id))
                 .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
             return;
@@ -1454,7 +1455,7 @@ public class TargetLegalityService {
                                                               ActivatedAbility ability,
                                                               List<CardEffect> abilityEffects,
                                                               UUID targetId, Card sourceCard, int xValue) {
-        if (targetId == null || !gameQueryService.hasFlagbearerControlledByOpponent(gameData, playerId)) {
+        if (targetId == null || !gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, playerId)) {
             return false;
         }
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, targetId);
@@ -1526,7 +1527,7 @@ public class TargetLegalityService {
                                                                List<CardEffect> abilityEffects,
                                                                List<UUID> targetIds, Card sourceCard,
                                                                int xValue) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, playerId)
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, playerId)
                 || targetIds.stream().map(id -> gameQueryService.findPermanentById(gameData, id))
                 .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
             return;
@@ -4172,6 +4173,14 @@ public class TargetLegalityService {
             }
             int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return manaValue == source.getCounterCount(equalsCounters.counterType());
+        }
+        if (predicate instanceof StackEntryManaValueGreaterThanControllerExperienceCountersPredicate) {
+            if (controllerId == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int experienceCounters = gameData.playerExperienceCounters.getOrDefault(controllerId, 0);
+            return manaValue > experienceCounters;
         }
         if (predicate instanceof StackEntryManaValueEqualsSourcePowerPredicate) {
             if (source == null) {

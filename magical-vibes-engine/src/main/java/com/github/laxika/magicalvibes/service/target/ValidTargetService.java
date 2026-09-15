@@ -955,7 +955,7 @@ public class ValidTargetService {
     private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,
                                                 List<UUID> alreadySelectedIds,
                                                 List<UUID> validPermanentIds, List<UUID> validPlayerIds) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)) {
             return;
         }
         if (alreadySelectedIds != null && alreadySelectedIds.stream()
@@ -1283,6 +1283,15 @@ public class ValidTargetService {
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                 || targetFilter instanceof OwnedPermanentPredicateTargetFilter
                 || targetFilter instanceof PermanentPredicateTargetFilter;
+    }
+
+    /** Uses the same targeting restrictions for a triggered ability's optional target choice. */
+    public boolean isValidTriggeredAbilityPermanentTarget(GameData gameData, Card sourceCard,
+                                                            List<CardEffect> effects, TargetFilter filter,
+                                                            Permanent target, UUID controllerId) {
+        ActivatedAbility targeting = new ActivatedAbility(false, null, effects, "", filter);
+        return isValidAbilityPermanentTarget(gameData, sourceCard, targeting, target, controllerId,
+                false, -1, filter);
     }
 
     public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,

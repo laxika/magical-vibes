@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantCrewEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "26")
+@CardRegistration(set = "KLR", collectorNumber = "29")
 public class RevokePrivileges extends Card {
 
     public RevokePrivileges() {

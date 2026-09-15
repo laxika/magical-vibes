@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "231")
+@CardRegistration(set = "KLR", collectorNumber = "268")
 public class ScrapheapScrounger extends Card {
 
     public ScrapheapScrounger() {

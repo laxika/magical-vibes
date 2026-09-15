@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "100")
 @CardRegistration(set = "ZNR", collectorNumber = "128")
+@CardRegistration(set = "KLR", collectorNumber = "107")
 public class SubtleStrike extends Card {
 
     public SubtleStrike() {

@@ -31,6 +31,7 @@ import java.util.List;
 @CardRegistration(set = "CHR", collectorNumber = "122")
 @CardRegistration(set = "CHR", collectorNumber = "124")
 @CardRegistration(set = "CHR", collectorNumber = "125")
+@CardRegistration(set = "2XM", collectorNumber = "331")
 public class UrzasTower extends Card {
 
     public UrzasTower() {

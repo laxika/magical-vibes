@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "96")
 @CardRegistration(set = "MPS", collectorNumber = "3")
+@CardRegistration(set = "KLR", collectorNumber = "104")
 public class NoxiousGearhulk extends Card {
 
     public NoxiousGearhulk() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "47")
+@CardRegistration(set = "SIR", collectorNumber = "50")
 public class ThaliasLancers extends Card {
 
     public ThaliasLancers() {

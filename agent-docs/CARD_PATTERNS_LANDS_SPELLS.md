@@ -1,5 +1,6 @@
 # Card Patterns: Lands & Spells
 - Cosmic Rebirth (`c/CosmicRebirth.java`): target a permanent card in your graveyard; gate `ReturnCardFromGraveyardEffect` battlefield/hand branches with `TargetGraveyardCardManaValueAtMost(3)` and `TargetGraveyardCardManaValueAtLeast(4)`, then add `GainLifeEffect(3)`.
+- Targeted low-mana permanent reanimate + optional graveyard-cast self-copy + flashback | `s/SevinnesReclamation.java` | `target(new GraveyardCardPredicateTargetFilter(CardAllOfPredicate(CardIsPermanentPredicate, CardMaxManaValuePredicate(3)), CONTROLLERS_GRAVEYARD))` + targeted `ReturnCardFromGraveyardEffect` to `BATTLEFIELD` + `ConditionalEffect(new CastFromZone(GRAVEYARD), MayEffect(new CopyThisSpellForControllerEffect(), prompt))` + `FlashbackCast("{4}{W}")` |
 
 Guided Passage's full-library reveal with category-constrained opponent choice is implemented by `g/GuidedPassage.java` and `GuidedPassageEffect()`.
 
@@ -36,6 +37,7 @@ on what the mana may pay for.
 | X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, new XValue()) + AnimatePermanentsEffect(0, 0, [ELEMENTAL], [HASTE], null, {}, TARGET, PERMANENT) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
 | Permanent named legendary land animation + counters | `a/AwakeningOfVituGhazi.java` | SPELL `PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 9)` + `AnimatePermanentsEffect(0, 0, [ELEMENTAL], [HASTE], null, {}, TARGET, PERMANENT)` + `SetTargetPermanentSupertypeEffect(LEGENDARY, true)` + `SetTargetPermanentNameEffect("Vitu-Ghazi")`, narrowed to `TargetFilters.landYouControl()` |
 | Check land | `d/DragonskullSummit.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(0, PermanentHasAnySubtypePredicate), new EntersTappedEffect())` + 2 mana abilities — enters tapped unless you control a matching permanent |
+| Multiplayer check land | `s/SeaOfClouds.java` | STATIC `ConditionalReplacementEffect(new NotCondition(new ControllerHasAtLeastOpponents(2)), new EntersTappedEffect())` + 2 mana abilities — enters tapped unless you have two or more opponents |
 | Check land with one-shot spell protection | `m/MistriseVillage.java` | Check-land replacement + `{T}` blue mana + `{U},{T}` `MakeNextSpellUncounterableThisTurnEffect` |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 3+ other lands |
 | Slow land | `d/DeathcapGlade.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 1 or fewer other lands |

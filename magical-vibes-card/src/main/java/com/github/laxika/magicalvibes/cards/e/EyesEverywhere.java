@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "38")
+@CardRegistration(set = "RVR", collectorNumber = "43")
 public class EyesEverywhere extends Card {
 
     public EyesEverywhere() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "93")
+@CardRegistration(set = "TSR", collectorNumber = "98")
 public class WalkTheAeons extends Card {
 
     public WalkTheAeons() {

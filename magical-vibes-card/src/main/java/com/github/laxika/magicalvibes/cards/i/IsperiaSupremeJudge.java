@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "171")
+@CardRegistration(set = "GK2", collectorNumber = "1")
 public class IsperiaSupremeJudge extends Card {
 
     public IsperiaSupremeJudge() {

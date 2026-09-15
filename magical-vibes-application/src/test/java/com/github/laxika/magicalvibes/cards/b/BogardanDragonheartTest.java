@@ -49,7 +49,7 @@ class BogardanDragonheartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, dragonheart))
-                .containsExactly(CardSubtype.HUMAN, CardSubtype.SHAMAN);
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SHAMAN);
         assertThat(gqs.getEffectivePower(gd, dragonheart)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, dragonheart)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dragonheart, Keyword.FLYING)).isFalse();

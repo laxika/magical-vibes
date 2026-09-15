@@ -143,9 +143,7 @@ public class CardChoiceHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
-            if (card.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
-            }
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
         } else {
             hand.add(cardIndex, card);
             gameLogService.append(gameData,

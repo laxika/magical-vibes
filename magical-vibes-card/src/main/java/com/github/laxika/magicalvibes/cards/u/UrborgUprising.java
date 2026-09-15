@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "APC", collectorNumber = "53")
 @CardRegistration(set = "EMA", collectorNumber = "111")
 @CardRegistration(set = "VMA", collectorNumber = "144")
+@CardRegistration(set = "DMR", collectorNumber = "107")
 public class UrborgUprising extends Card {
 
     public UrborgUprising() {

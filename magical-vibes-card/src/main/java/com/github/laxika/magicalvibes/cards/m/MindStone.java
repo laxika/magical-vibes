@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDP", collectorNumber = "65")
 @CardRegistration(set = "JVC", collectorNumber = "22")
 @CardRegistration(set = "IMA", collectorNumber = "219")
+@CardRegistration(set = "HA1", collectorNumber = "19")
+@CardRegistration(set = "DMR", collectorNumber = "232")
 public class MindStone extends Card {
 
     public MindStone() {

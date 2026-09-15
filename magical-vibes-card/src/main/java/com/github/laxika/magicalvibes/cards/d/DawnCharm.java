@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "4")
+@CardRegistration(set = "UMA", collectorNumber = "13")
 public class DawnCharm extends Card {
 
     public DawnCharm() {

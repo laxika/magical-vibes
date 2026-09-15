@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.ArchangelElspeth;
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mawcor.class, GrizzlyBears.class, Island.class, LlanowarElves.class})
+@CardUsed({Mawcor.class, GrizzlyBears.class, Island.class, LlanowarElves.class,
+        ArchangelElspeth.class, AwakenedSkyclave.class, InvasionOfZendikar.class})
 class MawcorTest extends BaseCardTest {
 
     @Test
@@ -30,7 +35,7 @@ class MawcorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -57,6 +62,34 @@ class MawcorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to a planeswalker")
+    void deals1DamageToPlaneswalker() {
+        addReadyMawcor(player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ArchangelElspeth());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to a battle")
+    void deals1DamageToBattle() {
+        addReadyMawcor(player1);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+
+        harness.activateAbility(player1, 0, null, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
     }
 
     @Test

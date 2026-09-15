@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "159")
+@CardRegistration(set = "2XM", collectorNumber = "258")
 public class GolemArtisan extends Card {
 
     public GolemArtisan() {

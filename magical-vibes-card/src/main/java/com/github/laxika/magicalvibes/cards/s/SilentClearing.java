@@ -12,10 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "246")
+@CardRegistration(set = "HA7", collectorNumber = "24")
 public class SilentClearing extends Card {
 
     public SilentClearing() {
-        // {T}, Pay 1 life: Add {W} or {B}.
+        // {T}, Pay 1 life: Add {W}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
@@ -23,6 +24,7 @@ public class SilentClearing extends Card {
                 "{T}, Pay 1 life: Add {W}."
         ));
 
+        // {T}, Pay 1 life: Add {B}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

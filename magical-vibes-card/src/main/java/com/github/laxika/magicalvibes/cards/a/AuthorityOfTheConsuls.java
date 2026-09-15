@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "137")
 @CardRegistration(set = "KLD", collectorNumber = "5")
+@CardRegistration(set = "KLR", collectorNumber = "9")
 public class AuthorityOfTheConsuls extends Card {
 
     public AuthorityOfTheConsuls() {

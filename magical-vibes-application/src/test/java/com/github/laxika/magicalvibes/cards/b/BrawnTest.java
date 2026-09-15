@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Brawn.class, Forest.class, GrizzlyBears.class})
@@ -17,7 +19,7 @@ class BrawnTest extends BaseCardTest {
     @Test
     @DisplayName("A Brawn in the graveyard gives your creatures trample while you control a Forest")
     void grantsTrampleFromGraveyardWithForest() {
-        gd.playerGraveyards.get(player1.getId()).add(new Brawn());
+        harness.setGraveyard(player1, List.of(new Brawn()));
         harness.addToBattlefield(player1, new Forest());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -30,7 +32,7 @@ class BrawnTest extends BaseCardTest {
     @DisplayName("Brawn's graveyard ability turns off without a Forest or after Brawn leaves the graveyard")
     void graveyardAbilityTurnsOffWhenConditionChanges() {
         Brawn brawn = new Brawn();
-        gd.playerGraveyards.get(player1.getId()).add(brawn);
+        harness.setGraveyard(player1, List.of(brawn));
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
@@ -42,7 +44,29 @@ class BrawnTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getCard() == forest);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
 
-        gd.playerGraveyards.get(player1.getId()).remove(brawn);
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Brawn requires a Forest controlled by the graveyard card's controller")
+    void forestMustBeControlledByGraveyardCardController() {
+        harness.setGraveyard(player1, List.of(new Brawn()));
+        harness.addToBattlefield(player2, new Forest());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, ownBears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Brawn does not grant its graveyard ability from the battlefield")
+    void battlefieldBrawnDoesNotGrantGraveyardAbility() {
+        harness.addToBattlefield(player1, new Brawn());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 }

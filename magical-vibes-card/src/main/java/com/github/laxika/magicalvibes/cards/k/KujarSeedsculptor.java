@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "159")
 @CardRegistration(set = "DDU", collectorNumber = "15")
+@CardRegistration(set = "KLR", collectorNumber = "165")
 public class KujarSeedsculptor extends Card {
 
     public KujarSeedsculptor() {

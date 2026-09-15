@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "114")
+@CardRegistration(set = "GK2", collectorNumber = "13")
 public class IsperiaTheInscrutable extends Card {
 
     public IsperiaTheInscrutable() {

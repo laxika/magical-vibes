@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "123")
+@CardRegistration(set = "GK2", collectorNumber = "112")
 public class GyreSage extends Card {
 
     public GyreSage() {

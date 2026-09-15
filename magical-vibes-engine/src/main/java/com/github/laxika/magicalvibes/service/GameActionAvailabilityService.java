@@ -1436,7 +1436,8 @@ public class GameActionAvailabilityService {
             // player has a land card in hand to discard as the additional cost.
             boolean isRetrace = !graveyardAbilitiesSuppressed
                     && (card.getCastingOption(Retrace.class).isPresent()
-                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.RETRACE, Zone.GRAVEYARD))
+                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.RETRACE, Zone.GRAVEYARD)
+                    || castingPermissionService.hasGrantedRetrace(gameData, playerId, card))
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize

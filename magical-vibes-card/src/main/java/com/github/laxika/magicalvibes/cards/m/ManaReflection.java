@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "122")
+@CardRegistration(set = "2XM", collectorNumber = "175")
 public class ManaReflection extends Card {
 
     public ManaReflection() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "149")
+@CardRegistration(set = "HA3", collectorNumber = "18")
 public class TectonicReformation extends Card {
 
     public TectonicReformation() {

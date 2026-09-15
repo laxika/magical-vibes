@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "182")
+@CardRegistration(set = "TSR", collectorNumber = "196")
 public class ThickSkinnedGoblin extends Card {
 
     public ThickSkinnedGoblin() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureDrawPowe
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "191")
+@CardRegistration(set = "GNT", collectorNumber = "47")
 public class NissasRevelation extends Card {
 
     public NissasRevelation() {

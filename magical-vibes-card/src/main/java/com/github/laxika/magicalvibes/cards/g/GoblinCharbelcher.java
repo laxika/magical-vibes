@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "MRD", collectorNumber = "176")
 @CardRegistration(set = "DDT", collectorNumber = "57")
 @CardRegistration(set = "EMA", collectorNumber = "222")
+@CardRegistration(set = "BRR", collectorNumber = "18")
 public class GoblinCharbelcher extends Card {
 
     public GoblinCharbelcher() {

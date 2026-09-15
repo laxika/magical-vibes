@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "122")
+@CardRegistration(set = "GN3", collectorNumber = "68")
 public class AncientHellkite extends Card {
 
     public AncientHellkite() {

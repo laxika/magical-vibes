@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyToBoostTa
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "76")
+@CardRegistration(set = "KLR", collectorNumber = "81")
 public class DieYoung extends Card {
 
     public DieYoung() {

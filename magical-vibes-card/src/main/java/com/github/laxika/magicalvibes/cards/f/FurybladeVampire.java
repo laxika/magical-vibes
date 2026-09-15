@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "155")
 @CardRegistration(set = "EMN", collectorNumber = "128")
+@CardRegistration(set = "SIR", collectorNumber = "156")
 public class FurybladeVampire extends Card {
 
     public FurybladeVampire() {

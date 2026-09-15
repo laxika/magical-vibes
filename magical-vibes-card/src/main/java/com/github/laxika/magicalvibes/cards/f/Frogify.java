@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "47")
+@CardRegistration(set = "2XM", collectorNumber = "52")
 public class Frogify extends Card {
 
     public Frogify() {

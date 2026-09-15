@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ONS", collectorNumber = "148")
 @CardRegistration(set = "HOP", collectorNumber = "27")
 @CardRegistration(set = "MMA", collectorNumber = "87")
+@CardRegistration(set = "DMR", collectorNumber = "85")
 public class FesteringGoblin extends Card {
 
     public FesteringGoblin() {

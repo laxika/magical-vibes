@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "205")
+@CardRegistration(set = "2XM", collectorNumber = "188")
 public class WoodlandChampion extends Card {
 
     public WoodlandChampion() {

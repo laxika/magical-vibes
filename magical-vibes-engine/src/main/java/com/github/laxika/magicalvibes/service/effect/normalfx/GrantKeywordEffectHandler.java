@@ -198,6 +198,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 || grant.scope() == GrantScope.EQUIPPED_CREATURE) {
             Permanent source = entry.getSourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) source = entry.getSourcePermanentSnapshot();
             Permanent target = source == null || source.getAttachedTo() == null
                     ? null : gameQueryService.findPermanentById(gameData, source.getAttachedTo());
             boolean creatureScope = grant.scope() == GrantScope.ENCHANTED_CREATURE

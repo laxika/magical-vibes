@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "237")
+@CardRegistration(set = "2X2", collectorNumber = "306")
 public class FiremindVessel extends Card {
 
     public FiremindVessel() {

@@ -148,7 +148,9 @@ public class UntapStepService {
 
     private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                  boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
-        snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+        if (!gameData.additionalBeginningPhaseUntapInProgress) {
+            snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+        }
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
         gameData.untapStepPlayerId = activePlayerId;
         gameData.untapStepUntappedPermanentCount = 0;
@@ -485,6 +487,7 @@ public class UntapStepService {
         gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (e instanceof StaticOrbEffect orb
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, p)
                         && appliesToUntapStep(orb, activePlayerId, controllerId)
                         && (!orb.requiresUntappedSource() || !p.isTapped())) {
                     active.add(orb);

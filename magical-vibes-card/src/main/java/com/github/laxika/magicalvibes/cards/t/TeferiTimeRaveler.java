@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "221")
+@CardRegistration(set = "RVR", collectorNumber = "232")
 public class TeferiTimeRaveler extends Card {
 
     public TeferiTimeRaveler() {

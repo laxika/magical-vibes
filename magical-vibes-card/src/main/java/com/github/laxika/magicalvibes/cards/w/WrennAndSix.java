@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "217")
+@CardRegistration(set = "2X2", collectorNumber = "296")
 public class WrennAndSix extends Card {
 
     public WrennAndSix() {

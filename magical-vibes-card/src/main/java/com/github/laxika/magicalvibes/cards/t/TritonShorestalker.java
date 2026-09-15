@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "56")
+@CardRegistration(set = "PA1", collectorNumber = "1")
 public class TritonShorestalker extends Card {
 
     public TritonShorestalker() {

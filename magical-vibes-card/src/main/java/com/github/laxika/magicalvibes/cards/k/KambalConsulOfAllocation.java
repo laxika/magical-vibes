@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "183")
+@CardRegistration(set = "KLR", collectorNumber = "198")
+@CardRegistration(set = "2X2", collectorNumber = "237")
 public class KambalConsulOfAllocation extends Card {
 
     public KambalConsulOfAllocation() {

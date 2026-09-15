@@ -10,10 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,37 +22,20 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "75")
+@CardRegistration(set = "DMR", collectorNumber = "71")
 public class UrzaLordHighArtificer extends Card {
 
     public UrzaLordHighArtificer() {
-        PermanentCount artifactsYouControl = new PermanentCount(
-                new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
+        PermanentCount artifactsYouControl =
+                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         CreateTokenEffect constructToken = new CreateTokenEffect(
-                CardType.CREATURE,
-                1,
-                "Construct",
-                0,
-                0,
-                null,
-                null,
-                List.of(CardSubtype.CONSTRUCT),
-                Set.of(),
-                Set.of(CardType.ARTIFACT),
-                false,
-                false,
-                Map.of(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                        artifactsYouControl, artifactsYouControl, GrantScope.SELF)),
-                List.of(),
-                false,
-                false,
-                false,
-                0,
-                Set.of());
+                CardType.CREATURE, 1, "Construct", 0, 0, null, null,
+                List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT), false, false,
+                Map.of(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, artifactsYouControl)),
+                List.of(), false, false, false, 0, Set.of());
 
-        // When Urza enters, create a 0/0 Construct artifact creature token with a dynamic artifact count boost.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, constructToken);
 
-        // Tap an untapped artifact you control: Add {U}.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
@@ -64,7 +46,6 @@ public class UrzaLordHighArtificer extends Card {
                 "Tap an untapped artifact you control: Add {U}."
         ));
 
-        // {5}: Shuffle your library, then exile the top card. Until end of turn, you may play that card without paying its mana cost.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",

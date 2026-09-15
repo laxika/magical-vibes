@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "MH1", collectorNumber = "107")
+@CardRegistration(set = "2XM", collectorNumber = "105")
 public class SilumgarScavenger extends Card {
 
     public SilumgarScavenger() {

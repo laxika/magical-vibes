@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "130")
+@CardRegistration(set = "2X2", collectorNumber = "108")
 public class DreamshaperShaman extends Card {
 
     public DreamshaperShaman() {

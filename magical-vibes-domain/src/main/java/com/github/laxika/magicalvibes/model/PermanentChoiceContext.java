@@ -155,6 +155,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
 
+    /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
+     * creates the fallback token when no legal sacrifice is possible. */
+    record TargetPlayerSacrificesCreatureOrCreatesToken(
+            UUID sacrificingPlayerId, StackEntry resolvingEntry, CreateTokenEffect tokenTemplate)
+            implements PermanentChoiceContext {}
+
     /** A targeted player chooses a permanent to sacrifice before taking mana-value damage. */
     record TargetPlayerSacrificesPermanentThenDealsManaValueDamage(
             UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)
@@ -195,6 +201,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(choosingPlayerId, sourceCardName, exile, false, sourcePermanentId, sourceCard);
         }
     }
+
+    /** Highcliff Felidar: the controller chooses a greatest-power creature for one opponent. */
+    record EachOpponentChoosesGreatestPowerCreatureToDestroy(
+            UUID controllerId,
+            Card sourceCard,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {}
 
     /** A player chooses a matching permanent to exile during a resolving effect. */
     record ExileChosenPermanent(UUID choosingPlayerId, String sourceCardName, String permanentLabel)
@@ -1133,6 +1148,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}
 
+    /** Brudiclad: choose a token whose copiable characteristics the other controlled tokens copy. */
+    record BrudicladTokenChoice(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Choose the creature whose copiable characteristics will be used. */
     record PolymorphousRushCreatureChoice(UUID controllerId,
                                            MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)
@@ -1328,7 +1346,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                 boolean resolutionCast, int lifeLossAfterCast,
-                                boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost) implements PermanentChoiceContext {
+                                boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost,
+                                CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) implements PermanentChoiceContext {
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
+                                    boolean copy, List<UUID> chosenTargets, int genericCostReduction,
+                                    boolean resolutionCast, int lifeLossAfterCast,
+                                    boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction,
+                    resolutionCast, lifeLossAfterCast, putOnBottomOfOwnersLibraryInsteadOfGraveyard,
+                    payManaCost, null, null);
+        }
+
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                 boolean resolutionCast, int lifeLossAfterCast,
@@ -1379,6 +1407,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                                int lifeLossAfterCast) {
             return new ExileCastSpellTarget(cardToCast, controllerId, spellEffects, spellType,
                     true, List.of(), 0, true, lifeLossAfterCast, false, false);
+        }
+
+        public static ExileCastSpellTarget resolutionCastCopy(Card cardToCast, UUID controllerId,
+                                                               List<CardEffect> spellEffects,
+                                                               StackEntryType spellType,
+                                                               int lifeLossAfterCast,
+                                                               CardEffect afterSuccessfulCastEffect,
+                                                               UUID sourcePermanentId) {
+            return new ExileCastSpellTarget(cardToCast, controllerId, spellEffects, spellType,
+                    true, List.of(), 0, true, lifeLossAfterCast, false, false,
+                    afterSuccessfulCastEffect, sourcePermanentId);
         }
     }
 
@@ -1498,6 +1537,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
+    record ChoosePlayerAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                               boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                               List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                               List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChoosePlayerAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
 
     record ChooseNonlandPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                          boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,

@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "112")
+@CardRegistration(set = "SIR", collectorNumber = "112")
+@CardRegistration(set = "UMA", collectorNumber = "96")
 public class GhoulcallersAccomplice extends Card {
 
     public GhoulcallersAccomplice() {

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "56")
 @CardRegistration(set = "M20", collectorNumber = "61")
+@CardRegistration(set = "ANB", collectorNumber = "27")
 public class FrilledSeaSerpent extends Card {
 
     public FrilledSeaSerpent() {

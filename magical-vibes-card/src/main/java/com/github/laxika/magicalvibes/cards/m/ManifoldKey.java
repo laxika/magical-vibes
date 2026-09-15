@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "230")
+@CardRegistration(set = "TSR", collectorNumber = "398")
 public class ManifoldKey extends Card {
 
     public ManifoldKey() {

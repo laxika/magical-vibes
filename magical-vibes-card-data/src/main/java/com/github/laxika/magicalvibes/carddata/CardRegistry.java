@@ -65,6 +65,7 @@ public class CardRegistry implements CardCatalog {
     private final Map<String, String> setNames = new ConcurrentHashMap<>();
     private final Map<String, Integer> setCardTotals = new ConcurrentHashMap<>();
     private final Set<CardSet> loadedSets = EnumSet.noneOf(CardSet.class);
+    private final Set<String> loadedOracleClassNames = ConcurrentHashMap.newKeySet();
     private volatile Map<CardSet, List<CardPrinting>> printings = Map.of();
     private volatile Map<Class<? extends Card>, CardSet> backFaceSets = Map.of();
 
@@ -179,17 +180,16 @@ public class CardRegistry implements CardCatalog {
             return;
         }
 
-        CardSet cardSet = findSetFor(cardClass);
-        if (cardSet == null) {
-            // Synthetic Card subclasses are common in engine tests and intentionally have no data.
-            return;
+        // A provider may omit a printing from an otherwise available set. Try the remaining
+        // registered printings before leaving the card without its name, type and mana cost.
+        // Synthetic test cards have no registered sets and require no oracle data.
+        for (CardSet cardSet : setsFor(cardClass).stream()
+                .sorted(Comparator.comparingInt(CardSet::ordinal).reversed()).toList()) {
+            ensureSetLoaded(cardSet);
+            if (loadedOracleClassNames.contains(cardClass.getSimpleName())) {
+                return;
+            }
         }
-        ensureSetLoaded(cardSet);
-    }
-
-    private CardSet findSetFor(Class<? extends Card> cardClass) {
-        CardSet cardSet = preferredSet(cardClass);
-        return cardSet != null ? cardSet : backFaceSets.get(cardClass);
     }
 
     private CardSet setCoveringMost(Set<Class<? extends Card>> cardClasses) {
@@ -212,14 +212,6 @@ public class CardRegistry implements CardCatalog {
             return Set.of(backFaceSets.get(cardClass));
         }
         return cardSets;
-    }
-
-    private static CardSet preferredSet(Class<? extends Card> cardClass) {
-        return Arrays.stream(cardClass.getAnnotationsByType(CardRegistration.class))
-                .map(registration -> CardSet.findByCode(registration.set()))
-                .filter(Objects::nonNull)
-                .max(Comparator.comparingInt(CardSet::ordinal))
-                .orElse(null);
     }
 
     private Card constructForRegistration(CardPrinting printing) {
@@ -259,6 +251,7 @@ public class CardRegistry implements CardCatalog {
             OracleData back = data.backFaceByCollectorNumber().get(printing.collectorNumber());
             verifyOracleNameMatchesClass(cardSet, printing, front, back);
             Card.registerOracle(printing.simpleCardClassName(), front);
+            loadedOracleClassNames.add(printing.simpleCardClassName());
 
             if (loadMode == OracleLoadMode.EAGER || printing.hasBackFace()) {
                 Card tempCard = constructForRegistration(printing);
@@ -268,6 +261,7 @@ public class CardRegistry implements CardCatalog {
                     // reuse the real spell class), whose own printing registers richer data that
                     // must win regardless of set load order.
                     Card.registerOracleIfAbsent(backFaceClassName, back);
+                    loadedOracleClassNames.add(backFaceClassName);
                 }
             }
         }

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "128")
+@CardRegistration(set = "TSR", collectorNumber = "345")
 public class GoblinEngineer extends Card {
 
     public GoblinEngineer() {

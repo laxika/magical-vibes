@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "77")
+@CardRegistration(set = "TSR", collectorNumber = "86")
 public class SlipstreamSerpent extends Card {
 
     public SlipstreamSerpent() {

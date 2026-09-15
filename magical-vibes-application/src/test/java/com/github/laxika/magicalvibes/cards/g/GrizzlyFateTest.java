@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyFate.class, GrizzlyBears.class})
+@CardUsed({GrizzlyFate.class, AvenFogbringer.class})
 class GrizzlyFateTest extends BaseCardTest {
 
     @Test
@@ -29,9 +31,9 @@ class GrizzlyFateTest extends BaseCardTest {
     @DisplayName("With threshold, Grizzly Fate creates four 2/2 green Bear tokens")
     void withThresholdCreatesFourBears() {
         castFromHand(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears()));
+                new AvenFogbringer(), new AvenFogbringer(), new AvenFogbringer(),
+                new AvenFogbringer(), new AvenFogbringer(), new AvenFogbringer(),
+                new AvenFogbringer()));
 
         assertBears(4);
     }
@@ -41,9 +43,9 @@ class GrizzlyFateTest extends BaseCardTest {
     void flashbackCreatesBearsAndExilesSpell() {
         harness.setGraveyard(player1, List.of(
                 new GrizzlyFate(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears()));
+                new AvenFogbringer(), new AvenFogbringer(), new AvenFogbringer(),
+                new AvenFogbringer(), new AvenFogbringer(), new AvenFogbringer(),
+                new AvenFogbringer()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
@@ -56,13 +58,27 @@ class GrizzlyFateTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Grizzly Fate"));
     }
 
+    @Test
+    @DisplayName("Flashback does not count Grizzly Fate itself toward threshold")
+    void flashbackDoesNotCountSpellItselfTowardThreshold() {
+        GrizzlyFate spell = new GrizzlyFate();
+        harness.setGraveyard(player1, List.of(
+                spell,
+                new AvenFogbringer(), new AvenFogbringer(), new AvenFogbringer(),
+                new AvenFogbringer(), new AvenFogbringer(), new AvenFogbringer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertBears(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
     private void castFromHand(List<Card> graveyard) {
         harness.setGraveyard(player1, graveyard);
-        harness.setHand(player1, List.of(new GrizzlyFate()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player1, new GrizzlyFate(), "{3}{G}{G}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
     }
 
@@ -73,6 +89,7 @@ class GrizzlyFateTest extends BaseCardTest {
                 .toList();
         assertThat(bears).hasSize(expectedCount);
         assertThat(bears).allSatisfy(bear -> {
+            assertThat(bear.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(bear.getCard().getPower()).isEqualTo(2);
             assertThat(bear.getCard().getToughness()).isEqualTo(2);
             assertThat(bear.getCard().getColor()).isEqualTo(CardColor.GREEN);

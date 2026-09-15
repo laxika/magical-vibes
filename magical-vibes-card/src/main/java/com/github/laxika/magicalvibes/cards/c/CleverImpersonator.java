@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "34")
+@CardRegistration(set = "EA2", collectorNumber = "9")
 public class CleverImpersonator extends Card {
 
     public CleverImpersonator() {

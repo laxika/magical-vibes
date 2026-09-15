@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "187")
+@CardRegistration(set = "GK2", collectorNumber = "52")
+@CardRegistration(set = "RVR", collectorNumber = "215")
 public class RakdosLordOfRiots extends Card {
 
     public RakdosLordOfRiots() {

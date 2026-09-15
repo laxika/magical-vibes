@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "39")
+@CardRegistration(set = "TSR", collectorNumber = "37")
 public class ReturnToDust extends Card {
 
     public ReturnToDust() {

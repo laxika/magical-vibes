@@ -13,8 +13,14 @@ import java.util.Set;
 public record EnterPermanentsOfTypesTappedEffect(
         Set<CardType> cardTypes,
         boolean opponentsOnly,
-        PermanentPredicate filter
+        PermanentPredicate filter,
+        boolean castOnly
 ) implements CardEffect {
+
+    public EnterPermanentsOfTypesTappedEffect(Set<CardType> cardTypes, boolean opponentsOnly,
+                                             PermanentPredicate filter) {
+        this(cardTypes, opponentsOnly, filter, false);
+    }
 
     public EnterPermanentsOfTypesTappedEffect(Set<CardType> cardTypes) {
         this(cardTypes, false, null);

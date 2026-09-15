@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "225")
+@CardRegistration(set = "OTP", collectorNumber = "56")
 public class TyrantsScorn extends Card {
 
     public TyrantsScorn() {

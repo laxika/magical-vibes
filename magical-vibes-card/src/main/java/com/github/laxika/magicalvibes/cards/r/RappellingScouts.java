@@ -14,9 +14,9 @@ public class RappellingScouts extends Card {
     public RappellingScouts() {
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{2}{W}{W}",
+                "{2}{W}",
                 List.of(new GrantProtectionChoiceUntilEndOfTurnEffect(GrantScope.SELF)),
-                "{2}{W}{W}: This creature gains protection from the color of your choice until end of turn."
+                "{2}{W}: This creature gains protection from the color of your choice until end of turn."
         ));
     }
 }

@@ -81,6 +81,7 @@ class CostEffectClassificationTest {
             "RemoveCounterFromGrantingPermanentCost",
             "RemoveCounterFromSourceCost",
             "RemoveOneOrMoreCountersFromControlledCreaturesCost",
+            "RemoveOneOrMoreCountersFromControlledPermanentsCost",
             "RemoveOneOrMoreCountersFromSourceCost",
             "RemoveXCountersFromSourceCost",
             "ReturnMultiplePermanentsToHandCost",

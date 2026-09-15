@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.c.CloudCover;
+import com.github.laxika.magicalvibes.cards.m.MorgueToad;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TrevasCharm.class, CloudCover.class, MorgueToad.class})
 class TrevasCharmTest extends BaseCardTest {
 
     private void addGUW() {
@@ -33,28 +34,27 @@ class TrevasCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys target enchantment")
         void destroysEnchantment() {
-            harness.addToBattlefield(player2, new GloriousAnthem());
+            harness.addToBattlefield(player2, new CloudCover());
             harness.setHand(player1, List.of(new TrevasCharm()));
             addGUW();
 
-            Permanent anthem = findPermanent(player2, "Glorious Anthem");
-            harness.castInstant(player1, 0, 0, anthem.getId());
+            Permanent cloudCover = findPermanent(player2, "Cloud Cover");
+            harness.castModalInstant(player1, 0, 0, List.of(cloudCover.getId()));
             harness.passBothPriorities();
 
-            harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-            harness.assertInGraveyard(player2, "Glorious Anthem");
+            harness.assertNotOnBattlefield(player2, "Cloud Cover");
+            harness.assertInGraveyard(player2, "Cloud Cover");
         }
 
         @Test
         @DisplayName("Cannot target a creature with the enchantment mode")
         void cannotTargetCreature() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.addToBattlefield(player1, new GloriousAnthem());
+            harness.addToBattlefield(player2, new MorgueToad());
             harness.setHand(player1, List.of(new TrevasCharm()));
             addGUW();
 
-            Permanent bears = findPermanent(player2, "Grizzly Bears");
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, bears.getId()))
+            Permanent toad = findPermanent(player2, "Morgue Toad");
+            assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0, List.of(toad.getId())))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -66,26 +66,26 @@ class TrevasCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Exiles target attacking creature")
         void exilesAttackingCreature() {
-            Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+            Permanent attacker = addAttacker(player2, player1, new MorgueToad());
             harness.setHand(player1, List.of(new TrevasCharm()));
             addGUW();
 
-            harness.castInstant(player1, 0, 1, attacker.getId());
+            harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
             harness.passBothPriorities();
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Morgue Toad");
+            assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Morgue Toad"));
         }
 
         @Test
         @DisplayName("Cannot target a nonattacking creature")
         void cannotTargetNonattacker() {
-            Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
-            Permanent nonattacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent attacker = addAttacker(player2, player1, new MorgueToad());
+            Permanent nonattacker = harness.addToBattlefieldAndReturn(player2, new MorgueToad());
             harness.setHand(player1, List.of(new TrevasCharm()));
             addGUW();
 
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, nonattacker.getId()))
+            assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(nonattacker.getId())))
                     .isInstanceOf(IllegalStateException.class);
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         }
@@ -98,31 +98,29 @@ class TrevasCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Draws before prompting for a discard")
         void drawsThenDiscards() {
-            harness.setHand(player1, List.of(new TrevasCharm(), new Peek()));
-            harness.setLibrary(player1, List.of(new GrizzlyBears()));
+            harness.setHand(player1, List.of(new TrevasCharm(), new CloudCover()));
+            harness.setLibrary(player1, List.of(new MorgueToad()));
             addGUW();
 
-            harness.castInstant(player1, 0, 2, null);
+            harness.castModalInstant(player1, 0, 2, List.of());
             harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
             assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
             assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+                    .anyMatch(card -> card.getName().equals("Morgue Toad"));
 
             harness.handleCardChosen(player1, 0);
 
             assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-            harness.assertInGraveyard(player1, "Peek");
+            harness.assertInGraveyard(player1, "Cloud Cover");
         }
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent attacker = new Permanent(card);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(controller, card);
         attacker.setAttacking(true);
         attacker.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(attacker);
         return attacker;
     }
 }

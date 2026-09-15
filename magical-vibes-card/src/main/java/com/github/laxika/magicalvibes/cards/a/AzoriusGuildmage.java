@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "141")
+@CardRegistration(set = "GK2", collectorNumber = "9")
+@CardRegistration(set = "RVR", collectorNumber = "165")
 public class AzoriusGuildmage extends Card {
 
     public AzoriusGuildmage() {

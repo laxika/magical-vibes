@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "138")
+@CardRegistration(set = "KLR", collectorNumber = "210")
 public class TezzeretsTouch extends Card {
 
     public TezzeretsTouch() {

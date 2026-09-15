@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(MarbleDiamond.class)
+@CardUsed({MarbleDiamond.class})
 class MarbleDiamondTest extends BaseCardTest {
 
     @Test
@@ -34,7 +34,7 @@ class MarbleDiamondTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isGreaterThanOrEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(diamond.isTapped()).isTrue();
     }
 

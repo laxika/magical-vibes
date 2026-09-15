@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "241")
+@CardRegistration(set = "2XM", collectorNumber = "290")
 public class SphinxOfTheGuildpact extends Card {
 
     public SphinxOfTheGuildpact() {

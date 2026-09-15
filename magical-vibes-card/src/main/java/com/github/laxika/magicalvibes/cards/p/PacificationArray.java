@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "168")
+@CardRegistration(set = "KLR", collectorNumber = "257")
 public class PacificationArray extends Card {
 
     public PacificationArray() {

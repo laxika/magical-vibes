@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "214")
+@CardRegistration(set = "GK2", collectorNumber = "107")
 public class ZeganaUtopianSpeaker extends Card {
 
     public ZeganaUtopianSpeaker() {

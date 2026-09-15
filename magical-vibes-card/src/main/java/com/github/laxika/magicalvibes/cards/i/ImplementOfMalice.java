@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "159")
+@CardRegistration(set = "KLR", collectorNumber = "245")
 public class ImplementOfMalice extends Card {
 
     public ImplementOfMalice() {

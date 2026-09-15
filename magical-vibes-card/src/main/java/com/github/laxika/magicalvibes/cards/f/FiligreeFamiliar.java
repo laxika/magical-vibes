@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "212")
+@CardRegistration(set = "KLR", collectorNumber = "239")
 @CardRegistration(set = "DDU", collectorNumber = "53")
+@CardRegistration(set = "GNT", collectorNumber = "52")
 public class FiligreeFamiliar extends Card {
 
     public FiligreeFamiliar() {

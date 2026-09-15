@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "181")
+@CardRegistration(set = "2XM", collectorNumber = "306")
 public class WalkingBallista extends Card {
 
     public WalkingBallista() {
