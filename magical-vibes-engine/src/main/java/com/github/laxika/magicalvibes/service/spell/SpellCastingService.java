@@ -11885,6 +11885,30 @@ public class SpellCastingService {
             manaSpent = before - pool.getTotalAllMana();
         } else {
             FlashbackCast flashback = flashbackOpt.orElseThrow(() -> new IllegalStateException("Flashback has no cost"));
+            List<Permanent> permanentsToTap = new ArrayList<>();
+            var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);
+            if (tapCost.isPresent()) {
+                int requiredCount = tapCost.get().count();
+                if (tapPermanentIds.size() != requiredCount) {
+                    throw new IllegalStateException("Must tap exactly " + requiredCount + " permanents");
+                }
+                Set<UUID> selectedIds = new HashSet<>();
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                for (UUID tapId : tapPermanentIds) {
+                    Permanent toTap = battlefield.stream()
+                            .filter(p -> p.getId().equals(tapId))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalStateException("Tap target not found on your battlefield"));
+                    if (toTap.isTapped() || !selectedIds.add(tapId)) {
+                        throw new IllegalStateException("Permanent is already tapped or selected to be tapped");
+                    }
+                    if (!predicateEvaluationService.matchesPermanentPredicate(toTap, tapCost.get().filter(),
+                            FilterContext.of(gameData).withSourceControllerId(playerId))) {
+                        throw new IllegalStateException("Tap target does not match the required filter");
+                    }
+                    permanentsToTap.add(toTap);
+                }
+            }
             var manaCostOpt = flashback.getCost(ManaCastingCost.class);
             if (manaCostOpt.isPresent()) {
                 ManaCost cost = castingCostService.applyColoredManaCostReductions(
@@ -11902,28 +11926,8 @@ public class SpellCastingService {
                 manaSpent = before - pool.getTotalAllMana();
             }
 
-            var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);
             if (tapCost.isPresent()) {
-                int requiredCount = tapCost.get().count();
-                if (tapPermanentIds.size() != requiredCount) {
-                    throw new IllegalStateException("Must tap exactly " + requiredCount + " permanents");
-                }
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                for (UUID tapId : tapPermanentIds) {
-                    Permanent toTap = battlefield.stream()
-                            .filter(p -> p.getId().equals(tapId))
-                            .findFirst()
-                            .orElse(null);
-                    if (toTap == null) {
-                        throw new IllegalStateException("Tap target not found on your battlefield");
-                    }
-                    if (toTap.isTapped()) {
-                        throw new IllegalStateException("Permanent is already tapped");
-                    }
-                    if (!predicateEvaluationService.matchesPermanentPredicate(toTap, tapCost.get().filter(),
-                            FilterContext.of(gameData).withSourceControllerId(playerId))) {
-                        throw new IllegalStateException("Tap target does not match the required filter");
-                    }
+                for (Permanent toTap : permanentsToTap) {
                     toTap.tap();
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " taps ")

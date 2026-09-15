@@ -265,7 +265,8 @@ public class GraveyardReturnSupport {
             List<UUID> attachTargetIds = new ArrayList<>();
             if (controllerBf != null) {
                 for (Permanent p : controllerBf) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.attachmentTarget())) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.attachmentTarget())
+                            && auraAttachmentService.canEnchant(gameData, targetCard, controllerId, p)) {
                         attachTargetIds.add(p.getId());
                     }
                 }

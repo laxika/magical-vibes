@@ -42,6 +42,7 @@ class TelekineticBondsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(target.isTapped()).isTrue();
     }
 
@@ -70,6 +71,7 @@ class TelekineticBondsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(target.isTapped()).isFalse();
     }
 
