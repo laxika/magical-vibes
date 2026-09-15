@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ErhnamDjinn.class, GrizzlyBears.class, WallOfStone.class})
+@CardUsed({ErhnamDjinn.class, GrizzlyBears.class, WallOfStone.class, Forest.class})
 class ErhnamDjinnTest extends BaseCardTest {
 
     @Test
@@ -32,6 +33,25 @@ class ErhnamDjinnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger excludes your creatures and noncreature permanents")
+    void upkeepTriggerExcludesOwnCreaturesAndNoncreatures() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId())
+                .doesNotContain(wall.getId(), ownCreature.getId(), land.getId());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
     }
 
     @Test

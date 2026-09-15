@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrystalQuarry;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,52 +12,66 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MirarisWake.class, GrizzlyBears.class, Forest.class})
+@CardUsed({MirarisWake.class, SuntailHawk.class, KrosanVerge.class})
 class MirarisWakeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives creatures you control +1/+1")
     void boostsCreaturesYouControl() {
         harness.addToBattlefield(player1, new MirarisWake());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SuntailHawk());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent hawk = findPermanent(player1, "Suntail Hawk");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Does not give the bonus to an opponent's creatures")
     void doesNotBoostOpponentsCreatures() {
         harness.addToBattlefield(player1, new MirarisWake());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SuntailHawk());
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent hawk = findPermanent(player2, "Suntail Hawk");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Adds one additional mana when you tap a land for mana")
     void addsManaForYourLandTap() {
         harness.addToBattlefield(player1, new MirarisWake());
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new KrosanVerge());
 
-        harness.tapPermanent(player1, 1);
+        harness.activateAbility(player1, 1, 0, null, null);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Does not add mana when an opponent taps a land")
     void doesNotAddManaForOpponentsLandTap() {
         harness.addToBattlefield(player1, new MirarisWake());
-        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new KrosanVerge());
 
-        harness.tapPermanent(player2, 0);
+        harness.activateAbility(player2, 0, 0, null, null);
 
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(CrystalQuarry.class)
+    @DisplayName("Adds only one additional mana when a land produces multiple colors")
+    void addsOnlyOneManaWhenLandProducesMultipleColors() {
+        harness.addToBattlefield(player1, new MirarisWake());
+        harness.addToBattlefield(player1, new CrystalQuarry());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
     }
 }

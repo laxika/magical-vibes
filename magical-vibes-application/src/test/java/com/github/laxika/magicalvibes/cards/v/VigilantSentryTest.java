@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VigilantSentry.class, GrizzlyBears.class})
+@CardUsed({VigilantSentry.class, SuntailHawk.class})
 class VigilantSentryTest extends BaseCardTest {
 
     @Test
@@ -30,7 +30,40 @@ class VigilantSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Has no threshold bonus below seven cards")
     void hasNoThresholdBonusBelowSevenCards() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
         Permanent sentry = addReadySentry();
+
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Threshold uses only the creature's controller's graveyard")
+    void thresholdUsesOnlyControllerGraveyard() {
+        harness.setGraveyard(player2, graveyardWithSevenCards());
+        Permanent sentry = addReadySentry();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        target.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Threshold effects turn off when the graveyard drops below seven cards")
+    void thresholdEffectsTurnOffBelowSevenCards() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent sentry = addReadySentry();
+
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(3);
+
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
 
         assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(2);
@@ -41,7 +74,7 @@ class VigilantSentryTest extends BaseCardTest {
     void boostsAttackingCreatureAtThreshold() {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         Permanent sentry = addReadySentry();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         target.setAttacking(true);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -49,8 +82,8 @@ class VigilantSentryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(sentry.isTapped()).isTrue();
     }
 
@@ -59,7 +92,7 @@ class VigilantSentryTest extends BaseCardTest {
     void boostsBlockingCreatureAtThreshold() {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         addReadySentry();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         target.setBlocking(true);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -67,8 +100,52 @@ class VigilantSentryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The granted boost ends at the end of the turn")
+    void grantedBoostEndsAtEndOfTurn() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent sentry = addReadySentry();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        target.setAttacking(true);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The boost does not resolve if its target stops attacking")
+    void boostFizzlesIfTargetStopsAttackingBeforeResolution() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        addReadySentry();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        target.setAttacking(true);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -76,7 +153,7 @@ class VigilantSentryTest extends BaseCardTest {
     void cannotTargetNonCombatCreature() {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         addReadySentry();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -87,14 +164,12 @@ class VigilantSentryTest extends BaseCardTest {
     }
 
     private Permanent addReadySentry() {
-        Permanent sentry = harness.addToBattlefieldAndReturn(player1, new VigilantSentry());
-        sentry.setSummoningSick(false);
-        return sentry;
+        return addCreatureReady(player1, new VigilantSentry());
     }
 
     private List<Card> graveyardWithSevenCards() {
         return List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new SuntailHawk(), new SuntailHawk(), new SuntailHawk(), new SuntailHawk(),
+                new SuntailHawk(), new SuntailHawk(), new SuntailHawk());
     }
 }

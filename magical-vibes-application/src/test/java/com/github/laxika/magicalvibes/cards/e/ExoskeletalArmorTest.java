@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
+import com.github.laxika.magicalvibes.cards.m.MentalNote;
+import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,51 +14,66 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExoskeletalArmor.class, FountainOfYouth.class, GrizzlyBears.class, Shock.class})
+@CardUsed({ExoskeletalArmor.class, DwarvenDriller.class, MentalNote.class, RiftstonePortal.class})
 class ExoskeletalArmorTest extends BaseCardTest {
 
     @Test
     void boostsEnchantedCreatureByCreatureCardsInAllGraveyards() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Shock()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        harness.setGraveyard(player1, List.of(new DwarvenDriller(), new MentalNote()));
+        harness.setGraveyard(player2, List.of(new DwarvenDriller()));
 
         harness.setHand(player1, List.of(new ExoskeletalArmor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
-        gd.playerGraveyards.get(player2.getId()).add(new GrizzlyBears());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        harness.setGraveyard(player2, List.of(new DwarvenDriller(), new DwarvenDriller()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
     void stopsBoostingWhenAuraLeavesTheBattlefield() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent armor = new Permanent(new ExoskeletalArmor());
-        armor.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(armor);
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new ExoskeletalArmor());
+        armor.setAttachedTo(creature.getId());
+        harness.setGraveyard(player1, List.of(new DwarvenDriller()));
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         gd.playerBattlefields.get(player1.getId()).remove(armor);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void canEnchantCreatureControlledByOpponent() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DwarvenDriller());
+        harness.setGraveyard(player1, List.of(new MentalNote()));
+        harness.setGraveyard(player2, List.of(new DwarvenDriller()));
+
+        harness.setHand(player1, List.of(new ExoskeletalArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
     void cannotEnchantNonCreaturePermanent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RiftstonePortal());
         harness.setHand(player1, List.of(new ExoskeletalArmor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
