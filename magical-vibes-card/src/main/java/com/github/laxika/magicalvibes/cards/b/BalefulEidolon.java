@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "78")
+@CardRegistration(set = "PIO", collectorNumber = "82")
 public class BalefulEidolon extends Card {
 
     public BalefulEidolon() {

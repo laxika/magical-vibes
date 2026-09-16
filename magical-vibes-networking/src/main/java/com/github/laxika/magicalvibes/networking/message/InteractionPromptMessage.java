@@ -32,7 +32,8 @@ public record InteractionPromptMessage(
         Boolean searchable,
         List<String> disabledOptions,
         Integer minCount,
-        Boolean manaPayment) {
+        Boolean manaPayment,
+        List<Integer> scrycastCardIndices) {
 
     private static InteractionPromptMessage of(InteractionShape shape, String prompt,
                                                List<Integer> cardIndices, List<CardView> cards,
@@ -43,7 +44,8 @@ public record InteractionPromptMessage(
                                                Boolean allGraveyards, Boolean searchable) {
         return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, shape, prompt,
                 cardIndices, cards, cardIds, permanentIds, playerIds, options, maxCount,
-                declinable, canPay, manaCost, cardName, allGraveyards, searchable, null, null, null);
+                declinable, canPay, manaCost, cardName, allGraveyards, searchable, null, null, null,
+                null);
     }
 
     private static InteractionPromptMessage of(InteractionShape shape, String prompt,
@@ -54,10 +56,24 @@ public record InteractionPromptMessage(
                                                String manaCost, String cardName,
                                                Boolean allGraveyards, Boolean searchable,
                                                Integer minCount, Boolean manaPayment) {
+        return of(shape, prompt, cardIndices, cards, cardIds, permanentIds, playerIds, options,
+                maxCount, declinable, canPay, manaCost, cardName, allGraveyards, searchable,
+                minCount, manaPayment, null);
+    }
+
+    private static InteractionPromptMessage of(InteractionShape shape, String prompt,
+                                               List<Integer> cardIndices, List<CardView> cards,
+                                               List<UUID> cardIds, List<UUID> permanentIds,
+                                               List<UUID> playerIds, List<String> options,
+                                               Integer maxCount, Boolean declinable, Boolean canPay,
+                                               String manaCost, String cardName,
+                                               Boolean allGraveyards, Boolean searchable,
+                                               Integer minCount, Boolean manaPayment,
+                                               List<Integer> scrycastCardIndices) {
         return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, shape, prompt,
                 cardIndices, cards, cardIds, permanentIds, playerIds, options, maxCount,
                 declinable, canPay, manaCost, cardName, allGraveyards, searchable, null,
-                minCount, manaPayment);
+                minCount, manaPayment, scrycastCardIndices);
     }
 
     /** Pick one card from the player's own hand by index. */
@@ -140,7 +156,7 @@ public record InteractionPromptMessage(
         return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, InteractionShape.LIST_PICK,
                 prompt, null, null, null, null, null, options, null, null, null, null, null, null,
                 searchable, disabledOptions == null || disabledOptions.isEmpty() ? null : List.copyOf(disabledOptions),
-                null, null);
+                null, null, null);
     }
 
     public static InteractionPromptMessage acceptDecline(String prompt, boolean canPay,
@@ -170,8 +186,16 @@ public record InteractionPromptMessage(
      */
     public static InteractionPromptMessage scryOrder(List<CardView> cards, String prompt,
                                                      boolean toGraveyard) {
+        return scryOrder(cards, prompt, toGraveyard, null);
+    }
+
+    /** Scry order prompt with the indices of cards that may be cast via Scrycast. */
+    public static InteractionPromptMessage scryOrder(List<CardView> cards, String prompt,
+                                                     boolean toGraveyard,
+                                                     List<Integer> scrycastCardIndices) {
         return of(InteractionShape.SCRY_ORDER, prompt, null, cards, null, null, null, null,
-                null, null, null, null, null, toGraveyard ? Boolean.TRUE : null, null);
+                null, null, null, null, null, toGraveyard ? Boolean.TRUE : null, null,
+                null, null, scrycastCardIndices);
     }
 
     public static InteractionPromptMessage cardOrder(List<CardView> cards, String prompt) {

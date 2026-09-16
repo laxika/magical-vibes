@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPG", collectorNumber = "16")
+@CardRegistration(set = "FCA", collectorNumber = "58")
 public class ThrasiosTritonHero extends Card {
 
     public ThrasiosTritonHero() {

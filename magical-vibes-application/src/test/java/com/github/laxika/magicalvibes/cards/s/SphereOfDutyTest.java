@@ -83,6 +83,6 @@ class SphereOfDutyTest extends BaseCardTest {
         declareAttackers(player2, List.of(0, 1));
         resolveCombat(player2);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 }

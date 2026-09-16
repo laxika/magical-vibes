@@ -15,7 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Descriptive only: {@link #damageMultiplierFactor()} states a fact intrinsic to the effect,
  * never a score.
  */
-public interface GlobalDamageMultiplyingEffect extends CardEffect {
+public interface GlobalDamageMultiplyingEffect extends DoublingEffect {
 
     /**
      * The factor by which this effect multiplies every point of damage dealt (2 for a plain

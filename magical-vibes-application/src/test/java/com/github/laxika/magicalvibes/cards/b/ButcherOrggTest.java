@@ -109,6 +109,31 @@ class ButcherOrggTest extends BaseCardTest {
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(2);
         assertThat(orgg.getMarkedDamage()).isEqualTo(2);
         assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.combatDamageToPlayerControllerSubtypesThisTurn)
+                .containsKey(player2.getId()).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A blocking Butcher Orgg may assign normally but cannot mix normal and alternative assignments")
+    void blockingOrggCanChooseNormalAssignmentAfterRejectingMixedAssignment() {
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        attacker.setAttacking(true);
+        Permanent orgg = addCreatureReady(player2, new ButcherOrgg());
+        orgg.setBlocking(true);
+        orgg.addBlockingTarget(0);
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player2, 0,
+                Map.of(attacker.getId(), 2, player2.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player2, 0,
+                Map.of(attacker.getId(), 7, player2.getId(), -1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(attacker.getId(), 6));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(orgg.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

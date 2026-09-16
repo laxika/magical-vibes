@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -50,6 +51,8 @@ public class LibrarySearchSupport {
 
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    private ReverseMiracleSupport reverseMiracleSupport;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the
@@ -750,6 +753,11 @@ public class LibrarySearchSupport {
                     prompt += " You may also cast a card with a library-search permission.";
                 }
             }
+        }
+
+        if (reverseMiracleSupport != null && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
+                prompt, canFailToFind, logMessage)) {
+            return;
         }
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -65,6 +66,8 @@ public class AsEntersInteractionService {
     private final EquipSupport equipSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final EtbTriggerService etbTriggerService;
+    private final UpgradeSupport upgradeSupport;
+    private PermanentRemovalService permanentRemovalService;
 
     @Autowired
     public AsEntersInteractionService(GameQueryService gameQueryService,
@@ -73,7 +76,8 @@ public class AsEntersInteractionService {
                                       PredicateEvaluationService predicateEvaluationService,
                                       @Lazy EquipSupport equipSupport,
                                       @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
-                                      @Lazy EtbTriggerService etbTriggerService) {
+                                      @Lazy EtbTriggerService etbTriggerService,
+                                      UpgradeSupport upgradeSupport) {
         this.gameQueryService = gameQueryService;
         this.playerInputService = playerInputService;
         this.amountEvaluationService = amountEvaluationService;
@@ -81,6 +85,7 @@ public class AsEntersInteractionService {
         this.equipSupport = equipSupport;
         this.permanentCounterSupport = permanentCounterSupport;
         this.etbTriggerService = etbTriggerService;
+        this.upgradeSupport = upgradeSupport;
     }
 
     public AsEntersInteractionService(GameQueryService gameQueryService,
@@ -90,7 +95,12 @@ public class AsEntersInteractionService {
                                       @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
                                       @Lazy EtbTriggerService etbTriggerService) {
         this(gameQueryService, playerInputService, amountEvaluationService, predicateEvaluationService,
-                null, permanentCounterSupport, etbTriggerService);
+                null, permanentCounterSupport, etbTriggerService, null);
+    }
+
+    @Autowired
+    void setPermanentRemovalService(@Lazy PermanentRemovalService permanentRemovalService) {
+        this.permanentRemovalService = permanentRemovalService;
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -198,6 +208,32 @@ public class AsEntersInteractionService {
                 playerInputService.processNextMayAbility(gameData);
                 return;
             }
+        }
+
+        if (upgradeSupport != null && upgradeSupport.isUpgrade(card)) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validIds = upgradeSupport.validArtifactIds(gameData, controllerId, justEntered);
+            if (validIds.isEmpty()) {
+                if (permanentRemovalService == null
+                        || !permanentRemovalService.removePermanentToExile(gameData, justEntered)) {
+                    throw new IllegalStateException("Upgrade permanent could not be exiled");
+                }
+                return;
+            }
+            UUID chosenId = justEntered.getChosenPermanentId();
+            if (chosenId != null && validIds.contains(chosenId)) {
+                Permanent covered = gameQueryService.findPermanentById(gameData, chosenId);
+                upgradeSupport.applyUpgrade(gameData, controllerId, justEntered, covered);
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.ChooseNonlandPermanentAsEnter(
+                            justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                            etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                            convokeCreatureIds));
+            playerInputService.beginPermanentChoice(gameData, controllerId,
+                    new ArrayList<>(validIds), "Choose an artifact you control to cover.");
+            return;
         }
 
         ChooseEquipmentAttachmentOnEnterEffect equipmentAttachment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "225")
+@CardRegistration(set = "PIO", collectorNumber = "355")
 public class NarsetTranscendent extends Card {
 
     public NarsetTranscendent() {

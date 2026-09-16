@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "97")
 @CardRegistration(set = "2XM", collectorNumber = "101")
+@CardRegistration(set = "PIO", collectorNumber = "337")
 public class OvalchaseDaredevil extends Card {
 
     public OvalchaseDaredevil() {

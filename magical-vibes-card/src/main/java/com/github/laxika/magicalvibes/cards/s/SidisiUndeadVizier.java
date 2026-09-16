@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "120")
+@CardRegistration(set = "PIO", collectorNumber = "108")
 public class SidisiUndeadVizier extends Card {
 
     public SidisiUndeadVizier() {

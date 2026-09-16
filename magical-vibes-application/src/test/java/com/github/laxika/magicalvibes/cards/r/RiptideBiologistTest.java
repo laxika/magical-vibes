@@ -69,7 +69,7 @@ class RiptideBiologistTest extends BaseCardTest {
     }
 
     @Test
-    void cannotBlockBeastCreature() {
+    void canBlockBeastCreature() {
         Permanent attacker = addCreatureReady(player1, new KrosanTusker());
         attacker.setAttacking(true);
 
@@ -77,11 +77,10 @@ class RiptideBiologistTest extends BaseCardTest {
 
         prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(biologist),
-                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection");
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(biologist.isBlocking()).isTrue();
     }
 
     @Test

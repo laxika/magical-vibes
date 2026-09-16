@@ -1339,6 +1339,25 @@ public class GameService {
         }
     }
 
+    /** Casts a face-down spellmorph card from the battlefield. */
+    public void playCardWithSpellmorph(GameData gameData, Player player, int permanentIndex,
+                                       Integer xValue, UUID targetId, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithSpellmorph(gameData, actionPlayer, permanentIndex, xValue,
+                        targetId, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            spellCastingService.playCardWithSpellmorph(gameData, player, battlefield.get(permanentIndex),
+                    xValue, targetId, targetIds != null ? targetIds : List.of());
+        }
+    }
+
     public void turnFaceUp(GameData gameData, Player player, int permanentIndex) {
         turnFaceUp(gameData, player, permanentIndex, null);
     }
@@ -1402,6 +1421,9 @@ public class GameService {
             String faceUpCost = manifestedOrCloaked ? permanent.getCard().getManaCost() : morphCost;
             if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
                 throw new IllegalStateException("Face-down permanent is not a creature card");
+            }
+            if (!manifestedOrCloaked && permanent.getCard().isSpellmorph()) {
+                throw new IllegalStateException("Spellmorph cards are cast from the battlefield instead");
             }
             if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()

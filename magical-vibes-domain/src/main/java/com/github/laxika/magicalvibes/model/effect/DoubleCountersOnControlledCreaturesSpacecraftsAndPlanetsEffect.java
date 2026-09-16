@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 
 /** Loading Zone's replacement effect for counters put on controlled creatures, Spacecraft, or Planets. */
 public record DoubleCountersOnControlledCreaturesSpacecraftsAndPlanetsEffect()
-        implements CounterReplacementEffect {
+        implements CounterReplacementEffect, DoublingEffect {
 
     @Override
     public int replace(CounterType counterType, int count) {

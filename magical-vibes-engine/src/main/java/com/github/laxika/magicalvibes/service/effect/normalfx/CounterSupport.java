@@ -395,6 +395,7 @@ public class CounterSupport {
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
         if (target == null || isAbility(target)) return;
+        triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null
                 && target.getCard().hasType(CardType.CREATURE)

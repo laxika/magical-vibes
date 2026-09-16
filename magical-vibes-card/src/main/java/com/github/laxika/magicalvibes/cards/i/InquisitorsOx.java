@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "24")
+@CardRegistration(set = "MB1", collectorNumber = "139")
 public class InquisitorsOx extends Card {
 
     public InquisitorsOx() {

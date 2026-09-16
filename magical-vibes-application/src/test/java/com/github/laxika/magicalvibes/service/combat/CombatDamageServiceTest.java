@@ -1160,6 +1160,23 @@ class CombatDamageServiceTest {
         }
 
         @Test
+        @DisplayName("Rejects negative assignments even when the total equals the creature's power")
+        void rejectsNegativeAssignmentWithCorrectTotal() {
+            Permanent blocker1 = setupPendingAssignment();
+            Permanent blocker2 = gameData.playerBattlefields.get(player2Id).get(1);
+            when(gameQueryService.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+            when(gameQueryService.getEffectiveCombatDamage(eq(gameData), any(Permanent.class)))
+                    .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getPower());
+            int power = gameData.playerBattlefields.get(player1Id).getFirst().getCard().getPower();
+
+            assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
+                    gameData, player1, 0, Map.of(blocker1.getId(), power + 1, blocker2.getId(), -1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("negative");
+            assertThat(gameData.combatDamagePlayerAssignments).isEmpty();
+        }
+
+        @Test
         @DisplayName("Rejects assignment with wrong total damage")
         void rejectsWrongTotalDamage() {
             Permanent blocker1 = setupPendingAssignment();

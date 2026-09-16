@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 
+@CardRegistration(set = "MB1", collectorNumber = "174")
 @CardRegistration(set = "SS2", collectorNumber = "2")
 public class MartyrsBond extends Card {
 

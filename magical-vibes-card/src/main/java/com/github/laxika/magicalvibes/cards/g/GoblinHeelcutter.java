@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "102")
+@CardRegistration(set = "PIO", collectorNumber = "341")
 public class GoblinHeelcutter extends Card {
 
     public GoblinHeelcutter() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "136")
+@CardRegistration(set = "PIO", collectorNumber = "197")
 public class SylvanPrimordial extends Card {
 
     public SylvanPrimordial() {

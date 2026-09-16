@@ -13,6 +13,10 @@ import java.util.List;
 @CardRegistration(set = "MMQ", collectorNumber = "320")
 @CardRegistration(set = "V12", collectorNumber = "9")
 @CardRegistration(set = "2XM", collectorNumber = "321")
+@CardRegistration(set = "EOS", collectorNumber = "18")
+@CardRegistration(set = "EOS", collectorNumber = "63")
+@CardRegistration(set = "EOS", collectorNumber = "108")
+@CardRegistration(set = "EOS", collectorNumber = "153")
 public class HighMarket extends Card {
 
     public HighMarket() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealP
 
 
 @CardRegistration(set = "AKH", collectorNumber = "138")
+@CardRegistration(set = "PIO", collectorNumber = "140")
 public class HeartPiercerManticore extends Card {
 
     public HeartPiercerManticore() {

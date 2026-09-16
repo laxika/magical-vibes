@@ -65,6 +65,9 @@ public sealed interface TriggerContext {
     /** Context for "whenever a spell you've cast is countered" triggers. */
     record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
 
+    /** Context for a spell's own "when this spell is countered or fizzles" ability. */
+    record SpellCounteredOrFizzled(StackEntry spellEntry) implements TriggerContext {}
+
     /**
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
      * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
@@ -219,8 +222,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
-    /** Context for a creature controlled by a player exploiting a nontoken creature. */
-    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard)
+    /** Context for a creature controlled by a player exploiting another creature. */
+    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard,
+                           int exploitedPower)
             implements TriggerContext {}
 
     record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,

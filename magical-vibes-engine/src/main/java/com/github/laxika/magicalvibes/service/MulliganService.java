@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -300,10 +300,10 @@ public class MulliganService {
             for (Card card : hand) {
                 for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect pregame
+                            && may.wrapped() instanceof PregameChoiceEffect pregame
                             && (!pregame.onlyForNonStartingPlayer()
                             || !playerId.equals(gameData.startingPlayerId))) {
-                        // Leyline is a pregame action (CR 103.6), not a triggered ability —
+                        // These are pregame actions, not triggered abilities —
                         // bypasses the stack, so add directly to pendingMayAbilities.
                         gameData.pendingMayAbilities.add(new PendingMayAbility(
                                 card, playerId,
@@ -385,6 +385,8 @@ public class MulliganService {
         List<Card> handAtTurnStart = gameData.playerHands.get(gameData.activePlayerId);
         gameData.handSizeAtTurnStart.put(gameData.activePlayerId,
                 handAtTurnStart == null ? 0 : handAtTurnStart.size());
+        gameData.turnUntapStepSkipped = false;
+        gameData.captureTurnStartSnapshot();
 
         String logEntry1 = "Mulligan phase complete!";
         String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";

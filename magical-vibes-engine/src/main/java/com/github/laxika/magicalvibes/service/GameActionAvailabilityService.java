@@ -179,6 +179,9 @@ public class GameActionAvailabilityService {
                     pool = poolWithoutSource;
                 }
                 ManaCost manaCost = new ManaCost(abilityManaCost);
+                if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                    manaCost = manaCost.withBlackManaAsPhyrexian();
+                }
                 boolean artifactCtx = gameQueryService.isArtifact(perm);
                 boolean myrCtx = perm.getCard().getSubtypes().contains(CardSubtype.MYR);
                 boolean powerstoneCtx = pool.getPowerstoneOnlyColorless() > 0;
@@ -609,6 +612,9 @@ public class GameActionAvailabilityService {
             combinedManaCost += "{" + additionalGenericCost + "}";
         }
         ManaCost totalCost = new ManaCost(combinedManaCost);
+        if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            totalCost = totalCost.withBlackManaAsPhyrexian();
+        }
         int kickerXValue = totalCost.hasX() ? totalCost.calculateMaxX(paymentPool) : 0;
         if (kicker.xUsesEachColorAtMostOnce() && kicker.hasXColorRestriction() && totalCost.hasX()) {
             int maxByColor = totalCost.calculateMaxX(paymentPool, kicker.xColorRestrictions(), 0);
@@ -894,6 +900,9 @@ public class GameActionAvailabilityService {
         for (ManaCost cost : candidateCosts) {
             cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, cost, ctx.costSnapshot(), false);
+            if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                cost = cost.withBlackManaAsPhyrexian();
+            }
             boolean canAfford = !card.isRequiresNoMana() && (hasRestricted
                     ? cost.canPayWithAdditionalGenericCost(paymentPool, 0, effectiveAdditionalCost,
                     isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
@@ -1532,8 +1541,10 @@ public class GameActionAvailabilityService {
             }
             ManaPool pool = gameData.playerManaPools.get(playerId);
             boolean cardHasFlashback = flashback.isPresent() || grantedFlashback || emblemFlashback;
-            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+            ManaCost reducedCost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, new ManaCost(manaCostStr), cardHasFlashback);
+            ManaCost cost = gameQueryService.canPayBlackManaWithLife(gameData, playerId)
+                    ? reducedCost.withBlackManaAsPhyrexian() : reducedCost;
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, card, cardHasFlashback, 0, Zone.GRAVEYARD);
             // Flashback-only mana and graveyard-only mana are exposed only for their matching

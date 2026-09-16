@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -50,7 +51,8 @@ public class DoubleTargetCreaturePowerEffectHandler implements NormalEffectHandl
             if (target == null) {
                 continue;
             }
-            for (int i = 0; i < times; i++) {
+            int effectiveTimes = times * MaroGoneNutsSupport.doublingFactor(gameData);
+            for (int i = 0; i < effectiveTimes; i++) {
                 int currentPower = gameQueryService.getEffectivePower(gameData, target);
                 target.setPowerModifier(target.getPowerModifier() + currentPower);
             }

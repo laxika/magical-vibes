@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "133")
+@CardRegistration(set = "PIO", collectorNumber = "117")
 public class UndeadButler extends Card {
 
     public UndeadButler() {

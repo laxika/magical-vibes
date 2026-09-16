@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "GRN", collectorNumber = "247")
 @CardRegistration(set = "RNA", collectorNumber = "247")
 @CardRegistration(set = "WAR", collectorNumber = "246")
+@CardRegistration(set = "PIO", collectorNumber = "262")
 public class GatewayPlaza extends Card {
 
     public GatewayPlaza() {
