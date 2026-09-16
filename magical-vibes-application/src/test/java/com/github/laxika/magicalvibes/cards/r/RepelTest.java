@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +16,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Repel.class, AvenFlock.class, Forest.class})
 class RepelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Repel puts target creature on top of its owner's library")
     void resolvingPutsTargetCreatureOnTopOfOwnersLibrary() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvenFlock());
         UUID targetId = creature.getId();
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
@@ -29,8 +31,7 @@ class RepelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
@@ -60,7 +61,7 @@ class RepelTest extends BaseCardTest {
     @Test
     @DisplayName("Repel fizzles if the target is removed before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvenFlock());
         UUID targetId = creature.getId();
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
@@ -76,5 +77,28 @@ class RepelTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(repel);
+    }
+
+    @Test
+    @DisplayName("Repel puts a controlled creature on top of its owner's library")
+    void putsControlledCreatureOnTopOfOwnersLibrary() {
+        AvenFlock creatureCard = new AvenFlock();
+        creatureCard.setOwnerId(player1.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, creatureCard);
+        int ownerDeckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
+        int controllerDeckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new Repel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(ownerDeckSizeBefore + 1)
+                .first()
+                .isSameAs(creatureCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSizeBefore);
     }
 }

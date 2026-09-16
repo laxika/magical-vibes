@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PatrolHound;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +16,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SetonsDesire.class, PatrolHound.class})
 class SetonsDesireTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Enchant creature cannot target a noncreature permanent")
+    void enchantCreatureCannotTargetNoncreaturePermanent() {
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new SetonsDesire());
+        harness.setHand(player1, List.of(new SetonsDesire()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, noncreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
 
     @Test
     @DisplayName("Enchanted creature gets +2/+2")
     void enchantedCreatureGetsBoost() {
-        Permanent creature = addCreature(player1);
+        Permanent creature = addCreatureReady(player1, new PatrolHound());
         attachAura(player1, creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
@@ -32,9 +47,9 @@ class SetonsDesireTest extends BaseCardTest {
     void thresholdDoesNotForceBlocksBelowSevenCards() {
         Permanent attacker = addAttackingCreature(player1);
         attachAura(player1, attacker);
-        addCreature(player2);
+        addCreatureReady(player2, new PatrolHound());
 
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());
     }
@@ -45,10 +60,10 @@ class SetonsDesireTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         Permanent attacker = addAttackingCreature(player1);
         attachAura(player1, attacker);
-        addCreature(player2);
-        addCreature(player2);
+        addCreatureReady(player2, new PatrolHound());
+        addCreatureReady(player2, new PatrolHound());
 
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -65,9 +80,38 @@ class SetonsDesireTest extends BaseCardTest {
         harness.setGraveyard(player2, graveyardWithSevenCards());
         Permanent attacker = addAttackingCreature(player1);
         attachAura(player1, attacker);
-        addCreature(player2);
+        addCreatureReady(player2, new PatrolHound());
 
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("Threshold uses the Aura controller's graveyard for an opposing enchanted creature")
+    void thresholdUsesAuraControllerGraveyardForOpposingCreature() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent attacker = addAttackingCreature(player2);
+        attachAura(player1, attacker);
+        addCreatureReady(player1, new PatrolHound());
+
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+    }
+
+    @Test
+    @DisplayName("Threshold does not force a creature unable to block")
+    void thresholdDoesNotForceUnableBlocker() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent attacker = addAttackingCreature(player1);
+        attachAura(player1, attacker);
+        Permanent blocker = addCreatureReady(player2, new PatrolHound());
+        blocker.setTapped(true);
+
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());
     }
@@ -78,29 +122,21 @@ class SetonsDesireTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         Permanent attacker = addAttackingCreature(player1);
         attachAura(player1, attacker);
-        addCreature(player2);
+        addCreatureReady(player2, new PatrolHound());
 
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block enchanted creature if able");
 
         harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());
     }
 
-    private Permanent addCreature(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
-    }
-
     private Permanent addAttackingCreature(Player player) {
-        Permanent creature = addCreature(player);
+        Permanent creature = addCreatureReady(player, new PatrolHound());
         creature.setAttacking(true);
         return creature;
     }
@@ -111,16 +147,9 @@ class SetonsDesireTest extends BaseCardTest {
         gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
-    private void beginBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
-
     private List<Card> graveyardWithSevenCards() {
         return List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new PatrolHound(), new PatrolHound(), new PatrolHound(), new PatrolHound(),
+                new PatrolHound(), new PatrolHound(), new PatrolHound());
     }
 }

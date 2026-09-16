@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,15 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PilgrimOfJustice.class, FireElemental.class, GrizzlyBears.class, LightningBolt.class})
 class PilgrimOfJusticeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting resolves to the battlefield")
     void castAndResolve() {
-        harness.setHand(player1, List.of(new PilgrimOfJustice()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PilgrimOfJustice(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Pilgrim of Justice");
@@ -36,7 +34,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by a red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent pilgrim = addReadyPilgrim(player2);
+        Permanent pilgrim = addCreatureReady(player2, new PilgrimOfJustice());
         Permanent otherTarget = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -52,8 +50,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability sacrifices Pilgrim of Justice")
     void activatingAbilitySacrificesAndPutsOnStack() {
-        addReadyPilgrim(player1);
-        addReadyRedCreature(player2);
+        addCreatureReady(player1, new PilgrimOfJustice());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -67,7 +64,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability prompts for a red source")
     void resolvingAbilityPromptsForRedSourceChoice() {
-        addReadyPilgrim(player1);
+        addCreatureReady(player1, new PilgrimOfJustice());
         addReadyRedCreature(player2);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -81,7 +78,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
     @DisplayName("The chosen red source's next damage is prevented")
     void chosenRedSourceNextDamageIsPrevented() {
         harness.setLife(player1, 20);
-        addReadyPilgrim(player1);
+        addCreatureReady(player1, new PilgrimOfJustice());
         Permanent redAttacker = addReadyRedCreature(player2);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -89,20 +86,47 @@ class PilgrimOfJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redAttacker.getId());
 
-        harness.forceActivePlayer(player2);
         redAttacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertLife(player1, 20);
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     @Test
+    @DisplayName("Can choose a red spell on the stack and prevent its next damage to a creature")
+    void preventsDamageFromRedSpellOnStackToCreature() {
+        addCreatureReady(player1, new PilgrimOfJustice());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        LightningBolt lightningBolt = new LightningBolt();
+
+        harness.setHand(player2, List.of(lightningBolt));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0, victim.getId());
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(lightningBolt.getId());
+        harness.handlePermanentChosen(player1, lightningBolt.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("Non-red sources cannot be chosen")
     void nonRedSourcesAreNotValidChoices() {
-        addReadyPilgrim(player1);
+        addCreatureReady(player1, new PilgrimOfJustice());
         addCreatureReady(player2, new GrizzlyBears());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -113,13 +137,6 @@ class PilgrimOfJusticeTest extends BaseCardTest {
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("No permanents on the battlefield"));
-    }
-
-    private Permanent addReadyPilgrim(Player player) {
-        Permanent permanent = new Permanent(new PilgrimOfJustice());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent addReadyRedCreature(Player player) {
