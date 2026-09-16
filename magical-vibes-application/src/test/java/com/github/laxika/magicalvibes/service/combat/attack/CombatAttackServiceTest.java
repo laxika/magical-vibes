@@ -254,6 +254,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({BerserkersOfBloodRidge.class, WindbornMuse.class})
         @DisplayName("CR 508.1d: an attack tax suspends every requirement, since the cost is optional")
         void anAttackTaxSuspendsEveryRequirement() {
             addCreatureReady(player1, new BerserkersOfBloodRidge());
@@ -356,6 +357,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindbornMuse.class, TroveOfTemptation.class})
         @DisplayName("The declaration reports the attack tax and the forced-attack demand")
         void openedDeclarationCarriesTheTaxAndTheDemand() {
             addCreatureReady(player1, new GrizzlyBears());
@@ -595,6 +597,7 @@ class CombatAttackServiceTest extends BaseCardTest {
     class AttackTax {
 
         @Test
+        @CardUsed({GrizzlyBears.class, HillGiant.class, WindbornMuse.class})
         @DisplayName("The tax is summed across the whole declaration and must be payable as one total")
         void taxIsSummedAcrossTheWholeDeclaration() {
             // Windborn Muse: creatures can't attack you unless their controller pays {2} for each.

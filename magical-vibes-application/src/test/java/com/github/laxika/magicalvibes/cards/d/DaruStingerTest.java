@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AvenWarhawk;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DaruStinger.class, AvenWarhawk.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({DaruStinger.class, AvenWarhawk.class, EnormousBaloth.class})
 class DaruStingerTest extends BaseCardTest {
 
     @Test
@@ -26,23 +25,48 @@ class DaruStingerTest extends BaseCardTest {
     void entersWithCountersForSoldiersInHand() {
         DaruStinger card = new DaruStinger();
         harness.setHand(player1, List.of(
-                card, new AvenWarhawk(), new AvenWarhawk(), new GrizzlyBears()));
+                card, new AvenWarhawk(), new AvenWarhawk(), new EnormousBaloth()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanentForCard(card).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+        assertThat(findPermanent(player1, "Daru Stinger").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lets its controller choose how many Soldier cards to reveal for Amplify")
+    void choosesHowManySoldierCardsToReveal() {
+        DaruStinger card = new DaruStinger();
+        AvenWarhawk firstSoldier = new AvenWarhawk();
+        AvenWarhawk secondSoldier = new AvenWarhawk();
+        harness.setHand(player1, List.of(card, firstSoldier, secondSoldier));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(firstSoldier.getId(), secondSoldier.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstSoldier.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Daru Stinger")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Deals damage equal to its +1/+1 counters to an attacking creature")
     void dealsDamageToAttackingCreature() {
-        Permanent stinger = addReadyStinger(player1);
+        Permanent stinger = addCreatureReady(player1, new DaruStinger());
         stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent attacker = addCreatureReady(player2, new SerraAngel());
+        Permanent attacker = addCreatureReady(player2, new EnormousBaloth());
         attacker.setAttacking(true);
 
         harness.forceActivePlayer(player1);
@@ -57,9 +81,9 @@ class DaruStingerTest extends BaseCardTest {
     @Test
     @DisplayName("Deals damage equal to its +1/+1 counters to a blocking creature")
     void dealsDamageToBlockingCreature() {
-        Permanent stinger = addReadyStinger(player1);
+        Permanent stinger = addCreatureReady(player1, new DaruStinger());
         stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+        Permanent blocker = addCreatureReady(player2, new EnormousBaloth());
         blocker.setBlocking(true);
 
         harness.forceActivePlayer(player1);
@@ -73,8 +97,8 @@ class DaruStingerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        addReadyStinger(player1);
-        Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new DaruStinger());
+        Permanent bystander = addCreatureReady(player2, new EnormousBaloth());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -84,17 +108,4 @@ class DaruStingerTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
-    private Permanent addReadyStinger(Player player) {
-        Permanent stinger = new Permanent(new DaruStinger());
-        stinger.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(stinger);
-        return stinger;
-    }
-
-    private Permanent findPermanentForCard(DaruStinger card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
-    }
 }

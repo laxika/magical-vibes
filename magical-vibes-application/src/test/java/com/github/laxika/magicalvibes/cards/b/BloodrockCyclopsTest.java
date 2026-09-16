@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -147,6 +150,27 @@ class BloodrockCyclopsTest extends BaseCardTest {
         declareAttackers(List.of());
 
         assertThat(cyclops.isAttacking()).isFalse();
+    }
+
+    @Test
+    @CardUsed({BloodrockCyclops.class, ChandraNalaar.class, WindbornMuse.class})
+    @DisplayName("Must attack an untaxed planeswalker despite Windborn Muse")
+    void mustAttackUntaxedPlaneswalkerDespiteWindbornMuse() {
+        addCreatureReady(player1, new BloodrockCyclops());
+
+        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
+        harness.addToBattlefield(player2, new WindbornMuse());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
     }
 
     // ===== Combat damage =====

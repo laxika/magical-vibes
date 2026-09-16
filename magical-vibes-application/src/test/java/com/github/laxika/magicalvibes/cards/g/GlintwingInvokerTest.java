@@ -47,6 +47,23 @@ class GlintwingInvokerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Repeated activations stack the boost and keep flying until end of turn")
+    void repeatedActivationsStack() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new GlintwingInvoker());
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, invoker)).isEqualTo(9);
+        assertThat(gqs.hasKeyword(gd, invoker, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot activate without seven generic and one blue mana")
     void cannotActivateWithoutEnoughMana() {
         harness.addToBattlefield(player1, new GlintwingInvoker());
