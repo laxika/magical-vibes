@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "85")
+@CardRegistration(set = "PIO", collectorNumber = "71")
 public class ScatterToTheWinds extends Card {
 
     @Override

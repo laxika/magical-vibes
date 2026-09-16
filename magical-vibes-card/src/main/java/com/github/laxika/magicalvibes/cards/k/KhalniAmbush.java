@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "192")
+@CardRegistration(set = "PIO", collectorNumber = "181")
 public class KhalniAmbush extends Card {
 
     public KhalniAmbush() {

@@ -18,6 +18,7 @@ import java.util.List;
  * {5}{U}: Draw a card, then discard a card.
  */
 @CardRegistration(set = "ORI", collectorNumber = "76")
+@CardRegistration(set = "PIO", collectorNumber = "287")
 public class SphinxsTutelage extends Card {
 
     public SphinxsTutelage() {

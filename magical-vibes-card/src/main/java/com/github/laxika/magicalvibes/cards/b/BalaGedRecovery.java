@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "180")
+@CardRegistration(set = "PIO", collectorNumber = "165")
 public class BalaGedRecovery extends Card {
 
     public BalaGedRecovery() {

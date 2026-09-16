@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "175")
+@CardRegistration(set = "PIO", collectorNumber = "270")
 public class NeedleSpires extends Card {
 
     public NeedleSpires() {

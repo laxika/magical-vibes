@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "M19", collectorNumber = "20")
 @CardRegistration(set = "2X2", collectorNumber = "14")
 @CardRegistration(set = "WOT", collectorNumber = "8")
+@CardRegistration(set = "PIO", collectorNumber = "22")
 public class KnightlyValor extends Card {
 
     public KnightlyValor() {

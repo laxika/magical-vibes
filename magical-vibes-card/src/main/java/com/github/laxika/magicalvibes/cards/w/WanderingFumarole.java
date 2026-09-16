@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "182")
+@CardRegistration(set = "PIO", collectorNumber = "278")
 public class WanderingFumarole extends Card {
 
     public WanderingFumarole() {

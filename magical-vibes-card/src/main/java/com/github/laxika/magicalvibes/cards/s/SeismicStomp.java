@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "152")
 @CardRegistration(set = "EMA", collectorNumber = "146")
+@CardRegistration(set = "PIO", collectorNumber = "378")
 public class SeismicStomp extends Card {
 
     public SeismicStomp() {

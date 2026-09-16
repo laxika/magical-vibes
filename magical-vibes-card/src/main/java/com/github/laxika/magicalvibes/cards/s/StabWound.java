@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDM", collectorNumber = "72")
 @CardRegistration(set = "GK2", collectorNumber = "35")
 @CardRegistration(set = "WOT", collectorNumber = "36")
+@CardRegistration(set = "PIO", collectorNumber = "111")
 public class StabWound extends Card {
 
     public StabWound() {

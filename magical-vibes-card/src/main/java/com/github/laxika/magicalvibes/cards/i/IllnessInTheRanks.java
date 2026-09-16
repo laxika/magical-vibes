@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "69")
+@CardRegistration(set = "PIO", collectorNumber = "292")
 public class IllnessInTheRanks extends Card {
 
     public IllnessInTheRanks() {

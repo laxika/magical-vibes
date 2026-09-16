@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "150")
+@CardRegistration(set = "PIO", collectorNumber = "309")
 public class IroasGodOfVictory extends Card {
 
     public IroasGodOfVictory() {

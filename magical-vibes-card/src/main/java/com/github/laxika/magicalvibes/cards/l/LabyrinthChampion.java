@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "126")
 @CardRegistration(set = "2X2", collectorNumber = "115")
+@CardRegistration(set = "PIO", collectorNumber = "143")
 public class LabyrinthChampion extends Card {
 
     public LabyrinthChampion() {

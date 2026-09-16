@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "41")
+@CardRegistration(set = "PIO", collectorNumber = "42")
 public class WarOracle extends Card {
 
     public WarOracle() {

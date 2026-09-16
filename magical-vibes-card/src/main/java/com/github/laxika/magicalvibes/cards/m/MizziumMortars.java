@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "RTR", collectorNumber = "101")
 @CardRegistration(set = "MM3", collectorNumber = "101")
 @CardRegistration(set = "GK1", collectorNumber = "32")
+@CardRegistration(set = "PIO", collectorNumber = "376")
 public class MizziumMortars extends Card {
 
     public MizziumMortars() {

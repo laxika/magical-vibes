@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "142")
+@CardRegistration(set = "PIO", collectorNumber = "204")
 public class AssembleTheLegion extends Card {
 
     public AssembleTheLegion() {

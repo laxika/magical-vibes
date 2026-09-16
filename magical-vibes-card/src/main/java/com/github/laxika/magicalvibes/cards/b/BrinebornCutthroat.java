@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "M20", collectorNumber = "50")
 @CardRegistration(set = "FDN", collectorNumber = "152")
 @CardRegistration(set = "GN3", collectorNumber = "24")
+@CardRegistration(set = "PIO", collectorNumber = "48")
 public class BrinebornCutthroat extends Card {
 
     public BrinebornCutthroat() {

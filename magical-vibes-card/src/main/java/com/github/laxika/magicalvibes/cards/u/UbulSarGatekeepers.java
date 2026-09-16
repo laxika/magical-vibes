@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DGM", collectorNumber = "30")
+@CardRegistration(set = "PIO", collectorNumber = "115")
 public class UbulSarGatekeepers extends Card {
 
     public UbulSarGatekeepers() {
