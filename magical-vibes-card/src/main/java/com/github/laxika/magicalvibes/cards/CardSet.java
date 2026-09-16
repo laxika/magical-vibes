@@ -216,6 +216,7 @@ public enum CardSet {
     SET_PLC("PLC"),
     SET_STX("STX"),
     SET_STA("STA"),
+    SET_SOA("SOA"),
     SET_SNC("SNC"),
     SET_TDM("TDM"),
     SET_TMT("TMT"),

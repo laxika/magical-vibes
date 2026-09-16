@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "26")
+@CardRegistration(set = "SOA", collectorNumber = "10")
 public class RequisitionRaid extends Card {
 
     public RequisitionRaid() {

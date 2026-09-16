@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TDM", collectorNumber = "10")
+@CardRegistration(set = "SOA", collectorNumber = "4")
 public class DutyBeyondDeath extends Card {
 
     public DutyBeyondDeath() {
