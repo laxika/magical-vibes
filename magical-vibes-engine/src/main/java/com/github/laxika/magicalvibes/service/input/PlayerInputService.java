@@ -1524,6 +1524,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 
+    public void beginRemoveUpToCountersFromAllPermanentsChoice(
+            GameData gameData, StackEntry resolvingEntry, CounterType counterType, int remaining,
+            Map<String, UUID> permanentOptions) {
+        ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice context =
+                new ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice(
+                        resolvingEntry, counterType, remaining, permanentOptions);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                resolvingEntry.getControllerId(), null, null, context, context.options(),
+                resolvingEntry.getCard().getName() + " - Choose a permanent from which to remove a "
+                        + counterType.name().toLowerCase().replace('_', ' ') + " counter (up to "
+                        + remaining + ")."));
+        log.info("Game {} - Awaiting {} to choose a permanent from which to remove a {} counter",
+                gameData.id, resolvingEntry.getControllerId(), counterType);
+    }
+
     public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,
                                              String sourceCardName, List<CounterType> counterTypes) {
         ChoiceContext.RemoveOneCounterChoice context = new ChoiceContext.RemoveOneCounterChoice(
