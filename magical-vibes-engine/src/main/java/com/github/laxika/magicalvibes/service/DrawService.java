@@ -239,7 +239,7 @@ public class DrawService {
     }
 
     private boolean drawChoicePending(GameData gameData) {
-        return gameData.interaction.isAwaitingInput() || gameData.pendingMayAbilities.stream()
+        return !gameData.pendingCommanderZoneMoves.isEmpty() || gameData.interaction.isAwaitingInput() || gameData.pendingMayAbilities.stream()
                 .flatMap(pending -> pending.effects().stream()).anyMatch(CardEffect::pausesDrawInstruction);
     }
 

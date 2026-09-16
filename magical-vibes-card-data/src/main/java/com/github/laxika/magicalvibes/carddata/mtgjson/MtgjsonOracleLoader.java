@@ -59,9 +59,33 @@ public class MtgjsonOracleLoader implements OracleLoader {
     private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(2);
 
     private final SetJsonCache cache;
+    private final SetJsonCache legalityCache;
 
     public MtgjsonOracleLoader(@Value("${card-data.cache-dir:./card-data-cache}") String cacheDir) {
         this.cache = new SetJsonCache(cacheDir, "mtgjson-", "MTGJSON", MtgjsonOracleLoader::fetchFromMtgjson);
+        this.legalityCache = new SetJsonCache(cacheDir, "legality-mtgjson-", "MTGJSON", MtgjsonOracleLoader::fetchFromMtgjson);
+    }
+
+
+    @Override
+    public com.github.laxika.magicalvibes.carddata.LegalitySnapshot loadLegalities(String setCode) {
+        String source = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+        try {
+            Map<String, JsonNode> nodes = indexFacesByCollectorNumber(MAPPER.readTree(legalityCache.getRefreshing(source, java.time.Duration.ofHours(24))).get("data").get("cards")).frontFaces();
+            Map<String, Map<String, String>> result = new HashMap<>();
+            nodes.forEach((number, node) -> {
+                Map<String, String> formats = new HashMap<>();
+                JsonNode legalities = node.get("legalities");
+                if (legalities != null) legalities.properties().forEach(entry ->
+                        formats.put(entry.getKey().toLowerCase(java.util.Locale.ROOT), entry.getValue().asText().toLowerCase(java.util.Locale.ROOT)));
+                result.put(number, formats);
+            });
+            return new com.github.laxika.magicalvibes.carddata.LegalitySnapshot(result, legalityCache.updatedAt(source));
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            LOG.warning("Could not refresh legalities for " + setCode + ": " + e.getMessage());
+            return com.github.laxika.magicalvibes.carddata.LegalitySnapshot.empty();
+        }
     }
 
     @Override

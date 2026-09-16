@@ -42,6 +42,27 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class StateBasedActionService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry commanderInteractions;
+
+    private boolean offerCommanderReturn(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput() || gameData.deferPlayerLossCheck) return false;
+        for (UUID owner : gameData.orderedPlayerIds) {
+            for (Card card : gameData.playerCommanders.getOrDefault(owner, List.of())) {
+                if (!gameData.commanderReturnCandidates.remove(card.getId())) continue;
+                var zone = gameData.playerGraveyards.getOrDefault(owner, List.of()).stream().anyMatch(c -> c.getId().equals(card.getId()))
+                        ? com.github.laxika.magicalvibes.model.Zone.GRAVEYARD
+                        : gameData.findExiledCard(card.getId()) != null ? com.github.laxika.magicalvibes.model.Zone.EXILE : null;
+                if (zone != null) {
+                    commanderInteractions.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.CommanderReturnChoice(owner, card, zone));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
 
 
@@ -71,7 +92,10 @@ public class StateBasedActionService {
      */
     private static final int MAX_SBA_PASSES = 100;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
     public void performStateBasedActions(GameData gameData) {
+        if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (graveyardService.hasPendingRegenerationChoice(gameData)) {
             graveyardService.processPendingRegenerationChoice(gameData);
             return;
@@ -146,6 +170,8 @@ public class StateBasedActionService {
                 }
             }
         }
+
+        if (offerCommanderReturn(gameData)) return;
 
         // CR 603.8 — check state-triggered abilities after SBAs
         stateTriggerService.checkStateTriggers(gameData);

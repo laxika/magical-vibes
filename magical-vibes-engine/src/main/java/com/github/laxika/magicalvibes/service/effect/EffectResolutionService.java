@@ -51,6 +51,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class EffectResolutionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
@@ -322,6 +325,7 @@ public class EffectResolutionService {
                 entry.restoreTargetIdAfterEffectResolution(savedTargetId);
             }
 
+            if (commanderZoneMoves != null) commanderZoneMoves.beginPending(gameData);
             effects = entry.getEffectsToResolve();
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.

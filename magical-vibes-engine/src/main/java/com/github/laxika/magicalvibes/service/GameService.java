@@ -1759,6 +1759,22 @@ public class GameService {
         }
     }
 
+    public void castCommander(GameData gameData, Player player, UUID cardId, Runnable cast) {
+        if (runAsActionIfNeeded(gameData, () -> castCommander(gameData, player, cardId, cast))) return;
+        synchronized (gameData) {
+            Player actor = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, actor);
+            if (gameData.commandCastCardId != null) throw new IllegalStateException("Already casting a commander");
+            List<Card> zone = gameData.playerCommandZones.getOrDefault(actor.getId(), List.of());
+            if (zone.size() != 1 || !zone.getFirst().getId().equals(cardId) || !gameData.isCommander(cardId))
+                throw new IllegalArgumentException("Commander is not in your command zone");
+            gameData.commandCastPlayerId = actor.getId();
+            gameData.commandCastCardId = cardId;
+            try { cast.run(); }
+            finally { gameData.commandCastPlayerId = null; gameData.commandCastCardId = null; }
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId, List.of());
     }

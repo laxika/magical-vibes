@@ -474,18 +474,21 @@ public class PermanentRemovalService {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         UUID controllerIdBeforeRemoval = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerIdBeforeRemoval = resolvePermanentOwner(gameData, target, controllerIdBeforeRemoval);
+        boolean commanderChoice = gameData.isCommander(target.getCard().getId());
+        if (!commanderChoice) {
         triggerCollectionService.checkControllerCreatureReturnedToHandTriggers(
                 gameData, target, wasCreature, ownerIdBeforeRemoval);
         triggerCollectionService.checkControllerAnotherNonlandPermanentReturnedToHandTriggers(
                 gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval);
+        }
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND);
+        if (!commanderChoice) triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
@@ -500,10 +503,12 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.addCardToHand(ownerId, leaving);
         }
-        gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(ownerId);
+        if (commanderChoice) gameData.commanderBounceContexts.put(target.getCard().getId(),
+                new com.github.laxika.magicalvibes.model.CommanderBounceContext(target, controllerId, ownerId, wasCreature));
+        else gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(ownerId);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
-        triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId, target);
+        if (!commanderChoice) triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId, target);
         target.setAttachedTo(null);
         return true;
     }

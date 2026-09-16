@@ -491,9 +491,12 @@ public class CastingCostService {
             boolean flashbackCost, int xValue, boolean plottingFromHand, Zone sourceZone,
             boolean castFaceDown, boolean collectEvidenceCostPaid, boolean kicked) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
-                flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
+                flashbackCost, xValue, plottingFromHand,
+                playerId.equals(gameData.commandCastPlayerId) ? Zone.COMMAND : sourceZone, castFaceDown,
                 collectEvidenceCostPaid, kicked);
-        int delta = 0;
+        UUID commanderId = playerId.equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : card.getId();
+        int delta = (sourceZone == Zone.COMMAND || playerId.equals(gameData.commandCastPlayerId))
+                ? gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) : 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
         if (exilePlayCostModifier != null

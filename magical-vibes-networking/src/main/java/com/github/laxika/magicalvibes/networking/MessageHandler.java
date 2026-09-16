@@ -32,6 +32,9 @@ import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import java.util.UUID;
 
 public interface MessageHandler {
+    default void handleLoadDeck(com.github.laxika.magicalvibes.networking.Connection connection, com.github.laxika.magicalvibes.networking.message.LoadDeckRequest request) throws Exception {}
+    default void handleValidateDeck(com.github.laxika.magicalvibes.networking.Connection connection, com.github.laxika.magicalvibes.networking.message.ValidateDeckRequest request) throws Exception {}
+
 
     void handleLogin(Connection connection, LoginRequest request) throws Exception;
 

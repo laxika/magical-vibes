@@ -75,6 +75,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class GameMessageHandler implements MessageHandler {
     @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.GameSetupService commanderGameSetup;
+
+    @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.planar.PlanarAbilityService planarAbilities;
 
 
@@ -223,8 +226,15 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        deckService.requireOwned(player.getId(), request.deckId());
+        com.github.laxika.magicalvibes.model.DeckDefinition acceptedAiDeck = null;
+        if (Boolean.TRUE.equals(request.vsAi())) {
+            String selectedAiDeck = request.aiDeckId() == null || request.aiDeckId().isBlank() ? request.deckId() : request.aiDeckId();
+            deckService.requireOwned(player.getId(), selectedAiDeck);
+            if (!allRandom) acceptedAiDeck = commanderGameSetup.validatedDeck(selectedAiDeck, request.format());
+        }
         LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId(),
-                allRandom, randomSet, Boolean.TRUE.equals(request.planechase()));
+                allRandom, randomSet, Boolean.TRUE.equals(request.planechase()), request.format());
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -234,7 +244,7 @@ public class GameMessageHandler implements MessageHandler {
             String aiDeck = (request.aiDeckId() != null && !request.aiDeckId().isBlank())
                     ? request.aiDeckId() : request.deckId();
             AiDifficulty aiDifficulty = request.aiDifficulty() != null ? request.aiDifficulty() : AiDifficulty.EASY;
-            aiPlayerService.joinAsAi(gameData, aiDeck, aiDifficulty);
+            aiPlayerService.joinAsAi(gameData, aiDeck, aiDifficulty, acceptedAiDeck);
 
             // Game is now in MULLIGAN — send full state to the creator
             JoinGame joinGame = gameResyncProjectionService.currentState(gameData, player.getId());
@@ -268,6 +278,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
+            deckService.requireOwned(player.getId(), request.deckId());
             LobbyGame lobbyGame = lobbyService.joinGame(gameData, player, request.deckId());
 
             // Mark joiner as in-game
@@ -829,6 +840,24 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
+    public void handleLoadDeck(Connection connection, com.github.laxika.magicalvibes.networking.message.LoadDeckRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) { handleError(connection, "Not authenticated"); return; }
+        try {
+            connection.sendMessage(new com.github.laxika.magicalvibes.networking.message.LoadDeckResponse(MessageType.LOAD_DECK_RESPONSE, deckService.load(player.getId(), request.id())));
+        } catch (IllegalArgumentException e) { handleError(connection, e.getMessage()); }
+    }
+
+    @Override
+    public void handleValidateDeck(Connection connection, com.github.laxika.magicalvibes.networking.message.ValidateDeckRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) { handleError(connection, "Not authenticated"); return; }
+        try {
+            connection.sendMessage(new com.github.laxika.magicalvibes.networking.message.ValidateDeckResponse(MessageType.VALIDATE_DECK_RESPONSE, deckService.validate(request.deck())));
+        } catch (IllegalArgumentException e) { handleError(connection, e.getMessage()); }
+    }
+
+    @Override
     public void handleSaveDeck(Connection connection, SaveDeckRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
@@ -862,7 +891,16 @@ public class GameMessageHandler implements MessageHandler {
         try {
             ValidTargetsResponse response;
             synchronized (gameData) {
-                if (request.planarObjectId() != null && request.abilityIndex() != null) {
+                if (request.commandCardId() != null) {
+                    UUID actorId = player.getId().equals(gameData.mindControllerPlayerId)
+                            ? gameData.mindControlledPlayerId : player.getId();
+                    var card = gameData.playerCommandZones.getOrDefault(actorId, java.util.List.of()).stream()
+                            .filter(candidate -> candidate.getId().equals(request.commandCardId())).findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException("Commander is not in your command zone"));
+                    response = validTargetService.computeValidTargetsForSpell(gameData, card, actorId,
+                            request.alreadySelectedIds() == null ? java.util.List.of() : request.alreadySelectedIds(),
+                            request.xValue(), request.kicked());
+                } else if (request.planarObjectId() != null && request.abilityIndex() != null) {
                     var source = planarAbilities.source(gameData, request.planarObjectId());
                     var ability = planarAbilities.ability(source, request.abilityIndex());
                     UUID actorId = player.getId().equals(gameData.mindControllerPlayerId)

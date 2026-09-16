@@ -492,6 +492,7 @@ export class GameComponent implements OnInit, OnDestroy {
       status: state.status,
       planechase: state.planechase ?? null,
       monarchPlayerId: state.monarchPlayerId ?? null,
+      commander: state.commander,
       activePlayerId: state.activePlayerId,
       turnNumber: state.turnNumber,
       currentStep: state.currentStep,
@@ -667,6 +668,12 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  playCommander(card: Card): void {
+    if (card.id && this.hasPriority && this.game()?.commander?.playableCardIds.includes(card.id)) this.choice.targeting.startCommanderPlay(card);
+  }
+  commanderDamage(playerId: string, cardId: string | undefined): number {
+    return cardId ? (this.game()?.commander?.damageReceived[playerId]?.[cardId] ?? 0) : 0;
+  }
   playExileCard(card: Card): void {
     if (card.id) {
       const exileAbility = card.exileActivatedAbilities?.[0];

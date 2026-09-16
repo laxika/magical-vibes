@@ -65,6 +65,10 @@ export enum MessageType {
   LEAVE_DRAFT = 'LEAVE_DRAFT',
   LOBBY_GAMES_RESPONSE = 'LOBBY_GAMES_RESPONSE',
   GAME_REMOVED = 'GAME_REMOVED',
+  LOAD_DECK = 'LOAD_DECK',
+  LOAD_DECK_RESPONSE = 'LOAD_DECK_RESPONSE',
+  VALIDATE_DECK = 'VALIDATE_DECK',
+  VALIDATE_DECK_RESPONSE = 'VALIDATE_DECK_RESPONSE',
   SAVE_DECK = 'SAVE_DECK',
   SAVE_DECK_RESPONSE = 'SAVE_DECK_RESPONSE'
 }
@@ -346,7 +350,9 @@ export interface PlanechaseView {
   rollSequence: number;
 }
 
+export interface CommanderView { format: DeckFormat; commandZones: Record<string, Card[]>; commanders: Record<string, string[]>; tax: Record<string, number>; damageReceived: Record<string, Record<string, number>>; playableCardIds: string[]; }
 export interface Game {
+  commander?: CommanderView;
   planechase?: PlanechaseView | null;
   monarchPlayerId: string | null;
   id: string;
@@ -379,6 +385,7 @@ export interface Game {
 }
 
 export interface LobbyGame {
+  format?: DeckFormat;
   planechase?: boolean;
   id: string;
   gameName: string;
@@ -388,7 +395,14 @@ export interface LobbyGame {
   allRandom: boolean;
 }
 
+export type DeckFormat = 'CASUAL' | 'STANDARD' | 'PIONEER' | 'MODERN' | 'LEGACY' | 'VINTAGE' | 'PAUPER' | 'COMMANDER';
+export const DECK_FORMATS: DeckFormat[] = ['CASUAL', 'STANDARD', 'PIONEER', 'MODERN', 'LEGACY', 'VINTAGE', 'PAUPER', 'COMMANDER'];
+export interface DeckValidation { errors: string[]; legalityUpdatedAt?: string | null; }
+export interface SavedDeckEntry { setCode: string; collectorNumber: string; count: number; }
+export interface SavedDeck { id?: string; name: string; format: DeckFormat; entries: SavedDeckEntry[]; sideboard: SavedDeckEntry[]; commander?: SavedDeckEntry | null; }
 export interface DeckInfo {
+  format?: DeckFormat;
+  validation?: DeckValidation;
   id: string;
   name: string;
 }
@@ -433,6 +447,7 @@ export interface LobbyGamesNotification {
 }
 
 export interface GameStateNotification {
+  commander?: CommanderView;
   planechase?: PlanechaseView | null;
   monarchPlayerId: string | null;
   type: MessageType;

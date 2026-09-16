@@ -1487,6 +1487,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     gameData, aiPlayer.getId(), MCTS_BUDGET, spellRootActions);
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
+                if (pc.commandCardId() != null) return tryCastCommander(gameData);
                 SpellCastingPlan plan = buildSpellCastingPlan(gameData, pc.handIndex(), pc.targetId(), false);
                 if (plan == null) return false;
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", plan.card().getName(),

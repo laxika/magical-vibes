@@ -58,7 +58,7 @@ public final class ManaProductionSupport {
 
     /** Returns the five colors present in the activating player's commander color identity. */
     public static List<ManaColor> commanderColorIdentity(GameData gameData, UUID playerId) {
-        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+        List<Card> commandZone = gameData.playerCommanders.get(playerId);
         if (commandZone == null || commandZone.isEmpty()) {
             return List.of();
         }

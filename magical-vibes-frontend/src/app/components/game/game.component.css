@@ -896,3 +896,7 @@
 }
 
 /* ========== Keyboard shortcuts (phase-rail icon + popup) ========== */
+
+.commander-panel { position: fixed; top: 4rem; right: .5rem; z-index: 20; padding: .65rem; max-width: 260px; background: #20252a; border: 1px solid #8d784b; border-radius: 6px; color: #eee; }
+.commander-panel div, .commander-panel small { display: block; margin-top: .35rem; }
+.commander-panel button { margin: .25rem 0; }
