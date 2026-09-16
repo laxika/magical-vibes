@@ -285,6 +285,7 @@ public enum CardSet {
     SET_EA2("EA2"),
     SET_EA3("EA3"),
     SET_AA1("AA1"),
+    SET_AA4("AA4"),
     SET_PA1("PA1");
 
     @Getter

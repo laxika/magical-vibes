@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "184")
+@CardRegistration(set = "AA4", collectorNumber = "23")
 public class Gigantomancer extends Card {
 
     public Gigantomancer() {
