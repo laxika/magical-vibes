@@ -1124,6 +1124,9 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Comeuppance: prevent opponent-source damage to a player and their planeswalkers this turn. */
+    public final List<ComeuppanceDamagePreventionShield> comeuppanceDamagePreventionShields =
+            Collections.synchronizedList(new ArrayList<>());
     public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
@@ -5072,6 +5075,7 @@ public class GameData {
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
+        copy.comeuppanceDamagePreventionShields.addAll(this.comeuppanceDamagePreventionShields);
         copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);

@@ -9672,11 +9672,17 @@ public class SpellCastingService {
 
     /** Casts a card from its owner's library during an active library search. */
     public void castCardFromLibraryWhileSearching(GameData gameData, Player player, Card card) {
+        castCardFromLibraryWhileSearching(gameData, player, player.getId(), card);
+    }
+
+    /** Casts a card from a searched library while another player controls the search. */
+    public void castCardFromLibraryWhileSearching(GameData gameData, Player player,
+                                                   UUID libraryOwnerId, Card card) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
 
-        UUID playerId = player.getId();
+        UUID playerId = libraryOwnerId;
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.stream().noneMatch(libraryCard -> libraryCard.getId().equals(card.getId()))) {
             throw new IllegalStateException("Card is no longer in the library");

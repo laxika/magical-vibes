@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
+import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -154,6 +155,7 @@ public class LibrarySearchSupport {
                     .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
+            params = applyOppositionAgentControl(gameData, params);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library."));
             return true;
@@ -696,6 +698,37 @@ public class LibrarySearchSupport {
         return deck.stream().filter(this::isLibrarySearchCastableCard).toList();
     }
 
+    /** Applies the controller of the most recently entered opposing Opposition Agent, if any. */
+    public LibrarySearchParams applyOppositionAgentControl(GameData gameData, LibrarySearchParams params) {
+        if (params.decisionPlayerId() != null
+                || params.sourceSideboard()
+                || params.sourceCards() != null
+                || (params.targetPlayerId() != null && !params.targetPlayerId().equals(params.playerId()))) {
+            return params;
+        }
+
+        UUID controllerId = null;
+        long newestTimestamp = Long.MIN_VALUE;
+        for (UUID battlefieldControllerId : gameData.orderedPlayerIds) {
+            if (battlefieldControllerId.equals(params.playerId())) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                boolean isOppositionAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OppositionAgentEffect.class::isInstance);
+                if (isOppositionAgent && permanent.getTimestamp() >= newestTimestamp) {
+                    newestTimestamp = permanent.getTimestamp();
+                    controllerId = battlefieldControllerId;
+                }
+            }
+        }
+        return controllerId == null ? params : params.withDecisionPlayerId(controllerId);
+    }
+
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind) {
         String playerName = gameData.playerIdToName.get(playerId);
@@ -751,6 +784,8 @@ public class LibrarySearchSupport {
                 }
             }
         }
+
+        params = applyOppositionAgentControl(gameData, params);
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
                 params, prompt, canFailToFind));

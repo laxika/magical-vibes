@@ -3480,6 +3480,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyChannelHarmPreventionToPermanent(
                     gameData, pw, sourceControllerId, damage);
             damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage, true);
+            damage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, pwControllerId, damage, atk.getCard(), atk,
+                    sourceControllerId, true);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(
                     gameData, pwControllerId, damage, true);
@@ -3739,6 +3742,9 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
+                damage = damagePreventionService.applyComeuppancePrevention(
+                        gameData, defenderId, damage, atk.getCard(), atk,
+                        sourceControllerId, true);
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
                 damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(

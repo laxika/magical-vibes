@@ -4340,7 +4340,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public UUID decidingPlayerId() {
-            return params.playerId();
+            return params.decisionPlayerId() != null ? params.decisionPlayerId() : params.playerId();
         }
 
         @Override

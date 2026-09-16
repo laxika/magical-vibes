@@ -265,6 +265,7 @@ public class TurnCleanupService {
         gameData.channelHarmShields.clear();
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
+        gameData.comeuppanceDamagePreventionShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();

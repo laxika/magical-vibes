@@ -330,6 +330,7 @@ Planar source note: `PutCountersOnSelfEffect(CounterType)` can place the counter
 - `CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect()` — ON_ANY_PLAYER_CASTS_SPELL: any player other than the spell's caster may pay that spell's printed mana cost, including the chosen value of X, to counter it (Ice Cave); the collector snapshots the concrete cost and queues `MayPayManaEffect` with `MayPayPayer.ANY_OTHER_PLAYER`
 - `DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect(int damageTargetGroup)` — destroy the primary target, then deal damage equal to its mana value to the creature chosen in the separate target group; the mana value is captured before destruction and the spell is the damage source (Orim's Thunder)
 - `OpponentsCantSearchLibrariesEffect()` — spells and abilities controlled by this permanent's opponents can't cause their controller to search that controller's library (Ashiok, Dream Render); passive rules-modifier checked at search initiation with the resolving spell or ability controller
+- `OppositionAgentEffect()` — while an opponent searches their library, this permanent's controller controls the search and cards that opponent finds are exiled with a permission for the controller to play them using mana of any color (Opposition Agent)
 - `ChooseNonlandCardNameRevealTopCardsToHandRestToGraveyardEffect(int count)` - controller names a nonland card, reveals the top `count` cards of their library, puts matching cards into hand, and puts the rest into the graveyard (Tamiyo, Collector of Tales = 4)
 - `OpponentEffectsCantCauseDiscardEffect()` - static effect preventing opponent-controlled spells and abilities from causing the controller to discard cards (Tamiyo, Collector of Tales)
 - `AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect()` — static permission to cast nonland spells from the top of your library by paying life equal to mana value instead of mana cost (Bolas's Citadel)
@@ -701,6 +702,7 @@ Protective Sphere uses `PreventDamageFromChosenSourceEffect.allDamageToYouOfActi
 Compact lookup: effect name + constructor signature, organized by category.
 
 - `PreventNextDamageBySelfEffect()` — activated ability: prevents the next damage event the ability's source permanent would deal to any recipient this turn. No source choice; installs a `SourceNextDamageToAnyTargetShield` keyed to the source permanent.
+- `PreventAllDamageFromOpponentSourcesToControllerAndPlaneswalkersEffect()` — Comeuppance: prevents all damage from opponent-controlled sources to the controller and planeswalkers they control for the turn; reflects creature-source damage to that creature and noncreature-source damage to its controller. Reflected damage is queued through the pending redirect pipeline.
 
 - `OpponentDrewAtLeastCardsThisTurn(n)` — an opponent drew at least `n` cards this turn; use as an alternate-cast availability condition for Runeflare Trap.
 
@@ -712,6 +714,8 @@ Compact lookup: effect name + constructor signature, organized by category.
 - `DistributeCountersAmongTargetsEffect.chosenAmongTargetCreaturesEtb(CounterType, int)` — fixed chosen counter distribution for an ETB ability; target-to-counter assignments come from the shared ETB assignment buffer (Wurmskin Forger)
 - `DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(CounterType, DynamicAmount, PermanentPredicate)` — chosen spell counter distribution that explicitly permits an empty target group (Stolen Goodies)
 - `DistributeCountersAmongTargetsEffect.chosenUpToAmongAnyNumberOfTargetCreatures(CounterType, DynamicAmount, PermanentPredicate)` — chosen counter distribution that may use fewer than the evaluated total, including zero targets (Lathiel, the Bounteous Dawn)
+- `CreateTokenCopyOfSourceForTargetPlayerEffect()` — creates a token copy of the source permanent under the targeted opponent's control; the target is an opponent and the copy uses the source's current characteristics (Wedding Ring)
+
 For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
 - `DistributeCountersAmongTargetsEffect.evenlyAmongTargetPermanents(CounterType, int, PermanentPredicate)` — fixed even counter distribution across a target group narrowed to matching permanents, such as Vehicles and/or creatures you control.
@@ -1362,6 +1366,7 @@ intervening-if condition used to gate a targeted ETB.
 - `ConditionalEffect(new ControllerTurn(), CardEffect)` — during your turn
 - `ConditionalEffect(new IsNight(), CardEffect)` — the game has the night designation; also usable in `FixedIfCondition` for a day/night numeric rider
 - `ConditionalEffect(new NotControllerTurn(), CardEffect)` — during turns other than yours; also an `END_STEP_TRIGGERED` intervening-if gate ("if it's an opponent's turn" — Discordant Spirit)
+- `TargetPlayerIsActivePlayer()` — condition for event-trigger effects whose target slot records the player whose turn the event occurred during; use with `ConditionalEffect` for Wedding Ring's draw and life-gain abilities
 - `ExtraTurn()` — the current turn was taken from the extra-turn queue; combine with `NotCondition` for attack restrictions such as Medomai the Ageless
 - `ControllerOwnTurnCountAtMost(n)` — controller is active player and has taken ≤ `n` turns this game (`GameData.turnsTakenByPlayer`); `setCastCondition(new NotCondition(...))` gives Serra Avenger's first-three-turns cast ban
 - `ControllerPlayedOrCastFromOutsideHandThisTurn()` — the controller played a land or cast a spell from somewhere other than their hand this turn; use with `ConditionalEffect` for an end-step intervening-if
@@ -1883,6 +1888,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect()` — at the next end step, sacrifice the target creature only if the controller still controls it, then gain life equal to its current toughness (Spinal Embrace)
 - `DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffect()` — destroy target creature (can't be regenerated), then create a black Spirit token for the controller with the destroyed creature's last-known power/toughness, sacrificed at next end step. Token created even if destruction fails (indestructible). Card supplies the target filter (Broken Visage: nonartifact attacking creature)
 - `DestroyTargetCreatureThenCreateTokenEqualToPowerToughnessEffect(CreateTokenEffect)` — destroy target creature, then create one token under the effect controller only if the creature was destroyed; the token template receives the creature's last-known effective power and toughness. Used by Kalitas, Bloodchief of Ghet
+- `DestroyTargetCreatureAndCreateTokenCopiesEffect()` — destroy target creature, then create two token copies under its controller with base power and toughness equal to half the creature's last-known effective power and toughness, rounded up. Saw in Half
 - `ReturnTargetPermanentToHandAtEndStepEffect()` — return the target to its owner's hand at next end step (Dragon Mask); pair with a pump on the shared target
 - `ReturnSelfToHandAtEndStepEffect()` — return the source permanent to its owner's hand at the beginning of the next end step (Rakalite); use on an activated ability when the source itself is the delayed return
 - `ExileSelfAtEndStepEffect()` — exile the source permanent (no target) at next end step (Dark Maze); pair with `CanAttackAsThoughNoDefenderEffect` on a `{0}` attack ability
