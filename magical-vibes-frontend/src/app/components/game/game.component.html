@@ -94,6 +94,9 @@
                   <div class="scry-buttons">
                     <button class="btn-scry-top" (click)="choice.library.scryToTop(item.originalIndex)">Top</button>
                     <button class="btn-scry-bottom" (click)="choice.library.scryToBottom(item.originalIndex)">{{ choice.library.scryToGraveyard ? 'Graveyard' : 'Bottom' }}</button>
+                    @if (choice.library.canScrycast(item.originalIndex)) {
+                      <button class="btn-scry-top" (click)="choice.library.scrycast(item.originalIndex)">Scrycast</button>
+                    }
                   </div>
                 </div>
               }

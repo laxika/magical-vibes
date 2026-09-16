@@ -81,8 +81,7 @@ class IridescentAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new IridescentAngel());
         Permanent archer = addCreatureReady(player2, new KrosanArcher());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(archer),
@@ -97,8 +96,7 @@ class IridescentAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new IridescentAngel());
         Permanent archer = addCreatureReady(player2, new KrosanArcher());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(angel),
                 gd.playerBattlefields.get(player2.getId()).indexOf(archer))));

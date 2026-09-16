@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "169")
 @CardRegistration(set = "INR", collectorNumber = "186")
+@CardRegistration(set = "AA3", collectorNumber = "15")
 public class AmbushViper extends Card {
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "12")
+@CardRegistration(set = "PIO", collectorNumber = "13")
 public class GhostbladeEidolon extends Card {
 
     public GhostbladeEidolon() {

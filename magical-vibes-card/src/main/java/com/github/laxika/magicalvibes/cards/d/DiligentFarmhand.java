@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.CountAsNamedCardForSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -14,6 +16,8 @@ import java.util.List;
 public class DiligentFarmhand extends Card {
 
     public DiligentFarmhand() {
+        addEffect(EffectSlot.STATIC, new CountAsNamedCardForSpellEffect("Muscle Burst", "Muscle Burst"));
+
         // {1}{G}, Sacrifice this creature: Search your library for a basic land card, put that
         // card onto the battlefield tapped, then shuffle.
         addActivatedAbility(new ActivatedAbility(

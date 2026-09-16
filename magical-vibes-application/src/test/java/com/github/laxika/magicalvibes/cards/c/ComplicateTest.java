@@ -72,10 +72,13 @@ class ComplicateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Complicate()));
         harness.setLibrary(player1, List.of(new GlorySeeker()));
         addCyclingMana();
-        harness.activateHandAbility(player1, 0, shock.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player1, "Complicate");
         harness.assertInHand(player1, "Glory Seeker");
@@ -97,10 +100,12 @@ class ComplicateTest extends BaseCardTest {
         addCyclingMana();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.activateHandAbility(player1, 0, shock.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Complicate");
         harness.assertInHand(player1, "Glory Seeker");
@@ -141,11 +146,13 @@ class ComplicateTest extends BaseCardTest {
         addCyclingMana();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.activateHandAbility(player1, 0, shock.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Complicate");
         harness.assertInHand(player1, "Glory Seeker");
@@ -170,12 +177,15 @@ class ComplicateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Complicate()));
         harness.setLibrary(player1, List.of(new GlorySeeker()));
         addCyclingMana();
-        harness.activateHandAbility(player1, 0, shock.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
 
         harness.castInstant(player2, 0, shock.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player1, "Complicate");
         harness.assertInHand(player1, "Glory Seeker");

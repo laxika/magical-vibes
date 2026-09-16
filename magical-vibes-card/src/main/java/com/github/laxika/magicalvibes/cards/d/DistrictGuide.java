@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "128")
+@CardRegistration(set = "PIO", collectorNumber = "172")
 public class DistrictGuide extends Card {
 
     public DistrictGuide() {

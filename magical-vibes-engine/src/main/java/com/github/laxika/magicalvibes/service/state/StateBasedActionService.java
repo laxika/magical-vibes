@@ -186,7 +186,7 @@ public class StateBasedActionService {
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.removeIf(entry -> {
                 Card card = entry.card();
-                if (!card.isToken()) {
+                if (!card.isToken() || card.isTokenCard()) {
                     return false;
                 }
                 if (removedTokenIds.add(card.getId())) {
@@ -210,6 +210,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exiledCardsWithCroakCounters.remove(cardId);
+            gameData.exiledCardsWithVoidCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);
@@ -247,7 +248,7 @@ public class StateBasedActionService {
 
     private void removeTokensFromZone(List<Card> zone, List<Card> removedTokens, Set<UUID> removedTokenIds) {
         zone.removeIf(card -> {
-            if (!card.isToken()) {
+            if (!card.isToken() || card.isTokenCard()) {
                 return false;
             }
             if (removedTokenIds.add(card.getId())) {

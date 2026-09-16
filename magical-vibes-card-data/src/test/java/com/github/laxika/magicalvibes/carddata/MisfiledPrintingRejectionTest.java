@@ -100,6 +100,12 @@ class MisfiledPrintingRejectionTest {
     }
 
     @Test
+    void acceptsAClassNamedAfterAllFacesOfAThreeFaceSplitCard() {
+        assertThat(CardRegistry.matchesClassName("SmeltHerdSaw", "Smelt", "Herd",
+                List.of("Smelt", "Herd", "Saw"))).isTrue();
+    }
+
+    @Test
     void rejectsADifferentCardWhoseNameMerelyStartsOrEndsTheSameWay() {
         assertThat(matches("Disperse", "Void Snare")).isFalse();
         assertThat(matches("SulfurousSpring", "Sulfurous Springs")).isFalse();

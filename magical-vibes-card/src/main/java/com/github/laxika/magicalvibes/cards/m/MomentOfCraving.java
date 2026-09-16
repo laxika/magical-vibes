@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "79")
 @CardRegistration(set = "FDN", collectorNumber = "524")
+@CardRegistration(set = "MB1", collectorNumber = "79")
 public class MomentOfCraving extends Card {
 
     public MomentOfCraving() {

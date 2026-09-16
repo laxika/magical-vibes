@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "35")
 @CardRegistration(set = "UMA", collectorNumber = "39")
+@CardRegistration(set = "PIO", collectorNumber = "39")
 public class SwiftReckoning extends Card {
 
     public SwiftReckoning() {

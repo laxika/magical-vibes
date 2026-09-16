@@ -12,9 +12,14 @@ public sealed interface InteractionAnswer {
     record NumberChosen(int value) implements InteractionAnswer {
     }
 
-    /** A split of viewed cards into a top-of-library ordering and a bottom-of-library ordering. */
-    record ScryOrder(java.util.List<Integer> topCardOrder, java.util.List<Integer> bottomCardOrder)
-            implements InteractionAnswer {
+    /** A split of viewed cards into a top/bottom ordering, optionally casting one via Scrycast. */
+    record ScryOrder(java.util.List<Integer> topCardOrder, java.util.List<Integer> bottomCardOrder,
+                     Integer scrycastCardIndex) implements InteractionAnswer {
+
+        /** Backwards-compatible constructor for an ordinary scry/surveil answer. */
+        public ScryOrder(java.util.List<Integer> topCardOrder, java.util.List<Integer> bottomCardOrder) {
+            this(topCardOrder, bottomCardOrder, null);
+        }
     }
 
     /** One viewed card to hand and one on top of the library (the rest go to the bottom). */

@@ -110,7 +110,9 @@ class ResilientWandererTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
         assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
 
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
     }

@@ -80,6 +80,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COUNTERS_SPELL,
     /** "Whenever a spell you've cast is countered, ..." */
     ON_CONTROLLER_SPELL_COUNTERED,
+    /** Triggers when this spell is countered or fizzles. */
+    ON_SELF_SPELL_COUNTERED_OR_FIZZLED,
     /**
      * "Whenever you play a land" — fired at the actual land-play sites (from hand, from graveyard,
      * from exile, and the may-cast/free-play paths), NOT when a land merely enters the battlefield.
@@ -965,6 +967,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  on the battlefield at the start of that resolution (sacrificing itself still counts).
      *  Fired from the exploit sacrifice completion path. Used by Overcharged Amalgam. */
     ON_EXPLOIT,
+    /** Triggers whenever a creature controlled by this permanent's controller exploits a creature. */
+    ON_ALLY_CREATURE_EXPLOITS,
     /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
      *  creature. Fired after the exploit sacrifice completes. */
     ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
@@ -1363,5 +1367,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_BECOMES_SADDLED,
     ON_ALLY_CREATURE_MUTATES,
     ON_SELF_MUTATES,
-    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE
+    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
+    /** Global temporary trigger for any creature becoming tapped. */
+    ON_ANY_CREATURE_BECOMES_TAPPED
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromOutsideGameThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class AllowPlayCardsFromOutsideGameThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -26,15 +28,22 @@ public class AllowPlayCardsFromOutsideGameThisTurnEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        AllowPlayCardsFromOutsideGameThisTurnEffect permissionEffect =
+                (AllowPlayCardsFromOutsideGameThisTurnEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> sideboard = gameData.playerSideboards.get(controllerId);
         if (sideboard != null) {
             for (Card card : List.copyOf(sideboard)) {
-                gameData.outsideGamePlayPermissions.add(card.getId());
+                if (permissionEffect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        card, permissionEffect.filter(), null, gameData, controllerId)) {
+                    gameData.outsideGamePlayPermissions.add(card.getId());
+                }
             }
         }
 
+        String description = permissionEffect.filter() == null ? "cards" : "matching cards";
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
-                + " may play cards from outside the game this turn."));
+                + " may play " + description + " from outside the game this turn."));
     }
 }

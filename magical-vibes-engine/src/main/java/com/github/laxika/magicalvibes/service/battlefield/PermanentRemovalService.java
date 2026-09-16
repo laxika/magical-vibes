@@ -193,6 +193,10 @@ public class PermanentRemovalService {
     }
 
     public boolean sacrificePermanentToGraveyard(GameData gameData, Permanent target) {
+        if (gameQueryService.cantBeAffectedByOwnEffects(
+                gameData, target, gameData.currentlyResolvingControllerId)) {
+            return false;
+        }
         return removePermanentToGraveyard(gameData, target, false, false, null, true);
     }
 
@@ -201,6 +205,10 @@ public class PermanentRemovalService {
      * applied destruction-specific replacement checks such as indestructible and regeneration.
      */
     public boolean destroyPermanentToGraveyard(GameData gameData, Permanent target) {
+        if (gameQueryService.cantBeAffectedByOwnEffects(
+                gameData, target, gameData.currentlyResolvingControllerId)) {
+            return false;
+        }
         return removePermanentToGraveyard(gameData, target, true);
     }
 
@@ -501,6 +509,38 @@ public class PermanentRemovalService {
     }
 
     /**
+     * Removes a permanent from the battlefield without putting its card into another zone.
+     * Spellmorph uses this while the card is being cast from the battlefield onto the stack.
+     * Like a bounce or library move, this is a non-dying departure.
+     */
+    public boolean removePermanentToStack(GameData gameData, Permanent target) {
+        boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
+        }
+        UUID controllerId = removed.get().controllerId();
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.STACK);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
+        triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
+        triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+                gameData, target, wasCreature, controllerId);
+        triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
+        triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
+        notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
+        triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+        forgetDamageDealtToDepartedPermanent(gameData, target);
+        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+        handleExileReturnOnLeave(gameData, target);
+        target.setAttachedTo(null);
+        return true;
+    }
+
+    /**
      * Removes a permanent from the battlefield and puts its card into the owner's exile zone.
      * Handles sacrifice-on-unattach and exile-return-on-leave.
      *
@@ -541,8 +581,12 @@ public class PermanentRemovalService {
     }
 
     private boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId,
-                                           boolean faceDown,
-                                           boolean exiledWhileActivatingCraftAbility) {
+                                            boolean faceDown,
+                                            boolean exiledWhileActivatingCraftAbility) {
+        if (gameQueryService.cantBeAffectedByOwnEffects(
+                gameData, target, gameData.currentlyResolvingControllerId)) {
+            return false;
+        }
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
         List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
@@ -936,6 +980,10 @@ public class PermanentRemovalService {
      * @return {@code true} if the permanent was destroyed, {@code false} if it survived
      */
     public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated) {
+        if (gameQueryService.cantBeAffectedByOwnEffects(
+                gameData, target, gameData.currentlyResolvingControllerId)) {
+            return false;
+        }
         if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
             gameLogService.append(gameData, GameLog.isIndestructible(target.getCard()));
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
@@ -1972,6 +2020,8 @@ public class PermanentRemovalService {
      * If so, returns the exiled card to the battlefield under its owner's control.
      */
     private void handleExileReturnOnLeave(GameData gameData, Permanent removedPermanent) {
+        gameData.hauntingCardToPermanentId.entrySet()
+                .removeIf(entry -> removedPermanent.getId().equals(entry.getValue()));
         List<PendingExileReturn> pendingReturns = gameData.exileReturnOnPermanentLeave.remove(removedPermanent.getId());
         if (pendingReturns == null) {
             triggerCollectionService.processDelayedExileReturnCounterTriggers(

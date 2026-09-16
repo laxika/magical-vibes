@@ -73,9 +73,8 @@ class GlarecasterTest extends BaseCardTest {
 
         activateGlarecaster(glarecaster, player2.getId());
 
-        declareAttackers(player2, List.of(
+        declareAttackersAndPrepareBlockers(player2, List.of(
                 indexOf(player2, blockedAttacker), indexOf(player2, unblockedAttacker)));
-        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, glarecaster), indexOf(player2, blockedAttacker))));
         resolveCombat(player2);

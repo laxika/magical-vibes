@@ -14,12 +14,12 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class GustcloakSavior extends Card {
 
     public GustcloakSavior() {
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new MayEffect(
+        addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_BLOCKED, new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.SELF),
                         new RemoveSelfFromCombatEffect()
                 ),
-                "Untap Gustcloak Savior and remove it from combat?"
+                "Untap that creature and remove it from combat?"
         ));
     }
 }

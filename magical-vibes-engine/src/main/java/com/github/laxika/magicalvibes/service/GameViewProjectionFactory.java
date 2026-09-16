@@ -425,7 +425,8 @@ public class GameViewProjectionFactory {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
                 List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
-                boolean revealEntireOpponentHand = fullHandRevealed;
+                boolean revealEntireOpponentHand = fullHandRevealed
+                        || gameData.playersWithHandRevealed.contains(opponentId);
                 return opponentHand.stream()
                         .filter(card -> revealEntireOpponentHand
                                 || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId())))
@@ -491,6 +492,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = data.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(data, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all

@@ -35,10 +35,10 @@ class AstralSlideTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Elvish Warrior"));
@@ -68,10 +68,11 @@ class AstralSlideTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Elvish Warrior"));
@@ -89,7 +90,8 @@ class AstralSlideTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Elvish Warrior"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Elvish Warrior");
@@ -110,13 +112,14 @@ class AstralSlideTest extends BaseCardTest {
         UUID nonCreatureId = harness.getPermanentId(player1, "Astral Slide");
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonCreatureId))
                 .isInstanceOf(IllegalStateException.class);
 
         UUID creatureId = harness.getPermanentId(player2, "Elvish Warrior");
         harness.handlePermanentChosen(player1, creatureId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
     }
 

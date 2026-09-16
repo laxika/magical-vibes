@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "178")
+@CardRegistration(set = "PIO", collectorNumber = "230")
 public class LoxodonSmiter extends Card {
 
     public LoxodonSmiter() {

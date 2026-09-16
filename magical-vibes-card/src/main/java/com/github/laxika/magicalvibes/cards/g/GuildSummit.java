@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "41")
+@CardRegistration(set = "PIO", collectorNumber = "56")
 public class GuildSummit extends Card {
 
     public GuildSummit() {

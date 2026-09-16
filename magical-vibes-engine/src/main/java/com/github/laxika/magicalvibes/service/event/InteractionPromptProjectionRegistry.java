@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -70,6 +72,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
+        register(PendingInteraction.TargetPlayerHandOrderChoice.class,
+                this::projectTargetPlayerHandOrderChoice);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
@@ -230,6 +234,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.ExchangeOutsideGameCardChoice.class,
+                this::projectExchangeOutsideGameCardChoice);
+        register(PendingInteraction.ExchangeOutsideGameHandChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
                 this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
@@ -316,8 +324,14 @@ public class InteractionPromptProjectionRegistry {
                             ? "Keep on top or put on the bottom of " + library + "."
                             : "Put cards on the top or bottom of " + library + ".";
         }
+        List<Integer> scrycastCardIndices = interaction.toGraveyard()
+                ? List.of()
+                : java.util.stream.IntStream.range(0, interaction.cards().size())
+                        .filter(i -> interaction.cards().get(i).getCastingOption(ScrycastCast.class).isPresent())
+                        .boxed()
+                        .toList();
         return InteractionPromptMessage.scryOrder(
-                cardViews(interaction.cards()), prompt, interaction.toGraveyard());
+                cardViews(interaction.cards()), prompt, interaction.toGraveyard(), scrycastCardIndices);
     }
 
     private InteractionPromptMessage projectHandTopBottomChoice(
@@ -339,6 +353,12 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectLibraryReorder(
             GameData gameData, PendingInteraction.LibraryReorder interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cards()), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectTargetPlayerHandOrderChoice(
+            GameData gameData, PendingInteraction.TargetPlayerHandOrderChoice interaction) {
         return InteractionPromptMessage.cardOrder(
                 cardViews(interaction.cards()), interaction.prompt());
     }
@@ -1368,6 +1388,18 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may reveal a " + interaction.cardLabel()
                         + " from outside the game or choose one in face-up exile.");
+    }
+
+    private InteractionPromptMessage projectExchangeOutsideGameCardChoice(
+            GameData gameData, PendingInteraction.ExchangeOutsideGameCardChoice interaction) {
+        String cardDescription = CardPredicateUtils.describeFilter(interaction.filter());
+        if (!cardDescription.endsWith("card")) {
+            cardDescription += " card";
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
+                "You may reveal a " + cardDescription
+                        + " you own from outside the game to exchange with a card in your hand.");
     }
 
     private InteractionPromptMessage projectShuffleCardsFromOutsideGameChoice(

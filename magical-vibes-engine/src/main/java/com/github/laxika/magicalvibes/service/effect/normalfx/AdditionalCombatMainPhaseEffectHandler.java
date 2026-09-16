@@ -44,7 +44,8 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         if (e.additionalCombatBeginningEffect() != null) {
             for (int i = 0; i < e.count(); i++) {
                 gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
-                        entry.getControllerId(), entry.getCard(), e.additionalCombatBeginningEffect()));
+                        entry.getControllerId(), entry.getCard(), e.additionalCombatBeginningEffect(),
+                        entry.getSourcePermanentId()));
             }
         }
 

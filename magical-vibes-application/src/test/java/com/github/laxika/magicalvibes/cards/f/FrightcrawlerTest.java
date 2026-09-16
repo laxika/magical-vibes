@@ -76,7 +76,7 @@ class FrightcrawlerTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, attacker)))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid blocker index");
+                .hasMessageContaining("fear");
     }
 
     @Test

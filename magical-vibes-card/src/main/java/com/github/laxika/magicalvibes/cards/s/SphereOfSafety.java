@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "24")
+@CardRegistration(set = "PIO", collectorNumber = "34")
 public class SphereOfSafety extends Card {
 
     public SphereOfSafety() {

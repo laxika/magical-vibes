@@ -104,8 +104,8 @@ class NewFrontiersTest extends BaseCardTest {
     @Test
     @DisplayName("Each player may choose fewer than X basic lands")
     void eachPlayerMayChooseFewerThanX() {
-        harness.setLibrary(player1, List.of(new Forest(), new Simplify()));
-        harness.setLibrary(player2, List.of(new Plains(), new Simplify()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Simplify()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Simplify()));
         castNewFrontiers(2);
 
         harness.handleCardChosen(player1, 0);

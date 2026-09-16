@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "122")
+@CardRegistration(set = "PIO", collectorNumber = "385")
 public class ArmedDangerous extends Card {
 
     public ArmedDangerous() {

@@ -1062,6 +1062,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
 
+    public void beginPregameLegacyWordChoice(GameData gameData, UUID playerId, Card sourceCard,
+                                              List<String> options) {
+        ChoiceContext.LegacyWordChoice choiceContext = new ChoiceContext.LegacyWordChoice(sourceCard, options);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a keyword or ability word for Legacy."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a Legacy keyword or ability word", gameData.id, playerName);
+    }
+
     public void beginBasicLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "136")
+@CardRegistration(set = "PIO", collectorNumber = "383")
 public class NaturalState extends Card {
 
     public NaturalState() {
