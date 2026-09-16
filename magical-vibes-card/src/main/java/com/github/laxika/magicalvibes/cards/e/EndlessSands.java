@@ -16,6 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "176")
+@CardRegistration(set = "EOS", collectorNumber = "15")
+@CardRegistration(set = "EOS", collectorNumber = "60")
+@CardRegistration(set = "EOS", collectorNumber = "105")
+@CardRegistration(set = "EOS", collectorNumber = "150")
 public class EndlessSands extends Card {
 
     public EndlessSands() {

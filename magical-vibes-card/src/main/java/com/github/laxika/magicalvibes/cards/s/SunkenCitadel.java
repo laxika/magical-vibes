@@ -13,6 +13,10 @@ import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "285")
 @CardRegistration(set = "LCI", collectorNumber = "392")
+@CardRegistration(set = "EOS", collectorNumber = "41")
+@CardRegistration(set = "EOS", collectorNumber = "86")
+@CardRegistration(set = "EOS", collectorNumber = "131")
+@CardRegistration(set = "EOS", collectorNumber = "176")
 public class SunkenCitadel extends Card {
 
     public SunkenCitadel() {
