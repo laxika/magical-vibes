@@ -223,6 +223,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPred
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueColorsSpentToCastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
@@ -1386,6 +1387,18 @@ public class PredicateEvaluationService {
                     yield true;
                 }
                 yield permanent.getCard().getManaValue() <= filterContext.xValue();
+            }
+            case PermanentMaxManaValueColorsSpentToCastPredicate ignored -> {
+                // During casting the colored-mana snapshot does not exist yet, so the target is
+                // potentially legal. Resolution-time checks use the snapshot taken during payment.
+                if (filterContext == null || filterContext.gameData() == null
+                        || filterContext.sourceCardId() == null
+                        || !filterContext.gameData().spellCastColorsSpent
+                        .containsKey(filterContext.sourceCardId())) {
+                    yield true;
+                }
+                yield permanent.getCard().getManaValue() <= filterContext.gameData()
+                        .getSpellCastColorsSpent(filterContext.sourceCardId()).size();
             }
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
                     permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();

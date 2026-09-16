@@ -1,4 +1,5 @@
 # EFFECTS_QUICK_REFERENCE
+- `DealDamageToChosenPlayerEffect(DynamicAmount)`; `(int)` - non-targeting ally combat-damage trigger effect for damage to the player chosen as the source permanent entered. The combat collector preserves the ability source and combat-damage dealer separately; `EventValue` supplies "that much." Used by Saskia the Unyielding.
 - `CopyThisSpellForControllerEffect()` — copies the spell currently resolving for its controller and offers that player a "choose new targets for the copy" prompt; use with `ConditionalEffect` and `MayEffect` for Sevinne's Reclamation.
 - `GoadEquippedCreatureEffect()` - STATIC Equipment requirement: the creature this Equipment is attached to is goaded while attached; attack validation enforces the "attacks a player other than you if able" portion. Used by Bloodthirsty Blade.
 - `TargetPlayerSacrificesCreatureOrCreatesTokenEffect(CreateTokenEffect tokenTemplate)` - non-targeting combat-damage trigger; the damaged player sacrifices a legal creature of their choice, or the source controller creates the supplied token if no sacrifice is possible. Used by Wasitora, Nekoru Queen.

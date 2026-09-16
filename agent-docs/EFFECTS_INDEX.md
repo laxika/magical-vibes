@@ -1,4 +1,5 @@
 # EFFECTS_INDEX
+| `DealDamageToChosenPlayerEffect` | `(DynamicAmount damage)`; convenience `(int)` | non-targeting ally combat-damage trigger effect: deals damage to the player chosen as the ability source entered, using the combat event's `EventValue`; the collector preserves the ability source and combat-damage dealer separately. Used by Saskia the Unyielding |
 | `CopyThisSpellForControllerEffect` | `()` | copies the spell currently resolving onto the stack under that spell's controller, then offers that player the standard "choose new targets for the copy" prompt. Used by Sevinne's Reclamation. Honors `cantBeCopied` |
 | `GoadEquippedCreatureEffect` | `()` | static Equipment combat requirement: the creature hosting the source Equipment is goaded while attached; attack validation counts the requirement and rejects an attack at the Equipment controller when another player is a legal attack target. Used by Bloodthirsty Blade |
 | `CantAttackCardOwnerEffect` | `()` | static self restriction: this creature can't attack its card owner or planeswalkers that player controls; enforced by `AttackLegalityService`. Xantcha, Sleeper Agent |

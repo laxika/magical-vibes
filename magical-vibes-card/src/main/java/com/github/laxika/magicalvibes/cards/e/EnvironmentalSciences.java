@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "STX", collectorNumber = "1")
+@CardRegistration(set = "MB2", collectorNumber = "2")
 public class EnvironmentalSciences extends Card {
 
     public EnvironmentalSciences() {
