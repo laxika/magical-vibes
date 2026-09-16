@@ -195,6 +195,12 @@ import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWi
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.effect.CountAsNamedCardForSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1380,6 +1386,12 @@ public class AmountEvaluationService {
     }
 
     private int countGraveyardCards(GameData gameData, CardsInGraveyard count, AmountContext ctx) {
+        StackEntry entry = ctx.stackEntry();
+        String spellName = entry == null ? null : switch (entry.getEntryType()) {
+            case TRIGGERED_ABILITY, ACTIVATED_ABILITY -> null;
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
+                    ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> entry.getCard().getName();
+        };
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
@@ -1389,13 +1401,35 @@ public class AmountEvaluationService {
                 if (card.isToken()) continue;
                 if (count.excludeSourceCard() && ctx.sourceCard() != null
                         && ctx.sourceCard().getId().equals(card.getId())) continue;
-                if (predicateEvaluationService.matchesCardPredicate(
-                        card, count.filter(), null, gameData, playerId)) {
+                if (matchesGraveyardCountFilter(gameData, card, count.filter(), playerId, spellName)) {
                     matches++;
                 }
             }
         }
         return matches;
+    }
+
+    private boolean matchesGraveyardCountFilter(GameData gameData, Card card, CardPredicate filter,
+                                                UUID ownerId, String spellName) {
+        if (spellName == null || filter == null) {
+            return predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, ownerId);
+        }
+        // Only name checks within this spell's graveyard count see the extra name. Other
+        // characteristics and ordinary predicate evaluation continue to use the original card.
+        return switch (filter) {
+            case CardNamedPredicate named -> named.cardName().equals(card.getName())
+                    || gameQueryService.getEffectiveGraveyardEffects(gameData, card, EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof CountAsNamedCardForSpellEffect countAs
+                            && countAs.spellName().equals(spellName)
+                            && countAs.cardName().equals(named.cardName()));
+            case CardAllOfPredicate all -> all.predicates().stream()
+                    .allMatch(part -> matchesGraveyardCountFilter(gameData, card, part, ownerId, spellName));
+            case CardAnyOfPredicate any -> any.predicates().stream()
+                    .anyMatch(part -> matchesGraveyardCountFilter(gameData, card, part, ownerId, spellName));
+            case CardNotPredicate not ->
+                    !matchesGraveyardCountFilter(gameData, card, not.predicate(), ownerId, spellName);
+            default -> predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, ownerId);
+        };
     }
 
     private int countGraveyardsAtLeast(GameData gameData, GraveyardsAtLeast count) {

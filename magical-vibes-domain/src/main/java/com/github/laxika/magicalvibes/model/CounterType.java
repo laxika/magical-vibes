@@ -157,6 +157,7 @@ public enum CounterType {
     SORCERY,
     SOUL,
     STASH,
+    STORY,
     STRIFE,
     SUPPLY,
     STORAGE,

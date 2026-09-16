@@ -2385,6 +2385,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreaturesEnterAsCopyOfSourceEffect()` — Essence of the Wild (static); `(true, true)` = nontoken creatures enter as a copy of the enchanted creature (Infinite Reflection)
 - `OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect()` — Infinite Reflection ETB (ON_ENTER_BATTLEFIELD, no target)
 - `ExileOpponentCardsInsteadOfGraveyardEffect()` — Leyline of the Void (static)
+- `ExileOpponentCardsInsteadOfGraveyardEffect.withVoidCounter()` — opponent cards that would enter a graveyard are exiled with a void-counter marker (Dauthi Voidwalker); pair with `ChooseCardExiledWithVoidCounterMayPlayThisTurnEffect()` for the sacrifice ability
+- `ChooseCardExiledWithVoidCounterMayPlayThisTurnEffect()` — resolution-time choice of one opponent-owned exiled card with a void counter; grants its controller free play permission through end of turn (Dauthi Voidwalker)
 - `ExileCreaturesDamagedBySourceInsteadOfDyingEffect()` — Frostwielder / Kumano's Blessing (static), or a targeted creature's temporary ability (Runesword); creatures this permanent (or Aura-enchanted creature) damaged this turn are exiled instead of dying
 - `ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect()` — Etching of Kumano; creatures damaged this turn by a source controlled by the effect's controller are exiled instead of dying
 - `ExileOpponentCreaturesInsteadOfDyingEffect()` — Liesa, Forgotten Archangel (static); opponents' creatures are exiled instead of dying. Parameterized variants cover nontoken-only replacement, ice counters, an exile rider, and life gained by the replacement controller.
@@ -3095,6 +3097,8 @@ source card is no longer in the graveyard, the library card is not exiled and no
 
 ## Mill
 
+- `MillControllerAndMayReturnMilledPermanentToHandEffect(DynamicAmount count, CardPredicate filter)` — controller mills the evaluated count, then may put one matching card from among those milled this way into their hand; `EventValue` supports combat-damage triggers such as Barrowgoyf.
+
 - `MillControllerAndMayReturnMilledLandToHandEffect()` — controller mills one card, records whether a Lesson card actually reached their graveyard in the stack entry's event value, and may return a milled land to hand. Used by Sparring Dummy; pair with `ConditionalEffect(new EventValueAtLeast(1), new GainLifeEffect(2))`
 
 - `MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(int count, int maxCount)` — controller mills `count` cards, then chooses up to `maxCount` creature cards milled by this resolution to put onto the battlefield
@@ -3250,6 +3254,7 @@ source card is no longer in the graveyard, the library card is not exiled and no
 - `PutCardExiledWithSourceIntoGraveyardCost()` — activation cost: choose one card exiled with the source, remove it from exile, and put it into its owner's graveyard before the ability is put on the stack. Void Maw
 - `PutOpponentOwnedExiledCardIntoGraveyardCost()` — cost: choose one card an opponent owns from exile, remove it from exile, and put it into that player's graveyard before the spell or ability is put on the stack. For a SPELL-slot cast, pass the card id through `chosenAdditionalCostObjectId`; for an activated ability, the normal exile-card choice interaction is used. Cryptic Cruiser and Oracle of Dust (`BFZ`), Processor Assault (`BFZ`)
 - `PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect(CardPredicate, boolean)` — put the targeted card exiled with the source into its owner's graveyard; the optional filter and exact-mana-value-X flag narrow legal targets. Gelatinous Cube
+- `PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect(CreateTokenEffect landToken, CreateTokenEffect nonlandToken)` — put the targeted card exiled with the source into its owner's graveyard, then create the matching token branch; a land creates `landToken`, otherwise `nonlandToken` is created. Currency Converter (AA2 19)
 - `PutAllCardsExiledWithSourceIntoOwnersHandsEffect()` — put every card exiled with the source permanent into its owner's hand; records the number actually returned in the stack entry's event value for a following "lose that much life" effect. Bag of Holding and Asmodeus the Archfiend.
 - `PutAllCardsExiledWithSourceIntoOwnersHandsEffect()` — put every card exiled with the source permanent into its owner's hand. Bag of Holding's sacrifice ability.
 - `PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect()` — on a source's death, put that card on the bottom of its owner's library; only if it moved, return cards exiled with that source to their owners' hands (The Spot, Living Portal)
@@ -4692,6 +4697,8 @@ Use `PlaneswalkEffect()`, `ChaosEnsuesEffect()`, and `RollPlanarDieEffect()` for
 
 - `SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, false, true)` skips the next combat this turn only (Moment of Silence); unused skips expire at cleanup.
 - `EnterPermanentsOfTypesTappedEffect(types, opponentsOnly, filter, true)` applies only to permanents entering from resolving spells (`castOnly`), as on Uphill Battle. Existing constructors also affect permanents put onto the battlefield.
+- `CreateTokenThenMillControllerAndRepeatIfMilledEffect(CreateTokenEffect, CardPredicate)` creates a token, mills one card, and repeats the token/mill process with a loyalty counter whenever a matching card reaches the controller's graveyard. Used by Grist, the Hunger Tide.
+- `BecomeCreatureOutsideBattlefieldEffect(power, toughness, subtypes)` marks its source as a creature with those characteristics outside the battlefield; `GameQueryService` consumes the `SelfOutsideBattlefieldCreatureEffect` capability while leaving the battlefield permanent's printed types unchanged. Used by Grist, the Hunger Tide.
 - `RegisterGlobalTriggeredAbilityUntilNextTurnEffect(EffectSlot, CardEffect)` registers a global trigger through the beginning of the registering player's next turn. `ON_ANY_CREATURE_BECOMES_TAPPED` watches creatures on either battlefield and stamps the tapped creature as `PermanentReference.TRIGGERING` context for non-targeting effects. Used by Don't Move.
 - `AllowCastFromCardsExiledWithSourceEffect.activePlayerNonOwnedWithAnyMana()` : static source-linked permission for the active player to cast spells they do not own from among cards exiled with the source during that player's turn, spending mana of any type (Ian Malcolm, Chaotician). `ExileAccessScope.ACTIVE_PLAYER` is dynamic and is not a persistent-after-source-leaves permission.
 - `DealDamageToRandomOpponentOrTheirPlaneswalkerEffect(DynamicAmount)`; `(int)` — chooses an opponent at random, then lets the controller choose that player or a planeswalker they control; the choice is non-targeting and the amount can use the triggering spell's mana value via `EventValue` (Vial Smasher the Fierce)
