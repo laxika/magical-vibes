@@ -210,6 +210,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exiledCardsWithCroakCounters.remove(cardId);
+            gameData.exiledCardsWithVoidCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);

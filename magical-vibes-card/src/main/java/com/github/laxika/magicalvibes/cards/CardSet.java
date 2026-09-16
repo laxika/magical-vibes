@@ -287,6 +287,7 @@ public enum CardSet {
     SET_EA1("EA1"),
     SET_EA2("EA2"),
     SET_EA3("EA3"),
+    SET_AA3("AA3"),
     SET_PIO("PIO"),
     SET_REX("REX"),
     SET_AA1("AA1"),
