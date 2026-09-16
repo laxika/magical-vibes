@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "121")
+@CardRegistration(set = "PIO", collectorNumber = "384")
 public class AliveWell extends Card {
 
     public AliveWell() {

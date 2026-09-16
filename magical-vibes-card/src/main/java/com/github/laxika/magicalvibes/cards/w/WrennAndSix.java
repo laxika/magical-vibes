@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "217")
 @CardRegistration(set = "2X2", collectorNumber = "296")
+@CardRegistration(set = "AA2", collectorNumber = "18")
 public class WrennAndSix extends Card {
 
     public WrennAndSix() {

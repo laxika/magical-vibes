@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "118")
+@CardRegistration(set = "PZA", collectorNumber = "8")
 public class AllWillBeOne extends Card {
 
     public AllWillBeOne() {

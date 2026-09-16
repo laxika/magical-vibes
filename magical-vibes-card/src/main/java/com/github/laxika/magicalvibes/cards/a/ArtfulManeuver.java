@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "4")
+@CardRegistration(set = "PIO", collectorNumber = "7")
 public class ArtfulManeuver extends Card {
 
     public ArtfulManeuver() {

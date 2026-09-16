@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "75")
+@CardRegistration(set = "PIO", collectorNumber = "289")
 public class AbhorrentOverlord extends Card {
 
     public AbhorrentOverlord() {

@@ -184,6 +184,8 @@ public class CombatService {
         gameData.combatDamageBlockerAssignments.clear();
         gameData.combatDamagePendingBlockerIndices.clear();
         gameData.combatDamageFirstStrikeAssignmentPhase = false;
+        gameData.combatDamageFirstestStrikeAssignmentPhase = false;
+        gameData.combatDamageFirstestStrikeStepComplete = false;
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;

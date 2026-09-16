@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandAndCardToGraveyardEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "175")
+@CardRegistration(set = "PIO", collectorNumber = "390")
 public class JaradsOrders extends Card {
 
     public JaradsOrders() {

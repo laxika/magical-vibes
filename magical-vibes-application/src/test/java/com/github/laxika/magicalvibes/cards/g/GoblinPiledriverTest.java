@@ -110,8 +110,10 @@ class GoblinPiledriverTest extends BaseCardTest {
         addPiledriver(player1);
         addCreatureReady(player2, new AphettoAlchemist());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
         prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -126,8 +128,10 @@ class GoblinPiledriverTest extends BaseCardTest {
         addPiledriver(player1);
         Permanent blocker = addGoblin(player2);
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

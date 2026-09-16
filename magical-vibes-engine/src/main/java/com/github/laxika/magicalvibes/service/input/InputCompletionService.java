@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 @Service
 @RequiredArgsConstructor
 public class InputCompletionService {
+    @Autowired private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+
 
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
@@ -75,6 +77,7 @@ public class InputCompletionService {
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         var queuedManaChoice = gameData.pendingInteractions.stream()
                 .filter(pending -> pending instanceof PendingInteraction.ColorChoice choice
                         && !(choice.context() instanceof ChoiceContext.RegenerationShieldChoice))
@@ -96,6 +99,7 @@ public class InputCompletionService {
         }
         if (!gameData.pendingCardDraws.isEmpty()) {
             drawService.resumePendingCardDraws(gameData);
+            if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
             if (gameData.status == GameStatus.FINISHED) return;
             if (gameData.interaction.isAwaitingInput()) return;
         }

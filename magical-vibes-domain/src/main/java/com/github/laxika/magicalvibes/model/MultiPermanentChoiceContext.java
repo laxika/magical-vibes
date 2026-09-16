@@ -132,6 +132,12 @@ public sealed interface MultiPermanentChoiceContext {
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }
 
+    /** The defending player chooses the required number of permanents they control to exile. */
+    record DefendingPlayerChoosesPermanentsToExile(UUID defendingPlayerId, int requiredCount,
+                                                   String sourceCardName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Deal damage to a creature the damaged player controls (combat damage trigger). */
     record DealDamageToDamagedPlayerControls(StackEntry damageEntry, DynamicAmount damage)
             implements MultiPermanentChoiceContext {

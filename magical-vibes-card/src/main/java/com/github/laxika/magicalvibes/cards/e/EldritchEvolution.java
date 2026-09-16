@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "INR", collectorNumber = "195")
 @CardRegistration(set = "INR", collectorNumber = "410")
 @CardRegistration(set = "EMN", collectorNumber = "155")
+@CardRegistration(set = "MB1", collectorNumber = "155")
 @CardRegistration(set = "SIR", collectorNumber = "195")
 public class EldritchEvolution extends Card {
 

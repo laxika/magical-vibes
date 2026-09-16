@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "219")
+@CardRegistration(set = "PIO", collectorNumber = "249")
 public class TomeboundLich extends Card {
 
     public TomeboundLich() {

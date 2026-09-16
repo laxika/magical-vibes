@@ -22,6 +22,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> treasureMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a basic land, tracked as a tag on regular mana. */
     private final EnumMap<ManaColor, Integer> basicLandMana = new EnumMap<>(ManaColor.class);
+    /** Mana produced by a source that could produce at least two colors. */
+    private final EnumMap<ManaColor, Integer> multicoloredSourceMana = new EnumMap<>(ManaColor.class);
     /** Mana tagged with the permanent that produced it for source-specific spell-cast triggers. */
     private final Map<UUID, EnumMap<ManaColor, Integer>> spellCastTriggerMana = new LinkedHashMap<>();
     private boolean snowManaSpendableAsAnyColor;
@@ -242,6 +244,7 @@ public class ManaPool {
             caveMana.put(color, 0);
             treasureMana.put(color, 0);
             basicLandMana.put(color, 0);
+            multicoloredSourceMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
@@ -296,6 +299,7 @@ public class ManaPool {
         caveMana.putAll(source.caveMana);
         treasureMana.putAll(source.treasureMana);
         basicLandMana.putAll(source.basicLandMana);
+        multicoloredSourceMana.putAll(source.multicoloredSourceMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.spellCastTriggerMana.entrySet()) {
             spellCastTriggerMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -490,6 +494,32 @@ public class ManaPool {
         if (amount > 0) {
             basicLandMana.merge(color, amount, Integer::sum);
         }
+    }
+
+    /** Copies a multicolored-source provenance tag onto mana already in this pool. */
+    public void addMulticoloredSourceManaTag(ManaColor color, int amount) {
+        if (color != null && amount > 0) {
+            multicoloredSourceMana.merge(color, amount, Integer::sum);
+        }
+    }
+
+    public int getMulticoloredSourceMana(ManaColor color) {
+        return multicoloredSourceMana.getOrDefault(color, 0);
+    }
+
+    public int getMulticoloredSourceManaTotal() {
+        return multicoloredSourceMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Spends one mana carrying the multicolored-source tag. */
+    public void removeMulticoloredSourceMana() {
+        for (ManaColor color : ManaColor.values()) {
+            if (getMulticoloredSourceMana(color) > 0) {
+                remove(color);
+                return;
+            }
+        }
+        throw new IllegalStateException("No multicolored-source mana available");
     }
 
     public int getBasicLandMana(ManaColor color) {
@@ -729,6 +759,7 @@ public class ManaPool {
             caveMana.put(color, 0);
             treasureMana.put(color, 0);
             basicLandMana.put(color, 0);
+            multicoloredSourceMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
@@ -1163,6 +1194,10 @@ public class ManaPool {
         int basicLand = basicLandMana.getOrDefault(color, 0);
         if (basicLand > 0) {
             basicLandMana.put(color, basicLand - 1);
+        }
+        int multicoloredSource = multicoloredSourceMana.getOrDefault(color, 0);
+        if (multicoloredSource > 0) {
+            multicoloredSourceMana.put(color, multicoloredSource - 1);
         }
         removeTaggedMana(spellCastTriggerMana, color);
         int promotedLandAbilityOnly = promotedLandAbilityOnlyMana.getOrDefault(color, 0);
@@ -3889,6 +3924,7 @@ public class ManaPool {
         clampColorTag(caveMana, protectedColors);
         clampColorTag(treasureMana, protectedColors);
         clampColorTag(basicLandMana, protectedColors);
+        clampColorTag(multicoloredSourceMana, protectedColors);
         clampColorTag(spellOnlyMana, protectedColors);
         clampColorTag(hasteGrantingMana, protectedColors);
         clampColorTagBuckets(subtypeHasteGrantingMana, protectedColors);

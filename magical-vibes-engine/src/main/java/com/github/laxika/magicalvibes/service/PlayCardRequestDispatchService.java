@@ -32,6 +32,16 @@ public class PlayCardRequestDispatchService {
     private final GameService gameService;
 
     public void dispatch(GameData gameData, Player player, PlayCardRequest request) {
+        if (request.commandCardId() != null) {
+            if (Boolean.TRUE.equals(request.foretell()) || Boolean.TRUE.equals(request.fromLibraryTop())
+                    || Boolean.TRUE.equals(request.fromGraveyard()) || Boolean.TRUE.equals(request.flashback())
+                    || request.fromExileCardId() != null) {
+                throw new IllegalArgumentException("Conflicting commander casting source");
+            }
+            gameService.castCommander(gameData, player, request.commandCardId(),
+                    () -> dispatch(gameData, player, request.withoutCommandSource()));
+            return;
+        }
         if (Boolean.TRUE.equals(request.foretell())) {
             gameService.foretellCard(gameData, player, request.cardIndex());
             return;
@@ -206,7 +216,7 @@ public class PlayCardRequestDispatchService {
                 || request.cardIndex() < 0) {
             return false;
         }
-        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Card> hand = gameData.castingSourceCards(player.getId());
         return hand != null && request.cardIndex() < hand.size()
                 && hand.get(request.cardIndex()).getKeywords().contains(Keyword.PLOT);
     }
@@ -217,7 +227,7 @@ public class PlayCardRequestDispatchService {
                 || request.cardIndex() < 0) {
             return false;
         }
-        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Card> hand = gameData.castingSourceCards(player.getId());
         return hand != null && request.cardIndex() < hand.size()
                 && hand.get(request.cardIndex()).getKeywords().contains(Keyword.WARP);
     }

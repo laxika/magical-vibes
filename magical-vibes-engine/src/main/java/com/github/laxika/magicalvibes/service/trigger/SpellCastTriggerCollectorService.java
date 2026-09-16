@@ -408,14 +408,16 @@ public class SpellCastTriggerCollectorService {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         CounterUnlessPaysEffect counterUnlessPays = new CounterUnlessPaysEffect(
                 new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER));
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(counterUnlessPays)),
                 sc.spellCard().getId(),
-                Zone.STACK));
+                Zone.STACK, match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -2315,6 +2317,11 @@ public class SpellCastTriggerCollectorService {
                 sourceOriginalCardId,
                 match.gameData(), castingPlayerId, null, null, spellXValue)) return false;
 
+        if (trigger.requiresTwoOrMoreCardTypes()
+                && !hasAtLeastTwoCardTypes(match.gameData(), spellCard, castingPlayerId)) {
+            return false;
+        }
+
         if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(match.gameData(), trigger, castingPlayerId)) {
             return false;
         }
@@ -2527,6 +2534,17 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean hasAtLeastTwoCardTypes(GameData gameData, Card card, UUID playerId) {
+        int cardTypeCount = 0;
+        for (CardType cardType : CardType.values()) {
+            if (gameQueryService.cardHasType(card, cardType, gameData, playerId)
+                    && ++cardTypeCount >= 2) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void preservePlanarSource(StackEntry entry, TriggerMatchContext match) {

@@ -91,8 +91,7 @@ class MysticEnforcerTest extends BaseCardTest {
         addEnforcer(player1);
         addCreatureReady(player2, new DuskImp());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -107,8 +106,7 @@ class MysticEnforcerTest extends BaseCardTest {
         Permanent enforcer = addEnforcer(player1);
         addCreatureReady(player2, new DuskImp());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 

@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.Combust;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JhovallRider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,12 +19,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reprieve.class, Combust.class, Forest.class, GrizzlyBears.class, SavannahLions.class})
+@CardUsed({Reprieve.class, Combust.class, Forest.class, GrizzlyBears.class, SavannahLions.class, Island.class, JhovallRider.class})
 class ReprieveTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Counters a spell into its owner's hand and draws a card")
-    void countersSpellIntoOwnersHandAndDraws() {
+    @DisplayName("Returns a spell to its owner's hand and draws a card")
+    void returnsSpellToOwnersHandAndDraws() {
         harness.setLibrary(player2, List.of(new Forest()));
 
         GrizzlyBears bears = new GrizzlyBears();
@@ -46,8 +49,8 @@ class ReprieveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Draws a card but does not return an uncounterable spell")
-    void drawsWhenTargetSpellCannotBeCountered() {
+    @DisplayName("Returns an uncounterable spell and draws a card")
+    void returnsUncounterableSpellAndDraws() {
         harness.setLibrary(player2, List.of(new Forest()));
         harness.addToBattlefield(player2, new SavannahLions());
 
@@ -64,7 +67,8 @@ class ReprieveTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Combust");
+        harness.assertInHand(player1, "Combust");
+        harness.assertOnBattlefield(player2, "Savannah Lions");
         harness.assertInGraveyard(player2, "Reprieve");
         assertThat(harness.getGameData().playerHands.get(player2.getId()))
                 .extracting(card -> card.getName())
@@ -80,5 +84,44 @@ class ReprieveTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnsTargetSpellToItsOwnersHandAndDrawsACard() {
+        JhovallRider rider = new JhovallRider();
+        harness.castFromHand(player1, rider, "{4}{W}");
+
+        Island drawnCard = new Island();
+        harness.setLibrary(player2, List.of(drawnCard));
+        Reprieve reprieve = new Reprieve();
+        harness.setHand(player2, List.of(reprieve));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, rider.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Jhovall Rider");
+        harness.assertInHand(player2, "Island");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(reprieve.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetAPermanent() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Reprieve reprieve = new Reprieve();
+        harness.setHand(player2, List.of(reprieve));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, island.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(reprieve);
+        assertThat(gd.stack).isEmpty();
     }
 }

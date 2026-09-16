@@ -733,6 +733,12 @@ public sealed interface ChoiceContext {
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
+    record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
+        public LegacyWordChoice {
+            options = List.copyOf(options);
+        }
+    }
+
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 

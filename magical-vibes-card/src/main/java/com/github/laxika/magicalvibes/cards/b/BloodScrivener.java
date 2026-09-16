@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLose
  * two cards and you lose 1 life."
  */
 @CardRegistration(set = "DGM", collectorNumber = "22")
+@CardRegistration(set = "PIO", collectorNumber = "86")
 public class BloodScrivener extends Card {
 
     public BloodScrivener() {

@@ -1,4 +1,28 @@
 <div class="game-container" (click)="choice.targeting.choosingAbility && choice.targeting.cancelAbilityChoice()">
+  @if (game()?.commander; as command) {
+    @if (command.format === 'COMMANDER') {
+      <aside class="commander-panel" aria-label="Command zones">
+        <strong>Commander</strong>
+        @for (playerId of game()!.playerIds; track playerId; let playerIndex = $index) {
+          <div>
+            <span>{{ game()!.playerNames[playerIndex] }}</span>
+            @for (card of command.commandZones[playerId] || []; track card.id) {
+              <button (click)="playCommander(card)" [disabled]="!hasPriority || !card.id || !command.playableCardIds.includes(card.id)"
+                (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()">
+                {{ card.name }} / tax +{{ command.tax[card.id!] || 0 }}
+              </button>
+            }
+            @for (sourcePlayer of game()!.playerIds; track sourcePlayer) {
+              @for (cardId of command.commanders[sourcePlayer] || []; track cardId) {
+                <small>{{ game()!.playerNames[game()!.playerIds.indexOf(sourcePlayer)] }} commander damage: {{ commanderDamage(playerId, cardId) }}/21</small>
+              }
+            }
+          </div>
+        }
+      </aside>
+    }
+  }
+
   <!-- Texture for the dust a creature kicks up as it lands (see .summon-dust in
        shared-game-styles.css). Declared once for the whole board rather than per card:
        filters are referenced by id, and every dust cloud shares these two. Takes no space
@@ -94,6 +118,9 @@
                   <div class="scry-buttons">
                     <button class="btn-scry-top" (click)="choice.library.scryToTop(item.originalIndex)">Top</button>
                     <button class="btn-scry-bottom" (click)="choice.library.scryToBottom(item.originalIndex)">{{ choice.library.scryToGraveyard ? 'Graveyard' : 'Bottom' }}</button>
+                    @if (choice.library.canScrycast(item.originalIndex)) {
+                      <button class="btn-scry-top" (click)="choice.library.scrycast(item.originalIndex)">Scrycast</button>
+                    }
                   </div>
                 </div>
               }

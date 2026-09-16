@@ -204,6 +204,7 @@ public class BattlefieldPlacementService {
         boolean kicked = request.kicked();
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
         EnterBattlefieldOnDiscardEffect discardReplacement = request.discardReplacement();
+        gameData.restoreBombardmentCardForBattlefield(permanent);
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);

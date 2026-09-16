@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ONS", collectorNumber = "119")
 public class TrickeryCharm extends Card {
@@ -27,7 +28,7 @@ public class TrickeryCharm extends Card {
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET), creature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature becomes the creature type of your choice until end of turn",
-                        new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(), creature),
+                        new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope.TARGET, Set.of()), creature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top four cards of your library, then put them back in any order",
                         new ReorderTopCardsOfLibraryEffect(4, LibraryOwner.CONTROLLER))

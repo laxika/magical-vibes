@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  * stack multiplicatively. Applied in mana-ability resolution via
  * {@code GameQueryService.manaProductionMultiplier}.
  */
-public record ManaReflectionEffect(PermanentPredicate permanentFilter, int multiplier) implements CardEffect {
+public record ManaReflectionEffect(PermanentPredicate permanentFilter, int multiplier)
+        implements CardEffect, DoublingEffect {
 
     public ManaReflectionEffect() {
         this(new PermanentTruePredicate(), 2);
@@ -23,5 +24,10 @@ public record ManaReflectionEffect(PermanentPredicate permanentFilter, int multi
 
     public ManaReflectionEffect(int multiplier) {
         this(new PermanentTruePredicate(), multiplier);
+    }
+
+    @Override
+    public boolean isDoublingEffect() {
+        return multiplier == 2;
     }
 }

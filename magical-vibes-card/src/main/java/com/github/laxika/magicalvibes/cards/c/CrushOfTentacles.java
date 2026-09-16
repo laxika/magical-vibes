@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "53")
+@CardRegistration(set = "PIO", collectorNumber = "52")
 public class CrushOfTentacles extends Card {
 
     public CrushOfTentacles() {

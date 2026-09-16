@@ -143,6 +143,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
     }
 
+    /** Red Herring: choose a controlled permanent or spell to exchange with the revealed hand card. */
+    record RedHerringExchange(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
+
     record PsychicBattleRetarget(UUID spellCardId, UUID controllerId, Card sourceCard, int targetIndex)
             implements PermanentChoiceContext {}
 
@@ -1309,15 +1312,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                   StackEntryType spellType, List<Card> cardsToBottom,
-                                  Integer discoverValue) implements PermanentChoiceContext {
+                                  Integer discoverValue, UUID ownerIdOverride) implements PermanentChoiceContext {
         public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                       StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, null, null);
+            this(cardToCast, controllerId, spellEffects, spellType, null, null, null);
         }
 
         public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                       StackEntryType spellType, List<Card> cardsToBottom) {
-            this(cardToCast, controllerId, spellEffects, spellType, cardsToBottom, null);
+            this(cardToCast, controllerId, spellEffects, spellType, cardsToBottom, null, null);
+        }
+
+        public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                      StackEntryType spellType, List<Card> cardsToBottom,
+                                      Integer discoverValue) {
+            this(cardToCast, controllerId, spellEffects, spellType, cardsToBottom, discoverValue, null);
         }
 
         public LibraryCastSpellTarget {

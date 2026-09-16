@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipme
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AuspiciousStarrixSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -137,6 +138,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final AuraCopyService auraCopyService;
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
+    private final UpgradeSupport upgradeSupport;
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
@@ -2190,13 +2192,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
         Permanent sourcePermanent = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        Permanent sourcePermanentSnapshot = sourcePermanent == null ? null : new Permanent(sourcePermanent);
+        StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
+        Permanent sourcePermanentSnapshot = sourcePermanent == null
+                ? originalEntry == null ? null : originalEntry.getSourcePermanentSnapshot()
+                : new Permanent(sourcePermanent);
 
         int sacrificedPower = gameQueryService.getEffectivePower(gameData, toSacrifice);
         int sacrificedColorCount = gameQueryService.getEffectiveColors(gameData, toSacrifice).size();
         int sacrificedToughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         Permanent sacrificedSnapshot = new Permanent(toSacrifice);
-        StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
         if (originalEntry != null) {
             originalEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
             originalEntry.setSacrificedPower(sacrificedPower);
@@ -2328,6 +2332,11 @@ public class PermanentChoiceBattlefieldHandlerService {
                 triggeredEntry.setSacrificedPower(sacrificedPower);
                 triggeredEntry.setSacrificedColorCount(sacrificedColorCount);
                 triggeredEntry.setSacrificedToughness(sacrificedToughness);
+                triggeredEntry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+                if (originalEntry != null) {
+                    triggeredEntry.setAttackedTargetId(originalEntry.getAttackedTargetId());
+                    triggeredEntry.setActivePlayerId(originalEntry.getActivePlayerId());
+                }
                 gameData.stack.add(triggeredEntry);
             }
         }
@@ -2612,6 +2621,16 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
         if (entering == null) {
             throw new IllegalStateException("Entering permanent no longer exists");
+        }
+        if (upgradeSupport.isUpgrade(context.card())) {
+            if (!upgradeSupport.isValidCoveredArtifact(gameData, context.controllerId(), entering, chosen)) {
+                throw new IllegalStateException("Chosen permanent is not a controlled artifact");
+            }
+            upgradeSupport.applyUpgrade(gameData, context.controllerId(), entering, chosen);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
         }
         if (chosenPermanentId.equals(context.controllerId())) {
             battlefieldEntryService.processCreatureETBEffects(

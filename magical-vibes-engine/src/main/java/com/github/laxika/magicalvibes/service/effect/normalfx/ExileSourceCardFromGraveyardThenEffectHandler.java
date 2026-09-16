@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -38,9 +40,20 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
             return;
         }
 
-        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect()),
-                null, 0, 0, 0, entry.getTriggeringPermanentPowerAtTrigger()));
-        triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+        if (exileThen.thenEffect().targetSpec().equals(TargetSpec.NONE)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    entry.getCard().getName() + "'s ability",
+                    List.of(exileThen.thenEffect()),
+                    null,
+                    entry.getSourcePermanentId()));
+        } else {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect()),
+                    null, 0, 0, 0, entry.getTriggeringPermanentPowerAtTrigger()));
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+        }
     }
 }

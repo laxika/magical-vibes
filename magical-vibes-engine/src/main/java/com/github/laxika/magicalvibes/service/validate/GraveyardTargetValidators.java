@@ -402,6 +402,7 @@ public class GraveyardTargetValidators {
 
     @ValidatesTarget(ExileGraveyardCardsEffect.class)
     public void validateExileGraveyardCards(TargetValidationContext ctx, ExileGraveyardCardsEffect effect) {
+        if (ctx.targetId() == null && effect.allowZeroTargets()) return;
         // Runs unconditionally for the class; gate the per-scope checks. The opponent-multi-card scope
         // is validated separately in TargetLegalityService.validateMultiTargetGraveyardAbility, and the
         // OWN / ALL_* scopes take no single validated target here.

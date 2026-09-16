@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "PIO", collectorNumber = "275")
 @CardRegistration(set = "EOS", collectorNumber = "38")
 @CardRegistration(set = "EOS", collectorNumber = "83")
 @CardRegistration(set = "EOS", collectorNumber = "128")

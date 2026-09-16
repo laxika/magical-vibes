@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrifice
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 
 @CardRegistration(set = "VIS", collectorNumber = "64")
+@CardRegistration(set = "AA3", collectorNumber = "9")
 public class Necromancy extends Card {
 
     public Necromancy() {

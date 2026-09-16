@@ -321,7 +321,7 @@ public class AutoPassService {
                 List<Integer> playable =
                         actionAvailabilityService.getPlayableCardIndices(gameData, stackPriorityHolder);
                 boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
-                return !playable.isEmpty() || hasActivatable;
+                return !playable.isEmpty() || hasActivatable || !actionAvailabilityService.getPlayableCommanders(gameData, stackPriorityHolder).isEmpty();
             });
 
             if (canRespond) {
@@ -351,6 +351,7 @@ public class AutoPassService {
     }
 
     private boolean shouldStopForAvailableAction(GameData gameData, UUID priorityHolder) {
+        if (!actionAvailabilityService.getPlayableCommanders(gameData, priorityHolder).isEmpty()) return true;
         if (gameData.planechase != null && planechaseService.canOfferRoll(gameData, priorityHolder)) return true;
         List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
         if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {

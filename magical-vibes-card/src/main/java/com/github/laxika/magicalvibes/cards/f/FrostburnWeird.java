@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "215")
+@CardRegistration(set = "PIO", collectorNumber = "306")
 public class FrostburnWeird extends Card {
 
     public FrostburnWeird() {

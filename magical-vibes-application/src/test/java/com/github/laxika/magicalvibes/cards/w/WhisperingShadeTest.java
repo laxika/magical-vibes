@@ -72,8 +72,7 @@ class WhisperingShadeTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new FilthyCur());
         harness.addToBattlefield(player2, new Swamp());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> declareBlock(blocker, shade))
                 .isInstanceOf(IllegalStateException.class)
@@ -86,8 +85,7 @@ class WhisperingShadeTest extends BaseCardTest {
         Permanent shade = addCreatureReady(player1, new WhisperingShade());
         Permanent blocker = addCreatureReady(player2, new FilthyCur());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         declareBlock(blocker, shade);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -100,8 +98,7 @@ class WhisperingShadeTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new FilthyCur());
         harness.addToBattlefield(player1, new Swamp());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         declareBlock(blocker, shade);
 
         assertThat(blocker.isBlocking()).isTrue();

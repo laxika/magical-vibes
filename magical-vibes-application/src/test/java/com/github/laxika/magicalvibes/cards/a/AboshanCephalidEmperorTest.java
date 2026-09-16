@@ -45,15 +45,15 @@ class AboshanCephalidEmperorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first ability cannot tap an Octopus with summoning sickness")
-    void firstAbilityCannotUseSummoningSickOctopus() {
+    @DisplayName("The first ability can tap an Octopus with summoning sickness")
+    void firstAbilityCanUseSummoningSickOctopus() {
         Permanent aboshan = harness.addToBattlefieldAndReturn(player1, new AboshanCephalidEmperor());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(
-                player1, battlefieldIndex(player1, aboshan), null, target.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(aboshan.isTapped()).isFalse();
+        harness.activateAbility(player1, battlefieldIndex(player1, aboshan), null, target.getId());
+        assertThat(aboshan.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test

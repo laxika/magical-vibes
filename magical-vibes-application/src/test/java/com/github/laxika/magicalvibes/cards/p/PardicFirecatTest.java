@@ -56,7 +56,7 @@ class PardicFirecatTest extends BaseCardTest {
     void pardicFirecatHasHaste() {
         Permanent firecat = harness.addToBattlefieldAndReturn(player1, new PardicFirecat());
 
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThat(firecat.isAttacking()).isTrue();
     }

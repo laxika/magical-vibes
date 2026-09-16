@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "128")
+@CardRegistration(set = "MB1", collectorNumber = "128")
 public class AtarkaEfreet extends Card {
 
     public AtarkaEfreet() {

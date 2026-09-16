@@ -88,6 +88,14 @@ public class AttackLegalityService {
         if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
             return false;
         }
+        if (gameData.onlyAggressiveCreaturesCanAttackThisCombat
+                && !gameQueryService.hasKeyword(gameData, creature, Keyword.AGGRESSIVE)) {
+            return false;
+        }
+        if (gameData.onlyPermanentCanAttackThisCombatId != null
+                && !gameData.onlyPermanentCanAttackThisCombatId.equals(creature.getId())) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
@@ -689,7 +697,9 @@ public class AttackLegalityService {
                                                          Permanent sourcePermanent,
                                                          CombatAttackRequirementEffect requirement,
                                                          FilterContext context) {
-        if (!requirement.isActive(gameData, sourcePermanent)
+        if (sourcePermanent.isFaceDown()
+                || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)
+                || !requirement.isActive(gameData, sourcePermanent)
                 || !predicateEvaluationService.matchesPermanentPredicate(
                 creature, requirement.affectedPredicate(), context)) {
             return false;

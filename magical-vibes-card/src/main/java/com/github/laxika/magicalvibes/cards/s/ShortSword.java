@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "229")
 @CardRegistration(set = "M21", collectorNumber = "236")
+@CardRegistration(set = "MB1", collectorNumber = "229")
 public class ShortSword extends Card {
 
     public ShortSword() {

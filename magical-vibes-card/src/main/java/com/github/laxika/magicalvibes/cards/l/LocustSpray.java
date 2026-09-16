@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DFT", collectorNumber = "95")
+@CardRegistration(set = "SOA", collectorNumber = "31")
 public class LocustSpray extends Card {
 
     public LocustSpray() {

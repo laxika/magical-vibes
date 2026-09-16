@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "KTK", collectorNumber = "162")
+@CardRegistration(set = "MB1", collectorNumber = "162")
 public class AbzanGuide extends Card {
 
     public AbzanGuide() {
