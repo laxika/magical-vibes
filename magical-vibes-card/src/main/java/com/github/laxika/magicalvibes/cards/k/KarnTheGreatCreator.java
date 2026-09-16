@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "1")
+@CardRegistration(set = "MB2", collectorNumber = "3")
 public class KarnTheGreatCreator extends Card {
 
     public KarnTheGreatCreator() {

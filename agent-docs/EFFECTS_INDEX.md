@@ -1,4 +1,5 @@
 # EFFECTS_INDEX
+| `DealDamageToChosenPlayerEffect` | `(DynamicAmount damage)`; convenience `(int)` | non-targeting ally combat-damage trigger effect: deals damage to the player chosen as the ability source entered, using the combat event's `EventValue`; the collector preserves the ability source and combat-damage dealer separately. Used by Saskia the Unyielding |
 | `CantAttackCardOwnerEffect` | `()` | static self restriction: this creature can't attack its card owner or planeswalkers that player controls; enforced by `AttackLegalityService`. Xantcha, Sleeper Agent |
 | `SourcePermanentControllerLosesLifeEffect` | `(int amount)` | activated-ability effect: the source permanent's current controller loses `amount`; uses the controller captured on activation as last-known information if the source leaves before resolution. Xantcha, Sleeper Agent |
 | `TargetPlayerSacrificesCreatureOrCreatesTokenEffect` | `(CreateTokenEffect tokenTemplate)` | non-targeting combat-damage trigger; the damaged player sacrifices a creature or the source controller creates the fallback token. Used by Wasitora, Nekoru Queen |

@@ -301,14 +301,17 @@ public class GraveyardReturnSupport {
 
         Permanent returnedPermanent = null;
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            UUID battlefieldControllerId = effect.underOwnersControl()
+                    ? targetCard.getOwnerId() == null ? targetOwnerId : targetCard.getOwnerId()
+                    : controllerId;
             if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
                     || effect.sacrificeAtEndStep()) {
-                returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
+                returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, battlefieldControllerId, targetCard,
                         effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                         effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
                         effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect));
             } else {
-                returnedPermanent = putCardOntoBattlefield(gameData, controllerId, targetCard,
+                returnedPermanent = putCardOntoBattlefield(gameData, battlefieldControllerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
                         null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect));
             }
