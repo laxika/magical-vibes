@@ -36,6 +36,9 @@ public enum ManaSpendRestriction {
     /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
     SOURCE_PERMANENT_COLORS,
 
+    /** Spendable only to cast spells with the legendary supertype. */
+    LEGENDARY_SPELLS,
+
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
      * pays for (Primal Wellspring).

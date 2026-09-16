@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.n;
+package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -15,29 +15,28 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 import java.util.Set;
 
-@CardRegistration(set = "OGW", collectorNumber = "175")
-@CardRegistration(set = "EOS", collectorNumber = "30")
-@CardRegistration(set = "EOS", collectorNumber = "75")
-@CardRegistration(set = "EOS", collectorNumber = "120")
-@CardRegistration(set = "EOS", collectorNumber = "165")
-public class NeedleSpires extends Card {
+@CardRegistration(set = "EOS", collectorNumber = "38")
+@CardRegistration(set = "EOS", collectorNumber = "83")
+@CardRegistration(set = "EOS", collectorNumber = "128")
+@CardRegistration(set = "EOS", collectorNumber = "173")
+public class ShamblingVent extends Card {
 
-    public NeedleSpires() {
+    public ShamblingVent() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.WHITE))),
-                "{T}: Add {R} or {W}."
+                List.of(new AwardManaOfColorsEffect(List.of(ManaColor.WHITE, ManaColor.BLACK))),
+                "{T}: Add {W} or {B}."
         ));
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{2}{R}{W}",
+                "{1}{W}{B}",
                 List.of(AnimatePermanentsEffect.withAnimatedColors(
-                        2, 1, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.DOUBLE_STRIKE),
-                        Set.of(CardColor.RED, CardColor.WHITE))),
-                "{2}{R}{W}: Until end of turn, Needle Spires becomes a 2/1 red and white Elemental creature "
-                        + "with double strike. It's still a land."
+                        2, 3, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.LIFELINK),
+                        Set.of(CardColor.WHITE, CardColor.BLACK))),
+                "{1}{W}{B}: Until end of turn, this land becomes a 2/3 white and black Elemental "
+                        + "creature with lifelink. It's still a land."
         ));
     }
 }
