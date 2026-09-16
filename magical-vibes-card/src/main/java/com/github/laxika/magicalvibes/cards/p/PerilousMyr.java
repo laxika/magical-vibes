@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "192")
 @CardRegistration(set = "A25", collectorNumber = "227")
+@CardRegistration(set = "MB1", collectorNumber = "227")
 public class PerilousMyr extends Card {
 
     public PerilousMyr() {

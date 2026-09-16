@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GoldMyr;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.b.BarrenMoor;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,35 +15,34 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sandskin.class, FountainOfYouth.class, GoldMyr.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({Sandskin.class, BarrenMoor.class, GlorySeeker.class, Shock.class, Sparksmith.class})
 class SandskinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sandskin attaches to a targeted creature")
     void attachesToCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new GlorySeeker());
 
         harness.setHand(player1, List.of(new Sandskin()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Sandskin")
-                        && bears.getId().equals(permanent.getAttachedTo()));
+                        && creature.getId().equals(permanent.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Sandskin cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new BarrenMoor());
         harness.setHand(player1, List.of(new Sandskin()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent land = findPermanent(player1, "Barren Moor");
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -55,66 +52,62 @@ class SandskinTest extends BaseCardTest {
     void preventsCombatDamageByEnchantedCreature() {
         harness.setLife(player2, 20);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent aura = new Permanent(new Sandskin());
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Sandskin());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Sandskin prevents combat damage dealt to the enchanted creature")
     void preventsCombatDamageToEnchantedCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent blocker = new Permanent(new GoldMyr());
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        Permanent aura = new Permanent(new Sandskin());
+        addCreatureReady(player1, new GlorySeeker());
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Sandskin());
         aura.setAttachedTo(blocker.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
-        harness.assertOnBattlefield(player2, "Gold Myr");
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        harness.assertOnBattlefield(player2, "Glory Seeker");
     }
 
     @Test
     @DisplayName("Sandskin does not prevent noncombat damage")
     void doesNotPreventNoncombatDamage() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent creature = addCreatureReady(player2, new GlorySeeker());
 
-        Permanent aura = new Permanent(new Sandskin());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Sandskin());
+        aura.setAttachedTo(creature.getId());
 
-        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertInGraveyard(player2, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Sandskin does not prevent noncombat damage dealt by the enchanted creature")
+    void doesNotPreventNoncombatDamageByEnchantedCreature() {
+        harness.setLife(player1, 20);
+
+        Permanent sparksmith = addCreatureReady(player1, new Sparksmith());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Sandskin());
+        aura.setAttachedTo(sparksmith.getId());
+        Permanent target = addCreatureReady(player2, new Sparksmith());
+
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Sparksmith");
+        harness.assertLife(player1, 18);
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibraryAndAllowOneMayPlayForLifeEffect;
 
 @CardRegistration(set = "NEO", collectorNumber = "114")
+@CardRegistration(set = "SLC", collectorNumber = "82")
 public class NashiMoonSagesScion extends Card {
 
     public NashiMoonSagesScion() {

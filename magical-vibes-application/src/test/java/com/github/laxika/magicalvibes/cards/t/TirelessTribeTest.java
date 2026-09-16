@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(TirelessTribe.class)
 class TirelessTribeTest extends BaseCardTest {
 
     @Test
@@ -20,7 +20,7 @@ class TirelessTribeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent tribe = harness.addToBattlefieldAndReturn(player1, new TirelessTribe());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new TirelessTribe()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -28,7 +28,7 @@ class TirelessTribeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, tribe)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, tribe)).isEqualTo(5);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Tireless Tribe");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -39,12 +39,32 @@ class TirelessTribeTest extends BaseCardTest {
     }
 
     @Test
+    void canActivateMultipleTimesInOneTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent tribe = harness.addToBattlefieldAndReturn(player1, new TirelessTribe());
+        harness.setHand(player1, List.of(new TirelessTribe(), new TirelessTribe()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tribe)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tribe)).isEqualTo(9);
+        harness.assertNotInHand(player1, "Tireless Tribe");
+    }
+
+    @Test
     void cannotActivateWithoutACardInHand() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addToBattlefieldAndReturn(player1, new TirelessTribe());
-        harness.setHand(player1, new ArrayList<>());
+        harness.setHand(player1, List.of());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

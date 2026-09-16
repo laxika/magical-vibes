@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "16")
+@CardRegistration(set = "PIO", collectorNumber = "320")
 public class CallTheGatewatch extends Card {
 
     public CallTheGatewatch() {

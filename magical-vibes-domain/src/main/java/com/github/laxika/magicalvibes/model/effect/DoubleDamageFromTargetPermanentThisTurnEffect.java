@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Multiple instances stack multiplicatively and the grant is keyed to that permanent's battlefield
  * identity.
  */
-public record DoubleDamageFromTargetPermanentThisTurnEffect() implements CardEffect {
+public record DoubleDamageFromTargetPermanentThisTurnEffect() implements CardEffect, DoublingEffect {
 
     @Override
     public TargetSpec targetSpec() {

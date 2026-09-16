@@ -25,6 +25,7 @@ import java.util.List;
  * untargeted mass pumps.
  */
 @CardRegistration(set = "DGM", collectorNumber = "130")
+@CardRegistration(set = "PIO", collectorNumber = "391")
 public class ProfitLoss extends Card {
 
     public ProfitLoss() {

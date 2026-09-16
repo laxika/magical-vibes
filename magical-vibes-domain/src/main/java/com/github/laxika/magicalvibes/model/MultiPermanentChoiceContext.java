@@ -132,6 +132,12 @@ public sealed interface MultiPermanentChoiceContext {
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }
 
+    /** The defending player chooses the required number of permanents they control to exile. */
+    record DefendingPlayerChoosesPermanentsToExile(UUID defendingPlayerId, int requiredCount,
+                                                   String sourceCardName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Deal damage to a creature the damaged player controls (combat damage trigger). */
     record DealDamageToDamagedPlayerControls(StackEntry damageEntry, DynamicAmount damage)
             implements MultiPermanentChoiceContext {
@@ -1009,6 +1015,16 @@ public sealed interface MultiPermanentChoiceContext {
         public WillOfTheCouncilChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Expropriate: the controller chooses a permanent owned by the current money voter. */
+    record ExpropriatePermanentChoice(UUID effectControllerId, UUID voterId,
+                                      java.util.List<UUID> remainingMoneyVoterIds,
+                                      int timeVotes, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public ExpropriatePermanentChoice {
+            remainingMoneyVoterIds = java.util.List.copyOf(remainingMoneyVoterIds);
         }
     }
 

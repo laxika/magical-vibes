@@ -319,7 +319,11 @@ public sealed interface ManaRestriction {
     record LegendarySpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addLegendarySpellOnlyColorless(amount);
+            if (color == ManaColor.COLORLESS) {
+                pool.addLegendarySpellOnlyColorless(amount);
+            } else {
+                pool.addLegendarySpellOnlyMana(color, amount);
+            }
         }
 
         @Override

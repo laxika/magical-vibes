@@ -285,6 +285,25 @@ class TargetLegalityServiceTest {
     }
 
     @Test
+    @DisplayName("An optional graveyard exile ability accepts an omitted target while a mandatory one rejects it")
+    void activatedGraveyardExileHonorsOptionalTargets() {
+        Card source = createCreature("Source", CardColor.BLACK);
+        ExileGraveyardCardsEffect optional = new ExileGraveyardCardsEffect(2,
+                GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                null, null, false, false, false, null, false, true);
+        ActivatedAbility ability = new ActivatedAbility(false, "{1}{B}", List.of(optional), "Exile up to two cards.");
+
+        sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                List.of(optional), null, Zone.GRAVEYARD, source, 0);
+
+        ExileGraveyardCardsEffect mandatory = new ExileGraveyardCardsEffect(1,
+                GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD);
+        assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                List.of(mandatory), null, Zone.GRAVEYARD, source, 0))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("requires a target");
+    }
+
+    @Test
     @DisplayName("passes the source card ID to graveyard return predicates")
     void passesSourceCardIdToGraveyardReturnPredicate() {
         Card source = createCreature("Source", CardColor.WHITE);

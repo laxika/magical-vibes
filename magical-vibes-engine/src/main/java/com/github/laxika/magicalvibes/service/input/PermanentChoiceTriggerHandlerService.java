@@ -141,6 +141,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
         }
+        entry.setNonTargeting(stt.nonTargeting());
         pushTriggeredEntry(gameData, entry);
 
         if (declined) {

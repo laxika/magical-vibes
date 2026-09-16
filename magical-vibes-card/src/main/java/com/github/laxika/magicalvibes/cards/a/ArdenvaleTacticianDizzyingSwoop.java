@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "5")
+@CardRegistration(set = "PIO", collectorNumber = "6")
 public class ArdenvaleTacticianDizzyingSwoop extends Card {
 
     public ArdenvaleTacticianDizzyingSwoop() {

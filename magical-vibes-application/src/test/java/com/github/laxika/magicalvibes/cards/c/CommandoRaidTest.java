@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.m.MistformWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,18 +16,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommandoRaid.class, AirElemental.class, GrizzlyBears.class, WallOfAir.class})
+@CardUsed({CommandoRaid.class, GlorySeeker.class, MistformWall.class})
 class CommandoRaidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Grants a combat-damage trigger that may deal damage equal to the creature's power")
     void combatDamageTriggerDealsPowerDamageToDamagedPlayersCreature() {
-        Permanent attacker = addCreatureReady(player1, new AirElemental());
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent damagedPlayersCreature = addCreatureReady(player2, new WallOfAir());
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        Permanent ownCreature = addCreatureReady(player1, new GlorySeeker());
+        Permanent damagedPlayersCreature = addCreatureReady(player2, new MistformWall());
         castOn(attacker);
 
-        attacker.setAttacking(true);
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.passBothPriorities();
 
@@ -42,18 +42,43 @@ class CommandoRaidTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(damagedPlayersCreature.getId()));
 
-        assertThat(damagedPlayersCreature.getMarkedDamage()).isEqualTo(4);
+        assertThat(damagedPlayersCreature.getMarkedDamage()).isEqualTo(2);
         assertThat(ownCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Uses the creature's power when the granted trigger resolves")
+    void usesPowerAtTriggerResolution() {
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        Permanent damagedPlayersCreature = addCreatureReady(player2, new MistformWall());
+        castOn(attacker);
+
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        attacker.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(damagedPlayersCreature.getId()));
+
+        assertThat(damagedPlayersCreature.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Declining the granted combat-damage trigger deals no additional damage")
     void decliningCombatDamageTriggerDealsNoAdditionalDamage() {
-        Permanent attacker = addCreatureReady(player1, new AirElemental());
-        Permanent damagedPlayersCreature = addCreatureReady(player2, new WallOfAir());
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        Permanent damagedPlayersCreature = addCreatureReady(player2, new MistformWall());
         castOn(attacker);
 
-        attacker.setAttacking(true);
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.passBothPriorities();
 
@@ -66,28 +91,27 @@ class CommandoRaidTest extends BaseCardTest {
     @Test
     @DisplayName("The granted combat-damage trigger expires at end of turn")
     void grantedTriggerExpiresAtEndOfTurn() {
-        Permanent attacker = addCreatureReady(player1, new AirElemental());
-        Permanent damagedPlayersCreature = addCreatureReady(player2, new WallOfAir());
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        Permanent damagedPlayersCreature = addCreatureReady(player2, new MistformWall());
         castOn(attacker);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        attacker.setAttacking(true);
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(damagedPlayersCreature.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Cannot target a creature controlled by an opponent")
     void cannotTargetOpponentCreature() {
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GlorySeeker());
         harness.setHand(player1, List.of(new CommandoRaid()));
         harness.addMana(player1, ManaColor.RED, 3);
 

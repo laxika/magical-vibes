@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(CrudeRampart.class)
 class CrudeRampartTest extends BaseCardTest {
@@ -33,5 +34,14 @@ class CrudeRampartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(rampart.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void cannotAttackBecauseItHasDefender() {
+        addCreatureReady(player1, new CrudeRampart());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }

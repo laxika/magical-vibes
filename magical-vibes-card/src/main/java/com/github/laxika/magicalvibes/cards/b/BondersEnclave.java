@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "245")
+@CardRegistration(set = "EOS", collectorNumber = "4")
+@CardRegistration(set = "EOS", collectorNumber = "49")
+@CardRegistration(set = "EOS", collectorNumber = "94")
+@CardRegistration(set = "EOS", collectorNumber = "139")
 public class BondersEnclave extends Card {
 
     public BondersEnclave() {

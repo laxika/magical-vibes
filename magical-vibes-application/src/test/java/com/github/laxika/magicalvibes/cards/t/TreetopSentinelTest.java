@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.m.MuscleBurst;
+import com.github.laxika.magicalvibes.cards.n.NantukoDisciple;
+import com.github.laxika.magicalvibes.cards.s.SetonsDesire;
+import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,47 +21,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TreetopSentinel.class, DwarvenGrunt.class, Firebolt.class, MuscleBurst.class,
+        NantukoDisciple.class, SetonsDesire.class, WoodlandDruid.class})
 class TreetopSentinelTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Green flying creature cannot block Treetop Sentinel")
     void greenCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new TreetopSentinel());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new TreetopSentinel());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Card greenBird = createCreature("Green Bird", 2, 2, CardColor.GREEN);
+        WoodlandDruid greenBird = new WoodlandDruid();
         greenBird.setKeywords(EnumSet.of(Keyword.FLYING));
-        Permanent blocker = new Permanent(greenBird);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, greenBird);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,54 +45,86 @@ class TreetopSentinelTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by green instant")
     void cannotBeTargetedByGreenInstant() {
-        Permanent sentinel = new Permanent(new TreetopSentinel());
-        sentinel.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentinel);
+        Permanent sentinel = addCreatureReady(player2, new TreetopSentinel());
 
-        Permanent otherCreature = new Permanent(createCreature("Other Creature", 1, 1, CardColor.GREEN));
-        otherCreature.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(otherCreature);
+        addCreatureReady(player2, new WoodlandDruid());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Green Bolt", CardColor.GREEN, "{G}")));
+        harness.setHand(player1, List.of(new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, sentinel.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, sentinel.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from green");
     }
 
     @Test
-    @DisplayName("Can be targeted by red instant")
-    void canBeTargetedByRedInstant() {
-        Permanent sentinel = new Permanent(new TreetopSentinel());
-        sentinel.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sentinel);
+    @DisplayName("Cannot be targeted by an ability from a green creature")
+    void cannotBeTargetedByGreenAbility() {
+        addCreatureReady(player1, new NantukoDisciple());
+        Permanent sentinel = addCreatureReady(player2, new TreetopSentinel());
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Bolt", CardColor.RED, "{R}")));
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sentinel.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from green");
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a green Aura")
+    void cannotBeEnchantedByGreenAura() {
+        Permanent sentinel = addCreatureReady(player2, new TreetopSentinel());
+        addCreatureReady(player2, new WoodlandDruid());
+
+        harness.setHand(player1, List.of(new SetonsDesire()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, sentinel.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from green");
+    }
+
+    @Test
+    @DisplayName("Takes no combat damage from a green creature")
+    void takesNoCombatDamageFromGreenCreature() {
+        addCreatureReady(player1, new WoodlandDruid());
+        Permanent sentinel = addCreatureReady(player2, new TreetopSentinel());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(sentinel.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Treetop Sentinel");
+        harness.assertInGraveyard(player1, "Woodland Druid");
+    }
+
+    @Test
+    @DisplayName("Can be targeted by red spell")
+    void canBeTargetedByRedSpell() {
+        Permanent sentinel = addCreatureReady(player1, new TreetopSentinel());
+        Firebolt firebolt = new Firebolt();
+
+        harness.setHand(player1, List.of(firebolt));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, sentinel.getId(), null);
+        harness.castSorcery(player1, 0, sentinel.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Red Bolt");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(firebolt);
     }
 
     @Test
     @DisplayName("Treetop Sentinel cannot be blocked by a nonflying creature")
     void cannotBeBlockedByNonflyingCreature() {
-        Permanent attacker = new Permanent(new TreetopSentinel());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new TreetopSentinel());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Red Creature", 2, 2, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new DwarvenGrunt());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

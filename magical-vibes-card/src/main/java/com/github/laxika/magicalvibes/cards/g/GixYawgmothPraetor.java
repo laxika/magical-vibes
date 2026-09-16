@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "95")
+@CardRegistration(set = "FCA", collectorNumber = "35")
 public class GixYawgmothPraetor extends Card {
 
     public GixYawgmothPraetor() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "81")
+@CardRegistration(set = "PIO", collectorNumber = "333")
 public class CavernLampad extends Card {
 
     public CavernLampad() {

@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "201")
+@CardRegistration(set = "PIO", collectorNumber = "211")
 public class CatacombSifter extends Card {
 
     private static final CreateTokenEffect ELDRAZI_SCION = new CreateTokenEffect(

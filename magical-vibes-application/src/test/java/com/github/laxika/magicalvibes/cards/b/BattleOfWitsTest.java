@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BattleOfWits.class)
 class BattleOfWitsTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,8 @@ class BattleOfWitsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve trigger
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("wins the game"));
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+        assertThat(gameLogContains("wins the game")).isTrue();
     }
 
     @Test
@@ -87,12 +89,25 @@ class BattleOfWitsTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Wins on resolution even if Battle of Wits left the battlefield after triggering")
+    void winsAfterSourceLeavesBattlefield() {
+        Permanent battleOfWits = harness.addToBattlefieldAndReturn(player1, new BattleOfWits());
+        setLibrarySize(player1, 200);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(battleOfWits);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
 
     private void setLibrarySize(Player player, int count) {
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            library.add(new Card());
+            library.add(new BattleOfWits());
         }
         harness.setLibrary(player, library);
     }

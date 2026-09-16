@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
+import com.github.laxika.magicalvibes.cards.a.AvenBrigadier;
+import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
+import com.github.laxika.magicalvibes.cards.d.DaruCavalier;
+import com.github.laxika.magicalvibes.cards.s.ScreamingSeahawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,24 +17,26 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrypticGateway.class, GrizzlyBears.class, LlanowarElves.class, MothdustChangeling.class})
+@CardUsed({CrypticGateway.class, BarkhideMauler.class, AvenBrigadier.class, DaruCavalier.class,
+        ScreamingSeahawk.class})
 class CrypticGatewayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps two creatures that need not share a type and only offers a creature sharing with both")
     void tapsTwoCreaturesAndFiltersHandByBothTypes() {
         Permanent gateway = harness.addToBattlefieldAndReturn(player1, new CrypticGateway());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent elves = addCreatureReady(player1, new LlanowarElves());
-        Card invalidCreature = new GrizzlyBears();
-        Card validCreature = new MothdustChangeling();
-        harness.setHand(player1, List.of(invalidCreature, validCreature));
+        Permanent bird = addCreatureReady(player1, new ScreamingSeahawk());
+        Permanent soldier = addCreatureReady(player1, new DaruCavalier());
+        Card invalidCreature = new BarkhideMauler();
+        Card nonCreature = new CrypticGateway();
+        Card validCreature = new AvenBrigadier();
+        harness.setHand(player1, List.of(invalidCreature, nonCreature, validCreature));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gateway.isTapped()).isFalse();
-        assertThat(bears.isTapped()).isTrue();
-        assertThat(elves.isTapped()).isTrue();
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(soldier.isTapped()).isTrue();
 
         harness.passBothPriorities();
         assertThat(harness.getGameData().interaction.activeInteraction())
@@ -43,21 +46,52 @@ class CrypticGatewayTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(((PendingInteraction.HandChoice) gameData.interaction.activeInteraction()).validIndices())
-                .containsExactly(1);
-        harness.handleCardChosen(player1, 1);
+                .containsExactly(2);
+        harness.handleCardChosen(player1, 2);
 
-        assertThat(gameData.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(permanent -> permanent.getCard().getId().equals(validCreature.getId()))).isTrue();
-        assertThat(gameData.playerHands.get(player1.getId())).containsExactly(invalidCreature);
+        harness.assertOnBattlefield(player1, validCreature.getName());
+        assertThat(gameData.playerHands.get(player1.getId())).containsExactly(invalidCreature, nonCreature);
+    }
+
+    @Test
+    @DisplayName("Only two untapped creatures controlled by the player can pay the cost")
+    void costOnlyUsesTwoUntappedControlledCreatures() {
+        harness.addToBattlefieldAndReturn(player1, new CrypticGateway());
+        Permanent first = addCreatureReady(player1, new ScreamingSeahawk());
+        Permanent second = addCreatureReady(player1, new DaruCavalier());
+        Permanent extra = addCreatureReady(player1, new BarkhideMauler());
+        Permanent tapped = addCreatureReady(player1, new BarkhideMauler());
+        tapped.tap();
+        Permanent opponentCreature = addCreatureReady(player2, new BarkhideMauler());
+        harness.setHand(player1, List.of(new AvenBrigadier()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validIds())
+                .containsExactly(first.getId(), second.getId(), extra.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validIds())
+                .containsExactly(second.getId(), extra.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(extra.isTapped()).isFalse();
+        assertThat(tapped.isTapped()).isTrue();
+        assertThat(opponentCreature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     @Test
     @DisplayName("Declining the may choice leaves the tapped creatures tapped and puts nothing onto the battlefield")
     void decliningMayDoesNotPutCreatureOntoBattlefield() {
         harness.addToBattlefieldAndReturn(player1, new CrypticGateway());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent elves = addCreatureReady(player1, new LlanowarElves());
-        Card creature = new MothdustChangeling();
+        Permanent bird = addCreatureReady(player1, new ScreamingSeahawk());
+        Permanent soldier = addCreatureReady(player1, new DaruCavalier());
+        Card creature = new AvenBrigadier();
         harness.setHand(player1, List.of(creature));
 
         harness.activateAbility(player1, 0, null, null);
@@ -65,10 +99,9 @@ class CrypticGatewayTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gameData = harness.getGameData();
-        assertThat(bears.isTapped()).isTrue();
-        assertThat(elves.isTapped()).isTrue();
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(soldier.isTapped()).isTrue();
         assertThat(gameData.playerHands.get(player1.getId())).containsExactly(creature);
-        assertThat(gameData.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()))).isFalse();
+        harness.assertNotOnBattlefield(player1, creature.getName());
     }
 }

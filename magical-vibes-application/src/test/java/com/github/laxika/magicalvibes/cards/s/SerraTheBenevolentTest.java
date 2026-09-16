@@ -27,6 +27,7 @@ class SerraTheBenevolentTest extends BaseCardTest {
         Permanent serra = addReadySerra(4);
         Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
         harness.activateAbility(player1, indexOf(serra), 0, null, null);
         harness.passBothPriorities();
@@ -35,6 +36,7 @@ class SerraTheBenevolentTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingAngel)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -54,6 +56,8 @@ class SerraTheBenevolentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(serra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().hasType(CardType.CREATURE)

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "176")
+@CardRegistration(set = "MB1", collectorNumber = "176")
 public class PierceTheSky extends Card {
 
     public PierceTheSky() {

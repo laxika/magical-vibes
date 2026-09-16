@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "90")
+@CardRegistration(set = "PIO", collectorNumber = "371")
 public class DarkPetition extends Card {
 
     public DarkPetition() {

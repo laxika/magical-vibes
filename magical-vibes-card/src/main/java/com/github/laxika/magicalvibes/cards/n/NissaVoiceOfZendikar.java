@@ -20,6 +20,8 @@ import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "138")
 @CardRegistration(set = "DDR", collectorNumber = "1")
+@CardRegistration(set = "MB1", collectorNumber = "138")
+@CardRegistration(set = "PIO", collectorNumber = "188")
 public class NissaVoiceOfZendikar extends Card {
 
     public NissaVoiceOfZendikar() {

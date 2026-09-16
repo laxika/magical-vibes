@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsEx
 import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "84")
+@CardRegistration(set = "PIO", collectorNumber = "110")
 public class Soulflayer extends Card {
 
     public Soulflayer() {

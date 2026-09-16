@@ -25,6 +25,7 @@ import java.util.List;
  * allowed because fusing both halves onto one artifact enchantment is legal.
  */
 @CardRegistration(set = "DGM", collectorNumber = "135")
+@CardRegistration(set = "PIO", collectorNumber = "398")
 public class WearTear extends Card {
 
     public WearTear() {

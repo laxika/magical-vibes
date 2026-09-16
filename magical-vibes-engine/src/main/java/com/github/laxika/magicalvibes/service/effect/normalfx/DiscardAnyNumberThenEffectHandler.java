@@ -50,6 +50,7 @@ public class DiscardAnyNumberThenEffectHandler implements NormalEffectHandlerBea
             if (chosenCount == 0) {
                 gameLogService.append(gameData, GameLog.text(playerName + " chooses to discard 0 "
                         + discardEffect.cardDescription() + " for " + cardName + "."));
+                insertThenEffectWhenZero(entry, discardEffect);
                 return;
             }
 
@@ -60,12 +61,13 @@ public class DiscardAnyNumberThenEffectHandler implements NormalEffectHandlerBea
                     validIndices,
                     cardName + " — Choose " + discardEffect.cardDescription() + " to discard.",
                     chosenCount,
-                    DiscardFollowUp.thenEffectWithEventValue(
+                    DiscardFollowUp.thenEffectWithEventValueAndDiscardedCards(
                             entry.getCard(),
                             discardEffect.thenEffect(),
                             chosenCount,
                             entry.getSourcePermanentId(),
-                            entry.getSourcePermanentSnapshot()));
+                            entry.getSourcePermanentSnapshot(),
+                            controllerId));
             return;
         }
 
@@ -75,6 +77,7 @@ public class DiscardAnyNumberThenEffectHandler implements NormalEffectHandlerBea
                     + discardEffect.cardDescription() + " to discard for " + cardName + "."));
             log.info("Game {} - {} has no {} to discard for {}", gameData.id, playerName,
                     discardEffect.cardDescription(), cardName);
+            insertThenEffectWhenZero(entry, discardEffect);
             return;
         }
 
@@ -83,6 +86,16 @@ public class DiscardAnyNumberThenEffectHandler implements NormalEffectHandlerBea
                 validIndices.size(),
                 "Choose how many " + discardEffect.cardDescription() + " to discard for " + cardName + ".",
                 cardName));
+    }
+
+    private void insertThenEffectWhenZero(StackEntry entry, DiscardAnyNumberThenEffect effect) {
+        if (!effect.resolveThenEffectWhenZero()) {
+            return;
+        }
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        if (effectIndex >= 0) {
+            entry.insertEffectsToResolve(effectIndex + 1, List.of(effect.thenEffect()));
+        }
     }
 
     private List<Integer> matchingHandIndices(GameData gameData, UUID controllerId,

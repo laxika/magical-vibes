@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "234")
+@CardRegistration(set = "FCA", collectorNumber = "20")
 public class TraxosScourgeOfKroog extends Card {
 
     public TraxosScourgeOfKroog() {

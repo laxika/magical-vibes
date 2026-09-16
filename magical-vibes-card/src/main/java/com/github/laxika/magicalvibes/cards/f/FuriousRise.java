@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 
 @CardRegistration(set = "M21", collectorNumber = "144")
 @CardRegistration(set = "THB", collectorNumber = "136")
+@CardRegistration(set = "PIO", collectorNumber = "136")
 public class FuriousRise extends Card {
 
     public FuriousRise() {

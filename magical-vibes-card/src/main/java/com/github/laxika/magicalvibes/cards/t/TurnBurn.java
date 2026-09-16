@@ -42,6 +42,7 @@ import java.util.List;
  */
 @CardRegistration(set = "DGM", collectorNumber = "134")
 @CardRegistration(set = "GK1", collectorNumber = "45")
+@CardRegistration(set = "PIO", collectorNumber = "396")
 public class TurnBurn extends Card {
 
     public TurnBurn() {

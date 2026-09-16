@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "M12", collectorNumber = "58")
 @CardRegistration(set = "M13", collectorNumber = "56")
 @CardRegistration(set = "M14", collectorNumber = "60")
+@CardRegistration(set = "PIO", collectorNumber = "330")
 public class JaceMemoryAdept extends Card {
 
     public JaceMemoryAdept() {

@@ -28,6 +28,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -97,6 +98,8 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
                     copyCard.getId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
+        } else if (e.mayChooseNewTargets() && copyEntry.getTargetIds().size() == 1) {
+            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), castingPlayerId, copyCard.getId(), 0);
         }
     }
 

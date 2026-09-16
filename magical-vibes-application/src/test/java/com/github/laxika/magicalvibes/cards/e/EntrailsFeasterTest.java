@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EntrailsFeaster.class, GrizzlyBears.class, Shock.class})
+@CardUsed({EntrailsFeaster.class, ElvishWarrior.class, Shock.class})
 class EntrailsFeasterTest extends BaseCardTest {
 
     @Test
     void exilesCreatureFromAnyGraveyardAndPutsCounterOnItself() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
-        Card creatureCard = new GrizzlyBears();
+        Card creatureCard = new ElvishWarrior();
         harness.setGraveyard(player2, List.of(creatureCard));
 
         advanceToUpkeep(player1);
@@ -38,7 +37,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     @Test
     void tapsWhenItDoesNotExileCreatureCard() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
-        Card creatureCard = new GrizzlyBears();
+        Card creatureCard = new ElvishWarrior();
         harness.setGraveyard(player2, List.of(creatureCard));
 
         advanceToUpkeep(player1);
@@ -63,5 +62,26 @@ class EntrailsFeasterTest extends BaseCardTest {
 
         assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(feaster.isTapped()).isTrue();
+    }
+
+    @Test
+    void canExileCreatureFromOwnGraveyardWhileIgnoringNoncreatureCards() {
+        Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
+        Card creatureCard = new ElvishWarrior();
+        Card noncreatureCard = new Shock();
+        harness.setGraveyard(player1, List.of(creatureCard));
+        harness.setGraveyard(player2, List.of(noncreatureCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creatureCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(noncreatureCard);
+        assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(feaster.isTapped()).isFalse();
     }
 }

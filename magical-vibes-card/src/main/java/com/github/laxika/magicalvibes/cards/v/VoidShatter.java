@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 
 @CardRegistration(set = "OGW", collectorNumber = "49")
+@CardRegistration(set = "PIO", collectorNumber = "368")
 public class VoidShatter extends Card {
 
     public VoidShatter() {

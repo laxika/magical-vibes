@@ -138,6 +138,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
@@ -3541,6 +3542,9 @@ public class AbilityActivationService {
         List<CardEffect> abilityEffects = ability.getEffects();
         if (ability.isSpecialAction() && abilityEffects.stream().noneMatch(CostEffect.class::isInstance)) {
             ManaCost cost = new ManaCost(ability.getManaCost() == null ? "{0}" : ability.getManaCost());
+            if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                cost = cost.withBlackManaAsPhyrexian();
+            }
             if (!cost.canPay(activationPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
@@ -3554,6 +3558,9 @@ public class AbilityActivationService {
         }
         gameData.abilityActivationTreasureManaSpent.remove(permanent.getCard().getId());
         ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
+        }
         if (ability.getSourceCounterScaledTargetsType() != null) {
             effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
         }
@@ -3987,7 +3994,11 @@ public class AbilityActivationService {
         // Pay the loyalty cost only now that full legality, including targets, is confirmed
         // (CR 601.2: an illegal activation rewinds with no cost paid)
         if (ability.getLoyaltyCost() != null) {
-            payLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
+            if (ability.isSparkAbility()) {
+                paySparkCost(gameData, playerId, ability);
+            } else {
+                payLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
+            }
         }
 
         ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
@@ -4206,6 +4217,9 @@ public class AbilityActivationService {
         if (waterbendCost != null) {
             payWaterbendCost(gameData, playerId, permanent, ability, waterbendCost, effectiveXValue,
                     ability.isRequiresTap());
+        }
+        if (abilityEffects.stream().anyMatch(PayMulticoloredSourceManaCost.class::isInstance)) {
+            gameData.playerManaPools.get(playerId).removeMulticoloredSourceMana();
         }
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
@@ -5650,6 +5664,7 @@ public class AbilityActivationService {
         additionalGenericCost -= equipReduction;
         int battlefieldReduction = castingCostService.getActivatedAbilityActivationCostReduction(
                 gameData, permanent, ability,
+                targetId, targetIds,
                 Math.max(0, totalManaCost + additionalGenericCost - 1));
         additionalGenericCost -= battlefieldReduction;
         AmountContext activationCostContext = new AmountContext(
@@ -5725,8 +5740,24 @@ public class AbilityActivationService {
             }
         }
 
+        UUID ownerId = permanent.getCard().getOwnerId();
+        if (ownerId == null) {
+            ownerId = gameData.stolenCreatures.get(permanent.getId());
+        }
+        if (ownerId == null) {
+            ownerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        }
+        if (ability.isActivatableOnlyByOwner() && !playerId.equals(ownerId)) {
+            throw new IllegalStateException("Only this permanent's owner may activate this ability");
+        }
+
         if (ability.isSpecialAction()) {
-            if (ability.getManaCost() != null && !new ManaCost(ability.getManaCost()).canPay(manaPool)) {
+            ManaCost specialActionCost = ability.getManaCost() == null
+                    ? null : new ManaCost(ability.getManaCost());
+            if (specialActionCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                specialActionCost = specialActionCost.withBlackManaAsPhyrexian();
+            }
+            if (specialActionCost != null && !specialActionCost.canPay(manaPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
             validateTimingRestrictions(gameData, playerId, permanent, ability);
@@ -5751,17 +5782,6 @@ public class AbilityActivationService {
 
         // City of Solitude: players can activate abilities only during their own turns.
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
-
-        UUID ownerId = permanent.getCard().getOwnerId();
-        if (ownerId == null) {
-            ownerId = gameData.stolenCreatures.get(permanent.getId());
-        }
-        if (ownerId == null) {
-            ownerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        }
-        if (ability.isActivatableOnlyByOwner() && !playerId.equals(ownerId)) {
-            throw new IllegalStateException("Only this permanent's owner may activate this ability");
-        }
 
         // Soul Ransom: only opponents of the source permanent's controller may activate this ability.
         if (ability.isActivatableOnlyByOpponents()
@@ -5795,10 +5815,15 @@ public class AbilityActivationService {
 
         // Loyalty ability restrictions (the cost itself is paid after target legality is confirmed)
         if (ability.getLoyaltyCost() != null) {
-            if (gameQueryService.isPlaneswalkerLoyaltyAbilityLocked(gameData, permanent)) {
+            if (!ability.isSparkAbility()
+                    && gameQueryService.isPlaneswalkerLoyaltyAbilityLocked(gameData, permanent)) {
                 throw new IllegalStateException("Loyalty abilities of planeswalkers can't be activated");
             }
-            validateLoyaltyCost(gameData, playerId, permanent, ability, xValue);
+            if (ability.isSparkAbility()) {
+                validateSparkCost(gameData, playerId, ability);
+            } else {
+                validateLoyaltyCost(gameData, playerId, permanent, ability, xValue);
+            }
         }
 
         // Tap requirement
@@ -6013,8 +6038,18 @@ public class AbilityActivationService {
         }
 
         // Mana affordability (CR 602.2b — checked before entering interactive cost choices)
+        if (abilityEffects.stream().anyMatch(PayMulticoloredSourceManaCost.class::isInstance)) {
+            if (manaPool == null || manaPool.getMulticoloredSourceManaTotal() < 1
+                    || manaPool.getTotalAllMana() < 2) {
+                throw new IllegalStateException(
+                        "One mana must come from a source that could produce two or more colors");
+            }
+        }
         if (abilityCost != null) {
             ManaCost preCheck = effectiveManaCost;
+            if (preCheck != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                preCheck = preCheck.withBlackManaAsPhyrexian();
+            }
             ManaPool affordabilityPool = manaPool;
             if (manaPool != null && isClassLevelUpAbility(abilityEffects)) {
                 affordabilityPool = copyManaPool(manaPool);
@@ -7289,6 +7324,23 @@ public class AbilityActivationService {
         return loyaltyCost;
     }
 
+    private void validateSparkCost(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (gameData.playersWhoActivatedSparkAbilityThisTurn.contains(playerId)) {
+            throw new IllegalStateException("Only one spark ability may be activated per turn");
+        }
+        if (!playerId.equals(gameData.activePlayerId)
+                || (gameData.currentStep != TurnStep.PRECOMBAT_MAIN
+                && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN)
+                || !gameData.stack.isEmpty()) {
+            throw new IllegalStateException("Spark abilities can only be activated as a sorcery");
+        }
+        int sparkCost = ability.getLoyaltyCost();
+        int sparkCounters = gameData.playerSparkCounters.getOrDefault(playerId, 0);
+        if (sparkCost < 0 && sparkCounters < Math.abs(sparkCost)) {
+            throw new IllegalStateException("Not enough spark counters");
+        }
+    }
+
     /**
      * Counters on the source permanent that scale a {@link PayLifeCost} ("pay 3 life for each
      * velocity counter on this enchantment"). Zero for the fixed and half-life forms.
@@ -7302,6 +7354,14 @@ public class AbilityActivationService {
         permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.add(playerId);
+    }
+
+    private void paySparkCost(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        validateSparkCost(gameData, playerId, ability);
+        int sparkCost = ability.getLoyaltyCost();
+        gameData.playerSparkCounters.put(playerId,
+                gameData.playerSparkCounters.getOrDefault(playerId, 0) + sparkCost);
+        gameData.playersWhoActivatedSparkAbilityThisTurn.add(playerId);
     }
 
     private int minimumWaterbendTaps(GameData gameData, UUID playerId, Permanent source,
@@ -7500,6 +7560,9 @@ public class AbilityActivationService {
                              Set<CardSubtype> subtypeSpellOrAbilityContext,
                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                              int additionalCost, Set<ManaColor> xColorRestrictions, boolean colorlessPermanentContext) {
+        if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            cost = cost.withBlackManaAsPhyrexian();
+        }
         if (cost.hasX() && xColorRestrictions != null) {
             if (!cost.canPay(gameData.playerManaPools.get(playerId), effectiveXValue,
                     xColorRestrictions, additionalCost)) {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "118")
+@CardRegistration(set = "SPG", collectorNumber = "73")
 public class NoxiousRevival extends Card {
 
     public NoxiousRevival() {

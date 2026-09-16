@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "116")
+@CardRegistration(set = "PIO", collectorNumber = "342")
 public class RecklessBushwhacker extends Card {
 
     public RecklessBushwhacker() {
