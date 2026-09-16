@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "ECL", collectorNumber = "324")
 @CardRegistration(set = "ECL", collectorNumber = "390")
 @CardRegistration(set = "ECL", collectorNumber = "400")
+@CardRegistration(set = "SPG", collectorNumber = "79")
 public class BloomTender extends Card {
 
     public BloomTender() {

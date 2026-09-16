@@ -1651,6 +1651,20 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Expropriate: the current player voted for time or money. */
+    record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                             List<UUID> moneyVoterIds, int timeVotes, String sourceName)
+            implements ChoiceContext {
+        public static final String TIME = "Time";
+        public static final String MONEY = "Money";
+        public static final List<String> OPTIONS = List.of(TIME, MONEY);
+
+        public ExpropriateChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
     /** Split Decision: the current player voted for denial or duplication. */
     record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                                              Map<String, Integer> votes, String sourceName) implements ChoiceContext {

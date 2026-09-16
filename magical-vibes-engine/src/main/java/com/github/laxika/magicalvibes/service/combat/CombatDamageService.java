@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEff
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
@@ -1280,6 +1281,12 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
+                gameData, attackerId, defenderId,
+                combatDamageDealtToPlayer.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .toList());
         triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
                 gameData, attackerId, defenderId,
                 combatDamageDealtToPlayer.entrySet().stream()
@@ -1928,6 +1935,12 @@ public class CombatDamageService {
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
                     se.setNonTargeting(true);
+                    if (firedEffect instanceof CombatDamageDealerReferencingEffect) {
+                        se.setTriggeringPermanentId(creature.getId());
+                        se.setTriggeringPermanentControllerId(attackerId);
+                        se.setDamageSourceCard(creature.getCard());
+                        se.setSourcePermanentSnapshot(new Permanent(perm));
+                    }
                     gameData.stack.add(se);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),

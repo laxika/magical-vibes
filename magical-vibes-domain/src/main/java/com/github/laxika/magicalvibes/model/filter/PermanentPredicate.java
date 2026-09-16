@@ -136,6 +136,7 @@ public sealed interface PermanentPredicate permits
         PermanentManaValueEqualsXPredicate,
         PermanentManaValueLessThanXPredicate,
         PermanentManaValueParityPredicate,
+        PermanentMaxManaValueColorsSpentToCastPredicate,
         PermanentMaxManaValuePredicate,
         PermanentMaxManaValueXPredicate,
         PermanentMinManaValuePredicate,

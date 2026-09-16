@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SPG", collectorNumber = "25")
 @CardRegistration(set = "MH1", collectorNumber = "160")
 public class CrashingFootfalls extends Card {
 

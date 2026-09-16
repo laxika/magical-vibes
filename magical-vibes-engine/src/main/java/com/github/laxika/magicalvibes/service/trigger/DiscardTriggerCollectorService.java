@@ -693,6 +693,7 @@ public class DiscardTriggerCollectorService {
      * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
      */
     @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
         return enqueueDiscardTrigger(match, trigger, "draw");
     }

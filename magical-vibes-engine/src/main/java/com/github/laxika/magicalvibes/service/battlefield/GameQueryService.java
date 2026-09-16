@@ -3369,6 +3369,12 @@ public class GameQueryService {
         return activeEffects;
     }
 
+    /** Returns the active printed and temporary static effects carried by a battlefield permanent. */
+    public List<CardEffect> getActiveStaticEffects(GameData gameData, Permanent permanent) {
+        return staticEffectsIncludingTemporary(gameData, permanent,
+                findPermanentController(gameData, permanent.getId()));
+    }
+
     private void collectActiveStaticEffects(GameData gameData, Permanent source, UUID controllerId,
                                             CardEffect effect, List<CardEffect> activeEffects) {
         if (effect instanceof ConditionalEffect conditional) {
