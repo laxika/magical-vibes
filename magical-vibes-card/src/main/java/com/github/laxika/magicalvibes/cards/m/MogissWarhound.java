@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JOU", collectorNumber = "104")
+@CardRegistration(set = "PIO", collectorNumber = "146")
 public class MogissWarhound extends Card {
 
     public MogissWarhound() {

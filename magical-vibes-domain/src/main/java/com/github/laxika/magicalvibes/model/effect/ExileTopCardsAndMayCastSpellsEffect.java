@@ -55,7 +55,16 @@ public record ExileTopCardsAndMayCastSpellsEffect(
     /** Exiles a fixed number from a targeted opponent and caps the number of free casts. */
     public static ExileTopCardsAndMayCastSpellsEffect targetedOpponent(int count, int maxCastCount) {
         return new ExileTopCardsAndMayCastSpellsEffect(
-                count, null, LibraryScope.TARGET_OPPONENT, true, null, null, maxCastCount, true, false);
+                count, null, LibraryScope.TARGET_OPPONENT, true, null, null,
+                maxCastCount, true, false);
+    }
+
+    /** Exiles cards from the controller's library and randomly bottoms every card not cast. */
+    public static ExileTopCardsAndMayCastSpellsEffect controllerWithRandomBottom(
+            int count, DynamicAmount manaValueLimit, CardPredicate castFilter, int maxCastCount) {
+        return new ExileTopCardsAndMayCastSpellsEffect(
+                count, null, LibraryScope.CONTROLLER, false, manaValueLimit, castFilter,
+                maxCastCount, false, true);
     }
 
     @Override

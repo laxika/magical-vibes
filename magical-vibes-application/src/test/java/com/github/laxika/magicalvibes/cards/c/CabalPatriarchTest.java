@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CabalPatriarch.class, Forest.class, GiantGrowth.class, GrizzlyBears.class, HillGiant.class})
 class CabalPatriarchTest extends BaseCardTest {
 
     @Test
@@ -76,6 +78,18 @@ class CabalPatriarchTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability cannot target a noncreature permanent")
+    void sacrificeAbilityCannotTargetNoncreature() {
+        harness.addToBattlefield(player1, new CabalPatriarch());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VoiceOfTheWoods.class, ElvishWarrior.class})
+@CardUsed({VoiceOfTheWoods.class, ElvishWarrior.class, Forest.class})
 class VoiceOfTheWoodsTest extends BaseCardTest {
 
     @Test
@@ -54,5 +56,42 @@ class VoiceOfTheWoodsTest extends BaseCardTest {
         int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
         assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires five untapped Elves controlled by the activating player")
+    void requiresFiveUntappedElvesYouControl() {
+        Permanent source = addCreatureReady(player1, new VoiceOfTheWoods());
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent tappedElf = addCreatureReady(player1, new ElvishWarrior());
+        tappedElf.tap();
+        addCreatureReady(player2, new ElvishWarrior());
+
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+        assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not tap a non-Elf when paying the cost")
+    void tapsOnlyElves() {
+        Permanent source = addCreatureReady(player1, new VoiceOfTheWoods());
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+        harness.activateAbility(player1, sourceIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        Permanent token = findPermanent(player1, "Elemental");
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "123")
+@CardRegistration(set = "PIO", collectorNumber = "372")
 public class TouchOfMoonglove extends Card {
 
     public TouchOfMoonglove() {

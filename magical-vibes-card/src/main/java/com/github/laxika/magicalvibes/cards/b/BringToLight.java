@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "209")
 @CardRegistration(set = "2X2", collectorNumber = "188")
+@CardRegistration(set = "PIO", collectorNumber = "209")
 public class BringToLight extends Card {
 
     public BringToLight() {

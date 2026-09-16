@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "54")
+@CardRegistration(set = "PIO", collectorNumber = "57")
 public class GustOfWind extends Card {
 
     public GustOfWind() {

@@ -1044,7 +1044,11 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        int count = Math.min(effect.randomCount(), matchingCards.size());
+        int requestedCount = effect.randomCountAmount() == null
+                ? effect.randomCount()
+                : amountEvaluationService.evaluate(gameData, effect.randomCountAmount(),
+                        com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, null));
+        int count = Math.min(Math.max(requestedCount, 0), matchingCards.size());
         List<Card> returnedCards = new ArrayList<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {

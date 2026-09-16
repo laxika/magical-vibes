@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "163")
+@CardRegistration(set = "PIO", collectorNumber = "185")
 public class NemesisOfMortals extends Card {
 
     public NemesisOfMortals() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "119")
+@CardRegistration(set = "PIO", collectorNumber = "135")
 public class FightWithFire extends Card {
 
     public FightWithFire() {

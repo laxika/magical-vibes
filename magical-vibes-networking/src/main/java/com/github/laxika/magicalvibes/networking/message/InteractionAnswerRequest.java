@@ -20,7 +20,8 @@ import java.util.UUID;
  *   <li>{@code ACCEPT_DECLINE} — {@code accepted}</li>
  *   <li>{@code NUMBER_PICK} — {@code number}</li>
  *   <li>{@code CARD_ORDER} — {@code order}</li>
- *   <li>{@code SCRY_ORDER} — {@code order} (top) and {@code secondOrder} (bottom)</li>
+ *   <li>{@code SCRY_ORDER} — {@code order} (top), {@code secondOrder} (bottom), and optional
+ *       {@code scrycastIndex}</li>
  *   <li>{@code HAND_TOP_BOTTOM} — {@code index} (to hand) and {@code secondIndex} (to top)</li>
  *   <li>{@code HAND_BOTTOM_EXILE} — {@code index} (to hand) and {@code secondIndex} (to bottom)</li>
  * </ul>
@@ -36,5 +37,6 @@ public record InteractionAnswerRequest(
         Boolean accepted,
         Integer number,
         List<Integer> order,
-        List<Integer> secondOrder) {
+        List<Integer> secondOrder,
+        Integer scrycastIndex) {
 }

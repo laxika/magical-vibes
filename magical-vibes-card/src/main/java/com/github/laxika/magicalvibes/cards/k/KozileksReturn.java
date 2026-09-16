@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "98")
+@CardRegistration(set = "PIO", collectorNumber = "142")
 public class KozileksReturn extends Card {
 
     public KozileksReturn() {

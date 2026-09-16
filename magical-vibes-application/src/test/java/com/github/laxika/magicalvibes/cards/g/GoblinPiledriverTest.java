@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
+import com.github.laxika.magicalvibes.cards.c.ChokingTethers;
+import com.github.laxika.magicalvibes.cards.c.CrownOfAscension;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.r.RiptideShapeshifter;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,29 +21,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinPiledriver.class, GoblinSledder.class, ElvishWarrior.class,
+        AphettoAlchemist.class, RiptideShapeshifter.class, ChokingTethers.class,
+        CrownOfAscension.class, Shock.class})
 class GoblinPiledriverTest extends BaseCardTest {
 
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
     private Permanent addPiledriver(Player player) {
-        Permanent piledriver = harness.addToBattlefieldAndReturn(player, new GoblinPiledriver());
-        piledriver.setSummoningSick(false);
-        return piledriver;
+        return addCreatureReady(player, new GoblinPiledriver());
     }
 
     private Permanent addGoblin(Player player) {
-        Permanent piker = new Permanent(new GoblinPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(piker);
-        return piker;
+        return addCreatureReady(player, new GoblinSledder());
     }
 
     @Test
@@ -72,9 +64,7 @@ class GoblinPiledriverTest extends BaseCardTest {
     void nonGoblinAttackersNotCounted() {
         Permanent piledriver = addPiledriver(player1);
         addGoblin(player1);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new ElvishWarrior());
 
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
@@ -95,17 +85,96 @@ class GoblinPiledriverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attack boost wears off at end of turn")
+    void attackBoostWearsOffAtEndOfTurn() {
+        Permanent piledriver = addPiledriver(player1);
+        addGoblin(player1);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+
+        piledriver.setAttacking(false);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(piledriver.getPowerModifier()).isZero();
+        assertThat(piledriver.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A blue creature cannot block Goblin Piledriver")
+    void cannotBeBlockedByBlueCreature() {
+        addPiledriver(player1);
+        addCreatureReady(player2, new AphettoAlchemist());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("A red creature can block Goblin Piledriver")
+    void canBeBlockedByRedCreature() {
+        addPiledriver(player1);
+        Permanent blocker = addGoblin(player2);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage from a blue creature is prevented")
+    void combatDamageFromBlueCreatureIsPrevented() {
+        addCreatureReady(player1, new RiptideShapeshifter());
+        Permanent piledriver = addPiledriver(player2);
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertOnBattlefield(player2, "Goblin Piledriver");
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(piledriver.getCard());
+    }
+
+    @Test
     @DisplayName("Cannot be targeted by a blue instant")
     void cannotBeTargetedByBlueInstant() {
         Permanent piledriver = addPiledriver(player2);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Blue Zap", CardColor.BLUE, "{U}")));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new ChokingTethers()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, piledriver.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, piledriver.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a blue Aura")
+    void cannotBeEnchantedByBlueAura() {
+        Permanent piledriver = addPiledriver(player2);
+
+        harness.setHand(player1, List.of(new CrownOfAscension()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, piledriver.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from blue");
     }
@@ -115,12 +184,12 @@ class GoblinPiledriverTest extends BaseCardTest {
     void canBeTargetedByRedInstant() {
         Permanent piledriver = addPiledriver(player1);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Zap", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, piledriver.getId(), null);
+        harness.castInstant(player1, 0, piledriver.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Red Zap");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
     }
 }

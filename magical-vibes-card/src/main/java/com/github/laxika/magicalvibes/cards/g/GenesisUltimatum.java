@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "IKO", collectorNumber = "189")
+@CardRegistration(set = "SPG", collectorNumber = "106")
 public class GenesisUltimatum extends Card {
 
     public GenesisUltimatum() {

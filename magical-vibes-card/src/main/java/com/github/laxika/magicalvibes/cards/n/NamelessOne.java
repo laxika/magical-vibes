@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class NamelessOne extends Card {
 
     public NamelessOne() {
+        addMorph("{2}{U}");
         PermanentCount wizardCount = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD), CountScope.ANY_PLAYER);
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(wizardCount, wizardCount));

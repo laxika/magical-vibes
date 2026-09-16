@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "M10", collectorNumber = "52")
 @CardRegistration(set = "MRD", collectorNumber = "35")
 @CardRegistration(set = "HOP", collectorNumber = "9")
+@CardRegistration(set = "SPG", collectorNumber = "20")
 public class Fabricate extends Card {
 
     public Fabricate() {

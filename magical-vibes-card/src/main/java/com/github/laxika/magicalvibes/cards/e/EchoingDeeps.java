@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterE
 
 @CardRegistration(set = "LCI", collectorNumber = "271")
 @CardRegistration(set = "LCI", collectorNumber = "346")
+@CardRegistration(set = "EOS", collectorNumber = "13")
+@CardRegistration(set = "EOS", collectorNumber = "58")
+@CardRegistration(set = "EOS", collectorNumber = "103")
+@CardRegistration(set = "EOS", collectorNumber = "148")
 public class EchoingDeeps extends Card {
 
     public EchoingDeeps() {

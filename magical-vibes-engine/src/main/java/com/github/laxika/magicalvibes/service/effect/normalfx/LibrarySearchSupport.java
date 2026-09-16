@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -50,6 +51,8 @@ public class LibrarySearchSupport {
 
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    private ReverseMiracleSupport reverseMiracleSupport;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the
@@ -58,12 +61,26 @@ public class LibrarySearchSupport {
      * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
      */
     public boolean startNextEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        return startNextEachPlayerBasicLandSearch(gameData, followUp, true);
+    }
+
+    /**
+     * Starts the next each-player basic-land search, optionally using a mandatory-search prompt.
+     * A restricted search can still fail to find a matching card even when the instruction is not
+     * optional.
+     */
+    public boolean startNextEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp,
+                                                       boolean maySearch) {
         LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
-        String prompt = followUp.eachPlayerSearchTapped()
-                ? "You may search your library for a basic land card and put it onto the battlefield tapped."
-                : "Search your library for a basic land card and put it onto the battlefield.";
+        String prompt = maySearch
+                ? followUp.eachPlayerSearchTapped()
+                        ? "You may search your library for a basic land card and put it onto the battlefield tapped."
+                        : "You may search your library for a basic land card and put it onto the battlefield."
+                : followUp.eachPlayerSearchTapped()
+                        ? "Search your library for a basic land card and put it onto the battlefield tapped."
+                        : "Search your library for a basic land card and put it onto the battlefield.";
 
         List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
         while (!remaining.isEmpty()) {
@@ -736,6 +753,11 @@ public class LibrarySearchSupport {
                     prompt += " You may also cast a card with a library-search permission.";
                 }
             }
+        }
+
+        if (reverseMiracleSupport != null && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
+                prompt, canFailToFind, logMessage)) {
+            return;
         }
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(

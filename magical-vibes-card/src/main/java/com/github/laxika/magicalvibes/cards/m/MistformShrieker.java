@@ -11,6 +11,7 @@ import java.util.List;
 public class MistformShrieker extends Card {
 
     public MistformShrieker() {
+        addMorph("{3}{U}{U}");
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

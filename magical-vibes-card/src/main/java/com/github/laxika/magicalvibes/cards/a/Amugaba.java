@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class Amugaba extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new DiscardCardTypeCost(null, null), new ReturnSelfToHandCost()),
+                List.of(new DiscardCardTypeCost(null, null), ReturnToHandEffect.self()),
                 "{2}{U}, Discard a card: Return this creature to its owner's hand."
         ));
     }

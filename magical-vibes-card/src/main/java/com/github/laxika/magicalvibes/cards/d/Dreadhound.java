@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "MID", collectorNumber = "97")
+@CardRegistration(set = "PIO", collectorNumber = "92")
 public class Dreadhound extends Card {
 
     public Dreadhound() {

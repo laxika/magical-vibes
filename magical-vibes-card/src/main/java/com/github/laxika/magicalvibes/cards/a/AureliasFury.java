@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "144")
+@CardRegistration(set = "PIO", collectorNumber = "386")
 public class AureliasFury extends Card {
 
     public AureliasFury() {

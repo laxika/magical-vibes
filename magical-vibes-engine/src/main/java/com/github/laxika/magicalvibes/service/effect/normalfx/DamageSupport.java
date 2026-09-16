@@ -1046,7 +1046,7 @@ public class DamageSupport {
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 Set<CardColor> sourceColors = sourcePermanent == null
-                        ? sourceCardColors(source)
+                        ? gameQueryService.getEffectiveCardColors(gameData, source)
                         : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
                 UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
                 loyaltyDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
@@ -1278,6 +1278,13 @@ public class DamageSupport {
             }
             playerId = redirectedPlayerId;
         }
+        if (gameQueryService.playerHasFlying(gameData, playerId)
+                && gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent)
+                && !gameQueryService.sourceHasKeyword(gameData, entry, sourcePermanent, Keyword.FLYING)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented by flying."));
+            return;
+        }
         if (gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(gameData, entry, playerId)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
@@ -1314,7 +1321,7 @@ public class DamageSupport {
         // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
         rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
         Set<CardColor> sourceColors = sourcePermanent == null
-                ? sourceCardColors(source)
+                ? gameQueryService.getEffectiveCardColors(gameData, source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
         Set<CardColor> damageSourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
         UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
@@ -1627,6 +1634,8 @@ public class DamageSupport {
                         gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
                     triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
+                    triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
                             gameData, sourceControllerId, playerId, List.of(sourcePermanent));
                 }
                 triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(

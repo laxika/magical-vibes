@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -25,12 +27,30 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ScryInteractionHandler implements InteractionHandler<PendingInteraction.Scry> {
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final MayCastHandlerService mayCastHandlerService;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    public ScryInteractionHandler(GameLogService gameLogService,
+                                  InputCompletionService inputCompletionService,
+                                  MayCastHandlerService mayCastHandlerService,
+                                  TriggerCollectionService triggerCollectionService) {
+        this.gameLogService = gameLogService;
+        this.inputCompletionService = inputCompletionService;
+        this.mayCastHandlerService = mayCastHandlerService;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    /** Backwards-compatible constructor for isolated scry tests without Scrycast support. */
+    public ScryInteractionHandler(GameLogService gameLogService,
+                                  InputCompletionService inputCompletionService,
+                                  TriggerCollectionService triggerCollectionService) {
+        this(gameLogService, inputCompletionService, null, triggerCollectionService);
+    }
 
     @Override
     public Class<PendingInteraction.Scry> handledType() {
@@ -45,8 +65,10 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     @Override
     public void handleAnswer(GameData gameData, Player player, PendingInteraction.Scry interaction,
                              InteractionAnswer answer) {
-        List<Integer> topCardOrder = ((InteractionAnswer.ScryOrder) answer).topCardOrder();
-        List<Integer> bottomCardOrder = ((InteractionAnswer.ScryOrder) answer).bottomCardOrder();
+        InteractionAnswer.ScryOrder scryOrder = (InteractionAnswer.ScryOrder) answer;
+        List<Integer> topCardOrder = scryOrder.topCardOrder();
+        List<Integer> bottomCardOrder = scryOrder.bottomCardOrder();
+        Integer scrycastCardIndex = scryOrder.scrycastCardIndex();
         if (!player.getId().equals(interaction.playerId())) {
             throw new IllegalStateException("Not your turn to scry");
         }
@@ -54,12 +76,25 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
         List<Card> scryCards = interaction.cards();
         int count = scryCards.size();
 
-        if (topCardOrder.size() + bottomCardOrder.size() != count) {
-            throw new IllegalStateException("Must assign all " + count + " cards");
+        if (scrycastCardIndex != null && interaction.toGraveyard()) {
+            throw new IllegalStateException("Scrycast is not available during surveil");
+        }
+        if (scrycastCardIndex != null
+                && (scrycastCardIndex < 0 || scrycastCardIndex >= count
+                || scryCards.get(scrycastCardIndex).getCastingOption(ScrycastCast.class).isEmpty())) {
+            throw new IllegalStateException("Invalid Scrycast card index: " + scrycastCardIndex);
+        }
+
+        int cardsToAssign = count - (scrycastCardIndex == null ? 0 : 1);
+        if (topCardOrder.size() + bottomCardOrder.size() != cardsToAssign) {
+            throw new IllegalStateException("Must assign all " + cardsToAssign + " non-Scrycast cards");
         }
 
         // Validate indices are a valid permutation of 0..count-1
         Set<Integer> seen = new HashSet<>();
+        if (scrycastCardIndex != null) {
+            seen.add(scrycastCardIndex);
+        }
         for (int idx : topCardOrder) {
             if (idx < 0 || idx >= count) {
                 throw new IllegalStateException("Invalid card index: " + idx);
@@ -68,6 +103,8 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
                 throw new IllegalStateException("Duplicate card index: " + idx);
             }
         }
+
+        Card scrycastCard = scrycastCardIndex == null ? null : scryCards.get(scrycastCardIndex);
         for (int idx : bottomCardOrder) {
             if (idx < 0 || idx >= count) {
                 throw new IllegalStateException("Invalid card index: " + idx);
@@ -101,13 +138,27 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             for (int idx : bottomCardOrder) {
                 deck.add(scryCards.get(idx));
             }
-            if (interaction.causesScryTriggers()) {
+            if (scrycastCard == null && interaction.causesScryTriggers()) {
                 triggerCollectionService.checkScryTriggers(gameData, player.getId(), bottomCardOrder.size());
             }
         }
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
+
+        if (scrycastCard != null) {
+            if (mayCastHandlerService == null) {
+                throw new IllegalStateException("Scrycast support is not configured");
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " casts ", scrycastCard, " using scrycast."));
+            log.info("Game {} - {} casts {} using scrycast", gameData.id, player.getUsername(),
+                    scrycastCard.getName());
+            mayCastHandlerService.castRevealedCardWithoutPaying(
+                    gameData, player, scrycastCard, libraryOwnerId, null, true);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         String logMsg;
         if (interaction.toGraveyard()) {

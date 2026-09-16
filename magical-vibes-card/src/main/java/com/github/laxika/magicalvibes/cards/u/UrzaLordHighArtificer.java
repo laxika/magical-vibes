@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@CardRegistration(set = "MH1", collectorNumber = "75")
 @CardRegistration(set = "DMR", collectorNumber = "71")
+@CardRegistration(set = "FCA", collectorNumber = "5")
 public class UrzaLordHighArtificer extends Card {
 
     public UrzaLordHighArtificer() {

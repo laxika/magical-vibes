@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MH1", collectorNumber = "52")
 @CardRegistration(set = "2X2", collectorNumber = "50")
 public class ForceOfNegation extends Card {
 
@@ -25,17 +26,15 @@ public class ForceOfNegation extends Card {
         // If it's not your turn, you may exile a blue card from your hand rather than pay this
         // spell's mana cost.
         addCastingOption(new AlternateHandCast(
-                List.of(new ExileCardsFromHandCastingCost(
-                        new CardColorPredicate(CardColor.BLUE), "blue")),
-                new NotControllerTurn(), false));
+                List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLUE), "blue")),
+                new NotControllerTurn(),
+                false));
 
         // Counter target noncreature spell. If that spell is countered this way, exile it instead
         // of putting it into its owner's graveyard.
         target(new StackEntryPredicateTargetFilter(
-                new StackEntryNotPredicate(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))),
+                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))),
                 "Target must be a noncreature spell."
-        )).addEffect(EffectSlot.SPELL,
-                new CounterSpellEffect(CounteredSpellDestination.EXILE));
+        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE));
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "120")
+@CardRegistration(set = "MB1", collectorNumber = "120")
 public class EaterOfDays extends Card {
 
     public EaterOfDays() {

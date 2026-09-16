@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "39")
+@CardRegistration(set = "MB2", collectorNumber = "18")
 public class SkyclaveApparition extends Card {
 
     public SkyclaveApparition() {

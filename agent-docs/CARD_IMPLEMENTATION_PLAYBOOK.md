@@ -168,6 +168,7 @@ public class ExampleCard extends Card {
 - Prowl ("Prowl {cost}" — an alternate hand cost gated on combat damage):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), CardSubtype.X))` — the second arg gates the alternate cost on "you dealt combat damage to a player this turn with a [subtype]" (a Changeling creature counts). For "with a Faerie or Rogue" (multiple qualifying subtypes) pass `Set.of(CardSubtype.FAERIE, CardSubtype.ROGUE)` instead. Populated in `CombatDamageService`, tracked per controller in `GameData.combatDamageToPlayerControllerSubtypesThisTurn`, checked by `CastingCostService.prowlConditionMet`.
   - Like evoke, it is a pure-mana alternate cost forced through a dedicated entry point (`GameService.playCardWithProwl` / harness `castWithProwl`); the availability gate runs in `SpellCastingService`.
+  - A static "[filter] spells you cast have prowl {cost}" grant uses `GrantProwlToSpellsEffect`; the engine synthesizes the alternate cast from the spell's effective creature types.
   - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `ON_ENTER_BATTLEFIELD` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
 

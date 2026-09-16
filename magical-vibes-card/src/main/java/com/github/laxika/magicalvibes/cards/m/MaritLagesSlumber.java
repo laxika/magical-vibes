@@ -20,28 +20,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@CardRegistration(set = "MH1", collectorNumber = "56")
 @CardRegistration(set = "HA4", collectorNumber = "6")
 public class MaritLagesSlumber extends Card {
 
     public MaritLagesSlumber() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+        // Whenever this or another snow permanent you control enters, scry 1.
+        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW),
                         new ScryEffect(1)));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new ConditionalEffect(
-                        new ControlsPermanentCount(10, new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
-                        new SacrificeSelfThenEffect(maritLageToken())));
-    }
-
-    private static CreateTokenEffect maritLageToken() {
-        return new CreateTokenEffect(
-                CardType.CREATURE, 1, "Marit Lage", 20, 20,
-                CardColor.BLACK, null, List.of(CardSubtype.AVATAR),
-                Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), Set.of(),
-                false, false, Map.of(), List.of(), false, false,
-                true, 0, Set.of());
+        // At the beginning of your upkeep, if you control ten or more snow permanents, sacrifice
+        // this enchantment. If you do, create Marit Lage, a legendary 20/20 black Avatar creature
+        // token with flying and indestructible.
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+                new ControlsPermanentCount(10, new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
+                new SacrificeSelfThenEffect(new CreateTokenEffect(
+                        CardType.CREATURE,
+                        1,
+                        "Marit Lage",
+                        20,
+                        20,
+                        CardColor.BLACK,
+                        null,
+                        List.of(CardSubtype.AVATAR),
+                        Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE),
+                        Set.of(),
+                        false,
+                        false,
+                        Map.of(),
+                        List.of(),
+                        false,
+                        false,
+                        true,
+                        0,
+                        Set.of(),
+                        Set.of()))));
     }
 }

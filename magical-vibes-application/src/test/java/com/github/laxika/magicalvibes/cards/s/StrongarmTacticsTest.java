@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,13 +13,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StrongarmTactics.class, Forest.class, GrizzlyBears.class})
+@CardUsed({StrongarmTactics.class, Mountain.class, WirewoodElf.class})
 class StrongarmTacticsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Players who discard creature cards do not lose life")
     void creatureDiscardsAvoidLifeLoss() {
-        resolveWithHands(List.of(new GrizzlyBears()), List.of(new GrizzlyBears()));
+        resolveWithHands(List.of(new WirewoodElf()), List.of(new WirewoodElf()));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -28,7 +28,7 @@ class StrongarmTacticsTest extends BaseCardTest {
     @Test
     @DisplayName("Players who discard noncreature cards lose 4 life")
     void noncreatureDiscardsCauseLifeLoss() {
-        resolveWithHands(List.of(new Forest()), List.of(new Forest()));
+        resolveWithHands(List.of(new Mountain()), List.of(new Mountain()));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(16);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
@@ -37,7 +37,7 @@ class StrongarmTacticsTest extends BaseCardTest {
     @Test
     @DisplayName("Only the player who discards a noncreature card loses life")
     void mixedDiscardsOnlyPenalizeNoncreatureDiscard() {
-        resolveWithHands(List.of(new GrizzlyBears()), List.of(new Forest()));
+        resolveWithHands(List.of(new WirewoodElf()), List.of(new Mountain()));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
@@ -76,7 +76,6 @@ class StrongarmTacticsTest extends BaseCardTest {
     private void castStrongarmTactics() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

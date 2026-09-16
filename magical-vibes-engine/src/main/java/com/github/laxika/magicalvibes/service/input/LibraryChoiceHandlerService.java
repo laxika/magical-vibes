@@ -1485,6 +1485,10 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (reveals) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " reveals ", chosenCard, "."));
+            }
             String prompt;
             if (targetPlayerId != null) {
                 String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -1501,6 +1505,7 @@ public class LibraryChoiceHandlerService {
                     LibrarySearchParams.builder(playerId, new ArrayList<>(newSearchCards))
                     .targetPlayerId(targetPlayerId)
                     .remainingCount(newRemaining)
+                    .reveals(reveals)
                     .canFailToFind(toGraveyard || canFailToFind)
                     .destination(destination)
                     .filterCardTypes(filterCardTypes)

@@ -46,6 +46,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PlanarCardChoice,
         PendingInteraction.SpatialMergingCardOrder,
         PendingInteraction.LibraryReorder,
+        PendingInteraction.TargetPlayerHandOrderChoice,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.InvokeCalamityCastChoice,
@@ -55,7 +56,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
-        PendingInteraction.ExiledCardMayPlayChoice,
+        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice,
         PendingInteraction.LudevicCopyChoice,
          PendingInteraction.KohExiledCreatureChoice,
          PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
@@ -132,6 +133,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
+        PendingInteraction.ExchangeOutsideGameCardChoice,
+        PendingInteraction.ExchangeOutsideGameHandChoice,
         PendingInteraction.ShuffleCardsFromOutsideGameChoice,
         PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
@@ -543,6 +546,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                               UUID deckOwnerId, String prompt, java.util.List<UUID> topCardIds) {
             this(playerId, cards, toBottom, deckOwnerId, prompt, 0, topCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
+    }
+
+    /** The target player orders their hand for a private, sequential reveal effect. */
+    record TargetPlayerHandOrderChoice(UUID playerId, java.util.List<Card> cards,
+                                       Card sourceCard, UUID controllerId,
+                                       UUID sourcePermanentId, String prompt)
+            implements PendingInteraction {
+        public TargetPlayerHandOrderChoice {
+            cards = java.util.List.copyOf(cards);
         }
 
         @Override
@@ -2049,6 +2072,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Chooses one matching face-up card from exile to return to the battlefield. */
     record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Chooses one of the controller's commanders to put into their hand. */
+    record CommandZoneCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String prompt)
+            implements PendingInteraction {
+
+        public CommandZoneCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -4348,6 +4390,49 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    /** Chooses at most one matching card from the controller's outside-game pool for an exchange. */
+    record ExchangeOutsideGameCardChoice(UUID playerId, java.util.List<Card> cards,
+                                         CardPredicate filter) implements PendingInteraction {
+
+        public ExchangeOutsideGameCardChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, 1);
+        }
+    }
+
+    /** Chooses the hand card to exchange for the previously selected outside-game card. */
+    record ExchangeOutsideGameHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                         String prompt, Card outsideCard)
+            implements PendingInteraction, HandChoice {
+
+        public ExchangeOutsideGameHandChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 

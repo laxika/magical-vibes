@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -495,7 +496,7 @@ public class ValidTargetService {
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
         int announced = announcedXValue != null ? announcedXValue : 0;
-        return card.getEffects(EffectSlot.SPELL).stream()
+        int effectiveXValue = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::cast)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect::castTimeXValue)
@@ -504,6 +505,15 @@ public class ValidTargetService {
                 .map(amount -> amountEvaluationService.evaluate(gameData, amount,
                         AmountContext.forCasting(controllerId, announced, card)))
                 .orElse(announced);
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CastTimeXValueModifierEffect modifier
+                        && modifier.appliesTo(card, controllerId, controllerId)) {
+                    effectiveXValue = modifier.modifyCastTimeXValue(effectiveXValue);
+                }
+            }
+        }
+        return effectiveXValue;
     }
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
@@ -780,6 +790,9 @@ public class ValidTargetService {
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
+            enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
+                    validPermanentIds, validPlayerIds);
+
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                     ability.getEffectiveMinTargets(effectiveTargetScalingValue),
@@ -912,6 +925,9 @@ public class ValidTargetService {
             }
         }
 
+        enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
+                validPermanentIds, validPlayerIds);
+
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, minTargets, maxTargets, prompt);
     }
@@ -945,25 +961,31 @@ public class ValidTargetService {
     private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,
                                                 List<UUID> alreadySelectedIds,
                                                 List<UUID> validPermanentIds, List<UUID> validPlayerIds) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)) {
             return;
         }
         if (alreadySelectedIds != null && alreadySelectedIds.stream()
-                .map(id -> gameQueryService.findPermanentById(gameData, id))
-                .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
+                .anyMatch(id -> isFlagbearerTarget(gameData, id))) {
             return;
         }
-        List<UUID> flagbearerIds = validPermanentIds.stream()
-                .filter(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent != null && gameQueryService.isFlagbearer(gameData, permanent);
-                })
+        List<UUID> flagbearerPermanentIds = validPermanentIds.stream()
+                .filter(id -> isFlagbearerTarget(gameData, id))
                 .toList();
-        if (flagbearerIds.isEmpty()) {
+        List<UUID> flagbearerPlayerIds = validPlayerIds.stream()
+                .filter(id -> isFlagbearerTarget(gameData, id))
+                .toList();
+        if (flagbearerPermanentIds.isEmpty() && flagbearerPlayerIds.isEmpty()) {
             return;
         }
-        validPermanentIds.retainAll(flagbearerIds);
-        validPlayerIds.clear();
+        validPermanentIds.retainAll(flagbearerPermanentIds);
+        validPlayerIds.retainAll(flagbearerPlayerIds);
+    }
+
+    private boolean isFlagbearerTarget(GameData gameData, UUID targetId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+        return permanent != null
+                ? gameQueryService.isFlagbearer(gameData, permanent)
+                : gameQueryService.isFlagbearer(gameData, targetId);
     }
 
     private List<UUID> computeValidExiledTargetsForAbility(GameData gameData, ActivatedAbility ability,
@@ -1972,6 +1994,10 @@ public class ValidTargetService {
      * Returns true if the permanent is blocked from being targeted by the given controller.
      */
     private boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
+        if (gameQueryService.cantBeAffectedByOwnEffects(gameData, perm, controllerId)) {
+            return true;
+        }
+
         // Shroud (Autumn Willow can hand out a per-player exemption for the turn)
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)
                 && !perm.ignoresShroudFor(controllerId)) {

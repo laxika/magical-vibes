@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "30")
+@CardRegistration(set = "PIO", collectorNumber = "323")
 public class OathOfGideon extends Card {
 
     public OathOfGideon() {

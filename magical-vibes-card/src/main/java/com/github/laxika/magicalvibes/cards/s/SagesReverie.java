@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCrea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FRF", collectorNumber = "23")
+@CardRegistration(set = "PIO", collectorNumber = "324")
 public class SagesReverie extends Card {
 
     public SagesReverie() {

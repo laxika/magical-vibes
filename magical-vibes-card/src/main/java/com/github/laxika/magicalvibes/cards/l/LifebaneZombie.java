@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "101")
+@CardRegistration(set = "PIO", collectorNumber = "95")
 public class LifebaneZombie extends Card {
 
     public LifebaneZombie() {

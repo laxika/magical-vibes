@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "75")
+@CardRegistration(set = "SPG", collectorNumber = "131")
 public class MistbindClique extends Card {
 
     public MistbindClique() {

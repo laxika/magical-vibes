@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalUpkeepStepEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "71")
+@CardRegistration(set = "SPG", collectorNumber = "123")
 public class ParadoxHaze extends Card {
 
     public ParadoxHaze() {

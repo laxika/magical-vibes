@@ -733,6 +733,12 @@ public sealed interface ChoiceContext {
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
+    record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
+        public LegacyWordChoice {
+            options = List.copyOf(options);
+        }
+    }
+
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 
@@ -1648,6 +1654,20 @@ public sealed interface ChoiceContext {
         public PleaForPowerChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Expropriate: the current player voted for time or money. */
+    record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                             List<UUID> moneyVoterIds, int timeVotes, String sourceName)
+            implements ChoiceContext {
+        public static final String TIME = "Time";
+        public static final String MONEY = "Money";
+        public static final List<String> OPTIONS = List.of(TIME, MONEY);
+
+        public ExpropriateChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            moneyVoterIds = List.copyOf(moneyVoterIds);
         }
     }
 

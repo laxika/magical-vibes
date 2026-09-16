@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
@@ -31,6 +32,9 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -1156,6 +1160,23 @@ class CombatDamageServiceTest {
         }
 
         @Test
+        @DisplayName("Rejects negative assignments even when the total equals the creature's power")
+        void rejectsNegativeAssignmentWithCorrectTotal() {
+            Permanent blocker1 = setupPendingAssignment();
+            Permanent blocker2 = gameData.playerBattlefields.get(player2Id).get(1);
+            when(gameQueryService.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+            when(gameQueryService.getEffectiveCombatDamage(eq(gameData), any(Permanent.class)))
+                    .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getPower());
+            int power = gameData.playerBattlefields.get(player1Id).getFirst().getCard().getPower();
+
+            assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
+                    gameData, player1, 0, Map.of(blocker1.getId(), power + 1, blocker2.getId(), -1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("negative");
+            assertThat(gameData.combatDamagePlayerAssignments).isEmpty();
+        }
+
+        @Test
         @DisplayName("Rejects assignment with wrong total damage")
         void rejectsWrongTotalDamage() {
             Permanent blocker1 = setupPendingAssignment();
@@ -1382,6 +1403,28 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("Attached multi-target combat trigger queues slot-by-slot target selection")
+        void attachedMultiTargetTriggerQueuesSlotBySlotSelection() {
+            Permanent creature = addAttacker("Equipped creature", 3, 3);
+            Card equipmentCard = createCard("Two-target Equipment", 0, 0);
+            equipmentCard.setType(CardType.ARTIFACT);
+            equipmentCard.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsPlaneswalkerPredicate(), "Target must be a planeswalker"), 0, 1)
+                    .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DestroyTargetPermanentEffect());
+            equipmentCard.target(TargetFilters.artifact(), 0, 1)
+                    .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DestroyTargetPermanentEffect());
+            Permanent equipment = new Permanent(equipmentCard);
+            equipment.setAttachedTo(creature.getId());
+            gameData.playerBattlefields.get(player2Id).add(equipment);
+            when(triggerCollectionService.needsSlotBySlotTargetSelection(equipmentCard)).thenReturn(true);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class))
+                    .isTrue();
         }
 
         @Test
