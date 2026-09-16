@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Demolish.class, FountainOfYouth.class, GrizzlyBears.class, Mountain.class})
 class DemolishTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -31,7 +33,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
+        harness.castSorcery(player1, 0, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -51,8 +53,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -66,8 +67,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
@@ -81,8 +81,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Fountain of Youth");
         harness.assertInGraveyard(player1, "Fountain of Youth");
@@ -96,8 +95,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertInGraveyard(player1, "Mountain");
@@ -111,8 +109,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -127,7 +124,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
+        harness.castSorcery(player1, 0, 0, targetId);
 
         // Remove target before resolution
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
@@ -148,7 +145,7 @@ class DemolishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

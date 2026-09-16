@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
 import com.github.laxika.magicalvibes.cards.d.DiscipleOfGrace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CabalArchon.class, DiscipleOfGrace.class})
+@CardUsed({CabalArchon.class, DiscipleOfGrace.class, AphettoAlchemist.class})
 @DisplayName("Cabal Archon")
 class CabalArchonTest extends BaseCardTest {
 
@@ -54,6 +55,36 @@ class CabalArchonTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertOnBattlefield(player1, "Cabal Archon");
         harness.assertInGraveyard(player1, "Disciple of Grace");
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canTargetItsController() {
+        addCreatureReady(player1, new CabalArchon());
+        prepareAbility();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Cabal Archon");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a non-Cleric creature")
+    void cannotSacrificeNonCleric() {
+        addCreatureReady(player1, new CabalArchon());
+        Permanent nonCleric = addCreatureReady(player1, new AphettoAlchemist());
+        prepareAbility();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(nonCleric).isIn(gd.playerBattlefields.get(player1.getId()));
+        harness.assertInGraveyard(player1, "Cabal Archon");
     }
 
     @Test

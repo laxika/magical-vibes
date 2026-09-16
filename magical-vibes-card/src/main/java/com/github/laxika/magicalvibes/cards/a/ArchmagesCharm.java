@@ -17,34 +17,38 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "40")
 @CardRegistration(set = "OTP", collectorNumber = "8")
 public class ArchmagesCharm extends Card {
 
     public ArchmagesCharm() {
-        PermanentPredicate eligiblePermanent = new PermanentAllOfPredicate(List.of(
+        PermanentPredicate lowManaNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentMaxManaValuePredicate(1)));
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell",
-                        new CounterSpellEffect()),
+                        new CounterSpellEffect(),
+                        new StackEntryPredicateTargetFilter(
+                                new StackEntryTruePredicate(), "Target must be a spell.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards",
                         new DrawCardForTargetPlayerEffect(2, false, true),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                                "Target must be a player.")),
+                                "Target must be a player")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Gain control of target nonland permanent with mana value 1 or less",
                         GainControlOfTargetEffect.withTargetPredicate(ControlDuration.PERMANENT,
-                                eligiblePermanent),
-                        new PermanentPredicateTargetFilter(
-                                eligiblePermanent,
-                                "Target must be a nonland permanent with mana value 1 or less."))
+                                lowManaNonland),
+                        new PermanentPredicateTargetFilter(lowManaNonland,
+                                "Target must be a nonland permanent with mana value 1 or less"))
         )));
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Traumatize.class)
 class TraumatizeTest extends BaseCardTest {
 
     // ===== Milling =====
@@ -24,10 +26,7 @@ class TraumatizeTest extends BaseCardTest {
         while (deck.size() > 20) {
             deck.removeFirst();
         }
-        int deckSizeBefore = deck.size();
-
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(10);
@@ -44,8 +43,7 @@ class TraumatizeTest extends BaseCardTest {
             deck.removeFirst();
         }
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // 11 / 2 = 5 (rounded down), so 6 remain
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
@@ -63,8 +61,7 @@ class TraumatizeTest extends BaseCardTest {
             deck.removeFirst();
         }
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
         // 5 milled cards + Traumatize itself goes to graveyard after resolving
@@ -83,8 +80,7 @@ class TraumatizeTest extends BaseCardTest {
             deck.removeFirst();
         }
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // 1 / 2 = 0, mills nothing
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -99,8 +95,7 @@ class TraumatizeTest extends BaseCardTest {
 
         gd.playerDecks.get(player2.getId()).clear();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -112,8 +107,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertInGraveyard(player1, "Traumatize");
         assertThat(gd.stack).isEmpty();
@@ -136,8 +130,7 @@ class TraumatizeTest extends BaseCardTest {
         Card thirdCard = deck.get(2);
         Card fourthCard = deck.get(3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Top 2 should be milled, bottom 2 remain
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(thirdCard, fourthCard);

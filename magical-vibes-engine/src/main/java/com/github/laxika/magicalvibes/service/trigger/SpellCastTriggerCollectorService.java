@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpel
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
@@ -2632,6 +2633,9 @@ public class SpellCastTriggerCollectorService {
                     snapshotTriggeringSpell(conditional.wrapped(), spellSnapshot, castingPlayerId,
                             gameData, sourceControllerId),
                     conditional.interveningIf());
+        }
+        if (effect instanceof FlipCoinWinEffect flip && flip.triggeringSpellController()) {
+            return new FlipCoinWinEffect(flip.wrapped(), flip.lost(), true, castingPlayerId);
         }
         if (effect instanceof FlipCoinCopyTriggeringSpellOrDealDamageEffect breechesEffect
                 && breechesEffect.spellSnapshot() == null) {

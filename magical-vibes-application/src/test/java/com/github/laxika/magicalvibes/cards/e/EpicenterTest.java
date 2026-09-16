@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
+import com.github.laxika.magicalvibes.cards.w.WildMongrel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Epicenter")
+@CardUsed({Epicenter.class, Forest.class, WildMongrel.class})
 class EpicenterTest extends BaseCardTest {
 
     @Test
@@ -42,13 +45,46 @@ class EpicenterTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         addLands(player1, 2);
         addLands(player2, 3);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new WildMongrel());
 
         cast();
 
         assertThat(landCount(player1)).isZero();
         assertThat(landCount(player2)).isZero();
-        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Wild Mongrel")).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Six cards in the controller's graveyard do not enable threshold")
+    void sixGraveyardCardsDoNotEnableThreshold() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        List<Permanent> lands = addLands(player2, 2);
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player2, List.of(lands.get(0).getId()));
+
+        assertThat(landCount(player2)).isEqualTo(1);
+        assertThat(landCount(player1)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(TajuruPreserver.class)
+    @DisplayName("Threshold respects an opponent's sacrifice prevention")
+    void thresholdRespectsOpponentSacrificePrevention() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        addLands(player1, 2);
+        addLands(player2, 2);
+        harness.addToBattlefield(player2, new TajuruPreserver());
+
+        cast();
+
+        assertThat(landCount(player1)).isZero();
+        assertThat(landCount(player2)).isEqualTo(2);
+        assertThat(countPermanents(player2, "Tajuru Preserver")).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -92,8 +128,12 @@ class EpicenterTest extends BaseCardTest {
     }
 
     private List<Card> graveyardWithSevenCards() {
-        return List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        return graveyardWithCards(7);
+    }
+
+    private List<Card> graveyardWithCards(int count) {
+        return java.util.stream.IntStream.range(0, count)
+                .mapToObj(i -> (Card) new Forest())
+                .toList();
     }
 }

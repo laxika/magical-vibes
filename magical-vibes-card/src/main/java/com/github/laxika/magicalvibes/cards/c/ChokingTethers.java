@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "74")
 @CardRegistration(set = "A25", collectorNumber = "48")
 @CardRegistration(set = "VMA", collectorNumber = "59")
+@CardRegistration(set = "MH1", collectorNumber = "44")
 public class ChokingTethers extends Card {
 
     public ChokingTethers() {

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.d.DarkwaterCatacombs;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,44 +15,87 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImmobilizingInk.class, DuskImp.class, DarkwaterCatacombs.class})
 class ImmobilizingInkTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature does not untap during its controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent bears = addTappedCreature();
-        addAura(bears);
+        Permanent creature = addTappedCreature();
+        Permanent otherCreature = addTappedCreature();
+        addAura(creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Enchanted creature can pay mana and discard a card to untap")
     void enchantedCreatureCanUntap() {
-        Permanent bears = addTappedCreature();
-        addAura(bears);
-        harness.setHand(player1, List.of(new LlanowarElves()));
+        Permanent creature = addTappedCreature();
+        addAura(creature);
+        harness.setHand(player1, List.of(new DuskImp()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Dusk Imp");
+    }
+
+    @Test
+    @DisplayName("Can cast Immobilizing Ink targeting a creature")
+    void canCastOnCreature() {
+        Permanent creature = addCreatureReady(player1, new DuskImp());
+        harness.setHand(player1, List.of(new ImmobilizingInk()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Immobilizing Ink");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller can activate the granted ability")
+    void enchantedCreatureControllerCanActivateAbility() {
+        Permanent creature = addTappedCreature(player2);
+        addAura(player1, creature);
+        harness.setHand(player2, List.of(new DuskImp()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Dusk Imp");
+    }
+
+    @Test
+    @DisplayName("The untap lock follows an enchanted creature controlled by an opponent")
+    void lockAppliesDuringEnchantedCreatureControllersUntapStep() {
+        Permanent creature = addTappedCreature(player2);
+        addAura(player1, creature);
+
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Removing the Aura removes the granted ability")
     void effectsEndWhenAuraLeaves() {
-        Permanent bears = addTappedCreature();
-        Permanent aura = addAura(bears);
+        Permanent creature = addTappedCreature();
+        Permanent aura = addAura(creature);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -64,25 +107,32 @@ class ImmobilizingInkTest extends BaseCardTest {
     @Test
     @DisplayName("Immobilizing Ink cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new DarkwaterCatacombs());
         harness.setHand(player1, List.of(new ImmobilizingInk()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
     private Permanent addTappedCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
-        bears.tap();
-        return bears;
+        return addTappedCreature(player1);
+    }
+
+    private Permanent addTappedCreature(Player player) {
+        Permanent creature = addCreatureReady(player, new DuskImp());
+        creature.tap();
+        return creature;
     }
 
     private Permanent addAura(Permanent enchantedCreature) {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImmobilizingInk());
+        return addAura(player1, enchantedCreature);
+    }
+
+    private Permanent addAura(Player auraController,
+                              Permanent enchantedCreature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new ImmobilizingInk());
         aura.setAttachedTo(enchantedCreature.getId());
         return aura;
     }

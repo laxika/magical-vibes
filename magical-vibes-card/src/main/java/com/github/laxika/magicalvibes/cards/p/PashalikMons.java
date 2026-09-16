@@ -18,14 +18,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MH1", collectorNumber = "138")
 @CardRegistration(set = "DMR", collectorNumber = "133")
 public class PashalikMons extends Card {
 
     public PashalikMons() {
-        DealDamageToAnyTargetEffect deathDamage = new DealDamageToAnyTargetEffect(1);
-        addEffect(EffectSlot.ON_DEATH, deathDamage);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.GOBLIN), deathDamage));
+                new CardSubtypePredicate(CardSubtype.GOBLIN),
+                new DealDamageToAnyTargetEffect(1)));
+        addEffect(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -34,16 +35,11 @@ public class PashalikMons extends Card {
                         new SacrificePermanentCost(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                                )),
-                                "Sacrifice a Goblin",
-                                false
-                        ),
+                                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN))),
+                                "Sacrifice a Goblin", false),
                         new CreateTokenEffect(
-                                2,
-                                "Goblin", 1, 1, CardColor.RED,
-                                List.of(CardSubtype.GOBLIN), Set.of(), Set.of())
-                ),
+                                2, "Goblin", 1, 1, CardColor.RED,
+                                List.of(CardSubtype.GOBLIN), Set.of(), Set.of())),
                 "{3}{R}, Sacrifice a Goblin: Create two 1/1 red Goblin creature tokens."
         ));
     }
