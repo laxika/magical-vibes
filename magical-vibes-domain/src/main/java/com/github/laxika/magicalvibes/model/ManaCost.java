@@ -391,6 +391,34 @@ public class ManaCost {
     }
 
     /**
+     * Returns this cost with ordinary black mana symbols and black/color hybrid symbols represented
+     * as Phyrexian mana symbols. This is used by static effects that allow their controller to pay
+     * two life instead of paying black mana.
+     */
+    public ManaCost withBlackManaAsPhyrexian() {
+        int blackCost = coloredCosts.getOrDefault(ManaColor.BLACK, 0);
+        if (blackCost == 0 && hybridCosts.stream().noneMatch(h -> h.genericAlternative() < 0
+                && h.colors().contains(ManaColor.BLACK))) {
+            return this;
+        }
+
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        remainingColored.remove(ManaColor.BLACK);
+        Map<ManaColor, Integer> additionalPhyrexian = new EnumMap<>(phyrexianCosts);
+        if (blackCost > 0) {
+            additionalPhyrexian.merge(ManaColor.BLACK, blackCost, Integer::sum);
+        }
+        List<HybridSymbol> remainingHybrids = hybridCosts.stream()
+                .map(hybrid -> hybrid.genericAlternative() < 0
+                        && hybrid.colors().contains(ManaColor.BLACK)
+                        ? new HybridSymbol(hybrid.colors(), hybrid.genericAlternative(), true)
+                        : hybrid)
+                .toList();
+        return new ManaCost(genericCost, remainingColored, additionalPhyrexian, remainingHybrids,
+                snowCost, xSymbolCount, cumulativeUpkeepPayment);
+    }
+
+    /**
      * Pays Phyrexian mana costs. For each Phyrexian symbol, uses colored mana from the pool
      * if available; otherwise the cost must be paid with 2 life per symbol.
      *

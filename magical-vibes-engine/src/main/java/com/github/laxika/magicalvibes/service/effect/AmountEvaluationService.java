@@ -148,6 +148,7 @@ import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
@@ -476,6 +477,8 @@ public class AmountEvaluationService {
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
                     opponentsAttackedThisTurn(gameData, ctx);
+            case OpponentsDealtCombatDamageThisTurn ignored ->
+                    opponentsDealtCombatDamageThisTurn(gameData, ctx);
             case OpponentsWhoLostLifeThisTurn ignored ->
                     opponentsWhoLostLifeThisTurn(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->
@@ -2231,6 +2234,16 @@ public class AmountEvaluationService {
             }
         }
         return count;
+    }
+
+    private int opponentsDealtCombatDamageThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        Set<UUID> damagedPlayers = new HashSet<>();
+        gameData.combatDamageToPlayersThisTurn.values().forEach(damagedPlayers::addAll);
+        return (int) damagedPlayers.stream()
+                .filter(gameData.orderedPlayerIds::contains)
+                .filter(playerId -> !playerId.equals(ctx.controllerId()))
+                .count();
     }
 
     private int opponentsAttackedThisTurn(GameData gameData, AmountContext ctx) {

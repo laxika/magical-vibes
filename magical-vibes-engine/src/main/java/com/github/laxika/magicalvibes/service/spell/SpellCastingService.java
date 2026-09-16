@@ -2737,6 +2737,10 @@ public class SpellCastingService {
                 .flatMap(a -> a.getCost(ExileCardFromGraveyardCastingCost.class))
                 .isPresent();
         boolean usingBestowCost = hasBestowCost && (forceAlternateCost || targetId != null);
+        boolean usingGrantedProwl = !fromGraveyard && forceAlternateCost
+                && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
+                && gameQueryService.findGrantedProwlAlternateCast(
+                gameData, playerId, handEarly.get(cardIndex)).isPresent();
         boolean usingSharedColorDiscardAlternativeCost = !fromGraveyard
                 && sharedColorDiscardHandCardIndex != null
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
@@ -2753,6 +2757,7 @@ public class SpellCastingService {
                 ? discardHandCardIndex != null ? discardHandCardIndex : sharedColorDiscardHandCardIndex
                 : null;
         boolean usingAlternateCost = usingBestowCost || forceAlternateCost
+                || usingGrantedProwl
                 || hasGraveyardExileAlternateCost
                 || usingCollectEvidenceAlternativeCost
                 || (!alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction)
@@ -2879,6 +2884,7 @@ public class SpellCastingService {
                 // Allow selected creatures to supply generic mana reduction below.
             } else if (usingAlternateCost && (usingCollectEvidenceAlternativeCost
                     || cardCheck.getCastingOption(AlternateHandCast.class).isPresent()
+                    || usingGrantedProwl
                     || cardCheck.getCastingOption(BestowCast.class).isPresent()
                     || usingSharedColorDiscardAlternativeCost
                     || usingWebSlingingCost)) {
@@ -2965,12 +2971,16 @@ public class SpellCastingService {
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
+        AlternateHandCast alternateHandCast = usingGrantedProwl
+                ? gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card).orElseThrow(
+                () -> new IllegalStateException("Card does not have a granted prowl cost"))
+                : card.getCastingOption(AlternateHandCast.class).orElse(null);
         if (usingAlternateCost) {
             int declaredTargetCount = targetIds.size() + (targetId == null ? 0 : 1);
             if (declaredTargetCount < card.getMinTargetsWhenCastForAlternateCost()) {
                 throw new IllegalStateException("Spell requires additional targets when cast for its alternate cost");
             }
-            card.getCastingOption(AlternateHandCast.class)
+            Optional.ofNullable(alternateHandCast)
                     .map(AlternateHandCast::alternateTargetFilter)
                     .ifPresent(card::setCastTimeTargetFilter);
         }
@@ -3240,7 +3250,7 @@ public class SpellCastingService {
                 additionalSpellCostService.validateCollectEvidenceCost(
                         gameData, player, card, collectEvidenceAlternativeCost, exileGraveyardCardIndices);
             } else {
-            AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
+            AlternateHandCast altCast = Optional.ofNullable(alternateHandCast)
                     .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
 
             if (altCast.getCost(EachOpponentGainsLifeCastingCost.class).isPresent()
@@ -4254,7 +4264,8 @@ public class SpellCastingService {
                     payCollectEvidenceCost(gameData, player, card, collectEvidenceAlternativeCost,
                             paymentCostSelection.exileGraveyardCardIndices());
                 } else {
-                    webSlingingReturnedCreatureManaValue = payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds,
+                    webSlingingReturnedCreatureManaValue = payAlternateCastingCost(gameData, player, card, alternateHandCast,
+                            alternateCostSacrificePermanentIds,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndices : discardHandCardIndices,
                             exileGraveyardCardIndex, cardIndex, manaCostX);
@@ -4371,7 +4382,7 @@ public class SpellCastingService {
                 entry.setEvoked(true);
                 // Prowl (CR 702.75): flag the entry so a creature's "if its prowl cost was paid" ETB
                 // trigger can gate on it. Only set for actual prowl alternate casts.
-                AlternateHandCast altHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+                AlternateHandCast altHandCast = alternateHandCast;
                 if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
                     entry.setProwl(true);
                 }
@@ -4573,7 +4584,8 @@ public class SpellCastingService {
                     payCollectEvidenceCost(gameData, player, card, collectEvidenceAlternativeCost,
                             paymentCostSelection.exileGraveyardCardIndices());
                 } else {
-                    webSlingingReturnedCreatureManaValue = payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds,
+                    webSlingingReturnedCreatureManaValue = payAlternateCastingCost(gameData, player, card, alternateHandCast,
+                            alternateCostSacrificePermanentIds,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndices : discardHandCardIndices,
                             exileGraveyardCardIndex, cardIndex, resolvedXValue);
@@ -5663,7 +5675,7 @@ public class SpellCastingService {
             // paid" SPELL effect can gate on it (e.g. Notorious Throng's extra turn).
             if (usingAlternateCost && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setAlternateCost(true);
-                AlternateHandCast altHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+                AlternateHandCast altHandCast = alternateHandCast;
                 if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
                     gameData.stack.getLast().setProwl(true);
                 }
@@ -10430,6 +10442,10 @@ public class SpellCastingService {
 
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
                 gameData, playerId, card, new ManaCost(totalMana));
+        boolean blackManaLifePaymentPermission = gameQueryService.canPayBlackManaWithLife(gameData, playerId);
+        if (blackManaLifePaymentPermission) {
+            cost = cost.withBlackManaAsPhyrexian();
+        }
 
         if (card.isRequiresBasicLandMana()) {
             if (!cost.canPayBasicLandOnly(pool, effectiveXValue, additionalCost)) {
@@ -10448,7 +10464,8 @@ public class SpellCastingService {
         boolean usesPendingAnyManaType = pendingAnyManaType && !anyManaType && !battlefieldAnyManaType
                 && !baseMana.isEmpty();
         if ((convokeContributions == null || convokeContributions.isEmpty())
-                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)) {
+                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
+                && !(blackManaLifePaymentPermission && cost.hasPhyrexianMana())) {
             if (usesPendingAnyManaType && !additionalCostsMana.isEmpty()) {
                 return payBaseManaCostWithPendingAnyManaType(gameData, playerId, card, baseMana,
                         additionalCostsMana, effectiveXValue, additionalCost, before, pool);
@@ -10507,6 +10524,9 @@ public class SpellCastingService {
             if (alternativeCost != null) {
                 ManaCost altCost = castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, new ManaCost(alternativeCost.manaCost() + additionalCostsMana));
+                if (blackManaLifePaymentPermission) {
+                    altCost = altCost.withBlackManaAsPhyrexian();
+                }
                 if (!altCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                     throw new IllegalStateException("Not enough mana to pay additional spell costs");
                 }
@@ -12313,13 +12333,15 @@ public class SpellCastingService {
         return attacker.getAttackTarget();
     }
 
-    private Integer payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds,
+    private Integer payAlternateCastingCost(GameData gameData, Player player, Card card,
+                                            AlternateHandCast alternateHandCast,
+                                            List<UUID> sacrificePermanentIds,
                                             Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
                                             Integer exileGraveyardCardIndex, int spellCardIndex, int xValue) {
         Integer returnedCreatureManaValue = webSlingingReturnedCreatureManaValue(
                 gameData, player.getId(), card, sacrificePermanentIds);
         gameData.addSpellCastManaSpent(card.getId(),
-                computeAlternateCastingManaPayment(gameData, player, card, sacrificePermanentIds,
+                computeAlternateCastingManaPayment(gameData, player, card, alternateHandCast, sacrificePermanentIds,
                         discardHandCardIndex, discardHandCardIndices, exileGraveyardCardIndex,
                         spellCardIndex, xValue));
         return returnedCreatureManaValue;
@@ -12440,11 +12462,13 @@ public class SpellCastingService {
         return new ManaCost(sacrificed.getCard().getManaCost());
     }
 
-    private int computeAlternateCastingManaPayment(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds,
+    private int computeAlternateCastingManaPayment(GameData gameData, Player player, Card card,
+                                                   AlternateHandCast altCast, List<UUID> sacrificePermanentIds,
                                                    Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
                                                    Integer exileGraveyardCardIndex, int spellCardIndex, int xValue) {
-        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
-                .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
+        if (altCast == null) {
+            throw new IllegalStateException("Card does not have an alternate casting cost");
+        }
         UUID playerId = player.getId();
         int alternateCostModifier = castingCostService.getAlternateHandCastCostModifier(
                 gameData, playerId, card);

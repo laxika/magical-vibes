@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsIn
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -4512,6 +4513,8 @@ public class TargetLegalityService {
     public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId,
                                           PlayerPredicate predicate, UUID sourcePermanentId) {
         return switch (predicate) {
+            case PlayerIdPredicate player -> player.playerId() != null
+                    && player.playerId().equals(targetPlayerId);
             case PlayerRelationPredicate relationPredicate -> switch (relationPredicate.relation()) {
                 case ANY -> true;
                 case SELF -> controllerId != null && controllerId.equals(targetPlayerId);

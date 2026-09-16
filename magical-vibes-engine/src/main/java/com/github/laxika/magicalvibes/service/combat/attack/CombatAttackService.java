@@ -2007,6 +2007,9 @@ public class CombatAttackService {
                         );
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                        anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setTriggeringPermanentControllerId(
+                                gameQueryService.findPermanentController(gameData, attacker.getId()));
                         gameData.stack.add(anyAttackTrigger);
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());

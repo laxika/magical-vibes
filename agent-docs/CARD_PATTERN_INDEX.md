@@ -53,6 +53,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
@@ -65,6 +66,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | metalcraft, morbid, conditional | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | quest counter, opponent end step trigger, life-loss condition | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| postcombat main may-pay-life draw based on opponents dealt combat damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |

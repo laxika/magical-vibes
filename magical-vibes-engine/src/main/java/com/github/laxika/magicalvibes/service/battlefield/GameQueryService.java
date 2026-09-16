@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -215,6 +218,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedE
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.ProwlGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
@@ -1165,6 +1169,35 @@ public class GameQueryService {
         return Optional.empty();
     }
 
+    /** Returns the prowl alternate cast granted to a matching spell by a permanent its controller controls. */
+    public Optional<AlternateHandCast> findGrantedProwlAlternateCast(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || card == null || card.isToken()) {
+            return Optional.empty();
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                        gameData, permanent, playerId, effect);
+                if (activeEffect instanceof ProwlGrantingEffect grant
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, grant.prowlGrantFilter(), null, gameData, playerId)) {
+                    Set<CardSubtype> creatureTypes = getCardSubtypes(card, gameData, playerId).stream()
+                            .filter(this::isCreatureSubtype)
+                            .collect(java.util.stream.Collectors.toSet());
+                    if (!creatureTypes.isEmpty()) {
+                        return Optional.of(new AlternateHandCast(
+                                List.of(new ManaCastingCost(grant.prowlCost())), creatureTypes));
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /**
      * Returns the miracle cost granted to {@code card} by a permanent the drawing player controls,
      * or empty if no grant applies. Native miracle is intentionally not consulted here.
@@ -1813,6 +1846,16 @@ public class GameQueryService {
     /** Returns true when a global static effect lets the player spend mana as any color. */
     public boolean canSpendManaAsAnyColor(GameData gameData, UUID playerId) {
         return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
+    }
+
+    /** Returns whether the player controls a permanent allowing black mana to be paid with life. */
+    public boolean canPayBlackManaWithLife(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown())
+                .filter(permanent -> !hasLostAllAbilities(gameData, permanent))
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PayBlackManaWithLifeEffect.class::isInstance));
     }
 
     /** Returns whether a player may look at opposing face-down creatures. */

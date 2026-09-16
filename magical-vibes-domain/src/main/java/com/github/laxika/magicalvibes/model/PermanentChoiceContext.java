@@ -1022,52 +1022,64 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        Permanent sourcePermanentSnapshot, boolean optionalTarget,
                                        UUID triggeringPermanentId, UUID permanentTargetControllerId,
                                        UUID choosingPlayerId, Integer triggeringSpellManaValue,
-                                       com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource)
+                                       com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                       boolean nonTargeting)
             implements PermanentChoiceContext {
         public SpellTargetTriggerAnyTarget copyPlanarSnapshot() {
             return planarSource == null ? this : new SpellTargetTriggerAnyTarget(sourceCard, controllerId,
                     effects, playerTargetOnly, targetFilter, spellManaSpentX, sourcePermanentId,
                     sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
-                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy());
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(), nonTargeting);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                 boolean playerTargetOnly, TargetFilter targetFilter, int spellManaSpentX,
                 UUID sourcePermanentId, Permanent sourcePermanentSnapshot, boolean optionalTarget,
-                UUID triggeringPermanentId, UUID permanentTargetControllerId, UUID choosingPlayerId,
-                com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
+                                       UUID triggeringPermanentId, UUID permanentTargetControllerId, UUID choosingPlayerId,
+                                       com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
-                    permanentTargetControllerId, choosingPlayerId, null, planarSource);
+                    permanentTargetControllerId, choosingPlayerId, null, planarSource, false);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter, int spellManaSpentX,
+                                           UUID sourcePermanentId, Permanent sourcePermanentSnapshot, boolean optionalTarget,
+                                           UUID triggeringPermanentId, UUID permanentTargetControllerId,
+                                           UUID choosingPlayerId, Integer triggeringSpellManaValue,
+                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
+                    sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource, false);
         }
 
         /** Convenience constructor for any-target (permanents + players). */
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, false, null, 0, null, null, false, null, null, controllerId, null, null);
+            this(sourceCard, controllerId, effects, false, null, 0, null, null, false, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            boolean playerTargetOnly) {
-            this(sourceCard, controllerId, effects, playerTargetOnly, null, 0, null, null, false, null, null, controllerId, null, null);
+            this(sourceCard, controllerId, effects, playerTargetOnly, null, 0, null, null, false, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            boolean playerTargetOnly, TargetFilter targetFilter) {
-            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, 0, null, null, false, null, null, controllerId, null, null);
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, 0, null, null, false, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            boolean playerTargetOnly, TargetFilter targetFilter,
                                            int spellManaSpentX) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
-                    spellManaSpentX, null, null, false, null, null, controllerId, null, null);
+                    spellManaSpentX, null, null, false, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            boolean playerTargetOnly, TargetFilter targetFilter,
                                            int spellManaSpentX, UUID sourcePermanentId) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
-                    spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId, null, null);
+                    spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1075,7 +1087,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            int spellManaSpentX, UUID sourcePermanentId,
                                            Permanent sourcePermanentSnapshot) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
-                    spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, false, null, null, controllerId, null, null);
+                    spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, false, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1086,7 +1098,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            UUID choosingPlayerId) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
-                    permanentTargetControllerId, choosingPlayerId, null, null);
+                    permanentTargetControllerId, choosingPlayerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1094,7 +1106,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            int spellManaSpentX, UUID sourcePermanentId,
                                            boolean optionalTarget) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
-                    spellManaSpentX, sourcePermanentId, null, optionalTarget, null, null, controllerId, null, null);
+                    spellManaSpentX, sourcePermanentId, null, optionalTarget, null, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1102,7 +1114,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            int spellManaSpentX, UUID sourcePermanentId,
                                            UUID triggeringPermanentId) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
-                    spellManaSpentX, sourcePermanentId, null, false, triggeringPermanentId, null, controllerId, null, null);
+                    spellManaSpentX, sourcePermanentId, null, false, triggeringPermanentId, null, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1111,13 +1123,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean optionalTarget, UUID permanentTargetControllerId) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
                     spellManaSpentX, sourcePermanentId, null, optionalTarget, null,
-                    permanentTargetControllerId, controllerId, null, null);
+                    permanentTargetControllerId, controllerId, null, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID sourcePermanentId, UUID choosingPlayerId) {
             this(sourceCard, controllerId, effects, false, null, 0, sourcePermanentId, null,
-                    false, null, null, choosingPlayerId, null, null);
+                    false, null, null, choosingPlayerId, null, null, false);
         }
     }
 

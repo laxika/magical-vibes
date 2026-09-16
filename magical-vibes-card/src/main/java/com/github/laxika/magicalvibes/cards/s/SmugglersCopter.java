@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "235")
+@CardRegistration(set = "FCA", collectorNumber = "62")
 public class SmugglersCopter extends Card {
 
     public SmugglersCopter() {

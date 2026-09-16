@@ -40,6 +40,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CreateTokenCopyOfTargetPermanentEffect}) knows which creature to copy. Checked in
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
     ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a nontoken creature enters under your control" for an Eminence ability whose
+     *  source card is in the controller's command zone. Checked in
+     *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. */
+    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     /** "Whenever one or more tokens you control enter the battlefield." */
     ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
@@ -961,6 +965,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  on the battlefield at the start of that resolution (sacrificing itself still counts).
      *  Fired from the exploit sacrifice completion path. Used by Overcharged Amalgam. */
     ON_EXPLOIT,
+    /** Triggers whenever a creature controlled by this permanent's controller exploits a creature. */
+    ON_ALLY_CREATURE_EXPLOITS,
     /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
      *  creature. Fired after the exploit sacrifice completes. */
     ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
@@ -1359,5 +1365,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_BECOMES_SADDLED,
     ON_ALLY_CREATURE_MUTATES,
     ON_SELF_MUTATES,
-    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE
+    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
+    /** Global temporary trigger for any creature becoming tapped. */
+    ON_ANY_CREATURE_BECOMES_TAPPED
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToTappedBattlefieldElseDrawEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,7 +52,7 @@ public class RevealTopCardLandToTappedBattlefieldElseDrawEffectHandler implement
 
         if (topCard.hasType(CardType.LAND)) {
             library.removeFirst();
-            Permanent permanent = new Permanent(topCard);
+            Permanent permanent = new Permanent(topCard, Zone.LIBRARY);
             permanent.tap();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, topCard);

@@ -361,6 +361,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 |-----------|-------------|---------|
 | `PlayerAttackedThisTurnPredicate` | `()` | players who declared at least one attacker this turn (evaluated against `GameData.playersDeclaredAttackersThisTurn`). Used by Fire and Brimstone's "target player who attacked this turn" |
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
+| `PlayerIdPredicate` | `(UUID)` | exactly the specified player; useful after an effect has randomly selected a player |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerCastSorceryThisTurnPredicate` | `()` | players who cast at least one sorcery spell this turn (evaluated against `GameData.getSpellsCastThisTurn`). Used by Backdraft's player target |
 | `OpponentPreviouslyDamagedBySourcePredicate` | `()` | opponents previously dealt damage by the ability's own source permanent during the game (evaluated against the durable `GameData.damageRecipientsBySource` record). Source-relative; used by Diseased Vermin's upkeep trigger |

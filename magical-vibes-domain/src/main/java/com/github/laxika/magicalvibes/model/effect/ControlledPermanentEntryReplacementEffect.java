@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Map;
+
 /**
  * Capability for a static effect that changes how matching permanents enter the battlefield.
  */
@@ -23,6 +25,18 @@ public interface ControlledPermanentEntryReplacementEffect extends CardEffect {
 
     default int additionalCounterCount(GameData gameData, Permanent enteringPermanent) {
         return additionalCounterCount(enteringPermanent);
+    }
+
+    /**
+     * Returns the counters this replacement adds, keyed by counter kind. Most entry replacements
+     * add one kind and use the count methods above; effects that copy counter kinds can override
+     * this method.
+     */
+    default Map<CounterType, Integer> additionalCounters(GameData gameData, Permanent source,
+                                                          Permanent enteringPermanent) {
+        int count = additionalCounterCount(gameData, enteringPermanent);
+        CounterType type = counterType();
+        return type == null || count <= 0 ? Map.of() : Map.of(type, count);
     }
 
 

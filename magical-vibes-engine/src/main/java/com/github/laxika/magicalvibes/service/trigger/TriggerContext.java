@@ -219,8 +219,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
-    /** Context for a creature controlled by a player exploiting a nontoken creature. */
-    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard)
+    /** Context for a creature controlled by a player exploiting another creature. */
+    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard,
+                           int exploitedPower)
             implements TriggerContext {}
 
     record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
