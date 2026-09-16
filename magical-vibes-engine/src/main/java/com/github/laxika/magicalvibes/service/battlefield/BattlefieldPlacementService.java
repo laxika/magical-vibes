@@ -204,6 +204,7 @@ public class BattlefieldPlacementService {
         boolean kicked = request.kicked();
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
         EnterBattlefieldOnDiscardEffect discardReplacement = request.discardReplacement();
+        gameData.restoreBombardmentCardForBattlefield(permanent);
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
@@ -1671,13 +1672,17 @@ public class BattlefieldPlacementService {
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
                     DynamicAmount dynamicAmount = replacement.additionalCounterAmount();
-                    int replacementCount = dynamicAmount == null
-                            ? replacement.additionalCounterCount(gameData, permanent)
-                            : amountEvaluationService.evaluate(gameData, dynamicAmount,
-                                    new AmountContext(controllerId, source, null, 0, 0));
-                    CounterType counterType = replacement.counterType();
-                    if (counterType != null) {
-                        additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
+                    if (dynamicAmount == null) {
+                        replacement.additionalCounters(gameData, source, permanent).forEach(
+                                (counterType, replacementCount) -> additionalCounters.merge(
+                                        counterType, Math.max(0, replacementCount), Integer::sum));
+                    } else {
+                        CounterType counterType = replacement.counterType();
+                        int replacementCount = amountEvaluationService.evaluate(gameData, dynamicAmount,
+                                new AmountContext(controllerId, source, null, 0, 0));
+                        if (counterType != null) {
+                            additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
+                        }
                     }
                 }
             }

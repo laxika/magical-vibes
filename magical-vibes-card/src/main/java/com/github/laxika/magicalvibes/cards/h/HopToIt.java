@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BLB", collectorNumber = "16")
+@CardRegistration(set = "SOA", collectorNumber = "6")
 public class HopToIt extends Card {
 
     public HopToIt() {

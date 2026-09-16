@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "TSB", collectorNumber = "40")
 @CardRegistration(set = "LEG", collectorNumber = "94")
+@CardRegistration(set = "SPG", collectorNumber = "124")
 public class Darkness extends Card {
 
     public Darkness() {

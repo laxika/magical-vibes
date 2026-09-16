@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "239")
+@CardRegistration(set = "PIO", collectorNumber = "256")
 public class HaloScarab extends Card {
 
     public HaloScarab() {

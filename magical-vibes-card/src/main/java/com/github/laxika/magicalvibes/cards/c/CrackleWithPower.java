@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 @CardRegistration(set = "STX", collectorNumber = "95")
 @CardRegistration(set = "OTP", collectorNumber = "22")
 @CardRegistration(set = "OTP", collectorNumber = "71")
+@CardRegistration(set = "SOA", collectorNumber = "42")
 public class CrackleWithPower extends Card {
 
     public CrackleWithPower() {

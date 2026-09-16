@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * Per CR 701.9a/b, each creature gets +X/+Y where X and Y are that creature's power and toughness
  * as this ability resolves (evaluated independently per creature).
  */
-public record DoubleAllOwnCreaturesPowerToughnessEffect() implements CardEffect {
+public record DoubleAllOwnCreaturesPowerToughnessEffect() implements CardEffect, DoublingEffect {
 }

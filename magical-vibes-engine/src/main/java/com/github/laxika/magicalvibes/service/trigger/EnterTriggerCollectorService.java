@@ -646,6 +646,23 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    private boolean handleAllyTokenEnterCardConditional(TriggerMatchContext match,
+                                                         TriggeringCardConditionalEffect conditional,
+                                                         TriggerContext ctx) {
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        for (UUID permanentId : tokensEnter.permanentIds()) {
+            Permanent token = gameQueryService.findPermanentById(match.gameData(), permanentId);
+            if (token != null && predicateEvaluationService.matchesCardPredicate(
+                    token.getCard(), conditional.predicate(), null,
+                    match.gameData(), match.controllerId())) {
+                return handleTokenEnterDefault(match, conditional.wrapped(), ctx);
+            }
+        }
+        return false;
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
@@ -1070,10 +1087,11 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
         int eventValue = mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect
                 ? pe.enteringCard().getManaValue() : 0;
         if (mayPay.sourceIsTriggeringPermanent()) {
@@ -1098,7 +1116,8 @@ public class EnterTriggerCollectorService {
                 ? pe.mayPayTargetCardId()
                 : null;
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId, null,
+            UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId, sourcePermanentId,
                     eventValue);
         }
         logTriggered(match);

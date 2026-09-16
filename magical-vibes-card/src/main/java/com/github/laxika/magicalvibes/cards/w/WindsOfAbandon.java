@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "37")
+@CardRegistration(set = "SOA", collectorNumber = "12")
 public class WindsOfAbandon extends Card {
 
     public WindsOfAbandon() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChos
 @CardRegistration(set = "MM2", collectorNumber = "20")
 @CardRegistration(set = "V15", collectorNumber = "9")
 @CardRegistration(set = "MB2", collectorNumber = "12")
+@CardRegistration(set = "AA4", collectorNumber = "3")
 public class IonaShieldOfEmeria extends Card {
 
     public IonaShieldOfEmeria() {

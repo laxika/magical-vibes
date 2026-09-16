@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "116")
 @CardRegistration(set = "IMA", collectorNumber = "121")
+@CardRegistration(set = "PIO", collectorNumber = "129")
 public class CoordinatedAssault extends Card {
 
     public CoordinatedAssault() {

@@ -34,6 +34,7 @@ public final class AiInteractionStrategies {
         register(new PutCardsFromHandOnLibraryDestinationChoiceAiStrategy());
         register(new CounteredSpellLibraryDestinationChoiceAiStrategy());
         register(new LibraryReorderAiStrategy());
+        register(new TargetPlayerHandOrderChoiceAiStrategy());
         register(new SpatialMergingCardOrderAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
         register(new InvokeCalamityCastChoiceAiStrategy());
@@ -52,6 +53,8 @@ public final class AiInteractionStrategies {
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new TargetedHandBattlefieldChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());
+        register(new CommanderReturnChoiceAiStrategy());
+        register(new CommanderReplacementChoiceAiStrategy());
         register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());
         register(new PutCardExiledWithSourceIntoGraveyardCostChoiceAiStrategy());
         register(new BrilliantUltimatumPileSeparationChoiceAiStrategy());

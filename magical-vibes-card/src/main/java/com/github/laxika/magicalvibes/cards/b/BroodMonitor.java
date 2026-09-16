@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "164")
+@CardRegistration(set = "PIO", collectorNumber = "345")
 public class BroodMonitor extends Card {
 
     private static final CreateTokenEffect ELDRAZI_SCION = new CreateTokenEffect(

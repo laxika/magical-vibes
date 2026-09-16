@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "110")
+@CardRegistration(set = "PIO", collectorNumber = "150")
 public class OutpostSiege extends Card {
 
     private static final String KHANS = "Khans";

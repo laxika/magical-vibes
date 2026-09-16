@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 @CardRegistration(set = "5ED", collectorNumber = "387")
 @CardRegistration(set = "SUM", collectorNumber = "261")
 @CardRegistration(set = "3ED", collectorNumber = "261")
+@CardRegistration(set = "SPG", collectorNumber = "158")
 public class LibraryOfLeng extends Card {
 
     public LibraryOfLeng() {

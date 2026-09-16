@@ -67,11 +67,13 @@ class AtogatogTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Atogatog());
         Permanent grizzlyBears = addCreatureReady(player1, new GrizzlyBears());
 
+        addCreatureReady(player1, new Atog());
+
         harness.activateAbility(player1, 0, null, null);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, grizzlyBears.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Atog creature");
+                .hasMessageContaining("Invalid permanent");
 
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Atogatog"));
         harness.passBothPriorities();

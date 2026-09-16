@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "MH1", collectorNumber = "116")
 @CardRegistration(set = "TSR", collectorNumber = "336")
 @CardRegistration(set = "DMR", collectorNumber = "110")
+@CardRegistration(set = "FCA", collectorNumber = "11")
 public class YawgmothThranPhysician extends Card {
 
     public YawgmothThranPhysician() {

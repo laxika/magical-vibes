@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "84")
 @CardRegistration(set = "W17", collectorNumber = "16")
+@CardRegistration(set = "MB1", collectorNumber = "84")
 @CardRegistration(set = "SIR", collectorNumber = "102")
 public class CertainDeath extends Card {
 

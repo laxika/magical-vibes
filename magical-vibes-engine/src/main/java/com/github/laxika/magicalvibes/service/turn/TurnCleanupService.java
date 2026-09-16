@@ -103,6 +103,7 @@ public class TurnCleanupService {
         returnPermanentsFlaggedForCleanup(gameData);
         removeCountersScheduledForCleanup(gameData);
         clearSpellTypeRestrictionsEndingThisTurn(gameData);
+        gameData.restoreBombardmentCards();
         resetEndOfTurnModifiers(gameData);
         expireControlAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
@@ -265,6 +266,7 @@ public class TurnCleanupService {
         gameData.channelHarmShields.clear();
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
+        gameData.comeuppanceDamagePreventionShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
@@ -364,8 +366,9 @@ public class TurnCleanupService {
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
-                !watcher.untilEndOfNextTurn()
-                        || (gameData.activePlayerId.equals(watcher.controllerId())
+                (!watcher.untilEndOfNextTurn() && !watcher.untilNextTurn())
+                        || (watcher.untilEndOfNextTurn()
+                        && gameData.activePlayerId.equals(watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
@@ -448,6 +451,8 @@ public class TurnCleanupService {
         gameData.outsideGamePlayPermissions.clear();
         gameData.graveyardPlayFilterPermissionsThisTurn.clear();
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
+        gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
+        gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "180")
+@CardRegistration(set = "OMB", collectorNumber = "35")
 public class HuntersInsight extends Card {
 
     public HuntersInsight() {

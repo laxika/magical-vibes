@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Static effect that multiplies damage dealt by matching sources. By default, matching sources
  * must be controlled by the permanent carrying this effect.
  */
-public interface SourceDamageMultiplyingEffect extends CardEffect {
+public interface SourceDamageMultiplyingEffect extends DoublingEffect {
 
     int damageMultiplier();
 

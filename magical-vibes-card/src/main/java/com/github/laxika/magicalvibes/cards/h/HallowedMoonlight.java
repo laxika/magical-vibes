@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUncastEnteringCreaturesEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "16")
+@CardRegistration(set = "PIO", collectorNumber = "359")
 public class HallowedMoonlight extends Card {
 
     public HallowedMoonlight() {

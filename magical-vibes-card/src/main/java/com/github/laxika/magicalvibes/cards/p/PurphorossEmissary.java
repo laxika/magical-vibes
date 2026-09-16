@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "136")
 @CardRegistration(set = "2X2", collectorNumber = "121")
+@CardRegistration(set = "PIO", collectorNumber = "152")
 public class PurphorossEmissary extends Card {
 
     public PurphorossEmissary() {

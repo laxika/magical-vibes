@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
             // Search prevented — still execute remaining spell steps per rules:
             // target puts hand on top of library, then library is shuffled.
             librarySearchSupport.putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
-            Collections.shuffle(targetDeck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String shuffleLog = targetName + "'s library is shuffled.";
             gameLogService.append(gameData, GameLog.text(shuffleLog));
             return;
@@ -59,7 +60,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
         if (handSize == 0) {
             String logMsg = targetName + " has no cards in hand. " + targetName + "'s library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
-            Collections.shuffle(targetDeck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             return;
         }
 

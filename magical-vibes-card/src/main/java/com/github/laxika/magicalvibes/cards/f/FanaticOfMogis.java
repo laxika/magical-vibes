@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 
 @CardRegistration(set = "THS", collectorNumber = "121")
+@CardRegistration(set = "PIO", collectorNumber = "295")
 public class FanaticOfMogis extends Card {
 
     public FanaticOfMogis() {

@@ -46,15 +46,15 @@ class SkirkCommandoTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(target.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
@@ -70,14 +70,15 @@ class SkirkCommandoTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(target.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(ownCreature.getMarkedDamage()).isZero();
@@ -94,14 +95,15 @@ class SkirkCommandoTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(validTarget.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(validTarget.getId()));
+        harness.handlePermanentChosen(player1, validTarget.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(validTarget.getMarkedDamage()).isEqualTo(2);
         assertThat(protectedTarget.getMarkedDamage()).isZero();
@@ -116,6 +118,8 @@ class SkirkCommandoTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 

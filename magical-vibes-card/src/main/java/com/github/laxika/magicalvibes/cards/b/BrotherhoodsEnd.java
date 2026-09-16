@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "128")
+@CardRegistration(set = "SOA", collectorNumber = "39")
 public class BrotherhoodsEnd extends Card {
 
     public BrotherhoodsEnd() {

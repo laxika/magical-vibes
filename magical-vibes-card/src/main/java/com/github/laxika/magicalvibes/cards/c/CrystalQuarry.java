@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "318")
+@CardRegistration(set = "EOS", collectorNumber = "10")
+@CardRegistration(set = "EOS", collectorNumber = "55")
+@CardRegistration(set = "EOS", collectorNumber = "100")
+@CardRegistration(set = "EOS", collectorNumber = "145")
 public class CrystalQuarry extends Card {
 
     public CrystalQuarry() {

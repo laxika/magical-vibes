@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "143")
+@CardRegistration(set = "PIO", collectorNumber = "193")
 public class SeedGuardian extends Card {
 
     public SeedGuardian() {

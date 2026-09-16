@@ -9,6 +9,42 @@
     </div>
   </header>
 
+  <section class="format-panel">
+    <div class="toolbar-controls">
+      <label>Format <select [ngModel]="format()" (ngModelChange)="changeFormat($event)">
+        @for (format of formats; track format) { <option [value]="format">{{ format }}</option> }
+      </select></label>
+      <label>Open saved deck <select (change)="loadDeck($any($event.target).value)">
+        <option value="">Choose a deck</option>
+        @for (deck of savedDecks; track deck.id) { <option [value]="deck.id">{{ deck.name }} / {{ deck.format || 'CASUAL' }}</option> }
+      </select></label>
+      <label>Add cards to <select [ngModel]="addTo()" (ngModelChange)="addTo.set($event)">
+        <option value="main">Main deck</option><option value="sideboard">Sideboard</option>
+      </select></label>
+      <button (click)="newDeck()" [disabled]="loading()">New deck</button>
+      <button class="btn-save" (click)="validateDeck()">Validate deck</button>
+    </div>
+    @if (error()) { <p role="alert">{{ error() }}</p> }
+    @if (validation(); as result) {
+      <div aria-live="polite">
+        <p>{{ result.errors.length ? 'Saved drafts are allowed. Fix these issues before playing:' : 'Valid for the selected format.' }}</p>
+        @for (error of result.errors; track $index) { <p class="validation-error">{{ error }}</p> }
+        @if (result.legalityUpdatedAt) { <small>Legality data: {{ result.legalityUpdatedAt | date:'medium' }}</small> }
+      </div>
+    }
+    @if (format() === 'COMMANDER' || commander()) {
+      <h2>Commander: {{ deckCardCount() + (commander() ? 1 : 0) }}/100 cards</h2>
+      @if (commander(); as card) {
+        <div class="commander-preview"><app-card-display [card]="toCard(card)" [preview]="true" /></div>
+        <button (click)="clearCommander()">Return commander to main deck</button>
+      } @else { <p>Choose a commander from your main deck below. One commander per deck is supported.</p> }
+    }
+    <h2>Sideboard: {{ sideboardCount() }} cards</h2>
+    @for (entry of sideboard(); track entry.cardInfo.setCode + entry.cardInfo.collectorNumber) {
+      <button (click)="removeSideboard($index)" title="Remove one copy">{{ entry.count }} / {{ entry.cardInfo.name }} (remove)</button>
+    }
+  </section>
+
   <!-- Card Browser (top panel) -->
   <section class="cards-panel">
     <div class="panel-toolbar">
@@ -138,7 +174,7 @@
       <button
         class="btn-save"
         (click)="openSavePopup()"
-        [disabled]="deckEntries().length === 0"
+        [disabled]="saving()"
       >Save Deck</button>
     </div>
 
@@ -151,6 +187,9 @@
             <app-card-display [card]="toCard(displayInfo(entry.cardInfo))" [artFace]="isFlipped(entry.cardInfo) ? 'back' : 'front'" [preview]="true" />
             @if (entry.cardInfo.backFace) {
               <button class="flip-face-btn" (click)="toggleFlip(entry.cardInfo, $event)" title="Switch face">&#10561;</button>
+            }
+            @if (format() === 'COMMANDER') {
+              <button class="choose-commander" (click)="selectCommander($index, $event)">Set commander</button>
             }
             @if (entry.count > 1) {
               <div class="deck-count-badge">{{ entry.count }}x</div>

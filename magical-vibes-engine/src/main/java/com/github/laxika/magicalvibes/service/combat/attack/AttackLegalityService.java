@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PreviouslyAttackedPlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -85,6 +86,14 @@ public class AttackLegalityService {
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
+            return false;
+        }
+        if (gameData.onlyAggressiveCreaturesCanAttackThisCombat
+                && !gameQueryService.hasKeyword(gameData, creature, Keyword.AGGRESSIVE)) {
+            return false;
+        }
+        if (gameData.onlyPermanentCanAttackThisCombatId != null
+                && !gameData.onlyPermanentCanAttackThisCombatId.equals(creature.getId())) {
             return false;
         }
         if (creature.isTapped()) return false;
@@ -223,6 +232,9 @@ public class AttackLegalityService {
      * flag is set apply (Sandwurm Convergence — "can't attack you or planeswalkers you control").
      */
     public boolean canAttackDefender(GameData gameData, Permanent attacker, UUID targetId) {
+        if (isRestrictedFromAttackingPreviouslyAttackedPlayer(gameData, attacker, targetId)) {
+            return false;
+        }
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
         if (targetPermanent != null && isAttackTargetRestricted(gameData, targetPermanent)) {
             return false;
@@ -286,6 +298,23 @@ public class AttackLegalityService {
             }
         }
         return true;
+    }
+
+    private boolean isRestrictedFromAttackingPreviouslyAttackedPlayer(GameData gameData,
+                                                                       Permanent attacker,
+                                                                       UUID targetId) {
+        if (!gameData.playerIds.contains(targetId)
+                || gameQueryService.hasLostAllAbilities(gameData, attacker)) {
+            return false;
+        }
+        boolean hasRestriction = gameQueryService.getActiveStaticEffects(gameData, attacker).stream()
+                .anyMatch(PreviouslyAttackedPlayerRestrictionEffect.class::isInstance);
+        if (!hasRestriction) {
+            return false;
+        }
+        return gameData.playersAttackedThisTurn
+                .getOrDefault(attacker.getId(), Set.of())
+                .contains(targetId);
     }
 
     private boolean cantAttackCardOwner(Permanent attacker, Permanent targetPermanent,
@@ -668,7 +697,9 @@ public class AttackLegalityService {
                                                          Permanent sourcePermanent,
                                                          CombatAttackRequirementEffect requirement,
                                                          FilterContext context) {
-        if (!requirement.isActive(gameData, sourcePermanent)
+        if (sourcePermanent.isFaceDown()
+                || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)
+                || !requirement.isActive(gameData, sourcePermanent)
                 || !predicateEvaluationService.matchesPermanentPredicate(
                 creature, requirement.affectedPredicate(), context)) {
             return false;

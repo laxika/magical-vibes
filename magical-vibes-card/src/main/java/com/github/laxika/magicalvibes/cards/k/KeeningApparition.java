@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "12")
+@CardRegistration(set = "PIO", collectorNumber = "20")
 @CardRegistration(set = "RVR", collectorNumber = "21")
 public class KeeningApparition extends Card {
 

@@ -18,6 +18,10 @@ import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "258")
 @CardRegistration(set = "WAR", collectorNumber = "244")
+@CardRegistration(set = "EOS", collectorNumber = "2")
+@CardRegistration(set = "EOS", collectorNumber = "47")
+@CardRegistration(set = "EOS", collectorNumber = "92")
+@CardRegistration(set = "EOS", collectorNumber = "137")
 public class BlastZone extends Card {
 
     public BlastZone() {

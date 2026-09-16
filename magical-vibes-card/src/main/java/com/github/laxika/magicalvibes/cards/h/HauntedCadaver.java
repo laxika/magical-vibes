@@ -15,7 +15,7 @@ public class HauntedCadaver extends Card {
         addMorph("{1}{B}");
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(new SacrificeSelfThenEffect(
-                        new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)),
+                        new DiscardEffect(3, DiscardRecipient.TRIGGERING_PLAYER)),
                         "You may sacrifice it. If you do, that player discards three cards."));
     }
 }

@@ -37,7 +37,7 @@ class DreamChiselTest extends BaseCardTest {
     void doesNotReduceMorphCost() {
         harness.addToBattlefield(player1, new DreamChisel());
         harness.setHand(player1, List.of(new DaruLancer()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
@@ -45,7 +45,7 @@ class DreamChiselTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent lancer = findPermanent(player1, "Daru Lancer");
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.turnFaceUp(player1,

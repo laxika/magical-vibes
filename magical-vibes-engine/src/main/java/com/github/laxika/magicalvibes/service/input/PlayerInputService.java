@@ -67,6 +67,11 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped));
     }
 
+    public void beginCommandZoneCardChoice(GameData gameData, UUID playerId, List<Card> cards, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.CommandZoneCardChoice(
+                playerId, cards.stream().map(Card::getId).toList(), prompt));
+    }
+
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
         beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
@@ -1055,6 +1060,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
+    }
+
+    public void beginPregameLegacyWordChoice(GameData gameData, UUID playerId, Card sourceCard,
+                                              List<String> options) {
+        ChoiceContext.LegacyWordChoice choiceContext = new ChoiceContext.LegacyWordChoice(sourceCard, options);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a keyword or ability word for Legacy."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a Legacy keyword or ability word", gameData.id, playerName);
     }
 
     public void beginBasicLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {

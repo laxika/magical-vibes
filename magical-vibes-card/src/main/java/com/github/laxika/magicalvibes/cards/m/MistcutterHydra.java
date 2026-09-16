@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "162")
+@CardRegistration(set = "PIO", collectorNumber = "184")
 public class MistcutterHydra extends Card {
 
     public MistcutterHydra() {

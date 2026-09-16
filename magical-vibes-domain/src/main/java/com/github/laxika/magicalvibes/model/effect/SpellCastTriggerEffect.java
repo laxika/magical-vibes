@@ -45,6 +45,7 @@ import java.util.List;
  * @param triggersOnAnyPlayer        when stored on an emblem, fire for every player's spells rather
  *                                   than only the emblem controller's spells
  * @param requiresTreasureMana       only fire when mana produced by a Treasure was spent to cast the spell
+ * @param requiresTwoOrMoreCardTypes only fire when the cast spell has at least two card types
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
@@ -60,8 +61,23 @@ public record SpellCastTriggerEffect(
         boolean triggersOnAnyPlayer,
         boolean requiresManaProducedBySource,
         int expendThreshold,
-        boolean requiresTreasureMana
+        boolean requiresTreasureMana,
+        boolean requiresTwoOrMoreCardTypes
 ) implements CardEffect {
+
+    /** Backward-compatible full constructor without a card-type-count restriction. */
+    public SpellCastTriggerEffect(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
+            TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
+            boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+            Condition intervening, int nthSpellNumber, int minimumSpellNumber,
+            boolean triggersOnAnyPlayer, boolean requiresManaProducedBySource,
+            int expendThreshold, boolean requiresTreasureMana) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
+                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
+                expendThreshold, requiresTreasureMana, false);
+    }
 
     public SpellCastTriggerEffect(
             CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
@@ -217,5 +233,11 @@ public record SpellCastTriggerEffect(
     public static SpellCastTriggerEffect usingTreasureMana(List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(null, resolvedEffects, null, null, null,
                 false, false, null, 0, 0, false, false, 0, true);
+    }
+
+    /** Trigger for a spell with at least two effective card types. */
+    public static SpellCastTriggerEffect withAtLeastTwoCardTypes(List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(null, resolvedEffects, null, null, null,
+                false, false, null, 0, 0, false, false, 0, false, true);
     }
 }

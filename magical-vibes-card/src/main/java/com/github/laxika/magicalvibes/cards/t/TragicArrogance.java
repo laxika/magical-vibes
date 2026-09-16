@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "38")
+@CardRegistration(set = "PIO", collectorNumber = "363")
 public class TragicArrogance extends Card {
 
     public TragicArrogance() {

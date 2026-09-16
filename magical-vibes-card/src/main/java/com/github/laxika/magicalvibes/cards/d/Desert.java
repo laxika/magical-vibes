@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSB", collectorNumber = "118")
 @CardRegistration(set = "V12", collectorNumber = "4")
+@CardRegistration(set = "SPG", collectorNumber = "37")
 public class Desert extends Card {
 
     public Desert() {

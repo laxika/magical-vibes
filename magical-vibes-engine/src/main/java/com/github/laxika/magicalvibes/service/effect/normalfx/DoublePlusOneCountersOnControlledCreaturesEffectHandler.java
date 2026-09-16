@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -44,11 +45,13 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
             int current = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
             if (current <= 0) continue;
 
-            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current * 2);
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    current * MaroGoneNutsSupport.apply(gameData, effect, 2));
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                     gameData, permanent, entry.getControllerId());
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                    gameData, permanent, current);
+                    gameData, permanent,
+                    current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
             doubled.add(permanent);
         }
 

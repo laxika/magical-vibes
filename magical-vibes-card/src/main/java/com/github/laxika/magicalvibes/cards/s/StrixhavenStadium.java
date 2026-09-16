@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "259")
+@CardRegistration(set = "FCA", collectorNumber = "63")
 public class StrixhavenStadium extends Card {
 
     public StrixhavenStadium() {

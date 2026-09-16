@@ -443,6 +443,12 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
+        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
+            rawDamage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, targetControllerId, rawDamage, sourceCardForBonus,
+                    sourcePermanentForBonus, sourceControllerId, false);
+            processPendingRedirectDamage(gameData);
+        }
         if (!targetDamageUnpreventable
                 && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(
                 gameData, target, effectiveDamageSource,
@@ -1046,7 +1052,7 @@ public class DamageSupport {
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 Set<CardColor> sourceColors = sourcePermanent == null
-                        ? sourceCardColors(source)
+                        ? gameQueryService.getEffectiveCardColors(gameData, source)
                         : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
                 UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
                 loyaltyDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
@@ -1063,6 +1069,13 @@ public class DamageSupport {
                         gameData, targetPermanent, loyaltyDamage);
                 loyaltyDamage = damagePreventionService.applyControllerAndPermanentsNoncombatDamagePrevention(
                         gameData, targetPermanent, loyaltyDamage);
+                loyaltyDamage = damagePreventionService.applyComeuppancePrevention(
+                        gameData, pwControllerId, loyaltyDamage, source, sourcePermanent,
+                        sourceControllerId, false);
+                processPendingRedirectDamage(gameData);
+                if (loyaltyDamage <= 0) {
+                    return 0;
+                }
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 int damageDealt = loyaltyDamage;
@@ -1278,6 +1291,13 @@ public class DamageSupport {
             }
             playerId = redirectedPlayerId;
         }
+        if (gameQueryService.playerHasFlying(gameData, playerId)
+                && gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent)
+                && !gameQueryService.sourceHasKeyword(gameData, entry, sourcePermanent, Keyword.FLYING)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented by flying."));
+            return;
+        }
         if (gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(gameData, entry, playerId)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
@@ -1314,7 +1334,7 @@ public class DamageSupport {
         // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
         rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
         Set<CardColor> sourceColors = sourcePermanent == null
-                ? sourceCardColors(source)
+                ? gameQueryService.getEffectiveCardColors(gameData, source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
         Set<CardColor> damageSourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
         UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
@@ -1431,6 +1451,9 @@ public class DamageSupport {
             processEyeForAnEyeReflections(gameData);
             rawDamage = damagePreventionService.applyChannelHarmPrevention(
                     gameData, playerId, sourceControllerId, rawDamage);
+            rawDamage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, playerId, rawDamage, source, sourcePermanent,
+                    sourceControllerId, false);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
@@ -1627,6 +1650,8 @@ public class DamageSupport {
                         gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
                     triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
+                    triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
                             gameData, sourceControllerId, playerId, List.of(sourcePermanent));
                 }
                 triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(

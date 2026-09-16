@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "137")
+@CardRegistration(set = "SPG", collectorNumber = "89")
+@CardRegistration(set = "SPG", collectorNumber = "99")
 public class ChandrasIgnition extends Card {
 
     public ChandrasIgnition() {

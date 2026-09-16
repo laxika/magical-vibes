@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 @CardRegistration(set = "VMA", collectorNumber = "272")
 @CardRegistration(set = "MPS", collectorNumber = "16")
 @CardRegistration(set = "2XM", collectorNumber = "270")
+@CardRegistration(set = "SPG", collectorNumber = "17")
 public class ManaCrypt extends Card {
 
     public ManaCrypt() {

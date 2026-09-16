@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * where X is that creature's power as the spell or ability that doubles it resolves."
  * Toughness is handled symmetrically (CR 701.9b).
  */
-public record DoubleSelfPowerToughnessEffect() implements CardEffect {
+public record DoubleSelfPowerToughnessEffect() implements CardEffect, DoublingEffect {
 
     @Override
     public TargetSpec targetSpec() {
