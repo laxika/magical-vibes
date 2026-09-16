@@ -3370,6 +3370,43 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Handles effects that trigger whenever one or more creatures controlled by a player deal
+     * damage to an opponent. The dealers are supplied as one batch so the trigger fires once for
+     * the event even when multiple creatures dealt damage simultaneously.
+     */
+    public void checkAllyCreaturesDealDamageToOpponentTriggers(GameData gameData, UUID sourceControllerId,
+                                                                UUID damagedPlayerId,
+                                                                List<Permanent> damageDealers) {
+        if (sourceControllerId == null || damagedPlayerId == null
+                || sourceControllerId.equals(damagedPlayerId)
+                || damageDealers == null || damageDealers.isEmpty()) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        var context = new TriggerContext.AllyCreaturesDealDamageToPlayer(
+                damagedPlayerId, sourceControllerId, damageDealers);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(
+                    EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT));
+            effects.addAll(permanent.getTemporaryTriggeredEffects(
+                    EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT));
+            effects.addAll(permanent.getPersistentTriggeredEffects(
+                    EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, permanent, EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT));
+            for (CardEffect effect : effects) {
+                var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, effect);
+                dispatch(match, EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT, effect, context);
+            }
+        }
+    }
+
+    /**
      * Handles {@link EffectSlot#ON_CONTROLLER_ANOTHER_NONLAND_PERMANENT_RETURNED_TO_HAND}.
      * The returned permanent is inspected before it leaves the battlefield, and the source itself
      * is excluded because the trigger says "another".

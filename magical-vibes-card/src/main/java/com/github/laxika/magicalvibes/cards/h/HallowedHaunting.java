@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "17")
+@CardRegistration(set = "SPG", collectorNumber = "64")
 public class HallowedHaunting extends Card {
 
     public HallowedHaunting() {

@@ -1064,4 +1064,29 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(MayPayManaEffect.class);
         }
     }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — DrawCardEffect")
+    class ControllerDiscardDraw {
+
+        @Test
+        @DisplayName("queues a draw trigger for the controller")
+        void queuesDrawTrigger() {
+            Permanent boneMiser = createPermanent("Bone Miser");
+            var effect = new DrawCardEffect(1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Spellbook"));
+
+            boolean result = registry.dispatch(
+                    match(boneMiser, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(boneMiser.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
 }

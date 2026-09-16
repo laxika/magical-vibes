@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves combat-damage top-library exile and play permissions. */
+/** Resolves a damaged player's top-card play-permission trigger. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -38,7 +38,8 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
                         effect;
         UUID damagedPlayerId = entry.getTargetId();
         UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
-                ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
+                ? entry.getTriggeringPermanentControllerId()
+                : entry.getControllerId();
         if (damagedPlayerId == null || creatureControllerId == null) {
             return;
         }

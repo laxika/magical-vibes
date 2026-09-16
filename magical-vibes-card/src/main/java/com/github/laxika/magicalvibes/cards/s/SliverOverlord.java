@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "H09", collectorNumber = "24")
 @CardRegistration(set = "SCG", collectorNumber = "139")
+@CardRegistration(set = "SPG", collectorNumber = "128")
 public class SliverOverlord extends Card {
 
     public SliverOverlord() {

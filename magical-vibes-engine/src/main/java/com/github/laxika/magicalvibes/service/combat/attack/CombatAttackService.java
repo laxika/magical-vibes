@@ -308,7 +308,7 @@ public class CombatAttackService {
                                     boolean filterByAttackTarget) {
         int[] maximum = {Integer.MAX_VALUE};
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                 if (effect instanceof CombatCreatureLimitEffect limit
                         && (!filterByAttackTarget
                         || limit.appliesToAttackTarget(sourceControllerId, permanent.getId(), attackTargetId))) {
@@ -721,7 +721,8 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
-        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets);
+        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets,
+                gameQueryService);
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash

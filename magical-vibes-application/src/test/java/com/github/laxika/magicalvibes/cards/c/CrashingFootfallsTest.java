@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -45,13 +46,18 @@ class CrashingFootfallsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        List<Permanent> rhinos = findPermanents(player1, "Rhino");
-        assertThat(rhinos).hasSize(2);
-        assertThat(rhinos).allSatisfy(rhino -> {
-            assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(4);
-            assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
-            assertThat(rhino.getCard().getKeywords()).contains(Keyword.TRAMPLE);
+        List<Permanent> tokens = findPermanents(player1, "Rhino");
+        assertThat(tokens).hasSize(2);
+        assertThat(tokens).allSatisfy(token -> {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+            assertThat(token.getCard().getPower()).isEqualTo(4);
+            assertThat(token.getCard().getToughness()).isEqualTo(4);
+            assertThat(token.getCard().getColor()).isEqualTo(com.github.laxika.magicalvibes.model.CardColor.GREEN);
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.RHINO);
+            assertThat(token.getCard().getKeywords()).contains(Keyword.TRAMPLE);
         });
+        harness.assertInGraveyard(player1, "Crashing Footfalls");
     }
 
     private CrashingFootfalls suspendCard() {

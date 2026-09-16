@@ -1306,6 +1306,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
     /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
     ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
+    /** Triggers whenever one or more creatures the controller controls deal damage to an opponent. */
+    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT,
     /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
     ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a

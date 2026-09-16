@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "244")
 @CardRegistration(set = "ZNE", collectorNumber = "27")
+@CardRegistration(set = "SPG", collectorNumber = "38")
 public class PrismaticVista extends Card {
 
     public PrismaticVista() {

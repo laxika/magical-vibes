@@ -8,21 +8,19 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToBattlefieldTappedElseDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToTappedBattlefieldElseDrawEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
-
-/** Resolves the land-or-draw top-card branch used by Thrasios, Triton Hero. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RevealTopCardLandToBattlefieldTappedElseDrawEffectHandler implements NormalEffectHandlerBean {
+public class RevealTopCardLandToTappedBattlefieldElseDrawEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -30,31 +28,30 @@ public class RevealTopCardLandToBattlefieldTappedElseDrawEffectHandler implement
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return RevealTopCardLandToBattlefieldTappedElseDrawEffect.class;
+        return RevealTopCardLandToTappedBattlefieldElseDrawEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
+        List<Card> library = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
 
-        if (deck == null || deck.isEmpty()) {
+        if (library == null || library.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
-        Card topCard = deck.getFirst();
+        Card topCard = library.getFirst();
         gameLogService.append(gameData, GameLog.builder()
-                .text(playerName + " reveals ")
-                .card(topCard)
+                .text(playerName + " reveals ").card(topCard)
                 .text(" from the top of their library (" + sourceName + ").")
                 .build());
 
         if (topCard.hasType(CardType.LAND)) {
-            deck.removeFirst();
+            library.removeFirst();
             Permanent permanent = new Permanent(topCard, Zone.LIBRARY);
             permanent.tap();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
@@ -62,10 +59,11 @@ public class RevealTopCardLandToBattlefieldTappedElseDrawEffectHandler implement
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(topCard, playerName));
             log.info("Game {} - {} puts {} onto the battlefield tapped ({})",
                     gameData.id, playerName, topCard.getName(), sourceName);
-        } else {
-            playerInteractionSupport.applyDrawCards(gameData, controllerId, 1);
-            log.info("Game {} - {} draws the revealed {} ({})",
-                    gameData.id, playerName, topCard.getName(), sourceName);
+            return;
         }
+
+        playerInteractionSupport.applyDrawCards(gameData, controllerId, 1);
+        log.info("Game {} - {} draws the revealed {} ({})",
+                gameData.id, playerName, topCard.getName(), sourceName);
     }
 }
