@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfLandsAndS
 
 @CardRegistration(set = "MOR", collectorNumber = "136")
 @CardRegistration(set = "M19", collectorNumber = "201")
+@CardRegistration(set = "SPG", collectorNumber = "34")
 public class Scapeshift extends Card {
 
     public Scapeshift() {

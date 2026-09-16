@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ELD", collectorNumber = "120")
+@CardRegistration(set = "SPG", collectorNumber = "77")
 public class Embercleave extends Card {
 
     public Embercleave() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "33")
+@CardRegistration(set = "MB2", collectorNumber = "22")
 public class TemporaryTruce extends Card {
 
     public TemporaryTruce() {
