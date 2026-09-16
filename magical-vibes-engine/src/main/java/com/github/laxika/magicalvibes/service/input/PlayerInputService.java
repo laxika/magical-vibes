@@ -67,6 +67,11 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped));
     }
 
+    public void beginCommandZoneCardChoice(GameData gameData, UUID playerId, List<Card> cards, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.CommandZoneCardChoice(
+                playerId, cards.stream().map(Card::getId).toList(), prompt));
+    }
+
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
         beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);

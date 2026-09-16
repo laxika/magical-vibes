@@ -11132,6 +11132,23 @@ public class TriggerCollectionService {
                 dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
             }
         }
+
+        List<Card> commandZone = gameData.playerCommandZones.get(controllerId);
+        if (commandZone != null) {
+            for (Card sourceCard : new ArrayList<>(commandZone)) {
+                List<CardEffect> effects = sourceCard.getEffects(
+                        EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
+                    if (resolved == null) continue;
+                    dispatch(new TriggerMatchContext(gameData, null, controllerId, resolved, sourceCard),
+                            EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+                            resolved, ctx);
+                }
+            }
+        }
     }
 
     /**

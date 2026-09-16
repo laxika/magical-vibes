@@ -201,6 +201,7 @@ public enum CardSet {
     SET_LEG("LEG"),
     SET_FDN("FDN"),
     SET_FIN("FIN"),
+    SET_FCA("FCA"),
     SET_EOE("EOE"),
     SET_ULG("ULG"),
     SET_UMA("UMA"),

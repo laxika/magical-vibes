@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellT
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledFaerieAsCast;
@@ -642,6 +643,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
             case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
+            case ControlledCommanderAsCast ignored -> controlsCommander(gameData, ctx);
             case ControlledFaerieAsCast ignored -> ctx.controlledFaerieAsCast();
             case ControlledModifiedCreatureAsCast ignored -> ctx.controlledModifiedCreatureAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
@@ -2258,6 +2260,23 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
+    }
+
+    /**
+     * The game model keeps commander cards in a player's command-zone registry rather than
+     * marking battlefield permanents directly. Match the controlled permanent to that registry
+     * by card name; this also works with the separate card instances used for command-zone setup.
+     */
+    private boolean controlsCommander(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+
+        List<Card> commandZone = gameData.playerCommandZones.get(controllerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (commandZone == null || commandZone.isEmpty() || battlefield == null) return false;
+
+        return battlefield.stream().anyMatch(permanent -> commandZone.stream()
+                .anyMatch(commander -> commander.getName().equals(permanent.getCard().getName())));
     }
 
     private boolean targetPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,

@@ -1364,7 +1364,21 @@ public class TriggeredAbilityQueueService {
             }
 
             List<UUID> validPlayerTargets;
-            if (pending.playerTargetOnly()) {
+            if (pending.nonTargeting()) {
+                if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                    validPlayerTargets = gameData.orderedPlayerIds.stream()
+                            .filter(id -> targetLegalityService.matchesPlayerPredicate(
+                                    gameData, pending.controllerId(), id, anyFilter.playerPredicate()))
+                            .toList();
+                } else if (pending.targetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
+                    validPlayerTargets = gameData.orderedPlayerIds.stream()
+                            .filter(id -> targetLegalityService.matchesPlayerPredicate(
+                                    gameData, pending.controllerId(), id, playerFilter.predicate()))
+                            .toList();
+                } else {
+                    validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+                }
+            } else if (pending.playerTargetOnly()) {
                 // Player-only triggers (e.g. Abundant Maw "target opponent") honour PlayerPredicateTargetFilter.
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
                         gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());

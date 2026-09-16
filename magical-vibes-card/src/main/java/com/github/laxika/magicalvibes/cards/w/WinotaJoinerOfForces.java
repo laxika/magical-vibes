@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 @CardRegistration(set = "IKO", collectorNumber = "216")
+@CardRegistration(set = "FCA", collectorNumber = "19")
 public class WinotaJoinerOfForces extends Card {
 
     private static final CardPredicate HUMAN_CREATURE = new CardAllOfPredicate(List.of(

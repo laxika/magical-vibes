@@ -136,6 +136,7 @@ public sealed interface DynamicAmount permits
         OpponentPoisonCounters,
         OpponentsWithMoreCardsInHandThanController,
         OpponentsAttackedThisTurn,
+        OpponentsDealtCombatDamageThisTurn,
         OpponentsWhoLostLifeThisTurn,
         OtherAttackersSharingCreatureTypeWithTarget,
         PartySize,

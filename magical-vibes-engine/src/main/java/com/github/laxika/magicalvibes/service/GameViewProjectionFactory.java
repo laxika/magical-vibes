@@ -830,7 +830,11 @@ public class GameViewProjectionFactory {
             if (ability.getManaCost() == null) {
                 return true;
             }
-            if (pool != null && new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+            ManaCost abilityCost = new ManaCost(ability.getManaCost());
+            if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                abilityCost = abilityCost.withBlackManaAsPhyrexian();
+            }
+            if (pool != null && abilityCost.canPay(pool, 0)) {
                 return true;
             }
         }
