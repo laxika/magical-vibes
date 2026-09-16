@@ -95,6 +95,7 @@ public class StateBasedActionService {
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
     public void performStateBasedActions(GameData gameData) {
+        if (gameData.waitingForSubgame) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (graveyardService.hasPendingRegenerationChoice(gameData)) {
             graveyardService.processPendingRegenerationChoice(gameData);
@@ -646,7 +647,10 @@ public class StateBasedActionService {
     private void checkEmptyLibraryLoss(GameData gameData) {
         if (gameData.deferPlayerLossCheck) return;
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
+        if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.MULLIGAN
+                || gameData.currentStep == com.github.laxika.magicalvibes.model.TurnStep.UNTAP) return;
 
+        List<UUID> losers = new java.util.ArrayList<>();
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
             // Consume the flag before resolving rather than clearing the whole set afterwards: a
             // replacement can re-arm it during this very pass (Lich's Mirror running the library
@@ -655,13 +659,14 @@ public class StateBasedActionService {
             gameData.playersAttemptedDrawFromEmptyLibrary.remove(playerId);
 
             if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
-                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
-                gameOutcomeService.declareWinner(gameData, winnerId);
+                losers.add(playerId);
             }
         }
+        if (losers.size() == gameData.playerIds.size()) gameOutcomeService.declareDraw(gameData);
+        else if (!losers.isEmpty()) gameOutcomeService.declareWinner(gameData, gameQueryService.getOpponentId(gameData, losers.getFirst()));
     }
 
     /**

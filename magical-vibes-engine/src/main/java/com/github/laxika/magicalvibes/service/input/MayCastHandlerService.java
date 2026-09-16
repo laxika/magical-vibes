@@ -1378,7 +1378,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        List<Card> sideboard = gameData.playerSideboards.get(sideboardOwnerId);
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, sideboardOwnerId);
         int cardIndex = -1;
         if (sideboard != null) {
             for (int i = 0; i < sideboard.size(); i++) {

@@ -33,7 +33,7 @@ public class SearchOutsideGameForCardToTopOfLibraryEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(controllerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId);
         if (sideboard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " finds no card outside the game."));

@@ -32,6 +32,13 @@ import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import java.util.UUID;
 
 public interface MessageHandler {
+    @FunctionalInterface
+    interface GameRequest { void run() throws Exception; }
+
+    default void dispatchGameRequest(Connection connection, com.github.laxika.magicalvibes.model.GameContext context,
+                                     GameRequest request) throws Exception {
+        request.run();
+    }
     default void handleLoadDeck(com.github.laxika.magicalvibes.networking.Connection connection, com.github.laxika.magicalvibes.networking.message.LoadDeckRequest request) throws Exception {}
     default void handleValidateDeck(com.github.laxika.magicalvibes.networking.Connection connection, com.github.laxika.magicalvibes.networking.message.ValidateDeckRequest request) throws Exception {}
 

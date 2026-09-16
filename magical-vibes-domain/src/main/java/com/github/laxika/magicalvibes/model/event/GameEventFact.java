@@ -16,9 +16,23 @@ import java.util.UUID;
 public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
         GameEventFact.GameLogAppended,
         GameEventFact.DecisionRequested,
-        GameEventFact.PrivateReveal, GameEventFact.MulliganResolved, GameEventFact.GameEnded {
+        GameEventFact.PrivateReveal, GameEventFact.MulliganResolved, GameEventFact.GameEnded,
+        GameEventFact.SubgameStarted, GameEventFact.SubgameEnded, GameEventFact.ActiveGameChanged {
 
     GameEventKind kind();
+
+    record SubgameStarted(UUID parentGameId, UUID childGameId) implements GameEventFact {
+        public GameEventKind kind() { return GameEventKind.SUBGAME_STARTED; }
+    }
+
+    record SubgameEnded(GameResult result, UUID winnerPlayerId) implements GameEventFact {
+        public GameEventKind kind() { return GameEventKind.SUBGAME_ENDED; }
+    }
+
+    record ActiveGameChanged(UUID sessionId, UUID activeGameId, long activationEpoch, int depth)
+            implements GameEventFact {
+        public GameEventKind kind() { return GameEventKind.ACTIVE_GAME_CHANGED; }
+    }
 
     /**
      * A post-action observable-state invalidation. Multiple invalidations with the exact same

@@ -91,6 +91,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
             JsonNode jsonNode = objectMapper.readTree(message.getPayload());
             MessageType type = MessageType.valueOf(jsonNode.get("type").asString());
 
+            JsonNode contextNode = jsonNode.get("gameContext");
+            com.github.laxika.magicalvibes.model.GameContext context = contextNode == null || contextNode.isNull()
+                    ? null : objectMapper.treeToValue(contextNode, com.github.laxika.magicalvibes.model.GameContext.class);
+            if (jsonNode instanceof tools.jackson.databind.node.ObjectNode object) object.remove("gameContext");
+            MessageHandler.GameRequest request = () -> {
             switch (type) {
                 case LOGIN -> messageHandler.handleLogin(connection, objectMapper.treeToValue(jsonNode, LoginRequest.class));
                 case REGISTER -> messageHandler.handleRegister(connection, objectMapper.treeToValue(jsonNode, RegisterRequest.class));
@@ -128,6 +133,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case LEAVE_GAME -> messageHandler.handleLeaveGame(connection);
                 case LEAVE_DRAFT -> messageHandler.handleLeaveDraft(connection);
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
+            }
+            };
+            switch (type) {
+                case LOGIN, REGISTER, CREATE_GAME, JOIN_GAME, CREATE_DRAFT, DRAFT_PICK, SUBMIT_DECK,
+                     REQUEST_CARD_LIST, LOAD_DECK, VALIDATE_DECK, SAVE_DECK, LEAVE_DRAFT -> request.run();
+                default -> messageHandler.dispatchGameRequest(connection, context, request);
             }
         } catch (Exception e) {
             log.error("Error processing message", e);

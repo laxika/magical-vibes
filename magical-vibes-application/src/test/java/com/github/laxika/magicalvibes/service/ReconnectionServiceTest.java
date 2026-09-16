@@ -59,6 +59,22 @@ class ReconnectionServiceTest {
                 coordinator, projections, new GameMessageTransport(sessions));
     }
 
+    @Test
+    void reconnectThroughTheRootReplaysOnlyTheActiveChildDecision() {
+        gameData.playerNeedsToBottom.put(player1Id, 1);
+        gameData.playerBottomDecisionIds.put(player1Id, UUID.randomUUID());
+        GameData child = new GameData(UUID.randomUUID(), "child", player1Id, "Player 1");
+        child.playerNeedsToBottom.put(player1Id, 3);
+        child.playerBottomDecisionIds.put(player1Id, UUID.randomUUID());
+        gameData.session.push(child);
+
+        reconnectionService.resendAwaitingInput(gameData, player1Id);
+
+        ArgumentCaptor<Object> message = ArgumentCaptor.forClass(Object.class);
+        verify(sessions).sendToPlayer(org.mockito.ArgumentMatchers.eq(player1Id), message.capture());
+        assertThat(message.getValue()).isEqualTo(new SelectCardsToBottomMessage(3));
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("projectionShapes")
     void reconnectProjectsEveryCanonicalInteractionShapeWithoutCreatingAnEvent(

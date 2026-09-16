@@ -50,6 +50,14 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 public class GameData {
 
+    public GameSession session = new GameSession(this);
+    public boolean subgameRequested;
+    public boolean waitingForSubgame;
+    public final List<PendingAncestorTransfer> pendingAncestorTransfers = new ArrayList<>();
+    // Physical cards also remain in the subgame while an interaction temporarily holds them.
+    public final Map<UUID, Card> subgameCards = new HashMap<>();
+    public final List<StackEntry> suspendedZoneTriggers = new ArrayList<>();
+
     public final UUID id;
     public final String gameName;
     public final UUID createdByUserId;
@@ -2577,7 +2585,9 @@ public class GameData {
 
     /** Captures the current turn state without exposing the snapshot to views or callers. */
     public void captureTurnStartSnapshot() {
-        turnStartSnapshot = simulationCopy();
+        GameData snapshot = simulationFrameCopy();
+        snapshot.turnStartSnapshot = null;
+        turnStartSnapshot = snapshot;
     }
 
     /**
@@ -2594,7 +2604,8 @@ public class GameData {
         if (snapshot == null) {
             return false;
         }
-        restoreMutableStateFrom(snapshot);
+        // Snapshots are shared read-only by simulations; restore from a fresh mutable copy.
+        restoreMutableStateFrom(snapshot.simulationFrameCopy());
         turnStartSnapshot = null;
         return true;
     }
@@ -2622,7 +2633,8 @@ public class GameData {
 
     private static boolean preservedDuringTurnRestart(String fieldName) {
         return switch (fieldName) {
-            case "turnStartSnapshot", "gameLog", "playersWhoLostGameThisMatch", "timestampCounter",
+            case "session", "subgameRequested", "waitingForSubgame", "pendingAncestorTransfers",
+                    "subgameCards", "suspendedZoneTriggers", "turnStartSnapshot", "gameLog", "playersWhoLostGameThisMatch", "timestampCounter",
                     "nextExtraTurnSequence", "graveyardEntryVersion",
                     "domainActionSequence", "domainEventSequence", "domainStateVersion",
                     "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
@@ -3115,6 +3127,13 @@ public class GameData {
      * (priority grant, auto-pass, {@code SpellCastingService.finishSpellCast}).
      */
     public void enqueueTrigger(StackEntry entry) {
+        if (waitingForSubgame && session.active() != this) {
+            suspendedZoneTriggers.add(entry);
+            for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
+                suspendedZoneTriggers.add(new StackEntry(entry));
+            }
+            return;
+        }
         if (manaAbilityResolutionDepth > 0) {
             pendingManaAbilityTriggers.add(entry);
             for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
@@ -5223,11 +5242,79 @@ public class GameData {
      * </ul>
      */
     public GameData simulationCopy() {
+        return session.simulationCopy(id);
+    }
+
+    private static CombatDamageState copyCombatDamageState(CombatDamageState source,
+            java.util.function.Function<Permanent, Permanent> permanentCopy) {
+        if (source == null) return null;
+        CombatDamageState copy = new CombatDamageState();
+        copy.sharedRedirectShields = new ArrayList<>(source.sharedRedirectShields);
+        copy.sourceDamageShields = new ArrayList<>(source.sourceDamageShields);
+        copy.damageToDefendingPlayer = source.damageToDefendingPlayer;
+        copy.poisonDamageToDefendingPlayer = source.poisonDamageToDefendingPlayer;
+        copy.unpreventableDamageToDefendingPlayer = source.unpreventableDamageToDefendingPlayer;
+        copy.damageRedirectedToGuard = source.damageRedirectedToGuard;
+        copy.infectDamageRedirectedToGuard = source.infectDamageRedirectedToGuard;
+        copy.deathtouchDamageRedirectedToGuard = source.deathtouchDamageRedirectedToGuard;
+        copy.deadAttackerIndices.addAll(source.deadAttackerIndices);
+        copy.deadDefenderIndices.addAll(source.deadDefenderIndices);
+        source.atkDamageTaken.forEach((key, value) -> copy.atkDamageTaken.put(key, value));
+        source.defDamageTaken.forEach((key, value) -> copy.defDamageTaken.put(key, value));
+        source.atkDamageTakenBySource.forEach((key, value) -> copy.atkDamageTakenBySource.put(key, new HashMap<>(value)));
+        source.defDamageTakenBySource.forEach((key, value) -> copy.defDamageTakenBySource.put(key, new HashMap<>(value)));
+        source.unpreventableAtkDamageTaken.forEach((key, value) -> copy.unpreventableAtkDamageTaken.put(key, value));
+        source.unpreventableDefDamageTaken.forEach((key, value) -> copy.unpreventableDefDamageTaken.put(key, value));
+        source.damageDealtToPermanentsBeforeStep.forEach((key, value) -> copy.damageDealtToPermanentsBeforeStep.put(key, value));
+        source.markedDamageBeforeStep.forEach((key, value) -> copy.markedDamageBeforeStep.put(key, value));
+        source.toughnessBeforeStep.forEach((key, value) -> copy.toughnessBeforeStep.put(key, value));
+        source.loyaltyBeforeStep.forEach((key, value) -> copy.loyaltyBeforeStep.put(key, value));
+        copy.deathtouchDamagedAttackerIndices.addAll(source.deathtouchDamagedAttackerIndices);
+        copy.deathtouchDamagedDefenderIndices.addAll(source.deathtouchDamagedDefenderIndices);
+        source.damageToPlaneswalkers.forEach((key, value) -> copy.damageToPlaneswalkers.put(key, value));
+        source.combatDamageDealt.forEach((key, value) -> copy.combatDamageDealt.put(permanentCopy.apply(key), value));
+        source.combatDamageDealtToPlayer.forEach((key, value) -> copy.combatDamageDealtToPlayer.put(permanentCopy.apply(key), value));
+        source.combatDamageDealtToPlaneswalker.forEach((key, value) -> copy.combatDamageDealtToPlaneswalker.put(permanentCopy.apply(key), value));
+        source.combatDamageAmountsToBattles.forEach((key, value) -> copy.combatDamageAmountsToBattles.put(permanentCopy.apply(key), new HashMap<>(value)));
+        source.combatDamageAmountsToPlaneswalkers.forEach((key, value) -> copy.combatDamageAmountsToPlaneswalkers.put(permanentCopy.apply(key), new HashMap<>(value)));
+        source.combatDamageRecipientControllers.forEach((key, value) -> copy.combatDamageRecipientControllers.put(permanentCopy.apply(key), new HashSet<>(value)));
+        source.combatDamageDealtToCreatures.forEach((key, value) -> copy.combatDamageDealtToCreatures.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        copy.combatDamageToBlockingCreatureSources.addAll(source.combatDamageToBlockingCreatureSources);
+        source.combatDamageDealerControllers.forEach((key, value) -> copy.combatDamageDealerControllers.put(permanentCopy.apply(key), value));
+        source.selfDealsCombatDamageEffects.forEach((key, value) -> copy.selfDealsCombatDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsCombatDamageToPlayerOrBattleEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrBattleEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsDamageEffects.forEach((key, value) -> copy.selfDealsDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.enchantedCreatureDealsDamageTriggers.forEach(value -> copy.enchantedCreatureDealsDamageTriggers.add(new StackEntry(value)));
+        source.allyCreatureDealsDamageToPlaneswalkerTriggers.forEach(value -> copy.allyCreatureDealsDamageToPlaneswalkerTriggers.add(new StackEntry(value)));
+        source.delayedCombatDamageDrawQualifications.forEach(value -> copy.delayedCombatDamageDrawQualifications.add(new CombatDamageState.DelayedCombatDamageDrawQualification(value.delayedAction(), Set.copyOf(value.sourceIds()))));
+        copy.delayedCombatDamageLookAtHandAndDrawQualifications.addAll(source.delayedCombatDamageLookAtHandAndDrawQualifications);
+        source.combatDamageAmountsToCreatures.forEach((key, value) -> copy.combatDamageAmountsToCreatures.put(permanentCopy.apply(key), new HashMap<>(value)));
+        source.combatDamageTargetControllers.forEach((key, value) -> copy.combatDamageTargetControllers.put(key, value));
+        source.pendingDralnuReplacementTargets.forEach((key, value) -> copy.pendingDralnuReplacementTargets.put(key, permanentCopy.apply(value)));
+        source.pendingDralnuReplacementDamage.forEach((key, value) -> copy.pendingDralnuReplacementDamage.put(key, value));
+        copy.defenderDamageAsInfect = source.defenderDamageAsInfect;
+        return copy;
+    }
+
+    GameData simulationFrameCopy() {
         GameData copy = new GameData(id, gameName, createdByUserId, createdByUsername);
+        copy.subgameRequested = subgameRequested;
+        copy.waitingForSubgame = waitingForSubgame;
+        copy.pendingAncestorTransfers.addAll(pendingAncestorTransfers);
+        copy.subgameCards.putAll(subgameCards);
+        suspendedZoneTriggers.forEach(entry -> copy.suspendedZoneTriggers.add(new StackEntry(entry)));
         copy.cardsExiledListener = this.cardsExiledListener;
 
         // --- Primitives, enums, UUIDs, Strings ---
         copy.status = this.status;
+        copy.turnStartSnapshot = this.turnStartSnapshot;
+        copy.playersWhoLostGameThisMatch.addAll(this.playersWhoLostGameThisMatch);
+        copy.completingCommanderZoneMove = this.completingCommanderZoneMove;
+        copy.commandCastPlayerId = this.commandCastPlayerId;
+        copy.commandCastCardId = this.commandCastCardId;
+        copy.pendingCombatDamageFirstStrikePhase = this.pendingCombatDamageFirstStrikePhase;
+        copy.pendingCombatDamageFirstestStrikePhase = this.pendingCombatDamageFirstestStrikePhase;
         copy.startingPlayerId = this.startingPlayerId;
         copy.currentStep = this.currentStep;
         copy.activePlayerId = this.activePlayerId;
@@ -6639,6 +6726,16 @@ public class GameData {
         copy.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.addAll(
                 this.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn);
 
+        Map<UUID, Permanent> copiedCombatPermanents = new HashMap<>();
+        copy.playerBattlefields.values().forEach(permanents -> permanents.forEach(
+                permanent -> copiedCombatPermanents.put(permanent.getId(), permanent)));
+        copy.phasedOutPermanents.values().forEach(permanents -> permanents.forEach(
+                permanent -> copiedCombatPermanents.put(permanent.getId(), permanent)));
+        java.util.function.Function<Permanent, Permanent> copyCombatPermanent = permanent ->
+                permanent == null ? null : copiedCombatPermanents.computeIfAbsent(
+                        permanent.getId(), ignored -> new Permanent(permanent));
+        copy.pendingCombatDamageRedirectTarget = copyCombatPermanent.apply(this.pendingCombatDamageRedirectTarget);
+        copy.pendingCombatDamageState = copyCombatDamageState(this.pendingCombatDamageState, copyCombatPermanent);
         return copy;
     }
 

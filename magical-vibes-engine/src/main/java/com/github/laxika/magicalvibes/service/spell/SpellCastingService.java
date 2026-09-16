@@ -8893,7 +8893,7 @@ public class SpellCastingService {
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         boolean fromOutsideGame = exiledEntry == null
                 && (gameData.outsideGamePlayPermissions.contains(exileCardId)
-                || gameData.playerSideboards.getOrDefault(playerId, List.of()).stream()
+                || com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId).stream()
                         .anyMatch(sideboardCard -> sideboardCard.getId().equals(exileCardId)));
         if (exiledEntry == null && !fromOutsideGame) {
             throw new IllegalStateException("Card not found in exile");
@@ -8902,7 +8902,7 @@ public class SpellCastingService {
                 ? sourceZoneOverride : fromOutsideGame ? Zone.OUTSIDE_GAME : Zone.EXILE;
         Card card;
         if (fromOutsideGame) {
-            card = gameData.playerSideboards.getOrDefault(playerId, List.of()).stream()
+            card = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId).stream()
                     .filter(sideboardCard -> sideboardCard.getId().equals(exileCardId))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Card not found outside the game"));
@@ -9397,7 +9397,7 @@ public class SpellCastingService {
                                  boolean sourceFreeCast, boolean collectionCounterPermission,
                                  boolean copy, boolean directExilePlayPermission, boolean fromOutsideGame) {
         if (fromOutsideGame) {
-            List<Card> sideboard = gameData.playerSideboards.get(playerId);
+            List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
             boolean removed = sideboard != null && sideboard.removeIf(card -> card.getId().equals(exileCardId));
             if (!removed) {
                 throw new IllegalStateException("Outside-game play permission is no longer available");

@@ -25,6 +25,8 @@ import java.util.UUID;
 @Getter
 public class StackEntry {
 
+    @Setter private SubgameResult subgameResult;
+
     private StackEntryType entryType;
     private StackEntryType bombardmentOriginalEntryType;
     private final Card card;
@@ -640,6 +642,7 @@ public class StackEntry {
      * Card and CardEffect references are shared (immutable after construction).
      */
     public StackEntry(StackEntry source) {
+        this.subgameResult = source.subgameResult;
         this.entryType = source.entryType;
         this.bombardmentOriginalEntryType = source.bombardmentOriginalEntryType;
         this.card = source.card;

@@ -1519,7 +1519,7 @@ public class DrawService {
 
     /** Ring of Ma'rûf's replaced draw: choose a card from outside the game and put it into hand. */
     private void resolveNextDrawFromOutsideGame(GameData gameData, UUID playerId) {
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         if (sideboard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(

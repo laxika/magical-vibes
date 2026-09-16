@@ -1,3 +1,11 @@
+.game-context {
+  padding: 3px 10px;
+  text-align: center;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 13px;
+}
+
 .players-area {
   display: flex;
   flex-wrap: wrap;
