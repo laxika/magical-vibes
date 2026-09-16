@@ -52,8 +52,11 @@ class InnocuousInsectTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(insect);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Grizzly Bears", "Innocuous Insect");
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(insect);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
     private void addMana() {

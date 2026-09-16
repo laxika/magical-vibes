@@ -1620,7 +1620,6 @@ public class DrawService {
         List<Card> deck = gameData.playerDecks.get(playerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
             gameLogService.append(gameData, GameLog.text(logEntry));
 
@@ -1642,6 +1641,7 @@ public class DrawService {
             }
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
+            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             if (!gameData.deferPlayerLossCheck
                     && gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);

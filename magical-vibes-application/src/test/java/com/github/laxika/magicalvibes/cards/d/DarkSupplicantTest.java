@@ -47,6 +47,8 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fourth.getId());
         harness.passBothPriorities();
 
+        harness.handleMultipleCardsChosen(player1, List.of(scion.getId()));
+
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
@@ -65,6 +67,7 @@ class DarkSupplicantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(scion.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
@@ -84,6 +87,7 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        harness.handleMultipleCardsChosen(player1, List.of(handScion.getId()));
         harness.assertOnBattlefield(player1, "Scion of Darkness");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
@@ -94,8 +98,8 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(libraryScion.getId()));
 
         harness.assertOnBattlefield(player1, "Scion of Darkness");
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -136,6 +140,9 @@ class DarkSupplicantTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .as("the controller must choose among matching cards in the graveyard and library")
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(libraryScion.getId()));
+        harness.assertOnBattlefield(player1, "Scion of Darkness");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardScion);
     }
 
     private void addThreeSupplicants() {

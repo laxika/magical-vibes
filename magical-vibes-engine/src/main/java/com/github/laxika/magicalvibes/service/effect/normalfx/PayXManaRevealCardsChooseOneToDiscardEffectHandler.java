@@ -92,13 +92,10 @@ public class PayXManaRevealCardsChooseOneToDiscardEffectHandler implements Norma
     }
 
     private int maxPotentialX(GameData gameData, UUID controllerId) {
-        int untappedSources = potentialManaService.buildVirtualManaPool(gameData, controllerId).getTotal()
-                - gameData.playerManaPools.get(controllerId).getTotal();
-        return Math.max(0, payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources);
+        return payableFromPool(potentialManaService.buildVirtualManaPool(gameData, controllerId));
     }
 
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+        return new ManaCost("{X}").calculateMaxX(pool);
     }
 }

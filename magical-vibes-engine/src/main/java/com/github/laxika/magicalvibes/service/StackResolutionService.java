@@ -528,6 +528,17 @@ public class StackResolutionService {
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
+        // Buyback on a creature (Innocuous Insect) returns it as it resolves,
+        // before it can enter the battlefield.
+        if (entry.isBuyback()) {
+            if (!entry.isCopy()) {
+                gameData.addCardToHand(entry.getOwnerId(), entry.getPhysicalCard());
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        " is returned to its owner's hand."));
+            }
+            return;
+        }
+
         Card card = entry.getCard();
         Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
