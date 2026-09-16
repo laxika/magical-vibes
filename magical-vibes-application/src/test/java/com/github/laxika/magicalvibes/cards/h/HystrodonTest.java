@@ -3,14 +3,13 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,10 +19,10 @@ class HystrodonTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage to a player may draw a card")
     void combatDamageToPlayerMayDraw() {
-        Permanent hystrodon = addReadyCreature(player1, new Hystrodon());
+        Permanent hystrodon = addCreatureReady(player1, new Hystrodon());
         hystrodon.setAttacking(true);
-        harness.setHand(player1, new ArrayList<>());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new Hystrodon())));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Hystrodon()));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -38,10 +37,10 @@ class HystrodonTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the combat-damage trigger does not draw a card")
     void decliningCombatDamageTriggerDoesNotDraw() {
-        Permanent hystrodon = addReadyCreature(player1, new Hystrodon());
+        Permanent hystrodon = addCreatureReady(player1, new Hystrodon());
         hystrodon.setAttacking(true);
-        harness.setHand(player1, new ArrayList<>());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new Hystrodon())));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Hystrodon()));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -50,6 +49,23 @@ class HystrodonTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage to a creature does not trigger the card draw")
+    void combatDamageToCreatureDoesNotTrigger() {
+        Permanent hystrodon = addCreatureReady(player1, new Hystrodon());
+        hystrodon.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new Hystrodon());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 3));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -74,10 +90,4 @@ class HystrodonTest extends BaseCardTest {
         assertThat(hystrodon.isFaceDown()).isFalse();
     }
 
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

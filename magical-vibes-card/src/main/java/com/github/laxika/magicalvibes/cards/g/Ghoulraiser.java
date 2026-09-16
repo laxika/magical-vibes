@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "102")
 @CardRegistration(set = "DDQ", collectorNumber = "58")
+@CardRegistration(set = "SIS", collectorNumber = "30")
 public class Ghoulraiser extends Card {
 
     public Ghoulraiser() {

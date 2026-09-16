@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianTyranny;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThunderscapeBattlemage.class, MaggotCarrier.class, PhyrexianTyranny.class})
 class ThunderscapeBattlemageTest extends BaseCardTest {
 
     @Test
@@ -32,7 +33,7 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
     @Test
     @DisplayName("Black kicker makes a target player discard two cards")
     void blackKickerDiscardsTwo() {
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        harness.setHand(player2, List.of(new MaggotCarrier(), new MaggotCarrier(), new MaggotCarrier()));
         harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
         addMana(3, ManaColor.RED, ManaColor.BLACK);
 
@@ -51,8 +52,9 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
     @Test
     @DisplayName("Green kicker destroys a target enchantment")
     void greenKickerDestroysEnchantment() {
-        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianTyranny());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MaggotCarrier());
+        harness.setHand(player2, List.of(new MaggotCarrier(), new MaggotCarrier()));
         harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
         addMana(2, ManaColor.RED, ManaColor.GREEN);
 
@@ -60,34 +62,36 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(anthem.getId())
-                .doesNotContain(land.getId(), player1.getId());
-        harness.handlePermanentChosen(player1, anthem.getId());
+                .contains(enchantment.getId())
+                .doesNotContain(creature.getId(), player1.getId());
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Tyranny");
+        harness.assertInGraveyard(player2, "Phyrexian Tyranny");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
     @Test
     @DisplayName("Both kicker abilities resolve independently")
     void bothKickers() {
-        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianTyranny());
+        harness.setHand(player2, List.of(new MaggotCarrier(), new MaggotCarrier(), new MaggotCarrier()));
         harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
         addMana(3, ManaColor.RED, ManaColor.BLACK, ManaColor.GREEN);
 
         castWithAdditionalCosts(List.of("{G}"), player2.getId(), true);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, anthem.getId());
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Tyranny");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }

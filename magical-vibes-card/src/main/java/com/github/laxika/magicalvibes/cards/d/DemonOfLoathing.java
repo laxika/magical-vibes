@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ANB", collectorNumber = "48")
+@CardRegistration(set = "GN3", collectorNumber = "45")
 public class DemonOfLoathing extends Card {
 
     public DemonOfLoathing() {

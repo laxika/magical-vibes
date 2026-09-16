@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "4")
+@CardRegistration(set = "PIO", collectorNumber = "9")
 public class ChainedToTheRocks extends Card {
 
     public ChainedToTheRocks() {

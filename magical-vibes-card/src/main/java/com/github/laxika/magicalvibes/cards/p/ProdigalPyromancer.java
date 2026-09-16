@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "PLC", collectorNumber = "118")
 @CardRegistration(set = "DPA", collectorNumber = "51")
 @CardRegistration(set = "IMA", collectorNumber = "142")
+@CardRegistration(set = "TSR", collectorNumber = "180")
 public class ProdigalPyromancer extends Card {
 
     public ProdigalPyromancer() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsRandomOpponentCreatureEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "101")
+@CardRegistration(set = "2X2", collectorNumber = "272")
 public class ScabClanGiant extends Card {
 
     public ScabClanGiant() {

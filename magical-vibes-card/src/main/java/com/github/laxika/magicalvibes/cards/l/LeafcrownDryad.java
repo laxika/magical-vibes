@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "161")
+@CardRegistration(set = "PIO", collectorNumber = "183")
 public class LeafcrownDryad extends Card {
 
     public LeafcrownDryad() {

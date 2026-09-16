@@ -24,6 +24,7 @@ import java.util.List;
  * CR 702.96b, the spell chooses no targets at all.
  */
 @CardRegistration(set = "DGM", collectorNumber = "40")
+@CardRegistration(set = "2XM", collectorNumber = "150")
 public class WeaponSurge extends Card {
 
     public WeaponSurge() {

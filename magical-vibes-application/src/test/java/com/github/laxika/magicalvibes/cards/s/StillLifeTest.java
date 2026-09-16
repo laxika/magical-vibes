@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(StillLife.class)
 class StillLifeTest extends BaseCardTest {
 
     @Test
@@ -34,6 +36,18 @@ class StillLifeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
         assertThat(stillLife.getTransientSubtypes()).containsExactly(CardSubtype.CENTAUR);
         assertThat(gqs.isEnchantment(gd, stillLife)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating Still Life requires two green mana")
+    void activationRequiresTwoGreenMana() {
+        addStillLife();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> harness.activateAbility(player1, 0, null, null)
+        );
     }
 
     @Test

@@ -33,8 +33,8 @@ class SquallTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Squall damages flying creatures controlled by both players")
-    void damagesFlyingCreaturesControlledByBothPlayers() {
+    @DisplayName("Squall destroys small flyers controlled by both players")
+    void destroysSmallFlyersControlledByBothPlayers() {
         harness.addToBattlefield(player1, new SkyshroudFalcon());
         harness.addToBattlefield(player2, new SkyshroudFalcon());
 
@@ -53,6 +53,18 @@ class SquallTest extends BaseCardTest {
 
         Permanent flyer = findPermanent(player2, "Air Elemental");
         assertThat(flyer.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Squall damages flying creatures controlled by either player")
+    void damagesFlyingCreaturesControlledByBothPlayers() {
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player2, new AirElemental());
+
+        castSquall();
+
+        assertThat(findPermanent(player1, "Air Elemental").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

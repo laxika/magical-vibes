@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "134")
+@CardRegistration(set = "TSR", collectorNumber = "143")
 public class SuddenDeath extends Card {
 
     public SuddenDeath() {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "211")
+@CardRegistration(set = "2X2", collectorNumber = "292")
+@CardRegistration(set = "OTP", collectorNumber = "58")
 public class VillainousWealth extends Card {
 
     public VillainousWealth() {

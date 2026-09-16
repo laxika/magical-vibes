@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 
 @CardRegistration(set = "IKO", collectorNumber = "231")
+@CardRegistration(set = "MUL", collectorNumber = "62")
+@CardRegistration(set = "MUL", collectorNumber = "127")
+@CardRegistration(set = "MUL", collectorNumber = "192")
 public class UmoriTheCollector extends Card {
 
     public UmoriTheCollector() {

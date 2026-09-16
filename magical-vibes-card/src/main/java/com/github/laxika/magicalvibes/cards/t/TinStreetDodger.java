@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "120")
+@CardRegistration(set = "RVR", collectorNumber = "128")
 public class TinStreetDodger extends Card {
 
     public TinStreetDodger() {

@@ -141,6 +141,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
         }
+        entry.setNonTargeting(stt.nonTargeting());
         pushTriggeredEntry(gameData, entry);
 
         if (declined) {
@@ -1049,6 +1050,58 @@ public class PermanentChoiceTriggerHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} attack trigger target no longer exists", gameData.id, att.sourceCard().getName());
         }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
+            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttackTrigger(GameData gameData, List<UUID> targetIds,
+                                     MultiPermanentChoiceContext.AttackTriggerTargets context) {
+        PermanentChoiceContext.AttackTriggerTarget att = context.pending();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                att.sourceCard(),
+                att.controllerId(),
+                att.sourceCard().getName() + "'s ability",
+                new ArrayList<>(att.effects()),
+                att.sourcePermanentId(),
+                targetIds);
+        if (att.xValue() != null) {
+            entry.setXValue(att.xValue());
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
+        if (source != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+        }
+        if (att.attackedTargetId() != null) {
+            entry.setAttackedTargetId(att.attackedTargetId());
+        }
+        entry.setTriggeringPermanentId(att.triggeringPermanentId());
+        pushTriggeredEntry(gameData, entry);
+        if (att.triggeringPermanentId() != null) {
+            Permanent triggeringCreature = gameQueryService.findPermanentById(
+                    gameData, att.triggeringPermanentId());
+            if (triggeringCreature != null) {
+                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                        gameData, triggeringCreature, entry);
+            }
+        }
+
+        gameLogService.append(gameData, GameLog.builder().card(att.sourceCard()).text("'s ability targets "
+                + targetIds.size() + " permanent" + (targetIds.size() == 1 ? "" : "s") + ".").build());
+        log.info("Game {} - {} attack trigger targets {} permanent(s)", gameData.id,
+                att.sourceCard().getName(), targetIds.size());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);

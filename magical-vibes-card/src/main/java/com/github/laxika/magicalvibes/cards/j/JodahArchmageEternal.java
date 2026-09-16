@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "198")
+@CardRegistration(set = "2X2", collectorNumber = "233")
 public class JodahArchmageEternal extends Card {
 
     public JodahArchmageEternal() {

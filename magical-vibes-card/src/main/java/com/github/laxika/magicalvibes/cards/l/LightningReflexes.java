@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MIR", collectorNumber = "186")
+@CardRegistration(set = "DMR", collectorNumber = "128")
 public class LightningReflexes extends Card {
 
     public LightningReflexes() {

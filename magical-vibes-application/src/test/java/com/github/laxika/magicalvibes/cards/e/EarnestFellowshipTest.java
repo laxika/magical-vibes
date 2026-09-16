@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.cards.a.Atogatog;
+import com.github.laxika.magicalvibes.cards.a.Auramancer;
+import com.github.laxika.magicalvibes.cards.k.KirtarsDesire;
+import com.github.laxika.magicalvibes.cards.o.OtarianJuggernaut;
+import com.github.laxika.magicalvibes.cards.r.Repel;
+import com.github.laxika.magicalvibes.cards.s.SecondThoughts;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,15 +19,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EarnestFellowship.class, Auramancer.class, OtarianJuggernaut.class,
+        Atogatog.class, Repel.class, SecondThoughts.class, KirtarsDesire.class})
 class EarnestFellowshipTest extends BaseCardTest {
 
     @Test
     @DisplayName("A creature cannot block a creature sharing its color")
     void coloredCreatureCannotBlockSameColorCreature() {
         harness.addToBattlefield(player1, new EarnestFellowship());
-        Permanent attacker = addReadyCreature(player1, "White attacker", List.of(CardColor.WHITE));
+        Permanent attacker = addCreatureReady(player1, new Auramancer());
         attacker.setAttacking(true);
-        addReadyCreature(player2, "White blocker", List.of(CardColor.WHITE));
+        addCreatureReady(player2, new Auramancer());
 
         prepareDeclareBlockers(player1);
 
@@ -40,9 +43,9 @@ class EarnestFellowshipTest extends BaseCardTest {
     @DisplayName("A colorless creature can block a colored creature")
     void colorlessCreatureCanBlockColoredCreature() {
         harness.addToBattlefield(player1, new EarnestFellowship());
-        Permanent attacker = addReadyCreature(player1, "White attacker", List.of(CardColor.WHITE));
+        Permanent attacker = addCreatureReady(player1, new Auramancer());
         attacker.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, "Colorless blocker", List.of());
+        Permanent blocker = addCreatureReady(player2, new OtarianJuggernaut());
 
         prepareDeclareBlockers(player1);
 
@@ -56,43 +59,66 @@ class EarnestFellowshipTest extends BaseCardTest {
     @DisplayName("A multicolored creature cannot be targeted by spells of either color")
     void multicoloredCreatureHasProtectionFromEachColor() {
         harness.addToBattlefield(player1, new EarnestFellowship());
-        Permanent target = addReadyCreature(player2, "Azorius creature", List.of(CardColor.WHITE, CardColor.BLUE));
-        addReadyCreature(player2, "Other target", List.of(CardColor.BLACK));
+        Permanent target = addCreatureReady(player2, new Atogatog());
+        target.setAttacking(true);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Blue Bolt", CardColor.BLUE)));
+        harness.setHand(player1, List.of(new Repel()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, target.getId(), null))
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from blue");
 
-        harness.setHand(player1, List.of(createTargetedInstant("White Bolt", CardColor.WHITE)));
+        harness.setHand(player1, List.of(new SecondThoughts()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, target.getId(), null))
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from white");
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player,
-                                       String name, List<CardColor> colors) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}");
-        card.setColor(colors.size() == 1 ? colors.getFirst() : null);
-        card.setColors(colors);
-        card.setPower(2);
-        card.setToughness(2);
-        return addCreatureReady(player, card);
+    @Test
+    @DisplayName("Protection prevents combat damage from a creature's own color")
+    void preventsDamageFromOwnColor() {
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        Permanent attacker = addCreatureReady(player1, new Auramancer());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new Auramancer());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
-    private static Card createTargetedInstant(String name, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setColors(List.of(color));
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
+    @Test
+    @DisplayName("A colorless creature can be targeted by a colored spell")
+    void colorlessCreatureHasNoProtectionFromColors() {
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        Permanent target = addCreatureReady(player2, new OtarianJuggernaut());
+
+        harness.setHand(player1, List.of(new Repel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Otarian Juggernaut");
+    }
+
+    @Test
+    @DisplayName("A creature cannot be enchanted by an Aura sharing its color")
+    void coloredCreatureCannotBeEnchantedBySameColorAura() {
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        Permanent target = addCreatureReady(player2, new Auramancer());
+
+        harness.setHand(player1, List.of(new KirtarsDesire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
     }
 }

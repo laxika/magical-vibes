@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPerm
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentWithSameControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -38,7 +39,8 @@ public class PermanentControlTargetValidators {
         Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
         if (target == null || !target.getCard().hasType(CardType.ENCHANTMENT)
                 || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
-                || !target.isAttached()) {
+                || !target.isAttached()
+                || gameQueryService.findPermanentById(ctx.gameData(), target.getAttachedTo()) == null) {
             throw new IllegalStateException("Target must be an Aura attached to a permanent");
         }
     }
@@ -74,6 +76,11 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(TargetPlayerGainsControlOfSourceCreatureEffect.class)
     public void validateTargetPlayerGainsControlOfSourceCreature(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
+    }
+
+    @ValidatesTarget(TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect.class)
+    public void validateTargetPlayerGainsControlOfSourcePermanentUntilEndOfTurn(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 }

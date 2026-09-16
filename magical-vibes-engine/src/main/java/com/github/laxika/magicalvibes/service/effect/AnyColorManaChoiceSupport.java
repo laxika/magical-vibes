@@ -159,6 +159,13 @@ public final class AnyColorManaChoiceSupport {
         if (choiceContext == null) {
             return false;
         }
+        if (sourcePermanentId != null) {
+            if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+                choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
+            } else if (choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+                choiceContext = subtypeChoice.withSourcePermanentId(sourcePermanentId);
+            }
+        }
         if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
@@ -345,6 +352,9 @@ public final class AnyColorManaChoiceSupport {
                         : ChoiceContext.ManaColorChoice.fixedColorCombination(
                                 playerId, fromCreature, amount, colors);
             }
+            case LEGENDARY_SPELLS ->
+                    new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
+                            effect.allowedColors(), new ManaRestriction.LegendarySpells());
             case INSTANT_SORCERY_ONLY -> ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, amount);
             case ARTIFACT_SPELLS_OR_ABILITIES ->
                     ChoiceContext.ManaColorChoice.artifactSpellOrAbilityOnly(playerId, amount);
@@ -441,6 +451,7 @@ public final class AnyColorManaChoiceSupport {
     private static String prompt(ManaSpendRestriction restriction) {
         return switch (restriction) {
             case COMMANDER_COLOR_IDENTITY -> "Choose a color in your commander's color identity.";
+            case LEGENDARY_SPELLS -> "Choose a color of mana to add (legendary spells only).";
             case SPELL_ONLY -> "Choose a color of mana to add (spells only).";
             case MULTICOLORED_SPELLS -> "Choose a color of mana to add (multicolored spells only).";
             case ABILITIES -> "Choose a color of mana to add (activated abilities only).";

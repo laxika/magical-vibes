@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "M12", collectorNumber = "108")
 @CardRegistration(set = "TSP", collectorNumber = "131")
 @CardRegistration(set = "DDR", collectorNumber = "61")
+@CardRegistration(set = "TSR", collectorNumber = "139")
+@CardRegistration(set = "SOA", collectorNumber = "33")
 public class Smallpox extends Card {
 
     public Smallpox() {

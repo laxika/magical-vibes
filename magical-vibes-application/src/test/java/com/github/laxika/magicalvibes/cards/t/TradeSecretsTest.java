@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TradeSecrets.class, Forest.class})
 class TradeSecretsTest extends BaseCardTest {
@@ -24,8 +25,7 @@ class TradeSecretsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -66,5 +66,49 @@ class TradeSecretsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(initialOpponentHandSize + 4);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller may draw zero cards before the opponent declines to repeat")
+    void controllerMayDrawZeroCards() {
+        int initialOpponentHandSize = gd.playerHands.get(player2.getId()).size();
+        castTradeSecrets();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(initialOpponentHandSize + 2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Target opponent may repeat the entire process multiple times")
+    void opponentMayRepeatMultipleTimes() {
+        int initialOpponentHandSize = gd.playerHands.get(player2.getId()).size();
+        castTradeSecrets();
+
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(initialOpponentHandSize + 6);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trade Secrets cannot target its controller")
+    void cannotTargetController() {
+        harness.setHand(player1, List.of(new TradeSecrets()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an opponent");
     }
 }

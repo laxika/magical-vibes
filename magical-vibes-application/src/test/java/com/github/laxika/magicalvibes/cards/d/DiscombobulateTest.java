@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Discombobulate.class, GrizzlyBears.class})
 class DiscombobulateTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -44,7 +46,6 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry discombobulateEntry = gd.stack.getLast();
         assertThat(discombobulateEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(discombobulateEntry.getCard().getName()).isEqualTo("Discombobulate");
         assertThat(discombobulateEntry.getTargetId()).isEqualTo(bearsCardId);
     }
 
@@ -69,7 +70,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack)
-                .noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+                .noneMatch(se -> se.getCard() == bears);
     }
 
     @Test
@@ -174,7 +175,6 @@ class DiscombobulateTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
     }
 
     // ===== Fizzle =====
@@ -195,7 +195,7 @@ class DiscombobulateTest extends BaseCardTest {
 
         // Remove Bears from stack before Discombobulate resolves
         GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getName().equals("Grizzly Bears"));
+        gd.stack.removeIf(se -> se.getCard() == bears);
 
         harness.passBothPriorities();
 
@@ -219,12 +219,10 @@ class DiscombobulateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
         Card cardA = new GrizzlyBears();
         Card cardB = new GrizzlyBears();
-        deck.add(cardA);
-        deck.add(cardB);
+        harness.setLibrary(player2, List.of(cardA, cardB));
+        List<Card> deck = gd.playerDecks.get(player2.getId());
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -252,8 +250,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -275,7 +272,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);

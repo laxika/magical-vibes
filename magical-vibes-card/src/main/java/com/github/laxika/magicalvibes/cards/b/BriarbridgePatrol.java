@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "195")
+@CardRegistration(set = "SIR", collectorNumber = "187")
 public class BriarbridgePatrol extends Card {
 
     public BriarbridgePatrol() {

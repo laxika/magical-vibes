@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "FUT", collectorNumber = "79")
+@CardRegistration(set = "TSR", collectorNumber = "142")
 public class StrongholdRats extends Card {
 
     public StrongholdRats() {

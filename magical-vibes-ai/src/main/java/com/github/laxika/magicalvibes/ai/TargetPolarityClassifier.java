@@ -402,6 +402,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetPermanentUntilOpponentBecomesMonarchEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetCreatureAndCopyEnchantedCreatureEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -435,6 +436,7 @@ public class TargetPolarityClassifier {
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("FlipUntilLoseOrStopEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("WhammyBurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             // Divine Deflection prevents damage to its controller, but the target is who the
             // prevented damage is then dealt to.
@@ -464,6 +466,7 @@ public class TargetPolarityClassifier {
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),
+            entry("GainControlOfTargetUntilRansomEffect", TargetPolarity.HARMFUL),
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
@@ -477,6 +480,7 @@ public class TargetPolarityClassifier {
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("GoadTargetCreatureUntilNextTurnEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
@@ -524,6 +528,9 @@ public class TargetPolarityClassifier {
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
+            entry("ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantFlyingToTargetCreatureOrPlayerEffect", TargetPolarity.BENEFICIAL),
+            entry("MakeTargetCreatureCommanderEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             // Chandra's Ignition: the target is a creature you control and is only the damage
@@ -585,6 +592,8 @@ public class TargetPolarityClassifier {
             entry("CreateTokenCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
+            // Fell the Mighty uses the target's power as a threshold and spares the target itself.
+            entry("DestroyAllCreaturesWithPowerGreaterThanTargetEffect", TargetPolarity.NEUTRAL),
             entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

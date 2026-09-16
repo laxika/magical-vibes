@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "87")
 @CardRegistration(set = "USG", collectorNumber = "80")
 @CardRegistration(set = "A25", collectorNumber = "61")
+@CardRegistration(set = "DMR", collectorNumber = "55")
 public class HorseshoeCrab extends Card {
 
     public HorseshoeCrab() {

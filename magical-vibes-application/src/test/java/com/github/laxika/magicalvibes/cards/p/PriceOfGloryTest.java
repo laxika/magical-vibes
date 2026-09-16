@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.CabalPit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PriceOfGlory.class, CabalPit.class, Forest.class})
 class PriceOfGloryTest extends BaseCardTest {
 
     @Test
@@ -17,11 +20,27 @@ class PriceOfGloryTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Destroys a land with an activated mana ability tapped outside its controller's turn")
+    void destroysLandWithActivatedManaAbilityTappedOutsideItsControllersTurn() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new PriceOfGlory());
+        harness.addToBattlefield(player2, new CabalPit());
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Cabal Pit");
+        harness.assertInGraveyard(player2, "Cabal Pit");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
     @Test
@@ -46,11 +65,5 @@ class PriceOfGloryTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         harness.assertOnBattlefield(player1, "Forest");
-    }
-
-    private void resolveStackFully() {
-        for (int i = 0; i < 4 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
     }
 }

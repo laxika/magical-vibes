@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
 @CardRegistration(set = "PLS", collectorNumber = "51")
+@CardRegistration(set = "DMR", collectorNumber = "100")
 public class PhyrexianScuta extends Card {
 
     public PhyrexianScuta() {

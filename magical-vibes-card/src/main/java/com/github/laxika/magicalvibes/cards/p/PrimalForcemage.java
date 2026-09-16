@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "212")
+@CardRegistration(set = "TSR", collectorNumber = "225")
 public class PrimalForcemage extends Card {
 
     public PrimalForcemage() {

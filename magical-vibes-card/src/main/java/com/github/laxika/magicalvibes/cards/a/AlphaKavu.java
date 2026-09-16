@@ -22,7 +22,7 @@ public class AlphaKavu extends Card {
 
     public AlphaKavu() {
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}{G}",
                 List.of(new BoostTargetCreatureEffect(-1, 1, KAVU_CREATURE)),
                 "{1}{G}: Target Kavu creature gets -1/+1 until end of turn.",

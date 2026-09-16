@@ -26,7 +26,7 @@ public class Permanent {
 
     private final UUID id;
     private Card card;
-    private final Card originalCard;
+    private Card originalCard;
     @Setter private boolean bestow;
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
@@ -306,6 +306,7 @@ public class Permanent {
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
+    private final Set<CardSubtype> faceDownSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Whether this face-down permanent was put onto the battlefield by manifest. */
     @Setter private boolean manifested;
     @Setter private boolean animatedUntilEndOfTurn;
@@ -559,6 +560,8 @@ public class Permanent {
     @Setter private boolean renowned;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
+    /** Whether this permanent has been motivated. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private boolean motivated;
     /** Whether this permanent's Case has been solved. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean solved;
     /** Whether this permanent is harnessed. Permanent state; never cleared by {@link #resetModifiers()}. */
@@ -807,6 +810,7 @@ public class Permanent {
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
+        this.faceDownSubtypes.addAll(source.faceDownSubtypes);
         this.manifested = source.manifested;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
@@ -898,6 +902,7 @@ public class Permanent {
         this.cast = source.cast;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
+        this.motivated = source.motivated;
         this.solved = source.solved;
         this.harnessed = source.harnessed;
         this.timesMutated = source.timesMutated;
@@ -936,12 +941,19 @@ public class Permanent {
     }
 
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {
+        setFaceDown(power, toughness, cardTypes, Set.of());
+    }
+
+    public void setFaceDown(int power, int toughness, Set<CardType> cardTypes,
+                            Set<CardSubtype> subtypes) {
         this.faceDown = true;
         this.cloaked = false;
         this.faceDownPower = power;
         this.faceDownToughness = toughness;
         this.faceDownCardTypes.clear();
         this.faceDownCardTypes.addAll(cardTypes);
+        this.faceDownSubtypes.clear();
+        this.faceDownSubtypes.addAll(subtypes);
     }
 
     public void setFaceDownAsCloaked() {
@@ -955,11 +967,24 @@ public class Permanent {
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
+        this.faceDownSubtypes.clear();
         this.manifested = false;
     }
 
     public void setCard(Card card) {
         this.card = card;
+    }
+
+    /** Replaces the card represented by this permanent while preserving the permanent object and its state. */
+    public void exchangeCard(Card card) {
+        card.freeze();
+        this.card = card;
+        this.originalCard = card;
+    }
+
+    public void restoreBombardmentCard(Card card) {
+        this.card = card;
+        this.originalCard = card;
     }
 
     /**

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AphettoGrifter;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,21 +14,14 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VoidmageProdigy.class, FugitiveWizard.class, GrizzlyBears.class, Shock.class})
+@CardUsed({VoidmageProdigy.class, AphettoGrifter.class, ElvishWarrior.class, Shock.class})
 class VoidmageProdigyTest extends BaseCardTest {
 
     @Test
     void morphsFaceDownAndCanBeTurnedFaceUpForBlue() {
-        harness.setHand(player1, List.of(new VoidmageProdigy()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        Permanent prodigy = findPermanent(player1, "Voidmage Prodigy");
+        Permanent prodigy = castFaceDown();
         assertThat(prodigy.isFaceDown()).isTrue();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -36,6 +29,19 @@ class VoidmageProdigyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(prodigy.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void cannotTurnFaceUpWithoutBlueMana() {
+        Permanent prodigy = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(prodigy)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(prodigy.isFaceDown()).isTrue();
     }
 
     @Test
@@ -63,8 +69,8 @@ class VoidmageProdigyTest extends BaseCardTest {
     void onlyWizardsCanBeSacrificed() {
         VoidmageProdigy prodigy = new VoidmageProdigy();
         Permanent prodigyPermanent = harness.addToBattlefieldAndReturn(player1, prodigy);
-        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new AphettoGrifter());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
         Shock shock = new Shock();
         harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -80,11 +86,21 @@ class VoidmageProdigyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(wizard.getId(), prodigyPermanent.getId())
-                .doesNotContain(bears.getId());
+                .doesNotContain(warrior.getId());
         harness.handlePermanentChosen(player1, wizard.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(prodigyPermanent).doesNotContain(wizard);
         harness.assertInGraveyard(player2, "Shock");
+    }
+
+    private Permanent castFaceDown() {
+        harness.setHand(player1, List.of(new VoidmageProdigy()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        return findPermanent(player1, "Voidmage Prodigy");
     }
 }

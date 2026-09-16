@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "161")
+@CardRegistration(set = "RVR", collectorNumber = "173")
 public class ConclaveCavalier extends Card {
 
     public ConclaveCavalier() {

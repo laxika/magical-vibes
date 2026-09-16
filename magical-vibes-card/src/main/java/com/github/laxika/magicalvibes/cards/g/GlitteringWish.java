@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToHan
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "156")
+@CardRegistration(set = "TSR", collectorNumber = "253")
 public class GlitteringWish extends Card {
 
     public GlitteringWish() {

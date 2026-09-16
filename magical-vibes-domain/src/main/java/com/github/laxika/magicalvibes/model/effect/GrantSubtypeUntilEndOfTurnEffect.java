@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Additively grants a creature subtype until end of turn.
@@ -12,7 +13,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param subtype the creature subtype to grant
  * @param scope the permanent or player scope receiving the subtype
  */
-public record GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope) implements CardEffect {
+public record GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope,
+                                               PermanentPredicate filter) implements CardEffect {
+
+    public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope) {
+        this(subtype, scope, null);
+    }
 
     @Override
     public TargetSpec targetSpec() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "17")
 @CardRegistration(set = "AKR", collectorNumber = "22")
+@CardRegistration(set = "MB1", collectorNumber = "131")
 public class GustWalker extends Card {
 
     public GustWalker() {

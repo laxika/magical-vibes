@@ -1,4 +1,4 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record DoubleManaPoolEffect() implements ManaProducingEffect {
+public record DoubleManaPoolEffect() implements ManaProducingEffect, DoublingEffect {
 }

@@ -321,7 +321,7 @@ public class AutoPassService {
                 List<Integer> playable =
                         actionAvailabilityService.getPlayableCardIndices(gameData, stackPriorityHolder);
                 boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
-                return !playable.isEmpty() || hasActivatable;
+                return !playable.isEmpty() || hasActivatable || !actionAvailabilityService.getPlayableCommanders(gameData, stackPriorityHolder).isEmpty();
             });
 
             if (canRespond) {
@@ -351,6 +351,7 @@ public class AutoPassService {
     }
 
     private boolean shouldStopForAvailableAction(GameData gameData, UUID priorityHolder) {
+        if (!actionAvailabilityService.getPlayableCommanders(gameData, priorityHolder).isEmpty()) return true;
         if (gameData.planechase != null && planechaseService.canOfferRoll(gameData, priorityHolder)) return true;
         List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
         if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
@@ -475,6 +476,12 @@ public class AutoPassService {
                 }
 
                 // Skip declare-blockers-only abilities outside that step
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED
+                        && gameData.currentStep != TurnStep.DECLARE_BLOCKERS
+                        && gameData.currentStep != TurnStep.COMBAT_DAMAGE
+                        && gameData.currentStep != TurnStep.END_OF_COMBAT) {
+                    continue;
+                }
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS
                         && gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {
                     continue;

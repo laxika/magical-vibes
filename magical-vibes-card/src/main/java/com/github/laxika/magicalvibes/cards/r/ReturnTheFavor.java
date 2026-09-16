@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "142")
+@CardRegistration(set = "SOA", collectorNumber = "47")
 public class ReturnTheFavor extends Card {
 
     public ReturnTheFavor() {

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, LobbyGamesNotification, DeckInfo, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification, SetInfo } from '../../services/websocket.service';
+import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, LobbyGamesNotification, DeckInfo, DeckFormat, DECK_FORMATS, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification, SetInfo } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -13,6 +13,8 @@ import { Subscription } from 'rxjs';
   styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  readonly formats = DECK_FORMATS;
+  format = signal<DeckFormat>('CASUAL');
   planechase = signal(false);
   games = signal<LobbyGame[]>([]);
   newGameName = signal('');
@@ -132,6 +134,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.websocketService.availableSets.filter(s => s.randomEligible);
   }
 
+  changeFormat(format: DeckFormat) {
+    this.format.set(format);
+    if (format === 'COMMANDER') this.planechase.set(false);
+    const matching = this.websocketService.availableDecks.find(deck => deck.format === format && !deck.validation?.errors.length);
+    if (matching) { this.selectedDeckId.set(matching.id); this.aiDeckId.set(matching.id); }
+  }
+
   createGame() {
     if (this.creating()) {
       return;
@@ -147,6 +156,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       type: MessageType.CREATE_GAME,
       gameName: this.newGameName(),
       deckId: this.selectedDeckId(),
+      format: this.activeTab() === 'allrandom' ? 'CASUAL' : this.format(),
       vsAi: this.vsAi(),
       planechase: this.planechase(),
       aiDeckId: this.aiDeckId(),

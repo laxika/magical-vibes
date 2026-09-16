@@ -1148,20 +1148,35 @@ public class GameService {
                                     Map<UUID, Integer> damageAssignments,
                                     List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                                     List<Integer> discardHandCardIndices) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+                                    Map<UUID, Integer> damageAssignments,
+                                    List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                                    List<Integer> discardHandCardIndices, List<UUID> convokeCreatureIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
                         targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
                         retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
                         damageAssignments, beholdPermanentIds, beholdHandCardIndices,
-                        discardHandCardIndices))) return;
+                        discardHandCardIndices, convokeCreatureIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId,
                     targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
                     retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
-                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices);
+                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices,
+                    convokeCreatureIds);
         }
     }
 
@@ -1324,6 +1339,25 @@ public class GameService {
         }
     }
 
+    /** Casts a face-down spellmorph card from the battlefield. */
+    public void playCardWithSpellmorph(GameData gameData, Player player, int permanentIndex,
+                                       Integer xValue, UUID targetId, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithSpellmorph(gameData, actionPlayer, permanentIndex, xValue,
+                        targetId, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            spellCastingService.playCardWithSpellmorph(gameData, player, battlefield.get(permanentIndex),
+                    xValue, targetId, targetIds != null ? targetIds : List.of());
+        }
+    }
+
     public void turnFaceUp(GameData gameData, Player player, int permanentIndex) {
         turnFaceUp(gameData, player, permanentIndex, null);
     }
@@ -1387,6 +1421,9 @@ public class GameService {
             String faceUpCost = manifestedOrCloaked ? permanent.getCard().getManaCost() : morphCost;
             if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
                 throw new IllegalStateException("Face-down permanent is not a creature card");
+            }
+            if (!manifestedOrCloaked && permanent.getCard().isSpellmorph()) {
+                throw new IllegalStateException("Spellmorph cards are cast from the battlefield instead");
             }
             if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()
@@ -1719,6 +1756,22 @@ public class GameService {
                     targetIds != null ? targetIds : List.of(),
                     spliceHandCardIndices != null ? spliceHandCardIndices : List.of(),
                     splicePermanentIds != null ? splicePermanentIds : List.of());
+        }
+    }
+
+    public void castCommander(GameData gameData, Player player, UUID cardId, Runnable cast) {
+        if (runAsActionIfNeeded(gameData, () -> castCommander(gameData, player, cardId, cast))) return;
+        synchronized (gameData) {
+            Player actor = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, actor);
+            if (gameData.commandCastCardId != null) throw new IllegalStateException("Already casting a commander");
+            List<Card> zone = gameData.playerCommandZones.getOrDefault(actor.getId(), List.of());
+            if (zone.size() != 1 || !zone.getFirst().getId().equals(cardId) || !gameData.isCommander(cardId))
+                throw new IllegalArgumentException("Commander is not in your command zone");
+            gameData.commandCastPlayerId = actor.getId();
+            gameData.commandCastCardId = cardId;
+            try { cast.run(); }
+            finally { gameData.commandCastPlayerId = null; gameData.commandCastCardId = null; }
         }
     }
 

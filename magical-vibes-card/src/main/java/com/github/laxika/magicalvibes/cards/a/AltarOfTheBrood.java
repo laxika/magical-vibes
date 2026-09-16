@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "216")
+@CardRegistration(set = "SLC", collectorNumber = "1")
+@CardRegistration(set = "SLC", collectorNumber = "28")
 public class AltarOfTheBrood extends Card {
 
     public AltarOfTheBrood() {

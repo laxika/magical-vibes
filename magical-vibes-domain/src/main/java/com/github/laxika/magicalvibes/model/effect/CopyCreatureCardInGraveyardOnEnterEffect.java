@@ -10,9 +10,18 @@ import java.util.Set;
  */
 public record CopyCreatureCardInGraveyardOnEnterEffect(
         String nameOverride,
-        int powerOverride,
-        int toughnessOverride,
-        Set<CardSubtype> additionalSubtypesOverride) implements ReplacementEffect {
+        Integer powerOverride,
+        Integer toughnessOverride,
+        Set<CardSubtype> additionalSubtypesOverride,
+        boolean exileTwoAndAddOtherPowerCounters) implements ReplacementEffect {
+
+    public CopyCreatureCardInGraveyardOnEnterEffect(
+            String nameOverride,
+            int powerOverride,
+            int toughnessOverride,
+            Set<CardSubtype> additionalSubtypesOverride) {
+        this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride, false);
+    }
 
     public CopyCreatureCardInGraveyardOnEnterEffect {
         additionalSubtypesOverride = Set.copyOf(additionalSubtypesOverride);

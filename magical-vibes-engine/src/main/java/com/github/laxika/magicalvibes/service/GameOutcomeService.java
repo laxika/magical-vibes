@@ -107,10 +107,12 @@ public class GameOutcomeService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.getLife(playerId);
             int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-            if (life <= 0 || poison >= 10) {
+            boolean commanderDamage = gameData.format == com.github.laxika.magicalvibes.model.DeckFormat.COMMANDER
+                    && gameData.commanderDamageReceived.getOrDefault(playerId, java.util.Map.of()).values().stream().anyMatch(damage -> damage >= 21);
+            if (life <= 0 || poison >= 10 || commanderDamage) {
                 // Poison is checked first: a player at 0 life AND 10 poison still loses even with
                 // Phyrexian Unlife, because that only prevents the life half (CR 704.5a/704.5c).
-                LossReason reason = poison >= 10 ? LossReason.POISON : LossReason.LIFE;
+                LossReason reason = commanderDamage ? LossReason.COMMANDER_DAMAGE : poison >= 10 ? LossReason.POISON : LossReason.LIFE;
                 if (resolveLoss(gameData, playerId, reason) != LossOutcome.LOSES) {
                     continue;
                 }
@@ -128,7 +130,9 @@ public class GameOutcomeService {
                 }
 
                 String logEntry;
-                if (poison >= 10) {
+                if (commanderDamage) {
+                    logEntry = gameData.playerIdToName.get(playerId) + " loses to commander damage! " + winnerName + " wins!";
+                } else if (poison >= 10) {
                     logEntry = gameData.playerIdToName.get(playerId) + " has 10 poison counters and loses! " + winnerName + " wins!";
                 } else {
                     logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";

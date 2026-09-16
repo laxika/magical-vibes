@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.InvestigateForEachTargetPlayerCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +47,7 @@ public class InvestigateForEachTargetPlayerCreatureEffectHandler implements Norm
             }
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    creatureCount++;
+                    creatureCount += CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService);
                 }
             }
         }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "57")
+@CardRegistration(set = "DMR", collectorNumber = "63")
 public class Ovinize extends Card {
 
     public Ovinize() {

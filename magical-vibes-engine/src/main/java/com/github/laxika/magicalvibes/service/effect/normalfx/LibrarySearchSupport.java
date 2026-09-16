@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
+import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -50,6 +52,8 @@ public class LibrarySearchSupport {
 
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    private ReverseMiracleSupport reverseMiracleSupport;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the
@@ -58,12 +62,26 @@ public class LibrarySearchSupport {
      * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
      */
     public boolean startNextEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        return startNextEachPlayerBasicLandSearch(gameData, followUp, true);
+    }
+
+    /**
+     * Starts the next each-player basic-land search, optionally using a mandatory-search prompt.
+     * A restricted search can still fail to find a matching card even when the instruction is not
+     * optional.
+     */
+    public boolean startNextEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp,
+                                                       boolean maySearch) {
         LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
-        String prompt = followUp.eachPlayerSearchTapped()
-                ? "You may search your library for a basic land card and put it onto the battlefield tapped."
-                : "Search your library for a basic land card and put it onto the battlefield.";
+        String prompt = maySearch
+                ? followUp.eachPlayerSearchTapped()
+                        ? "You may search your library for a basic land card and put it onto the battlefield tapped."
+                        : "You may search your library for a basic land card and put it onto the battlefield."
+                : followUp.eachPlayerSearchTapped()
+                        ? "Search your library for a basic land card and put it onto the battlefield tapped."
+                        : "Search your library for a basic land card and put it onto the battlefield.";
 
         List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
         while (!remaining.isEmpty()) {
@@ -140,6 +158,7 @@ public class LibrarySearchSupport {
                     .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
+            params = applyOppositionAgentControl(gameData, params);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library."));
             return true;
@@ -682,6 +701,37 @@ public class LibrarySearchSupport {
         return deck.stream().filter(this::isLibrarySearchCastableCard).toList();
     }
 
+    /** Applies the controller of the most recently entered opposing Opposition Agent, if any. */
+    public LibrarySearchParams applyOppositionAgentControl(GameData gameData, LibrarySearchParams params) {
+        if (params.decisionPlayerId() != null
+                || params.sourceSideboard()
+                || params.sourceCards() != null
+                || (params.targetPlayerId() != null && !params.targetPlayerId().equals(params.playerId()))) {
+            return params;
+        }
+
+        UUID controllerId = null;
+        long newestTimestamp = Long.MIN_VALUE;
+        for (UUID battlefieldControllerId : gameData.orderedPlayerIds) {
+            if (battlefieldControllerId.equals(params.playerId())) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                boolean isOppositionAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OppositionAgentEffect.class::isInstance);
+                if (isOppositionAgent && permanent.getTimestamp() >= newestTimestamp) {
+                    newestTimestamp = permanent.getTimestamp();
+                    controllerId = battlefieldControllerId;
+                }
+            }
+        }
+        return controllerId == null ? params : params.withDecisionPlayerId(controllerId);
+    }
+
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind) {
         String playerName = gameData.playerIdToName.get(playerId);
@@ -736,6 +786,13 @@ public class LibrarySearchSupport {
                     prompt += " You may also cast a card with a library-search permission.";
                 }
             }
+        }
+
+        params = applyOppositionAgentControl(gameData, params);
+
+        if (reverseMiracleSupport != null && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
+                prompt, canFailToFind, logMessage)) {
+            return;
         }
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(

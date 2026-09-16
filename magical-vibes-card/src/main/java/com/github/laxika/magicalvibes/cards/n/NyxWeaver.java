@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "153")
+@CardRegistration(set = "PIO", collectorNumber = "236")
 public class NyxWeaver extends Card {
 
     public NyxWeaver() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardWithMan
 
 @CardRegistration(set = "AER", collectorNumber = "177")
 @CardRegistration(set = "A25", collectorNumber = "235")
+@CardRegistration(set = "2XM", collectorNumber = "302")
 public class TreasureKeeper extends Card {
 
     public TreasureKeeper() {

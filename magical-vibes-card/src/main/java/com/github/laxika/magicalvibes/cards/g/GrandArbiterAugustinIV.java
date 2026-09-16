@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "DIS", collectorNumber = "112")
 @CardRegistration(set = "MMA", collectorNumber = "176")
+@CardRegistration(set = "2X2", collectorNumber = "221")
 public class GrandArbiterAugustinIV extends Card {
 
     public GrandArbiterAugustinIV() {

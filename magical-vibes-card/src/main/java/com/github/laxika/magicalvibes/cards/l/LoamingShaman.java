@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveya
 
 @CardRegistration(set = "M20", collectorNumber = "180")
 @CardRegistration(set = "DIS", collectorNumber = "87")
+@CardRegistration(set = "RVR", collectorNumber = "149")
 public class LoamingShaman extends Card {
 
     public LoamingShaman() {

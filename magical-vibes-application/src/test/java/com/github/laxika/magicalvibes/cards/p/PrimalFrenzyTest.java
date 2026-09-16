@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeafDancer;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,71 +16,87 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrimalFrenzy.class, LeafDancer.class, Mountain.class})
 class PrimalFrenzyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Primal Frenzy attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new LeafDancer());
 
         harness.setHand(player1, List.of(new PrimalFrenzy()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Primal Frenzy")
-                        && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
+                .anyMatch(p -> p.isAttached()
+                        && p.getAttachedTo().equals(creature.getId()));
     }
 
     @Test
     @DisplayName("Enchanted creature has trample")
     void enchantedCreatureHasTrample() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new LeafDancer());
 
-        Permanent frenzyPerm = new Permanent(new PrimalFrenzy());
-        frenzyPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(frenzyPerm);
+        Permanent frenzyPerm = harness.addToBattlefieldAndReturn(player1, new PrimalFrenzy());
+        frenzyPerm.setAttachedTo(creature.getId());
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     @DisplayName("Creature loses trample when Primal Frenzy leaves")
     void creatureLosesTrampleWhenAuraLeaves() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new LeafDancer());
 
-        Permanent frenzyPerm = new Permanent(new PrimalFrenzy());
-        frenzyPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(frenzyPerm);
+        Permanent frenzyPerm = harness.addToBattlefieldAndReturn(player1, new PrimalFrenzy());
+        frenzyPerm.setAttachedTo(creature.getId());
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(frenzyPerm);
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Primal Frenzy can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new LeafDancer());
+        harness.setHand(player1, List.of(new PrimalFrenzy()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Primal Frenzy affects only the enchanted creature")
+    void doesNotAffectOtherCreatures() {
+        Permanent enchantedCreature = addCreatureReady(player1, new LeafDancer());
+        Permanent otherCreature = addCreatureReady(player1, new LeafDancer());
+
+        Permanent frenzyPerm = harness.addToBattlefieldAndReturn(player1, new PrimalFrenzy());
+        frenzyPerm.setAttachedTo(enchantedCreature.getId());
+
+        assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new LeafDancer());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new PrimalFrenzy()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-
-        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

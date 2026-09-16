@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Brainstorm.class, Island.class, KjeldoranWarrior.class})
+@CardUsed({Brainstorm.class, Island.class})
 class BrainstormTest extends BaseCardTest {
 
     private List<Card> fiveCards() {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            cards.add(i % 2 == 0 ? new Island() : new KjeldoranWarrior());
+            cards.add(new Island());
         }
         return cards;
     }
@@ -79,7 +79,7 @@ class BrainstormTest extends BaseCardTest {
     @DisplayName("Can put a card that was already in hand on top")
     void choosesFromEntireHand() {
         List<Card> library = fiveCards();
-        Card alreadyInHand = new KjeldoranWarrior();
+        Card alreadyInHand = new Island();
         harness.setLibrary(player1, library);
 
         harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
@@ -95,10 +95,10 @@ class BrainstormTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Puts all available cards back when the library has fewer than three cards")
-    void handlesShortLibrary() {
+    @DisplayName("Completes the return choice before losing after the library runs out")
+    void completesReturnChoiceBeforeLosingWhenLibraryRunsOut() {
         Card libraryCard = new Island();
-        Card alreadyInHand = new KjeldoranWarrior();
+        Card alreadyInHand = new Island();
         harness.setLibrary(player1, List.of(libraryCard));
 
         harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
@@ -106,14 +106,20 @@ class BrainstormTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
         harness.handleMultipleCardsChosen(player1, List.of(alreadyInHand.getId(), libraryCard.getId()));
 
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(alreadyInHand, libraryCard);
     }
 
     @Test
-    @DisplayName("Requires every available card when fewer than two cards are available")
+    @DisplayName("Requires every available card before losing after a short draw")
     void requiresEveryAvailableCardWhenLibraryIsShort() {
         Card libraryCard = new Island();
         harness.setLibrary(player1, List.of(libraryCard));
@@ -125,5 +131,25 @@ class BrainstormTest extends BaseCardTest {
                     assertThat(choice.minCount()).isEqualTo(1);
                     assertThat(choice.maxCount()).isEqualTo(1);
                 });
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.handleMultipleCardsChosen(player1, List.of(libraryCard.getId()));
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Does not open a return choice when the library is empty")
+    void doesNotOpenReturnChoiceWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new Brainstorm(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

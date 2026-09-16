@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EpicStruggle.class, GrizzlyBears.class})
+@CardUsed({EpicStruggle.class, GiantWarthog.class})
 class EpicStruggleTest extends BaseCardTest {
 
     @Test
@@ -29,12 +28,38 @@ class EpicStruggleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wins the game at upkeep with more than 20 creatures")
+    void winsWithMoreThanTwentyCreatures() {
+        harness.addToBattlefield(player1, new EpicStruggle());
+        addCreatures(player1, 21);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
     @DisplayName("Does not trigger at upkeep with only 19 creatures")
     void doesNotTriggerWithNineteenCreatures() {
         harness.addToBattlefield(player1, new EpicStruggle());
         addCreatures(player1, 19);
 
         advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new EpicStruggle());
+        addCreatures(player1, 20);
+
+        advanceToUpkeep(player2);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
@@ -62,7 +87,7 @@ class EpicStruggleTest extends BaseCardTest {
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Grizzly Bears"));
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Giant Warthog"));
 
         harness.passBothPriorities();
 
@@ -71,9 +96,7 @@ class EpicStruggleTest extends BaseCardTest {
 
     private void addCreatures(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent creature = new Permanent(new GrizzlyBears());
-            creature.setSummoningSick(false);
-            gd.playerBattlefields.get(player.getId()).add(creature);
+            addCreatureReady(player, new GiantWarthog());
         }
     }
 }

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeismicMage.class, Forest.class, Mountain.class})
 class SeismicMageTest extends BaseCardTest {
 
     @Test
@@ -31,14 +33,32 @@ class SeismicMageTest extends BaseCardTest {
         assertThat(mage.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Can destroy a land it controls")
+    void destroysOwnLand() {
+        Permanent mage = addCreatureReady(player1, new SeismicMage());
+        harness.addToBattlefield(player1, new Forest());
+        prepareActivation();
+        UUID targetId = harness.getPermanentId(player1, "Forest");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(mage.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mountain");
     }
 
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
         addCreatureReady(player1, new SeismicMage());
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new SeismicMage());
         prepareActivation();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -60,7 +80,7 @@ class SeismicMageTest extends BaseCardTest {
 
     private void prepareActivation() {
         addMana();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Mountain()));
     }
 
     private void addMana() {

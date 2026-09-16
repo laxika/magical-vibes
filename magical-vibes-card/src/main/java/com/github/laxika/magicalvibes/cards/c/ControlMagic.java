@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "VMA", collectorNumber = "63")
 @CardRegistration(set = "DDM", collectorNumber = "30")
 @CardRegistration(set = "EMA", collectorNumber = "42")
+@CardRegistration(set = "AA2", collectorNumber = "3")
 public class ControlMagic extends Card {
 
     public ControlMagic() {

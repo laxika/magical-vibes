@@ -1,19 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenArcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StalkingBloodsucker.class, AvenArcher.class})
 class StalkingBloodsuckerTest extends BaseCardTest {
 
     private void addActivationMana() {
@@ -30,16 +31,61 @@ class StalkingBloodsuckerTest extends BaseCardTest {
         Permanent bloodsucker = harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
         int basePower = gqs.getEffectivePower(gd, bloodsucker);
         int baseToughness = gqs.getEffectiveToughness(gd, bloodsucker);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AvenArcher()));
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Aven Archer");
         assertThat(gqs.getEffectivePower(gd, bloodsucker)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, bloodsucker)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated repeatedly in the same turn")
+    void repeatedActivationsStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent bloodsucker = harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
+        int basePower = gqs.getEffectivePower(gd, bloodsucker);
+        int baseToughness = gqs.getEffectiveToughness(gd, bloodsucker);
+        harness.setHand(player1, List.of(new AvenArcher(), new AvenArcher()));
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bloodsucker)).isEqualTo(basePower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, bloodsucker)).isEqualTo(baseToughness + 4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability does not require this creature to be untapped")
+    void abilityDoesNotRequireTapping() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent bloodsucker = harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
+        bloodsucker.tap();
+        int basePower = gqs.getEffectivePower(gd, bloodsucker);
+        harness.setHand(player1, List.of(new AvenArcher()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bloodsucker)).isEqualTo(basePower + 2);
+        assertThat(bloodsucker.isTapped()).isTrue();
     }
 
     @Test
@@ -51,7 +97,7 @@ class StalkingBloodsuckerTest extends BaseCardTest {
         Permanent bloodsucker = harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
         int basePower = gqs.getEffectivePower(gd, bloodsucker);
         int baseToughness = gqs.getEffectiveToughness(gd, bloodsucker);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AvenArcher()));
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
@@ -75,7 +121,7 @@ class StalkingBloodsuckerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
-        harness.setHand(player1, new ArrayList<>());
+        harness.setHand(player1, List.of());
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

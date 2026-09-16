@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.Gravecrawler;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.e.EntrailsFeaster;
+import com.github.laxika.magicalvibes.cards.f.FutureSight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnholyGrotto.class, Gravecrawler.class, HolyDay.class})
+@CardUsed({UnholyGrotto.class, EntrailsFeaster.class, FutureSight.class})
 class UnholyGrottoTest extends BaseCardTest {
 
     @Test
@@ -36,16 +35,34 @@ class UnholyGrottoTest extends BaseCardTest {
         Permanent grotto = addReadyGrotto();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        Card zombie = new Gravecrawler();
+        Card zombie = new EntrailsFeaster();
         harness.setGraveyard(player1, List.of(zombie));
-        harness.setLibrary(player1, List.of(new HolyDay()));
+        harness.setLibrary(player1, List.of(new FutureSight()));
 
         int grottoIndex = gd.playerBattlefields.get(player1.getId()).indexOf(grotto);
-        harness.activateAbility(player1, grottoIndex, 1, null, zombie.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, grottoIndex, 1, List.of(zombie.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(zombie);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(zombie);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(grotto.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Zombie-return ability requires black mana")
+    void requiresBlackMana() {
+        Permanent grotto = addReadyGrotto();
+        Card zombie = new EntrailsFeaster();
+        harness.setGraveyard(player1, List.of(zombie));
+
+        int grottoIndex = gd.playerBattlefields.get(player1.getId()).indexOf(grotto);
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, grottoIndex, 1, List.of(zombie.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(zombie);
+        assertThat(grotto.isTapped()).isFalse();
     }
 
     @Test
@@ -54,12 +71,27 @@ class UnholyGrottoTest extends BaseCardTest {
         Permanent grotto = addReadyGrotto();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        Card nonZombie = new HolyDay();
+        Card nonZombie = new FutureSight();
         harness.setGraveyard(player1, List.of(nonZombie));
 
         int grottoIndex = gd.playerBattlefields.get(player1.getId()).indexOf(grotto);
-        assertThatThrownBy(() -> harness.activateAbility(
-                player1, grottoIndex, 1, null, nonZombie.getId(), Zone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, grottoIndex, 1, List.of(nonZombie.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only cards in your graveyard can be targeted")
+    void rejectsZombieInOpponentsGraveyard() {
+        Permanent grotto = addReadyGrotto();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        Card opponentZombie = new EntrailsFeaster();
+        harness.setGraveyard(player2, List.of(opponentZombie));
+
+        int grottoIndex = gd.playerBattlefields.get(player1.getId()).indexOf(grotto);
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, grottoIndex, 1, List.of(opponentZombie.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

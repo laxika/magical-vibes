@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "M20", collectorNumber = "189")
 @CardRegistration(set = "OGW", collectorNumber = "141")
 @CardRegistration(set = "UMA", collectorNumber = "179")
+@CardRegistration(set = "PIO", collectorNumber = "191")
 public class PulseOfMurasa extends Card {
 
     public PulseOfMurasa() {

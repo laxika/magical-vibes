@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "95")
+@CardRegistration(set = "GN3", collectorNumber = "46")
 public class DemonicEmbrace extends Card {
 
     public DemonicEmbrace() {

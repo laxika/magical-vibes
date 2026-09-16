@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "JOU", collectorNumber = "87")
+@CardRegistration(set = "PIO", collectorNumber = "373")
 public class WorstFears extends Card {
 
     public WorstFears() {

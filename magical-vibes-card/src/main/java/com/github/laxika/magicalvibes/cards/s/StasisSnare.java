@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BFZ", collectorNumber = "50")
+@CardRegistration(set = "PIO", collectorNumber = "37")
 public class StasisSnare extends Card {
 
     public StasisSnare() {

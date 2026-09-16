@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "161")
+@CardRegistration(set = "RVR", collectorNumber = "141")
 public class ForcedLanding extends Card {
 
     public ForcedLanding() {

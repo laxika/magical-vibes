@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "209")
+@CardRegistration(set = "TSR", collectorNumber = "222")
 public class PendelhavenElder extends Card {
 
     public PendelhavenElder() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "16")
 @CardRegistration(set = "DDQ", collectorNumber = "8")
+@CardRegistration(set = "EA2", collectorNumber = "5")
 public class EerieInterlude extends Card {
 
     public EerieInterlude() {

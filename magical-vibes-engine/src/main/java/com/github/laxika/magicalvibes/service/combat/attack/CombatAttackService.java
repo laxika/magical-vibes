@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
@@ -306,7 +308,7 @@ public class CombatAttackService {
                                     boolean filterByAttackTarget) {
         int[] maximum = {Integer.MAX_VALUE};
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                 if (effect instanceof CombatCreatureLimitEffect limit
                         && (!filterByAttackTarget
                         || limit.appliesToAttackTarget(sourceControllerId, permanent.getId(), attackTargetId))) {
@@ -719,7 +721,8 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
-        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets);
+        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets,
+                gameQueryService);
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
@@ -1039,6 +1042,11 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttackedTargetMatches ? ce.wrapped() : e);
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetIsOpponent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackedTargetIsOpponent ? ce.wrapped() : e);
 
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.interveningIf()
@@ -1122,10 +1130,16 @@ public class CombatAttackService {
                             }
                         } else if (needsTarget) {
                             // Multi-target / "up to N" attack triggers (Archon of the Triumvirate):
-                            // reuse the ETB slot-by-slot picker — AttackTriggerTarget collects only one.
+                            // multi-group and dynamic groups use the slot-by-slot picker; a static
+                            // single group is handled by the ordinary attack-trigger target flow.
                             Card attackCard = attacker.getCard();
+                            boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
+                                    && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
+                                    && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
+                                    && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
                             if (attackCard.getSpellTargets().size() > 1
-                                    || etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)) {
+                                    || (!staticSingleMultiTargetGroup
+                                    && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
                                 gameData.queueInteraction(
                                         new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                 attackCard, playerId, otherEffects, attacker.getId(),
@@ -1993,6 +2007,9 @@ public class CombatAttackService {
                         );
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                        anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setTriggeringPermanentControllerId(
+                                gameQueryService.findPermanentController(gameData, attacker.getId()));
                         gameData.stack.add(anyAttackTrigger);
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
@@ -2101,6 +2118,7 @@ public class CombatAttackService {
         processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
         processDelayedVehicleAttackTriggers(gameData, battlefield, attackerIndices);
+        processDelayedWatchedCreatureAttackTriggers(gameData, battlefield, attackerIndices);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
@@ -2201,6 +2219,41 @@ public class CombatAttackService {
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
                 log.info("Game {} - {} delayed attacker boost fires for {}",
                         gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
+
+    /** Fires delayed triggers for a watched creature attacking one of its registering player's opponents. */
+    private void processDelayedWatchedCreatureAttackTriggers(GameData gameData,
+                                                              List<Permanent> battlefield,
+                                                              List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedWatchedCreatureAttack.class)) {
+            return;
+        }
+        for (DelayedWatchedCreatureAttack watch
+                : gameData.getDelayedActions(DelayedWatchedCreatureAttack.class)) {
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                UUID attackedTargetId = attacker.getAttackTarget();
+                if (!watch.watchedPermanentId().equals(attacker.getId())
+                        || attackedTargetId == null
+                        || !gameData.playerIds.contains(attackedTargetId)
+                        || watch.controllerId().equals(attackedTargetId)) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watch.sourceCard(),
+                        watch.controllerId(),
+                        watch.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(watch.effects()),
+                        (UUID) null,
+                        attacker.getId());
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(watch.sourceCard()).text("'s ability triggers.").build());
             }
         }
     }

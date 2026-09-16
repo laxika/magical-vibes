@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "233")
+@CardRegistration(set = "PIO", collectorNumber = "246")
 public class SwiftWarkite extends Card {
 
     public SwiftWarkite() {

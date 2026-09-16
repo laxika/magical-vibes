@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "259")
+@CardRegistration(set = "DMR", collectorNumber = "171")
 public class NutCollector extends Card {
 
     public NutCollector() {

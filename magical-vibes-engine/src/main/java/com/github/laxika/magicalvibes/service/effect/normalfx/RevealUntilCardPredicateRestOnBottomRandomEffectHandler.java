@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,6 +37,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -47,12 +51,17 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var typedEffect = (RevealUntilCardPredicateRestOnBottomRandomEffect) effect;
+        resolve(gameData, entry, (RevealUntilCardPredicateRestOnBottomRandomEffect) effect, false);
+    }
+
+    void resolve(GameData gameData, StackEntry entry,
+                 RevealUntilCardPredicateRestOnBottomRandomEffect typedEffect, boolean shuffleLibrary) {
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            if (shuffleLibrary && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
             return;
@@ -78,6 +87,15 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
 
         boolean toBattlefield = typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD;
         Permanent permanent = null;
+        boolean entryBlocked = foundCard != null && toBattlefield
+                && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, foundCard, Zone.LIBRARY);
+        if (entryBlocked) {
+            gameLogService.append(gameData, GameLog.cardThen(foundCard,
+                    " can't enter the battlefield from a library; it stays in the library."));
+            revealedCards.remove(foundCard);
+            deck.addFirst(foundCard);
+            foundCard = null;
+        }
         if (foundCard != null) {
             revealedCards.remove(foundCard);
             if (toBattlefield && typedEffect.enterTappedAndAttacking()) {
@@ -87,7 +105,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             }
 
             if (toBattlefield) {
-                permanent = new Permanent(foundCard);
+                permanent = new Permanent(foundCard, Zone.LIBRARY);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
                 gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundCard, playerName));
 
@@ -101,12 +119,15 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
                         playerName + " puts " + foundCard.getName() + " into their hand."));
             }
 
-        } else {
+        } else if (!entryBlocked) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library — no matching card was found."));
         }
 
-        if (!revealedCards.isEmpty()) {
+        if (shuffleLibrary) {
+            deck.addAll(revealedCards);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        } else if (!revealedCards.isEmpty()) {
             Collections.shuffle(revealedCards);
             deck.addAll(revealedCards);
         }

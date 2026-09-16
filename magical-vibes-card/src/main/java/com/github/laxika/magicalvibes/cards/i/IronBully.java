@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "240")
+@CardRegistration(set = "2XM", collectorNumber = "262")
 public class IronBully extends Card {
 
     public IronBully() {

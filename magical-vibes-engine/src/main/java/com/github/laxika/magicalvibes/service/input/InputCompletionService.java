@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 @Service
 @RequiredArgsConstructor
 public class InputCompletionService {
+    @Autowired private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+
 
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
@@ -46,6 +48,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private DrawService drawService;
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -72,6 +77,7 @@ public class InputCompletionService {
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         var queuedManaChoice = gameData.pendingInteractions.stream()
                 .filter(pending -> pending instanceof PendingInteraction.ColorChoice choice
                         && !(choice.context() instanceof ChoiceContext.RegenerationShieldChoice))
@@ -87,8 +93,13 @@ public class InputCompletionService {
             stateBasedActionService.performStateBasedActions(gameData);
             if (gameData.interaction.isAwaitingInput()) return;
         }
+        if (!gameData.pendingAuctionEntries.isEmpty()) {
+            permanentAuctionService.resumePendingEntries(gameData);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
         if (!gameData.pendingCardDraws.isEmpty()) {
             drawService.resumePendingCardDraws(gameData);
+            if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
             if (gameData.status == GameStatus.FINISHED) return;
             if (gameData.interaction.isAwaitingInput()) return;
         }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "47")
+@CardRegistration(set = "2XM", collectorNumber = "45")
 public class CloudreaderSphinx extends Card {
 
     public CloudreaderSphinx() {

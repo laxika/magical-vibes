@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "60")
+@CardRegistration(set = "PIO", collectorNumber = "331")
 public class OathOfJace extends Card {
 
     public OathOfJace() {

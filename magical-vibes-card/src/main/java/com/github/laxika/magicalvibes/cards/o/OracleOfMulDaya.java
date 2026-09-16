@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "172")
+@CardRegistration(set = "2X2", collectorNumber = "154")
 public class OracleOfMulDaya extends Card {
 
     public OracleOfMulDaya() {

@@ -9,10 +9,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "66")
+@CardRegistration(set = "MB1", collectorNumber = "66")
+@CardRegistration(set = "2X2", collectorNumber = "138")
 @CardRegistration(set = "ECL", collectorNumber = "166")
 @CardRegistration(set = "ECL", collectorNumber = "324")
 @CardRegistration(set = "ECL", collectorNumber = "390")
 @CardRegistration(set = "ECL", collectorNumber = "400")
+@CardRegistration(set = "SPG", collectorNumber = "79")
 public class BloomTender extends Card {
 
     public BloomTender() {

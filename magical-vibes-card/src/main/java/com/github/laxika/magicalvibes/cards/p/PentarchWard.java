@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "33")
+@CardRegistration(set = "MB1", collectorNumber = "199")
 @CardRegistration(set = "IMA", collectorNumber = "27")
 public class PentarchWard extends Card {
 

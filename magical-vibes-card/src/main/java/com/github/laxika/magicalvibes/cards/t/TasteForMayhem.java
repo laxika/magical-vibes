@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DIS", collectorNumber = "75")
+@CardRegistration(set = "RVR", collectorNumber = "127")
 public class TasteForMayhem extends Card {
 
     public TasteForMayhem() {

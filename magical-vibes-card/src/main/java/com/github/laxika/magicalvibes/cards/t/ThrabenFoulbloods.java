@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "108")
+@CardRegistration(set = "SIR", collectorNumber = "135")
 public class ThrabenFoulbloods extends Card {
 
     public ThrabenFoulbloods() {

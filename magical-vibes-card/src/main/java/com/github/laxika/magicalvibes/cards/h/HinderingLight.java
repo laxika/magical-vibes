@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanen
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "173")
+@CardRegistration(set = "OTP", collectorNumber = "46")
 public class HinderingLight extends Card {
 
     public HinderingLight() {

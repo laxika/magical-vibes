@@ -232,6 +232,12 @@ public class GraveyardTargetingService {
      */
     public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                       List<CardEffect> allEffects, ExileGraveyardCardsEffect exile) {
+        handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, allEffects, exile, exile.count());
+    }
+
+    public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                      List<CardEffect> allEffects, ExileGraveyardCardsEffect exile,
+                                                      int maximumTargets) {
         CardPredicate filter = exile.filter();
         GraveyardSearchScope scope = exile.targetSpec().graveyardScope().orElseThrow();
 
@@ -262,7 +268,7 @@ public class GraveyardTargetingService {
             return;
         }
 
-        int maxTargets = Math.min(exile.count(), matchingCards.size());
+        int maxTargets = Math.min(Math.min(exile.count(), Math.max(0, maximumTargets)), matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
@@ -913,12 +919,22 @@ public class GraveyardTargetingService {
                                                      StackEntryType entryType, int targetCount,
                                                      CardPredicate filter, String destination,
                                                      List<CardEffect> spellEffects, GraveyardSearchScope scope) {
+        handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, targetCount,
+                filter, destination, spellEffects, scope, null);
+    }
+
+    public void handleExactNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     StackEntryType entryType, int targetCount,
+                                                     CardPredicate filter, String destination,
+                                                     List<CardEffect> spellEffects, GraveyardSearchScope scope,
+                                                     List<UUID> eligibleBeforeCosts) {
         List<Card> matchingCards = new ArrayList<>();
         for (UUID graveyardOwner : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
             List<Card> graveyard = targetableGraveyard(gameData, graveyardOwner, controllerId);
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
-                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    if ((eligibleBeforeCosts == null || eligibleBeforeCosts.contains(graveyardCard.getId()))
+                            && predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                         matchingCards.add(graveyardCard);
                     }
                 }

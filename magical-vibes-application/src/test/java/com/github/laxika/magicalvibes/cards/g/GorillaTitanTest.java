@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GorillaTitan.class, Forest.class})
 class GorillaTitanTest extends BaseCardTest {
 
     @Test
@@ -26,6 +29,16 @@ class GorillaTitanTest extends BaseCardTest {
         assertStats(8, 8);
 
         harness.setGraveyard(player1, List.of(new GorillaTitan()));
+
+        assertStats(4, 4);
+    }
+
+    @Test
+    @DisplayName("A noncreature card in the graveyard also disables the boost")
+    void noncreatureCardInGraveyardDisablesBoost() {
+        harness.addToBattlefield(player1, new GorillaTitan());
+
+        harness.setGraveyard(player1, List.of(new Forest()));
 
         assertStats(4, 4);
     }

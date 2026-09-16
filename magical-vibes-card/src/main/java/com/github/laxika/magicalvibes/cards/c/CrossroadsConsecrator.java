@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "154")
+@CardRegistration(set = "MB1", collectorNumber = "154")
 public class CrossroadsConsecrator extends Card {
 
     public CrossroadsConsecrator() {

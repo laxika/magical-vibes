@@ -143,7 +143,7 @@ class PitchstoneWallTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(discardedCard);
-        harness.assertOnBattlefield(player1, "Pitchstone Wall");
+        harness.assertInGraveyard(player1, "Pitchstone Wall");
     }
 
     private Card prepareDiscard() {

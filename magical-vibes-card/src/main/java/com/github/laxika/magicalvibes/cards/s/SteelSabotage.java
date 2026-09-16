@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "33")
+@CardRegistration(set = "2XM", collectorNumber = "70")
 public class SteelSabotage extends Card {
 
     public SteelSabotage() {

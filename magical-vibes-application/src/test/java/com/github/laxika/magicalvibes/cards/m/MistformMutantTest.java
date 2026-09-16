@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,13 +14,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MistformMutant.class, GrizzlyBears.class})
+@CardUsed({MistformMutant.class, GlorySeeker.class})
 class MistformMutantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature becomes the chosen type until end of turn")
     void targetBecomesChosenType() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         addMutantAndMana();
 
         activate(target);
@@ -34,7 +35,7 @@ class MistformMutantTest extends BaseCardTest {
     @Test
     @DisplayName("Wall is not a legal creature type choice")
     void wallCannotBeChosen() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         addMutantAndMana();
 
         activate(target);
@@ -47,14 +48,30 @@ class MistformMutantTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen creature type wears off at end of turn")
     void chosenTypeWearsOff() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         addMutantAndMana();
 
         activate(target);
         harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
-        target.resetModifiers();
 
-        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.BEAR);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target))
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        addMutantAndMana();
+
+        activate(target);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.GOBLIN);
     }
 
     private void addMutantAndMana() {
@@ -65,7 +82,9 @@ class MistformMutantTest extends BaseCardTest {
     }
 
     private void activate(Permanent target) {
-        harness.activateAbility(player1, 1, null, target.getId());
+        int mutantIndex = gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Mistform Mutant"));
+        harness.activateAbility(player1, mutantIndex, null, target.getId());
         harness.passBothPriorities();
     }
 }

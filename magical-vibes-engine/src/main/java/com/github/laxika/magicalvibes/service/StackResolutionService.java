@@ -156,7 +156,13 @@ public class StackResolutionService {
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
 
-        StackEntry entry = gameData.stack.removeLast();
+        StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
+                ? gameData.stack.removeFirst()
+                : gameData.stack.removeLast();
+        if (entry.getCard() != null && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+            gameData.spellsMadeUncounterable.remove(entry.getCard().getId());
+        }
         gameData.priorityPassedBy.clear();
 
         // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack
@@ -1149,6 +1155,8 @@ public class StackResolutionService {
             log.info("Game {} - {} fizzles, target {} is illegal",
                     gameData.id, entry.getDescription(), entry.getTargetId());
 
+            triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, entry);
+
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
@@ -1176,6 +1184,16 @@ public class StackResolutionService {
 
             // A spell that pauses for input must remain undisposed until its effects finish.
             if (gameData.pendingEffectResolutionEntry != null) {
+                return;
+            }
+
+            if (gameData.restartTurnRequested) {
+                gameData.restartTurnRequested = false;
+                if (isNonCopySpell(entry)) {
+                    Card cardToExile = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
+                    removeCardFromRestartedSourceZone(gameData, entry, cardToExile);
+                    exileService.exileCard(gameData, entry.getOwnerId(), cardToExile);
+                }
                 return;
             }
 
@@ -1572,6 +1590,30 @@ public class StackResolutionService {
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    private static void removeCardFromRestartedSourceZone(GameData gameData, StackEntry entry, Card card) {
+        if (entry.getSourceZone() == null || card == null) {
+            return;
+        }
+        UUID cardId = card.getId();
+        UUID ownerId = entry.getOwnerId();
+        switch (entry.getSourceZone()) {
+            case HAND -> removeCardFromList(gameData.playerHands.get(ownerId), cardId);
+            case LIBRARY -> removeCardFromList(gameData.playerDecks.get(ownerId), cardId);
+            case GRAVEYARD -> removeCardFromList(gameData.playerGraveyards.get(ownerId), cardId);
+            case EXILE -> gameData.removeFromExile(cardId);
+            case OUTSIDE_GAME -> removeCardFromList(gameData.playerSideboards.get(ownerId), cardId);
+            case COMMAND -> removeCardFromList(gameData.playerCommandZones.get(ownerId), cardId);
+            default -> {
+            }
+        }
+    }
+
+    private static void removeCardFromList(List<Card> cards, UUID cardId) {
+        if (cards != null) {
+            cards.removeIf(card -> card.getId().equals(cardId));
         }
     }
 

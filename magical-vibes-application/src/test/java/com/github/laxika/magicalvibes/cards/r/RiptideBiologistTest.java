@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.e.EvergloveCourier;
+import com.github.laxika.magicalvibes.cards.k.KrosanTusker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(RiptideBiologist.class)
+@CardUsed({RiptideBiologist.class, KrosanTusker.class, EvergloveCourier.class})
 class RiptideBiologistTest extends BaseCardTest {
 
     @Test
@@ -40,35 +39,62 @@ class RiptideBiologistTest extends BaseCardTest {
     }
 
     @Test
-    void takesNoCombatDamageFromBeastCreature() {
-        Permanent attacker = new Permanent(createBeast());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+    void cannotBeBlockedByBeastCreature() {
+        Permanent biologist = addCreatureReady(player1, new RiptideBiologist());
+        biologist.setAttacking(true);
+        Permanent beast = addCreatureReady(player2, new KrosanTusker());
 
-        Permanent biologist = new Permanent(new RiptideBiologist());
-        biologist.setSummoningSick(false);
-        biologist.setBlocking(true);
-        biologist.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(biologist);
+        prepareDeclareBlockers();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player2, "Riptide Biologist");
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(beast),
+                gd.playerBattlefields.get(player1.getId()).indexOf(biologist)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 
-    private static Card createBeast() {
-        Card card = new Card();
-        card.setName("Beast");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{3}{G}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(3);
-        card.setToughness(3);
-        card.setSubtypes(List.of(CardSubtype.BEAST));
-        return card;
+    @Test
+    void canBeBlockedByNonBeastCreature() {
+        Permanent biologist = addCreatureReady(player1, new RiptideBiologist());
+        biologist.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new EvergloveCourier());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(biologist))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void canBlockBeastCreature() {
+        Permanent attacker = addCreatureReady(player1, new KrosanTusker());
+        attacker.setAttacking(true);
+
+        Permanent biologist = addCreatureReady(player2, new RiptideBiologist());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(biologist),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(biologist.isBlocking()).isTrue();
+    }
+
+    @Test
+    void preventsCombatDamageFromAlreadyBlockedBeastCreature() {
+        Permanent attacker = addCreatureReady(player1, new KrosanTusker());
+        attacker.setAttacking(true);
+
+        Permanent biologist = addCreatureReady(player2, new RiptideBiologist());
+        biologist.setBlocking(true);
+        biologist.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(biologist.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(biologist);
     }
 }

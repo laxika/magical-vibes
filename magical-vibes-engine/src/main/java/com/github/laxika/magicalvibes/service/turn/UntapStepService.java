@@ -148,7 +148,9 @@ public class UntapStepService {
 
     private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                  boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
-        snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+        if (!gameData.additionalBeginningPhaseUntapInProgress) {
+            snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+        }
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
         gameData.untapStepPlayerId = activePlayerId;
         gameData.untapStepUntappedPermanentCount = 0;

@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "WTH", collectorNumber = "164")
 @CardRegistration(set = "TSB", collectorNumber = "119")
+@CardRegistration(set = "DMR", collectorNumber = "247")
 public class GemstoneMine extends Card {
 
     public GemstoneMine() {

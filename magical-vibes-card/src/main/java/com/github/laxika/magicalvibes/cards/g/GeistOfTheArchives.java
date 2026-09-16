@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "62")
+@CardRegistration(set = "SIR", collectorNumber = "72")
 public class GeistOfTheArchives extends Card {
 
     public GeistOfTheArchives() {

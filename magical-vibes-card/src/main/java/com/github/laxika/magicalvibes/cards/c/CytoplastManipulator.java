@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "23")
+@CardRegistration(set = "PZA", collectorNumber = "5")
 public class CytoplastManipulator extends Card {
 
     public CytoplastManipulator() {

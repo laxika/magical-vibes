@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "157")
+@CardRegistration(set = "MB1", collectorNumber = "157")
 public class BitterbladeWarrior extends Card {
 
     public BitterbladeWarrior() {

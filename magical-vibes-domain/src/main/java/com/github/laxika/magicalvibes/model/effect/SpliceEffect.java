@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -22,41 +24,61 @@ import java.util.stream.Collectors;
  * graveyard-exile splice cards on the same representation as newer splice cards with sacrifice
  * costs and splice-only effects.
  *
- * @param ontoSubtype the subtype the host spell must have (e.g. {@link CardSubtype#ARCANE})
+ * @param host the quality the host spell must have
  * @param costs the splice cost components
  * @param splicedEffects additional effects to add only when this card is spliced; the card's
  *                      SPELL effects are included as well
  */
-public record SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs,
+public record SpliceEffect(SpliceHost host, List<CastingCost> costs,
                            List<CardEffect> splicedEffects) implements CardEffect {
 
     public SpliceEffect {
+        Objects.requireNonNull(host);
         costs = List.copyOf(Objects.requireNonNull(costs));
         splicedEffects = List.copyOf(Objects.requireNonNull(splicedEffects));
     }
 
+    public SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs, List<CardEffect> splicedEffects) {
+        this(SpliceHost.subtype(ontoSubtype), costs, splicedEffects);
+    }
+
     public SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs) {
-        this(ontoSubtype, costs, List.of());
+        this(SpliceHost.subtype(ontoSubtype), costs, List.of());
     }
 
     public SpliceEffect(CardSubtype ontoSubtype, String manaCost) {
-        this(ontoSubtype, manaCosts(manaCost), List.of());
+        this(SpliceHost.subtype(ontoSubtype), manaCosts(manaCost), List.of());
     }
 
     /** Compatibility constructor for "tap an untapped permanent" splice costs. */
     public SpliceEffect(CardSubtype ontoSubtype, String manaCost, PermanentPredicate tapCost) {
-        this(ontoSubtype, costsWithMana(manaCost, new TapUntappedPermanentsCost(1, tapCost)), List.of());
+        this(SpliceHost.subtype(ontoSubtype), costsWithMana(manaCost, new TapUntappedPermanentsCost(1, tapCost)), List.of());
+    }
+
+    /** Splice onto any instant or sorcery spell. */
+    public static SpliceEffect ontoInstantOrSorcery(String manaCost) {
+        return new SpliceEffect(SpliceHost.INSTANT_OR_SORCERY, manaCosts(manaCost), List.of());
     }
 
     /** Splice cost whose only component is returning a matching permanent you control to hand. */
     public static SpliceEffect returning(CardSubtype ontoSubtype, PermanentPredicate returnCost) {
-        return new SpliceEffect(ontoSubtype, List.of(new ReturnPermanentsCost(1, returnCost)), List.of());
+        return new SpliceEffect(SpliceHost.subtype(ontoSubtype), List.of(new ReturnPermanentsCost(1, returnCost)), List.of());
     }
 
     /** Splice cost whose only component is exiling {@code count} cards from your graveyard. */
     public static SpliceEffect exilingGraveyard(CardSubtype ontoSubtype, int count) {
-        return new SpliceEffect(ontoSubtype,
+        return new SpliceEffect(SpliceHost.subtype(ontoSubtype),
                 List.of(new ExileTopCardsFromGraveyardCastingCost(null, "a card", count)), List.of());
+    }
+
+    /** The subtype required by a subtype-based splice ability, or {@code null} otherwise. */
+    public CardSubtype ontoSubtype() {
+        return host.ontoSubtype();
+    }
+
+    /** Whether this splice ability can be used with the supplied host spell. */
+    public boolean appliesTo(Card hostSpell) {
+        return host.appliesTo(hostSpell);
     }
 
     /** The mana portion of this splice cost, or an empty string when it has no mana component. */
@@ -110,5 +132,27 @@ public record SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs,
         List<CastingCost> costs = new ArrayList<>(manaCosts(manaCost));
         costs.add(additionalCost);
         return costs;
+    }
+
+    public record SpliceHost(CardSubtype ontoSubtype, boolean instantOrSorcery) {
+
+        private static final SpliceHost INSTANT_OR_SORCERY = new SpliceHost(null, true);
+
+        public SpliceHost {
+            if ((ontoSubtype == null && !instantOrSorcery)
+                    || (ontoSubtype != null && instantOrSorcery)) {
+                throw new IllegalArgumentException("A splice host must be a subtype or instant/sorcery");
+            }
+        }
+
+        private static SpliceHost subtype(CardSubtype ontoSubtype) {
+            return new SpliceHost(Objects.requireNonNull(ontoSubtype), false);
+        }
+
+        private boolean appliesTo(Card hostSpell) {
+            return instantOrSorcery
+                    ? hostSpell.hasType(CardType.INSTANT) || hostSpell.hasType(CardType.SORCERY)
+                    : hostSpell.getSubtypes().contains(ontoSubtype);
+        }
     }
 }

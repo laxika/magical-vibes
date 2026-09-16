@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "87")
+@CardRegistration(set = "2XM", collectorNumber = "122")
 public class CragganwickCremator extends Card {
 
     public CragganwickCremator() {

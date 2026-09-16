@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AccursedCentaur;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BarrenMoor.class, GrizzlyBears.class})
+@CardUsed({BarrenMoor.class, AccursedCentaur.class})
 class BarrenMoorTest extends BaseCardTest {
 
     @Test
@@ -41,7 +42,7 @@ class BarrenMoorTest extends BaseCardTest {
     @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new BarrenMoor()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AccursedCentaur()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateHandAbility(player1, 0, null);
@@ -49,13 +50,26 @@ class BarrenMoorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Barren Moor");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Accursed Centaur");
+    }
+
+    @Test
+    @DisplayName("Cycling requires black mana")
+    void cyclingRequiresBlackMana() {
+        BarrenMoor moor = new BarrenMoor();
+        harness.setHand(player1, List.of(moor));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(moor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private Permanent addMoorReady(Player player) {
-        Permanent land = new Permanent(new BarrenMoor());
+        Permanent land = harness.addToBattlefieldAndReturn(player, new BarrenMoor());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(land);
         return land;
     }
 }

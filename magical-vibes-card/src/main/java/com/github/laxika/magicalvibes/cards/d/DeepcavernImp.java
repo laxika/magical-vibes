@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 
 @CardRegistration(set = "FUT", collectorNumber = "83")
 @CardRegistration(set = "MMA", collectorNumber = "79")
+@CardRegistration(set = "TSR", collectorNumber = "110")
 public class DeepcavernImp extends Card {
 
     public DeepcavernImp() {

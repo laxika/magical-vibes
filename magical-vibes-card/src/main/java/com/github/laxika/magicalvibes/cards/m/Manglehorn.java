@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "175")
 @CardRegistration(set = "AKR", collectorNumber = "201")
+@CardRegistration(set = "MB1", collectorNumber = "175")
 public class Manglehorn extends Card {
 
     public Manglehorn() {

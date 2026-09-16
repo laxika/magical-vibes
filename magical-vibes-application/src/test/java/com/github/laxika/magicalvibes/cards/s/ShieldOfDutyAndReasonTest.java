@@ -59,8 +59,7 @@ class ShieldOfDutyAndReasonTest extends BaseCardTest {
         castShield(host);
         Permanent greenBlocker = addCreatureReady(player2, new AnaDisciple());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(host)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(host)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(greenBlocker),

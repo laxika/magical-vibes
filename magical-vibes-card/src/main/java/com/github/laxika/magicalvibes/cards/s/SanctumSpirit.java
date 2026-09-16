@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "30")
+@CardRegistration(set = "2XM", collectorNumber = "30")
 public class SanctumSpirit extends Card {
 
     public SanctumSpirit() {
