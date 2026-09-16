@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "173")
+@CardRegistration(set = "SOA", collectorNumber = "63")
 public class DeflectingPalm extends Card {
 
     public DeflectingPalm() {
