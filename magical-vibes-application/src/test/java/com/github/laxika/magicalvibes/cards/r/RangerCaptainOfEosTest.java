@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -97,7 +100,8 @@ class RangerCaptainOfEosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -106,6 +110,33 @@ class RangerCaptainOfEosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The enters-the-battlefield ability searches for a creature with mana value 1 or less")
+    void searchesForLowManaValueCreature() {
+        harness.setHand(player1, List.of(new RangerCaptainOfEos()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        library.clear();
+        library.addAll(List.of(new Memnite(), new GrizzlyBears(), new Shock()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gameData = harness.getGameData();
+        assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .extracting(Card::getName)
+                .containsExactly("Memnite");
+
+        harness.getGameService().handleInteractionAnswer(gameData, player1,
+                new InteractionAnswer.LibraryCardChosen(0));
+
+        harness.assertInHand(player1, "Memnite");
     }
 
     private void castRangerCaptain() {

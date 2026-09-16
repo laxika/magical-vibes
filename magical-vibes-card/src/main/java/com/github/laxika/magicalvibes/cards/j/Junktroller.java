@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "235")
 @CardRegistration(set = "RAV", collectorNumber = "264")
+@CardRegistration(set = "RVR", collectorNumber = "262")
 public class Junktroller extends Card {
 
     public Junktroller() {

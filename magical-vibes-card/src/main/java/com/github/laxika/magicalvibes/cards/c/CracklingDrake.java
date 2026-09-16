@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "163")
+@CardRegistration(set = "RVR", collectorNumber = "174")
 public class CracklingDrake extends Card {
 
     public CracklingDrake() {

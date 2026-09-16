@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "232")
+@CardRegistration(set = "RVR", collectorNumber = "257")
 public class GateColossus extends Card {
 
     public GateColossus() {

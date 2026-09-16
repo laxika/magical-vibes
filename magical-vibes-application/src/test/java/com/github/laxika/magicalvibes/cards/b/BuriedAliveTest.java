@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,13 +43,34 @@ class BuriedAliveTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         for (int i = 0; i < 3; i++) {
-            harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Striped Bears")).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Striped Bears"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Search takes no more than three creature cards")
+    void maximumOfThreeCreatures() {
+        castBuriedAlive();
+        harness.setLibrary(player1, List.of(
+                new NullRod(), new StripedBears(), new StripedBears(), new StripedBears(),
+                new StripedBears(), new NullRod()));
+
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Striped Bears")).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Striped Bears")).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -67,8 +87,8 @@ class BuriedAliveTest extends BaseCardTest {
         assertThat(search.params().cards()).extracting(Card::getName).containsOnly("Striped Bears");
         assertThat(search.params().cards()).hasSize(2);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Striped Bears")).hasSize(2);
@@ -86,13 +106,29 @@ class BuriedAliveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Striped Bears")).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Buried Alive");
+    }
+
+    @Test
+    @DisplayName("Search may take no creature cards")
+    void noCreaturesChosen() {
+        castBuriedAlive();
+        setupLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Striped Bears")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Striped Bears")).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

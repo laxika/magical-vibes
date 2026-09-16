@@ -55,6 +55,7 @@ class WormfangBehemothTest extends BaseCardTest {
     @Test
     @DisplayName("The leaves-the-battlefield ability returns each exiled card to its owner")
     void leavesTheBattlefieldReturnsCardsToTheirOwners() {
+        harness.setHand(player2, List.of());
         Card ownedByOpponent = new SuntailHawk();
         ownedByOpponent.setOwnerId(player2.getId());
         Card ownedByController = new GiantWarthog();

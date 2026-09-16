@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M20", collectorNumber = "86")
 @CardRegistration(set = "MID", collectorNumber = "87")
 @CardRegistration(set = "RNA", collectorNumber = "64")
+@CardRegistration(set = "RVR", collectorNumber = "68")
 public class Bladebrand extends Card {
 
     public Bladebrand() {

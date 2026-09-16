@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * A 1/1 creature; only scavenge needs engine logic.
  */
 @CardRegistration(set = "RTR", collectorNumber = "222")
+@CardRegistration(set = "RVR", collectorNumber = "226")
 public class Slitherhead extends Card {
 
     public Slitherhead() {

@@ -1,31 +1,26 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BatteringCraghorn;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AetherCharge.class, AxebaneBeast.class, ElspethKnightErrant.class, GrizzlyBears.class})
+@CardUsed({AetherCharge.class, AvenSoulgazer.class, BatteringCraghorn.class, ElspethKnightErrant.class})
 class AetherChargeTest extends BaseCardTest {
 
     @Test
     @DisplayName("A Beast entering under your control may deal 4 damage to an opponent")
     void beastMayDealDamageToOpponent() {
         addCharge();
-        harness.setHand(player1, List.of(new AxebaneBeast()));
-        addBeastMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
@@ -43,10 +38,7 @@ class AetherChargeTest extends BaseCardTest {
         addCharge();
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        harness.setHand(player1, List.of(new AxebaneBeast()));
-        addBeastMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
@@ -56,13 +48,29 @@ class AetherChargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The trigger may target a planeswalker you control")
+    void beastMayDealDamageToOwnPlaneswalker() {
+        addCharge();
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).containsExactlyInAnyOrder(player2.getId(), planeswalker.getId());
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Declining the Beast trigger deals no damage")
     void decliningTriggerDealsNoDamage() {
         addCharge();
-        harness.setHand(player1, List.of(new AxebaneBeast()));
-        addBeastMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -75,23 +83,29 @@ class AetherChargeTest extends BaseCardTest {
     @DisplayName("A non-Beast creature does not trigger Aether Charge")
     void nonBeastDoesNotTrigger() {
         addCharge();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvenSoulgazer(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player2, 20);
     }
 
-    private void addCharge() {
-        harness.addToBattlefield(player1, new AetherCharge());
+    @Test
+    @DisplayName("A Beast entering under an opponent's control does not trigger Aether Charge")
+    void opponentBeastDoesNotTrigger() {
+        addCharge();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new BatteringCraghorn(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
-    private void addBeastMana() {
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    private void addCharge() {
+        harness.addToBattlefield(player1, new AetherCharge());
     }
 }

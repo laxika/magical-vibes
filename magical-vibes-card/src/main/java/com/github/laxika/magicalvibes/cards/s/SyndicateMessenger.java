@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "25")
+@CardRegistration(set = "RVR", collectorNumber = "29")
 public class SyndicateMessenger extends Card {
 
     public SyndicateMessenger() {

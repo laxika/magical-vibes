@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyar
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreatureTypesAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
@@ -344,6 +345,8 @@ public class AmountEvaluationService {
                     countCardTypesAmongControlledPermanents(gameData, c, ctx);
             case CardTypesAmongSpellsCastThisTurn ignored ->
                     countCardTypesAmongSpellsCastThisTurn(gameData, ctx);
+            case CreatureTypesAmongControlledCreatures ignored ->
+                    countCreatureTypesAmongControlledCreatures(gameData, ctx);
             case CardTypesAmongCardsDiscardedThisResolution ignored ->
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisTurn c ->
@@ -1294,6 +1297,30 @@ public class AmountEvaluationService {
                 if (gameQueryService.hasKeyword(gameData, permanent, ability)) {
                     found.add(ability);
                 }
+            }
+        }
+        return found.size();
+    }
+
+    private int countCreatureTypesAmongControlledCreatures(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        Set<CardSubtype> found = EnumSet.noneOf(CardSubtype.class);
+        Set<CardSubtype> allCreatureTypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (gameQueryService.isCreatureSubtype(subtype)) {
+                allCreatureTypes.add(subtype);
+            }
+        }
+
+        for (Permanent permanent : battlefield) {
+            if (!gameQueryService.isCreature(gameData, permanent)) continue;
+            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+                found.addAll(allCreatureTypes);
+            } else {
+                found.addAll(gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
             }
         }
         return found.size();

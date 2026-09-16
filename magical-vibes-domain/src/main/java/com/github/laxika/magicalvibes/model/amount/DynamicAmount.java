@@ -20,6 +20,7 @@ public sealed interface DynamicAmount permits
         CardTypesAmongSpellsCastThisTurn,
         CardTypesAmongControlledPermanents,
         CardTypesAmongCardsInGraveyard,
+        CreatureTypesAmongControlledCreatures,
         CardsDrawnThisTurn,
         DistinctColorPairsAmongControlledPermanents,
         DistinctManaCostsAmongCardsInGraveyard,

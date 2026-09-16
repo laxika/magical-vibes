@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DwarvenRecruiter.class, DwarvenGrunt.class, AvenFlock.class})
 class DwarvenRecruiterTest extends BaseCardTest {
 
     @Test
@@ -22,9 +23,9 @@ class DwarvenRecruiterTest extends BaseCardTest {
         setupAndCast();
         Card dwarfA = new DwarvenGrunt();
         Card dwarfB = new DwarvenGrunt();
-        setLibrary(List.of(dwarfA, new GrizzlyBears(), dwarfB, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(dwarfA, new AvenFlock(), dwarfB, new AvenFlock()));
 
-        resolveEtb();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryToTopChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class).pool())
@@ -36,9 +37,9 @@ class DwarvenRecruiterTest extends BaseCardTest {
     void choosingSingleDwarfPutsOnTop() {
         setupAndCast();
         Card dwarf = new DwarvenGrunt();
-        setLibrary(List.of(dwarf, new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(dwarf, new AvenFlock(), new AvenFlock()));
 
-        resolveEtb();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(dwarf.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -52,9 +53,9 @@ class DwarvenRecruiterTest extends BaseCardTest {
         setupAndCast();
         Card dwarfA = new DwarvenGrunt();
         Card dwarfB = new DwarvenGrunt();
-        setLibrary(List.of(dwarfA, dwarfB, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(dwarfA, dwarfB, new AvenFlock()));
 
-        resolveEtb();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(dwarfA.getId(), dwarfB.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -68,13 +69,33 @@ class DwarvenRecruiterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing a subset reveals the chosen Dwarf and returns the others to the library")
+    void choosingSubsetRevealsChosenAndReturnsOthers() {
+        setupAndCast();
+        Card chosenDwarf = new DwarvenGrunt();
+        Card unchosenDwarf = new DwarvenGrunt();
+        Card nonDwarf = new AvenFlock();
+        harness.setLibrary(player1, List.of(chosenDwarf, unchosenDwarf, nonDwarf));
+
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(chosenDwarf.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(3);
+        assertThat(library.getFirst()).isSameAs(chosenDwarf);
+        assertThat(library).contains(unchosenDwarf, nonDwarf);
+        assertThat(gameLogContains("reveals " + chosenDwarf.getName())).isTrue();
+    }
+
+    @Test
     @DisplayName("Choosing zero Dwarves leaves all cards in the library")
     void choosingZeroKeepsLibrary() {
         setupAndCast();
         Card dwarf = new DwarvenGrunt();
-        setLibrary(List.of(dwarf, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(dwarf, new AvenFlock()));
 
-        resolveEtb();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -87,28 +108,27 @@ class DwarvenRecruiterTest extends BaseCardTest {
     @DisplayName("No Dwarves in library: no prompt, library is shuffled")
     void noDwarvesInLibraryShufflesLibrary() {
         setupAndCast();
-        setLibrary(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AvenFlock(), new AvenFlock()));
 
-        resolveEtb();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no Dwarf cards"));
     }
 
+    @Test
+    @DisplayName("An empty library search does not prompt")
+    void emptyLibraryDoesNotPrompt() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class)).isNull();
+        assertThat(gameLogContains("library but it is empty")).isTrue();
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new DwarvenRecruiter()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0);
-    }
-
-    private void setLibrary(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
-    }
-
-    private void resolveEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new DwarvenRecruiter(), "{2}{R}");
     }
 }

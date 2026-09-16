@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureAnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "96")
+@CardRegistration(set = "RVR", collectorNumber = "112")
 public class HomingLightning extends Card {
 
     public HomingLightning() {

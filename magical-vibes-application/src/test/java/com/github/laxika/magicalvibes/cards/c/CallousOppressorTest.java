@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CallousOppressor.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CallousOppressor.class, GlorySeeker.class, BarkhideMauler.class})
 class CallousOppressorTest extends BaseCardTest {
 
     @Test
@@ -27,48 +28,65 @@ class CallousOppressorTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "BEAR");
+        harness.handleListChoice(player2, "SOLDIER");
 
         Permanent oppressor = findPermanent(player1, "Callous Oppressor");
-        assertThat(oppressor.getChosenSubtype()).isEqualTo(CardSubtype.BEAR);
+        assertThat(oppressor.getChosenSubtype()).isEqualTo(CardSubtype.SOLDIER);
     }
 
     @Test
     @DisplayName("The activated ability only targets creatures outside the chosen type")
     void onlyTargetsCreatureOutsideChosenType() {
-        Permanent oppressor = addReadyOppressor(player1, CardSubtype.BEAR);
-        Permanent bear = addReadyCreature(player2, new GrizzlyBears());
-        Permanent giant = addReadyCreature(player2, new HillGiant());
+        Permanent oppressor = addReadyOppressor(player1, CardSubtype.SOLDIER);
+        Permanent soldier = addReadyCreature(player2, new GlorySeeker());
+        Permanent beast = addReadyCreature(player2, new BarkhideMauler());
 
         assertThatThrownBy(() -> harness.activateAbility(
-                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, bear.getId()))
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, soldier.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("chosen type");
 
         harness.activateAbility(
-                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, giant.getId());
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, beast.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(giant);
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(giant);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(beast);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(beast);
         assertThat(oppressor.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Control ends when Callous Oppressor untaps")
     void controlEndsWhenSourceUntaps() {
-        Permanent oppressor = addReadyOppressor(player1, CardSubtype.BEAR);
-        Permanent giant = addReadyCreature(player2, new HillGiant());
+        Permanent oppressor = addReadyOppressor(player1, CardSubtype.SOLDIER);
+        Permanent beast = addReadyCreature(player2, new BarkhideMauler());
 
         harness.activateAbility(
-                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, giant.getId());
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, beast.getId());
         harness.passBothPriorities();
 
         advanceToNextTurnWithMayChoice(player2, true);
 
         assertThat(oppressor.isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(giant);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(giant);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(beast);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(beast);
+    }
+
+    @Test
+    @DisplayName("Control persists when Callous Oppressor remains tapped")
+    void controlPersistsWhenSourceRemainsTapped() {
+        Permanent oppressor = addReadyOppressor(player1, CardSubtype.SOLDIER);
+        Permanent beast = addReadyCreature(player2, new BarkhideMauler());
+
+        harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(oppressor), null, beast.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurnWithMayChoice(player2, false);
+
+        assertThat(oppressor.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(beast);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(beast);
     }
 
     private Permanent addReadyOppressor(Player player, CardSubtype chosenSubtype) {
@@ -86,13 +104,11 @@ class CallousOppressorTest extends BaseCardTest {
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean untap) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, untap);
     }
 }
