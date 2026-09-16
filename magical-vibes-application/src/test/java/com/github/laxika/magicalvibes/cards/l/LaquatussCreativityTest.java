@@ -54,7 +54,7 @@ class LaquatussCreativityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandChoice.class).playerId())
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
 
