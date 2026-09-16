@@ -56,7 +56,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
-        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice,
+        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice, PendingInteraction.CommanderReturnChoice, PendingInteraction.CommanderReplacementChoice,
         PendingInteraction.LudevicCopyChoice,
          PendingInteraction.KohExiledCreatureChoice,
          PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
@@ -2096,6 +2096,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
+    }
+
+    record CommanderReplacementChoice(CommanderZoneMove move) implements PendingInteraction {
+        @Override public UUID decidingPlayerId() { return move.ownerId(); }
+        @Override public InteractionOptions legalOptions() { return new InteractionOptions.AcceptDecline(); }
+    }
+
+    record CommanderReturnChoice(UUID playerId, Card card, Zone fromZone) implements PendingInteraction {
+        @Override public UUID decidingPlayerId() { return playerId; }
+        @Override public InteractionOptions legalOptions() { return new InteractionOptions.AcceptDecline(); }
     }
 
     /** Chooses one of the controller's commanders to put into their hand. */

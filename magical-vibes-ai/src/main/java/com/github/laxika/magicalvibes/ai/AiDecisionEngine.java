@@ -203,7 +203,7 @@ public abstract class AiDecisionEngine {
         }
 
         switch (kind) {
-            case GAME_STATE -> handleGameState(gameData);
+            case GAME_STATE -> { if (!tryCastCommander(gameData)) handleGameState(gameData); }
             case MULLIGAN -> handleInitialMulligan();
             case CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
             case ATTACKER_DECLARATION -> {
@@ -226,6 +226,45 @@ public abstract class AiDecisionEngine {
     }
 
     // ===== Abstract Methods =====
+
+    protected boolean tryCastCommander(GameData gameData) {
+        UUID playerId = aiPlayer.getId();
+        if (!hasPriority(gameData) || gameData.interaction.isAwaitingInput()) return false;
+        for (Card card : List.copyOf(gameData.playerCommandZones.getOrDefault(playerId, List.of()))) {
+            var virtualPool = manaManager.buildVirtualManaPool(gameData, playerId);
+            UUID previousPlayer = gameData.commandCastPlayerId, previousCard = gameData.commandCastCardId;
+            boolean playable;
+            try {
+                gameData.commandCastPlayerId = playerId; gameData.commandCastCardId = card.getId();
+                playable = gameData.isCommander(card.getId())
+                        && gameQueryService.canCastSpellFromZone(gameData, card, com.github.laxika.magicalvibes.model.Zone.COMMAND, playerId)
+                        && actionAvailabilityService.isCardPlayable(gameData, playerId, card, virtualPool, 0);
+            } finally { gameData.commandCastPlayerId = previousPlayer; gameData.commandCastCardId = previousCard; }
+            if (!playable) continue;
+            UUID target = null;
+            List<UUID> targets = null;
+            if (targetSelector.needsMultiTargetSelection(card)) {
+                targets = targetSelector.chooseMultiTargets(gameData, card, playerId);
+                if (targets == null) continue;
+            } else if (EffectResolution.needsTarget(card) || card.isAura()) {
+                target = targetSelector.chooseTarget(gameData, card, playerId);
+                if (target == null) continue;
+            }
+            int tax = gameData.commanderTaxByCardId.getOrDefault(card.getId(), 0);
+            int targetingTax = computeTargetingTax(gameData, card, target, targets);
+            int x = card.getManaCost() != null && card.getManaCost().contains("{X}")
+                    ? manaManager.calculateSmartX(gameData, playerId, card, target, virtualPool,
+                        tax + targetingTax + castingCostService.getCastCostModifier(gameData, playerId, card)) : 0;
+            if (!tapManaForSpell(gameData, card, x, tax + targetingTax)) continue;
+            var request = buildSpellPlayCardRequest(gameData, card, 0, x, target, null, targets,
+                    List.of(), List.of(), selectSacrificeTarget(gameData, card), null, null, null, null,
+                    List.of(), List.of(), null).withCommandSource(card.getId());
+            send(() -> gameActions.handlePlayCard(request));
+            if (gameData.playerCommandZones.getOrDefault(playerId, List.of()).stream().noneMatch(c -> c.getId().equals(card.getId()))
+                    || gameData.interaction.isAwaitingInput()) return true;
+        }
+        return false;
+    }
 
     protected abstract void handleGameState(GameData gameData);
 

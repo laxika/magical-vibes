@@ -924,7 +924,8 @@ public class ConditionEvaluationService {
             case MinimumMatchingAttackers c ->
                     countMatchingAttackers(gameData, ctx, c.predicate()) >= c.minimum();
             case OpponentAttacksWithAtLeastCreatures c ->
-                    countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx) >= c.minimum();
+                    countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx, c.includePlaneswalkers())
+                            >= c.minimum();
             case OpponentAttacksPlaneswalker ignored ->
                     opponentAttacksPlaneswalker(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
@@ -3013,7 +3014,8 @@ public class ConditionEvaluationService {
     }
 
     private long countOpponentAttackersAtControllerOrPlaneswalkers(GameData gameData,
-                                                                    ConditionContext ctx) {
+                                                                    ConditionContext ctx,
+                                                                    boolean includePlaneswalkers) {
         UUID controllerId = ctx.controllerId();
         UUID attackingPlayerId = ctx.targetId();
         if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
@@ -3024,10 +3026,12 @@ public class ConditionEvaluationService {
         List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
         if (controlledPermanents == null || attackers == null) return 0;
 
-        Set<UUID> controlledPlaneswalkerIds = controlledPermanents.stream()
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId)
-                .collect(java.util.stream.Collectors.toSet());
+        Set<UUID> controlledPlaneswalkerIds = includePlaneswalkers
+                ? controlledPermanents.stream()
+                        .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                        .map(Permanent::getId)
+                        .collect(java.util.stream.Collectors.toSet())
+                : Set.of();
 
         return attackers.stream()
                 .filter(Permanent::isAttacking)

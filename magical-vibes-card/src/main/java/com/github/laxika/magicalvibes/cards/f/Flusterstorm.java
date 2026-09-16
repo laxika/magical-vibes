@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "IMA", collectorNumber = "55")
 @CardRegistration(set = "VMA", collectorNumber = "68")
 @CardRegistration(set = "MH1", collectorNumber = "255")
+@CardRegistration(set = "SOA", collectorNumber = "18")
 public class Flusterstorm extends Card {
 
     public Flusterstorm() {

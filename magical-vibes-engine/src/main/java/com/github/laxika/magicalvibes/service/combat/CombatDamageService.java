@@ -398,6 +398,12 @@ public class CombatDamageService {
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
+        state.combatDamageDealtToPlayer.forEach((source, damage) -> {
+            if (damage > 0 && gameData.isCommander(source.getOriginalCard().getId())) {
+                gameData.commanderDamageReceived.computeIfAbsent(defenderId, id -> new java.util.HashMap<>())
+                        .merge(source.getOriginalCard().getId(), damage, Integer::sum);
+            }
+        });
 
         // Process lifelink before removing dead creatures
         processLifelink(gameData, state.combatDamageDealt);
@@ -3394,6 +3400,18 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.text(logEntry));
             }
         }
+        }
+
+        // Aggregate prevention/replacement above must also update the per-source ledger.
+        // Life floors and effects that stop life totals changing do not reduce damage dealt.
+        int recordedDamage = state.combatDamageDealtToPlayer.values().stream().mapToInt(Integer::intValue).sum();
+        int removedDamage = Math.max(0, recordedDamage - state.damageToDefendingPlayer - state.poisonDamageToDefendingPlayer);
+        for (var source : state.combatDamageDealtToPlayer.entrySet()) {
+            if (removedDamage == 0) break;
+            int removed = Math.min(source.getValue(), removedDamage);
+            source.setValue(source.getValue() - removed);
+            state.combatDamageDealt.computeIfPresent(source.getKey(), (ignored, amount) -> Math.max(0, amount - removed));
+            removedDamage -= removed;
         }
 
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)

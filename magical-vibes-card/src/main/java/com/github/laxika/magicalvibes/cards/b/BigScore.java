@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "102")
+@CardRegistration(set = "SOA", collectorNumber = "38")
 public class BigScore extends Card {
 
     public BigScore() {
