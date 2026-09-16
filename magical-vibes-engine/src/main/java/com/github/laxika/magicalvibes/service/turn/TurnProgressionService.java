@@ -619,8 +619,7 @@ public class TurnProgressionService {
             damageCantBePrevented = Boolean.TRUE.equals(gameData.extraTurnDamageCantBePrevented.pollFirst());
             extraTurnSequence = gameData.extraTurnSequences.isEmpty()
                     ? null : gameData.extraTurnSequences.pollFirst();
-            if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
-                    .stream().anyMatch(ExtraTurnSkipReplacementEffect.class::isInstance))) {
+            if (hasApplicableExtraTurnSkipReplacement(gameData, nextActive)) {
                 Long skippedExtraTurnSequence = extraTurnSequence;
                 if (skippedExtraTurnSequence != null) {
                     gameData.drainDelayedActions(LoseGameAtEndStep.class,
@@ -1077,6 +1076,20 @@ public class TurnProgressionService {
         }
 
         completeTurnAdvance(gameData);
+    }
+
+    private boolean hasApplicableExtraTurnSkipReplacement(GameData gameData, UUID extraTurnPlayerId) {
+        for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
+            UUID sourceControllerId = battlefieldEntry.getKey();
+            for (Permanent permanent : battlefieldEntry.getValue()) {
+                boolean applies = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(ExtraTurnSkipReplacementEffect.class::isInstance)
+                        .map(ExtraTurnSkipReplacementEffect.class::cast)
+                        .anyMatch(effect -> effect.appliesToExtraTurn(sourceControllerId, extraTurnPlayerId));
+                if (applies) return true;
+            }
+        }
+        return false;
     }
 
     /**

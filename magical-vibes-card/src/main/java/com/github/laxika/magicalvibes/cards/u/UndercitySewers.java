@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "270")
 @CardRegistration(set = "MKM", collectorNumber = "332")
+@CardRegistration(set = "PZA", collectorNumber = "20")
 public class UndercitySewers extends Card {
 
     public UndercitySewers() {

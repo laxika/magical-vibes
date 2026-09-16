@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 
 @CardRegistration(set = "DFT", collectorNumber = "67")
+@CardRegistration(set = "SOA", collectorNumber = "24")
 public class StockUp extends Card {
 
     public StockUp() {

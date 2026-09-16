@@ -216,6 +216,7 @@ public enum CardSet {
     SET_PLC("PLC"),
     SET_STX("STX"),
     SET_STA("STA"),
+    SET_SOA("SOA"),
     SET_SNC("SNC"),
     SET_TDM("TDM"),
     SET_TMT("TMT"),
@@ -292,7 +293,8 @@ public enum CardSet {
     SET_REX("REX"),
     SET_AA1("AA1"),
     SET_PA1("PA1"),
-    SET_CN2("CN2");
+    SET_CN2("CN2"),
+    SET_PZA("PZA");
 
     @Getter
     private final String code;

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FCA", collectorNumber = "21")
+@CardRegistration(set = "SOA", collectorNumber = "1")
 public class AkromasWill extends Card {
 
     public AkromasWill() {

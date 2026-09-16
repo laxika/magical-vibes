@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "183")
+@CardRegistration(set = "SOA", collectorNumber = "56")
 public class RoyalTreatment extends Card {
 
     public RoyalTreatment() {
