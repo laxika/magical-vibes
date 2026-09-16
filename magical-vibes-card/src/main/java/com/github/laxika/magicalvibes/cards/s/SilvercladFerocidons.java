@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "115")
+@CardRegistration(set = "PZA", collectorNumber = "9")
 public class SilvercladFerocidons extends Card {
 
     public SilvercladFerocidons() {

@@ -478,6 +478,7 @@ scope, free-cast, and exile flags to narrow the instant-or-sorcery choice furthe
 | `AdditionalDamageToOpponentsAndTheirPermanentsEffect` | `(int amount)` | static replacement: spells deal that much damage plus `amount` to opponents of this permanent's controller or permanents those opponents control instead. The spell's controller is irrelevant; combat and ability damage are unaffected. Queried by `GameQueryService.getAdditionalSpellDamageToOpponentsBonus` |
 
 | `ExtraTurnSkipReplacementEffect` | `()` | static replacement capability that skips an extra turn as it would begin while the source remains on the battlefield |
+| `OpponentExtraTurnSkipReplacementEffect` | `()` | static replacement capability that skips an extra turn only when an opponent of the source controller would begin it; implements `ExtraTurnSkipReplacementEffect` |
 | `TimeVaultReplacementEffect` | `()` | static replacement marker; at the source controller's turn start, offers to skip that turn and untap the source |
 | `ExileAndTakeExtraTurnReplacementEffect` | `()` | self-replacement capability that exiles the source from the battlefield instead of putting it into a graveyard and queues an extra turn for its last controller |
 | `UginNexusReplacementEffect` | `()` | combines the extra-turn skip and self-exile/extra-turn capabilities for Ugin's Nexus |

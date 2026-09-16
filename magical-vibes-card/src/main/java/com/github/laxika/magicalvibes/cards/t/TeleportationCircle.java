@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "39")
+@CardRegistration(set = "PZA", collectorNumber = "2")
 public class TeleportationCircle extends Card {
 
     public TeleportationCircle() {

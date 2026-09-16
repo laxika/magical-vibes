@@ -549,6 +549,7 @@ mana; controller-scoped and allowed to reduce the generic portion to zero (Silve
 - `AdditionalDamageToOpponentsAndTheirPermanentsEffect(int)` — STATIC: spells deal that much damage plus N to opponents of this permanent's controller or permanents those opponents control instead. Applies regardless of who controls the spell; combat and ability damage are unaffected. Queried by `GameQueryService.getAdditionalSpellDamageToOpponentsBonus`.
 
 - `ExtraTurnSkipReplacementEffect` — capability for a static replacement that skips an extra turn as it would begin while the source remains on the battlefield
+- `OpponentExtraTurnSkipReplacementEffect()` — `ExtraTurnSkipReplacementEffect` variant that applies only when an opponent of the source controller would begin an extra turn (Trouble in Pairs)
 - `ExileAndTakeExtraTurnReplacementEffect` — capability for a self-replacement that exiles the source from the battlefield instead of putting it into a graveyard and queues an extra turn for its last controller
 - `UginNexusReplacementEffect()` — combines the two Ugin's Nexus replacement capabilities
 - `PayXManaDrawXCardsEffect()` — life-gain trigger: controller chooses X up to the life gained and available mana, pays generic mana, and draws X cards. The life-gain amount is snapshotted when the trigger is collected; X=0 declines. Well of Lost Dreams (`ON_CONTROLLER_GAINS_LIFE`)
