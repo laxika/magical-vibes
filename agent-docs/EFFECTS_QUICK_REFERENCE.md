@@ -3005,6 +3005,8 @@ source card is no longer in the graveyard, the library card is not exiled and no
 
 ## Mill
 
+- `MillControllerAndMayReturnMilledPermanentToHandEffect(DynamicAmount count, CardPredicate filter)` — controller mills the evaluated count, then may put one matching card from among those milled this way into their hand; `EventValue` supports combat-damage triggers such as Barrowgoyf.
+
 - `MillControllerAndMayReturnMilledLandToHandEffect()` — controller mills one card, records whether a Lesson card actually reached their graveyard in the stack entry's event value, and may return a milled land to hand. Used by Sparring Dummy; pair with `ConditionalEffect(new EventValueAtLeast(1), new GainLifeEffect(2))`
 
 - `MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(int count, int maxCount)` — controller mills `count` cards, then chooses up to `maxCount` creature cards milled by this resolution to put onto the battlefield
@@ -3158,6 +3160,7 @@ source card is no longer in the graveyard, the library card is not exiled and no
 - `PutCardExiledWithSourceIntoGraveyardCost()` — activation cost: choose one card exiled with the source, remove it from exile, and put it into its owner's graveyard before the ability is put on the stack. Void Maw
 - `PutOpponentOwnedExiledCardIntoGraveyardCost()` — cost: choose one card an opponent owns from exile, remove it from exile, and put it into that player's graveyard before the spell or ability is put on the stack. For a SPELL-slot cast, pass the card id through `chosenAdditionalCostObjectId`; for an activated ability, the normal exile-card choice interaction is used. Cryptic Cruiser and Oracle of Dust (`BFZ`), Processor Assault (`BFZ`)
 - `PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect(CardPredicate, boolean)` — put the targeted card exiled with the source into its owner's graveyard; the optional filter and exact-mana-value-X flag narrow legal targets. Gelatinous Cube
+- `PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect(CreateTokenEffect landToken, CreateTokenEffect nonlandToken)` — put the targeted card exiled with the source into its owner's graveyard, then create the matching token branch; a land creates `landToken`, otherwise `nonlandToken` is created. Currency Converter (AA2 19)
 - `PutAllCardsExiledWithSourceIntoOwnersHandsEffect()` — put every card exiled with the source permanent into its owner's hand; records the number actually returned in the stack entry's event value for a following "lose that much life" effect. Bag of Holding and Asmodeus the Archfiend.
 - `PutAllCardsExiledWithSourceIntoOwnersHandsEffect()` — put every card exiled with the source permanent into its owner's hand. Bag of Holding's sacrifice ability.
 - `PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect()` — on a source's death, put that card on the bottom of its owner's library; only if it moved, return cards exiled with that source to their owners' hands (The Spot, Living Portal)
@@ -4564,3 +4567,5 @@ Use `PlaneswalkEffect()`, `ChaosEnsuesEffect()`, and `RollPlanarDieEffect()` for
 
 - `SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, false, true)` skips the next combat this turn only (Moment of Silence); unused skips expire at cleanup.
 - `EnterPermanentsOfTypesTappedEffect(types, opponentsOnly, filter, true)` applies only to permanents entering from resolving spells (`castOnly`), as on Uphill Battle. Existing constructors also affect permanents put onto the battlefield.
+- `CreateTokenThenMillControllerAndRepeatIfMilledEffect(CreateTokenEffect, CardPredicate)` creates a token, mills one card, and repeats the token/mill process with a loyalty counter whenever a matching card reaches the controller's graveyard. Used by Grist, the Hunger Tide.
+- `BecomeCreatureOutsideBattlefieldEffect(power, toughness, subtypes)` marks its source as a creature with those characteristics outside the battlefield; `GameQueryService` consumes the `SelfOutsideBattlefieldCreatureEffect` capability while leaving the battlefield permanent's printed types unchanged. Used by Grist, the Hunger Tide.

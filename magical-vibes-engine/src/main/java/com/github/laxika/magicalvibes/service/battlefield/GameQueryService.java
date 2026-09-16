@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfOutsideBattlefieldCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
@@ -847,6 +848,9 @@ public class GameQueryService {
      */
     public boolean cardHasType(Card card, CardType type, GameData gameData, UUID playerId) {
         if (card.hasType(type)) return true;
+        if (type == CardType.CREATURE && isOutsideBattlefieldCreature(card, gameData)) {
+            return true;
+        }
         if (gameData == null || playerId == null || card.getType() == null
                 || !card.getType().isPermanentType()
                 || card.hasType(CardType.LAND)) {
@@ -872,11 +876,12 @@ public class GameQueryService {
      */
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
         if (card.getSubtypes().contains(subtype)) return true;
-        if (card.hasType(CardType.CREATURE) && isCreatureSubtype(subtype)
+        if (cardHasType(card, CardType.CREATURE, gameData, cardOwnerId) && isCreatureSubtype(subtype)
                 && (card.hasKeyword(Keyword.CHANGELING) || hasSelfAllCreatureTypesEffect(card)
-                || selfAllZoneGrantedSubtypes(card).contains(subtype))) return true;
+                || selfAllZoneGrantedSubtypes(card).contains(subtype)
+                || selfOutsideBattlefieldGrantedSubtypes(card, gameData).contains(subtype))) return true;
         if (gameData == null || cardOwnerId == null) return false;
-        if (!card.hasType(CardType.CREATURE)) return false;
+        if (!cardHasType(card, CardType.CREATURE, gameData, cardOwnerId)) return false;
         if (computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype)) {
             return true;
         }
@@ -977,15 +982,17 @@ public class GameQueryService {
      */
     public Set<CardSubtype> getCardSubtypes(Card card, GameData gameData, UUID cardOwnerId) {
         Set<CardSubtype> subtypes = new java.util.HashSet<>(card.getSubtypes());
-        if (card.hasType(CardType.CREATURE) && hasSelfAllCreatureTypesEffect(card)) {
+        boolean creature = cardHasType(card, CardType.CREATURE, gameData, cardOwnerId);
+        if (creature && hasSelfAllCreatureTypesEffect(card)) {
             for (CardSubtype subtype : CardSubtype.values()) {
                 if (isCreatureSubtype(subtype)) subtypes.add(subtype);
             }
         }
-        if (card.hasType(CardType.CREATURE)) {
+        if (creature) {
             subtypes.addAll(selfAllZoneGrantedSubtypes(card));
+            subtypes.addAll(selfOutsideBattlefieldGrantedSubtypes(card, gameData));
         }
-        if (gameData != null && cardOwnerId != null && card.hasType(CardType.CREATURE)) {
+        if (gameData != null && cardOwnerId != null && creature) {
             subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
             if (isCardInGraveyard(gameData, cardOwnerId, card)) {
                 subtypes.addAll(computeGrantedGraveyardSubtypesForOwnedCreatureCard(gameData, cardOwnerId, card));
@@ -1008,6 +1015,36 @@ public class GameQueryService {
                 .filter(this::isCreatureSubtype)
                 .distinct()
                 .toList();
+    }
+
+    private List<CardSubtype> selfOutsideBattlefieldGrantedSubtypes(Card card, GameData gameData) {
+        if (isOnBattlefield(card, gameData)) {
+            return List.of();
+        }
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(SelfOutsideBattlefieldCreatureEffect.class::isInstance)
+                .map(SelfOutsideBattlefieldCreatureEffect.class::cast)
+                .flatMap(effect -> effect.grantedSubtypes().stream())
+                .filter(this::isCreatureSubtype)
+                .distinct()
+                .toList();
+    }
+
+    private boolean isOutsideBattlefieldCreature(Card card, GameData gameData) {
+        return !isOnBattlefield(card, gameData)
+                && card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(SelfOutsideBattlefieldCreatureEffect.class::isInstance);
+    }
+
+    private boolean isOnBattlefield(Card card, GameData gameData) {
+        if (card == null || gameData == null) {
+            return false;
+        }
+        return gameData.orderedPlayerIds.stream()
+                .map(gameData.playerBattlefields::get)
+                .filter(list -> list != null)
+                .flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
     }
 
     /**

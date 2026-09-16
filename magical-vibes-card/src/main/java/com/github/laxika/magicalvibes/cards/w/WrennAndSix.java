@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "2X2", collectorNumber = "296")
+@CardRegistration(set = "AA2", collectorNumber = "18")
 public class WrennAndSix extends Card {
 
     private static final String EMBLEM_TEXT =

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "40")
 @CardRegistration(set = "DDP", collectorNumber = "7")
+@CardRegistration(set = "AA2", collectorNumber = "2")
 public class Oust extends Card {
 
     public Oust() {
