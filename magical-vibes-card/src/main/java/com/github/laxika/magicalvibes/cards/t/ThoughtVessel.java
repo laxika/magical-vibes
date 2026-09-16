@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 
-@CardRegistration(set = "MB1", collectorNumber = "224")
+@CardRegistration(set = "C15", collectorNumber = "55")
 public class ThoughtVessel extends Card {
 
     public ThoughtVessel() {
