@@ -24,8 +24,7 @@ class SpellgorgerBarbarianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cardToDiscard);
@@ -41,8 +40,7 @@ class SpellgorgerBarbarianTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player2, 0, barbarian.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

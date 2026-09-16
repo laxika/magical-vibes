@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "34")
+@CardRegistration(set = "RVR", collectorNumber = "63")
 public class TidespoutTyrant extends Card {
 
     public TidespoutTyrant() {

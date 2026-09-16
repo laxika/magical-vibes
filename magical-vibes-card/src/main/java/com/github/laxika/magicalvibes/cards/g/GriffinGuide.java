@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "DDH", collectorNumber = "25")
 @CardRegistration(set = "DDL", collectorNumber = "28")
 @CardRegistration(set = "TSR", collectorNumber = "19")
+@CardRegistration(set = "DMR", collectorNumber = "8")
 public class GriffinGuide extends Card {
 
     public GriffinGuide() {

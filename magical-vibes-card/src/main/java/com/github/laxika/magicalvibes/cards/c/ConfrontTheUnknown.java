@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "198")
+@CardRegistration(set = "SIR", collectorNumber = "190")
 public class ConfrontTheUnknown extends Card {
 
     public ConfrontTheUnknown() {

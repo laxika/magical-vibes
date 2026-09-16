@@ -594,6 +594,8 @@ public class PermanentRemovalService {
                 gameData, leavingCards.size(), controllerId, wasCreature, creatureCards);
         triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
+        triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
+                gameData, target, wasCreature, controllerId);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -1652,6 +1654,8 @@ public class PermanentRemovalService {
         if (exiledFromBattlefield > 0) {
             triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
+            triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
+                    gameData, target, wasCreature, controllerId);
         }
         if (wentToGraveyard) {
             triggerCollectionService.checkHauntedCreatureDeathTriggers(gameData, target);
@@ -1729,7 +1733,7 @@ public class PermanentRemovalService {
             }
             if (wasArtifact && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                        gameData, ownerId, controllerId, target.getCard().getManaValue(),
+                        gameData, ownerId, controllerId, target.getOriginalCard(), target.getCard().getManaValue(),
                         Map.copyOf(target.getCounters()), wasSacrificed);
             }
             if (wasEnchantment && !creatureDeathTriggersSuppressed) {

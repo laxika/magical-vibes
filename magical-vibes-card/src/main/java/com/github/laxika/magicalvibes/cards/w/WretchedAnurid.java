@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "183")
+@CardRegistration(set = "DMR", collectorNumber = "109")
 public class WretchedAnurid extends Card {
 
     public WretchedAnurid() {

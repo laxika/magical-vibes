@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "168")
 @CardRegistration(set = "ICE", collectorNumber = "132")
 @CardRegistration(set = "SUM", collectorNumber = "114")
+@CardRegistration(set = "DMR", collectorNumber = "88")
 public class HowlFromBeyond extends Card {
 
     public HowlFromBeyond() {

@@ -32,8 +32,7 @@ class WheelAndDealTest extends BaseCardTest {
         harness.setHand(player2, discarded);
         addMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(player2.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDraw);
         assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentDraws);
@@ -50,11 +49,30 @@ class WheelAndDealTest extends BaseCardTest {
         harness.setHand(player2, opponentHand);
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDraw);
         assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentHand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent with an empty hand still draws seven cards")
+    void emptyOpponentHandStillDrawsSeven() {
+        Card controllerDraw = new Forest();
+        List<Card> opponentDraws = List.of(
+                new Island(), new Island(), new Island(), new Island(),
+                new Island(), new Island(), new Island());
+        harness.setLibrary(player1, List.of(controllerDraw));
+        harness.setLibrary(player2, opponentDraws);
+        harness.setHand(player1, List.of(new WheelAndDeal()));
+        harness.setHand(player2, List.of());
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, List.of(player2.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDraw);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentDraws);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 

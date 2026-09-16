@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "196")
+@CardRegistration(set = "MUL", collectorNumber = "28")
+@CardRegistration(set = "MUL", collectorNumber = "93")
+@CardRegistration(set = "MUL", collectorNumber = "158")
 public class RenataCalledToTheHunt extends Card {
 
     public RenataCalledToTheHunt() {

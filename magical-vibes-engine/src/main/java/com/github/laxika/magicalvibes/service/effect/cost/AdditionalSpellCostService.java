@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
+import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
@@ -165,6 +166,7 @@ public class AdditionalSpellCostService {
             DiscardXCardsCost.class,
             EscalateDiscardCost.class,
             EscalateManaCost.class,
+            EntwineManaCost.class,
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
             ChooseCreatureTypeCost.class,
@@ -230,6 +232,7 @@ public class AdditionalSpellCostService {
             DiscardXCardsCost discardXCardsCost,
             EscalateDiscardCost escalateDiscardCost,
             EscalateManaCost escalateManaCost,
+            EntwineManaCost entwineManaCost,
             RepeatableAdditionalManaCost repeatableManaCost,
             ChooseXValueCost chooseXValueCost,
             BeholdAndExileCost beholdCost,
@@ -276,7 +279,7 @@ public class AdditionalSpellCostService {
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardCardOrPayLifeCost != null
                     || discardHand || discardXCardsCost != null
-                    || repeatableManaCost != null || chooseXValueCost != null
+                    || entwineManaCost != null || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
                     || chosenCreatureOrWarpedCardCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null
@@ -485,6 +488,7 @@ public class AdditionalSpellCostService {
         DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
+        EntwineManaCost entwineManaCost = removeFirst(effects, EntwineManaCost.class);
         List<RepeatableAdditionalManaCost> repeatableManaCosts = effects.stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
@@ -520,7 +524,7 @@ public class AdditionalSpellCostService {
                 exileGraveyardCost, exileXCardsCost, putOpponentOwnedExiledCardIntoGraveyardCost,
                 collectEvidenceCost, exileNCardsCost, exileNCardsOrPayManaCost, discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
-                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
+                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, entwineManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
                 delveCost, revealCardCost, chooseCreatureOrRevealCreatureCardCost, chooseCreatureTypeCost, tieredManaCost,
                 payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
@@ -842,11 +846,13 @@ public class AdditionalSpellCostService {
                     boolean canPayMana = canAffordManaOption(gameData, playerId, card, cost.manaCost());
                     if (!canPayLife && !canPayMana) return false;
                 }
-                // Escalate is payable with a single mode (zero extra payments), so it never blocks
-                // playability by itself — concrete mode+payment selections are validated at cast.
-                case EscalateDiscardCost ignored -> { }
-                case EscalateManaCost ignored -> { }
-                case TieredManaCost ignored -> { }
+                 // Escalate is payable with a single mode (zero extra payments), so it never blocks
+                 // playability by itself — concrete mode+payment selections are validated at cast.
+                 case EscalateDiscardCost ignored -> { }
+                 case EscalateManaCost ignored -> { }
+                 // Entwine is paid as a fixed mana suffix only when all modes are selected.
+                 case EntwineManaCost ignored -> { }
+                 case TieredManaCost ignored -> { }
                 case EscalateSacrificeCost ignored -> { }
                 case EscalateTapCost ignored -> { }
                 case SacrificeAllCreaturesYouControlCost ignored -> {
@@ -1649,6 +1655,25 @@ public class AdditionalSpellCostService {
             return "";
         }
         return cost.manaCost().repeat(times);
+    }
+
+    /** Builds the fixed additional mana-cost suffix for an entwined modal spell. */
+    public String entwineManaSuffix(Card card, EntwineManaCost cost, int requiredModes,
+                                    int allModes, int modesChosen) {
+        if (cost == null) {
+            return "";
+        }
+        if (cost.manaCost() == null || cost.manaCost().isEmpty()) {
+            throw new IllegalStateException("Entwine mana cost is missing on " + card.getName());
+        }
+        if (modesChosen == requiredModes) {
+            return "";
+        }
+        if (modesChosen == allModes) {
+            return cost.manaCost();
+        }
+        throw new IllegalStateException("Choose exactly " + requiredModes
+                + " modes, or all modes when paying entwine for " + card.getName());
     }
 
     /** Builds the selected mode's additional mana-cost suffix for a tiered spell. */

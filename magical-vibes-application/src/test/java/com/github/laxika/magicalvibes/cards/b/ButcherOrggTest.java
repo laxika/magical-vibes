@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +13,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ButcherOrgg.class, GrizzlyBears.class})
+@CardUsed({ButcherOrgg.class, GlorySeeker.class})
 class ButcherOrggTest extends BaseCardTest {
 
     @Test
@@ -22,13 +21,13 @@ class ButcherOrggTest extends BaseCardTest {
     void dividesBlockedCombatDamageAmongDefendingCreaturesAndPlayer() {
         harness.setLife(player2, 20);
         Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        Permanent otherCreature = addCreatureReady(player2, new GlorySeeker());
         orgg.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        advanceToCombatDamageAssignment();
+        resolveCombat();
 
         PendingInteraction.CombatDamageAssignment prompt =
                 gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
@@ -52,10 +51,10 @@ class ButcherOrggTest extends BaseCardTest {
     void dividesUnblockedCombatDamageAmongDefendingCreatureAndPlayer() {
         harness.setLife(player2, 20);
         Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
-        Permanent defendingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent defendingCreature = addCreatureReady(player2, new GlorySeeker());
         orgg.setAttacking(true);
 
-        advanceToCombatDamageAssignment();
+        resolveCombat();
 
         assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
                 player1, 0, Map.of(orgg.getId(), 6)))
@@ -76,16 +75,56 @@ class ButcherOrggTest extends BaseCardTest {
         Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
         orgg.setAttacking(true);
 
-        advanceToCombatDamageAssignment();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
-    private void advanceToCombatDamageAssignment() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("A blocking Butcher Orgg can divide its combat damage among its defending player and creatures")
+    void blockingOrggCanDivideDamageAmongItsDefendingPlayerAndCreatures() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        attacker.setAttacking(true);
+        Permanent orgg = addCreatureReady(player2, new ButcherOrgg());
+        Permanent ownCreature = addCreatureReady(player2, new GlorySeeker());
+        orgg.setBlocking(true);
+        orgg.addBlockingTarget(0);
+
+        resolveCombat();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.validTargets()).extracting(target -> target.id())
+                .contains(attacker.getId(), ownCreature.getId(), player2.getId());
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(
+                ownCreature.getId(), 2,
+                player2.getId(), 4));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(orgg.getMarkedDamage()).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Butcher Orgg rejects negative combat damage assignments")
+    void rejectsNegativeCombatDamageAssignment() {
+        harness.setLife(player2, 20);
+        Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        orgg.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(blocker.getId(), 7, player2.getId(), -1)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

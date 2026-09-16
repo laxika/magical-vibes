@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEn
 
 @CardRegistration(set = "SCG", collectorNumber = "16")
 @CardRegistration(set = "VMA", collectorNumber = "29")
+@CardRegistration(set = "MH1", collectorNumber = "12")
 public class GildedLight extends Card {
 
     public GildedLight() {

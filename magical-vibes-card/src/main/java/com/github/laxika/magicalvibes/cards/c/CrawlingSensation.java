@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "199")
+@CardRegistration(set = "SIR", collectorNumber = "191")
 public class CrawlingSensation extends Card {
 
     public CrawlingSensation() {

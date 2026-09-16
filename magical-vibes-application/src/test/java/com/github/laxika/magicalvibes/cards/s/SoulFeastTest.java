@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GrizzlyBears.class, MetathranSoldier.class, SoulFeast.class})
 class SoulFeastTest extends BaseCardTest {
 
-    
+
 
     @Test
     @DisplayName("Casting Soul Feast targeting a player puts it on the stack")

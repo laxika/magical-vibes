@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -42,6 +43,16 @@ class HauntedCadaverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage uses the damaged player without asking for a target")
+    void combatDamageUsesDamagedPlayerWithoutTargetChoice() {
+        addAttacker();
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
     @DisplayName("Declining the may ability keeps Haunted Cadaver on the battlefield")
     void decliningMayKeepsCadaver() {
         harness.setHand(player2, List.of(new HauntedCadaver()));
@@ -70,6 +81,47 @@ class HauntedCadaverTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Haunted Cadaver");
+    }
+
+    @Test
+    @DisplayName("A Haunted Cadaver that leaves before the choice resolves cannot discard")
+    void leavingBeforeMayResolutionPreventsDiscard() {
+        harness.setHand(player2, List.of(new HauntedCadaver(), new HauntedCadaver(), new HauntedCadaver()));
+        Permanent attacker = addAttacker();
+
+        resolveCombat();
+        chooseDamagedPlayer();
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can be cast face down and turned face up for its morph cost")
+    void morphsFaceDownAndCanBeTurnedFaceUp() {
+        harness.setHand(player1, List.of(new HauntedCadaver()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent cadaver = findPermanent(player1, "Haunted Cadaver");
+        assertThat(cadaver.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cadaver));
+        harness.passBothPriorities();
+
+        assertThat(cadaver.isFaceDown()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     private Permanent addAttacker() {

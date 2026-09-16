@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,21 +13,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EmberBeast.class, WoodlandDruid.class})
 class EmberBeastTest extends BaseCardTest {
 
     @Test
     @DisplayName("Ember Beast can't attack alone")
     void cantAttackAlone() {
-        Permanent beast = new Permanent(new EmberBeast());
-        beast.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(beast);
+        addCreatureReady(player1, new EmberBeast());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -36,41 +30,24 @@ class EmberBeastTest extends BaseCardTest {
     void canAttackWithAnother() {
         harness.setLife(player2, 20);
 
-        Permanent beast = new Permanent(new EmberBeast());
-        beast.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(beast);
+        addCreatureReady(player1, new EmberBeast());
+        addCreatureReady(player1, new WoodlandDruid());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        declareAttackers(List.of(0, 1));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
-
-        // Ember Beast (3/4) + Grizzly Bears (2/2) = 5 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        // Ember Beast (3/4) + Woodland Druid (1/2) = 4 damage
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
     @DisplayName("Ember Beast can't block alone")
     void cantBlockAlone() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new WoodlandDruid());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent beast = new Permanent(new EmberBeast());
-        beast.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(beast);
+        addCreatureReady(player2, new EmberBeast());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -79,28 +56,17 @@ class EmberBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Ember Beast can block with another creature")
     void canBlockWithAnother() {
-        Permanent attacker1 = new Permanent(new GrizzlyBears());
-        attacker1.setSummoningSick(false);
+        Permanent attacker1 = addCreatureReady(player1, new WoodlandDruid());
         attacker1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker1);
 
-        Permanent attacker2 = new Permanent(new GrizzlyBears());
-        attacker2.setSummoningSick(false);
+        Permanent attacker2 = addCreatureReady(player1, new WoodlandDruid());
         attacker2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker2);
 
-        Permanent beast = new Permanent(new EmberBeast());
-        beast.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(beast);
+        Permanent beast = addCreatureReady(player2, new EmberBeast());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent druid = addCreatureReady(player2, new WoodlandDruid());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -108,6 +74,6 @@ class EmberBeastTest extends BaseCardTest {
         ));
 
         assertThat(beast.isBlocking()).isTrue();
-        assertThat(bears.isBlocking()).isTrue();
+        assertThat(druid.isBlocking()).isTrue();
     }
 }

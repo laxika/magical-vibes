@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "10")
+@CardRegistration(set = "DMR", collectorNumber = "3")
 public class ClericOfTheForwardOrder extends Card {
 
     public ClericOfTheForwardOrder() {

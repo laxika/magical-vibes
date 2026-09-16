@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -18,25 +19,27 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "128")
 @CardRegistration(set = "TSR", collectorNumber = "345")
 public class GoblinEngineer extends Card {
 
     public GoblinEngineer() {
-        CardTypePredicate artifactCard = new CardTypePredicate(CardType.ARTIFACT);
-
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new SearchLibraryEffect(artifactCard, LibrarySearchDestination.GRAVEYARD),
-                "Search your library for an artifact card and put it into your graveyard?"));
+                new SearchLibraryEffect(
+                        new Fixed(1),
+                        new CardTypePredicate(CardType.ARTIFACT),
+                        LibrarySearchDestination.GRAVEYARD),
+                "Search your library for an artifact card?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
                 List.of(
-                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "Sacrifice an artifact"),
+                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardAllOfPredicate(List.of(
-                                        artifactCard,
+                                        new CardTypePredicate(CardType.ARTIFACT),
                                         new CardMaxManaValuePredicate(3))))
                                 .targetGraveyard(true)
                                 .build()),

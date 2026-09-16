@@ -39,7 +39,8 @@ public class RevealTopCardsOfChosenTypeToHandRestEffectHandler implements Normal
 
         if (gameData.chosenSpellPermanentType == null) {
             gameData.rerunCurrentEffectAfterInteraction = true;
-            playerInputService.beginSpellCardTypeChoice(gameData, entry.getControllerId());
+            playerInputService.beginSpellCardTypeChoice(
+                    gameData, entry.getControllerId(), reveal.allowedTypes());
             return;
         }
 

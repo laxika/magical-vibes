@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "134")
+@CardRegistration(set = "SIR", collectorNumber = "164")
 public class InsatiableGorgers extends Card {
 
     public InsatiableGorgers() {

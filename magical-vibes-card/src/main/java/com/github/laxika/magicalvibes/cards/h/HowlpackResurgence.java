@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "204")
 @CardRegistration(set = "SOI", collectorNumber = "211")
+@CardRegistration(set = "SIR", collectorNumber = "202")
 public class HowlpackResurgence extends Card {
 
     public HowlpackResurgence() {

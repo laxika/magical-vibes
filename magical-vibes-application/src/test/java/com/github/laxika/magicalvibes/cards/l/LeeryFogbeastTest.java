@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeeryFogbeast.class, GrizzlyBears.class})
+@CardUsed({LeeryFogbeast.class, ElvishWarrior.class, Shock.class})
 class LeeryFogbeastTest extends BaseCardTest {
 
     @Test
@@ -23,10 +23,11 @@ class LeeryFogbeastTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent fogbeast = addAttackingCreature(player1, player2, new LeeryFogbeast());
-        addAttackingCreature(player1, player2, new GrizzlyBears());
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent fogbeast = addCreatureReady(player1, new LeeryFogbeast());
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
 
+        declareAttackers(List.of(0, 1));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -42,8 +43,9 @@ class LeeryFogbeastTest extends BaseCardTest {
     @DisplayName("An unblocked Leery Fogbeast does not prevent combat damage")
     void unblockedDoesNotPreventCombatDamage() {
         harness.setLife(player2, 20);
-        addAttackingCreature(player1, player2, new LeeryFogbeast());
+        addCreatureReady(player1, new LeeryFogbeast());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
@@ -51,10 +53,24 @@ class LeeryFogbeastTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
-    private Permanent addAttackingCreature(Player attacker, Player defender, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(attacker, card);
-        permanent.setAttacking(true);
-        permanent.setAttackTarget(defender.getId());
-        return permanent;
+    @Test
+    @DisplayName("The triggered prevention does not prevent noncombat damage")
+    void doesNotPreventNoncombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent fogbeast = addCreatureReady(player1, new LeeryFogbeast());
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(fogbeast))));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "202")
+@CardRegistration(set = "SIR", collectorNumber = "193")
 public class DeathcapCultivator extends Card {
 
     public DeathcapCultivator() {

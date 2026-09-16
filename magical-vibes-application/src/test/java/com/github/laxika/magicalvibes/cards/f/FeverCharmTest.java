@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.ArcanisTheOmnipotent;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FeverCharm.class, ArcanisTheOmnipotent.class, GrizzlyBears.class})
+@CardUsed({FeverCharm.class, ArcanisTheOmnipotent.class, GlorySeeker.class, Forest.class})
 class FeverCharmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Haste mode grants haste until end of turn")
     void grantsHasteUntilEndOfTurn() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         castMode(0, target);
 
@@ -38,12 +38,22 @@ class FeverCharmTest extends BaseCardTest {
     @Test
     @DisplayName("Pump mode gives the target creature +2/+0")
     void boostsTargetCreature() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         castMode(1, target);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creature mode rejects a noncreature permanent")
+    void creatureModeRejectsNoncreaturePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> castMode(0, target))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
     }
 
     @Test
@@ -59,7 +69,7 @@ class FeverCharmTest extends BaseCardTest {
     @Test
     @DisplayName("Wizard mode rejects a non-Wizard creature")
     void wizardModeRejectsNonWizardCreature() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         assertThatThrownBy(() -> castMode(2, target))
                 .isInstanceOf(IllegalStateException.class)

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "196")
+@CardRegistration(set = "SIR", collectorNumber = "188")
 public class BywayCourier extends Card {
 
     public BywayCourier() {

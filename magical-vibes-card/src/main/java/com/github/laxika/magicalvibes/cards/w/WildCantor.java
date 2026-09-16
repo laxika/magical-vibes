@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "149")
+@CardRegistration(set = "RVR", collectorNumber = "239")
 public class WildCantor extends Card {
 
     public WildCantor() {

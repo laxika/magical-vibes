@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "AKH", collectorNumber = "111")
 @CardRegistration(set = "AKR", collectorNumber = "126")
 @CardRegistration(set = "A25", collectorNumber = "109")
+@CardRegistration(set = "GN3", collectorNumber = "62")
 @CardRegistration(set = "2X2", collectorNumber = "93")
 @CardRegistration(set = "2XM", collectorNumber = "108")
 public class SupernaturalStamina extends Card {

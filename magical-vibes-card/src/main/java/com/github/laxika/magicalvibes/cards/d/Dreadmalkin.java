@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "87")
+@CardRegistration(set = "RVR", collectorNumber = "75")
 public class Dreadmalkin extends Card {
 
     public Dreadmalkin() {

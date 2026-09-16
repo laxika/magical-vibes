@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M20", collectorNumber = "26")
 @CardRegistration(set = "MM2", collectorNumber = "23")
 @CardRegistration(set = "MB2", collectorNumber = "14")
+@CardRegistration(set = "WOT", collectorNumber = "10")
 public class LeylineOfSanctity extends Card {
 
     public LeylineOfSanctity() {

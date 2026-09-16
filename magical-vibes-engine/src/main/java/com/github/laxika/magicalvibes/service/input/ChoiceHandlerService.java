@@ -140,6 +140,8 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
+            voteForDenialOrDuplicationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
             tyrantsChoiceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GraceOrCondemnationEffectHandler
@@ -717,6 +719,17 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.VoteForDenialOrDuplicationChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Split Decision vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            voteForDenialOrDuplicationEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -4026,14 +4039,19 @@ public class ChoiceHandlerService {
             ChoiceContext.CounterDistributionAssignment next =
                     new ChoiceContext.CounterDistributionAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
-                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex);
+                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
+                            ctx.allowsPartialDistribution());
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
-        if (assigned != ctx.total()) {
-            throw new IllegalStateException("Counter assignments must total " + ctx.total());
+        if (ctx.allowsPartialDistribution()
+                ? assigned <= 0 || assigned > ctx.total()
+                : assigned != ctx.total()) {
+            throw new IllegalStateException(ctx.allowsPartialDistribution()
+                    ? "Counter assignments must not exceed " + ctx.total()
+                    : "Counter assignments must total " + ctx.total());
         }
 
         gameData.interaction.clearAwaitingInput();

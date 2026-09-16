@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "18")
+@CardRegistration(set = "SIR", collectorNumber = "20")
 public class CourageousOutrider extends Card {
 
     public CourageousOutrider() {

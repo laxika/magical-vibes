@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "PLC", collectorNumber = "72")
+@CardRegistration(set = "OTP", collectorNumber = "15")
 public class ImpsMischief extends Card {
 
     public ImpsMischief() {

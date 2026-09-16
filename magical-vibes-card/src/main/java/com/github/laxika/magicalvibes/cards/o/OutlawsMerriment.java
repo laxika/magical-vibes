@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "198")
+@CardRegistration(set = "OTP", collectorNumber = "51")
 public class OutlawsMerriment extends Card {
 
     public OutlawsMerriment() {

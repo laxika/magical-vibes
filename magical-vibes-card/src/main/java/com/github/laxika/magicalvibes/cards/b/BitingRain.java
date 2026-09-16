@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "102")
+@CardRegistration(set = "SIR", collectorNumber = "99")
 public class BitingRain extends Card {
 
     public BitingRain() {

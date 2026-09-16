@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "290")
 @CardRegistration(set = "TSB", collectorNumber = "96")
+@CardRegistration(set = "DMR", collectorNumber = "192")
 public class MysticEnforcer extends Card {
 
     public MysticEnforcer() {

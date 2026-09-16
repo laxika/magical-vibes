@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "238")
 @CardRegistration(set = "DOM", collectorNumber = "239")
+@CardRegistration(set = "DMR", collectorNumber = "241")
 public class ClifftopRetreat extends Card {
 
     public ClifftopRetreat() {

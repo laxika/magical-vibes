@@ -5,20 +5,20 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemGrantsRetraceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Set;
 
+@CardRegistration(set = "MH1", collectorNumber = "217")
 @CardRegistration(set = "2X2", collectorNumber = "296")
 public class WrennAndSix extends Card {
-
-    private static final String EMBLEM_TEXT =
-            "Instant and sorcery cards in your graveyard have retrace.";
 
     public WrennAndSix() {
         // +1: Return up to one target land card from your graveyard to your hand.
@@ -44,9 +44,14 @@ public class WrennAndSix extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemGrantsRetraceEffect(Set.of(CardType.INSTANT, CardType.SORCERY))),
-                        EMBLEM_TEXT)),
-                "−7: You get an emblem with \"" + EMBLEM_TEXT + "\"."
+                        List.of(GrantSpellCastingAbilityToSpellsEffect.fromZone(
+                                Keyword.RETRACE,
+                                new CardAnyOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.INSTANT),
+                                        new CardTypePredicate(CardType.SORCERY))),
+                                Zone.GRAVEYARD)),
+                        "Instant and sorcery cards in your graveyard have retrace.")),
+                "−7: You get an emblem with \"Instant and sorcery cards in your graveyard have retrace.\""
         ));
     }
 }

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ONS", collectorNumber = "287")
+@CardRegistration(set = "DMR", collectorNumber = "180")
 public class SymbioticBeast extends Card {
 
     public SymbioticBeast() {

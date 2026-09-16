@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SOI", collectorNumber = "133")
 @CardRegistration(set = "ANB", collectorNumber = "57")
 @CardRegistration(set = "UMA", collectorNumber = "111")
+@CardRegistration(set = "SIR", collectorNumber = "133")
 public class SanitariumSkeleton extends Card {
 
     public SanitariumSkeleton() {

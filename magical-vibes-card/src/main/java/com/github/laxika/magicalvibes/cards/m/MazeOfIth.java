@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "V12", collectorNumber = "10")
 @CardRegistration(set = "EMA", collectorNumber = "241")
 @CardRegistration(set = "2XM", collectorNumber = "322")
+@CardRegistration(set = "DMR", collectorNumber = "250")
 public class MazeOfIth extends Card {
 
     public MazeOfIth() {

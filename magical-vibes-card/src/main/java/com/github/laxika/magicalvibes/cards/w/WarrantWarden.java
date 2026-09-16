@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "230")
+@CardRegistration(set = "RVR", collectorNumber = "240")
 public class WarrantWarden extends Card {
 
     public WarrantWarden() {

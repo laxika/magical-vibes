@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.a.AncestralTribute;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MysticVisionary.class, AncestralTribute.class})
 class MysticVisionaryTest extends BaseCardTest {
 
     @Test
@@ -28,6 +29,15 @@ class MysticVisionaryTest extends BaseCardTest {
     @DisplayName("Has flying with seven cards in its controller's graveyard")
     void thresholdGrantsFlying() {
         harness.setGraveyard(player1, graveyardCards(7));
+        harness.addToBattlefield(player1, new MysticVisionary());
+
+        assertThat(gqs.hasKeyword(gd, findVisionary(), Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Keeps flying with more than seven cards in its controller's graveyard")
+    void moreThanSevenCardsStillMeetThreshold() {
+        harness.setGraveyard(player1, graveyardCards(8));
         harness.addToBattlefield(player1, new MysticVisionary());
 
         assertThat(gqs.hasKeyword(gd, findVisionary(), Keyword.FLYING)).isTrue();
@@ -67,7 +77,7 @@ class MysticVisionaryTest extends BaseCardTest {
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Spellbook());
+            cards.add(new AncestralTribute());
         }
         return cards;
     }

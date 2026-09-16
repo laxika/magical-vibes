@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Entomb.class, DuskImp.class, Plains.class, Swamp.class})
 class EntombTest extends BaseCardTest {
 
     @Test
@@ -31,7 +31,7 @@ class EntombTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName)
-                .containsExactly("Grizzly Bears", "Plains", "Swamp");
+                .containsExactly("Dusk Imp", "Plains", "Swamp");
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.GRAVEYARD);
         assertThat(search.params().reveals()).isFalse();
         assertThat(search.params().canFailToFind()).isFalse();
@@ -47,16 +47,31 @@ class EntombTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int librarySizeBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .contains("Grizzly Bears", "Entomb");
+                .contains("Dusk Imp", "Entomb");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySizeBefore - 1);
         assertThat(gd.playerDecks.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+                .noneMatch(card -> card.getName().equals("Dusk Imp"));
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty library completes the search without prompting")
+    void emptyLibraryCompletesSearch() {
+        castEntomb();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Entomb");
+        assertThat(gameLogContains("it is empty")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -67,20 +82,16 @@ class EntombTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(-1)))
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot fail to find");
     }
 
     private void castEntomb() {
-        harness.setHand(player1, List.of(new Entomb()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Entomb(), "{B}");
     }
 
     private void setupLibrary() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(new DuskImp(), new Plains(), new Swamp()));
     }
 }

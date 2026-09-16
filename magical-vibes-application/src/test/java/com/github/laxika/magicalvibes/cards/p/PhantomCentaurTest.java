@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
+import com.github.laxika.magicalvibes.cards.c.Cagemail;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.l.LavaDart;
+import com.github.laxika.magicalvibes.cards.t.ToxicStench;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantomCentaur.class, DoomBlade.class, GrizzlyBears.class, Shock.class})
+@CardUsed({PhantomCentaur.class, CabalTrainee.class, Cagemail.class, FlaringPain.class,
+        LavaDart.class, ToxicStench.class})
 class PhantomCentaurTest extends BaseCardTest {
 
     @Test
@@ -29,34 +33,31 @@ class PhantomCentaurTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent centaur = findCentaur(player1);
-        assertThat(centaur).isNotNull();
+        Permanent centaur = findPermanent(player1, "Phantom Centaur");
         assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("Damage is prevented and removes one +1/+1 counter")
-    void damageIsPreventedAndRemovesOneCounter() {
-        Permanent centaur = harness.addToBattlefieldAndReturn(player2, new PhantomCentaur());
-        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+    @DisplayName("Each damage event is prevented and removes one +1/+1 counter")
+    void damageIsPreventedAndRemovesOneCounterPerEvent() {
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, centaur.getId());
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LavaDart(), new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, centaur.getId());
+        harness.castAndResolveInstant(player1, 0, centaur.getId());
 
-        Permanent survivingCentaur = findCentaur(player2);
-        assertThat(survivingCentaur).isNotNull();
-        assertThat(survivingCentaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player2, "Phantom Centaur")).isSameAs(centaur);
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(centaur.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Protection from black prevents black spells from targeting it")
     void protectionFromBlackPreventsTargeting() {
-        Permanent centaur = harness.addToBattlefieldAndReturn(player2, new PhantomCentaur());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
 
-        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.setHand(player1, List.of(new ToxicStench()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, centaur.getId()))
@@ -64,10 +65,58 @@ class PhantomCentaurTest extends BaseCardTest {
                 .hasMessageContaining("protection from black");
     }
 
-    private Permanent findCentaur(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Phantom Centaur"))
-                .findFirst()
-                .orElse(null);
+    @Test
+    @DisplayName("Protection from black prevents black creatures from blocking it")
+    void protectionFromBlackPreventsBlocking() {
+        Permanent centaur = harness.enterBattlefieldAndReturn(player1, new PhantomCentaur());
+        centaur.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new CabalTrainee());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Damage prevention continues after all +1/+1 counters are removed")
+    void preventsDamageWithoutCounters() {
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
+
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, centaur.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LavaDart(), new LavaDart(), new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, centaur.getId());
+        harness.castAndResolveInstant(player1, 0, centaur.getId());
+        harness.castAndResolveInstant(player1, 0, centaur.getId());
+
+        assertThat(findPermanent(player2, "Phantom Centaur")).isSameAs(centaur);
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(centaur.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage prevention still removes a counter when damage cannot be prevented")
+    void removesCounterWhenDamageCannotBePrevented() {
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
+
+        harness.setHand(player1, List.of(new FlaringPain()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, centaur.getId());
+
+        assertThat(findPermanent(player2, "Phantom Centaur")).isSameAs(centaur);
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(centaur.getMarkedDamage()).isEqualTo(1);
     }
 }
