@@ -960,7 +960,7 @@ public class CardChoiceHandlerService {
                         followUp.thenEffectSourcePermanentId());
                 thenEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
                 thenEntry.setNonTargeting(true);
-                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard);
+                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard, followUp);
                 gameData.stack.add(thenEntry);
             } else {
                 StackEntry reflexiveEntry = followUp.thenEffectSourcePermanentId() == null
@@ -972,7 +972,7 @@ public class CardChoiceHandlerService {
                 reflexiveEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
                 reflexiveEntry.setEventValue(followUp.thenEffectEventValue() > 0
                         ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount());
-                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard);
+                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard, followUp);
                 gameData.stack.add(reflexiveEntry);
             }
             log.info("Game {} - {} discard-then rider pushed for {}",
@@ -983,7 +983,7 @@ public class CardChoiceHandlerService {
     }
 
     private List<Card> discardedCardsStillInGraveyard(GameData gameData, DiscardFollowUp followUp) {
-        if (followUp.discardedCardSelectionControllerId() == null) {
+        if (followUp.discardedCardSelectionControllerId() == null || followUp.thenEffect() != null) {
             return List.of();
         }
         List<Card> discardedLands = new ArrayList<>();
@@ -996,7 +996,8 @@ public class CardChoiceHandlerService {
         return discardedLands;
     }
 
-    private void copyDiscardFollowUpContext(GameData gameData, StackEntry entry, Card discardedCard) {
+    private void copyDiscardFollowUpContext(GameData gameData, StackEntry entry, Card discardedCard,
+                                            DiscardFollowUp followUp) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null) {
             entry.setSourcePermanentSnapshot(pendingEntry.getSourcePermanentSnapshot());
@@ -1005,6 +1006,9 @@ public class CardChoiceHandlerService {
             entry.setTriggeringCardId(discardedCard.getId());
             entry.setTriggeringCardGraveyardEntryVersion(
                     gameData.graveyardEntryVersion(discardedCard.getId()));
+        }
+        if (!followUp.discardedCardIds().isEmpty()) {
+            entry.setTriggeringCardIds(followUp.discardedCardIds());
         }
     }
 

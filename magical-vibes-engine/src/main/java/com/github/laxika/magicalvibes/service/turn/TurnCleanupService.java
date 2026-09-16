@@ -362,8 +362,9 @@ public class TurnCleanupService {
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
-                !watcher.untilEndOfNextTurn()
-                        || (gameData.activePlayerId.equals(watcher.controllerId())
+                (!watcher.untilEndOfNextTurn() && !watcher.untilNextTurn())
+                        || (watcher.untilEndOfNextTurn()
+                        && gameData.activePlayerId.equals(watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();

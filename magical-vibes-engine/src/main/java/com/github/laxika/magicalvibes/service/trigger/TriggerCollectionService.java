@@ -5802,6 +5802,9 @@ public class TriggerCollectionService {
                 new ArrayList<>(List.of(watcher.effect())));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
+        if (watcher.slot() == EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED) {
+            entry.setTriggeringPermanentId(targetId);
+        }
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
@@ -5849,6 +5852,11 @@ public class TriggerCollectionService {
         final int creatureTapCount = gameQueryService.isCreature(gameData, tappedPermanent)
                 ? gameData.creatureTapCountsThisTurn.merge(tappedPermanent.getId(), 1, Integer::sum)
                 : 0;
+
+        if (creatureTapCount > 0) {
+            collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED,
+                    tappedPermanent.getId(), 0);
+        }
 
         var ctx = new TriggerContext.EnchantedPermanentTap(tappedPermanent, tappedPermanentControllerId);
 
@@ -7814,16 +7822,17 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Fires effects that watch a creature controlled by the exploiting player exploit a nontoken
+     * Fires effects that watch a creature controlled by the exploiting player exploit a
      * creature. The exploiting permanent is also checked from its last-known battlefield object so
      * sacrificing it for its own exploit still lets its other triggered ability trigger.
      */
     public void checkAllyCreatureExploitTriggers(GameData gameData, UUID exploitingPlayerId,
-                                                  Permanent exploitingPermanent, Card exploitedCard) {
-        if (exploitingPermanent == null || exploitedCard == null || exploitedCard.isToken()) return;
+                                                  Permanent exploitingPermanent, Card exploitedCard,
+                                                  int exploitedPower) {
+        if (exploitingPermanent == null || exploitedCard == null) return;
 
         TriggerContext ctx = new TriggerContext.CreatureExploit(
-                exploitingPlayerId, exploitingPermanent.getCard(), exploitedCard);
+                exploitingPlayerId, exploitingPermanent.getCard(), exploitedCard, exploitedPower);
         List<Permanent> battlefield = gameData.playerBattlefields.get(exploitingPlayerId);
         boolean sourceStillPresent = false;
         if (battlefield != null) {
@@ -7831,12 +7840,21 @@ public class TriggerCollectionService {
                 if (perm.getId().equals(exploitingPermanent.getId())) {
                     sourceStillPresent = true;
                 }
-                dispatchSlot(gameData, perm, exploitingPlayerId,
-                        EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE, ctx);
+                dispatchSlot(gameData, perm, exploitingPlayerId, EffectSlot.ON_ALLY_CREATURE_EXPLOITS, ctx);
+                if (!exploitedCard.isToken()) {
+                    dispatchSlot(gameData, perm, exploitingPlayerId,
+                            EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE, ctx);
+                }
             }
         }
 
         if (!sourceStillPresent) {
+            for (CardEffect effect : exploitingPermanent.getCard().getEffects(
+                    EffectSlot.ON_ALLY_CREATURE_EXPLOITS)) {
+                dispatch(new TriggerMatchContext(gameData, exploitingPermanent, exploitingPlayerId, effect),
+                        EffectSlot.ON_ALLY_CREATURE_EXPLOITS, effect, ctx);
+            }
+            if (exploitedCard.isToken()) return;
             for (CardEffect effect : exploitingPermanent.getCard().getEffects(
                     EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE)) {
                 dispatch(new TriggerMatchContext(gameData, exploitingPermanent, exploitingPlayerId, effect),

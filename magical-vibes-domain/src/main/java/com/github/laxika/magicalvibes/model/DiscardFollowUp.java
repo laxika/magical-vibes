@@ -299,6 +299,16 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 sourcePermanentId, sourcePermanentSnapshot, eventValue);
     }
 
+    /** Pushes a reflexive effect and retains every card discarded in the event for that effect. */
+    public static DiscardFollowUp thenEffectWithEventValueAndDiscardedCards(
+            Card sourceCard, CardEffect thenEffect, int eventValue, UUID sourcePermanentId,
+            Permanent sourcePermanentSnapshot, UUID discardControllerId) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                sourceCard, thenEffect, null, null, null, null, 0,
+                null, false, 0, false, null, null, null, false,
+                sourcePermanentId, sourcePermanentSnapshot, eventValue, discardControllerId, List.of());
+    }
+
     /** Completes a permanent's entry after the controller discards the required card. */
     public static DiscardFollowUp enteringPermanent(Permanent permanent, UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,

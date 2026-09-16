@@ -3874,12 +3874,20 @@ public class StepTriggerService {
         expireNextEndStepTemporaryCopies(gameData);
         for (var delayed : gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
-                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
-                    new ArrayList<>(List.of(delayed.effect())), delayed.affectedPermanentId(),
-                    delayed.sourcePermanentId());
-            entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            if (delayed.targetGroups().isEmpty()) {
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                        delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(delayed.effect())), delayed.affectedPermanentId(),
+                        delayed.sourcePermanentId());
+                entry.setNonTargeting(true);
+                gameData.enqueueTrigger(entry);
+            } else {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        delayed.sourceCard(), delayed.controllerId(),
+                        new ArrayList<>(List.of(delayed.effect())), delayed.sourcePermanentId(),
+                        List.of(), 0, 0, List.of(), 0, List.of(), false, null,
+                        delayed.affectedPermanentId()));
+            }
         }
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
 

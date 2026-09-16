@@ -2128,7 +2128,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             triggerCollectionService.checkExploitTriggers(
                     gameData, ctx.sourceCard(), ctx.controllerId(), ctx.sourcePermanentId());
             triggerCollectionService.checkAllyCreatureExploitTriggers(
-                    gameData, ctx.controllerId(), ctx.sourcePermanent(), exploitedCard);
+                    gameData, ctx.controllerId(), ctx.sourcePermanent(), exploitedCard, sacrificedPower);
             if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)
                     && !gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.processNextExploitTriggerTarget(gameData);
