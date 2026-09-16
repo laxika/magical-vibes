@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
-
-import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "252")
 public class MuscleBurst extends Card {
@@ -19,9 +16,7 @@ public class MuscleBurst extends Card {
     public MuscleBurst() {
         var boost = new Sum(
                 new Fixed(3),
-                new CardsInGraveyard(new CardAnyOfPredicate(List.of(
-                        new CardNamedPredicate("Muscle Burst"),
-                        new CardNamedPredicate("Diligent Farmhand"))), CountScope.ANY_PLAYER));
+                new CardsInGraveyard(new CardNamedPredicate("Muscle Burst"), CountScope.ANY_PLAYER));
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(boost, boost));
     }
 }
