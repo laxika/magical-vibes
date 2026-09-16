@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,6 +45,24 @@ class UnstableHulkTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    void skipsItsControllerNextTurn() {
+        Permanent hulk = castFaceDown();
+
+        turnFaceUp(hulk);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new UnstableHulk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -64,5 +83,11 @@ class UnstableHulkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(hulk));
+    }
+
+    private void advanceTurn(Player expectedActivePlayer) {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(expectedActivePlayer, TurnStep.PRECOMBAT_MAIN);
     }
 }
