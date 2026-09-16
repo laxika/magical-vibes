@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "22")
+@CardRegistration(set = "GN3", collectorNumber = "16")
 public class PilgrimOfTheAges extends Card {
 
     public PilgrimOfTheAges() {

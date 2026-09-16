@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "180")
+@CardRegistration(set = "KLR", collectorNumber = "194")
 public class EmpyrealVoyager extends Card {
 
     public EmpyrealVoyager() {

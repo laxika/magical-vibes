@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "72")
+@CardRegistration(set = "DMR", collectorNumber = "87")
 public class GoblinTurncoat extends Card {
 
     public GoblinTurncoat() {

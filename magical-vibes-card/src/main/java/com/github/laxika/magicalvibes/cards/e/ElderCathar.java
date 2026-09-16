@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "12")
 @CardRegistration(set = "DDQ", collectorNumber = "9")
+@CardRegistration(set = "SIS", collectorNumber = "6")
 public class ElderCathar extends Card {
 
     public ElderCathar() {

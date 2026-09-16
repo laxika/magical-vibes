@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BroodhatchNantuko.class, Shock.class, GrizzlyBears.class})
+@CardUsed({BroodhatchNantuko.class, Shock.class, ElvishWarrior.class})
 class BroodhatchNantukoTest extends BaseCardTest {
 
     @Test
@@ -55,27 +54,41 @@ class BroodhatchNantukoTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage also uses the amount of damage dealt")
     void combatDamageCreatesThatManyTokens() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new BroodhatchNantuko());
+        var attacker = addCreatureReady(player1, new ElvishWarrior());
+        var nantuko = addCreatureReady(player2, new BroodhatchNantuko());
 
-        var attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        var nantuko = gd.playerBattlefields.get(player2.getId()).getFirst();
-        nantuko.setSummoningSick(false);
         nantuko.setBlocking(true);
         nantuko.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(findPermanents(player2, "Insect")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Can be cast face down and turned face up for its morph cost")
+    void canBeCastFaceDownAndTurnedFaceUpForMorphCost() {
+        harness.setHand(player1, List.of(new BroodhatchNantuko()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        var nantuko = findPermanent(player1, "Broodhatch Nantuko");
+        assertThat(nantuko.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(nantuko));
+        harness.passBothPriorities();
+
+        assertThat(nantuko.isFaceDown()).isFalse();
     }
 }

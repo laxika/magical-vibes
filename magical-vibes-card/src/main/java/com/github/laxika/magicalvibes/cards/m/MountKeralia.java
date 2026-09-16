@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromNamedPlanesT
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "25")
+@CardRegistration(set = "OPCA", collectorNumber = "52")
 public class MountKeralia extends Card {
 
     public MountKeralia() {

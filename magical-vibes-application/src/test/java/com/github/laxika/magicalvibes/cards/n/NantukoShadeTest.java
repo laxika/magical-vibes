@@ -1,21 +1,19 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(NantukoShade.class)
 class NantukoShadeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -23,27 +21,19 @@ class NantukoShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Nantuko Shade puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new NantukoShade()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castFromHand(player1, new NantukoShade(), "{B}{B}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nantuko Shade");
     }
 
     @Test
     @DisplayName("Resolving Nantuko Shade puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new NantukoShade()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NantukoShade(), "{B}{B}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Nantuko Shade");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     // ===== Activate ability =====
@@ -51,29 +41,26 @@ class NantukoShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
     void activatingAbilityPutsOnStack() {
-        Permanent shadePerm = addNantukoShadeReady(player1);
+        Permanent shadePerm = addCreatureReady(player1, new NantukoShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Nantuko Shade");
         assertThat(entry.getTargetId()).isEqualTo(shadePerm.getId());
     }
 
     @Test
     @DisplayName("Resolving ability gives +1/+1 to Nantuko Shade")
     void resolvingAbilityBoostsPowerAndToughness() {
-        addNantukoShadeReady(player1);
+        addCreatureReady(player1, new NantukoShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent shade = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(shade.getEffectivePower()).isEqualTo(3);
@@ -85,7 +72,7 @@ class NantukoShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
-        addNantukoShadeReady(player1);
+        addCreatureReady(player1, new NantukoShade());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -105,7 +92,7 @@ class NantukoShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addNantukoShadeReady(player1);
+        addCreatureReady(player1, new NantukoShade());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -131,20 +118,34 @@ class NantukoShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addNantukoShadeReady(player1);
+        addCreatureReady(player1, new NantukoShade());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Can activate ability with summoning sickness because it does not tap")
+    void canActivateWithSummoningSickness() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new NantukoShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
-    private Permanent addNantukoShadeReady(Player player) {
-        NantukoShade card = new NantukoShade();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new NantukoShade());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardsToHandEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "42")
+@CardRegistration(set = "HA1", collectorNumber = "4")
 public class TreasureHunt extends Card {
 
     public TreasureHunt() {

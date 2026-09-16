@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "135")
+@CardRegistration(set = "V17", collectorNumber = "6")
 public class ChandraFireOfKaladesh extends Card {
 
     public ChandraFireOfKaladesh() {

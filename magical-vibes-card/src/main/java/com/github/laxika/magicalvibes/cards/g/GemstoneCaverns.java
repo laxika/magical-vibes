@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "274")
+@CardRegistration(set = "TSR", collectorNumber = "280")
 public class GemstoneCaverns extends Card {
 
     public GemstoneCaverns() {

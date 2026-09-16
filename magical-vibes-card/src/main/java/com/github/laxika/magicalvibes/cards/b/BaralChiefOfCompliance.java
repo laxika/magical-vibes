@@ -17,6 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "28")
+@CardRegistration(set = "TSR", collectorNumber = "306")
+@CardRegistration(set = "KLR", collectorNumber = "42")
+@CardRegistration(set = "MUL", collectorNumber = "8")
+@CardRegistration(set = "MUL", collectorNumber = "73")
+@CardRegistration(set = "MUL", collectorNumber = "138")
 public class BaralChiefOfCompliance extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(

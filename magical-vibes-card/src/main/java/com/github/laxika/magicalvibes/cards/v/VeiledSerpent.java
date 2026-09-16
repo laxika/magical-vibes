@@ -14,9 +14,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "110")
+@CardRegistration(set = "DMR", collectorNumber = "72")
 public class VeiledSerpent extends Card {
 
     public VeiledSerpent() {
+        addCycling("{2}");
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
                 null,
                 List.of(new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT)),

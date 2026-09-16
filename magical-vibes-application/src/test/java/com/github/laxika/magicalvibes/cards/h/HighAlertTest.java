@@ -40,8 +40,9 @@ class HighAlertTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         beginAttackers(player1);
-        gs.declareAttackers(gd, player1,
-                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(wall)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1,
+                        List.of(gd.playerBattlefields.get(player1.getId()).indexOf(wall))));
 
         assertThat(wall.isAttacking()).isTrue();
     }

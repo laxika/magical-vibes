@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosen
 
 @CardRegistration(set = "SHM", collectorNumber = "21")
 @CardRegistration(set = "M21", collectorNumber = "32")
+@CardRegistration(set = "UMA", collectorNumber = "34")
 public class RunedHalo extends Card {
 
     public RunedHalo() {

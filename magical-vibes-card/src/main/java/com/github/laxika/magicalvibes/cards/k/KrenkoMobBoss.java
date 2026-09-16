@@ -16,6 +16,8 @@ import java.util.Set;
 @CardRegistration(set = "M13", collectorNumber = "138")
 @CardRegistration(set = "FDN", collectorNumber = "204")
 @CardRegistration(set = "DDN", collectorNumber = "15")
+@CardRegistration(set = "DDT", collectorNumber = "52")
+@CardRegistration(set = "RVR", collectorNumber = "114")
 public class KrenkoMobBoss extends Card {
 
     public KrenkoMobBoss() {

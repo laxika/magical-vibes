@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "109")
+@CardRegistration(set = "2X2", collectorNumber = "120")
 public class PiratesPillage extends Card {
 
     public PiratesPillage() {

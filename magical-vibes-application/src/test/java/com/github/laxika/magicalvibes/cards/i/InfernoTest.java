@@ -3,15 +3,17 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.cards.g.GoblinHero;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianColossus;
 import com.github.laxika.magicalvibes.cards.s.SeaMonster;
-import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Inferno.class, GoblinHero.class, GlacialWall.class, SeaMonster.class, FountainOfYouth.class})
+@CardUsed({FountainOfYouth.class, GlacialWall.class, GoblinHero.class, HowlingMine.class, Inferno.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class})
 class InfernoTest extends BaseCardTest {
 
     @Test
@@ -27,21 +29,33 @@ class InfernoTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Inferno destroys creatures with toughness 6 or less on both sides")
-    void destroysCreaturesWithToughnessSixOrLess() {
-        harness.addToBattlefield(player1, new GoblinHero());
-        harness.addToBattlefield(player2, new GoblinHero());
+    @DisplayName("Inferno deals lethal damage to creatures with toughness 6 or less on both sides")
+    void dealsLethalDamageToCreaturesWithToughnessSixOrLess() {
+        harness.addToBattlefield(player1, new MahamotiDjinn());
+        harness.addToBattlefield(player2, new MahamotiDjinn());
 
         harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Goblin Hero");
-        harness.assertNotOnBattlefield(player2, "Goblin Hero");
+        harness.assertNotOnBattlefield(player1, "Mahamoti Djinn");
+        harness.assertNotOnBattlefield(player2, "Mahamoti Djinn");
     }
 
     @Test
     @DisplayName("Inferno does not destroy creatures with toughness greater than 6")
     void doesNotDestroyLargeCreatures() {
+        var phyrexianColossus = harness.addToBattlefieldAndReturn(player2, new PhyrexianColossus());
+
+        harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Phyrexian Colossus");
+        assertThat(phyrexianColossus.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Inferno does not destroy creatures with toughness greater than 6")
+    void doesNotDestroyLargeCreaturesUpstreamReview() {
         var glacialWall = harness.addToBattlefieldAndReturn(player2, new GlacialWall());
 
         harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
@@ -49,6 +63,18 @@ class InfernoTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Glacial Wall");
         assertThat(glacialWall.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Inferno does not affect noncreature permanents")
+    void doesNotAffectNoncreaturePermanents() {
+        var howlingMine = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+
+        harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Howling Mine");
+        assertThat(howlingMine.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -60,17 +86,5 @@ class InfernoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Sea Monster");
-    }
-
-    @Test
-    @DisplayName("Inferno does not affect noncreature permanents")
-    void doesNotAffectNoncreaturePermanents() {
-        var fountainOfYouth = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-
-        harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player2, "Fountain of Youth");
-        assertThat(fountainOfYouth.getMarkedDamage()).isZero();
     }
 }

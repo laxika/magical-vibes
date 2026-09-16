@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -495,7 +496,7 @@ public class ValidTargetService {
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
         int announced = announcedXValue != null ? announcedXValue : 0;
-        return card.getEffects(EffectSlot.SPELL).stream()
+        int effectiveXValue = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::cast)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect::castTimeXValue)
@@ -504,6 +505,15 @@ public class ValidTargetService {
                 .map(amount -> amountEvaluationService.evaluate(gameData, amount,
                         AmountContext.forCasting(controllerId, announced, card)))
                 .orElse(announced);
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CastTimeXValueModifierEffect modifier
+                        && modifier.appliesTo(card, controllerId, controllerId)) {
+                    effectiveXValue = modifier.modifyCastTimeXValue(effectiveXValue);
+                }
+            }
+        }
+        return effectiveXValue;
     }
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
@@ -945,7 +955,7 @@ public class ValidTargetService {
     private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,
                                                 List<UUID> alreadySelectedIds,
                                                 List<UUID> validPermanentIds, List<UUID> validPlayerIds) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)) {
             return;
         }
         if (alreadySelectedIds != null && alreadySelectedIds.stream()
@@ -1273,6 +1283,15 @@ public class ValidTargetService {
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                 || targetFilter instanceof OwnedPermanentPredicateTargetFilter
                 || targetFilter instanceof PermanentPredicateTargetFilter;
+    }
+
+    /** Uses the same targeting restrictions for a triggered ability's optional target choice. */
+    public boolean isValidTriggeredAbilityPermanentTarget(GameData gameData, Card sourceCard,
+                                                            List<CardEffect> effects, TargetFilter filter,
+                                                            Permanent target, UUID controllerId) {
+        ActivatedAbility targeting = new ActivatedAbility(false, null, effects, "", filter);
+        return isValidAbilityPermanentTarget(gameData, sourceCard, targeting, target, controllerId,
+                false, -1, filter);
     }
 
     public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,

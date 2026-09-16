@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "22")
 @CardRegistration(set = "CP3", collectorNumber = "2")
+@CardRegistration(set = "IMA", collectorNumber = "29")
+@CardRegistration(set = "2X2", collectorNumber = "28")
 public class SeekerOfTheWay extends Card {
 
     public SeekerOfTheWay() {

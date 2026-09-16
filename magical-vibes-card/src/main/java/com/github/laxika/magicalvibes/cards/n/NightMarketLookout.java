@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "95")
+@CardRegistration(set = "KLR", collectorNumber = "103")
 public class NightMarketLookout extends Card {
 
     public NightMarketLookout() {

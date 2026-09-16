@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "209")
 @CardRegistration(set = "SOI", collectorNumber = "219")
+@CardRegistration(set = "SIR", collectorNumber = "205")
 public class MoonlightHunt extends Card {
 
     public MoonlightHunt() {

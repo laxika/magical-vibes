@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "26")
+@CardRegistration(set = "OPCA", collectorNumber = "54")
 public class NaarIsle extends Card {
 
     public NaarIsle() {

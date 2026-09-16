@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 @CardRegistration(set = "DIS", collectorNumber = "101")
+@CardRegistration(set = "MM3", collectorNumber = "148")
+@CardRegistration(set = "2X2", collectorNumber = "167")
 public class AethermagesTouch extends Card {
 
     public AethermagesTouch() {

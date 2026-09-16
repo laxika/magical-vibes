@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "23")
+@CardRegistration(set = "OPCA", collectorNumber = "44")
 public class KilnspireDistrict extends Card {
 
     public KilnspireDistrict() {

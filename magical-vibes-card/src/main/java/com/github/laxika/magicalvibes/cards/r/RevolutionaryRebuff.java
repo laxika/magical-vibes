@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "61")
+@CardRegistration(set = "KLR", collectorNumber = "62")
 public class RevolutionaryRebuff extends Card {
 
     public RevolutionaryRebuff() {

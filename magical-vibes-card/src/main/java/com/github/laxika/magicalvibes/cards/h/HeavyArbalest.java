@@ -13,6 +13,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "164")
+@CardRegistration(set = "A25", collectorNumber = "225")
 public class HeavyArbalest extends Card {
 
     public HeavyArbalest() {

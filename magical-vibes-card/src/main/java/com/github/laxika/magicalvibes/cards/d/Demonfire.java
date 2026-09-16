@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "DIS", collectorNumber = "60")
 @CardRegistration(set = "DD2", collectorNumber = "57")
 @CardRegistration(set = "JVC", collectorNumber = "57")
+@CardRegistration(set = "GK2", collectorNumber = "56")
+@CardRegistration(set = "RVR", collectorNumber = "107")
 public class Demonfire extends Card {
 
     public Demonfire() {

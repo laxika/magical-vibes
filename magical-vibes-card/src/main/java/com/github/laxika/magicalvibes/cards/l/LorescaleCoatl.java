@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 @CardRegistration(set = "M21", collectorNumber = "221")
 @CardRegistration(set = "MM2", collectorNumber = "179")
 @CardRegistration(set = "DDO", collectorNumber = "53")
+@CardRegistration(set = "A25", collectorNumber = "207")
 public class LorescaleCoatl extends Card {
 
     public LorescaleCoatl() {

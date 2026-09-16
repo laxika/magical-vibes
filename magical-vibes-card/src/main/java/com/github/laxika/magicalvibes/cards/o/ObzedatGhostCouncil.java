@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "182")
+@CardRegistration(set = "MM3", collectorNumber = "176")
+@CardRegistration(set = "EA3", collectorNumber = "16")
 public class ObzedatGhostCouncil extends Card {
 
     public ObzedatGhostCouncil() {

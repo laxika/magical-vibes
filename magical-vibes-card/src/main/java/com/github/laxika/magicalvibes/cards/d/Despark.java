@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "WAR", collectorNumber = "190")
+@CardRegistration(set = "STA", collectorNumber = "59")
 public class Despark extends Card {
 
     public Despark() {

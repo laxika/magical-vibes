@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "145")
+@CardRegistration(set = "SIS", collectorNumber = "68")
 public class AvacynsCollar extends Card {
 
     public AvacynsCollar() {

@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "22")
+@CardRegistration(set = "MM3", collectorNumber = "23")
+@CardRegistration(set = "2X2", collectorNumber = "29")
 public class SensorSplicer extends Card {
 
     public SensorSplicer() {

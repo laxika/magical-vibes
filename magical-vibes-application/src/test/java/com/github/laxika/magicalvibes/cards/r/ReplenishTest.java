@@ -14,9 +14,30 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 @CardUsed({Replenish.class, Sanctimony.class, CapashenKnight.class, PatternOfRebirth.class})
 class ReplenishTest extends BaseCardTest {
+
+    @Test
+    void waitsForAuraAttachmentBeforeReturningNonAuraEnchantments() {
+        var first = harness.addToBattlefieldAndReturn(player1, new CapashenKnight());
+        var second = harness.addToBattlefieldAndReturn(player2, new CapashenKnight());
+        Card aura = new PatternOfRebirth();
+        Card enchantment = new Sanctimony();
+        harness.setGraveyard(player1, List.of(aura, enchantment));
+        castReplenish();
+
+        var choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.assertNotOnBattlefield(player1, "Sanctimony");
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(findPermanent(player1, "Pattern of Rebirth").getAttachedTo()).isEqualTo(second.getId());
+        harness.assertOnBattlefield(player1, "Sanctimony");
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(aura, enchantment);
+    }
 
     private void castReplenish() {
         harness.castFromHand(player1, new Replenish(), "{3}{W}");

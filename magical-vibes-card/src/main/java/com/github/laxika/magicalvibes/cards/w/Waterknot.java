@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "61")
+@CardRegistration(set = "ANB", collectorNumber = "40")
 public class Waterknot extends Card {
 
     public Waterknot() {

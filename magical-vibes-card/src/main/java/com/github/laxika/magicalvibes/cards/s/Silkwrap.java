@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "38")
+@CardRegistration(set = "Q06", collectorNumber = "4")
 public class Silkwrap extends Card {
 
     public Silkwrap() {

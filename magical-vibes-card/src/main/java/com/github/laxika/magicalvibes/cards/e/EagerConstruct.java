@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayScryEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "209")
+@CardRegistration(set = "GNT", collectorNumber = "51")
+@CardRegistration(set = "2XM", collectorNumber = "250")
+@CardRegistration(set = "KLR", collectorNumber = "236")
 public class EagerConstruct extends Card {
 
     public EagerConstruct() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "73")
+@CardRegistration(set = "RVR", collectorNumber = "126")
 public class StalkingVengeance extends Card {
 
     public StalkingVengeance() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "212")
+@CardRegistration(set = "2XM", collectorNumber = "171")
 public class HeartbeatOfSpring extends Card {
 
     public HeartbeatOfSpring() {

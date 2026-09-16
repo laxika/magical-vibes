@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "22")
+@CardRegistration(set = "SIR", collectorNumber = "33")
 public class HopeAgainstHope extends Card {
 
     public HopeAgainstHope() {

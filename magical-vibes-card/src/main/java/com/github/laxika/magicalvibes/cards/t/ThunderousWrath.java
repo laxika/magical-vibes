@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "160")
+@CardRegistration(set = "MM3", collectorNumber = "113")
 public class ThunderousWrath extends Card {
 
     public ThunderousWrath() {

@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "279")
 @CardRegistration(set = "EMN", collectorNumber = "204")
+@CardRegistration(set = "SIR", collectorNumber = "271")
 public class HanweirBattlements extends Card {
 
     private static final String PARTNER_NAME = "Hanweir Garrison";

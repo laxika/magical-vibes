@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "97")
+@CardRegistration(set = "KLR", collectorNumber = "144")
 public class ScrapperChampion extends Card {
 
     public ScrapperChampion() {

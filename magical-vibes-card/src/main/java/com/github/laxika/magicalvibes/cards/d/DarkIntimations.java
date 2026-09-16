@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "128")
+@CardRegistration(set = "KLR", collectorNumber = "191")
 public class DarkIntimations extends Card {
 
     public DarkIntimations() {

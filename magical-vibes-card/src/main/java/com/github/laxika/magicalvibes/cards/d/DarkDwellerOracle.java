@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "134")
+@CardRegistration(set = "2X2", collectorNumber = "106")
 public class DarkDwellerOracle extends Card {
 
     public DarkDwellerOracle() {

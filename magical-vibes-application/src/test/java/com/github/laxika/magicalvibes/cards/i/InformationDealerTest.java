@@ -22,8 +22,7 @@ class InformationDealerTest extends BaseCardTest {
 
     @Test
     void countsWizardsOnBothBattlefieldsWhenAbilityResolves() {
-        Permanent informationDealer = harness.addToBattlefieldAndReturn(player1, new InformationDealer());
-        informationDealer.setSummoningSick(false);
+        addCreatureReady(player1, new InformationDealer());
         Card topCard = new Forest();
         Card secondCard = new Island();
         Card thirdCard = new Mountain();
@@ -31,8 +30,7 @@ class InformationDealerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard, secondCard, thirdCard, fourthCard));
 
         harness.activateAbility(player1, 0, null, null);
-        Permanent opponentWizard = harness.addToBattlefieldAndReturn(player2, new InformationDealer());
-        opponentWizard.setSummoningSick(false);
+        addCreatureReady(player2, new InformationDealer());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -50,13 +48,28 @@ class InformationDealerTest extends BaseCardTest {
 
     @Test
     void looksAtOnlyOneCardWithOnlyTheSourceWizard() {
-        Permanent informationDealer = harness.addToBattlefieldAndReturn(player1, new InformationDealer());
-        informationDealer.setSummoningSick(false);
+        addCreatureReady(player1, new InformationDealer());
         Card topCard = new Forest();
         Card secondCard = new Island();
         harness.setLibrary(player1, List.of(topCard, secondCard));
 
         harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void usesZeroWhenSourceLeavesBeforeAbilityResolves() {
+        Permanent informationDealer = addCreatureReady(player1, new InformationDealer());
+        Card topCard = new Forest();
+        Card secondCard = new Island();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(informationDealer);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);

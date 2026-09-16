@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "GTC", collectorNumber = "9")
+@CardRegistration(set = "GK1", collectorNumber = "79")
 public class DaringSkyjek extends Card {
 
     public DaringSkyjek() {

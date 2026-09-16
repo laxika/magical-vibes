@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "56")
+@CardRegistration(set = "GN2", collectorNumber = "26")
 public class AccursedHorde extends Card {
 
     public AccursedHorde() {

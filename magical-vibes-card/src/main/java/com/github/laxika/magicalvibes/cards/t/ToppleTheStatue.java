@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "35")
+@CardRegistration(set = "2XM", collectorNumber = "36")
 public class ToppleTheStatue extends Card {
 
     public ToppleTheStatue() {

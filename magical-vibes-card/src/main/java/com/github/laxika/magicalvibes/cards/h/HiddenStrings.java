@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DGM", collectorNumber = "12")
+@CardRegistration(set = "Q06", collectorNumber = "5")
 public class HiddenStrings extends Card {
 
     public HiddenStrings() {

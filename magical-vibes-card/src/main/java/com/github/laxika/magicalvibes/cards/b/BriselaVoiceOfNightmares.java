@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "14b")
+@CardRegistration(set = "V17", collectorNumber = "16")
 public class BriselaVoiceOfNightmares extends Card {
 
     public BriselaVoiceOfNightmares() {

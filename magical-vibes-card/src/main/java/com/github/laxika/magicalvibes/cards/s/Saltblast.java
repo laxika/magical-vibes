@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "15")
 @CardRegistration(set = "DDF", collectorNumber = "30")
+@CardRegistration(set = "TSR", collectorNumber = "39")
 public class Saltblast extends Card {
 
     public Saltblast() {

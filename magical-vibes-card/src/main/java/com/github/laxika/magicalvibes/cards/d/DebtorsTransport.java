@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "72")
+@CardRegistration(set = "RVR", collectorNumber = "72")
 public class DebtorsTransport extends Card {
 
     public DebtorsTransport() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "GTC", collectorNumber = "223")
+@CardRegistration(set = "GK2", collectorNumber = "93")
 public class PitFight extends Card {
 
     public PitFight() {

@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "9")
 @CardRegistration(set = "DDO", collectorNumber = "1")
+@CardRegistration(set = "SLC", collectorNumber = "75")
 public class ElspethSunsChampion extends Card {
 
     public ElspethSunsChampion() {

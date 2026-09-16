@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "29")
+@CardRegistration(set = "SIR", collectorNumber = "38")
 public class NearheathChaplain extends Card {
 
     public NearheathChaplain() {

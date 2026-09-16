@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "119")
+@CardRegistration(set = "WOT", collectorNumber = "41")
 public class DragonMantle extends Card {
 
     public DragonMantle() {

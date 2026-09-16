@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M14", collectorNumber = "53")
 @CardRegistration(set = "ROE", collectorNumber = "61")
+@CardRegistration(set = "2X2", collectorNumber = "47")
 public class Domestication extends Card {
 
     public Domestication() {

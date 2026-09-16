@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "KLD", collectorNumber = "129")
+@CardRegistration(set = "2XM", collectorNumber = "143")
+@CardRegistration(set = "KLR", collectorNumber = "143")
 public class SalivatingGremlins extends Card {
 
     public SalivatingGremlins() {

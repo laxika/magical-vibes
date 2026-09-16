@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
@@ -45,6 +46,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
 
 /**
  * Handles end-of-turn cleanup, mana pool draining, and hand-size calculations.
@@ -84,6 +88,15 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
+        for (var delayed : gameData.drainDelayedActions(
+                DelayedCleanupTrigger.class)) {
+            var entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(), delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s cleanup trigger", List.of(delayed.effect()));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         permanentRemovalService.processDelayedPermanentActions(
                 gameData, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         sacrificePermanentsFlaggedForCleanup(gameData);
@@ -93,6 +106,12 @@ public class TurnCleanupService {
         resetEndOfTurnModifiers(gameData);
         expireControlAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
+        gameData.skipCombatPhaseExpirationsThisTurn.forEach((playerId, count) ->
+                gameData.skipNextCombatPhaseCount.computeIfPresent(playerId,
+                        (id, total) -> total > count ? total - count : null));
+        gameData.skipCombatPhaseExpirationsThisTurn.clear();
+        gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class);
         gameData.controlLossUnattachTriggers.clear();
         gameData.controlLossTapTriggers.clear();
     }
@@ -189,8 +208,6 @@ public class TurnCleanupService {
             gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
         }
     }
-
-
 
     /**
      * Resets all "until end of turn" modifiers on permanents (power/toughness
@@ -297,6 +314,7 @@ public class TurnCleanupService {
         gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
                 watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
+        gameData.clearDelayedActions(DelayedWatchedCreatureAttack.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamage.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
@@ -707,6 +725,14 @@ public class TurnCleanupService {
             }
             for (Permanent perm : battlefield) {
                 if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        if (gameData.planechase != null) {
+            for (var planarObject : gameData.planechase.faceUp) {
+                if (planarObject.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }

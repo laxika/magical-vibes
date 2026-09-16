@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "89")
 @CardRegistration(set = "ODY", collectorNumber = "122")
+@CardRegistration(set = "A25", collectorNumber = "81")
 public class CausticTar extends Card {
 
     public CausticTar() {

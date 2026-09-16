@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "222")
+@CardRegistration(set = "IMA", collectorNumber = "223")
 @CardRegistration(set = "MPS", collectorNumber = "41")
+@CardRegistration(set = "2XM", collectorNumber = "279")
 public class OblivionStone extends Card {
 
     public OblivionStone() {

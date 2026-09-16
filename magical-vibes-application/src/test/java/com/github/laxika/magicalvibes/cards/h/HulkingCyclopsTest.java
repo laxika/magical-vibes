@@ -24,8 +24,7 @@ class HulkingCyclopsTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new RagingCougar());
         attacker.setAttacking(true);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

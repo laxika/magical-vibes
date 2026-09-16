@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "7")
 @CardRegistration(set = "MD1", collectorNumber = "22")
+@CardRegistration(set = "IMA", collectorNumber = "14")
 public class BurrentonForgeTender extends Card {
 
     public BurrentonForgeTender() {

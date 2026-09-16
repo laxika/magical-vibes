@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "272")
+@CardRegistration(set = "SIR", collectorNumber = "265")
 public class ForebodingRuins extends Card {
 
     public ForebodingRuins() {

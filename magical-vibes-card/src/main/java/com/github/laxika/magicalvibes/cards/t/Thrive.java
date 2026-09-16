@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "PCY", collectorNumber = "129")
 @CardRegistration(set = "DIS", collectorNumber = "98")
 @CardRegistration(set = "MM2", collectorNumber = "166")
+@CardRegistration(set = "2X2", collectorNumber = "161")
 public class Thrive extends Card {
 
     public Thrive() {

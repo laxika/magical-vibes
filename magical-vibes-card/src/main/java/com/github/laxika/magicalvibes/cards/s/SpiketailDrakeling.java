@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "80")
+@CardRegistration(set = "TSR", collectorNumber = "89")
 public class SpiketailDrakeling extends Card {
 
     public SpiketailDrakeling() {

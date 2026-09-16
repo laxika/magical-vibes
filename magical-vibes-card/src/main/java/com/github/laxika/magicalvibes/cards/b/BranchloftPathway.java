@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "258")
+@CardRegistration(set = "SLU", collectorNumber = "13")
 public class BranchloftPathway extends Card {
 
     public BranchloftPathway() {

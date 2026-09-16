@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "133")
+@CardRegistration(set = "KLR", collectorNumber = "203")
 public class RenegadeRallier extends Card {
 
     public RenegadeRallier() {

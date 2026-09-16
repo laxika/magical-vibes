@@ -186,7 +186,8 @@ public class GameViewProjectionFactory {
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
                     potentialPayableAbilityIndices, speeds, gameData.dayNight,
-                    gameData.planechase == null ? null : planarViews.create(gameData, playerId)
+                    gameData.planechase == null ? null : planarViews.create(gameData, playerId),
+                    gameData.monarchPlayerId
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -932,7 +933,8 @@ public class GameViewProjectionFactory {
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return playable;
 
-        if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
+        if (!castingPermissionService.canCastWithTimingFromLibraryTop(
+                gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 
         // Check if spell requires a legal target (MTG rule 601.2c)
         if (EffectResolution.needsSpellCastTarget(topCard) && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
@@ -1057,7 +1059,8 @@ public class GameViewProjectionFactory {
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),
                 data.dayNight,
-                data.planechase == null ? null : planarViews.create(data, playerId)
+                data.planechase == null ? null : planarViews.create(data, playerId),
+                data.monarchPlayerId
         );
     }
 

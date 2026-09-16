@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "14")
+@CardRegistration(set = "KLR", collectorNumber = "18")
 public class Fragmentize extends Card {
 
     public Fragmentize() {

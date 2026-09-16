@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GiantCaterpillar.class)
+@CardUsed({GiantCaterpillar.class})
 class GiantCaterpillarTest extends BaseCardTest {
 
     @Test
@@ -65,7 +65,7 @@ class GiantCaterpillarTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without green mana")
     void cannotActivateWithoutGreenMana() {
-        harness.addToBattlefield(player1, new GiantCaterpillar());
+        addCreatureReady(player1, new GiantCaterpillar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
 
@@ -74,6 +74,21 @@ class GiantCaterpillarTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Giant Caterpillar");
         harness.assertNotInGraveyard(player1, "Giant Caterpillar");
+    }
+
+    @Test
+    @DisplayName("Can activate during an opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        addCreatureReady(player1, new GiantCaterpillar());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Giant Caterpillar");
+        harness.assertInGraveyard(player1, "Giant Caterpillar");
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
     }
 
     @Test
@@ -95,8 +110,7 @@ class GiantCaterpillarTest extends BaseCardTest {
     }
 
     private void setupCaterpillar() {
-        harness.addToBattlefield(player1, new GiantCaterpillar());
-        findPermanent(player1, "Giant Caterpillar").setSummoningSick(false);
+        addCreatureReady(player1, new GiantCaterpillar());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
     }

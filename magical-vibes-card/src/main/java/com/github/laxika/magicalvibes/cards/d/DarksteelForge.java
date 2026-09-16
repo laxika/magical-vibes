@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "M14", collectorNumber = "206")
 @CardRegistration(set = "DST", collectorNumber = "110")
 @CardRegistration(set = "HOP", collectorNumber = "111")
+@CardRegistration(set = "2XM", collectorNumber = "248")
 public class DarksteelForge extends Card {
 
     public DarksteelForge() {

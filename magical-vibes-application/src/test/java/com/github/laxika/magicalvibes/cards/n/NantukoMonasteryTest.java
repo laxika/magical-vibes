@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoMonastery.class, GrizzlyBears.class})
+@CardUsed(NantukoMonastery.class)
 class NantukoMonasteryTest extends BaseCardTest {
 
     @Test
@@ -26,7 +25,7 @@ class NantukoMonasteryTest extends BaseCardTest {
     void tapForColorless() {
         addMonasteryReady(player1);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
@@ -37,8 +36,8 @@ class NantukoMonasteryTest extends BaseCardTest {
     void animationRequiresThreshold() {
         addMonasteryReady(player1);
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery(),
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -64,9 +63,10 @@ class NantukoMonasteryTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, monastery)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, monastery))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
-        assertThat(monastery.getTransientSubtypes())
+        assertThat(gqs.effectiveCreatureSubtypes(gd, monastery))
                 .containsExactlyInAnyOrder(CardSubtype.INSECT, CardSubtype.MONK);
-        assertThat(monastery.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gqs.hasKeyword(gd, monastery, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(monastery.isTapped()).isFalse();
     }
 
     @Test
@@ -87,21 +87,33 @@ class NantukoMonasteryTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, monastery)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, monastery)).isEmpty();
-        assertThat(monastery.getTransientSubtypes()).isEmpty();
-        assertThat(monastery.getGrantedKeywords()).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, monastery)).isEmpty();
+        assertThat(gqs.hasKeyword(gd, monastery, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Threshold ignores cards in an opponent's graveyard")
+    void thresholdRequiresCardsInControllersGraveyard() {
+        addMonasteryReady(player1);
+        setThresholdGraveyard(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addMonasteryReady(Player player) {
-        NantukoMonastery monastery = new NantukoMonastery();
-        Permanent permanent = new Permanent(monastery);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new NantukoMonastery());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private void setThresholdGraveyard(Player player) {
         harness.setGraveyard(player, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery(),
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery(),
+                new NantukoMonastery()));
     }
 }

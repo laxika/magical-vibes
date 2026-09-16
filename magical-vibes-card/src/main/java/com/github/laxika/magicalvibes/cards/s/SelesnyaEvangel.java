@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "228")
+@CardRegistration(set = "GK1", collectorNumber = "118")
+@CardRegistration(set = "RVR", collectorNumber = "220")
 public class SelesnyaEvangel extends Card {
 
     public SelesnyaEvangel() {

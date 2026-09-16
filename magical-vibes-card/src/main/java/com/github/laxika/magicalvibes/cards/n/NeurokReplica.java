@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "186")
+@CardRegistration(set = "DDU", collectorNumber = "59")
 public class NeurokReplica extends Card {
 
     public NeurokReplica() {

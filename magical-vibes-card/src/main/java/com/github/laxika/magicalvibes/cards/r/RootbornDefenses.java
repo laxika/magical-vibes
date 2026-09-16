@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "19")
+@CardRegistration(set = "MM3", collectorNumber = "21")
+@CardRegistration(set = "RVR", collectorNumber = "26")
 public class RootbornDefenses extends Card {
 
     public RootbornDefenses() {

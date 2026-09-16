@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "128")
+@CardRegistration(set = "GK2", collectorNumber = "99")
+@CardRegistration(set = "RVR", collectorNumber = "219")
 public class ScabClanMauler extends Card {
 
     public ScabClanMauler() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "JOU", collectorNumber = "26")
+@CardRegistration(set = "UMA", collectorNumber = "36")
 public class SkyspearCavalry extends Card {
 
     public SkyspearCavalry() {

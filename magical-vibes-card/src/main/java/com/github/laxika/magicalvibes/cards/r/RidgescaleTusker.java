@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "121")
+@CardRegistration(set = "KLR", collectorNumber = "177")
 public class RidgescaleTusker extends Card {
 
     public RidgescaleTusker() {

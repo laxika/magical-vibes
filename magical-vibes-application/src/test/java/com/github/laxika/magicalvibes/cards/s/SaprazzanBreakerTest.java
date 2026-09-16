@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Invigorate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SaprazzanBreaker.class, Forest.class, Invigorate.class})
 class SaprazzanBreakerTest extends BaseCardTest {
 
     @Test
@@ -34,13 +36,26 @@ class SaprazzanBreakerTest extends BaseCardTest {
     @DisplayName("Milling a nonland does not make Saprazzan Breaker unblockable")
     void millingNonlandDoesNotMakeItUnblockable() {
         Permanent breaker = addReadyBreaker();
-        Card bears = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(bears));
+        Card nonland = new Invigorate();
+        harness.setLibrary(player1, List.of(nonland));
         addBlueMana();
 
         activateAndResolve(breaker);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonland);
+        assertThat(breaker.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Milling with an empty library does not make Saprazzan Breaker unblockable")
+    void emptyLibraryDoesNotMakeItUnblockable() {
+        Permanent breaker = addReadyBreaker();
+        harness.setLibrary(player1, List.of());
+        addBlueMana();
+
+        activateAndResolve(breaker);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(breaker.isCantBeBlocked()).isFalse();
     }
 

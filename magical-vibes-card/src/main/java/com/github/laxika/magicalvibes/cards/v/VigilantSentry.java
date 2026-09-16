@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "33")
+@CardRegistration(set = "DMR", collectorNumber = "33")
 public class VigilantSentry extends Card {
 
     public VigilantSentry() {

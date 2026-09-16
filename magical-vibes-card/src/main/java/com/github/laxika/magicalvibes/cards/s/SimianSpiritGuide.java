@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "122")
+@CardRegistration(set = "A25", collectorNumber = "148")
+@CardRegistration(set = "TSR", collectorNumber = "190")
 public class SimianSpiritGuide extends Card {
 
     public SimianSpiritGuide() {

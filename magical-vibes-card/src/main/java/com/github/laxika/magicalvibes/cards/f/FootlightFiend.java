@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "216")
+@CardRegistration(set = "RVR", collectorNumber = "181")
 public class FootlightFiend extends Card {
 
     public FootlightFiend() {

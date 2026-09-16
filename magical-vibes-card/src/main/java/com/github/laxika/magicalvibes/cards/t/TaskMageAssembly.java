@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -16,11 +16,8 @@ import java.util.List;
 public class TaskMageAssembly extends Card {
 
     public TaskMageAssembly() {
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> gameData.orderedPlayerIds.stream()
-                        .flatMap(playerId -> gameData.playerBattlefields
-                                .getOrDefault(playerId, List.of()).stream())
-                        .noneMatch(permanent -> permanent.getCard().hasType(CardType.CREATURE)),
+        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
+                new PermanentIsCreaturePredicate(),
                 List.of(new SacrificeSelfEffect()),
                 "Task Mage Assembly's state-triggered ability"
         ));

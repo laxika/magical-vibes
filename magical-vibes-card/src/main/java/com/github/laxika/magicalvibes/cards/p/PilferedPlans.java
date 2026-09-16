@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "DGM", collectorNumber = "90")
+@CardRegistration(set = "MM3", collectorNumber = "178")
 public class PilferedPlans extends Card {
 
     public PilferedPlans() {

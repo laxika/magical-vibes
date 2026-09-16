@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "4ED", collectorNumber = "76")
 @CardRegistration(set = "ME1", collectorNumber = "34")
+@CardRegistration(set = "EMA", collectorNumber = "52")
 public class GiantTortoise extends Card {
 
     public GiantTortoise() {

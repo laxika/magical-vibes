@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TemptingWurm.class, Forest.class, GrizzlyBears.class, HowlingMine.class, LightningBolt.class})
+@CardUsed({TemptingWurm.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class,
+        HowlingMine.class, Naturalize.class})
 class TemptingWurmTest extends BaseCardTest {
 
     @Test
@@ -25,14 +27,14 @@ class TemptingWurmTest extends BaseCardTest {
         Forest opponentLand = new Forest();
         GrizzlyBears opponentCreature = new GrizzlyBears();
         HowlingMine opponentArtifact = new HowlingMine();
-        LightningBolt nonPermanent = new LightningBolt();
+        Naturalize nonPermanent = new Naturalize();
         harness.setHand(player1, List.of(wurm, ownLand));
         harness.setHand(player2, List.of(opponentLand, opponentCreature, opponentArtifact, nonPermanent));
 
         castWurm();
 
         PendingInteraction.EachPlayerMayPutCardFromHandChoice choice =
-                (PendingInteraction.EachPlayerMayPutCardFromHandChoice) gd.interaction.activeInteraction();
+                gd.interaction.activeInteraction(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validCardIds()).containsExactly(
                 opponentLand.getId(), opponentCreature.getId(), opponentArtifact.getId());
@@ -45,7 +47,26 @@ class TemptingWurmTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Forest");
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
-                .containsExactly("Lightning Bolt");
+                .containsExactly("Naturalize");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void enchantmentCardsAreEligible() {
+        TemptingWurm wurm = new TemptingWurm();
+        GloriousAnthem opponentEnchantment = new GloriousAnthem();
+        harness.setHand(player1, List.of(wurm));
+        harness.setHand(player2, List.of(opponentEnchantment));
+
+        castWurm();
+
+        PendingInteraction.EachPlayerMayPutCardFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(opponentEnchantment.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(opponentEnchantment.getId()));
+
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

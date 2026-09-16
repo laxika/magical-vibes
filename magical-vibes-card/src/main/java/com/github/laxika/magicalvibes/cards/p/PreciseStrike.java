@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AER", collectorNumber = "92")
+@CardRegistration(set = "KLR", collectorNumber = "137")
 public class PreciseStrike extends Card {
 
     public PreciseStrike() {

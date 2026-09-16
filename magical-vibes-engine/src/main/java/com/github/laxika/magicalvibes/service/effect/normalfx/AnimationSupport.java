@@ -438,7 +438,7 @@ public class AnimationSupport {
 
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent perm : battlefield) {
-                if (!perm.getCard().hasType(CardType.LAND)) {
+                if (!gameQueryService.isLand(gameData, perm)) {
                     continue;
                 }
                 perm.setAnimatedUntilEndOfTurn(true);

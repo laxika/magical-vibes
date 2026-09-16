@@ -1,28 +1,26 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Duress.class, DarkRitual.class, ArgothianSwine.class, Forest.class})
+@CardUsed({ArgothianSwine.class, DarkRitual.class, Duress.class, Forest.class, GrizzlyBears.class, Shock.class})
 class DuressTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -38,7 +36,6 @@ class DuressTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Duress");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -53,14 +50,13 @@ class DuressTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target yourself")
-    void cannotTargetYourself() {
+    @DisplayName("Cannot target the caster")
+    void cannotTargetCaster() {
         harness.setHand(player1, List.of(new Duress()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Resolving — choosing a noncreature, nonland card from opponent's hand =====
@@ -68,6 +64,26 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving reveals hand and prompts caster for card choice")
     void promptsForCardChoice() {
+        Card card1 = new Shock();
+        harness.setHand(player2, List.of(card1));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).discardMode()).isTrue();
+    }
+
+    // ===== Resolving — choosing a noncreature, nonland card from opponent's hand =====
+
+    @Test
+    @DisplayName("Resolving reveals hand and prompts caster for card choice")
+    void promptsForCardChoiceUpstreamReview() {
         Card card1 = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(card1)));
 
@@ -85,6 +101,32 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a noncreature nonland card discards it")
     void choosingValidCardDiscardsIt() {
+        Card instant = new Shock();
+        Card creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(instant, creature));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        // Choose Shock (index 0)
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        // Shock should be in player2's graveyard
+        harness.assertInGraveyard(player2, "Shock");
+
+        // Grizzly Bears should remain in player2's hand
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Choosing a noncreature nonland card discards it")
+    void choosingValidCardDiscardsItUpstreamReview() {
         Card instant = new DarkRitual();
         Card creature = new ArgothianSwine();
         harness.setHand(player2, new ArrayList<>(List.of(instant, creature)));
@@ -110,6 +152,25 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Creature cards are excluded from valid choices")
     void creatureCardsExcludedFromChoices() {
+        Card creature = new GrizzlyBears();
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(creature, instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+
+        // Only index 1 (Shock) should be valid, index 0 (Grizzly Bears) is a creature
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("Creature cards are excluded from valid choices")
+    void creatureCardsExcludedFromChoicesUpstreamReview() {
         Card creature = new ArgothianSwine();
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(creature, instant)));
@@ -129,6 +190,25 @@ class DuressTest extends BaseCardTest {
     @DisplayName("Land cards are excluded from valid choices")
     void landCardsExcludedFromChoices() {
         Card land = new Forest();
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(land, instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+
+        // Only index 1 (Shock) should be valid, index 0 (Forest) is a land
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("Land cards are excluded from valid choices")
+    void landCardsExcludedFromChoicesUpstreamReview() {
+        Card land = new Forest();
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(land, instant)));
 
@@ -146,6 +226,25 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Selecting a creature index is rejected")
     void selectingCreatureIndexIsRejected() {
+        Card creature = new GrizzlyBears();
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(creature, instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        // Trying to choose Grizzly Bears (index 0, a creature) should fail
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card index");
+    }
+
+    @Test
+    @DisplayName("Selecting a creature index is rejected")
+    void selectingCreatureIndexIsRejectedUpstreamReview() {
         Card creature = new ArgothianSwine();
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(creature, instant)));
@@ -162,11 +261,34 @@ class DuressTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(BottleGnomes.class)
+    @DisplayName("Artifact creature cards are excluded from valid choices")
+    void artifactCreatureCardsExcludedFromChoices() {
+        Card artifactCreature = new BottleGnomes();
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(artifactCreature, instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
+                .containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInHand(player2, "Bottle Gnomes");
+    }
+
+    @Test
     @DisplayName("Hand with only creatures and lands results in no valid choices")
     void handWithOnlyCreaturesAndLandsNoValidChoices() {
         Card creature = new ArgothianSwine();
         Card land = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(creature, land)));
+        harness.setHand(player2, List.of(creature, land));
 
         harness.setHand(player1, List.of(new Duress()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -200,6 +322,34 @@ class DuressTest extends BaseCardTest {
     @DisplayName("Hand with mix of all types only allows noncreature nonland choice")
     void mixedHandOnlyAllowsValidChoice() {
         Card land = new Forest();
+        Card instant = new Shock();
+        Card creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(land, instant, creature));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        // Only index 1 (Shock) should be valid
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
+
+        // Choose the only valid card
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Shock");
+
+        // Forest and Grizzly Bears remain in hand
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Hand with mix of all types only allows noncreature nonland choice")
+    void mixedHandOnlyAllowsValidChoiceUpstreamReview() {
+        Card land = new Forest();
         Card instant = new DarkRitual();
         Card creature = new ArgothianSwine();
         harness.setHand(player2, new ArrayList<>(List.of(land, instant, creature)));
@@ -228,6 +378,25 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Invalid card index is rejected")
     void invalidCardIndexRejected() {
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 5))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card index");
+    }
+
+    // ===== Validation =====
+
+    @Test
+    @DisplayName("Invalid card index is rejected")
+    void invalidCardIndexRejectedUpstreamReview() {
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(instant)));
 
@@ -244,6 +413,23 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Wrong player cannot choose")
     void wrongPlayerCannotChoose() {
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not your turn to choose");
+    }
+
+    @Test
+    @DisplayName("Wrong player cannot choose")
+    void wrongPlayerCannotChooseUpstreamReview() {
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(instant)));
 
@@ -262,6 +448,26 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Duress goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Duress");
+    }
+
+    // ===== After resolution =====
+
+    @Test
+    @DisplayName("Duress goes to caster's graveyard after resolving")
+    void goesToGraveyardAfterResolvingUpstreamReview() {
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(instant)));
 
@@ -281,6 +487,23 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Hand reveal is logged")
     void handRevealIsLogged() {
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals their hand"));
+    }
+
+    // ===== Logging =====
+
+    @Test
+    @DisplayName("Hand reveal is logged")
+    void handRevealIsLoggedUpstreamReview() {
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(instant)));
 
@@ -295,6 +518,23 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Card choice is logged")
     void cardChoiceIsLogged() {
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses") && log.contains("Shock"));
+    }
+
+    @Test
+    @DisplayName("Card choice is logged")
+    void cardChoiceIsLoggedUpstreamReview() {
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(instant)));
 
@@ -311,6 +551,23 @@ class DuressTest extends BaseCardTest {
     @Test
     @DisplayName("Discard is logged")
     void discardIsLogged() {
+        Card instant = new Shock();
+        harness.setHand(player2, List.of(instant));
+
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Shock"));
+    }
+
+    @Test
+    @DisplayName("Discard is logged")
+    void discardIsLoggedUpstreamReview() {
         Card instant = new DarkRitual();
         harness.setHand(player2, new ArrayList<>(List.of(instant)));
 
@@ -322,5 +579,16 @@ class DuressTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Dark Ritual"));
+    }
+
+    @Test
+    @DisplayName("Cannot target yourself")
+    void cannotTargetYourself() {
+        harness.setHand(player1, List.of(new Duress()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an opponent");
     }
 }

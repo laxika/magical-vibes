@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AngelOfRetribution;
+import com.github.laxika.magicalvibes.cards.c.CabalTorturer;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,38 +15,70 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CephalidAristocrat.class, Forest.class, ProdigalPyromancer.class, Shock.class})
+@CardUsed({CephalidAristocrat.class, AngelOfRetribution.class, CabalTorturer.class, FieryTemper.class})
 class CephalidAristocratTest extends BaseCardTest {
 
     @Test
     @DisplayName("Mills two cards when targeted by a spell")
     void millsWhenTargetedBySpell() {
         Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CephalidAristocrat());
-        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new AngelOfRetribution(), new AngelOfRetribution()));
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.castInstant(player2, 0, aristocrat.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Forest", "Forest");
+                .containsExactly("Angel of Retribution", "Angel of Retribution");
     }
 
     @Test
     @DisplayName("Mills two cards when targeted by an ability")
     void millsWhenTargetedByAbility() {
         Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CephalidAristocrat());
-        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
-        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
+        harness.setLibrary(player1, List.of(new AngelOfRetribution(), new AngelOfRetribution()));
+        addCreatureReady(player2, new CabalTorturer());
+        harness.addMana(player2, ManaColor.BLACK, 1);
 
         harness.activateAbility(player2, 0, null, aristocrat.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Forest", "Forest");
+                .containsExactly("Angel of Retribution", "Angel of Retribution");
+    }
+
+    @Test
+    @DisplayName("Mills two cards when targeted by its controller's spell")
+    void millsWhenTargetedByControllersSpell() {
+        Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CephalidAristocrat());
+        harness.setLibrary(player1, List.of(new AngelOfRetribution(), new AngelOfRetribution()));
+
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, aristocrat.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Angel of Retribution", "Angel of Retribution");
+    }
+
+    @Test
+    @DisplayName("Mills only the cards available in a short library")
+    void millsOnlyAvailableCardsInShortLibrary() {
+        Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CephalidAristocrat());
+        harness.setLibrary(player1, List.of(new AngelOfRetribution()));
+
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castInstant(player2, 0, aristocrat.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Angel of Retribution");
     }
 }

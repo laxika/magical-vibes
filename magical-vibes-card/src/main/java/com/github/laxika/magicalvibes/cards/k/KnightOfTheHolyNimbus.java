@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyed
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "26")
+@CardRegistration(set = "TSR", collectorNumber = "23")
 public class KnightOfTheHolyNimbus extends Card {
 
     public KnightOfTheHolyNimbus() {

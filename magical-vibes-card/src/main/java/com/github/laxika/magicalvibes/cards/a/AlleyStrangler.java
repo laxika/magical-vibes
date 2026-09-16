@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "AER", collectorNumber = "52")
+@CardRegistration(set = "KLR", collectorNumber = "77")
 public class AlleyStrangler extends Card {
 
     public AlleyStrangler() {

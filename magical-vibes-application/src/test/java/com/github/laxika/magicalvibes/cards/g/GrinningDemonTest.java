@@ -39,16 +39,21 @@ class GrinningDemonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not have its upkeep ability while face down")
+    void doesNotTriggerWhileFaceDown() {
+        harness.setLife(player1, 20);
+        castFaceDown();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     void morphsFaceDownAndCanBeTurnedFaceUp() {
-        harness.setHand(player1, List.of(new GrinningDemon()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Permanent demon = castFaceDown();
 
-        harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        Permanent demon = findPermanent(player1, "Grinning Demon");
         assertThat(demon.isFaceDown()).isTrue();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -57,5 +62,17 @@ class GrinningDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(demon.isFaceDown()).isFalse();
+    }
+
+    private Permanent castFaceDown() {
+        harness.setHand(player1, List.of(new GrinningDemon()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        return findPermanent(player1, "Grinning Demon");
     }
 }

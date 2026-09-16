@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
+import com.github.laxika.magicalvibes.cards.h.Hypochondria;
+import com.github.laxika.magicalvibes.cards.n.NantukoShade;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PossessedNomad.class, Spellbook.class, SavannahLions.class, GrizzlyBears.class})
+@CardUsed({PossessedNomad.class, AvenTrooper.class, NantukoShade.class, Hypochondria.class})
 class PossessedNomadTest extends BaseCardTest {
 
     @Test
@@ -48,19 +48,33 @@ class PossessedNomadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Threshold counts only cards in the source controller's graveyard")
+    void thresholdUsesControllerGraveyard() {
+        fillGraveyard(player1, 6);
+        fillGraveyard(player2, 7);
+        Permanent nomad = addReadyNomad();
+
+        assertThat(gqs.getEffectivePower(gd, nomad)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nomad)).isEqualTo(3);
+        assertThat(gqs.hasColor(gd, nomad, CardColor.BLACK)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Destroys a target white creature at threshold")
     void destroysWhiteCreature() {
         fillGraveyard(player1, 7);
         addReadyNomad();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Savannah Lions");
-        harness.assertInGraveyard(player2, "Savannah Lions");
+        harness.assertNotOnBattlefield(player2, "Aven Trooper");
+        harness.assertInGraveyard(player2, "Aven Trooper");
     }
 
     @Test
@@ -68,7 +82,18 @@ class PossessedNomadTest extends BaseCardTest {
     void cannotTargetNonwhiteCreature() {
         fillGraveyard(player1, 7);
         addReadyNomad();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NantukoShade());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a white noncreature permanent")
+    void cannotTargetWhiteNoncreaturePermanent() {
+        fillGraveyard(player1, 7);
+        addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Hypochondria());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -86,7 +111,7 @@ class PossessedNomadTest extends BaseCardTest {
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Spellbook());
+            cards.add(new AvenTrooper());
         }
         harness.setGraveyard(player, cards);
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +17,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Mindspring Merfolk")
+@CardUsed({MindspringMerfolk.class, CoralMerfolk.class, GrizzlyBears.class, Forest.class})
 class MindspringMerfolkTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exhaust draws X and puts counters on each Merfolk creature you control")
     void exhaustDrawsAndCountersMerfolk() {
-        Permanent mindspringMerfolk = addMindspringMerfolk();
+        Permanent mindspringMerfolk = addCreatureReady(player1, new MindspringMerfolk());
         Permanent coralMerfolk = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new CoralMerfolk());
-        setLibrary(new Forest(), new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of());
         addExhaustMana(2);
 
@@ -43,8 +45,8 @@ class MindspringMerfolkTest extends BaseCardTest {
     @Test
     @DisplayName("Each exhaust ability can be activated only once")
     void cannotExhaustTwice() {
-        addMindspringMerfolk();
-        setLibrary(new Forest(), new Forest(), new Forest(), new Forest());
+        addCreatureReady(player1, new MindspringMerfolk());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of());
         addExhaustMana(2);
 
@@ -60,19 +62,9 @@ class MindspringMerfolkTest extends BaseCardTest {
                 .hasMessageContaining("only once");
     }
 
-    private Permanent addMindspringMerfolk() {
-        Permanent mindspringMerfolk = harness.addToBattlefieldAndReturn(player1, new MindspringMerfolk());
-        mindspringMerfolk.setSummoningSick(false);
-        return mindspringMerfolk;
-    }
-
     private void addExhaustMana(int x) {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, x);
     }
 
-    private void setLibrary(Forest... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
-    }
 }

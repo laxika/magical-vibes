@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ class AngelfireCrusaderTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability gives +1/+0 until end of turn")
     void resolvingAbilityBoostsSelf() {
-        Permanent crusader = addReadyCrusader(player1);
+        Permanent crusader = addCreatureReady(player1, new AngelfireCrusader());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,7 +30,7 @@ class AngelfireCrusaderTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated repeatedly for a cumulative boost")
     void repeatedActivationsStack() {
-        Permanent crusader = addReadyCrusader(player1);
+        Permanent crusader = addCreatureReady(player1, new AngelfireCrusader());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -46,7 +45,7 @@ class AngelfireCrusaderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without red mana")
     void cannotActivateWithoutRedMana() {
-        addReadyCrusader(player1);
+        addCreatureReady(player1, new AngelfireCrusader());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -54,9 +53,34 @@ class AngelfireCrusaderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate the ability with only non-red mana")
+    void cannotActivateWithOnlyNonRedMana() {
+        addCreatureReady(player1, new AngelfireCrusader());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while Angelfire Crusader has summoning sickness")
+    void activationDoesNotRequireHaste() {
+        Permanent crusader = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThat(crusader.isSummoningSick()).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crusader.getPowerModifier()).isEqualTo(1);
+        assertThat(crusader.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Boost wears off at end of turn")
     void boostResetsAtEndOfTurn() {
-        Permanent crusader = addReadyCrusader(player1);
+        Permanent crusader = addCreatureReady(player1, new AngelfireCrusader());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -70,10 +94,4 @@ class AngelfireCrusaderTest extends BaseCardTest {
         assertThat(crusader.getToughnessModifier()).isEqualTo(0);
     }
 
-    private Permanent addReadyCrusader(Player player) {
-        Permanent perm = new Permanent(new AngelfireCrusader());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

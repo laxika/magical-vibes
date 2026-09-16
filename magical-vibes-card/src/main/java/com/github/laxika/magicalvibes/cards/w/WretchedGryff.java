@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "7")
 @CardRegistration(set = "INR", collectorNumber = "332")
 @CardRegistration(set = "EMN", collectorNumber = "12")
+@CardRegistration(set = "SIR", collectorNumber = "9")
 public class WretchedGryff extends Card {
 
     public WretchedGryff() {

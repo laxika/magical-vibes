@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PortInspector.class, FreshVolunteers.class})
 class PortInspectorTest extends BaseCardTest {
 
     @Test
@@ -21,8 +21,9 @@ class PortInspectorTest extends BaseCardTest {
         declarePortInspectorBlocked();
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
-                .anyMatch(message -> message.contains("Grizzly Bears"));
+                .anyMatch(message -> message.contains("Fresh Volunteers"));
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
     }
 
@@ -32,26 +33,60 @@ class PortInspectorTest extends BaseCardTest {
         declarePortInspectorBlocked();
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
     }
 
+    @Test
+    @DisplayName("When blocked by multiple creatures, it offers one hand-look trigger")
+    void multipleBlockersOfferOneHandLookTrigger() {
+        declarePortInspectorBlocked(List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When unblocked, it does not offer a hand-look trigger")
+    void unblockedDoesNotLookAtHand() {
+        Permanent inspector = addCreatureReady(player1, new PortInspector());
+        inspector.setAttacking(true);
+        inspector.setAttackTarget(player2.getId());
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+
+        resolveCombat();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void declarePortInspectorBlocked() {
+        declarePortInspectorBlocked(List.of(new BlockerAssignment(0, 0)));
+    }
+
+    private void declarePortInspectorBlocked(List<BlockerAssignment> assignments) {
         Permanent inspector = addCreatureReady(player1, new PortInspector());
         inspector.setAttacking(true);
         inspector.setAttackTarget(player2.getId());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        int blockerCount = assignments.stream()
+                .mapToInt(BlockerAssignment::blockerIndex)
+                .max()
+                .orElseThrow() + 1;
+        for (int i = 0; i < blockerCount; i++) {
+            addCreatureReady(player2, new FreshVolunteers());
+        }
+        harness.setHand(player2, List.of(new FreshVolunteers()));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, assignments);
         harness.passBothPriorities();
     }
 }

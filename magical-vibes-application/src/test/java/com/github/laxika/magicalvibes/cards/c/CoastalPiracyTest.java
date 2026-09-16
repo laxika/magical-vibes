@@ -1,25 +1,25 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoastalPiracy.class, FreshVolunteers.class})
 class CoastalPiracyTest extends BaseCardTest {
 
     private void addCoastalPiracy() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new CoastalPiracy()));
+        harness.addToBattlefield(player1, new CoastalPiracy());
     }
 
     private Permanent addReadyAttacker() {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player1, new FreshVolunteers());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
@@ -74,13 +74,25 @@ class CoastalPiracyTest extends BaseCardTest {
         addReadyAttacker(); // index 0 on player1's battlefield
         addCoastalPiracy();
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A creature controlled by another player does not trigger Coastal Piracy")
+    void opponentCreatureDoesNotTrigger() {
+        addCoastalPiracy();
+        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
+        attacker.setAttacking(true);
+
+        harness.setLife(player1, 20);
+        resolveCombat(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }

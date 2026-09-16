@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "127")
+@CardRegistration(set = "TSR", collectorNumber = "202")
 public class EvolutionCharm extends Card {
 
     public EvolutionCharm() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "215")
+@CardRegistration(set = "MM3", collectorNumber = "206")
+@CardRegistration(set = "GK1", collectorNumber = "85")
 public class BorosReckoner extends Card {
 
     public BorosReckoner() {

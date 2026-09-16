@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 
 @CardRegistration(set = "PCY", collectorNumber = "45")
+@CardRegistration(set = "WOT", collectorNumber = "25")
+@CardRegistration(set = "WOT", collectorNumber = "71")
+@CardRegistration(set = "WOT", collectorNumber = "91")
 public class RhysticStudy extends Card {
 
     public RhysticStudy() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "96")
+@CardRegistration(set = "GK2", collectorNumber = "18")
 public class RenderSilent extends Card {
 
     public RenderSilent() {

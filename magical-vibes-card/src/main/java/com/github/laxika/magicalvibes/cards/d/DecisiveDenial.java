@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "177")
+@CardRegistration(set = "OTP", collectorNumber = "42")
 public class DecisiveDenial extends Card {
 
     public DecisiveDenial() {

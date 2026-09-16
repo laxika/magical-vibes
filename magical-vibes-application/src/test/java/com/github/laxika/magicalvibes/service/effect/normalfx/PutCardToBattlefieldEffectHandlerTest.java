@@ -20,6 +20,28 @@ import static org.mockito.Mockito.*;
 class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
+    void retainsSourceSnapshotForTheHandFilterAfterSourceLeaves() {
+        Card source = createCard("Subtype source");
+        var snapshot = new com.github.laxika.magicalvibes.model.Permanent(source);
+        CardPredicate predicate = new CardNamedPredicate("Test Filter");
+        var effect = new PutCardToBattlefieldEffect(predicate, "creature");
+        StackEntry entry = new StackEntry(com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY,
+                source, player1Id, "Source ability", List.of(effect), null, snapshot.getId());
+        entry.setSourcePermanentSnapshot(snapshot);
+        Card creature = createCard("Chosen creature");
+        gd.playerHands.get(player1Id).add(creature);
+        when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(predicate), any(), eq(gd),
+                eq(player1Id), eq(snapshot.getId()), isNull(), anyInt(), eq(snapshot))).thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), eq(List.of(0)), any(),
+                anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(),
+                eq(false), eq(false), eq(0), eq(0), anySet(), isNull(), eq(false), eq(false),
+                isNull(), isNull(), isNull(), isNull(), eq(snapshot.getId()), eq(Set.of()));
+    }
+
+    @Test
     @DisplayName("Presents card choice when matching cards exist in hand")
     void presentsChoiceWhenMatchingCards() {
         Card card = createCard("Elvish Piper");

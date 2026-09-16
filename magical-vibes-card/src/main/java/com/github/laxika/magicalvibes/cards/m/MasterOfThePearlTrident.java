@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "59")
+@CardRegistration(set = "DDT", collectorNumber = "9")
+@CardRegistration(set = "TSR", collectorNumber = "310")
 public class MasterOfThePearlTrident extends Card {
 
     public MasterOfThePearlTrident() {

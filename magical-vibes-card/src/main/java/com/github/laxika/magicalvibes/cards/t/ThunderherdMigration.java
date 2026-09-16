@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "RIX", collectorNumber = "149")
+@CardRegistration(set = "GN2", collectorNumber = "52")
 public class ThunderherdMigration extends Card {
 
     public ThunderherdMigration() {

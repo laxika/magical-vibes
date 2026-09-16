@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -32,12 +32,7 @@ public class NecraSanctuary extends Card {
                 "Target must be a player"
         ));
         targetPlayer.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
-                controlsGreenAndWhite,
-                new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER)));
-        targetPlayer.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
-                new AllOf(List.of(
-                        new AnyOf(List.of(controlsGreen, controlsWhite)),
-                        new NotCondition(controlsGreenAndWhite))),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));
+                new AnyOf(List.of(controlsGreen, controlsWhite)),
+                new LoseLifeEffect(new FixedIfCondition(controlsGreenAndWhite, 3, 1), LoseLifeRecipient.TARGET_PLAYER)));
     }
 }

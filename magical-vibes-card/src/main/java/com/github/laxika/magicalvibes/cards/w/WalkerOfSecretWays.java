@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "60")
 @CardRegistration(set = "PC2", collectorNumber = "27")
+@CardRegistration(set = "PCA", collectorNumber = "27")
 public class WalkerOfSecretWays extends Card {
 
     public WalkerOfSecretWays() {

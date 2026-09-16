@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "135")
+@CardRegistration(set = "GK1", collectorNumber = "44")
 public class TiborAndLumia extends Card {
 
     public TiborAndLumia() {

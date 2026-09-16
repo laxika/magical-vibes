@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "82")
+@CardRegistration(set = "KLR", collectorNumber = "125")
 public class FrontlineRebel extends Card {
 
     public FrontlineRebel() {

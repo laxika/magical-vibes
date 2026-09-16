@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "247")
+@CardRegistration(set = "SIR", collectorNumber = "238")
 public class NahiriTheHarbinger extends Card {
 
     public NahiriTheHarbinger() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "110")
+@CardRegistration(set = "UMA", collectorNumber = "162")
+@CardRegistration(set = "2X2", collectorNumber = "143")
 public class DevotedDruid extends Card {
 
     public DevotedDruid() {

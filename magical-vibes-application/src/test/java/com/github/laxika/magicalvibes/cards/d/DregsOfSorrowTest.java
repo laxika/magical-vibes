@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DregsOfSorrow.class, BogWraith.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DregsOfSorrow.class, BogWraith.class, GrizzlyBears.class, HillGiant.class, Swamp.class})
 class DregsOfSorrowTest extends BaseCardTest {
 
     @Test
@@ -110,5 +111,30 @@ class DregsOfSorrowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(blackCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack");
+    }
+
+    @Test
+    @DisplayName("Can target a nonblack creature you control")
+    void canTargetOwnNonblackCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DregsOfSorrow()));
+        harness.addMana(player1, ManaColor.BLACK, 6); // X=1: {1}{4}{B} = 6
+
+        harness.castSorcery(player1, 0, 1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.setHand(player1, List.of(new DregsOfSorrow()));
+        harness.addMana(player1, ManaColor.BLACK, 6); // X=1
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creatures");
     }
 }

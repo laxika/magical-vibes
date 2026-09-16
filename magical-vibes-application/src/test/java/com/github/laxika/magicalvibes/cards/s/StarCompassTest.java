@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.MemorialToWar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StarCompass.class, Forest.class, Island.class, CityOfBrass.class})
 class StarCompassTest extends BaseCardTest {
 
     @Test
@@ -72,7 +72,7 @@ class StarCompassTest extends BaseCardTest {
     @DisplayName("A nonbasic land you control does not contribute its colors")
     void nonbasicLandDoesNotContribute() {
         harness.addToBattlefield(player1, new StarCompass());
-        harness.addToBattlefield(player1, new MemorialToWar()); // nonbasic land, taps for red
+        harness.addToBattlefield(player1, new CityOfBrass()); // nonbasic land, taps for any color
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -95,15 +95,23 @@ class StarCompassTest extends BaseCardTest {
     @Test
     @DisplayName("Star Compass enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new StarCompass()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castFromHand(player1, new StarCompass(), "{2}");
 
-        harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent compass = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent compass = findPermanent(player1, "Star Compass");
+        assertThat(compass.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating Star Compass taps it as part of its cost")
+    void activationTapsSource() {
+        Permanent compass = harness.addToBattlefieldAndReturn(player1, new StarCompass());
+
+        harness.activateAbility(player1, 0, null, null);
+
         assertThat(compass.isTapped()).isTrue();
     }
 }

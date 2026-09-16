@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FlailingSoldier;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CommonCause.class, FreshVolunteers.class, FlailingSoldier.class})
 class CommonCauseTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor... colors) {
@@ -37,8 +41,7 @@ class CommonCauseTest extends BaseCardTest {
     }
 
     private Permanent addCommonCause() {
-        harness.addToBattlefield(player1, new CommonCause());
-        return findPermanent(player1, "Common Cause");
+        return harness.addToBattlefieldAndReturn(player1, new CommonCause());
     }
 
     @Test
@@ -85,5 +88,19 @@ class CommonCauseTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "White Creature"))).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Colorless Creature"))).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Reevaluates the boost when a nonartifact creature enters with a different color")
+    void reevaluatesWhenNonartifactCreatureEnters() {
+        addCommonCause();
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1,
+                new FreshVolunteers());
+
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(4);
+
+        harness.addToBattlefield(player2, new FlailingSoldier());
+
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(2);
     }
 }

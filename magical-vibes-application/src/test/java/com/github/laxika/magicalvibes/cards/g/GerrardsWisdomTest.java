@@ -35,6 +35,24 @@ class GerrardsWisdomTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts only cards in the controller's hand")
+    void countsOnlyCardsInControllersHand() {
+        harness.setHand(player1, List.of(
+                new GerrardsWisdom(),
+                new GrizzlyBears()));
+        harness.setHand(player2, List.of(
+                new GrizzlyBears(),
+                new GrizzlyBears(),
+                new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
     @DisplayName("Gains no life with an otherwise empty hand")
     void gainsNoLifeWithEmptyHand() {
         harness.castFromHand(player1, new GerrardsWisdom(), "{2}{W}{W}");

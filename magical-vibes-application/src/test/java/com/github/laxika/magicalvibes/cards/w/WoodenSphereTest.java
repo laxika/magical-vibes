@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,18 +12,37 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WoodenSphere.class, GrizzlyBears.class, AirElemental.class, GiantGrowth.class})
+@CardUsed({AirElemental.class, BogImp.class, Forest.class, GiantGrowth.class, GrizzlyBears.class, WoodenSphere.class})
 class WoodenSphereTest extends BaseCardTest {
     @Test
     @DisplayName("Controller casts green spell, pays {1}, gains 1 life")
     void controllerCastsGreenSpellAndPays() {
+        harness.addToBattlefield(player1, new WoodenSphere());
+
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Wooden Sphere"));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+    @Test
+    @DisplayName("Controller casts green spell, pays {1}, gains 1 life")
+    void controllerCastsGreenSpellAndPaysUpstreamReview() {
         harness.addToBattlefield(player1, new WoodenSphere());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -45,6 +66,20 @@ class WoodenSphereTest extends BaseCardTest {
     @DisplayName("Controller casts green spell, declines to pay, no life gain")
     void controllerCastsGreenSpellAndDeclines() {
         harness.addToBattlefield(player1, new WoodenSphere());
+
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Controller casts green spell, declines to pay, no life gain")
+    void controllerCastsGreenSpellAndDeclinesUpstreamReview() {
+        harness.addToBattlefield(player1, new WoodenSphere());
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
@@ -59,6 +94,20 @@ class WoodenSphereTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana gains no life")
     void acceptWithoutManaNoLife() {
+        harness.addToBattlefield(player1, new WoodenSphere());
+
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Accepting without enough mana gains no life")
+    void acceptWithoutManaNoLifeUpstreamReview() {
         harness.addToBattlefield(player1, new WoodenSphere());
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -96,6 +145,17 @@ class WoodenSphereTest extends BaseCardTest {
     @DisplayName("Non-green spell does not trigger Wooden Sphere")
     void nonGreenSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new WoodenSphere());
+        harness.castFromHand(player1, new BogImp(), "{1}{B}");
+
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Wooden Sphere"));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+    @Test
+    @DisplayName("Non-green spell does not trigger Wooden Sphere")
+    void nonGreenSpellDoesNotTriggerUpstreamReview() {
+        harness.addToBattlefield(player1, new WoodenSphere());
         harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -114,8 +174,7 @@ class WoodenSphereTest extends BaseCardTest {
 
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -123,6 +182,54 @@ class WoodenSphereTest extends BaseCardTest {
 
         harness.assertLife(player1, lifeBefore + 1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Wooden Sphere does not trigger while in its owner's hand")
+    void doesNotTriggerWhenNotOnBattlefield() {
+        harness.setHand(player1, List.of(new WoodenSphere(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 1);
+
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Wooden Sphere"));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Each Wooden Sphere triggers for the same green spell")
+    void multipleSpheresTriggerIndependently() {
+        harness.addToBattlefield(player1, new WoodenSphere());
+        harness.addToBattlefield(player1, new WoodenSphere());
+
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Playing a Forest does not trigger Wooden Sphere")
+    void playingLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WoodenSphere());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -152,19 +259,5 @@ class WoodenSphereTest extends BaseCardTest {
 
         harness.assertLife(player1, lifeBefore + 2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-    }
-
-    @Test
-    @DisplayName("Wooden Sphere does not trigger while in its owner's hand")
-    void doesNotTriggerWhenNotOnBattlefield() {
-        harness.setHand(player1, List.of(new WoodenSphere(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 1);
-
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Wooden Sphere"));
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 }

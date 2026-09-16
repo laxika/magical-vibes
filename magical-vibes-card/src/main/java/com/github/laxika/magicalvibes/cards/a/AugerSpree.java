@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "144")
+@CardRegistration(set = "MM3", collectorNumber = "151")
+@CardRegistration(set = "GK2", collectorNumber = "60")
+@CardRegistration(set = "2X2", collectorNumber = "178")
 public class AugerSpree extends Card {
 
     public AugerSpree() {

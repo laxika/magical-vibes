@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.b.Boneknitter;
+import com.github.laxika.magicalvibes.cards.d.DaruLancer;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,25 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FallenCleric.class)
+@CardUsed({FallenCleric.class, Boneknitter.class, DaruLancer.class, Shock.class})
 class FallenClericTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cleric creature cannot block Fallen Cleric")
     void clericCreatureCannotBlock() {
-        Permanent fallenCleric = new Permanent(new FallenCleric());
-        fallenCleric.setSummoningSick(false);
+        Permanent fallenCleric = addCreatureReady(player1, new FallenCleric());
         fallenCleric.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(fallenCleric);
 
-        Permanent blocker = new Permanent(createCreature("Cleric", CardSubtype.CLERIC, 2, 2));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new Boneknitter());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -46,51 +35,60 @@ class FallenClericTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fallen Cleric takes no combat damage from a Cleric")
-    void takesNoCombatDamageFromCleric() {
-        Permanent attacker = new Permanent(createCreature("Cleric", CardSubtype.CLERIC, 3, 3));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+    @DisplayName("Non-Cleric creature can block Fallen Cleric")
+    void nonClericCreatureCanBlock() {
+        Permanent fallenCleric = addCreatureReady(player1, new FallenCleric());
+        fallenCleric.setAttacking(true);
 
-        Permanent fallenCleric = new Permanent(new FallenCleric());
-        fallenCleric.setSummoningSick(false);
-        fallenCleric.setBlocking(true);
-        fallenCleric.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(fallenCleric);
+        Permanent blocker = addCreatureReady(player2, new DaruLancer());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
-    @DisplayName("Cleric spell cannot target Fallen Cleric")
-    void clericSpellCannotTarget() {
-        Permanent fallenCleric = new Permanent(new FallenCleric());
-        fallenCleric.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(fallenCleric);
+    @DisplayName("Fallen Cleric takes no combat damage from a Cleric")
+    void takesNoCombatDamageFromCleric() {
+        Permanent attacker = addCreatureReady(player1, new FallenCleric());
+        attacker.setAttacking(true);
 
-        Permanent validTarget = new Permanent(createCreature("Zombie", CardSubtype.ZOMBIE, 2, 2));
-        validTarget.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(validTarget);
+        Permanent fallenCleric = addCreatureReady(player2, new FallenCleric());
+        fallenCleric.setBlocking(true);
+        fallenCleric.addBlockingTarget(0);
 
-        Card spell = new Card();
-        spell.setName("Cleric Bolt");
-        spell.setType(CardType.INSTANT);
-        spell.setManaCost("{W}");
-        spell.setColor(CardColor.WHITE);
-        spell.setSubtypes(List.of(CardSubtype.CLERIC));
-        spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        harness.setHand(player1, List.of(spell));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        resolveCombat();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, fallenCleric.getId(), null))
+        assertThat(fallenCleric.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Fallen Cleric");
+        harness.assertOnBattlefield(player2, "Fallen Cleric");
+    }
+
+    @Test
+    @DisplayName("Cleric ability cannot target Fallen Cleric")
+    void clericAbilityCannotTarget() {
+        Permanent fallenCleric = addCreatureReady(player2, new FallenCleric());
+        addCreatureReady(player1, new Boneknitter());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, fallenCleric.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Non-Cleric instant can target Fallen Cleric")
+    void nonClericInstantCanTarget() {
+        Permanent fallenCleric = addCreatureReady(player2, new FallenCleric());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, fallenCleric.getId());
+
+        assertThat(fallenCleric.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -113,17 +111,5 @@ class FallenClericTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(fallenCleric.isFaceDown()).isFalse();
-    }
-
-    private static Card createCreature(String name, CardSubtype subtype, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{3}");
-        card.setColor(CardColor.WHITE);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtype));
-        return card;
     }
 }

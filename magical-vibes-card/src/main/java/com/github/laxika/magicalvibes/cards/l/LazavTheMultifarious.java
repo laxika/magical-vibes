@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "184")
+@CardRegistration(set = "RVR", collectorNumber = "196")
 public class LazavTheMultifarious extends Card {
 
     public LazavTheMultifarious() {

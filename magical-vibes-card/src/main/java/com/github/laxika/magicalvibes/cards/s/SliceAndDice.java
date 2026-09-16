@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "232")
+@CardRegistration(set = "DMR", collectorNumber = "138")
 public class SliceAndDice extends Card {
 
     public SliceAndDice() {

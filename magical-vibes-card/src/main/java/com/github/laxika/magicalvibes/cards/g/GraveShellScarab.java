@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "211")
+@CardRegistration(set = "GK1", collectorNumber = "63")
 public class GraveShellScarab extends Card {
 
     public GraveShellScarab() {

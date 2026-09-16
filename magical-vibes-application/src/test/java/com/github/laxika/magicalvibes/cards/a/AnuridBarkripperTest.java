@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnuridBarkripper.class, Shock.class})
+@CardUsed({AnuridBarkripper.class, AvenFogbringer.class})
 class AnuridBarkripperTest extends BaseCardTest {
 
     @Test
@@ -71,7 +70,7 @@ class AnuridBarkripperTest extends BaseCardTest {
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Shock());
+            cards.add(new AvenFogbringer());
         }
         return cards;
     }

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "214")
 @CardRegistration(set = "DDH", collectorNumber = "15")
+@CardRegistration(set = "GK1", collectorNumber = "114")
 public class LoxodonHierarch extends Card {
 
     public LoxodonHierarch() {

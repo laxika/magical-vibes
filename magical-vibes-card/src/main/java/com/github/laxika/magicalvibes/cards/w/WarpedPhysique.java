@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DGM", collectorNumber = "117")
+@CardRegistration(set = "GK1", collectorNumber = "21")
 public class WarpedPhysique extends Card {
 
     public WarpedPhysique() {

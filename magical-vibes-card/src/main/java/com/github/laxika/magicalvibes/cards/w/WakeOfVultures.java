@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "74")
+@CardRegistration(set = "EMA", collectorNumber = "115")
 public class WakeOfVultures extends Card {
 
     public WakeOfVultures() {

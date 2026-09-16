@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolcanicWind.class, GrizzlyBears.class, Forest.class})
 class VolcanicWindTest extends BaseCardTest {
 
     private void prepare() {
@@ -39,6 +42,32 @@ class VolcanicWindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts creatures but not other permanents")
+    void countsOnlyCreaturesOnBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        prepare();
+
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 1));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
+                .containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Resolves without targets when there are no creatures")
+    void resolvesWithNoCreatures() {
+        prepare();
+
+        harness.castSorcery(player1, 0, Map.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Volcanic Wind");
+    }
+
+    @Test
     @DisplayName("Locks the creature count at cast time")
     void locksCreatureCountAtCastTime() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -53,6 +82,16 @@ class VolcanicWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires assignments to sum to the cast-time creature count")
+    void assignmentsMustSumToCreatureCount() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(target.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

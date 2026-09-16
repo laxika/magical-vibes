@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "AER", collectorNumber = "31")
+@CardRegistration(set = "KLR", collectorNumber = "46")
 public class Disallow extends Card {
 
     public Disallow() {

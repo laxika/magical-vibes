@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "81")
 @CardRegistration(set = "AKR", collectorNumber = "94")
+@CardRegistration(set = "2XM", collectorNumber = "78")
 public class BonePicker extends Card {
 
     public BonePicker() {

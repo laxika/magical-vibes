@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "45")
 @CardRegistration(set = "INR", collectorNumber = "53")
+@CardRegistration(set = "SIS", collectorNumber = "13")
 public class BattlegroundGeist extends Card {
 
     public BattlegroundGeist() {

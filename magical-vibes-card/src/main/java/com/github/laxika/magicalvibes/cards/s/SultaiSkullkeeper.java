@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "FRF", collectorNumber = "53")
+@CardRegistration(set = "UMA", collectorNumber = "75")
 public class SultaiSkullkeeper extends Card {
 
     public SultaiSkullkeeper() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "1")
+@CardRegistration(set = "GNT", collectorNumber = "7")
+@CardRegistration(set = "SIR", collectorNumber = "10")
 public class AlwaysWatching extends Card {
 
     public AlwaysWatching() {

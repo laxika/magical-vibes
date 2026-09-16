@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "58")
+@CardRegistration(set = "TSR", collectorNumber = "78")
 public class PiracyCharm extends Card {
 
     public PiracyCharm() {

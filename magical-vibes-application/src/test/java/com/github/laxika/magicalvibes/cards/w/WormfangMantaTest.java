@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,25 +26,32 @@ class WormfangMantaTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, manta));
-        resolvePendingTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
 
-    private Permanent castManta() {
-        harness.setHand(player1, List.of(new WormfangManta()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+    @Test
+    @DisplayName("If it leaves before its enters trigger resolves, the leave trigger resolves first")
+    void leavingBeforeEnterTriggerResolvesPreservesBothTriggers() {
+        harness.castFromHand(player1, new WormfangManta(), "{5}{U}{U}");
         harness.passBothPriorities();
+
+        Permanent manta = findPermanent(player1, "Wormfang Manta");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, manta));
+
         harness.passBothPriorities();
-        return findPermanent(player1, "Wormfang Manta");
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gd.skipNextTurnCount).containsEntry(player1.getId(), 1);
     }
 
-    private void resolvePendingTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    private Permanent castManta() {
+        harness.castFromHand(player1, new WormfangManta(), "{5}{U}{U}");
+        resolveAllTriggers();
+        return findPermanent(player1, "Wormfang Manta");
     }
 }

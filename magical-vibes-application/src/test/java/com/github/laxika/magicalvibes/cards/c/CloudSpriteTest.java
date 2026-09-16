@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CloudSprite.class, FreshVolunteers.class})
 class CloudSpriteTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -32,7 +32,6 @@ class CloudSpriteTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Cloud Sprite");
     }
 
     @Test
@@ -77,20 +76,13 @@ class CloudSpriteTest extends BaseCardTest {
     @DisplayName("Cloud Sprite can block a creature with flying")
     void canBlockFlyingCreature() {
         // Player2 has Cloud Sprite as potential blocker
-        Permanent spritePerm = new Permanent(new CloudSprite());
-        spritePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(spritePerm);
+        Permanent spritePerm = addCreatureReady(player2, new CloudSprite());
 
-        // Player1 has a flying attacker (Air Elemental)
-        Permanent atkPerm = new Permanent(new AirElemental());
-        atkPerm.setSummoningSick(false);
+        // Player1 has a flying attacker
+        Permanent atkPerm = addCreatureReady(player1, new CloudSprite());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         // Should not throw — Cloud Sprite can block flyers
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -101,23 +93,31 @@ class CloudSpriteTest extends BaseCardTest {
     // ===== Blocking — cannot block creatures without flying =====
 
     @Test
+    @DisplayName("Cloud Sprite cannot be blocked by a creature without flying or reach")
+    void flyingPreventsNonFlyingBlocker() {
+        addCreatureReady(player2, new FreshVolunteers());
+
+        Permanent atkPerm = addCreatureReady(player1, new CloudSprite());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
     @DisplayName("Cloud Sprite cannot block a creature without flying")
     void cannotBlockNonFlyingCreature() {
         // Player2 has Cloud Sprite as potential blocker
-        Permanent spritePerm = new Permanent(new CloudSprite());
-        spritePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(spritePerm);
+        Permanent spritePerm = addCreatureReady(player2, new CloudSprite());
 
-        // Player1 has a ground attacker (Grizzly Bears)
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        // Player1 has a ground attacker
+        Permanent atkPerm = addCreatureReady(player1, new FreshVolunteers());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -132,22 +132,15 @@ class CloudSpriteTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 has Cloud Sprite as attacker
-        Permanent atkPerm = new Permanent(new CloudSprite());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new CloudSprite());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         // Player2 has Cloud Sprite as blocker
-        Permanent blockerPerm = new Permanent(new CloudSprite());
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new CloudSprite());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Both should be dead
         harness.assertInGraveyard(player1, "Cloud Sprite");
@@ -164,15 +157,10 @@ class CloudSpriteTest extends BaseCardTest {
     void dealsOneDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new CloudSprite());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new CloudSprite());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

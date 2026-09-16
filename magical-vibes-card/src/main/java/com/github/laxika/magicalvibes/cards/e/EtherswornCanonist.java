@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifact
 
 @CardRegistration(set = "ALA", collectorNumber = "10")
 @CardRegistration(set = "MMA", collectorNumber = "14")
+@CardRegistration(set = "2XM", collectorNumber = "14")
 public class EtherswornCanonist extends Card {
 
     public EtherswornCanonist() {

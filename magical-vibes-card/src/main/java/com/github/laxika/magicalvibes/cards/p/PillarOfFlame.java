@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "149")
+@CardRegistration(set = "IMA", collectorNumber = "141")
 public class PillarOfFlame extends Card {
 
     public PillarOfFlame() {

@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,19 +16,19 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GhoulsFeast.class, FreshVolunteers.class, Forest.class})
 class GhoulsFeastTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives target creature +X/+0 for creature cards in the caster's graveyard")
     void givesPowerBoostBasedOnCreatureCardsInCastersGraveyard() {
-        Permanent target = addCreature(player2);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant(), new Shock()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new HillGiant()));
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        harness.setGraveyard(player1, List.of(new FreshVolunteers(), new FreshVolunteers(), new Forest()));
+        harness.setGraveyard(player2, List.of(new FreshVolunteers(), new FreshVolunteers()));
         harness.setHand(player1, List.of(new GhoulsFeast()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
@@ -38,12 +37,12 @@ class GhoulsFeastTest extends BaseCardTest {
     @Test
     @DisplayName("Counts creature cards when the spell resolves")
     void countsCreatureCardsAtResolution() {
-        Permanent target = addCreature(player1);
+        Permanent target = addCreatureReady(player1, new FreshVolunteers());
         harness.setHand(player1, List.of(new GhoulsFeast()));
         addMana();
 
         harness.castInstant(player1, 0, target.getId());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant()));
+        harness.setGraveyard(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
@@ -52,13 +51,12 @@ class GhoulsFeastTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent target = addCreature(player2);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        harness.setGraveyard(player1, List.of(new FreshVolunteers()));
         harness.setHand(player1, List.of(new GhoulsFeast()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -66,6 +64,20 @@ class GhoulsFeastTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gives no boost when the caster has no creature cards in their graveyard")
+    void givesNoBoostWithNoCreatureCardsInCastersGraveyard() {
+        Permanent target = addCreatureReady(player1, new FreshVolunteers());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GhoulsFeast()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
@@ -85,10 +97,4 @@ class GhoulsFeastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 
-    private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

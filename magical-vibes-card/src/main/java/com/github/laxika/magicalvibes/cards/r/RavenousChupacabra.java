@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "82")
+@CardRegistration(set = "A25", collectorNumber = "104")
+@CardRegistration(set = "GN3", collectorNumber = "59")
 public class RavenousChupacabra extends Card {
 
     public RavenousChupacabra() {

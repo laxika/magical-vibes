@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "315")
 @CardRegistration(set = "PLS", collectorNumber = "134")
+@CardRegistration(set = "IMA", collectorNumber = "229")
 public class StarCompass extends Card {
 
     public StarCompass() {

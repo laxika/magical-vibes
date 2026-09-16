@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "122")
+@CardRegistration(set = "A25", collectorNumber = "188")
 public class StampedeDriver extends Card {
 
     public StampedeDriver() {

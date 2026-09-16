@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "83")
 @CardRegistration(set = "V11", collectorNumber = "13")
+@CardRegistration(set = "IMA", collectorNumber = "75")
+@CardRegistration(set = "TSR", collectorNumber = "91")
 public class TeferiMageOfZhalfir extends Card {
 
     public TeferiMageOfZhalfir() {

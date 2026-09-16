@@ -611,16 +611,20 @@ public class TriggeredAbilityQueueService {
     }
 
     private SpellTarget dynamicTargetForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+        SpellTarget target = targetGroupForTriggeredEffects(sourceCard, effects);
+        if (target == null) {
+            return null;
+        }
+        return target.getDynamicMaxTargets() == null ? null : target;
+    }
+
+    private SpellTarget targetGroupForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(sourceCard::getEffectTargetIndex)
                 .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
                 .findFirst()
                 .orElse(-1);
-        if (targetGroupIndex < 0) {
-            return null;
-        }
-        SpellTarget target = sourceCard.getSpellTargets().get(targetGroupIndex);
-        return target.getDynamicMaxTargets() == null ? null : target;
+        return targetGroupIndex < 0 ? null : sourceCard.getSpellTargets().get(targetGroupIndex);
     }
 
     private void enqueueSelfTriggeredAbilityWithoutTargets(GameData gameData,
@@ -829,7 +833,21 @@ public class TriggeredAbilityQueueService {
                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            if (optionalTarget) {
+            SpellTarget targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            if (targetGroup != null && targetGroup.getMaxTargets() > 1) {
+                int minTargets = targetGroup.getMinTargets();
+                int maxTargets = Math.min(targetGroup.getMaxTargets(), result.validTargets().size());
+                if (result.validTargets().size() < minTargets) {
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s triggered ability has too few valid targets."));
+                    continue;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId,
+                        result.validTargets(), maxTargets,
+                        new MultiPermanentChoiceContext.AttackTriggerTargets(pending, minTargets),
+                        pending.sourceCard().getName() + "'s ability - Choose up to " + maxTargets
+                                + " target permanents.");
+            } else if (optionalTarget) {
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, result.validTargets(),
                         List.of(pending.controllerId()),
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CracklingClub;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.p.PardicLancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LastLaugh.class, GrizzlyBears.class, Shock.class})
+@CardUsed({LastLaugh.class, PardicLancer.class, FieryTemper.class, CracklingClub.class, Opalescence.class})
 class LastLaughTest extends BaseCardTest {
 
     @Test
@@ -24,10 +26,10 @@ class LastLaughTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new LastLaugh());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PardicLancer());
+        harness.addToBattlefield(player2, new PardicLancer());
 
-        killWithShock(player2, player1, "Grizzly Bears");
+        killWithFieryTemper(player2, player1, "Pardic Lancer");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
@@ -39,9 +41,9 @@ class LastLaughTest extends BaseCardTest {
     @DisplayName("Sacrifices itself when the last creature leaves the battlefield")
     void sacrificesWhenNoCreaturesRemain() {
         harness.addToBattlefield(player1, new LastLaugh());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PardicLancer());
 
-        killWithShock(player2, player1, "Grizzly Bears");
+        killWithFieryTemper(player2, player1, "Pardic Lancer");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -49,14 +51,43 @@ class LastLaughTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Last Laugh");
     }
 
-    private void killWithShock(Player caster, Player targetPlayer, String targetName) {
+    @Test
+    @DisplayName("A noncreature permanent put into a graveyard also triggers the damage ability")
+    void noncreaturePermanentGraveyardTriggerDealsDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new LastLaugh());
+        harness.addToBattlefield(player1, new PardicLancer());
+        harness.addToBattlefield(player1, new CracklingClub());
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Crackling Club");
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice itself while a continuous effect makes it a creature")
+    void doesNotSacrificeWhileItIsAnAnimatedCreature() {
+        harness.addToBattlefield(player1, new LastLaugh());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Last Laugh");
+    }
+
+    private void killWithFieryTemper(Player caster, Player targetPlayer, String targetName) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new Shock()));
-        harness.addMana(caster, ManaColor.RED, 1);
+        harness.setHand(caster, List.of(new FieryTemper()));
+        harness.addMana(caster, ManaColor.COLORLESS, 1);
+        harness.addMana(caster, ManaColor.RED, 2);
         UUID targetId = harness.getPermanentId(targetPlayer, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }

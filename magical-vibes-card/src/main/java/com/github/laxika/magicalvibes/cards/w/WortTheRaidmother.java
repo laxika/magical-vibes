@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "223")
+@CardRegistration(set = "MM3", collectorNumber = "214")
 public class WortTheRaidmother extends Card {
 
     public WortTheRaidmother() {

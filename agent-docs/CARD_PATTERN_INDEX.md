@@ -52,6 +52,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |

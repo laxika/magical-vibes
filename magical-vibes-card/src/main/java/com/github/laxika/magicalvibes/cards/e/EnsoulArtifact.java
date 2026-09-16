@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "54")
+@CardRegistration(set = "EA1", collectorNumber = "3")
 public class EnsoulArtifact extends Card {
 
     public EnsoulArtifact() {

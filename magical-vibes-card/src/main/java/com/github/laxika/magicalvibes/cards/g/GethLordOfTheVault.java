@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "64")
+@CardRegistration(set = "2XM", collectorNumber = "94")
 public class GethLordOfTheVault extends Card {
 
     public GethLordOfTheVault() {

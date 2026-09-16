@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "XLN", collectorNumber = "248")
 @CardRegistration(set = "LCI", collectorNumber = "261")
 @CardRegistration(set = "ELD", collectorNumber = "233")
+@CardRegistration(set = "TSR", collectorNumber = "401")
 public class SorcerousSpyglass extends Card {
 
     public SorcerousSpyglass() {

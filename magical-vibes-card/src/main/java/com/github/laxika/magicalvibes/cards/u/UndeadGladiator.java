@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "178")
+@CardRegistration(set = "A25", collectorNumber = "112")
+@CardRegistration(set = "DMR", collectorNumber = "105")
 public class UndeadGladiator extends Card {
 
     public UndeadGladiator() {

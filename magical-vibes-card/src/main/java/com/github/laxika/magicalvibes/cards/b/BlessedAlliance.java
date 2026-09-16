@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "13")
+@CardRegistration(set = "SIR", collectorNumber = "14")
 public class BlessedAlliance extends Card {
 
     public BlessedAlliance() {

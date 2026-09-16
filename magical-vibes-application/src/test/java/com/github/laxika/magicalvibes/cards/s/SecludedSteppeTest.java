@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SecludedSteppe.class, GrizzlyBears.class})
+@CardUsed({SecludedSteppe.class, GlorySeeker.class})
 class SecludedSteppeTest extends BaseCardTest {
 
     @Test
@@ -41,7 +42,7 @@ class SecludedSteppeTest extends BaseCardTest {
     @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new SecludedSteppe()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateHandAbility(player1, 0, null);
@@ -49,13 +50,26 @@ class SecludedSteppeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Secluded Steppe");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Cycling requires white mana")
+    void cyclingRequiresWhiteMana() {
+        SecludedSteppe steppe = new SecludedSteppe();
+        harness.setHand(player1, List.of(steppe));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(steppe);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private Permanent addLandReady(Player player) {
-        Permanent land = new Permanent(new SecludedSteppe());
+        Permanent land = harness.addToBattlefieldAndReturn(player, new SecludedSteppe());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(land);
         return land;
     }
 }

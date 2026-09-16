@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "197")
+@CardRegistration(set = "EA1", collectorNumber = "17")
 public class SlaughterGames extends Card {
 
     public SlaughterGames() {

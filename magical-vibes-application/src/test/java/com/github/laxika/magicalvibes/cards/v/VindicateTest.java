@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
+import com.github.laxika.magicalvibes.cards.g.GerrardCapashen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,39 +12,49 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vindicate.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({Vindicate.class, GerrardCapashen.class, CavesOfKoilos.class})
 class VindicateTest extends BaseCardTest {
 
     @Test
     void destroysTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GerrardCapashen());
 
         castVindicate(target);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Gerrard Capashen");
+        harness.assertInGraveyard(player2, "Gerrard Capashen");
     }
 
     @Test
     void destroysTargetLand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CavesOfKoilos());
 
         castVindicate(target);
 
-        harness.assertNotOnBattlefield(player2, "Mountain");
-        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Caves of Koilos");
+        harness.assertInGraveyard(player2, "Caves of Koilos");
+    }
+
+    @Test
+    void destroysYourOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
+
+        castVindicate(target);
+
+        harness.assertNotOnBattlefield(player1, "Caves of Koilos");
+        harness.assertInGraveyard(player1, "Caves of Koilos");
     }
 
     @Test
     void destructionAllowsRegeneration() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GerrardCapashen());
         target.setRegenerationShield(1);
 
         castVindicate(target);
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
                 .contains(target);
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Gerrard Capashen");
     }
 
     private void castVindicate(Permanent target) {

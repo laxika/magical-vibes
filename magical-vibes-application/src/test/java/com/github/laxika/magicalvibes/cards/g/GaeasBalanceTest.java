@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.Taiga;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GaeasBalance.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class,
-        Plains.class, Swamp.class})
+        Plains.class, Swamp.class, Taiga.class})
 class GaeasBalanceTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,24 @@ class GaeasBalanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices only five lands when more than five are available")
+    void sacrificesOnlyFiveSelectedLands() {
+        List<Card> availableLands = List.of(new Plains(), new Island(), new Swamp(), new Mountain(),
+                new Forest(), new Forest());
+        List<UUID> availableLandIds = addLandsToBattlefield(availableLands);
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorceryWithSacrifices(player1, 0, null, availableLandIds.subList(0, 5));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactly(availableLands.get(5));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(availableLands.subList(0, 5));
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Cannot pay the additional cost with fewer than five lands")
     void cannotCastWithoutFiveLands() {
         List<Card> sacrificeCards = List.of(new Plains(), new Island(), new Swamp(), new Mountain());
@@ -53,6 +72,25 @@ class GaeasBalanceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional cost with a nonland permanent")
+    void cannotCastBySacrificingNonlandPermanent() {
+        List<Card> sacrificeCards = List.of(new Plains(), new Island(), new Swamp(), new Mountain(),
+                new GrizzlyBears());
+        List<UUID> sacrificeIds = addLandsToBattlefield(sacrificeCards);
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("matching");
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactlyElementsOf(sacrificeCards);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -83,6 +121,34 @@ class GaeasBalanceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
                 .containsExactlyInAnyOrderElementsOf(searchedLands);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+    }
+
+    @Test
+    @DisplayName("Searches nonbasic lands with basic land types")
+    void searchesNonbasicLandWithBasicLandType() {
+        List<Card> sacrificedCards = List.of(new Plains(), new Island(), new Swamp(), new Mountain(), new Forest());
+        List<UUID> sacrificeIds = addLandsToBattlefield(sacrificedCards);
+        Card taiga = new Taiga();
+        List<Card> searchedLands = List.of(new Plains(), new Island(), new Swamp(), taiga, new Forest());
+        harness.setLibrary(player1, new ArrayList<>(searchedLands));
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < searchedLands.size(); i++) {
+            PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search).isNotNull();
+            assertThat(search.params().cards()).containsExactly(searchedLands.get(i));
+            harness.getGameService().handleInteractionAnswer(
+                    gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactlyInAnyOrderElementsOf(searchedLands);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private List<UUID> addLandsToBattlefield(List<Card> lands) {

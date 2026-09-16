@@ -73,8 +73,7 @@ class VoiceOfReasonTest extends BaseCardTest {
         addCreatureReady(player1, new VoiceOfReason());
         addCreatureReady(player2, new ThievingMagpie());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -87,8 +86,7 @@ class VoiceOfReasonTest extends BaseCardTest {
         addCreatureReady(player1, new VoiceOfReason());
         Permanent blocker = addCreatureReady(player2, new VoiceOfDuty());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -100,8 +98,7 @@ class VoiceOfReasonTest extends BaseCardTest {
         addCreatureReady(player1, new ThievingMagpie());
         Permanent voice = addCreatureReady(player2, new VoiceOfReason());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "22")
+@CardRegistration(set = "OPCA", collectorNumber = "43")
 public class KharashaFoothills extends Card {
 
     public KharashaFoothills() {

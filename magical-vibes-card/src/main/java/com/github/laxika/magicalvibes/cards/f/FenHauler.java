@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "58")
+@CardRegistration(set = "KLR", collectorNumber = "85")
 public class FenHauler extends Card {
 
     public FenHauler() {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,14 +12,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OvergrownEstate.class, Forest.class})
+@CardUsed({OvergrownEstate.class, CavesOfKoilos.class})
 class OvergrownEstateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a land gains 3 life")
     void sacrificeLandGainsThreeLife() {
         harness.addToBattlefield(player1, new OvergrownEstate());
-        harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
 
         prepareAbilityActivation();
         harness.setLife(player1, 20);
@@ -27,15 +27,15 @@ class OvergrownEstateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Caves of Koilos");
     }
 
     @Test
     @DisplayName("With multiple lands the controller chooses which land to sacrifice")
     void promptsForLandChoice() {
         harness.addToBattlefield(player1, new OvergrownEstate());
-        harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
 
         prepareAbilityActivation();
         harness.setLife(player1, 20);
@@ -57,6 +57,19 @@ class OvergrownEstateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's land")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new OvergrownEstate());
+        harness.addToBattlefield(player2, new CavesOfKoilos());
+
+        prepareAbilityActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Caves of Koilos");
     }
 
     private void prepareAbilityActivation() {

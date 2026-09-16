@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "90")
+@CardRegistration(set = "GN3", collectorNumber = "43")
 public class BloodsoakedAltar extends Card {
 
     public BloodsoakedAltar() {

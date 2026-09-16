@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "190")
+@CardRegistration(set = "KLR", collectorNumber = "215")
 public class WhirlerVirtuoso extends Card {
 
     public WhirlerVirtuoso() {

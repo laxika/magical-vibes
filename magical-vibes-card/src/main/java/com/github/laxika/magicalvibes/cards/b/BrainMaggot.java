@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "62")
+@CardRegistration(set = "HA2", collectorNumber = "7")
 public class BrainMaggot extends Card {
 
     public BrainMaggot() {

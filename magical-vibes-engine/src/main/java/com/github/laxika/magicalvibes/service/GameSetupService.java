@@ -190,7 +190,6 @@ public class GameSetupService {
             }
 
             Collections.shuffle(deck, random);
-            gameData.playerDecks.put(playerId, deck);
             gameData.playerSideboards.put(playerId, sideboard);
             gameData.mulliganCounts.put(playerId, 0);
             gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
@@ -201,6 +200,7 @@ public class GameSetupService {
 
             List<Card> hand = new ArrayList<>(deck.subList(0, 7));
             deck.subList(0, 7).clear();
+            gameData.playerDecks.put(playerId, deck);
             gameData.playerHands.put(playerId, hand);
             gameData.playerMulliganDecisionIds.put(playerId, UUID.randomUUID());
 

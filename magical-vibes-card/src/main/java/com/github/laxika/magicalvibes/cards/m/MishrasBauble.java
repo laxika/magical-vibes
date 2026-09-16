@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "138")
+@CardRegistration(set = "IMA", collectorNumber = "221")
+@CardRegistration(set = "2XM", collectorNumber = "274")
+@CardRegistration(set = "BRR", collectorNumber = "34")
 public class MishrasBauble extends Card {
 
     public MishrasBauble() {

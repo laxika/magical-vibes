@@ -26,9 +26,7 @@ class BogRaidersTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

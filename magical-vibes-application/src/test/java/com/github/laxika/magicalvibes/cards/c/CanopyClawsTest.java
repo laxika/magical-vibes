@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CanopyClaws.class, SuntailHawk.class, FountainOfYouth.class})
+@CardUsed({CanopyClaws.class, BenevolentBodyguard.class, SuntailHawk.class, KrosanVerge.class})
 class CanopyClawsTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class CanopyClawsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent hawk = findPermanent(player2, "Suntail Hawk");
         assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
@@ -42,6 +42,32 @@ class CanopyClawsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.setHand(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        UUID targetId = harness.getPermanentId(player1, "Suntail Hawk");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        assertThat(findPermanent(player1, "Suntail Hawk").hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target a creature without flying")
+    void canTargetCreatureWithoutFlying() {
+        harness.addToBattlefield(player2, new BenevolentBodyguard());
+        harness.setHand(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Benevolent Bodyguard");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        assertThat(findPermanent(player2, "Benevolent Bodyguard").hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Flashback removes flying and exiles Canopy Claws")
     void flashbackRemovesFlyingAndExilesSpell() {
         harness.addToBattlefield(player2, new SuntailHawk());
@@ -49,8 +75,7 @@ class CanopyClawsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         assertThat(findPermanent(player2, "Suntail Hawk").hasKeyword(Keyword.FLYING)).isFalse();
         harness.assertNotInGraveyard(player1, "Canopy Claws");
@@ -61,11 +86,11 @@ class CanopyClawsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new KrosanVerge());
         harness.setHand(player1, List.of(new CanopyClaws()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player2, "Krosan Verge");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }

@@ -138,9 +138,7 @@ class DazzlingBeautyTest extends BaseCardTest {
         Permanent blockedAttacker = addCreatureReady(player1, new FemerefScouts());
         addCreatureReady(player1, new FemerefScouts());
         addCreatureReady(player2, new FemerefScouts());
-        declareAttackers(List.of(0, 1));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
         giveSpell();
