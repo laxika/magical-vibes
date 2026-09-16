@@ -21,8 +21,7 @@ class GustcloakSaviorTest extends BaseCardTest {
         Permanent savior = addSavior();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -40,8 +39,7 @@ class GustcloakSaviorTest extends BaseCardTest {
         Permanent savior = addSavior();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -60,8 +58,7 @@ class GustcloakSaviorTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2);
         Permanent secondBlocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 1),
                 new BlockerAssignment(1, 1)));

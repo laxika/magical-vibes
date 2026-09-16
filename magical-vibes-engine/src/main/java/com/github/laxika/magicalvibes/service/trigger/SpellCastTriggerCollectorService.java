@@ -408,14 +408,16 @@ public class SpellCastTriggerCollectorService {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         CounterUnlessPaysEffect counterUnlessPays = new CounterUnlessPaysEffect(
                 new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER));
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(counterUnlessPays)),
                 sc.spellCard().getId(),
-                Zone.STACK));
+                Zone.STACK, match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         return true;
     }
 

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
+import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -13,6 +15,11 @@ import java.util.*;
  * Groups the ~15 local variables previously scattered throughout resolveCombatDamage().
  */
 class CombatDamageState {
+
+    /** Shared redirect shields present at the start of this simultaneous damage event. */
+    List<SourcePermanentAndControllerNextDamageRedirectShield> sharedRedirectShields = List.of();
+
+    List<SourceNextDamageToAnyTargetShield> sourceDamageShields = List.of();
 
     // Player damage accumulation
     int damageToDefendingPlayer;

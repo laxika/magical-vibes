@@ -3850,7 +3850,9 @@ public class SpellCastingService {
             }
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
                     gameData, card, targetIds, playerId, effectiveXValue, true);
-        } else if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
+        } else if (card.getMaxTargets() > 0 && !multipleSpellTargets
+                && (!targetIds.isEmpty() || (targetId == null
+                && card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE))) {
             if (!dividedDamageTargetGroupSizes.isEmpty()) {
                 targetLegalityService.validateMultiSpellTargets(
                         gameData, card, targetIds, playerId, effectiveXValue, kicked,
@@ -4792,7 +4794,7 @@ public class SpellCastingService {
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                 c, shuffleOwnGraveyardCardsEffect.filter(), card.getId()))
                         .count();
-                if (matchingCount > 0) {
+                if (matchingCount > 0 && gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
                     gameData.graveyardTargetOperation.spellCounterTargetId = spellCounterTargetId;
                     gameData.graveyardTargetOperation.permanentTargetIds = permanentTargetIds;
                     if (shuffleOwnGraveyardCardsEffect.maxTargets()
@@ -5311,34 +5313,8 @@ public class SpellCastingService {
                     // "Prevent the next N damage ... to any number of targets, divided as you choose"
                     // (Remedy). Per-target shield amounts ride on damageAssignments; each target needs
                     // at least 1, so N is the effective cap on the number of targets.
-                    int expectedPrevention = amountEvaluationService.evaluate(gameData,
-                            preventDivided.amount(),
-                            com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
-                    int totalPrevention = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                    if (!damageAssignments.isEmpty() && totalPrevention != expectedPrevention) {
-                        throw new IllegalStateException("Prevention assignments must sum to " + expectedPrevention);
-                    }
-                    if (damageAssignments.size() > expectedPrevention) {
-                        throw new IllegalStateException("Too many targets");
-                    }
-                    PermanentPredicate assignmentRestriction = preventDivided.targetSpec().targetPredicate()
-                            .permanentRestriction().orElseThrow();
-                    FilterContext assignmentContext = new FilterContext(gameData, card.getId(), playerId, null, null);
-                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        if (!gameData.playerIds.contains(assignment.getKey())) {
-                            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                            if (target == null) {
-                                throw new IllegalStateException("Invalid target");
-                            }
-                            if (!predicateEvaluationService.matchesPermanentPredicate(
-                                    target, assignmentRestriction, assignmentContext)) {
-                                throw new IllegalStateException("Target must be a creature, planeswalker, battle, or player");
-                            }
-                        }
-                        if (assignment.getValue() <= 0) {
-                            throw new IllegalStateException("Each prevention assignment must be positive");
-                        }
-                    }
+                    validateDividedPreventionAssignments(gameData, card, playerId,
+                            damageAssignments, preventDivided);
                 } else {
                     DealDividedDamageEffect dividedEffect =
                             findChosenDividedDamageEffectForCast(
@@ -7857,6 +7833,14 @@ public class SpellCastingService {
                 ? additionalCosts.forageOrPayManaCost()
                 : grantedFilterPermission.map(GameData.GraveyardCastFilterPermission::additionalCost)
                         .orElse(null);
+        PreventDividedDamageEffect dividedPreventionEffect = spellEffects.stream()
+                .filter(PreventDividedDamageEffect.class::isInstance)
+                .map(PreventDividedDamageEffect.class::cast).findFirst().orElse(null);
+        if (dividedPreventionEffect != null) {
+            damageAssignments = damageAssignments == null ? Map.of() : damageAssignments;
+            validateDividedPreventionAssignments(gameData, card, playerId,
+                    damageAssignments, dividedPreventionEffect);
+        }
         DealDividedDamageEffect dividedDamageEffect = findChosenDividedDamageEffect(spellEffects);
         if (dividedDamageEffect != null) {
             damageAssignments = damageAssignments == null ? Map.of() : damageAssignments;
@@ -8516,7 +8500,7 @@ public class SpellCastingService {
                     null, Map.of(), Zone.GRAVEYARD,
                     targetId != null ? List.of(targetId) : List.of(), targetIds
             );
-        } else if (dividedDamageEffect != null) {
+        } else if (dividedDamageEffect != null || dividedPreventionEffect != null) {
             stackEntry = new StackEntry(
                     entryType, card, playerId, spellName,
                     spellEffects, effectiveXValue, targetId, damageAssignments
@@ -10697,6 +10681,39 @@ public class SpellCastingService {
                     return target.isXScaled() ? Math.min(xValue, min) : min;
                 })
                 .sum();
+    }
+
+    private void validateDividedPreventionAssignments(GameData gameData, Card card, UUID playerId,
+                                                       Map<UUID, Integer> damageAssignments,
+                                                       PreventDividedDamageEffect preventDivided) {
+        int expectedPrevention = amountEvaluationService.evaluate(gameData,
+                preventDivided.amount(),
+                com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
+        int totalPrevention = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
+        if (!damageAssignments.isEmpty() && totalPrevention != expectedPrevention) {
+            throw new IllegalStateException("Prevention assignments must sum to " + expectedPrevention);
+        }
+        if (damageAssignments.size() > expectedPrevention) {
+            throw new IllegalStateException("Too many targets");
+        }
+        PermanentPredicate assignmentRestriction = preventDivided.targetSpec().targetPredicate()
+                .permanentRestriction().orElseThrow();
+        FilterContext assignmentContext = new FilterContext(gameData, card.getId(), playerId, null, null);
+        for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+            if (!gameData.playerIds.contains(assignment.getKey())) {
+                Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                if (target == null) {
+                    throw new IllegalStateException("Invalid target");
+                }
+                if (!predicateEvaluationService.matchesPermanentPredicate(
+                        target, assignmentRestriction, assignmentContext)) {
+                    throw new IllegalStateException("Target must be a creature, planeswalker, battle, or player");
+                }
+            }
+            if (assignment.getValue() <= 0) {
+                throw new IllegalStateException("Each prevention assignment must be positive");
+            }
+        }
     }
 
     private DealDividedDamageEffect findChosenDividedDamageEffect(List<CardEffect> effects) {

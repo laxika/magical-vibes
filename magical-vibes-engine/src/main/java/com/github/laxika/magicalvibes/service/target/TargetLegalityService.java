@@ -967,7 +967,9 @@ public class TargetLegalityService {
         boolean targetsSomething = abilityEffects.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null
                         && !(effect instanceof ReturnCardFromGraveyardEffect returnEffect
-                        && returnEffect.upTo()))
+                        && returnEffect.upTo())
+                        && !(effect instanceof ExileGraveyardCardsEffect exileEffect
+                        && exileEffect.allowZeroTargets()))
                 && !EffectResolution.needsDamageDistribution(abilityEffects);
         if (targetId == null && targetsSomething) {
             boolean playerOnly = abilityEffects.stream()
@@ -1954,6 +1956,20 @@ public class TargetLegalityService {
         }
 
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+            Set<UUID> targetedControllers = targetIds.stream()
+                    .map(id -> gameQueryService.findPermanentController(gameData, id))
+                    .collect(java.util.stream.Collectors.toSet());
+            for (UUID opponentId : gameData.playerIds) {
+                if (opponentId.equals(controllerId) || targetedControllers.contains(opponentId)) continue;
+                boolean hasLegalTarget = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                        .anyMatch(permanent -> checkSpellTargeting(
+                                gameData, card, permanent.getId(), null, controllerId).isEmpty());
+                if (hasLegalTarget) {
+                    throw new IllegalStateException("Must target a permanent controlled by each opponent if able");
+                }
+            }
+        }
     }
 
     private void validateMultiSpellTargetPosition(GameData gameData, Card card, UUID targetId,

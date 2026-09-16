@@ -869,7 +869,9 @@ public class StepTriggerService {
             try {
             List<CardEffect> upkeepEffects = new ArrayList<>();
             if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
-                upkeepEffects.addAll(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                if (!perm.isFaceDown()) {
+                    upkeepEffects.addAll(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                }
                 upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
                 upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
             }
@@ -4788,6 +4790,7 @@ public class StepTriggerService {
             if (battlefield == null) continue;
 
             for (Permanent perm : battlefield) {
+                if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> endStepEffects = perm.getCard().getEffects(EffectSlot.END_STEP_TRIGGERED);
                 if (endStepEffects == null || endStepEffects.isEmpty()) continue;
 

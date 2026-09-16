@@ -18,6 +18,7 @@ import java.util.List;
 public class RiptideEntrancer extends Card {
 
     public RiptideEntrancer() {
+        addMorph("{U}{U}");
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

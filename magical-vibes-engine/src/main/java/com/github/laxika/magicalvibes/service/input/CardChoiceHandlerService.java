@@ -476,9 +476,7 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
         }
 
-        if (!replacedByBattlefield) {
-            followUp = followUp.withDiscardedCard(card.getId());
-        }
+        followUp = followUp.withDiscardedCard(card.getId());
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
@@ -504,7 +502,7 @@ public class CardChoiceHandlerService {
         if (followUp.targetOpponentsDiscardThenDraw()) {
             gameData.targetOpponentsDiscardThenDraw.selectedDiscards.add(
                     new TargetOpponentsDiscardThenDrawState.SelectedDiscard(
-                            playerId, card.getId(), card.getManaValue(), !replacedByBattlefield));
+                            playerId, card.getId(), card.getManaValue(), true));
         }
         if (followUp.enteringPermanent() != null) {
             gameData.interaction.clearAwaitingInput();

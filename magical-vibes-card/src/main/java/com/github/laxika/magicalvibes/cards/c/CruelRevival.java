@@ -24,14 +24,6 @@ import java.util.List;
 public class CruelRevival extends Card {
 
     public CruelRevival() {
-        // Return up to one target Zombie card from your graveyard to your hand.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.HAND)
-                .filter(new CardSubtypePredicate(CardSubtype.ZOMBIE))
-                .targetGraveyard(true)
-                .upTo(true)
-                .build());
-
         // Destroy target non-Zombie creature. It can't be regenerated.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -41,5 +33,13 @@ public class CruelRevival extends Card {
                 "Target must be a non-Zombie creature"
         ), 1, 1)
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+
+        // Return up to one target Zombie card from your graveyard to your hand.
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .filter(new CardSubtypePredicate(CardSubtype.ZOMBIE))
+                .targetGraveyard(true)
+                .upTo(true)
+                .build());
     }
 }

@@ -689,7 +689,9 @@ public class AttackLegalityService {
                                                          Permanent sourcePermanent,
                                                          CombatAttackRequirementEffect requirement,
                                                          FilterContext context) {
-        if (!requirement.isActive(gameData, sourcePermanent)
+        if (sourcePermanent.isFaceDown()
+                || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)
+                || !requirement.isActive(gameData, sourcePermanent)
                 || !predicateEvaluationService.matchesPermanentPredicate(
                 creature, requirement.affectedPredicate(), context)) {
             return false;

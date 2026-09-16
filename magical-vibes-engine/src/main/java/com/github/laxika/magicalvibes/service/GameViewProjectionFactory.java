@@ -491,6 +491,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = data.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(data, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all

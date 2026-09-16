@@ -25,6 +25,7 @@ class SphereOfLawTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Firebolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
+        harness.forceActivePlayer(player2);
         harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -54,6 +55,7 @@ class SphereOfLawTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Firebolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
+        harness.forceActivePlayer(player2);
         harness.castAndResolveSorcery(player2, 0, player2.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -68,6 +70,7 @@ class SphereOfLawTest extends BaseCardTest {
         harness.setHand(player2, List.of(new ScorchingMissile()));
         harness.addMana(player2, ManaColor.RED, 4);
 
+        harness.forceActivePlayer(player2);
         harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);

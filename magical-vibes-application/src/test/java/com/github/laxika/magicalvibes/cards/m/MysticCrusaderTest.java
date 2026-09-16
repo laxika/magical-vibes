@@ -102,8 +102,7 @@ class MysticCrusaderTest extends BaseCardTest {
         addCreatureReady(player1, new MysticCrusader());
         addCreatureReady(player2, new PardicFirecat());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -118,8 +117,7 @@ class MysticCrusaderTest extends BaseCardTest {
         Permanent crusader = addCreatureReady(player1, new MysticCrusader());
         addCreatureReady(player2, new CabalInquisitor());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 

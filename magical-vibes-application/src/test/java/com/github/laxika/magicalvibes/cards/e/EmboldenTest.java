@@ -107,6 +107,22 @@ class EmboldenTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Embolden"));
     }
 
+    @Test
+    void flashbackRejectsNoncreatureTargetBeforePayingMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new AbandonedOutpost());
+        harness.setGraveyard(player1, List.of(new Embolden()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, Map.of(land.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Embolden");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void prepareEmbolden() {
         harness.setHand(player1, List.of(new Embolden()));
         harness.addMana(player1, ManaColor.WHITE, 1);

@@ -1046,7 +1046,7 @@ public class DamageSupport {
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 Set<CardColor> sourceColors = sourcePermanent == null
-                        ? sourceCardColors(source)
+                        ? gameQueryService.getEffectiveCardColors(gameData, source)
                         : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
                 UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
                 loyaltyDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
@@ -1314,7 +1314,7 @@ public class DamageSupport {
         // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
         rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
         Set<CardColor> sourceColors = sourcePermanent == null
-                ? sourceCardColors(source)
+                ? gameQueryService.getEffectiveCardColors(gameData, source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
         Set<CardColor> damageSourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
         UUID damageSourceId = damageSourceKey(entry, sourcePermanent);

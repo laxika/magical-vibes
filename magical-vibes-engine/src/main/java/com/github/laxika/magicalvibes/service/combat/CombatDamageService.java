@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
@@ -434,17 +436,21 @@ public class CombatDamageService {
             }
         }
 
-        // Process combat damage to player triggers (e.g. Cephalid Constable)
-        processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId,
-                attachedDamageSources);
-        triggerCollectionService.checkEmblemCombatDamageTriggers(
-                gameData, activeId, defenderId, state.combatDamageDealtToPlayer);
-
-        // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
-        processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
-
-        processDelayedCombatDamageTokenTriggers(
-                gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
+        // A blocker can also deal combat damage to the defending player (Butcher Orgg).
+        // Attribute triggers and damage history to each source's controller.
+        Map<UUID, Map<Permanent, Integer>> playerDamageByController = new LinkedHashMap<>();
+        state.combatDamageDealtToPlayer.forEach((source, damage) ->
+                playerDamageByController.computeIfAbsent(
+                        state.combatDamageDealerControllers.getOrDefault(source, activeId),
+                        ignored -> new LinkedHashMap<>()).put(source, damage));
+        playerDamageByController.forEach((controllerId, damageBySource) -> {
+            processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, defenderId,
+                    attachedDamageSources);
+            triggerCollectionService.checkEmblemCombatDamageTriggers(
+                    gameData, controllerId, defenderId, damageBySource);
+            processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
+            processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, defenderId);
+        });
 
         processDelayedCombatDamageLookAtHandAndDrawTriggers(gameData, state);
 
@@ -555,6 +561,7 @@ public class CombatDamageService {
         // Validate total damage
         int totalAssigned = 0;
         for (int assigned : assignments.values()) {
+            if (assigned < 0) throw new IllegalStateException("Assigned damage cannot be negative");
             totalAssigned += assigned;
         }
         if (totalAssigned != totalDamage) {
@@ -748,6 +755,7 @@ public class CombatDamageService {
 
         int totalAssigned = 0;
         for (int assigned : assignments.values()) {
+            if (assigned < 0) throw new IllegalStateException("Assigned damage cannot be negative");
             totalAssigned += assigned;
         }
         if (totalAssigned != totalDamage) {
@@ -761,6 +769,19 @@ public class CombatDamageService {
             if (p1.deadAttackerIndices.contains(bEntry.getKey())) continue;
             if (bEntry.getValue().contains(blockerIndex)) {
                 validTargetIds.add(atkBf.get(bEntry.getKey()).getId());
+            }
+        }
+        if (assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, blk)) {
+            validTargetIds.add(defenderId);
+            defBf.stream().filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .map(Permanent::getId).forEach(validTargetIds::add);
+            boolean usesAlternative = assignments.entrySet().stream()
+                    .anyMatch(assignment -> assignment.getValue() > 0
+                            && (assignment.getKey().equals(defenderId)
+                            || defBf.stream().anyMatch(permanent -> permanent.getId().equals(assignment.getKey()))));
+            if (usesAlternative && assignments.entrySet().stream().anyMatch(assignment -> assignment.getValue() > 0
+                    && atkBf.stream().anyMatch(permanent -> permanent.getId().equals(assignment.getKey())))) {
+                throw new IllegalStateException("Cannot combine normal and alternative combat damage assignments");
             }
         }
         for (UUID targetId : assignments.keySet()) {
@@ -812,6 +833,8 @@ public class CombatDamageService {
                                      List<Permanent> atkBf, List<Permanent> defBf,
                                      UUID activeId, UUID defenderId,
                                      Permanent redirectTarget, boolean isFirstStrikePhase) {
+        state.sharedRedirectShields = List.copyOf(gameData.sourcePermanentAndControllerNextDamageRedirectShields);
+        state.sourceDamageShields = List.copyOf(gameData.sourceNextDamageToAnyTargetShields);
         captureCombatDamageBaselines(gameData, state, atkBf, defBf);
         // CR 510.4: all combat damage in this step is dealt simultaneously, so every value used
         // to assign and deal it (P/T, combat keywords, protection, prevention) comes from one
@@ -921,6 +944,60 @@ public class CombatDamageService {
             }
         }
 
+        for (var assignmentEntry : gameData.combatDamageBlockerAssignments.entrySet()) {
+            int blockerIndex = assignmentEntry.getKey();
+            Permanent blocker = defBf.get(blockerIndex);
+            CombatantStats stats = snap.defenderStats().get(blockerIndex);
+            if (!assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, blocker)
+                    || stats == null || !stats.participatesInDamagePhase(isFirstStrikePhase)
+                    || stats.preventedFromDealingCombatDamage()
+                    || (!isFirstStrikePhase && state.deadDefenderIndices.contains(blockerIndex))) continue;
+            Map<UUID, Integer> assignments = assignmentEntry.getValue();
+            int playerDamage = gameQueryService.applyCombatDamageMultiplier(
+                    gameData, assignments.getOrDefault(defenderId, 0), blocker, null);
+            if (playerDamage > 0 && !isCombatDamagePreventedByGlobalEffect(gameData, blocker, null)) {
+                accumulatePlayerDamageToPlayer(gameData, blocker, stats, playerDamage, defenderId, null, state, false);
+            }
+            for (int targetIndex = 0; targetIndex < defBf.size(); targetIndex++) {
+                Permanent target = defBf.get(targetIndex);
+                int damage = gameQueryService.applyCombatDamageMultiplier(
+                        gameData, assignments.getOrDefault(target.getId(), 0), blocker, target);
+                if (damage <= 0 || (damagePreventableFrom(gameData, snap.damagePreventable(), blocker)
+                        && gameQueryService.hasProtectionFromDamageSource(gameData, target, blocker))) continue;
+                if (!applyCombatCreatureDamage(gameData, state, blocker, stats, target, targetIndex, damage,
+                        state.defDamageTaken, state.unpreventableDefDamageTaken,
+                        state.deathtouchDamagedDefenderIndices, state.defDamageTakenBySource)) {
+                    state.combatDamageDealt.merge(blocker, damage, Integer::sum);
+                    recordCombatDamageToCreature(gameData, state, blocker, defenderId, target, damage);
+                }
+            }
+        }
+
+    }
+
+    // Every original combat assignment belongs to the same damage event. Reuse its shields for
+    // those assignments only; redirected damage still sees a consumed shield, preventing loops.
+    private void restoreSharedRedirectForCombatChunk(GameData gameData, CombatDamageState state,
+                                                     UUID targetId, boolean playerTarget) {
+        for (SourcePermanentAndControllerNextDamageRedirectShield shield : state.sharedRedirectShields.reversed()) {
+            UUID protectedId = playerTarget ? shield.protectedPlayerId() : shield.protectedPermanentId();
+            if (targetId.equals(protectedId)
+                    && !gameData.sourcePermanentAndControllerNextDamageRedirectShields.contains(shield)) {
+                gameData.sourcePermanentAndControllerNextDamageRedirectShields.addFirst(shield);
+            }
+        }
+    }
+
+    private void restoreSourceShieldForCombatChunk(GameData gameData, CombatDamageState state,
+                                                    UUID sourceId, UUID recipientId, boolean playerTarget) {
+        for (SourceNextDamageToAnyTargetShield shield : state.sourceDamageShields.reversed()) {
+            if (sourceId.equals(shield.sourceId())
+                    && (shield.recipientId() == null || recipientId.equals(shield.recipientId()))
+                    && (!shield.playersOnly() || playerTarget)
+                    && !gameData.sourceNextDamageToAnyTargetShields.contains(shield)) {
+                gameData.sourceNextDamageToAnyTargetShields.addFirst(shield);
+            }
+        }
     }
 
     private Permanent findCombatDamageRedirectTarget(GameData gameData, UUID defenderId) {
@@ -3061,6 +3138,9 @@ public class CombatDamageService {
         boolean lichReplaced = damageSupport.applyNefariousLichReplacement(gameData, defenderId,
                 state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer) > 0;
         if (lichReplaced) {
+            state.combatDamageDealtToPlayer.forEach((source, amount) ->
+                    state.combatDamageDealt.computeIfPresent(source, (ignored, total) -> total - amount));
+            state.combatDamageDealtToPlayer.replaceAll((source, amount) -> 0);
             state.damageToDefendingPlayer = 0;
             state.poisonDamageToDefendingPlayer = 0;
         } else if (damageSupport.applyCrumblingSanctuaryReplacement(gameData, defenderId,
@@ -3471,6 +3551,7 @@ public class CombatDamageService {
             damage = damagePreventionService.applyCreatureRedirectShields(gameData, pw.getId(), atk.getId(), damage);
             processSourceRedirectDamage(gameData);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
+            if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, atk.getId(), pw.getId(), false);
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
             processEyeForAnEyeReflections(gameData);
             if (damagePreventionService.isColorDamagePreventedForTarget(
@@ -3674,6 +3755,7 @@ public class CombatDamageService {
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(
                     gameData, defenderId, null, atk.getId(), damage, true);
             processSourceRedirectDamage(gameData);
+            if (damage > 0) restoreSharedRedirectForCombatChunk(gameData, state, defenderId, true);
             damage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
                     gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
@@ -3713,6 +3795,7 @@ public class CombatDamageService {
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(
                         gameData, defenderId, atk.getId(), damage, true, null, sourceUnblocked);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
+                if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, atk.getId(), defenderId, true);
                 damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, defenderId, true);
                 processEyeForAnEyeReflections(gameData);
                 damage = damagePreventionService.applyChannelHarmPrevention(
@@ -3903,6 +3986,7 @@ public class CombatDamageService {
                 gameData, target, source.getId(), damage);
         processSourceRedirectDamage(gameData);
         if (damage <= 0) return;
+        restoreSharedRedirectForCombatChunk(gameData, state, target.getId(), false);
         damage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
                 gameData, target.getId(), source.getId(), damage);
         processSourceRedirectDamage(gameData);
@@ -3928,6 +4012,7 @@ public class CombatDamageService {
         damage = damagePreventionService.applyTargetSourcePreventionShield(
                 gameData, target.getId(), source.getId(), damage, true);
         // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
+        if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, source.getId(), target.getId(), false);
         damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage, target.getId(), true);
         processEyeForAnEyeReflections(gameData);
         // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
@@ -4192,8 +4277,9 @@ public class CombatDamageService {
             // defending player.
             List<Integer> blockers = new ArrayList<>();
             for (var countEntry : livingAttackersPerBlocker.entrySet()) {
-                if (countEntry.getValue() < 2) continue;
                 int blkIdx = countEntry.getKey();
+                if (countEntry.getValue() < 2
+                        && !assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, defBf.get(blkIdx))) continue;
                 if (state.deadDefenderIndices.contains(blkIdx)) continue;
                 Permanent blk = defBf.get(blkIdx);
                 boolean blkFirstStrike = gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE);
@@ -4504,6 +4590,16 @@ public class CombatDamageService {
                     atk.getId(), atk.getCard().getName(),
                     gameQueryService.getEffectiveToughness(gameData, atk),
                     atk.getMarkedDamage() + p1.atkDamageTaken.getOrDefault(atkIdx, 0), false));
+        }
+
+        if (assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, blk)) {
+            domainTargets.add(new CombatDamageTarget(defenderId, gameData.playerIdToName.get(defenderId), 0, 0, true));
+            for (Permanent permanent : defBf) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    domainTargets.add(new CombatDamageTarget(permanent.getId(), permanent.getCard().getName(),
+                            gameQueryService.getEffectiveToughness(gameData, permanent), permanent.getMarkedDamage(), false));
+                }
+            }
         }
 
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, blk);

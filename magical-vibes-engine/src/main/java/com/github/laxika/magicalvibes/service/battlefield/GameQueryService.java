@@ -4754,6 +4754,7 @@ public class GameQueryService {
         }
         AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (target.isFaceDown()) continue;
             if (effect instanceof GraveyardStaticEffect) {
                 continue;
             }
@@ -8914,7 +8915,7 @@ public class GameQueryService {
     public boolean hasActiveStaticEffect(GameData gameData, Permanent source,
                                          Class<? extends CardEffect> effectType) {
         UUID controllerId = findPermanentController(gameData, source.getId());
-        if (controllerId == null || source.isStaticEffectSuppressed(effectType)
+        if (controllerId == null || source.isFaceDown() || source.isStaticEffectSuppressed(effectType)
                 || hasLostPrintedAbilities(gameData, source)) return false;
         return source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(effect -> !source.isStaticEffectSuppressed(effect.getClass()))

@@ -651,7 +651,7 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-            if (sourceZone == Zone.LIBRARY && !suppressLibraryMillTriggers) {
+            if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
             }
         }

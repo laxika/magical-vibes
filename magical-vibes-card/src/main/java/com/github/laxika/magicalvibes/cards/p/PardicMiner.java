@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -16,7 +19,8 @@ public class PardicMiner extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new TargetPlayerCantPlayLandsThisTurnEffect()),
-                "Sacrifice this creature: Target player can't play lands this turn."
+                "Sacrifice this creature: Target player can't play lands this turn.",
+                new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player")
         ));
     }
 }
