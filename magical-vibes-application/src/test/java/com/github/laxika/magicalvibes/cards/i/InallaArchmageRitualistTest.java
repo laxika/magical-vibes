@@ -71,18 +71,15 @@ class InallaArchmageRitualistTest extends BaseCardTest {
             addReady(player1, new FugitiveWizard());
         }
 
-        harness.setLife(player2, 20);
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(inalla), 0,
-                null, player2.getId());
-
         List<Permanent> wizards = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.WIZARD))
                 .filter(permanent -> !permanent.isTapped())
                 .limit(5)
                 .toList();
-        for (Permanent wizard : wizards) {
-            harness.handlePermanentChosen(player1, wizard.getId());
-        }
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(inalla), 0,
+                null, player2.getId());
+        // With exactly five eligible Wizards, the engine pays the tap cost automatically.
         harness.passBothPriorities();
 
         assertThat(wizards).hasSize(5);
