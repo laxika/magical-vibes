@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "149")
+@CardRegistration(set = "MH1", collectorNumber = "98")
 public class NetherSpirit extends Card {
 
     public NetherSpirit() {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,18 +13,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SymbioticElf.class, WrathOfGod.class})
+@CardUsed({SymbioticElf.class, SolarBlast.class})
 class SymbioticElfTest extends BaseCardTest {
 
     @Test
     void createsTwoGreenInsectsWhenItDies() {
         harness.addToBattlefield(player1, new SymbioticElf());
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.setHand(player2, List.of(new SolarBlast()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
 
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Symbiotic Elf"));
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
 

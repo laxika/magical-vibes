@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "GK1", collectorNumber = "90")
 @CardRegistration(set = "2X2", collectorNumber = "243")
 @CardRegistration(set = "STA", collectorNumber = "62")
+@CardRegistration(set = "SLC", collectorNumber = "2005")
+@CardRegistration(set = "RVR", collectorNumber = "197")
 public class LightningHelix extends Card {
 
     public LightningHelix() {

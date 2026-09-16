@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Persuasion.class, AuraGraft.class, Demystify.class, FountainOfYouth.class, GrizzlyBears.class})
 class PersuasionTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -34,7 +37,6 @@ class PersuasionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Persuasion");
         assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
@@ -44,8 +46,9 @@ class PersuasionTest extends BaseCardTest {
     @DisplayName("Resolving Persuasion steals opponent's creature")
     void resolvingStealsCreature() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Persuasion persuasion = new Persuasion();
 
-        harness.setHand(player1, List.of(new Persuasion()));
+        harness.setHand(player1, List.of(persuasion));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castEnchantment(player1, 0, creature.getId());
@@ -59,7 +62,7 @@ class PersuasionTest extends BaseCardTest {
 
         // Persuasion aura should be on player1's battlefield attached to the creature
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Persuasion")
+                .anyMatch(p -> p.getCard() == persuasion
                         && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
 
@@ -74,8 +77,9 @@ class PersuasionTest extends BaseCardTest {
     @DisplayName("Persuasion fizzles if target creature is no longer on the battlefield")
     void fizzlesIfTargetGone() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Persuasion persuasion = new Persuasion();
 
-        harness.setHand(player1, List.of(new Persuasion()));
+        harness.setHand(player1, List.of(persuasion));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castEnchantment(player1, 0, creature.getId());
@@ -86,15 +90,16 @@ class PersuasionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Persuasion should be in graveyard
-        harness.assertInGraveyard(player1, "Persuasion");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(persuasion);
     }
 
     @Test
     @DisplayName("Creature returns to owner when Persuasion is destroyed")
     void creatureReturnsWhenPersuasionDestroyed() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Persuasion persuasion = new Persuasion();
 
-        harness.setHand(player1, List.of(new Persuasion()));
+        harness.setHand(player1, List.of(persuasion));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         // Player1 casts Persuasion, resolve it
@@ -106,7 +111,10 @@ class PersuasionTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
         // Find the Persuasion aura permanent
-        Permanent persuasionPerm = findPermanent(player1, "Persuasion");
+        Permanent persuasionPerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() == persuasion)
+                .findFirst()
+                .orElseThrow();
 
         // Set up for Demystify: force step to a main phase, give player2 priority
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -129,13 +137,44 @@ class PersuasionTest extends BaseCardTest {
         assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
     }
 
+    @Test
+    @DisplayName("Control of the enchanted creature follows the Aura's controller")
+    void controlFollowsAuraController() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Persuasion persuasion = new Persuasion();
+
+        harness.setHand(player1, List.of(persuasion));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent persuasionPermanent = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() == persuasion)
+                .findFirst()
+                .orElseThrow();
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new AuraGraft()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, persuasionPermanent.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(persuasionPermanent);
+        assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
+    }
+
     // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Can target a creature with Persuasion")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Persuasion()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
@@ -148,11 +187,10 @@ class PersuasionTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent with Persuasion")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        FountainOfYouth fountain = new FountainOfYouth();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, fountain);
         harness.setHand(player1, List.of(new Persuasion()));
         harness.addMana(player1, ManaColor.BLUE, 5);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

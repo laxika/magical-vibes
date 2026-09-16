@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "63")
+@CardRegistration(set = "RVR", collectorNumber = "67")
 public class BladeJuggler extends Card {
 
     public BladeJuggler() {

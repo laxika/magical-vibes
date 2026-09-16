@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "233")
 @CardRegistration(set = "SOI", collectorNumber = "255")
+@CardRegistration(set = "SIR", collectorNumber = "250")
 public class ExplosiveApparatus extends Card {
 
     public ExplosiveApparatus() {

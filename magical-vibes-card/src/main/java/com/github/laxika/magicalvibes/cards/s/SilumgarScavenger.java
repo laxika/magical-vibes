@@ -10,15 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
+@CardRegistration(set = "MH1", collectorNumber = "107")
 @CardRegistration(set = "2XM", collectorNumber = "105")
 public class SilumgarScavenger extends Card {
 
     public SilumgarScavenger() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new PutCountersOnSourceEffect(1, 1, 1));
-        addEffect(EffectSlot.ON_EXPLOIT,
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
+        addEffect(EffectSlot.ON_EXPLOIT, new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

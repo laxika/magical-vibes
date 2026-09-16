@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "INR", collectorNumber = "271")
 @CardRegistration(set = "EMN", collectorNumber = "200")
+@CardRegistration(set = "SIR", collectorNumber = "259")
 public class StitchersGraft extends Card {
 
     public StitchersGraft() {

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SilentSpecter.class, GrizzlyBears.class})
+@CardUsed({SilentSpecter.class, ElvishWarrior.class, GoblinSharpshooter.class})
 class SilentSpecterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage makes the damaged player discard two chosen cards")
     void combatDamageMakesDamagedPlayerDiscardTwoCards() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
-        Permanent specter = addReadyCreature(player1, new SilentSpecter());
+        harness.setHand(player2, new ArrayList<>(List.of(
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior())));
+        Permanent specter = addCreatureReady(player1, new SilentSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -44,11 +45,11 @@ class SilentSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("A blocked Silent Specter does not make the defending player discard")
     void blockedSpecterDoesNotTrigger() {
-        List<Card> hand = new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        List<Card> hand = new ArrayList<>(List.of(new ElvishWarrior(), new ElvishWarrior()));
         harness.setHand(player2, hand);
-        Permanent specter = addReadyCreature(player1, new SilentSpecter());
+        Permanent specter = addCreatureReady(player1, new SilentSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -62,13 +63,11 @@ class SilentSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage does not trigger Silent Specter's discard ability")
     void noncombatDamageDoesNotTrigger() {
-        SilentSpecter card = new SilentSpecter();
-        card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
-        Permanent specter = addReadyCreature(player1, card);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        addCreatureReady(player1, new SilentSpecter());
+        Permanent sharpshooter = addCreatureReady(player1, new GoblinSharpshooter());
+        harness.setHand(player2, new ArrayList<>(List.of(new ElvishWarrior(), new ElvishWarrior())));
 
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sharpshooter),
                 null, player2.getId());
         harness.passBothPriorities();
 
@@ -76,11 +75,25 @@ class SilentSpecterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player,
-                                       com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Morph casts Silent Specter face down and turns it face up for {3}{B}{B}")
+    void morphsFaceDownAndTurnsFaceUpForMorphCost() {
+        harness.setHand(player1, List.of(new SilentSpecter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent specter = findPermanent(player1, "Silent Specter");
+        assertThat(specter.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter));
+        harness.passBothPriorities();
+
+        assertThat(specter.isFaceDown()).isFalse();
     }
 }

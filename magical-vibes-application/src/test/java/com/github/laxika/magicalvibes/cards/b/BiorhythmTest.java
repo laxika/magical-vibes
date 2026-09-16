@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.d.DaruLancer;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({Biorhythm.class, DaruLancer.class, Forest.class})
 class BiorhythmTest extends BaseCardTest {
 
     @Test
@@ -18,18 +18,17 @@ class BiorhythmTest extends BaseCardTest {
     void setsLifeToCreatureCount() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player2, new DaruLancer());
         harness.setHand(player1, List.of(new Biorhythm()));
         harness.addMana(player1, ManaColor.GREEN, 8);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(2);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(1);
+        harness.assertLife(player1, 2);
+        harness.assertLife(player2, 1);
     }
 
     @Test
@@ -37,15 +36,32 @@ class BiorhythmTest extends BaseCardTest {
     void setsLifeToZeroWithNoCreatures() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DaruLancer());
         harness.setHand(player1, List.of(new Biorhythm()));
         harness.addMana(player1, ManaColor.GREEN, 8);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 0);
+    }
+
+    @Test
+    @DisplayName("Does not count noncreature permanents")
+    void ignoresNoncreaturePermanents() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Biorhythm()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 0);
     }
 }

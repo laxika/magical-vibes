@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PleaForPowerEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "87")
+@CardRegistration(set = "GN3", collectorNumber = "33")
 public class PleaForPower extends Card {
 
     public PleaForPower() {

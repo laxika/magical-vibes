@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "94")
+@CardRegistration(set = "RVR", collectorNumber = "105")
 public class BurningTreeVandal extends Card {
 
     public BurningTreeVandal() {

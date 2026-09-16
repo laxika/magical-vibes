@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "162")
+@CardRegistration(set = "SIR", collectorNumber = "204")
 public class IshkanahGrafwidow extends Card {
 
     public IshkanahGrafwidow() {

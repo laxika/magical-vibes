@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "82")
+@CardRegistration(set = "DMR", collectorNumber = "172")
 public class PenumbraBobcat extends Card {
 
     public PenumbraBobcat() {

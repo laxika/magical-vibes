@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOtherSpellsAndCounterAbi
 @CardRegistration(set = "INR", collectorNumber = "88")
 @CardRegistration(set = "INR", collectorNumber = "368")
 @CardRegistration(set = "EMN", collectorNumber = "75")
+@CardRegistration(set = "SIR", collectorNumber = "92")
 public class SummaryDismissal extends Card {
 
     public SummaryDismissal() {

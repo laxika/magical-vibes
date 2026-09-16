@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "197")
+@CardRegistration(set = "RVR", collectorNumber = "213")
 public class RakdosFirewheeler extends Card {
 
     public RakdosFirewheeler() {

@@ -1,22 +1,19 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.n.NantukoDisciple;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MagmaVein.class, AvenFlock.class, Forest.class, NantukoDisciple.class})
 class MagmaVeinTest extends BaseCardTest {
 
     @Test
@@ -24,47 +21,45 @@ class MagmaVeinTest extends BaseCardTest {
     void sacrificingLandDealsDamageOnlyToCreaturesWithoutFlying() {
         harness.addToBattlefield(player1, new MagmaVein());
         harness.addToBattlefield(player1, new Forest());
-        Permanent groundCreature = addCreature(player2, creature("Ground creature", false));
-        Permanent flyingCreature = addCreature(player2, creature("Flying creature", true));
+        Permanent ownGroundCreature = addCreatureReady(player1, new NantukoDisciple());
+        Permanent ownFlyingCreature = addCreatureReady(player1, new AvenFlock());
+        Permanent opposingGroundCreature = addCreatureReady(player2, new NantukoDisciple());
+        Permanent opposingFlyingCreature = addCreatureReady(player2, new AvenFlock());
+        harness.addToBattlefield(player2, new Forest());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(groundCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(flyingCreature.getMarkedDamage()).isZero();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof Forest);
+        assertThat(ownGroundCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingGroundCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(ownFlyingCreature.getMarkedDamage()).isZero();
+        assertThat(opposingFlyingCreature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Magma Vein");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
-    @DisplayName("Magma Vein cannot be activated without a land to sacrifice")
-    void cannotActivateWithoutLand() {
+    @DisplayName("Magma Vein cannot be activated when only the opponent controls a land")
+    void cannotActivateWithoutLandToSacrifice() {
         harness.addToBattlefield(player1, new MagmaVein());
+        harness.addToBattlefield(player2, new Forest());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
-    private Permanent addCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Magma Vein cannot be activated without red mana")
+    void cannotActivateWithoutRedMana() {
+        harness.addToBattlefield(player1, new MagmaVein());
+        harness.addToBattlefield(player1, new Forest());
 
-    private static Card creature(String name, boolean flying) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.RED);
-        card.setPower(2);
-        card.setToughness(2);
-        if (flying) {
-            card.setKeywords(Set.of(Keyword.FLYING));
-        }
-        return card;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Standstill.class, DwarvenGrunt.class})
 class StandstillTest extends BaseCardTest {
 
     private List<Card> tenCardLibrary() {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            cards.add(new SuntailHawk());
+            cards.add(new DwarvenGrunt());
         }
         return cards;
     }
@@ -35,8 +36,8 @@ class StandstillTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new DwarvenGrunt()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.castCreature(player2, 0);
@@ -51,10 +52,10 @@ class StandstillTest extends BaseCardTest {
     @DisplayName("The caster's opponents draw, even when the Standstill controller casts the spell")
     void casterOpponentsDraw() {
         harness.addToBattlefield(player1, new Standstill());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new SuntailHawk()));
+        harness.setHand(player1, List.of(new DwarvenGrunt(), new DwarvenGrunt()));
         harness.setLibrary(player2, tenCardLibrary());
         harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         int player1HandBefore = gd.playerHands.get(player1.getId()).size();
         int player2HandBefore = gd.playerHands.get(player2.getId()).size();
@@ -74,8 +75,8 @@ class StandstillTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new DwarvenGrunt()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.castCreature(player2, 0);

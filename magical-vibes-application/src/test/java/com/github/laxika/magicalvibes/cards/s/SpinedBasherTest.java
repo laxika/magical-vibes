@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(SpinedBasher.class)
 class SpinedBasherTest extends BaseCardTest {
@@ -33,5 +34,25 @@ class SpinedBasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(basher.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void turningFaceUpRequiresBlackMana() {
+        harness.setHand(player1, List.of(new SpinedBasher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent basher = findPermanent(player1, "Spined Basher");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        int basherIndex = gd.playerBattlefields.get(player1.getId()).indexOf(basher);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, basherIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(basher.isFaceDown()).isTrue();
     }
 }

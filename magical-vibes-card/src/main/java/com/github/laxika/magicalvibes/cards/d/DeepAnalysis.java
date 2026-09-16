@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "DDH", collectorNumber = "65")
 @CardRegistration(set = "EMA", collectorNumber = "45")
 @CardRegistration(set = "VMA", collectorNumber = "65")
+@CardRegistration(set = "DMR", collectorNumber = "46")
 @CardRegistration(set = "2X2", collectorNumber = "44")
 public class DeepAnalysis extends Card {
 

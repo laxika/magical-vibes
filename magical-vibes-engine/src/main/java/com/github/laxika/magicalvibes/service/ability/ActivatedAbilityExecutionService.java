@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
@@ -698,7 +699,8 @@ public class ActivatedAbilityExecutionService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability);
+        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability,
+                activatedPermanentControllerId);
         snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
         // and its cost and effect don't move cards to or from a library.
@@ -707,6 +709,18 @@ public class ActivatedAbilityExecutionService {
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
 
         if (isManaAbility) {
+            int stackBeforeCopyTriggers = gameData.stack.size();
+            StackEntry abilitySnapshot = createImmediateAbilitySnapshot(
+                    permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
+                    targetZone, targetIds, damageAssignments);
+            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
+                    gameData, playerId, abilitySnapshot, ability, permanent,
+                    preCostActivationTriggers.effects());
+            if (gameData.stack.size() > stackBeforeCopyTriggers) {
+                gameData.pendingManaAbilityTriggers.addAll(
+                        gameData.stack.subList(stackBeforeCopyTriggers, gameData.stack.size()));
+                gameData.stack.subList(stackBeforeCopyTriggers, gameData.stack.size()).clear();
+            }
             // A "pure" mana activation (tap-only cost, only fixed-shape mana output) can be undone
             // by the MTGO-style cancel-casting UI: snapshot the pool around resolution so the exact
             // mana added (incl. Damping Sphere replacement) is recorded. AwardAnyColorManaEffect
@@ -841,6 +855,9 @@ public class ActivatedAbilityExecutionService {
         // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
+        triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
+                gameData, playerId, abilityEntry, ability, permanent,
+                preCostActivationTriggers.effects());
         triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
                 gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
@@ -869,6 +886,46 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
+    private StackEntry createImmediateAbilitySnapshot(Permanent permanent, UUID playerId,
+                                                       ActivatedAbility ability,
+                                                       List<CardEffect> snapshotEffects,
+                                                       int effectiveXValue, UUID effectiveTargetId,
+                                                       Zone targetZone, List<UUID> targetIds,
+                                                       Map<UUID, Integer> damageAssignments) {
+        Zone effectiveTargetZone = targetZone;
+        if (ability.targetsSpellOnStack(targetZone)) {
+            effectiveTargetZone = Zone.STACK;
+        } else if (effectiveTargetZone == Zone.BATTLEFIELD) {
+            effectiveTargetZone = null;
+        }
+        List<UUID> effectiveTargetIds = targetIds != null ? targetIds : List.of();
+        List<UUID> targetCardIds = effectiveTargetZone == Zone.GRAVEYARD
+                ? effectiveTargetIds : List.of();
+        List<UUID> permanentTargetIds = effectiveTargetZone == Zone.GRAVEYARD
+                ? List.of() : effectiveTargetIds;
+        StackEntry snapshot = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                permanent.getCard(),
+                playerId,
+                permanent.getCard().getName() + "'s ability",
+                snapshotEffects,
+                effectiveXValue,
+                effectiveTargetId,
+                permanent.getId(),
+                damageAssignments != null ? damageAssignments : Map.of(),
+                effectiveTargetZone,
+                targetCardIds,
+                permanentTargetIds
+        );
+        snapshot.setTargetFilter(ability.getTargetFilter());
+        if (!ability.getMultiTargetFilters().isEmpty()) {
+            snapshot.setTargetFilters(new ArrayList<>(ability.getMultiTargetFilters()));
+        }
+        snapshot.setMultiTargetConstraint(ability.getMultiTargetConstraint());
+        snapshot.setSourcePermanentSnapshot(new Permanent(permanent));
+        return snapshot;
+    }
+
     private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
                                                           Map<ManaColor, Integer> after) {
         Set<ManaColor> produced = EnumSet.noneOf(ManaColor.class);
@@ -881,7 +938,8 @@ public class ActivatedAbilityExecutionService {
     }
 
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
-                                             Permanent permanent, ActivatedAbility ability) {
+                                             Permanent permanent, ActivatedAbility ability,
+                                             UUID activatedPermanentControllerId) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect printedEffect : abilityEffects) {
             CardEffect effect = TextChangeTransformer.transform(printedEffect,
@@ -909,6 +967,9 @@ public class ActivatedAbilityExecutionService {
                         destroy.counterType(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
+            } else if (effect instanceof SourcePermanentControllerLosesLifeEffect lifeLoss) {
+                snapshotEffects.add(new SourcePermanentControllerLosesLifeEffect(
+                        lifeLoss.amount(), activatedPermanentControllerId));
             } else if (effect instanceof MustBlockSourceEffect) {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
@@ -1396,6 +1457,9 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             permanent, ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
+                    if (isCreatureSource) {
+                        gameData.playerManaPools.get(playerId).addCreatureMana(manaColor, manaMultiplier);
+                    }
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
                     }

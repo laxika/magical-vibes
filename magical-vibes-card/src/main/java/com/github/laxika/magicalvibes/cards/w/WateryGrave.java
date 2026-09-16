@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "RAV", collectorNumber = "286")
 @CardRegistration(set = "EOE", collectorNumber = "261")
 @CardRegistration(set = "EXP", collectorNumber = "7")
+@CardRegistration(set = "RVR", collectorNumber = "291")
+@CardRegistration(set = "RVR", collectorNumber = "301")
 public class WateryGrave extends Card {
 
     public WateryGrave() {

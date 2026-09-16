@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "17")
+@CardRegistration(set = "DMR", collectorNumber = "28")
 public class SpectralLynx extends Card {
 
     public SpectralLynx() {

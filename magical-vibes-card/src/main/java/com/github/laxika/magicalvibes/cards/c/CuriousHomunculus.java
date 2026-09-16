@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "54")
+@CardRegistration(set = "SIR", collectorNumber = "58")
 public class CuriousHomunculus extends Card {
 
     public CuriousHomunculus() {

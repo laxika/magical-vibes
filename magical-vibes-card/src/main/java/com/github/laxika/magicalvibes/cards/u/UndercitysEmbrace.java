@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "89")
+@CardRegistration(set = "RVR", collectorNumber = "96")
 public class UndercitysEmbrace extends Card {
 
     public UndercitysEmbrace() {

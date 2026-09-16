@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToCombatOpponentCon
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "117")
+@CardRegistration(set = "SIR", collectorNumber = "141")
 public class AssembledAlphas extends Card {
 
     public AssembledAlphas() {

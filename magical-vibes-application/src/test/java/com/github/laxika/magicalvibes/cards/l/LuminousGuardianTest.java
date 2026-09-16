@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LuminousGuardian.class, WoodlandDruid.class})
 class LuminousGuardianTest extends BaseCardTest {
 
     @Test
@@ -28,6 +31,22 @@ class LuminousGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Luminous Guardian cannot block two attackers without activating")
+    void cannotBlockTwoAttackersWithoutActivating() {
+        Permanent guardian = addGuardian();
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(guardian);
+        addAttacker();
+        addAttacker();
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIndex, 0),
+                new BlockerAssignment(blockerIndex, 1)
+        ))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Colorless ability lets Luminous Guardian block two attackers")
     void blocksTwoAttackersAfterActivating() {
         Permanent guardian = addGuardian();
@@ -36,13 +55,9 @@ class LuminousGuardianTest extends BaseCardTest {
         addAttacker();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player2, blockerIndex, 1, null, null);
-        harness.passBothPriorities();
+        activate(player2, guardian, 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIndex, 0),
@@ -58,8 +73,7 @@ class LuminousGuardianTest extends BaseCardTest {
         Permanent guardian = addGuardian();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player2, 0, 1, null, null);
-        harness.passBothPriorities();
+        activate(player2, guardian, 1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -68,11 +82,25 @@ class LuminousGuardianTest extends BaseCardTest {
         assertThat(guardian.getAdditionalBlocksUntilEndOfTurn()).isZero();
     }
 
+    @Test
+    @DisplayName("White ability wears off at end of turn")
+    void toughnessBoostExpiresAtEndOfTurn() {
+        Permanent guardian = addGuardian();
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        activate(player2, guardian, 0);
+
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(5);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(4);
+    }
+
     private Permanent addGuardian() {
-        Permanent perm = new Permanent(new LuminousGuardian());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player2, new LuminousGuardian());
     }
 
     private void activate(com.github.laxika.magicalvibes.model.Player player, Permanent guardian, int abilityIndex) {
@@ -82,11 +110,9 @@ class LuminousGuardianTest extends BaseCardTest {
     }
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new WoodlandDruid());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 }

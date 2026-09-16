@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "251")
+@CardRegistration(set = "SIR", collectorNumber = "243")
 public class SorinGrimNemesis extends Card {
 
     public SorinGrimNemesis() {

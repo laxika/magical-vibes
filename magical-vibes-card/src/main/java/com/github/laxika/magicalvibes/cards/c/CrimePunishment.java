@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "150")
+@CardRegistration(set = "OTP", collectorNumber = "39")
+@CardRegistration(set = "OTP", collectorNumber = "75")
 public class CrimePunishment extends Card {
 
     public CrimePunishment() {

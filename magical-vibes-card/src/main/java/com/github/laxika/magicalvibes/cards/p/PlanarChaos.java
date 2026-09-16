@@ -18,6 +18,6 @@ public class PlanarChaos extends Card {
                 new FlipCoinWinEffect(null, new SacrificeSelfEffect()));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null,
-                        List.of(new FlipCoinWinEffect(null, new CounterSpellEffect()))));
+                        List.of(FlipCoinWinEffect.forTriggeringSpellController(null, new CounterSpellEffect()))));
     }
 }

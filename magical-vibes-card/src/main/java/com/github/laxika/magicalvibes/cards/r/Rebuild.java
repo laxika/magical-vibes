@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "40")
+@CardRegistration(set = "MH1", collectorNumber = "66")
 public class Rebuild extends Card {
 
     public Rebuild() {

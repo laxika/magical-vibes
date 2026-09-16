@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "DD2", collectorNumber = "44")
 @CardRegistration(set = "JVC", collectorNumber = "44")
 @CardRegistration(set = "GK2", collectorNumber = "57")
+@CardRegistration(set = "RVR", collectorNumber = "120")
 public class RakdosPitDragon extends Card {
 
     public RakdosPitDragon() {

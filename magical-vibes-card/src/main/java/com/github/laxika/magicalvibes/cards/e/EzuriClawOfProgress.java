@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "211")
+@CardRegistration(set = "MUL", collectorNumber = "38")
+@CardRegistration(set = "MUL", collectorNumber = "103")
+@CardRegistration(set = "MUL", collectorNumber = "168")
 public class EzuriClawOfProgress extends Card {
 
     public EzuriClawOfProgress() {

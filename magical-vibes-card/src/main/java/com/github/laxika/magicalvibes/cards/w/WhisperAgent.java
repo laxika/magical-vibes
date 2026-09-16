@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "220")
+@CardRegistration(set = "RVR", collectorNumber = "238")
 public class WhisperAgent extends Card {
 
     public WhisperAgent() {

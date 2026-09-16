@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "141")
+@CardRegistration(set = "DMR", collectorNumber = "255")
 public class RithsGrove extends Card {
 
     public RithsGrove() {

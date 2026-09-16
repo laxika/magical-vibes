@@ -93,6 +93,25 @@ class AnarchistTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prompt when the targeted sorcery leaves the graveyard before resolution")
+    void targetLeavingGraveyardBeforeResolutionFizzes() {
+        Card sorcery = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(sorcery));
+
+        castAnarchist();
+
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(sorcery);
+        gd.addToExile(player1.getId(), sorcery);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInHand(player1, "Death's Duet");
+        harness.assertNotInGraveyard(player1, "Death's Duet");
+    }
+
+    @Test
     @DisplayName("Chooses a specific sorcery when multiple are in the graveyard")
     void choosesSpecificSorcery() {
         Card firstSorcery = new DeathsDuet();

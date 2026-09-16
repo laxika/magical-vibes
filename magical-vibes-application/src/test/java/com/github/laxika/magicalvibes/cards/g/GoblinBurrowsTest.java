@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinBurrows.class, GoblinPiker.class, GrizzlyBears.class, Forest.class})
+@CardUsed({GoblinBurrows.class, GoblinPiker.class, GrizzlyBears.class})
 class GoblinBurrowsTest extends BaseCardTest {
 
     @Test
@@ -41,6 +40,22 @@ class GoblinBurrowsTest extends BaseCardTest {
         assertThat(goblin.getEffectivePower()).isEqualTo(4);
         assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
         assertThat(burrows.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Goblin Burrows' boost requires one generic and one red mana")
+    void boostRequiresGenericAndRedMana() {
+        Permanent burrows = addReadyBurrows(player1);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        assertThat(burrows.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -77,9 +92,7 @@ class GoblinBurrowsTest extends BaseCardTest {
     }
 
     private Permanent addReadyBurrows(Player player) {
-        Permanent perm = new Permanent(new GoblinBurrows());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        Permanent perm = addCreatureReady(player, new GoblinBurrows());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

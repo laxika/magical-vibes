@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "115")
+@CardRegistration(set = "SIR", collectorNumber = "116")
 public class GrotesqueMutation extends Card {
 
     public GrotesqueMutation() {

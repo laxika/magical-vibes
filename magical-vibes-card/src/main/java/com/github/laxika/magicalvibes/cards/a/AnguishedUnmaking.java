@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "242")
+@CardRegistration(set = "SIR", collectorNumber = "229")
 @CardRegistration(set = "2X2", collectorNumber = "170")
+@CardRegistration(set = "OTP", collectorNumber = "35")
+@CardRegistration(set = "OTP", collectorNumber = "74")
 public class AnguishedUnmaking extends Card {
 
     public AnguishedUnmaking() {

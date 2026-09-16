@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHand
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "94")
+@CardRegistration(set = "RVR", collectorNumber = "84")
 public class MausoleumTurnkey extends Card {
 
     public MausoleumTurnkey() {

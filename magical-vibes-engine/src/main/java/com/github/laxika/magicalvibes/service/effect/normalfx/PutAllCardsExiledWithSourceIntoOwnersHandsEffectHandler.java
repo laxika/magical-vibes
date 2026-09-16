@@ -43,7 +43,9 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
                 .filter(exiled -> sourceId.equals(exiled.sourcePermanentId())
                         && (!returnEffect.onlyControllerOwned()
-                        || entry.getControllerId().equals(exiled.ownerId())))
+                        || entry.getControllerId().equals(exiled.ownerId()))
+                        && (!returnEffect.onlyIntelCounters()
+                        || gameData.exiledCardsWithIntelCounters.contains(exiled.card().getId())))
                 .toList();
 
         int returnedCount = 0;

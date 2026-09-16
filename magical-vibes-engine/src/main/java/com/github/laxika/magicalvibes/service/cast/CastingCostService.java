@@ -1844,7 +1844,8 @@ public class CastingCostService {
         if (costIndex == costs.size()) return true;
         DiscardCardCastingCost cost = costs.get(costIndex);
         for (Card candidate : hand) {
-            if (candidate.getId().equals(sourceCard.getId()) || usedCardIds.contains(candidate.getId())) {
+            if ((sourceCard != null && candidate.getId().equals(sourceCard.getId()))
+                    || usedCardIds.contains(candidate.getId())) {
                 continue;
             }
             if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(
@@ -2324,8 +2325,8 @@ public class CastingCostService {
         if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) {
             return false;
         }
-        var discardCost = graveyardCast.getCost(DiscardCardCastingCost.class);
-        return discardCost.isEmpty() || !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty();
+        return canPayDiscardCosts(gameData, playerId, null,
+                graveyardCast.getCosts(DiscardCardCastingCost.class));
     }
 
     private boolean canPayGraveyardCastAdditionalCosts(GameData gameData, UUID playerId, Card card) {
@@ -2333,9 +2334,15 @@ public class CastingCostService {
         if (graveyardCast.isEmpty()) {
             return true;
         }
+        if (!canPayDiscardCosts(gameData, playerId, card,
+                graveyardCast.get().getCosts(DiscardCardCastingCost.class))) {
+            return false;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         for (CastingCost cost : graveyardCast.get().additionalCosts()) {
-            if (cost instanceof LifeCastingCost lifeCost) {
+            if (cost instanceof DiscardCardCastingCost) {
+                continue;
+            } else if (cost instanceof LifeCastingCost lifeCost) {
                 if (gameData.getLife(playerId) < lifeCost.amount()
                         || !gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
                     return false;

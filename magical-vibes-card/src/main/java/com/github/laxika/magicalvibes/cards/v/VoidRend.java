@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SNC", collectorNumber = "230")
+@CardRegistration(set = "OTP", collectorNumber = "59")
 public class VoidRend extends Card {
 
     public VoidRend() {

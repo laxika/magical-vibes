@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "3")
 @CardRegistration(set = "EMN", collectorNumber = "3")
+@CardRegistration(set = "SIR", collectorNumber = "3")
 public class DistendedMindbender extends Card {
 
     public DistendedMindbender() {

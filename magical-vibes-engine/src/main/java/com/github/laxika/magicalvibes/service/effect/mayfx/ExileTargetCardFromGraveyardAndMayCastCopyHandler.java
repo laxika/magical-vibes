@@ -86,7 +86,8 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
 
             gameData.interaction.setPermanentChoiceContext(
                     PermanentChoiceContext.ExileCastSpellTarget.resolutionCastCopy(
-                            copy, player.getId(), spellEffects, spellType, effect.lifeLossOnCast()));
+                            copy, player.getId(), spellEffects, spellType, effect.lifeLossOnCast(),
+                            effect.afterSuccessfulCastEffect(), ability.sourcePermanentId()));
             playerInputService.beginPermanentChoice(gameData, player.getId(), firstCandidates,
                     "Choose a target for " + copy.getName() + ".");
             return;
@@ -95,6 +96,8 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         try {
             spellCastingService.playCardFromExileAsResolutionCast(
                     gameData, player, copy.getId(), 0, (UUID) null, true);
+            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, copy, player.getId(),
+                    ability.sourcePermanentId(), effect.afterSuccessfulCastEffect());
             applyLifeLoss(gameData, player, copy, effect.lifeLossOnCast());
         } catch (IllegalStateException ex) {
             gameData.removeFromExile(copy.getId());

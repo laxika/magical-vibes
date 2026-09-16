@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "233")
+@CardRegistration(set = "MUL", collectorNumber = "65")
+@CardRegistration(set = "MUL", collectorNumber = "130")
+@CardRegistration(set = "MUL", collectorNumber = "195")
 public class ZirdaTheDawnwaker extends Card {
 
     public ZirdaTheDawnwaker() {
