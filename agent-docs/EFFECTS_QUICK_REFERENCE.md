@@ -2306,6 +2306,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreaturesEnterAsCopyOfSourceEffect()` — Essence of the Wild (static); `(true, true)` = nontoken creatures enter as a copy of the enchanted creature (Infinite Reflection)
 - `OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect()` — Infinite Reflection ETB (ON_ENTER_BATTLEFIELD, no target)
 - `ExileOpponentCardsInsteadOfGraveyardEffect()` — Leyline of the Void (static)
+- `ExileOpponentCardsInsteadOfGraveyardEffect.withVoidCounter()` — opponent cards that would enter a graveyard are exiled with a void-counter marker (Dauthi Voidwalker); pair with `ChooseCardExiledWithVoidCounterMayPlayThisTurnEffect()` for the sacrifice ability
+- `ChooseCardExiledWithVoidCounterMayPlayThisTurnEffect()` — resolution-time choice of one opponent-owned exiled card with a void counter; grants its controller free play permission through end of turn (Dauthi Voidwalker)
 - `ExileCreaturesDamagedBySourceInsteadOfDyingEffect()` — Frostwielder / Kumano's Blessing (static), or a targeted creature's temporary ability (Runesword); creatures this permanent (or Aura-enchanted creature) damaged this turn are exiled instead of dying
 - `ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect()` — Etching of Kumano; creatures damaged this turn by a source controlled by the effect's controller are exiled instead of dying
 - `ExileOpponentCreaturesInsteadOfDyingEffect()` — Liesa, Forgotten Archangel (static); opponents' creatures are exiled instead of dying. Parameterized variants cover nontoken-only replacement, ice counters, an exile rider, and life gained by the replacement controller.

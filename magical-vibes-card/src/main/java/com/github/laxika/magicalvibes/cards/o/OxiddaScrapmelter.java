@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "101")
+@CardRegistration(set = "AA3", collectorNumber = "14")
 public class OxiddaScrapmelter extends Card {
 
     public OxiddaScrapmelter() {

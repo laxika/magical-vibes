@@ -646,6 +646,23 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    private boolean handleAllyTokenEnterCardConditional(TriggerMatchContext match,
+                                                         TriggeringCardConditionalEffect conditional,
+                                                         TriggerContext ctx) {
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        for (UUID permanentId : tokensEnter.permanentIds()) {
+            Permanent token = gameQueryService.findPermanentById(match.gameData(), permanentId);
+            if (token != null && predicateEvaluationService.matchesCardPredicate(
+                    token.getCard(), conditional.predicate(), null,
+                    match.gameData(), match.controllerId())) {
+                return handleTokenEnterDefault(match, conditional.wrapped(), ctx);
+            }
+        }
+        return false;
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)

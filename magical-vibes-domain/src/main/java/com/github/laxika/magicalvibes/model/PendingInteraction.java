@@ -829,25 +829,39 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Choose one card among exiled cards and grant it a temporary play permission. */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                   ExilePlayDuration duration, boolean anyManaType)
+                                   ExilePlayDuration duration, boolean anyManaType,
+                                   boolean withoutPayingManaCost)
             implements PendingInteraction {
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                   ExilePlayDuration duration) {
-            this(playerId, validCardIds, duration, false);
+                                       ExilePlayDuration duration) {
+            this(playerId, validCardIds, duration, false, false);
+        }
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       ExilePlayDuration duration, boolean anyManaType) {
+            this(playerId, validCardIds, duration, anyManaType, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds, boolean expiresAtEndOfTurn, boolean anyManaType) {
-            this(playerId, validCardIds, expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, anyManaType);
+            this(playerId, validCardIds, expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, anyManaType, false);
+        }
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       boolean expiresAtEndOfTurn, boolean anyManaType,
+                                       boolean withoutPayingManaCost) {
+            this(playerId, validCardIds,
+                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN,
+                    anyManaType, withoutPayingManaCost);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds) {
-            this(playerId, validCardIds, ExilePlayDuration.NEXT_TURN, false);
+            this(playerId, validCardIds, ExilePlayDuration.NEXT_TURN, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        boolean expiresAtEndOfTurn) {
             this(playerId, validCardIds,
-                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, false);
+                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, false, false);
         }
 
         public ExiledCardMayPlayChoice {

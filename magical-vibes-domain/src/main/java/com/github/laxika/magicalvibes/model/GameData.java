@@ -489,6 +489,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have croak counters (Grolnok, the Omnivore). */
     public final Set<UUID> exiledCardsWithCroakCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have void counters (Dauthi Voidwalker). */
+    public final Set<UUID> exiledCardsWithVoidCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have collection counters (Evelyn, the Covetous). */
     public final Set<UUID> exiledCardsWithCollectionCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have hatching counters (The Dragon-Kami Reborn). */
@@ -4234,6 +4236,12 @@ public class GameData {
         exiledCardsWithCroakCounters.add(card.getId());
     }
 
+    /** Adds a card to exile and marks it with a void counter. */
+    public void addToExileWithVoidCounter(UUID ownerId, Card card) {
+        addToExile(ownerId, card);
+        exiledCardsWithVoidCounters.add(card.getId());
+    }
+
     /** Adds a card to exile with a collection counter and records the exiling ability's controller. */
     public void addToExileWithCollectionCounter(UUID ownerId, Card card, UUID exilerId) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
@@ -4325,6 +4333,7 @@ public class GameData {
             exiledCardScreamCounters.remove(cardId);
             exiledCardsWithIceCounters.remove(cardId);
             exiledCardsWithCroakCounters.remove(cardId);
+            exiledCardsWithVoidCounters.remove(cardId);
             exiledCardsWithCollectionCounters.remove(cardId);
             exiledCardsWithHatchingCounters.remove(cardId);
             exiledCardsWithStudyCounters.remove(cardId);
@@ -5093,6 +5102,7 @@ public class GameData {
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
         copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
+        copy.exiledCardsWithVoidCounters.addAll(this.exiledCardsWithVoidCounters);
         copy.exiledCardsWithCollectionCounters.addAll(this.exiledCardsWithCollectionCounters);
         copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
         copy.exiledCardsWithIntelCounters.addAll(this.exiledCardsWithIntelCounters);

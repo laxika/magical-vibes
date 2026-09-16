@@ -595,6 +595,9 @@ public class GraveyardService {
             } else {
                 exileService.exileCard(gameData, ownerId, card);
             }
+            if (opponentExileReplacement.effect().addVoidCounter()) {
+                gameData.exiledCardsWithVoidCounters.add(card.getId());
+            }
             
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());

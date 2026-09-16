@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect;
 
 @CardRegistration(set = "MH1", collectorNumber = "199")
+@CardRegistration(set = "AA3", collectorNumber = "19")
 public class FallenShinobi extends Card {
 
     public FallenShinobi() {
