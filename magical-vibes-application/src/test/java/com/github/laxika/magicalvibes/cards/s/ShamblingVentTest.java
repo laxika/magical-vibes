@@ -20,6 +20,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ShamblingVentTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Shambling Vent enters tapped and adds white or black mana")
+    void entersTappedAndAddsChosenMana() {
+        harness.setHand(player1, List.of(new ShamblingVent()));
+        harness.playLand(player1, 0);
+
+        Permanent vent = findPermanent(player1, "Shambling Vent");
+        assertThat(vent.isTapped()).isTrue();
+
+        vent.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
     @DisplayName("Shambling Vent enters the battlefield tapped")
     void entersBattlefieldTapped() {
         harness.setHand(player1, List.of(new ShamblingVent()));
@@ -63,6 +80,7 @@ class ShamblingVentTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, vent))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(gqs.effectiveCreatureSubtypes(gd, vent)).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(vent.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, vent, Keyword.LIFELINK)).isTrue();
     }
 
@@ -81,6 +99,7 @@ class ShamblingVentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, vent)).isFalse();
+        assertThat(vent.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.isLand(gd, vent)).isTrue();
         assertThat(gqs.hasKeyword(gd, vent, Keyword.LIFELINK)).isFalse();
     }

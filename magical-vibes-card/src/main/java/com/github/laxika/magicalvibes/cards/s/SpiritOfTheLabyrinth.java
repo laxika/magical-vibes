@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCanDrawOnlyOneCardEach
 
 @CardRegistration(set = "BNG", collectorNumber = "27")
 @CardRegistration(set = "PIO", collectorNumber = "35")
+@CardRegistration(set = "MB2", collectorNumber = "20")
 public class SpiritOfTheLabyrinth extends Card {
 
     public SpiritOfTheLabyrinth() {

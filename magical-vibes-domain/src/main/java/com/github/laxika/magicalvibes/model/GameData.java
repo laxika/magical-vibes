@@ -107,6 +107,10 @@ public class GameData {
     /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
     public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Permanents sacrificed by each player this turn, retaining last-known card characteristics. */
+    public final Map<UUID, List<Card>> permanentsSacrificedThisTurn = new ConcurrentHashMap<>();
+    /** Permanent card ids currently being sacrificed as an additional cost of a spell cast. */
+    public final Set<UUID> currentCastSacrificedPermanentIds = ConcurrentHashMap.newKeySet();
     /** Face-down creatures that entered under each player's control this turn, including ones that have since left or turned face up. */
     public final Map<UUID, List<Card>> faceDownCreaturesEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Face-down permanents that entered under each player's control this turn, including ones that have since left or turned face up. */
@@ -3441,6 +3445,9 @@ public class GameData {
         if (playerId == null || card == null) return;
         playersWhoSacrificedPermanentsThisTurn.add(playerId);
         sacrificedPermanentCountThisTurn.merge(playerId, 1, Integer::sum);
+        permanentsSacrificedThisTurn
+                .computeIfAbsent(playerId, ignored -> Collections.synchronizedList(new ArrayList<>()))
+                .add(card);
         if (card.hasType(CardType.ARTIFACT)) {
             playersWhoSacrificedArtifactsThisTurn.add(playerId);
         }
@@ -5128,6 +5135,9 @@ public class GameData {
         copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
+        this.permanentsSacrificedThisTurn.forEach((k, v) ->
+                copy.permanentsSacrificedThisTurn.put(k, new ArrayList<>(v)));
+        copy.currentCastSacrificedPermanentIds.addAll(this.currentCastSacrificedPermanentIds);
         this.faceDownCreaturesEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.faceDownCreaturesEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.faceDownPermanentsEnteredBattlefieldThisTurn.forEach((k, v) ->

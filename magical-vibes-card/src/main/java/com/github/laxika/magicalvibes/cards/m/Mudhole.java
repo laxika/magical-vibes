@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "208")
+@CardRegistration(set = "SLD", collectorNumber = "62")
 public class Mudhole extends Card {
 
     public Mudhole() {

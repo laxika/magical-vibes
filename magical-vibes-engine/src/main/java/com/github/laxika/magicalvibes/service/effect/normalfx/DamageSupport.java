@@ -1628,6 +1628,8 @@ public class DamageSupport {
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
                     triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
                             gameData, sourceControllerId, playerId, List.of(sourcePermanent));
+                    triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
+                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
                 }
                 triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
                         gameData, playerId, entry.getControllerId(), effectiveDamage);

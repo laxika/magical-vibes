@@ -2628,6 +2628,7 @@ public class SpellCastingService {
                     beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype,
                     chosenCreatureType, waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds);
         } finally {
+            gameData.currentCastSacrificedPermanentIds.clear();
             if (casterPool != null) {
                 casterPool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousPermission);
             }
@@ -2685,9 +2686,16 @@ public class SpellCastingService {
 
         List<UUID> costReductionSacrificeIds = !alternateCostSacrificePermanentIds.isEmpty()
                 ? alternateCostSacrificePermanentIds : additionalCostSacrificePermanentIds;
+        gameData.currentCastSacrificedPermanentIds.clear();
         boolean hasSacrificeForCostReduction = !costReductionSacrificeIds.isEmpty() && !fromGraveyard
                 && handEarly.get(cardIndex).getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
+        if (hasSacrificeForCostReduction) {
+            gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(permanent -> costReductionSacrificeIds.contains(permanent.getId()))
+                    .map(permanent -> permanent.getCard().getId())
+                    .forEach(gameData.currentCastSacrificedPermanentIds::add);
+        }
         boolean hasExileHandAlternateCost = !fromGraveyard
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
                         .flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))

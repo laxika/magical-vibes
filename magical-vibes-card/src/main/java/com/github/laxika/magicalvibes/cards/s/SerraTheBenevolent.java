@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MB2", collectorNumber = "17")
 @CardRegistration(set = "MH1", collectorNumber = "26")
 public class SerraTheBenevolent extends Card {
 

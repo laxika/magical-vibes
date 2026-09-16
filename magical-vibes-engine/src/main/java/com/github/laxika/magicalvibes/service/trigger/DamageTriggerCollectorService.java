@@ -1211,6 +1211,48 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT)
+    private boolean handleAllyCreaturesDealDamageToOpponent(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
+        TriggerContext.AllyCreaturesDealDamageToPlayer damageContext =
+                (TriggerContext.AllyCreaturesDealDamageToPlayer) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null || !match.controllerId().equals(damageContext.sourceControllerId())) {
+            return false;
+        }
+
+        FilterContext triggerContext = FilterContext.of(match.gameData())
+                .withSourceCardId(watcher.getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentId(watcher.getId())
+                .withSourcePermanentSnapshot(watcher);
+        boolean matchingDealer = damageContext.damageDealers().stream()
+                .filter(dealer -> gameQueryService.isCreature(match.gameData(), dealer))
+                .anyMatch(dealer -> trigger.predicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        dealer, trigger.predicate(), triggerContext));
+        if (!matchingDealer) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger.wrapped())),
+                damageContext.damagedPlayerId(),
+                watcher.getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after one or more controlled creatures dealt damage to an opponent",
+                match.gameData().id, watcher.getCard().getName());
+        return true;
+    }
+
     private boolean queueAllySourceDealtDamageToOpponentTrigger(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;

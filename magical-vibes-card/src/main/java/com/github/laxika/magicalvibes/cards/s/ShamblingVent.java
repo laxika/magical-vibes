@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PIO", collectorNumber = "275")
+@CardRegistration(set = "EOS", collectorNumber = "38")
+@CardRegistration(set = "EOS", collectorNumber = "83")
+@CardRegistration(set = "EOS", collectorNumber = "128")
+@CardRegistration(set = "EOS", collectorNumber = "173")
 public class ShamblingVent extends Card {
 
     public ShamblingVent() {
@@ -32,7 +36,8 @@ public class ShamblingVent extends Card {
                 List.of(AnimatePermanentsEffect.withAnimatedColors(
                         2, 3, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.LIFELINK),
                         Set.of(CardColor.WHITE, CardColor.BLACK))),
-                "{1}{W}{B}: Until end of turn, this land becomes a 2/3 white and black Elemental creature with lifelink. It's still a land."
+                "{1}{W}{B}: Until end of turn, this land becomes a 2/3 white and black Elemental "
+                        + "creature with lifelink. It's still a land."
         ));
     }
 }

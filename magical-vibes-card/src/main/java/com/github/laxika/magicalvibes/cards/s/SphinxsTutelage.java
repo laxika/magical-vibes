@@ -19,6 +19,7 @@ import java.util.List;
  */
 @CardRegistration(set = "ORI", collectorNumber = "76")
 @CardRegistration(set = "PIO", collectorNumber = "287")
+@CardRegistration(set = "SPG", collectorNumber = "75")
 public class SphinxsTutelage extends Card {
 
     public SphinxsTutelage() {

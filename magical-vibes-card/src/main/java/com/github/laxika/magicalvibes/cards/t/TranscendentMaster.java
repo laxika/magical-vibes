@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "51")
+@CardRegistration(set = "MB2", collectorNumber = "23")
 public class TranscendentMaster extends Card {
 
     public TranscendentMaster() {

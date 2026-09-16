@@ -1018,6 +1018,16 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Expropriate: the controller chooses a permanent owned by the current money voter. */
+    record ExpropriatePermanentChoice(UUID effectControllerId, UUID voterId,
+                                      java.util.List<UUID> remainingMoneyVoterIds,
+                                      int timeVotes, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public ExpropriatePermanentChoice {
+            remainingMoneyVoterIds = java.util.List.copyOf(remainingMoneyVoterIds);
+        }
+    }
+
     /** Sundering Titan: the controller chose a land for the current basic land type. */
     record ChooseLandOfEachBasicTypeThenDestroyChoice(UUID controllerId, int typeIndex,
                                                       java.util.List<UUID> chosenIds,
