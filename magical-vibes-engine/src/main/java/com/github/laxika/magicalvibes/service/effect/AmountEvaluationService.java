@@ -2053,7 +2053,18 @@ public class AmountEvaluationService {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
-            total += gameData.sacrificedPermanentCountThisTurn.getOrDefault(playerId, 0);
+            if (count.filter() == null && !count.excludeCurrentCastSacrifices()) {
+                total += gameData.sacrificedPermanentCountThisTurn.getOrDefault(playerId, 0);
+            } else {
+                total += (int) gameData.permanentsSacrificedThisTurn
+                        .getOrDefault(playerId, List.of())
+                        .stream()
+                        .filter(card -> !count.excludeCurrentCastSacrifices()
+                                || !gameData.currentCastSacrificedPermanentIds.contains(card.getId()))
+                        .filter(card -> count.filter() == null
+                                || predicateEvaluationService.matchesCardPredicate(card, count.filter(), null))
+                        .count();
+            }
         }
         return total;
     }

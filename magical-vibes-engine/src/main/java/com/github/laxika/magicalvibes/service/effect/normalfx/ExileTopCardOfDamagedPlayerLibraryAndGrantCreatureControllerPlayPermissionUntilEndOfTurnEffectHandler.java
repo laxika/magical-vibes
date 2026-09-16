@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves Curse of Hospitality's combat-damage trigger. */
+/** Resolves a damaged player's top-card play-permission trigger. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,7 +34,9 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID damagedPlayerId = entry.getTargetId();
-        UUID creatureControllerId = entry.getTriggeringPermanentControllerId();
+        UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId()
+                : entry.getControllerId();
         if (damagedPlayerId == null || creatureControllerId == null) {
             return;
         }

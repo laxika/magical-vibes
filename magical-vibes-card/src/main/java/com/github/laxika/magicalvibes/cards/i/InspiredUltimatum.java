@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "191")
+@CardRegistration(set = "SPG", collectorNumber = "107")
 public class InspiredUltimatum extends Card {
 
     public InspiredUltimatum() {

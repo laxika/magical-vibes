@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "12")
+@CardRegistration(set = "SPG", collectorNumber = "119")
 public class WarpingWail extends Card {
 
     public WarpingWail() {
