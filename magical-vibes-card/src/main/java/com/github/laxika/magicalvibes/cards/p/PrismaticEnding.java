@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentIf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPG", collectorNumber = "40")
+@CardRegistration(set = "MB2", collectorNumber = "16")
 public class PrismaticEnding extends Card {
 
     public PrismaticEnding() {
