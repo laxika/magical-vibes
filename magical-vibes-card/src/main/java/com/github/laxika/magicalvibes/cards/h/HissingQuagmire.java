@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "171")
+@CardRegistration(set = "EOS", collectorNumber = "19")
+@CardRegistration(set = "EOS", collectorNumber = "64")
+@CardRegistration(set = "EOS", collectorNumber = "109")
+@CardRegistration(set = "EOS", collectorNumber = "154")
 public class HissingQuagmire extends Card {
 
     public HissingQuagmire() {

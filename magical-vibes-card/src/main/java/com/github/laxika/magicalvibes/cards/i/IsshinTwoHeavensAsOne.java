@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "224")
+@CardRegistration(set = "FCA", collectorNumber = "54")
 public class IsshinTwoHeavensAsOne extends Card {
 
     public IsshinTwoHeavensAsOne() {

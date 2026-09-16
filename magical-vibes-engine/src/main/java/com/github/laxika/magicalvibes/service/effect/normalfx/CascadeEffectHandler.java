@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Component;
 public class CascadeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -70,7 +72,9 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
             boolean qualifyingType = cascade.instantOrSorceryOnly()
                     ? top.hasType(CardType.INSTANT) || top.hasType(CardType.SORCERY)
                     : !top.hasType(CardType.LAND);
-            if (qualifyingType && top.getManaValue() < threshold) {
+            boolean matchesFilter = predicateEvaluationService.matchesCardPredicate(
+                    top, cascade.qualifyingCardFilter(), null, gameData, controllerId);
+            if (qualifyingType && matchesFilter && top.getManaValue() < threshold) {
                 hit = top;
                 break;
             }

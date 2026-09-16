@@ -180,9 +180,10 @@ public final class CombatHelper {
      * Validates every static restriction on the number of attackers in the current combat.
      */
     public static void validateMaximumAttackers(GameData gameData, List<Integer> attackerIndices,
-                                                Map<Integer, UUID> attackTargets) {
+                                                Map<Integer, UUID> attackTargets,
+                                                GameQueryService gameQueryService) {
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                 validateMaximumAttackers(limitOrNull(effect), sourceControllerId, permanent.getId(),
                         attackerIndices, attackTargets);
             }
@@ -226,6 +227,11 @@ public final class CombatHelper {
         int[] maximum = {Integer.MAX_VALUE};
         gameData.forEachPermanent((ignored, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CombatCreatureLimitEffect limit) {
+                    maximum[0] = Math.min(maximum[0], limit.maxBlockers());
+                }
+            }
+            for (CardEffect effect : permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CombatCreatureLimitEffect limit) {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }

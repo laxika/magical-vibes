@@ -20,6 +20,48 @@ class PrismaticEndingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles a nonland permanent within the number of colors spent")
+    void exilesTargetWithinConvergeValue() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Mana value is checked on resolution rather than targeting")
+    void leavesTargetWithHigherManaValueOnBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Cannot target a land")
+    void rejectsLandTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonland permanent");
+    }
+    @Test
+    @DisplayName("Exiles a nonland permanent within the number of colors spent")
     void exilesPermanentWithinColorsSpent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new PrismaticEnding()));
@@ -47,15 +89,4 @@ class PrismaticEndingTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
-    @Test
-    @DisplayName("Cannot target a land")
-    void cannotTargetLand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        harness.setHand(player1, List.of(new PrismaticEnding()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("nonland permanent");
-    }
 }

@@ -204,7 +204,9 @@ public enum CardSet {
     SET_LEG("LEG"),
     SET_FDN("FDN"),
     SET_FIN("FIN"),
+    SET_FCA("FCA"),
     SET_EOE("EOE"),
+    SET_EOS("EOS"),
     SET_ULG("ULG"),
     SET_UMA("UMA"),
     SET_DFT("DFT"),
@@ -221,6 +223,7 @@ public enum CardSet {
     SET_APC("APC"),
     SET_DKM("DKM"),
     SET_SPM("SPM"),
+    SET_SPG("SPG"),
     SET_LCI("LCI"),
     SET_BIG("BIG"),
     SET_TLA("TLA"),
@@ -282,6 +285,7 @@ public enum CardSet {
     SET_EA2("EA2"),
     SET_EA3("EA3"),
     SET_REX("REX"),
+    SET_AA1("AA1"),
     SET_PA1("PA1");
 
     @Getter

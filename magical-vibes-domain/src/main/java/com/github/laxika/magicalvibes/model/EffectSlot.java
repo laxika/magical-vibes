@@ -40,6 +40,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CreateTokenCopyOfTargetPermanentEffect}) knows which creature to copy. Checked in
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
     ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a nontoken creature enters under your control" for an Eminence ability whose
+     *  source card is in the controller's command zone. Checked in
+     *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. */
+    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     /** "Whenever one or more tokens you control enter the battlefield." */
     ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
@@ -1304,6 +1308,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
     /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
     ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
+    /** Triggers whenever one or more creatures the controller controls deal damage to an opponent. */
+    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT,
     /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
     ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a

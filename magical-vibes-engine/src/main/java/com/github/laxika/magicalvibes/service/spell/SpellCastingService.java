@@ -2628,6 +2628,7 @@ public class SpellCastingService {
                     beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype,
                     chosenCreatureType, waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds);
         } finally {
+            gameData.currentCastSacrificedPermanentIds.clear();
             if (casterPool != null) {
                 casterPool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousPermission);
             }
@@ -2685,9 +2686,16 @@ public class SpellCastingService {
 
         List<UUID> costReductionSacrificeIds = !alternateCostSacrificePermanentIds.isEmpty()
                 ? alternateCostSacrificePermanentIds : additionalCostSacrificePermanentIds;
+        gameData.currentCastSacrificedPermanentIds.clear();
         boolean hasSacrificeForCostReduction = !costReductionSacrificeIds.isEmpty() && !fromGraveyard
                 && handEarly.get(cardIndex).getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
+        if (hasSacrificeForCostReduction) {
+            gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(permanent -> costReductionSacrificeIds.contains(permanent.getId()))
+                    .map(permanent -> permanent.getCard().getId())
+                    .forEach(gameData.currentCastSacrificedPermanentIds::add);
+        }
         boolean hasExileHandAlternateCost = !fromGraveyard
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
                         .flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
@@ -10434,6 +10442,10 @@ public class SpellCastingService {
 
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
                 gameData, playerId, card, new ManaCost(totalMana));
+        boolean blackManaLifePaymentPermission = gameQueryService.canPayBlackManaWithLife(gameData, playerId);
+        if (blackManaLifePaymentPermission) {
+            cost = cost.withBlackManaAsPhyrexian();
+        }
 
         if (card.isRequiresBasicLandMana()) {
             if (!cost.canPayBasicLandOnly(pool, effectiveXValue, additionalCost)) {
@@ -10452,7 +10464,8 @@ public class SpellCastingService {
         boolean usesPendingAnyManaType = pendingAnyManaType && !anyManaType && !battlefieldAnyManaType
                 && !baseMana.isEmpty();
         if ((convokeContributions == null || convokeContributions.isEmpty())
-                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)) {
+                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
+                && !(blackManaLifePaymentPermission && cost.hasPhyrexianMana())) {
             if (usesPendingAnyManaType && !additionalCostsMana.isEmpty()) {
                 return payBaseManaCostWithPendingAnyManaType(gameData, playerId, card, baseMana,
                         additionalCostsMana, effectiveXValue, additionalCost, before, pool);
@@ -10511,6 +10524,9 @@ public class SpellCastingService {
             if (alternativeCost != null) {
                 ManaCost altCost = castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, new ManaCost(alternativeCost.manaCost() + additionalCostsMana));
+                if (blackManaLifePaymentPermission) {
+                    altCost = altCost.withBlackManaAsPhyrexian();
+                }
                 if (!altCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                     throw new IllegalStateException("Not enough mana to pay additional spell costs");
                 }

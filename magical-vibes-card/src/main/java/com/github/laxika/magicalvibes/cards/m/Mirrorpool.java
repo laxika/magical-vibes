@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "174")
+@CardRegistration(set = "EOS", collectorNumber = "27")
+@CardRegistration(set = "EOS", collectorNumber = "72")
+@CardRegistration(set = "EOS", collectorNumber = "117")
+@CardRegistration(set = "EOS", collectorNumber = "162")
 public class Mirrorpool extends Card {
 
     public Mirrorpool() {

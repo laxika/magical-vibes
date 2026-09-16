@@ -1457,7 +1457,8 @@ public abstract class AiDecisionEngine {
                 candidateTargets.put(index, attackTargets.getOrDefault(index, defaultTarget));
             }
             try {
-                CombatHelper.validateMaximumAttackers(gameData, candidate, candidateTargets);
+                CombatHelper.validateMaximumAttackers(gameData, candidate, candidateTargets,
+                        gameQueryService);
                 capped.add(attackerIndex);
             } catch (IllegalStateException ignored) {
                 // Keep the largest declaration found so far that satisfies every combat limit.

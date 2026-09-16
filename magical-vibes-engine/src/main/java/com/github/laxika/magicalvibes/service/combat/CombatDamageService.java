@@ -1281,6 +1281,12 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
+                gameData, attackerId, defenderId,
+                combatDamageDealtToPlayer.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .toList());
         triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
                 gameData, attackerId, defenderId,
                 combatDamageDealtToPlayer.entrySet().stream()

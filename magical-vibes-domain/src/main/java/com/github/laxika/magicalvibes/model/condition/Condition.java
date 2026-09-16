@@ -142,6 +142,7 @@ public sealed interface Condition permits
         ControlsUnlockedRoomDoorsCount,
         ControlsMoreCreaturesThanOpponent,
         ControlledDragonAsCast,
+        ControlledCommanderAsCast,
         APlayerControlsMoreCreaturesThanEachOtherPlayer,
         APlayerHasMoreCardsInHandThanEachOtherPlayer,
         ControlsOtherPermanentCount,

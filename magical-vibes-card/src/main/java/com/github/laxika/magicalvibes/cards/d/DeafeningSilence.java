@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "10")
+@CardRegistration(set = "SPG", collectorNumber = "120")
 @CardRegistration(set = "MB2", collectorNumber = "9")
 public class DeafeningSilence extends Card {
 

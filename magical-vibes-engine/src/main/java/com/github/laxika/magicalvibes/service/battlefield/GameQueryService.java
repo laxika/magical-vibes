@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -1847,6 +1848,16 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
     }
 
+    /** Returns whether the player controls a permanent allowing black mana to be paid with life. */
+    public boolean canPayBlackManaWithLife(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown())
+                .filter(permanent -> !hasLostAllAbilities(gameData, permanent))
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PayBlackManaWithLifeEffect.class::isInstance));
+    }
+
     /** Returns whether a player may look at opposing face-down creatures. */
     public boolean mayLookAtOpposingFaceDownCreatures(GameData gameData, UUID playerId) {
         if (gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(playerId)) {
@@ -3399,6 +3410,12 @@ public class GameQueryService {
             collectActiveStaticEffects(gameData, permanent, controllerId, effect, activeEffects);
         }
         return activeEffects;
+    }
+
+    /** Returns the active printed and temporary static effects carried by a battlefield permanent. */
+    public List<CardEffect> getActiveStaticEffects(GameData gameData, Permanent permanent) {
+        return staticEffectsIncludingTemporary(gameData, permanent,
+                findPermanentController(gameData, permanent.getId()));
     }
 
     private void collectActiveStaticEffects(GameData gameData, Permanent source, UUID controllerId,

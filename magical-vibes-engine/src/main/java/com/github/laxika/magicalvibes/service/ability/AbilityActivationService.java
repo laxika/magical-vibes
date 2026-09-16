@@ -3541,6 +3541,9 @@ public class AbilityActivationService {
         List<CardEffect> abilityEffects = ability.getEffects();
         if (ability.isSpecialAction() && abilityEffects.stream().noneMatch(CostEffect.class::isInstance)) {
             ManaCost cost = new ManaCost(ability.getManaCost() == null ? "{0}" : ability.getManaCost());
+            if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                cost = cost.withBlackManaAsPhyrexian();
+            }
             if (!cost.canPay(activationPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
@@ -3554,6 +3557,9 @@ public class AbilityActivationService {
         }
         gameData.abilityActivationTreasureManaSpent.remove(permanent.getCard().getId());
         ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
+        }
         if (ability.getSourceCounterScaledTargetsType() != null) {
             effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
         }
@@ -5726,7 +5732,12 @@ public class AbilityActivationService {
         }
 
         if (ability.isSpecialAction()) {
-            if (ability.getManaCost() != null && !new ManaCost(ability.getManaCost()).canPay(manaPool)) {
+            ManaCost specialActionCost = ability.getManaCost() == null
+                    ? null : new ManaCost(ability.getManaCost());
+            if (specialActionCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                specialActionCost = specialActionCost.withBlackManaAsPhyrexian();
+            }
+            if (specialActionCost != null && !specialActionCost.canPay(manaPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
             validateTimingRestrictions(gameData, playerId, permanent, ability);
@@ -6015,6 +6026,9 @@ public class AbilityActivationService {
         // Mana affordability (CR 602.2b — checked before entering interactive cost choices)
         if (abilityCost != null) {
             ManaCost preCheck = effectiveManaCost;
+            if (preCheck != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                preCheck = preCheck.withBlackManaAsPhyrexian();
+            }
             ManaPool affordabilityPool = manaPool;
             if (manaPool != null && isClassLevelUpAbility(abilityEffects)) {
                 affordabilityPool = copyManaPool(manaPool);
@@ -7500,6 +7514,9 @@ public class AbilityActivationService {
                              Set<CardSubtype> subtypeSpellOrAbilityContext,
                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                              int additionalCost, Set<ManaColor> xColorRestrictions, boolean colorlessPermanentContext) {
+        if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            cost = cost.withBlackManaAsPhyrexian();
+        }
         if (cost.hasX() && xColorRestrictions != null) {
             if (!cost.canPay(gameData.playerManaPools.get(playerId), effectiveXValue,
                     xColorRestrictions, additionalCost)) {
