@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "144")
+@CardRegistration(set = "RVR", collectorNumber = "189")
 public class GruulGuildmage extends Card {
 
     public GruulGuildmage() {

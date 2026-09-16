@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "27")
 @CardRegistration(set = "2X2", collectorNumber = "30")
 public class SettleBeyondReality extends Card {
 

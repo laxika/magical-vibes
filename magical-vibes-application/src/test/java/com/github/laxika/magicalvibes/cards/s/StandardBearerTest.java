@@ -124,4 +124,18 @@ class StandardBearerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(changeling.getId());
     }
+
+    @Test
+    void losingAbilitiesRemovesFlagbearerRequirement() {
+        Permanent standardBearer = addCreatureReady(player1, new StandardBearer());
+        standardBearer.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Permanent otherCreature = addCreatureReady(player1, new AngelfireCrusader());
+        harness.setHand(player2, List.of(new Jilt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, otherCreature.getId());
+
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(otherCreature.getId());
+    }
 }

@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "178")
+@CardRegistration(set = "MUL", collectorNumber = "37")
+@CardRegistration(set = "MUL", collectorNumber = "102")
+@CardRegistration(set = "MUL", collectorNumber = "167")
 public class DinaSoulSteeper extends Card {
 
     public DinaSoulSteeper() {

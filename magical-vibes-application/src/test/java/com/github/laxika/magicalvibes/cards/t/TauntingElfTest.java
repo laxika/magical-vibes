@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
-import com.github.laxika.magicalvibes.cards.h.HulkingOgre;
+import com.github.laxika.magicalvibes.cards.c.ChargingSlateback;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TauntingElf.class, GoliathBeetle.class, HulkingOgre.class})
+@CardUsed({TauntingElf.class, ElvishWarrior.class, ChargingSlateback.class})
 class TauntingElfTest extends BaseCardTest {
 
     @Test
@@ -23,8 +23,8 @@ class TauntingElfTest extends BaseCardTest {
         Permanent elf = addCreatureReady(player1, new TauntingElf());
         elf.setAttacking(true);
 
-        addCreatureReady(player2, new GoliathBeetle());
-        addCreatureReady(player2, new GoliathBeetle());
+        addCreatureReady(player2, new ElvishWarrior());
+        addCreatureReady(player2, new ElvishWarrior());
 
         prepareDeclareBlockers();
 
@@ -47,8 +47,8 @@ class TauntingElfTest extends BaseCardTest {
         Permanent elf = addCreatureReady(player1, new TauntingElf());
         elf.setAttacking(true);
 
-        Permanent untapped = addCreatureReady(player2, new GoliathBeetle());
-        Permanent tapped = addCreatureReady(player2, new GoliathBeetle());
+        Permanent untapped = addCreatureReady(player2, new ElvishWarrior());
+        Permanent tapped = addCreatureReady(player2, new ElvishWarrior());
         tapped.tap();
 
         prepareDeclareBlockers();
@@ -64,8 +64,8 @@ class TauntingElfTest extends BaseCardTest {
         Permanent elf = addCreatureReady(player1, new TauntingElf());
         elf.setAttacking(true);
 
-        Permanent able = addCreatureReady(player2, new GoliathBeetle());
-        Permanent unable = addCreatureReady(player2, new HulkingOgre());
+        Permanent able = addCreatureReady(player2, new ElvishWarrior());
+        Permanent unable = addCreatureReady(player2, new ChargingSlateback());
 
         prepareDeclareBlockers();
 

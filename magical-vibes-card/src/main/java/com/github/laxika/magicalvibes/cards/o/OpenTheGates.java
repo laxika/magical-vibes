@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "133")
+@CardRegistration(set = "RVR", collectorNumber = "151")
 public class OpenTheGates extends Card {
 
     public OpenTheGates() {

@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
+@CardRegistration(set = "MH1", collectorNumber = "196")
 @CardRegistration(set = "HA4", collectorNumber = "19")
 public class CollectedConjuring extends Card {
 
     public CollectedConjuring() {
-        addEffect(EffectSlot.SPELL, new ExileTopCardsAndMayCastSpellsEffect(
-                6, new Fixed(3), new CardTypePredicate(CardType.SORCERY), 2, true));
+        addEffect(EffectSlot.SPELL,
+                ExileTopCardsAndMayCastSpellsEffect.controllerWithRandomBottom(
+                        6, new Fixed(3), new CardTypePredicate(CardType.SORCERY), 2));
     }
 }

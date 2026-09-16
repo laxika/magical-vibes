@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -16,9 +18,35 @@ import static org.mockito.Mockito.*;
 
 class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("A bound spell caster flips the coin and determines the resolved branch")
+    void boundCasterFlipsCoin(boolean won) {
+        when(coinFlipService.flip(gd, player2Id))
+                .thenReturn(new CoinFlipService.CoinFlipResult(won, 1));
+        EffectHandler drawHandler = mock(EffectHandler.class);
+        registry.register(DrawCardEffect.class, drawHandler);
+        DrawCardEffect winEffect = new DrawCardEffect(1);
+        DrawCardEffect lossEffect = new DrawCardEffect(2);
+        FlipCoinWinEffect effect = new FlipCoinWinEffect(winEffect, lossEffect, true, player2Id);
+        StackEntry entry = createEntry(createCard("Planar Chaos"), player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(coinFlipService).flip(gd, player2Id);
+        verify(coinFlipService, never()).flip(gd, player1Id);
+        verify(drawHandler).resolve(gd, entry, won ? winEffect : lossEffect);
+        verify(drawHandler, never()).resolve(gd, entry, won ? lossEffect : winEffect);
+        if (won) {
+            verify(triggerCollectionService).checkControllerWinsCoinFlipTriggers(gd, player2Id);
+        } else {
+            verify(triggerCollectionService).checkControllerLosesCoinFlipTriggers(gd, player2Id);
+        }
+    }
+
     @Override
     protected void setUpHandler() {
-        when(coinFlipService.flip(gd, player1Id))
+        lenient().when(coinFlipService.flip(gd, player1Id))
                 .thenReturn(new CoinFlipService.CoinFlipResult(true, 1));
         when(coinFlipService.replacementDetails(any())).thenReturn("");
     }

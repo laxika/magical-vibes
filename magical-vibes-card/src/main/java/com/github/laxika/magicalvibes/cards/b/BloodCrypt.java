@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "ECL", collectorNumber = "262")
 @CardRegistration(set = "ECL", collectorNumber = "349")
 @CardRegistration(set = "EXP", collectorNumber = "8")
+@CardRegistration(set = "RVR", collectorNumber = "273")
+@CardRegistration(set = "RVR", collectorNumber = "292")
 public class BloodCrypt extends Card {
 
     public BloodCrypt() {

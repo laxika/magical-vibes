@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AncestorsProphet;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,11 +8,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FalseCure.class, AngelOfMercy.class})
+@CardUsed({FalseCure.class, AncestorsProphet.class})
 class FalseCureTest extends BaseCardTest {
 
     @Test
@@ -21,14 +18,24 @@ class FalseCureTest extends BaseCardTest {
     void eachPlayerLosesTwiceTheLifeTheyGain() {
         castFalseCure();
 
-        gainThreeLife(player1);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        gainTenLife(player1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        gainThreeLife(player2);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        gainTenLife(player2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Life gained before False Cure resolves is not affected")
+    void doesNotAffectLifeGainedBeforeItResolves() {
+        harness.castFromHand(player1, new FalseCure(), "{B}{B}");
+
+        gainTenLife(player1);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(30);
     }
 
     @Test
@@ -43,23 +50,21 @@ class FalseCureTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        gainThreeLife(player1);
+        gainTenLife(player1);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(30);
     }
 
     private void castFalseCure() {
-        harness.setHand(player1, List.of(new FalseCure()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new FalseCure(), "{B}{B}");
         harness.passBothPriorities();
     }
 
-    private void gainThreeLife(Player player) {
-        harness.setHand(player, List.of(new AngelOfMercy()));
-        harness.addMana(player, ManaColor.WHITE, 5);
-        harness.castCreature(player, 0);
-        harness.passBothPriorities();
+    private void gainTenLife(Player player) {
+        for (int i = 0; i < 5; i++) {
+            addCreatureReady(player, new AncestorsProphet());
+        }
+        harness.activateAbility(player, 0, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

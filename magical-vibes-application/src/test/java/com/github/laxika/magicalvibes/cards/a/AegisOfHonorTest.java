@@ -1,16 +1,26 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Chainflinger;
+import com.github.laxika.magicalvibes.cards.e.EmberBeast;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.f.FlameBurst;
+import com.github.laxika.magicalvibes.cards.v.VolcanicSpray;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({AegisOfHonor.class, Chainflinger.class, EmberBeast.class, Firebolt.class,
+        FlameBurst.class, VolcanicSpray.class})
 class AegisOfHonorTest extends BaseCardTest {
 
     @Test
@@ -21,7 +31,7 @@ class AegisOfHonorTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         activateAegis(aegis);
-        castShockAt(player2, player1);
+        castFlameBurstAt(player2, player1);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
@@ -34,12 +44,10 @@ class AegisOfHonorTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         activateAegis(aegis);
-        castShockAt(player2, player1);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        castFireboltAt(player2, player1);
+        castFireboltAt(player2, player1);
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
@@ -49,25 +57,94 @@ class AegisOfHonorTest extends BaseCardTest {
     @DisplayName("Damage from an activated ability is not redirected")
     void doesNotRedirectActivatedAbilityDamage() {
         Permanent aegis = addReadyAegis(player1);
-        Permanent pyromancer = new Permanent(new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancer);
+        Permanent chainflinger = addCreatureReady(player2, new Chainflinger());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
         activateAegis(aegis);
-        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer), null, player1.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(chainflinger),
+                0, null, player1.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    @DisplayName("Sorcery damage to a permanent does not consume the shield")
+    void doesNotConsumeShieldForDamageToPermanent() {
+        Permanent aegis = addReadyAegis(player1);
+        Permanent target = addCreatureReady(player1, new EmberBeast());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        activateAegis(aegis);
+        castFireboltAt(player2, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+
+        castFireboltAt(player2, player1);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The shield expires when the turn ends")
+    void shieldExpiresAtEndOfTurn() {
+        Permanent aegis = addReadyAegis(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        activateAegis(aegis);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        castFireboltAt(player2, player1);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Only the protected player's damage is redirected from a spell that damages each player")
+    void redirectsOnlyProtectedPlayerDamageFromMassSpell() {
+        Permanent aegis = addReadyAegis(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        activateAegis(aegis);
+        harness.setHand(player2, List.of(new VolcanicSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Each activation creates a separate one-shot shield")
+    void multipleActivationsCreateMultipleShields() {
+        Permanent aegis = addReadyAegis(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        activateAegis(aegis);
+        activateAegis(aegis);
+        castFireboltAt(player2, player1);
+        castFireboltAt(player2, player1);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
     private Permanent addReadyAegis(Player player) {
-        Permanent aegis = new Permanent(new AegisOfHonor());
-        aegis.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(aegis);
-        return aegis;
+        return harness.addToBattlefieldAndReturn(player, new AegisOfHonor());
     }
 
     private void activateAegis(Permanent aegis) {
@@ -76,10 +153,20 @@ class AegisOfHonorTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void castShockAt(Player caster, Player target) {
-        harness.setHand(caster, List.of(new Shock()));
+    private void castFlameBurstAt(Player caster, Player target) {
+        harness.setHand(caster, List.of(new FlameBurst()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.addMana(caster, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(caster, 0, target.getId());
+    }
+
+    private void castFireboltAt(Player caster, Player target) {
+        castFireboltAt(caster, target.getId());
+    }
+
+    private void castFireboltAt(Player caster, UUID targetId) {
+        harness.setHand(caster, List.of(new Firebolt()));
+        harness.addMana(caster, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(caster, 0, targetId);
     }
 }

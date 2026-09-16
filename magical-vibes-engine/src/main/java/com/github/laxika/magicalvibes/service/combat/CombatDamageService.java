@@ -1700,8 +1700,13 @@ public class CombatDamageService {
                     boolean needsTarget = effects.stream()
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                     if (needsTarget) {
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId));
+                        if (triggerCollectionService.needsSlotBySlotTargetSelection(perm.getCard())) {
+                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                    perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0));
+                        } else {
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId));
+                        }
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
                     } else {
@@ -1895,6 +1900,19 @@ public class CombatDamageService {
                             .mapToInt(Map.Entry::getValue)
                             .sum()
                             : damageDealt;
+                    if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
+                        firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
+                    }
+                    if (firedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        UUID graveyardOwnerId = firedEffect.targetSpec().graveyardScope().orElse(null)
+                                == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                perm.getCard(), attackerId, new ArrayList<>(List.of(firedEffect)), graveyardOwnerId,
+                                0, triggerDamage, 0, null, false, perm.getId()));
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                        continue;
+                    }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
                     // against them (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(

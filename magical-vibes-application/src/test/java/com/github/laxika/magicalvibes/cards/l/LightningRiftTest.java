@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.c.Censor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LightningRift.class, Censor.class, GrizzlyBears.class})
+@CardUsed({LightningRift.class, LonelySandbar.class, GlorySeeker.class})
 class LightningRiftTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class LightningRiftTest extends BaseCardTest {
         prepareGame();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        cycleCensor();
+        cycleLonelySandbar();
         chooseTarget(player2.getId());
         harness.handleMayAbilityChosen(player1, true);
 
@@ -34,8 +33,8 @@ class LightningRiftTest extends BaseCardTest {
     @DisplayName("Cycling by an opponent also triggers Lightning Rift")
     void opponentCyclingTriggersAbility() {
         harness.addToBattlefield(player1, new LightningRift());
-        harness.setHand(player2, List.of(new Censor()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new LonelySandbar()));
+        harness.setLibrary(player2, List.of(new GlorySeeker()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
 
@@ -53,15 +52,15 @@ class LightningRiftTest extends BaseCardTest {
     @Test
     @DisplayName("Cycling and paying {1} deals 2 damage to a creature")
     void payingDealsDamageToCreature() {
-        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var creature = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
         prepareGame();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        cycleCensor();
+        cycleLonelySandbar();
         chooseTarget(creature.getId());
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
     }
 
     @Test
@@ -70,21 +69,33 @@ class LightningRiftTest extends BaseCardTest {
         prepareGame();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        cycleCensor();
+        cycleLonelySandbar();
         chooseTarget(player2.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Cannot pay for the trigger when no mana remains")
+    void noManaPreventsDamage() {
+        prepareGame();
+
+        cycleLonelySandbar();
+        chooseTarget(player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
     private void prepareGame() {
         harness.addToBattlefield(player1, new LightningRift());
-        harness.setHand(player1, List.of(new Censor()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LonelySandbar()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
         harness.addMana(player1, ManaColor.BLUE, 1);
     }
 
-    private void cycleCensor() {
+    private void cycleLonelySandbar() {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())

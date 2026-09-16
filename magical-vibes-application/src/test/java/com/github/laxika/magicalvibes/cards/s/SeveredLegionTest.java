@@ -2,37 +2,31 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeveredLegion.class, GrizzlyBears.class, DrossCrocodile.class, Juggernaut.class})
 class SeveredLegionTest extends BaseCardTest {
-
 
     @Test
     @DisplayName("Severed Legion cannot be blocked by non-black non-artifact creatures")
     void cannotBeBlockedByNonBlackNonArtifactCreatures() {
-        Permanent attacker = new Permanent(new SeveredLegion());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SeveredLegion());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -42,21 +36,27 @@ class SeveredLegionTest extends BaseCardTest {
     @Test
     @DisplayName("Severed Legion can be blocked by black creatures")
     void canBeBlockedByBlackCreatures() {
-        Permanent attacker = new Permanent(new SeveredLegion());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SeveredLegion());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player2, new DrossCrocodile());
 
-        Permanent blocker = new Permanent(new DrossCrocodile());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Severed Legion can be blocked by artifact creatures")
+    void canBeBlockedByArtifactCreatures() {
+        Permanent attacker = addCreatureReady(player1, new SeveredLegion());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Juggernaut());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

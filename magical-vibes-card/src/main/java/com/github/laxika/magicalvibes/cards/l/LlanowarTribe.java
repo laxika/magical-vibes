@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
+@CardRegistration(set = "MH1", collectorNumber = "170")
 @CardRegistration(set = "GN3", collectorNumber = "102")
 public class LlanowarTribe extends Card {
 

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "GK2", collectorNumber = "111")
 @CardRegistration(set = "2X2", collectorNumber = "146")
 @CardRegistration(set = "PIO", collectorNumber = "173")
+@CardRegistration(set = "RVR", collectorNumber = "137")
 public class ExperimentOne extends Card {
 
     public ExperimentOne() {

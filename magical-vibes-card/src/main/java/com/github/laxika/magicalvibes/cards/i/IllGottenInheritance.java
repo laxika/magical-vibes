@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "77")
+@CardRegistration(set = "RVR", collectorNumber = "77")
 public class IllGottenInheritance extends Card {
 
     public IllGottenInheritance() {

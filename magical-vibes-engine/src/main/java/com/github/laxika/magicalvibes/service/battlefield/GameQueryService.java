@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
+import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -914,7 +915,11 @@ public class GameQueryService {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (!bonus.landSubtypeOverriding()) {
-            addLandTypes(result, permanent.getCard().getSubtypes());
+            if (permanent.isFaceDown()) {
+                addLandTypes(result, permanent.getFaceDownSubtypes());
+            } else {
+                addLandTypes(result, permanent.getCard().getSubtypes());
+            }
             addLandTypes(result, permanent.getGrantedSubtypes());
         }
         addLandTypes(result, bonus.grantedSubtypes());
@@ -924,6 +929,28 @@ public class GameQueryService {
         return result;
     }
 
+    /** Returns the mana colors granted intrinsically by the permanent's effective basic land types. */
+    public Set<ManaColor> intrinsicBasicLandManaColors(GameData gameData, Permanent permanent) {
+        if (permanent == null || !isLand(gameData, permanent)) {
+            return Set.of();
+        }
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        for (CardSubtype subtype : effectiveBasicLandTypes(gameData, permanent)) {
+            ManaColor color = switch (subtype) {
+                case PLAINS -> ManaColor.WHITE;
+                case ISLAND -> ManaColor.BLUE;
+                case SWAMP -> ManaColor.BLACK;
+                case MOUNTAIN -> ManaColor.RED;
+                case FOREST -> ManaColor.GREEN;
+                default -> null;
+            };
+            if (color != null) {
+                colors.add(color);
+            }
+        }
+        return colors;
+    }
+
     public Set<CardSubtype> landTypesOf(Card card) {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         addLandTypes(result, card.getSubtypes());
@@ -931,6 +958,14 @@ public class GameQueryService {
     }
 
     private void addLandTypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {
+        for (CardSubtype subtype : subtypes) {
+            if (LAND_SUBTYPES.contains(subtype)) {
+                target.add(subtype);
+            }
+        }
+    }
+
+    private void addLandTypes(Set<CardSubtype> target, Set<CardSubtype> subtypes) {
         for (CardSubtype subtype : subtypes) {
             if (LAND_SUBTYPES.contains(subtype)) {
                 target.add(subtype);
@@ -2019,9 +2054,9 @@ public class GameQueryService {
 
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
-     * or {@code 0} when no battlefield or turn-scoped life-floor effect currently applies.
-     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield or in their temporary
-     * player effects currently applies.
+     * or {@code 0} when no battlefield, emblem, or turn-scoped life-floor effect currently applies.
+     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield, in an emblem they
+     * control, or in their temporary player effects currently applies.
      * Callers must treat {@code 0} as "no floor" (do not clamp life to 0). Each such effect only
      * contributes its floor while its {@link LifeFloorCondition} holds, evaluated against the
      * player's state before the damage is applied ({@code currentLife}).
@@ -2043,6 +2078,14 @@ public class GameQueryService {
                 .getOrDefault(playerId, List.of())) {
             if (effect instanceof DamageLifeFloorEffect lifeFloor) {
                 floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
+            }
+        }
+        for (Emblem emblem : gameData.emblems) {
+            if (!playerId.equals(emblem.controllerId())) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof DamageLifeFloorEffect lifeFloor) {
+                    floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
+                }
             }
         }
         return floor;
@@ -2407,6 +2450,19 @@ public class GameQueryService {
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
                     }
+                }
+            }
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!Objects.equals(emblem.controllerId(), playerId)) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    return true;
                 }
             }
         }
@@ -7672,11 +7728,22 @@ public class GameQueryService {
                 new PermanentHasSubtypePredicate(CardSubtype.FLAGBEARER));
     }
 
-    /** Returns whether an opponent of {@code playerId} controls a Flagbearer. */
-    public boolean hasFlagbearerControlledByOpponent(GameData gameData, UUID playerId) {
+    /** Returns whether an opponent controls an active Flagbearer targeting requirement. */
+    public boolean hasFlagbearerTargetRequirementFromOpponent(GameData gameData, UUID playerId) {
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
             if (!entry.getKey().equals(playerId)
-                    && entry.getValue().stream().anyMatch(permanent -> isFlagbearer(gameData, permanent))) {
+                    && entry.getValue().stream().anyMatch(permanent -> {
+                        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+                        if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || bonus.losesAllAbilities()
+                                || bonus.losesAllNonManaAbilities()
+                                || permanent.isStaticEffectSuppressed(RequireFlagbearerTargetEffect.class)) {
+                            return false;
+                        }
+                        return staticEffectsIncludingTemporary(gameData, permanent, entry.getKey()).stream()
+                                .anyMatch(RequireFlagbearerTargetEffect.class::isInstance)
+                                || bonus.grantedEffects().stream()
+                                        .anyMatch(RequireFlagbearerTargetEffect.class::isInstance);
+                    })) {
                 return true;
             }
         }

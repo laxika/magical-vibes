@@ -20,6 +20,7 @@ public sealed interface DynamicAmount permits
         CardTypesAmongSpellsCastThisTurn,
         CardTypesAmongControlledPermanents,
         CardTypesAmongCardsInGraveyard,
+        CreatureTypesAmongControlledCreatures,
         CardsDrawnThisTurn,
         DistinctColorPairsAmongControlledPermanents,
         DistinctManaCostsAmongCardsInGraveyard,
@@ -186,6 +187,7 @@ public sealed interface DynamicAmount permits
         UnlockedRoomDoorsCount,
         WebSlingingReturnedCreatureManaValue,
         XValue,
+        TriggeringSpellTargetCount,
         CardTypesAmongCardsDiscardedThisResolution {
 
     /**

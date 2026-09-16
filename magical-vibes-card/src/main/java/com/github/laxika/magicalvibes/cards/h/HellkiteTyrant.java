@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "94")
+@CardRegistration(set = "RVR", collectorNumber = "111")
 public class HellkiteTyrant extends Card {
 
     public HellkiteTyrant() {

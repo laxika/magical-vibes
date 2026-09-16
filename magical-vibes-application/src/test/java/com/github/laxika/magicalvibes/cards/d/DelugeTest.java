@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Deluge.class, AirElemental.class, Forest.class, GrizzlyBears.class})
 class DelugeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -22,15 +21,11 @@ class DelugeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack as INSTANT_SPELL")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Deluge");
     }
 
     // ===== Resolving =====
@@ -38,47 +33,37 @@ class DelugeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving taps all creatures without flying on both sides")
     void tapsAllCreaturesWithoutFlying() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
         harness.passBothPriorities();
 
-        List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
-        for (Permanent p : p1Battlefield) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.isTapped()).isTrue();
-            }
-        }
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
+    }
 
-        List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
-        for (Permanent p : p2Battlefield) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.isTapped()).isTrue();
-            }
-        }
+    @Test
+    @DisplayName("Does not tap noncreature permanents")
+    void doesNotTapNoncreaturePermanents() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Does not tap creatures with flying")
     void doesNotTapCreaturesWithFlying() {
-        harness.addToBattlefield(player1, new AirElemental());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        Permanent airElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
         harness.passBothPriorities();
-
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        Permanent airElemental = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
-        Permanent grizzlyBears = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
 
         assertThat(airElemental.isTapped()).isFalse();
         assertThat(grizzlyBears.isTapped()).isTrue();
@@ -87,10 +72,7 @@ class DelugeTest extends BaseCardTest {
     @Test
     @DisplayName("Works with empty battlefield (no crash)")
     void worksWithEmptyBattlefield() {
-        harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -99,10 +81,7 @@ class DelugeTest extends BaseCardTest {
     @Test
     @DisplayName("Deluge goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -112,21 +91,11 @@ class DelugeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not tap creatures with flying on opponent's side either")
     void doesNotTapOpponentFlyingCreatures() {
-        harness.addToBattlefield(player2, new AirElemental());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        Permanent airElemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
         harness.passBothPriorities();
-
-        List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
-        Permanent airElemental = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
-        Permanent grizzlyBears = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
 
         assertThat(airElemental.isTapped()).isFalse();
         assertThat(grizzlyBears.isTapped()).isTrue();

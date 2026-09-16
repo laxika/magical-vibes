@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "184")
 @CardRegistration(set = "OTP", collectorNumber = "33")
 public class Thornado extends Card {
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageFromTargetT
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DIS", collectorNumber = "6")
+@CardRegistration(set = "RVR", collectorNumber = "12")
 public class Carom extends Card {
 
     public Carom() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "90")
+@CardRegistration(set = "RVR", collectorNumber = "97")
 public class VindictiveVampire extends Card {
 
     public VindictiveVampire() {

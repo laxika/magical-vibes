@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,40 +15,72 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnifiedStrike.class, GrizzlyBears.class, YotianSoldier.class})
+@CardUsed({UnifiedStrike.class, GlorySeeker.class})
 class UnifiedStrikeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles an attacking creature whose power is at most the battlefield Soldier count")
     void exilesAttackerWithinSoldierCount() {
-        addCreatureReady(player2, new YotianSoldier());
-        addCreatureReady(player2, new YotianSoldier());
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GlorySeeker());
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
 
         cast(attacker);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getName)
-                .contains("Grizzly Bears");
+                .contains("Glory Seeker");
     }
 
     @Test
     @DisplayName("Does not exile an attacking creature whose power exceeds the battlefield Soldier count")
     void doesNotExileAttackerAboveSoldierCount() {
-        addCreatureReady(player2, new YotianSoldier());
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
 
         cast(attacker);
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Glory Seeker");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Uses the Soldier count when the spell resolves")
+    void usesSoldierCountAtResolution() {
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new UnifiedStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        addCreatureReady(player1, new GlorySeeker());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .contains("Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when the target stops attacking before resolution")
+    void targetMustStillBeAttackingAtResolution() {
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new UnifiedStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Glory Seeker");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttackingCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GlorySeeker());
         harness.setHand(player1, List.of(new UnifiedStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -61,16 +92,14 @@ class UnifiedStrikeTest extends BaseCardTest {
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new UnifiedStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addAttacker(Player controller, Card card) {
-        Permanent attacker = new Permanent(card);
+        Permanent attacker = harness.addToBattlefieldAndReturn(controller, card);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
-        gd.playerBattlefields.get(controller.getId()).add(attacker);
         return attacker;
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 @CardRegistration(set = "VMA", collectorNumber = "227")
 @CardRegistration(set = "DDL", collectorNumber = "64")
 @CardRegistration(set = "A25", collectorNumber = "187")
+@CardRegistration(set = "MH1", collectorNumber = "175")
 @CardRegistration(set = "STA", collectorNumber = "56")
 @CardRegistration(set = "GN3", collectorNumber = "106")
 public class Regrowth extends Card {

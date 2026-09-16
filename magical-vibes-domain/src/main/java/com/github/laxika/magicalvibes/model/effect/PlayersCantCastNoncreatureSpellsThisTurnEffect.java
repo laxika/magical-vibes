@@ -1,7 +1,17 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Spell effect: every player can't cast noncreature spells for the rest of this turn.
+ * Effect that prevents players from casting noncreature spells for the rest of this turn.
  */
-public record PlayersCantCastNoncreatureSpellsThisTurnEffect() implements CardEffect {
+public record PlayersCantCastNoncreatureSpellsThisTurnEffect(boolean opponentsOnly) implements CardEffect {
+
+    /** Every player is restricted. */
+    public PlayersCantCastNoncreatureSpellsThisTurnEffect() {
+        this(false);
+    }
+
+    /** Restrict only the opponents of the effect controller. */
+    public static PlayersCantCastNoncreatureSpellsThisTurnEffect forOpponents() {
+        return new PlayersCantCastNoncreatureSpellsThisTurnEffect(true);
+    }
 }
