@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.SoldierOfThePantheon;
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
+import com.github.laxika.magicalvibes.cards.c.CoastalDrake;
+import com.github.laxika.magicalvibes.cards.g.GerrardsVerdict;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,8 +19,8 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnlistmentOfficer.class, GrizzlyBears.class, Plains.class, Shock.class,
-        SoldierOfThePantheon.class, WoodlandChangeling.class})
+@CardUsed({EnlistmentOfficer.class, CavesOfKoilos.class, CoastalDrake.class,
+        GerrardsVerdict.class, WoodlandChangeling.class})
 class EnlistmentOfficerTest extends BaseCardTest {
 
     private static Card createNoncreatureSoldierCard() {
@@ -42,9 +40,7 @@ class EnlistmentOfficerTest extends BaseCardTest {
     }
 
     private void castOfficer() {
-        harness.setHand(player1, List.of(new EnlistmentOfficer()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EnlistmentOfficer(), "{3}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -52,40 +48,38 @@ class EnlistmentOfficerTest extends BaseCardTest {
     @Test
     @DisplayName("Soldier cards among the top four go to hand and the rest go to the bottom")
     void soldiersGoToHand() {
-        Card soldier1 = new SoldierOfThePantheon();
-        Card soldier2 = new SoldierOfThePantheon();
-        Card bear = new GrizzlyBears();
-        Card plains = new Plains();
-        Card shock = new Shock();
+        Card soldier1 = new EnlistmentOfficer();
+        Card soldier2 = new EnlistmentOfficer();
+        Card drake = new CoastalDrake();
+        Card caves = new CavesOfKoilos();
+        Card verdict = new GerrardsVerdict();
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(soldier1, soldier2, bear, plains, shock));
+        harness.setLibrary(player1, List.of(soldier1, soldier2, drake, caves, verdict));
 
         castOfficer();
         finishAnyReorder();
 
+        List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).contains(soldier1, soldier2);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bear, plains);
-        assertThat(deck).contains(bear, plains, shock);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drake, caves);
+        assertThat(deck).contains(drake, caves, verdict);
     }
 
     @Test
     @DisplayName("Only the top four cards are revealed")
     void onlyTopFourAreRevealed() {
-        Card plains1 = new Plains();
-        Card plains2 = new Plains();
-        Card plains3 = new Plains();
-        Card plains4 = new Plains();
-        Card deepSoldier = new SoldierOfThePantheon();
+        Card nonSoldier1 = new CavesOfKoilos();
+        Card nonSoldier2 = new CavesOfKoilos();
+        Card nonSoldier3 = new CavesOfKoilos();
+        Card nonSoldier4 = new CavesOfKoilos();
+        Card deepSoldier = new EnlistmentOfficer();
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(plains1, plains2, plains3, plains4, deepSoldier));
+        harness.setLibrary(player1, List.of(nonSoldier1, nonSoldier2, nonSoldier3, nonSoldier4, deepSoldier));
 
         castOfficer();
         finishAnyReorder();
 
+        List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(deepSoldier);
         assertThat(deck).contains(deepSoldier);
     }
@@ -95,16 +89,14 @@ class EnlistmentOfficerTest extends BaseCardTest {
     void changelingAndNoncreatureSoldierCardsGoToHand() {
         Card changeling = new WoodlandChangeling();
         Card noncreatureSoldier = createNoncreatureSoldierCard();
-        Card shock = new Shock();
+        Card verdict = new GerrardsVerdict();
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(changeling, noncreatureSoldier, shock));
+        harness.setLibrary(player1, List.of(changeling, noncreatureSoldier, verdict));
 
         castOfficer();
         finishAnyReorder();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(changeling, noncreatureSoldier);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(shock);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(verdict);
     }
 }

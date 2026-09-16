@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "204")
 @CardRegistration(set = "MM3", collectorNumber = "130")
+@CardRegistration(set = "2X2", collectorNumber = "153")
+@CardRegistration(set = "TSR", collectorNumber = "217")
 public class MightOfOldKrosa extends Card {
 
     public MightOfOldKrosa() {

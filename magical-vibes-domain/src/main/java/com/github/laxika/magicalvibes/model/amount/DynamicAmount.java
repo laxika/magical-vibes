@@ -20,6 +20,7 @@ public sealed interface DynamicAmount permits
         CardTypesAmongSpellsCastThisTurn,
         CardTypesAmongControlledPermanents,
         CardTypesAmongCardsInGraveyard,
+        CreatureTypesAmongControlledCreatures,
         CardsDrawnThisTurn,
         DistinctColorPairsAmongControlledPermanents,
         DistinctManaCostsAmongCardsInGraveyard,
@@ -53,6 +54,7 @@ public sealed interface DynamicAmount permits
         BeheldPower,
         ChosenCreatureOrWarpedCardPower,
         ControllerLifeTotal,
+        ControllerExperienceCounters,
         ControllerSpeed,
         CompletedDungeonsCount,
         CountersOnLinkedPermanent,
@@ -135,6 +137,8 @@ public sealed interface DynamicAmount permits
         Min,
         OpponentPoisonCounters,
         OpponentsWithMoreCardsInHandThanController,
+        OpponentsAttackedThisTurn,
+        OpponentsDealtCombatDamageThisTurn,
         OpponentsWhoLostLifeThisTurn,
         OtherAttackersSharingCreatureTypeWithTarget,
         PartySize,
@@ -186,6 +190,7 @@ public sealed interface DynamicAmount permits
         UnlockedRoomDoorsCount,
         WebSlingingReturnedCreatureManaValue,
         XValue,
+        TriggeringSpellTargetCount,
         CardTypesAmongCardsDiscardedThisResolution {
 
     /**

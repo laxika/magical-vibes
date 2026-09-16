@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "5")
+@CardRegistration(set = "RVR", collectorNumber = "7")
 public class BasilicaGuards extends Card {
 
     public BasilicaGuards() {

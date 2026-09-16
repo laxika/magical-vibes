@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "178")
 @CardRegistration(set = "MB1", collectorNumber = "178")
+@CardRegistration(set = "OTP", collectorNumber = "48")
 public class Hypothesizzle extends Card {
 
     public Hypothesizzle() {

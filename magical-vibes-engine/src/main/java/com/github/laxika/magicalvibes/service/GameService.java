@@ -1148,20 +1148,35 @@ public class GameService {
                                     Map<UUID, Integer> damageAssignments,
                                     List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                                     List<Integer> discardHandCardIndices) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+                                    Map<UUID, Integer> damageAssignments,
+                                    List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                                    List<Integer> discardHandCardIndices, List<UUID> convokeCreatureIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
                         targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
                         retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
                         damageAssignments, beholdPermanentIds, beholdHandCardIndices,
-                        discardHandCardIndices))) return;
+                        discardHandCardIndices, convokeCreatureIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId,
                     targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
                     retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
-                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices);
+                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices,
+                    convokeCreatureIds);
         }
     }
 

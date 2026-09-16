@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class Knighthood extends Card {
 
     public Knighthood() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES));
     }
 }

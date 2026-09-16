@@ -306,6 +306,7 @@ public class Permanent {
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
+    private final Set<CardSubtype> faceDownSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Whether this face-down permanent was put onto the battlefield by manifest. */
     @Setter private boolean manifested;
     @Setter private boolean animatedUntilEndOfTurn;
@@ -809,6 +810,7 @@ public class Permanent {
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
+        this.faceDownSubtypes.addAll(source.faceDownSubtypes);
         this.manifested = source.manifested;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
@@ -939,12 +941,19 @@ public class Permanent {
     }
 
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {
+        setFaceDown(power, toughness, cardTypes, Set.of());
+    }
+
+    public void setFaceDown(int power, int toughness, Set<CardType> cardTypes,
+                            Set<CardSubtype> subtypes) {
         this.faceDown = true;
         this.cloaked = false;
         this.faceDownPower = power;
         this.faceDownToughness = toughness;
         this.faceDownCardTypes.clear();
         this.faceDownCardTypes.addAll(cardTypes);
+        this.faceDownSubtypes.clear();
+        this.faceDownSubtypes.addAll(subtypes);
     }
 
     public void setFaceDownAsCloaked() {
@@ -958,6 +967,7 @@ public class Permanent {
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
+        this.faceDownSubtypes.clear();
         this.manifested = false;
     }
 

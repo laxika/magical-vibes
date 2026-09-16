@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "15")
+@CardRegistration(set = "UMA", collectorNumber = "25")
 public class MartyrOfSands extends Card {
 
     public MartyrOfSands() {

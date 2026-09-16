@@ -14,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GravelSlinger.class, GrizzlyBears.class})
+@CardUsed({GravelSlinger.class, GlorySeeker.class})
 class GravelSlingerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to an attacking creature")
     void dealsDamageToAttackingCreature() {
-        Permanent slinger = addReadySlinger(player1);
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
         Permanent attacker = addCombatCreature(player2, true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
@@ -34,7 +34,7 @@ class GravelSlingerTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to a blocking creature")
     void dealsDamageToBlockingCreature() {
-        Permanent slinger = addReadySlinger(player1);
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
         Permanent blocker = addCombatCreature(player2, false);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
@@ -46,10 +46,24 @@ class GravelSlingerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an attacking creature its controller controls")
+    void dealsDamageToOwnAttackingCreature() {
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
+        Permanent attacker = addCombatCreature(player1, true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(slinger.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        addReadySlinger(player1);
-        Permanent bystander = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GravelSlinger());
+        Permanent bystander = addCreatureReady(player2, new GlorySeeker());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bystander.getId()))
@@ -78,15 +92,8 @@ class GravelSlingerTest extends BaseCardTest {
         assertThat(slinger.isFaceDown()).isFalse();
     }
 
-    private Permanent addReadySlinger(Player player) {
-        Permanent slinger = harness.addToBattlefieldAndReturn(player, new GravelSlinger());
-        slinger.setSummoningSick(false);
-        return slinger;
-    }
-
     private Permanent addCombatCreature(Player player, boolean attacking) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player, new GlorySeeker());
         if (attacking) {
             creature.setAttacking(true);
         } else {

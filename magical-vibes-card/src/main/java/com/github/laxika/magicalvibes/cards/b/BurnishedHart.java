@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "THS", collectorNumber = "213")
 @CardRegistration(set = "FDN", collectorNumber = "250")
 @CardRegistration(set = "MB1", collectorNumber = "248")
+@CardRegistration(set = "BRR", collectorNumber = "8")
 public class BurnishedHart extends Card {
 
     public BurnishedHart() {

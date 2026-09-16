@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "185")
+@CardRegistration(set = "TSR", collectorNumber = "404")
 public class ArchOfOrazca extends Card {
 
     public ArchOfOrazca() {

@@ -295,6 +295,8 @@ public class PermanentChoiceSpellHandlerService {
                             new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
                             ect.cardToCast().getId(), 0, permanentId, ect.copy(),
                             ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());
+                    exileCastTargetSupport.queueAfterSuccessfulCast(gameData, ect.cardToCast(), ect.controllerId(),
+                            ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
                     if (ect.lifeLossAfterCast() > 0) {
                         lifeSupport.applyLifeLoss(gameData, ect.controllerId(), ect.lifeLossAfterCast(),
                                 ect.cardToCast().getName());
@@ -451,7 +453,8 @@ public class PermanentChoiceSpellHandlerService {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
                     ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
-                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost()));
+                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost(),
+                    ect.afterSuccessfulCastEffect(), ect.sourcePermanentId()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -459,6 +462,22 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         // Every target slot is filled — put the spell on the stack preserving the declared order.
+        if (ect.resolutionCast()) {
+            try {
+                spellCastingService.playCardFromExileAsResolutionCast(gameData,
+                        new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
+                        card.getId(), 0, chosen, ect.copy());
+                exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, ect.controllerId(),
+                        ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
+                if (ect.lifeLossAfterCast() > 0) {
+                    lifeSupport.applyLifeLoss(gameData, ect.controllerId(), ect.lifeLossAfterCast(), card.getName());
+                }
+            } catch (IllegalStateException ex) {
+                gameData.removeFromExile(card.getId());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             try {
                 spellCastingService.playCardFromExileAsResolutionCast(gameData,

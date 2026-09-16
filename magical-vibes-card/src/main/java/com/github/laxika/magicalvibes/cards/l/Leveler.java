@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "195")
 @CardRegistration(set = "MB1", collectorNumber = "195")
+@CardRegistration(set = "TSR", collectorNumber = "397")
 public class Leveler extends Card {
 
     public Leveler() {

@@ -180,6 +180,7 @@ public class Card {
     private boolean sacrificeAtEndStep;
     private boolean requiresCreatureMana;
     private boolean requiresBasicLandMana;
+    private boolean requiresNoMana;
     /**
      * When true, this Aura enchants a player even though it isn't a Curse (e.g. Wheel of Sun and
      * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
@@ -367,6 +368,7 @@ public class Card {
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
         this.requiresCreatureMana = source.requiresCreatureMana;
         this.requiresBasicLandMana = source.requiresBasicLandMana;
+        this.requiresNoMana = source.requiresNoMana;
         this.enchantPlayer = source.enchantPlayer;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
@@ -458,6 +460,7 @@ public class Card {
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
         this.requiresCreatureMana = face.requiresCreatureMana;
         this.requiresBasicLandMana = face.requiresBasicLandMana;
+        this.requiresNoMana = face.requiresNoMana;
         this.enchantPlayer = face.enchantPlayer;
         this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
@@ -570,6 +573,7 @@ public class Card {
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
     public void setRequiresBasicLandMana(boolean requiresBasicLandMana) { assertMutable(); this.requiresBasicLandMana = requiresBasicLandMana; }
+    public void setRequiresNoMana(boolean requiresNoMana) { assertMutable(); this.requiresNoMana = requiresNoMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }

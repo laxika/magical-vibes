@@ -64,6 +64,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             Permanent source = entry.getSourcePermanentId() == null
                     ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) source = entry.getSourcePermanentSnapshot();
             CardColor chosenColor = source == null ? null : source.getChosenColor();
             if (chosenColor == null) {
                 preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);

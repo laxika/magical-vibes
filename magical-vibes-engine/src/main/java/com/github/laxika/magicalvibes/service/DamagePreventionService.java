@@ -852,8 +852,8 @@ public class DamagePreventionService {
 
     /**
      * Dolmen Gate-style protection: returns true when the given attacking creature's controller controls
-     * a permanent carrying {@link PreventCombatDamageToAttackingCreaturesYouControlEffect}. Combat damage
-     * dealt to such a creature is fully prevented by the caller.
+     * a permanent carrying {@link PreventCombatDamageToAttackingCreaturesYouControlEffect} whose optional
+     * filter matches the creature. Combat damage dealt to such a creature is fully prevented by the caller.
      */
     private boolean hasAttackingCreatureCombatDamagePreventionSource(GameData gameData, Permanent creature) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
@@ -861,8 +861,14 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(e -> e instanceof PreventCombatDamageToAttackingCreaturesYouControlEffect);
+                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(PreventCombatDamageToAttackingCreaturesYouControlEffect.class::isInstance)
+                        .map(PreventCombatDamageToAttackingCreaturesYouControlEffect.class::cast)
+                        .anyMatch(effect -> effect.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(
+                                gameData,
+                                creature,
+                                effect.filter())));
     }
 
     /**

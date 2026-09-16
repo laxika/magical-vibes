@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "164")
+@CardRegistration(set = "KLR", collectorNumber = "173")
 public class OrnamentalCourage extends Card {
 
     public OrnamentalCourage() {

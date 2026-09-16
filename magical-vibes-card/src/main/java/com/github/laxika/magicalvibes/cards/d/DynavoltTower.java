@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "208")
+@CardRegistration(set = "KLR", collectorNumber = "235")
 public class DynavoltTower extends Card {
 
     public DynavoltTower() {

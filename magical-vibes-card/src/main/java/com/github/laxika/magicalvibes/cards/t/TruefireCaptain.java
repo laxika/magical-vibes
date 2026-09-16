@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "209")
+@CardRegistration(set = "RVR", collectorNumber = "235")
 public class TruefireCaptain extends Card {
 
     public TruefireCaptain() {

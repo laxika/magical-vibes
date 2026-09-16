@@ -171,6 +171,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
+        register(PendingInteraction.CommandZoneCardChoice.class, this::projectCommandZoneCardChoice);
         register(PendingInteraction.RemoveTimeCounterCostChoice.class,
                 this::projectRemoveTimeCounterCostChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
@@ -1084,6 +1085,17 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose an exiled card named \"" + interaction.cardName()
                         + "\" to return to the battlefield.");
+    }
+
+    private InteractionPromptMessage projectCommandZoneCardChoice(
+            GameData gameData, PendingInteraction.CommandZoneCardChoice interaction) {
+        List<Card> commandZone = gameData.playerCommandZones
+                .getOrDefault(interaction.playerId(), List.of())
+                .stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(commandZone), 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectRemoveTimeCounterCostChoice(

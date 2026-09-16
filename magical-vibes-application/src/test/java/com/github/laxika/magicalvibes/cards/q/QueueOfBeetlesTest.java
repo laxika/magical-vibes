@@ -23,7 +23,6 @@ class QueueOfBeetlesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passPriority(player2);
         harness.castInstant(player1, 0, player2.getId());
 
         harness.passBothPriorities();

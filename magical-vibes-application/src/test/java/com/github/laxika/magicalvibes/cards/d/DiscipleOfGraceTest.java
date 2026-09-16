@@ -16,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DiscipleOfGrace.class, Expunge.class, GorillaWarrior.class, BogRaiders.class})
+@CardUsed({DiscipleOfGrace.class, Expunge.class, GorillaWarrior.class, BogRaiders.class,
+        Despondency.class})
 class DiscipleOfGraceTest extends BaseCardTest {
 
     @Test
@@ -30,6 +31,20 @@ class DiscipleOfGraceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, disciple.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents a black Aura from enchanting Disciple of Grace")
+    void protectionFromBlackPreventsBlackAuraAttachment() {
+        Permanent disciple = addCreatureReady(player1, new DiscipleOfGrace());
+
+        harness.setHand(player1, List.of(new Despondency()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
     }
 
     @Test

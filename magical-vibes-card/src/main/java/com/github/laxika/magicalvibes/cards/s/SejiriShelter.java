@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "37")
+@CardRegistration(set = "PIO", collectorNumber = "31")
 public class SejiriShelter extends Card {
 
     public SejiriShelter() {

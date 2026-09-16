@@ -11,11 +11,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Opposition.class, Forest.class, GrizzlyBears.class, HowlingMine.class, Pacifism.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HowlingMine.class, Opposition.class, Pacifism.class})
 class OppositionTest extends BaseCardTest {
 
     // ===== Tapping targets =====
@@ -60,6 +59,35 @@ class OppositionTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can target a permanent controlled by the ability's controller")
+    void canTargetOwnPermanent() {
+        addOpposition(player1);
+        Permanent cost = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(cost.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target a permanent that is already tapped")
+    void canTargetAlreadyTappedPermanent() {
+        addOpposition(player1);
+        Permanent cost = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(cost.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
     // ===== Invalid targets =====
 
     @Test
@@ -89,17 +117,14 @@ class OppositionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay the cost with an untapped noncreature permanent")
-    void cannotPayWithNonCreature() {
+    @DisplayName("Cannot tap an opponent's creature to pay the cost")
+    void cannotPayWithOpponentsCreature() {
         addOpposition(player1);
-        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-
-        assertThat(nonCreature.isTapped()).isFalse();
-        assertThat(target.isTapped()).isFalse();
     }
 
     @Test
@@ -125,5 +150,19 @@ class OppositionTest extends BaseCardTest {
 
     private Permanent addOpposition(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Opposition());
+    }
+
+    @Test
+    @DisplayName("Cannot pay the cost with an untapped noncreature permanent")
+    void cannotPayWithNonCreature() {
+        addOpposition(player1);
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(nonCreature.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
     }
 }

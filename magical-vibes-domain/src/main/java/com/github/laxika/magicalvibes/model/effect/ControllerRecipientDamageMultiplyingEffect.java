@@ -17,4 +17,12 @@ public interface ControllerRecipientDamageMultiplyingEffect extends DoublingEffe
     default boolean noncombatOnly() {
         return false;
     }
+
+    /**
+     * Whether this multiplier also applies when the recipient is a permanent controlled by an
+     * opponent. A false value models effects that mention only damage to an opponent.
+     */
+    default boolean appliesToOpponentPermanents() {
+        return true;
+    }
 }

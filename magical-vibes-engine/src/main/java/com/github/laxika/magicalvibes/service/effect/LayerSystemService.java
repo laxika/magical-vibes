@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwn
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -626,8 +627,8 @@ public class LayerSystemService {
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
      * every query and only the finished board is cached): emblems, the conditions of the
-     * conditional wrappers the pass did not collect, step state, amount evaluation beyond
-     * the fields above. The wrappers the pass DOES collect are exactly those
+     * conditional wrappers the pass did not collect, amount evaluation beyond the fields above.
+     * The wrappers the pass DOES collect are exactly those
      * whose conditions read only what is hashed here — that is what
      * {@link ConditionBoardStability} decides, so widening it means widening this method too.
      *
@@ -642,6 +643,7 @@ public class LayerSystemService {
         h = mix(h, gameData.stolenCreatures.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         if (gameData.planechase != null) {
             h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));
             for (var planar : gameData.planechase.faceUp) {
@@ -730,6 +732,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isCloaked() ? 1 : 0);
         flags = flags << 1 | (p.isRoomDoorUnlocked(0) ? 1 : 0);
         flags = flags << 1 | (p.isRoomDoorUnlocked(1) ? 1 : 0);
+        flags = flags << 1 | (p.isBlockedWithoutBlockers() ? 1 : 0);
         // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.
@@ -785,6 +788,7 @@ public class LayerSystemService {
         h = mix(h, p.getFaceDownPower());
         h = mix(h, p.getFaceDownToughness());
         h = hashEnums(h, p.getFaceDownCardTypes());
+        h = hashEnums(h, p.getFaceDownSubtypes());
 
         h = hashEnums(h, p.getGrantedKeywords());
         h = hashEnums(h, p.getPersistentGrantedKeywords());
@@ -2582,6 +2586,11 @@ public class LayerSystemService {
                         state.addStaticEffect(grant.effect());
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), grant.effect());
+                    }
+                    case GrantTriggeredAbilityEffect grant -> {
+                        state.addStaticEffect(grant);
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), grant);
                     }
                     default -> {
                         continue;

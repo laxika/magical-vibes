@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfE
 
 @CardRegistration(set = "PLC", collectorNumber = "1")
 @CardRegistration(set = "EMA", collectorNumber = "1")
+@CardRegistration(set = "TSR", collectorNumber = "6")
 public class AvenRiftwatcher extends Card {
 
     public AvenRiftwatcher() {

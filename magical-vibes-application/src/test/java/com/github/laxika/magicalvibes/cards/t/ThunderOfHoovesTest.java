@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
+import com.github.laxika.magicalvibes.cards.i.IronfistCrusher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ThunderOfHooves.class)
+@CardUsed({ThunderOfHooves.class, BarkhideMauler.class, IronfistCrusher.class})
 class ThunderOfHoovesTest extends BaseCardTest {
 
     @Test
@@ -48,14 +49,31 @@ class ThunderOfHoovesTest extends BaseCardTest {
     void countsBeastsAtResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2,
                 makeCreature("Target", 5, List.of(), Set.of()));
-        harness.setHand(player1, List.of(new ThunderOfHooves()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ThunderOfHooves(), "{3}{R}");
         harness.addToBattlefield(player2, makeCreature("Beast", 5, List.of(CardSubtype.BEAST), Set.of()));
         harness.addToBattlefield(player1, makeCreature("Another Beast", 5, List.of(CardSubtype.BEAST), Set.of()));
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts flying Beasts for X without dealing damage to them")
+    void countsFlyingBeastsButDoesNotDamageThem() {
+        Permanent flyingBeast = harness.addToBattlefieldAndReturn(player2,
+                makeCreature("Flying Beast", 5, List.of(CardSubtype.BEAST), Set.of(Keyword.FLYING)));
+        Permanent ownBeast = harness.addToBattlefieldAndReturn(player1, new BarkhideMauler());
+        Permanent nonflyingCreature = harness.addToBattlefieldAndReturn(player2, new IronfistCrusher());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast();
+
+        assertThat(flyingBeast.getMarkedDamage()).isZero();
+        assertThat(ownBeast.getMarkedDamage()).isEqualTo(2);
+        assertThat(nonflyingCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
     @Test
@@ -77,9 +95,7 @@ class ThunderOfHoovesTest extends BaseCardTest {
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new ThunderOfHooves()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ThunderOfHooves(), "{3}{R}");
         harness.passBothPriorities();
     }
 

@@ -34,13 +34,25 @@ class CabalCoffersTest extends BaseCardTest {
     @Test
     @DisplayName("Adds no black mana when you control no Swamps")
     void addsNoManaWithNoControlledSwamps() {
-        harness.addToBattlefield(player1, new CabalCoffers());
-        Permanent coffers = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent coffers = harness.addToBattlefieldAndReturn(player1, new CabalCoffers());
         coffers.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Pays two generic mana and taps Cabal Coffers")
+    void paysActivationCostAndTapsSource() {
+        Permanent coffers = harness.addToBattlefieldAndReturn(player1, new CabalCoffers());
+        coffers.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(coffers.isTapped()).isTrue();
     }
 }

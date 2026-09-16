@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "273")
+@CardRegistration(set = "2XM", collectorNumber = "305")
 public class VulshokGauntlets extends Card {
 
     public VulshokGauntlets() {

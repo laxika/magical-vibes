@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "DRB", collectorNumber = "12")
 @CardRegistration(set = "INV", collectorNumber = "267")
 @CardRegistration(set = "DDE", collectorNumber = "48")
+@CardRegistration(set = "DMR", collectorNumber = "198")
 public class RithTheAwakener extends Card {
 
     public RithTheAwakener() {

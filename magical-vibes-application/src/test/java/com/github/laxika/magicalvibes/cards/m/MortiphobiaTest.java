@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.Gravegouger;
+import com.github.laxika.magicalvibes.cards.p.PutridImp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mortiphobia.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({Mortiphobia.class, Gravegouger.class, PutridImp.class})
 class MortiphobiaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discard ability exiles a target card from a graveyard")
     void discardAbilityExilesTargetCard() {
-        Card discard = new GrizzlyBears();
-        Card target = new HillGiant();
+        Card discard = new PutridImp();
+        Card target = new Gravegouger();
         harness.addToBattlefield(player1, new Mortiphobia());
         harness.setHand(player1, List.of(discard));
         harness.setGraveyard(player2, List.of(target));
@@ -38,7 +38,7 @@ class MortiphobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifice ability exiles a target card from a graveyard")
     void sacrificeAbilityExilesTargetCard() {
-        Card target = new HillGiant();
+        Card target = new Gravegouger();
         harness.addToBattlefield(player1, new Mortiphobia());
         harness.setGraveyard(player2, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -51,5 +51,40 @@ class MortiphobiaTest extends BaseCardTest {
                 .anyMatch(card -> card instanceof Mortiphobia);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Discard ability can be paid with {1}{B}")
+    void discardAbilityUsesTwoMana() {
+        Card discard = new PutridImp();
+        Card target = new Gravegouger();
+        harness.addToBattlefield(player1, new Mortiphobia());
+        harness.setHand(player1, List.of(discard));
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability can target a card in its controller's graveyard")
+    void sacrificeAbilityExilesFromControllersGraveyard() {
+        Card target = new Gravegouger();
+        Card source = new Mortiphobia();
+        harness.addToBattlefield(player1, source);
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
     }
 }

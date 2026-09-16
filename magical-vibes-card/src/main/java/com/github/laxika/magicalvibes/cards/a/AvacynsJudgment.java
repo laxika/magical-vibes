@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "145")
+@CardRegistration(set = "SIR", collectorNumber = "142")
 public class AvacynsJudgment extends Card {
 
     public AvacynsJudgment() {

@@ -37,7 +37,18 @@ public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
         boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
-        boolean allowZeroTargets) implements GraveyardCardChoosingEffect {
+        boolean allowZeroTargets, boolean putKickCounters) implements GraveyardCardChoosingEffect {
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     UUID affectedPlayerId, boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter,
+                                     boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets) {
+        this(count, scope, filter, affectedPlayerId, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn,
+                allowZeroTargets, false);
+    }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      UUID affectedPlayerId, boolean exactTargetCount,
@@ -116,6 +127,12 @@ public record ExileGraveyardCardsEffect(
     public static ExileGraveyardCardsEffect upToOneTargetFromAnyGraveyard() {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
                 null, null, false, false, false, null, false, true);
+    }
+
+    /** Exiles source-tracked controller-graveyard cards and marks each with a kick counter. */
+    public static ExileGraveyardCardsEffect upToControllerGraveyardWithKickCounters(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(100, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, null, false, true, false, null, false, false, true);
     }
 
     @Override

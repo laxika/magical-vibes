@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "140")
+@CardRegistration(set = "PIO", collectorNumber = "375")
 public class LimitsOfSolidarity extends Card {
 
     public LimitsOfSolidarity() {

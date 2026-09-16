@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "181")
+@CardRegistration(set = "SIR", collectorNumber = "177")
 public class SinProdder extends Card {
 
     public SinProdder() {

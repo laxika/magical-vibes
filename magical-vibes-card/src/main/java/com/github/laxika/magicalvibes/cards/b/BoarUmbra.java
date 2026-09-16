@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "179")
 @CardRegistration(set = "PC2", collectorNumber = "58")
+@CardRegistration(set = "UMA", collectorNumber = "158")
 @CardRegistration(set = "PCA", collectorNumber = "58")
 public class BoarUmbra extends Card {
 

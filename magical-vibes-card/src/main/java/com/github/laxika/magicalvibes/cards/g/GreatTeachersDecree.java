@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "21")
+@CardRegistration(set = "IMA", collectorNumber = "21")
 public class GreatTeachersDecree extends Card {
 
     public GreatTeachersDecree() {

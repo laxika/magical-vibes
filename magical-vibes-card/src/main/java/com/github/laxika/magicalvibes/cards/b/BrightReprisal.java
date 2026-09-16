@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "7")
+@CardRegistration(set = "GNT", collectorNumber = "9")
 public class BrightReprisal extends Card {
 
     public BrightReprisal() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "126")
+@CardRegistration(set = "PIO", collectorNumber = "174")
 public class GatebreakerRam extends Card {
 
     public GatebreakerRam() {

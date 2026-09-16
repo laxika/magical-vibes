@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "MM2", collectorNumber = "13")
 @CardRegistration(set = "MMA", collectorNumber = "11")
 @CardRegistration(set = "MB1", collectorNumber = "63")
+@CardRegistration(set = "HA5", collectorNumber = "1")
 public class CourtHomunculus extends Card {
 
     public CourtHomunculus() {

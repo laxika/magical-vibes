@@ -19,6 +19,6 @@ public class Misstep extends Card {
                 "Target must be a player"
         )).addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(
                 TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                new PermanentIsCreaturePredicate()));
+                new PermanentIsCreaturePredicate(), 1, true));
     }
 }

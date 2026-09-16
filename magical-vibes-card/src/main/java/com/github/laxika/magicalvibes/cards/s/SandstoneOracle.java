@@ -11,10 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "C15", collectorNumber = "52")
 @CardRegistration(set = "MB1", collectorNumber = "213")
+@CardRegistration(set = "IMA", collectorNumber = "227")
+@CardRegistration(set = "2XM", collectorNumber = "285")
 public class SandstoneOracle extends Card {
 
     public SandstoneOracle() {
-        // If the opponent has more cards in hand than you, draw the difference.
+        // When this creature enters, draw cards equal to the difference between the opponent's
+        // hand size and yours. A non-positive difference draws nothing.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DrawCardEffect(new Sum(
                         new CardsInHand(CountScope.OPPONENTS),

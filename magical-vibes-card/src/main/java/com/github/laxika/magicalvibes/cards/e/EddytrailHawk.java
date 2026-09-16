@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "12")
+@CardRegistration(set = "KLR", collectorNumber = "16")
 public class EddytrailHawk extends Card {
 
     public EddytrailHawk() {

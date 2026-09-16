@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -85,8 +86,10 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSp
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedAtLeastThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
+import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledFaerieAsCast;
@@ -98,6 +101,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFro
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsFewerCreaturesThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasAtLeastOpponents;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsPrimeNumberOfLands;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledSourcesDealtDamageThisTurn;
@@ -245,6 +249,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesO
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
@@ -651,6 +656,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
             case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
+            case ControlledCommanderAsCast ignored -> controlsCommander(gameData, ctx);
             case ControlledFaerieAsCast ignored -> ctx.controlledFaerieAsCast();
             case ControlledModifiedCreatureAsCast ignored -> ctx.controlledModifiedCreatureAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
@@ -719,6 +725,8 @@ public class ConditionEvaluationService {
                             && sourcePermanent(gameData, ctx).getTimesRegeneratedThisTurn() > 0;
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
+            case NoMonarch ignored ->
+                    gameData.monarchPlayerId == null;
             case AttachedPermanentControllerControlsNoOther c ->
                     attachedPermanentControllerControlsNoOther(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
@@ -740,6 +748,11 @@ public class ConditionEvaluationService {
                     controllerHasMoreCardsInHandThanEachOpponent(gameData, ctx.controllerId());
             case ControllerControlsFewerCreaturesThanEachOpponent ignored ->
                     controllerControlsFewerCreaturesThanEachOpponent(gameData, ctx.controllerId());
+            case ControllerHasAtLeastOpponents c ->
+                    ctx.controllerId() != null
+                            && gameData.orderedPlayerIds.stream()
+                            .filter(playerId -> !playerId.equals(ctx.controllerId()))
+                            .count() >= c.minimum();
             case AnOpponentHasMoreCardsInHandThanController ignored ->
                     anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
@@ -885,6 +898,9 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
+            case AttackedTargetIsOpponent ignored ->
+                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
+                            && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null
@@ -1175,6 +1191,8 @@ public class ConditionEvaluationService {
                     ctx.castDuringMainPhase();
             case ControllerTurn ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
+            case ControllerIsMonarch ignored ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.monarchPlayerId);
             case ControllerMainPhase ignored ->
                     ctx.controllerId() != null
                             && ctx.controllerId().equals(gameData.activePlayerId)
@@ -1494,7 +1512,7 @@ public class ConditionEvaluationService {
                                 gameData, source, ctx.controllerId());
             }
             case ColorMostCommonAmongAllPermanents c ->
-                    ColorMostCommonAmongAllPermanents.isMostCommon(gameData, c.color());
+                    isMostCommonPermanentColor(gameData, c.color());
             case CardsExiledThisTurn ignored -> gameData.cardsExiledThisTurn > 0;
             case AllNonartifactCreaturesShareColor ignored ->
                     allNonartifactCreaturesShareColor(gameData);
@@ -1794,6 +1812,17 @@ public class ConditionEvaluationService {
                 .max()
                 .orElse(0);
         return targetSpell.getCard().getManaValue() + targetSpell.getXValue() <= greatestManaValue;
+    }
+
+    private boolean isMostCommonPermanentColor(GameData gameData, CardColor color) {
+        Map<CardColor, Integer> counts = new java.util.EnumMap<>(CardColor.class);
+        gameData.forEachPermanent((playerId, permanent) -> {
+            for (CardColor currentColor : gameQueryService.colorsForStaticEvaluation(permanent)) {
+                counts.merge(currentColor, 1, Integer::sum);
+            }
+        });
+        int colorCount = counts.getOrDefault(color, 0);
+        return counts.values().stream().allMatch(count -> colorCount >= count);
     }
 
     private boolean targetSpellSharesColorWithControlledCreature(GameData gameData, ConditionContext ctx) {
@@ -2262,6 +2291,23 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
+    }
+
+    /**
+     * The game model keeps commander cards in a player's command-zone registry rather than
+     * marking battlefield permanents directly. Match the controlled permanent to that registry
+     * by card name; this also works with the separate card instances used for command-zone setup.
+     */
+    private boolean controlsCommander(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+
+        List<Card> commandZone = gameData.playerCommandZones.get(controllerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (commandZone == null || commandZone.isEmpty() || battlefield == null) return false;
+
+        return battlefield.stream().anyMatch(permanent -> commandZone.stream()
+                .anyMatch(commander -> commander.getName().equals(permanent.getCard().getName())));
     }
 
     private boolean targetPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,

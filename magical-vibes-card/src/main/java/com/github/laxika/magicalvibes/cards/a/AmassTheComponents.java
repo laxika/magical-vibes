@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "43")
+@CardRegistration(set = "IMA", collectorNumber = "41")
 public class AmassTheComponents extends Card {
 
     public AmassTheComponents() {

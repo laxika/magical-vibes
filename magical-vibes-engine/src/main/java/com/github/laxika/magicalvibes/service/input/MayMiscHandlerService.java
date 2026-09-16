@@ -192,8 +192,12 @@ public class MayMiscHandlerService {
         playerInputService.processNextMayAbility(gameData);
 
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            // All may-not-untap choices resolved — complete the turn advance and resume auto-pass
-            turnProgressionService.completeTurnAdvance(gameData);
+            // All may-not-untap choices resolved — resume the current untap sequence.
+            if (gameData.additionalBeginningPhaseUntapInProgress) {
+                turnProgressionService.completeAdditionalBeginningPhaseUntap(gameData);
+            } else {
+                turnProgressionService.completeTurnAdvance(gameData);
+            }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }

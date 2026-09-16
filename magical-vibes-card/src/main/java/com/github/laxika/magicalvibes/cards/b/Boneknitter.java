@@ -14,6 +14,7 @@ import java.util.List;
 public class Boneknitter extends Card {
 
     public Boneknitter() {
+        addMorph("{2}{B}");
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",

@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "236")
+@CardRegistration(set = "GK1", collectorNumber = "121")
+@CardRegistration(set = "RVR", collectorNumber = "234")
 public class TolsimirWolfblood extends Card {
 
     public TolsimirWolfblood() {

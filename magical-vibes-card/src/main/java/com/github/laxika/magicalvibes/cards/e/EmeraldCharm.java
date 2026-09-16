@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "106")
+@CardRegistration(set = "DMR", collectorNumber = "158")
 public class EmeraldCharm extends Card {
 
     public EmeraldCharm() {

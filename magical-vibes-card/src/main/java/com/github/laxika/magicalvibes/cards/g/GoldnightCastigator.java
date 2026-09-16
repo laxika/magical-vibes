@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "162")
+@CardRegistration(set = "SIR", collectorNumber = "160")
 public class GoldnightCastigator extends Card {
 
     public GoldnightCastigator() {

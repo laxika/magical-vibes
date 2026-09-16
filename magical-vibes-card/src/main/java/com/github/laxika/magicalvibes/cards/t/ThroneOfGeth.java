@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "211")
+@CardRegistration(set = "2XM", collectorNumber = "301")
 public class ThroneOfGeth extends Card {
 
     public ThroneOfGeth() {

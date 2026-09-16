@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "13")
+@CardRegistration(set = "KLR", collectorNumber = "14")
 public class CountlessGearsRenegade extends Card {
 
     public CountlessGearsRenegade() {

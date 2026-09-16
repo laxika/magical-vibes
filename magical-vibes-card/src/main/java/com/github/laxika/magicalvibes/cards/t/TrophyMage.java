@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "48")
 @CardRegistration(set = "DDU", collectorNumber = "42")
+@CardRegistration(set = "KLR", collectorNumber = "71")
 public class TrophyMage extends Card {
 
     public TrophyMage() {

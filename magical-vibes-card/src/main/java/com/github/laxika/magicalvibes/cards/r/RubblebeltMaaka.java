@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "38")
 @CardRegistration(set = "MM3", collectorNumber = "109")
+@CardRegistration(set = "RVR", collectorNumber = "121")
 public class RubblebeltMaaka extends Card {
 
     public RubblebeltMaaka() {

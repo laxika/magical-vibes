@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "229")
+@CardRegistration(set = "TSR", collectorNumber = "241")
 public class ThrillOfTheHunt extends Card {
 
     public ThrillOfTheHunt() {

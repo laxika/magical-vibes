@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "193")
+@CardRegistration(set = "OTP", collectorNumber = "47")
 public class Humiliate extends Card {
 
     public Humiliate() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "76")
+@CardRegistration(set = "RVR", collectorNumber = "85")
 public class MephiticVapors extends Card {
 
     public MephiticVapors() {

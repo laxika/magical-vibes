@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "127")
+@CardRegistration(set = "KLR", collectorNumber = "188")
 public class AjaniUnyielding extends Card {
 
     public AjaniUnyielding() {

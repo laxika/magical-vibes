@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "51")
+@CardRegistration(set = "KLR", collectorNumber = "75")
 public class AetherPoisoner extends Card {
 
     public AetherPoisoner() {

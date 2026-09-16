@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "153")
+@CardRegistration(set = "GK2", collectorNumber = "38")
 public class DeathpactAngel extends Card {
 
     private static final String NAME = "Deathpact Angel";

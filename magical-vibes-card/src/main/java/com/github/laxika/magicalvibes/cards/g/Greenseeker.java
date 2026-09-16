@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "198")
+@CardRegistration(set = "TSR", collectorNumber = "207")
 public class Greenseeker extends Card {
 
     public Greenseeker() {

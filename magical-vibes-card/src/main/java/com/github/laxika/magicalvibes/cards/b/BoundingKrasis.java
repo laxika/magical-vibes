@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "212")
 @CardRegistration(set = "MB1", collectorNumber = "212")
+@CardRegistration(set = "PIO", collectorNumber = "304")
 public class BoundingKrasis extends Card {
 
     public BoundingKrasis() {

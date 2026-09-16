@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "108")
+@CardRegistration(set = "GN2", collectorNumber = "35")
 public class TorgaarFamineIncarnate extends Card {
 
     public TorgaarFamineIncarnate() {

@@ -41,6 +41,8 @@ import java.util.List;
  * targets are allowed because fusing both halves onto one creature is legal.
  */
 @CardRegistration(set = "DGM", collectorNumber = "134")
+@CardRegistration(set = "GK1", collectorNumber = "45")
+@CardRegistration(set = "PIO", collectorNumber = "396")
 public class TurnBurn extends Card {
 
     public TurnBurn() {

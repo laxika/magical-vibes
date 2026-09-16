@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "163")
+@CardRegistration(set = "KLR", collectorNumber = "250")
 public class MerchantsDockhand extends Card {
 
     public MerchantsDockhand() {

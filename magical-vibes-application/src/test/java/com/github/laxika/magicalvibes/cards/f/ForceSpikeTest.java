@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,20 +13,19 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForceSpike.class, LlanowarElves.class, DarkRitual.class})
+@CardUsed({ForceSpike.class, LlanowarElves.class, Shock.class})
 class ForceSpikeTest extends BaseCardTest {
     @Test
     @DisplayName("Counters spell when opponent has no mana to pay {1}")
     void countersWhenOpponentCannotPay() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1); // just enough to cast
+        harness.castFromHand(player1, elves, "{G}");
 
         harness.setHand(player2, List.of(new ForceSpike()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
 
@@ -41,33 +40,32 @@ class ForceSpikeTest extends BaseCardTest {
     @Test
     @DisplayName("Counters a noncreature spell when its controller cannot pay {1}")
     void countersNoncreatureSpellWhenControllerCannotPay() {
-        DarkRitual ritual = new DarkRitual();
-        harness.setHand(player1, List.of(ritual));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.setHand(player2, List.of(new ForceSpike()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ritual.getId());
+        harness.castInstant(player2, 0, shock.getId());
 
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Dark Ritual");
+        harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.stack).isEmpty();
     }
     @Test
     @DisplayName("Spell is not countered when opponent pays {1}")
     void spellNotCounteredWhenOpponentPays() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast, 1 to pay
+        harness.castFromHand(player1, elves, "{G}");
+        harness.addMana(player1, ManaColor.GREEN, 1); // 1 to pay
 
         harness.setHand(player2, List.of(new ForceSpike()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
@@ -88,13 +86,12 @@ class ForceSpikeTest extends BaseCardTest {
     @DisplayName("Spell is countered when opponent declines to pay")
     void spellCounteredWhenOpponentDeclines() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast, 1 available
+        harness.castFromHand(player1, elves, "{G}");
+        harness.addMana(player1, ManaColor.GREEN, 1); // 1 available
 
         harness.setHand(player2, List.of(new ForceSpike()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
@@ -106,5 +103,41 @@ class ForceSpikeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target spell is no longer on the stack")
+    void fizzlesIfTargetSpellRemoved() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.castFromHand(player1, elves, "{G}");
+
+        ForceSpike forceSpike = new ForceSpike();
+        harness.setHand(player2, List.of(forceSpike));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        gd.stack.removeIf(entry -> entry.getCard().getId().equals(elves.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player2, "Force Spike");
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        var elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        ForceSpike forceSpike = new ForceSpike();
+        harness.setHand(player2, List.of(forceSpike));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, elves.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forceSpike);
+        assertThat(gd.stack).isEmpty();
     }
 }

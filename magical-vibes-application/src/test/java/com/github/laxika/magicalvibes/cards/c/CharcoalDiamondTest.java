@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -38,6 +37,18 @@ class CharcoalDiamondTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate the mana ability while tapped")
+    void cannotTapForBlackManaWhileTapped() {
+        Permanent diamond = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
+        diamond.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent diamond = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
@@ -47,5 +58,4 @@ class CharcoalDiamondTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
-
 }

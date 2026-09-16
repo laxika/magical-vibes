@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "SOI", collectorNumber = "73")
+@CardRegistration(set = "SIR", collectorNumber = "80")
 public class ManicScribe extends Card {
 
     public ManicScribe() {

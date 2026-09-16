@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BalshanBeguiler.class, Island.class, Forest.class, WoodlandDruid.class})
 class BalshanBeguilerTest extends BaseCardTest {
 
     @Test
@@ -23,7 +24,7 @@ class BalshanBeguilerTest extends BaseCardTest {
     void revealsDamagedPlayersTopCardsAndPutsOneIntoGraveyard() {
         Card ownCard = new Island();
         Card opponentTop = new Forest();
-        Card opponentSecond = new GrizzlyBears();
+        Card opponentSecond = new WoodlandDruid();
         harness.setLibrary(player1, List.of(ownCard));
         harness.setLibrary(player2, List.of(opponentTop, opponentSecond));
         addAttackingBeguiler();
@@ -41,7 +42,7 @@ class BalshanBeguilerTest extends BaseCardTest {
         assertThat(choice.params().targetPlayerId()).isEqualTo(player2.getId());
         assertThat(choice.params().cards()).containsExactly(opponentTop, opponentSecond);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentSecond);
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
@@ -49,10 +50,31 @@ class BalshanBeguilerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A library with only one card reveals and puts that card into the graveyard")
+    void oneCardLibraryIsHandled() {
+        Card onlyCard = new Forest();
+        harness.setLibrary(player2, List.of(onlyCard));
+        addAttackingBeguiler();
+
+        resolveCombatAndTrigger();
+
+        PendingInteraction.LibrarySearch choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.params().cards()).containsExactly(onlyCard);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(onlyCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("A blocked Beguiler does not trigger")
     void blockedDoesNotTrigger() {
         addAttackingBeguiler();
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new WoodlandDruid());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);

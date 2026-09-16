@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.f.ForgottenCave;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MythicProportions.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({MythicProportions.class, ElvishWarrior.class, ForgottenCave.class})
 class MythicProportionsTest extends BaseCardTest {
 
     @Test
     void resolvingAttachesToTargetCreature() {
-        Permanent creature = addReadyCreature();
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
         harness.setHand(player1, List.of(new MythicProportions()));
         addMana();
 
@@ -33,61 +33,67 @@ class MythicProportionsTest extends BaseCardTest {
     }
 
     @Test
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new MythicProportions()));
+        addMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     void enchantedCreatureGetsEightEightAndTrample() {
-        Permanent creature = addReadyCreature();
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
         attachAura(creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     void effectsEndWhenAuraLeavesBattlefield() {
-        Permanent creature = addReadyCreature();
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
         Permanent aura = attachAura(creature);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     void cannotEnchantNonCreaturePermanent() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new ForgottenCave());
         harness.setHand(player1, List.of(new MythicProportions()));
         addMana();
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent land = findPermanent(player1, "Forgotten Cave");
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
     @Test
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature();
-        Permanent otherCreature = addReadyCreature();
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent otherCreature = addCreatureReady(player1, new ElvishWarrior());
         attachAura(creature);
 
         assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();
     }
 
-    private Permanent addReadyCreature() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new MythicProportions());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MythicProportions());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 

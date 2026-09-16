@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Inspirit.class, GrizzlyBears.class, Pacifism.class})
 class InspiritTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,21 @@ class InspiritTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an already untapped creature")
+    void canTargetAlreadyUntappedCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Inspirit()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addTappedCreature(player1);
@@ -101,10 +118,8 @@ class InspiritTest extends BaseCardTest {
     }
 
     private Permanent addTappedCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

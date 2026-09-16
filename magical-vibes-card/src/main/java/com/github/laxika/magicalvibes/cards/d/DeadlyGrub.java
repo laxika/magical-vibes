@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "69")
+@CardRegistration(set = "TSR", collectorNumber = "108")
 public class DeadlyGrub extends Card {
 
     public DeadlyGrub() {

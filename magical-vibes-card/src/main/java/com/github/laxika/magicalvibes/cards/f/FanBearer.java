@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "12")
 @CardRegistration(set = "AKR", collectorNumber = "17")
+@CardRegistration(set = "GNT", collectorNumber = "12")
 public class FanBearer extends Card {
 
     public FanBearer() {

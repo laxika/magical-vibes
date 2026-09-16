@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "8")
+@CardRegistration(set = "STA", collectorNumber = "4")
 public class DivineGambit extends Card {
 
     public DivineGambit() {

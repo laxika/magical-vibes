@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicCurator;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraNalaar.class, LavaAxe.class, AngelicCurator.class})
+@CardUsed({ChandraNalaar.class, LavaAxe.class, GrizzlyBears.class})
 class LavaAxeTest extends BaseCardTest {
 
     @Test
@@ -72,7 +72,7 @@ class LavaAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Lava Axe cannot target a creature")
     void cannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicCurator());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -119,4 +119,3 @@ class LavaAxeTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
     }
 }
-

@@ -186,7 +186,8 @@ public class GameViewProjectionFactory {
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
                     potentialPayableAbilityIndices, speeds, gameData.dayNight,
-                    gameData.planechase == null ? null : planarViews.create(gameData, playerId)
+                    gameData.planechase == null ? null : planarViews.create(gameData, playerId),
+                    gameData.monarchPlayerId
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -491,6 +492,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = data.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(data, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all
@@ -830,7 +832,11 @@ public class GameViewProjectionFactory {
             if (ability.getManaCost() == null) {
                 return true;
             }
-            if (pool != null && new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+            ManaCost abilityCost = new ManaCost(ability.getManaCost());
+            if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                abilityCost = abilityCost.withBlackManaAsPhyrexian();
+            }
+            if (pool != null && abilityCost.canPay(pool, 0)) {
                 return true;
             }
         }
@@ -933,7 +939,8 @@ public class GameViewProjectionFactory {
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return playable;
 
-        if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
+        if (!castingPermissionService.canCastWithTimingFromLibraryTop(
+                gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 
         // Check if spell requires a legal target (MTG rule 601.2c)
         if (EffectResolution.needsSpellCastTarget(topCard) && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
@@ -1058,7 +1065,8 @@ public class GameViewProjectionFactory {
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),
                 data.dayNight,
-                data.planechase == null ? null : planarViews.create(data, playerId)
+                data.planechase == null ? null : planarViews.create(data, playerId),
+                data.monarchPlayerId
         );
     }
 

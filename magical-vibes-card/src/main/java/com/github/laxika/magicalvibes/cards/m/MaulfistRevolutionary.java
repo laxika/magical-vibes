@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindToTargetEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "115")
+@CardRegistration(set = "KLR", collectorNumber = "168")
 public class MaulfistRevolutionary extends Card {
 
     public MaulfistRevolutionary() {

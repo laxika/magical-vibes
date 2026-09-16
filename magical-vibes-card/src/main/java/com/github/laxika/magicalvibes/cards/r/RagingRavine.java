@@ -18,6 +18,11 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "141")
+@CardRegistration(set = "UMA", collectorNumber = "249")
+@CardRegistration(set = "EOS", collectorNumber = "35")
+@CardRegistration(set = "EOS", collectorNumber = "80")
+@CardRegistration(set = "EOS", collectorNumber = "125")
+@CardRegistration(set = "EOS", collectorNumber = "170")
 public class RagingRavine extends Card {
 
     public RagingRavine() {

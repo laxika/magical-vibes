@@ -87,6 +87,8 @@ public class BasicLandSearchQueueSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData,
                     GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return false;

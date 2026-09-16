@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "177")
+@CardRegistration(set = "OTP", collectorNumber = "36")
 public class BackForMore extends Card {
 
     public BackForMore() {

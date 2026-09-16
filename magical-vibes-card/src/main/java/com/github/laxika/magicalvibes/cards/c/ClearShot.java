@@ -17,6 +17,10 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "188")
 @CardRegistration(set = "EMN", collectorNumber = "152")
 @CardRegistration(set = "MID", collectorNumber = "176")
+@CardRegistration(set = "2XM", collectorNumber = "159")
+@CardRegistration(set = "SIR", collectorNumber = "189")
+@CardRegistration(set = "OTP", collectorNumber = "28")
+@CardRegistration(set = "PIO", collectorNumber = "168")
 public class ClearShot extends Card {
 
     public ClearShot() {

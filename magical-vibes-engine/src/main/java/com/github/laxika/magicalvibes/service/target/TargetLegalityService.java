@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsIn
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -86,6 +87,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
@@ -965,7 +967,9 @@ public class TargetLegalityService {
         boolean targetsSomething = abilityEffects.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null
                         && !(effect instanceof ReturnCardFromGraveyardEffect returnEffect
-                        && returnEffect.upTo()))
+                        && returnEffect.upTo())
+                        && !(effect instanceof ExileGraveyardCardsEffect exileEffect
+                        && exileEffect.allowZeroTargets()))
                 && !EffectResolution.needsDamageDistribution(abilityEffects);
         if (targetId == null && targetsSomething) {
             boolean playerOnly = abilityEffects.stream()
@@ -1332,7 +1336,7 @@ public class TargetLegalityService {
                                                             UUID targetId, List<UUID> targetIds,
                                                             UUID controllerId, int xValue,
                                                             boolean kicked) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)) {
             return;
         }
         if (containsFlagbearer(gameData, targetId, targetIds)) {
@@ -1471,7 +1475,7 @@ public class TargetLegalityService {
                                                               List<UUID> targetIds, UUID controllerId,
                                                               int xValue, boolean kicked,
                                                               int firstGroupIndex) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)
                 || targetIds.stream().map(id -> gameQueryService.findPermanentById(gameData, id))
                 .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
             return;
@@ -1512,7 +1516,7 @@ public class TargetLegalityService {
                                                               ActivatedAbility ability,
                                                               List<CardEffect> abilityEffects,
                                                               UUID targetId, Card sourceCard, int xValue) {
-        if (targetId == null || !gameQueryService.hasFlagbearerControlledByOpponent(gameData, playerId)) {
+        if (targetId == null || !gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, playerId)) {
             return false;
         }
         if (isFlagbearerTarget(gameData, targetId)) {
@@ -1627,7 +1631,7 @@ public class TargetLegalityService {
                                                                List<CardEffect> abilityEffects,
                                                                List<UUID> targetIds, Card sourceCard,
                                                                int xValue) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, playerId)
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, playerId)
                 || targetIds.stream().anyMatch(id -> isFlagbearerTarget(gameData, id))) {
             return;
         }
@@ -2062,6 +2066,20 @@ public class TargetLegalityService {
         }
 
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+            Set<UUID> targetedControllers = targetIds.stream()
+                    .map(id -> gameQueryService.findPermanentController(gameData, id))
+                    .collect(java.util.stream.Collectors.toSet());
+            for (UUID opponentId : gameData.playerIds) {
+                if (opponentId.equals(controllerId) || targetedControllers.contains(opponentId)) continue;
+                boolean hasLegalTarget = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                        .anyMatch(permanent -> checkSpellTargeting(
+                                gameData, card, permanent.getId(), null, controllerId).isEmpty());
+                if (hasLegalTarget) {
+                    throw new IllegalStateException("Must target a permanent controlled by each opponent if able");
+                }
+            }
+        }
     }
 
     private void validateMultiSpellTargetPosition(GameData gameData, Card card, UUID targetId,
@@ -4287,6 +4305,14 @@ public class TargetLegalityService {
             int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return manaValue == source.getCounterCount(equalsCounters.counterType());
         }
+        if (predicate instanceof StackEntryManaValueGreaterThanControllerExperienceCountersPredicate) {
+            if (controllerId == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int experienceCounters = gameData.playerExperienceCounters.getOrDefault(controllerId, 0);
+            return manaValue > experienceCounters;
+        }
         if (predicate instanceof StackEntryManaValueEqualsSourcePowerPredicate) {
             if (source == null) {
                 return false;
@@ -4617,6 +4643,8 @@ public class TargetLegalityService {
     public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId,
                                           PlayerPredicate predicate, UUID sourcePermanentId) {
         return switch (predicate) {
+            case PlayerIdPredicate player -> player.playerId() != null
+                    && player.playerId().equals(targetPlayerId);
             case PlayerRelationPredicate relationPredicate -> switch (relationPredicate.relation()) {
                 case ANY -> true;
                 case SELF -> controllerId != null && controllerId.equals(targetPlayerId);

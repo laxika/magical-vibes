@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "8")
 @CardRegistration(set = "MB1", collectorNumber = "142")
+@CardRegistration(set = "IMA", collectorNumber = "25")
 public class IonasJudgment extends Card {
 
     public IonasJudgment() {

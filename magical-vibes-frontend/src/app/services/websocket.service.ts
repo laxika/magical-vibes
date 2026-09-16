@@ -348,6 +348,7 @@ export interface PlanechaseView {
 
 export interface Game {
   planechase?: PlanechaseView | null;
+  monarchPlayerId: string | null;
   id: string;
   gameName: string;
   status: GameStatus;
@@ -433,6 +434,7 @@ export interface LobbyGamesNotification {
 
 export interface GameStateNotification {
   planechase?: PlanechaseView | null;
+  monarchPlayerId: string | null;
   type: MessageType;
   status: GameStatus;
   activePlayerId: string;

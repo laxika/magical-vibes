@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThoughtEater.class, Forest.class, Mountain.class, Plains.class})
 class ThoughtEaterTest extends BaseCardTest {
 
     @Test
@@ -24,7 +25,7 @@ class ThoughtEaterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new Forest(), new Mountain(), new Plains(), new Forest()
+                new Forest(), new Forest(), new Mountain(), new Plains(), new Forest()
         )));
 
         gs.advanceStep(gd);
@@ -41,7 +42,7 @@ class ThoughtEaterTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
         )));
 
@@ -59,7 +60,7 @@ class ThoughtEaterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
         )));
 

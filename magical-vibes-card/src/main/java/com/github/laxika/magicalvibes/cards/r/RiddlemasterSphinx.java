@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M19", collectorNumber = "287")
 @CardRegistration(set = "M20", collectorNumber = "317")
+@CardRegistration(set = "ANB", collectorNumber = "31")
 public class RiddlemasterSphinx extends Card {
 
     public RiddlemasterSphinx() {

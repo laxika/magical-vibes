@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "167")
+@CardRegistration(set = "SIS", collectorNumber = "46")
 public class VampiricFury extends Card {
 
     public VampiricFury() {

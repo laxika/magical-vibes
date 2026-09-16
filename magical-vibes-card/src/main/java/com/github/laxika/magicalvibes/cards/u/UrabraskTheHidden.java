@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "98")
+@CardRegistration(set = "IMA", collectorNumber = "152")
+@CardRegistration(set = "HA5", collectorNumber = "15")
+@CardRegistration(set = "MUL", collectorNumber = "23")
+@CardRegistration(set = "MUL", collectorNumber = "88")
+@CardRegistration(set = "MUL", collectorNumber = "153")
 public class UrabraskTheHidden extends Card {
 
     public UrabraskTheHidden() {

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "169")
 @CardRegistration(set = "MPS", collectorNumber = "43")
+@CardRegistration(set = "KLR", collectorNumber = "259")
 public class ParadoxEngine extends Card {
 
     public ParadoxEngine() {

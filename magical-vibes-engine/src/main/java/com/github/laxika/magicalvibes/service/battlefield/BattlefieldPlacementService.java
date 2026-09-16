@@ -211,9 +211,6 @@ public class BattlefieldPlacementService {
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             becomeDayAsEntersEffectHandler.applyDayboundEntryFace(gameData, permanent);
         }
-        Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
-        int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
-        int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
             return;
         }
@@ -223,6 +220,10 @@ public class BattlefieldPlacementService {
         if (!applyEntryCostReplacement(gameData, controllerId, permanent)) {
             return;
         }
+        ZoneChangeCounterSupport.restore(gameData, permanent);
+        Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
+        int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
+        int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan = null;
@@ -828,7 +829,7 @@ public class BattlefieldPlacementService {
                 if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
                     continue;
                 }
-                if (enterTapped.opponentsOnly()) {
+                if (enterTapped.opponentsOnly() || enterTapped.castOnly()) {
                     continue;
                 }
                 enterTappedTypes.addAll(enterTapped.cardTypes());
@@ -925,7 +926,7 @@ public class BattlefieldPlacementService {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped
                         && !enterTapped.opponentsOnly()
-                        && enterTapped.filter() != null
+                        && (enterTapped.filter() != null || enterTapped.castOnly())
                         && matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped)) {
                     enteringPermanent.tap();
                 }
@@ -935,6 +936,9 @@ public class BattlefieldPlacementService {
 
     private boolean matchesEnterTappedEffect(GameData gameData, Permanent enteringPermanent,
                                              EnterPermanentsOfTypesTappedEffect enterTapped) {
+        if (enterTapped.castOnly() && enteringPermanent.getCastFromZone() == null) {
+            return false;
+        }
         if (enterTapped.filter() != null) {
             return predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, enterTapped.filter());
         }
@@ -1668,13 +1672,17 @@ public class BattlefieldPlacementService {
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
                     DynamicAmount dynamicAmount = replacement.additionalCounterAmount();
-                    int replacementCount = dynamicAmount == null
-                            ? replacement.additionalCounterCount(gameData, permanent)
-                            : amountEvaluationService.evaluate(gameData, dynamicAmount,
-                                    new AmountContext(controllerId, source, null, 0, 0));
-                    CounterType counterType = replacement.counterType();
-                    if (counterType != null) {
-                        additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
+                    if (dynamicAmount == null) {
+                        replacement.additionalCounters(gameData, source, permanent).forEach(
+                                (counterType, replacementCount) -> additionalCounters.merge(
+                                        counterType, Math.max(0, replacementCount), Integer::sum));
+                    } else {
+                        CounterType counterType = replacement.counterType();
+                        int replacementCount = amountEvaluationService.evaluate(gameData, dynamicAmount,
+                                new AmountContext(controllerId, source, null, 0, 0));
+                        if (counterType != null) {
+                            additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
+                        }
                     }
                 }
             }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 @CardRegistration(set = "ELD", collectorNumber = "126")
 @CardRegistration(set = "PC2", collectorNumber = "44")
 @CardRegistration(set = "PCA", collectorNumber = "44")
+@CardRegistration(set = "OTP", collectorNumber = "24")
 public class Fling extends Card {
 
     public Fling() {

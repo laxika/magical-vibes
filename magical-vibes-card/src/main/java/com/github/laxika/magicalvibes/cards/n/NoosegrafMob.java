@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "98")
+@CardRegistration(set = "SIR", collectorNumber = "126")
 public class NoosegrafMob extends Card {
 
     public NoosegrafMob() {

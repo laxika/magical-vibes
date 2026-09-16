@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GoblinLegionnaire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,30 +13,30 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DivineLight.class, GrizzlyBears.class, Shock.class})
+@CardUsed({DivineLight.class, GoblinLegionnaire.class})
 class DivineLightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents all damage to creatures you control this turn")
     void preventsDamageToControlledCreatures() {
         castDivineLight();
-        Permanent bears = addCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GoblinLegionnaire());
 
-        shock(player2, bears.getId());
+        dealDamage(player2, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isZero();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Goblin Legionnaire");
     }
 
     @Test
     @DisplayName("Does not prevent damage to an opponent's creature")
     void doesNotPreventDamageToOpponentsCreature() {
-        Permanent bears = addCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GoblinLegionnaire());
         castDivineLight();
 
-        shock(player1, bears.getId());
+        dealDamage(player1, bears.getId());
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Goblin Legionnaire");
     }
 
     @Test
@@ -46,7 +45,7 @@ class DivineLightTest extends BaseCardTest {
         harness.setLife(player1, 20);
         castDivineLight();
 
-        shock(player2, player1.getId());
+        dealDamage(player2, player1.getId());
 
         harness.assertLife(player1, 18);
     }
@@ -54,35 +53,43 @@ class DivineLightTest extends BaseCardTest {
     @Test
     @DisplayName("Prevention wears off at end of turn")
     void preventionWearsOffAtEndOfTurn() {
-        Permanent bears = addCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GoblinLegionnaire());
         castDivineLight();
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
-        shock(player2, bears.getId());
+        dealDamage(player2, bears.getId());
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Goblin Legionnaire");
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage to creatures you control")
+    void preventsCombatDamageToControlledCreatures() {
+        Permanent attacker = addCreatureReady(player2, new GoblinLegionnaire());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player1, new GoblinLegionnaire());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        castDivineLight();
+        resolveCombat(player2);
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Goblin Legionnaire");
+        harness.assertInGraveyard(player2, "Goblin Legionnaire");
     }
 
     private void castDivineLight() {
-        harness.setHand(player1, java.util.List.of(new DivineLight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.forceActivePlayer(player1);
-        harness.castSorcery(player1, 0, java.util.List.of());
+        harness.castFromHand(player1, new DivineLight(), "{W}");
         harness.passBothPriorities();
     }
 
-    private void shock(Player caster, java.util.UUID targetId) {
-        harness.setHand(caster, java.util.List.of(new Shock()));
+    private void dealDamage(Player caster, java.util.UUID targetId) {
+        Permanent source = addCreatureReady(caster, new GoblinLegionnaire());
         harness.addMana(caster, ManaColor.RED, 1);
         harness.forceActivePlayer(caster);
-        harness.castInstant(caster, 0, targetId);
+        int sourceIndex = gd.playerBattlefields.get(caster.getId()).indexOf(source);
+        harness.activateAbility(caster, sourceIndex, 0, null, targetId);
         harness.passBothPriorities();
-    }
-
-    private Permanent addCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
     }
 }

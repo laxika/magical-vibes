@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "26")
+@CardRegistration(set = "RVR", collectorNumber = "28")
 public class SunhomeStalwart extends Card {
 
     public SunhomeStalwart() {

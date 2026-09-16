@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,27 +17,27 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Overrun.class, GrizzlyBears.class})
+@CardUsed({Overrun.class, WoodlandDruid.class})
 class OverrunTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Overrun gives own creatures +3/+3 and trample")
     void resolvesAndBuffsOwnCreatures() {
-        Permanent p1a = addCreatureReady(player1, new GrizzlyBears());
-        Permanent p1b = addCreatureReady(player1, new GrizzlyBears());
-        Permanent p2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent p1a = addCreatureReady(player1, new WoodlandDruid());
+        Permanent p1b = addCreatureReady(player1, new WoodlandDruid());
+        Permanent p2 = addCreatureReady(player2, new WoodlandDruid());
 
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(p1a.getEffectivePower()).isEqualTo(5);
+        assertThat(p1a.getEffectivePower()).isEqualTo(4);
         assertThat(p1a.getEffectiveToughness()).isEqualTo(5);
-        assertThat(p1b.getEffectivePower()).isEqualTo(5);
+        assertThat(p1b.getEffectivePower()).isEqualTo(4);
         assertThat(p1b.getEffectiveToughness()).isEqualTo(5);
         assertThat(p1a.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(p1b.hasKeyword(Keyword.TRAMPLE)).isTrue();
 
-        assertThat(p2.getEffectivePower()).isEqualTo(2);
+        assertThat(p2.getEffectivePower()).isEqualTo(1);
         assertThat(p2.getEffectiveToughness()).isEqualTo(2);
         assertThat(p2.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
@@ -46,38 +46,38 @@ class OverrunTest extends BaseCardTest {
     @DisplayName("Overrun trample assigns excess damage to defending player")
     void trampleAssignsExcessDamageToDefender() {
         harness.setLife(player2, 20);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new WoodlandDruid());
+        Permanent blocker = addCreatureReady(player2, new WoodlandDruid());
 
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        attacker.setAttacking(true);
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        // 5/5 trample blocked by 2/2 → assign lethal to blocker, excess to player
+        // 4/5 trample blocked by 1/2 → assign lethal to blocker, excess to player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 2,
-                player2.getId(), 3
+                player2.getId(), 2
         ));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertOnBattlefield(player1, "Woodland Druid");
+        harness.assertInGraveyard(player2, "Woodland Druid");
     }
 
     @Test
     @DisplayName("Overrun effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WoodlandDruid());
 
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(5);
         assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
 
@@ -85,7 +85,7 @@ class OverrunTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
         assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
@@ -93,17 +93,17 @@ class OverrunTest extends BaseCardTest {
     @Test
     @DisplayName("Only creatures present at resolution receive Overrun's effects")
     void onlyCreaturesPresentAtResolutionAreAffected() {
-        Permanent existingCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent existingCreature = addCreatureReady(player1, new WoodlandDruid());
 
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent laterCreature = addCreatureReady(player1, new WoodlandDruid());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(5);
+        assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
         assertThat(existingCreature.getEffectiveToughness()).isEqualTo(5);
         assertThat(existingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
         assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
         assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }

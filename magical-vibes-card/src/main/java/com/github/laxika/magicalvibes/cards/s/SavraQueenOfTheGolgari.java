@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "RVR", collectorNumber = "218")
 @CardRegistration(set = "RAV", collectorNumber = "225")
+@CardRegistration(set = "GK1", collectorNumber = "69")
 public class SavraQueenOfTheGolgari extends Card {
 
     public SavraQueenOfTheGolgari() {

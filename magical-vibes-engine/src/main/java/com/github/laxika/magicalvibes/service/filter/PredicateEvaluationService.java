@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastAttachedAurasPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasMorphAbilityPredicate;
@@ -225,6 +226,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPred
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueColorsSpentToCastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
@@ -288,6 +290,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
@@ -965,6 +968,8 @@ public class PredicateEvaluationService {
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentHasAtLeastAttachedAurasPredicate p ->
+                    gameData != null && countAttachedAuras(gameData, permanent) >= p.minimum();
             case PermanentIsEnchantedBySourceControllerAuraPredicate ignored ->
                     hasAuraControlledBySourceControllerAttachedTo(gameData, permanent, sourceControllerId);
             case PermanentIsEquippedPredicate ignored ->
@@ -1419,6 +1424,18 @@ public class PredicateEvaluationService {
                     yield true;
                 }
                 yield permanent.getCard().getManaValue() <= filterContext.xValue();
+            }
+            case PermanentMaxManaValueColorsSpentToCastPredicate ignored -> {
+                // During casting the colored-mana snapshot does not exist yet, so the target is
+                // potentially legal. Resolution-time checks use the snapshot taken during payment.
+                if (filterContext == null || filterContext.gameData() == null
+                        || filterContext.sourceCardId() == null
+                        || !filterContext.gameData().spellCastColorsSpent
+                        .containsKey(filterContext.sourceCardId())) {
+                    yield true;
+                }
+                yield permanent.getCard().getManaValue() <= filterContext.gameData()
+                        .getSpellCastColorsSpent(filterContext.sourceCardId()).size();
             }
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
                     permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
@@ -2375,6 +2392,10 @@ public class PredicateEvaluationService {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameQueryService.isEnchanted(gameData, permanent);
             }
+            case PermanentHasAtLeastAttachedAurasPredicate p -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && countAttachedAuras(gameData, permanent) >= p.minimum();
+            }
             case PermanentAttachedToCreatureControlledBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
@@ -2503,6 +2524,18 @@ public class PredicateEvaluationService {
                         && sourceControllerId.equals(permanent.getAttackTarget());
             }
             case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsBlockedPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && permanent.isAttacking() && isBlocked(gameData, permanent);
+            }
+            case PermanentIsUnblockedAttackingPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null
+                        && gameData.currentStep != null
+                        && !gameData.currentStep.isBeforeBlockersDeclared()
+                        && permanent.isAttacking()
+                        && !isBlocked(gameData, permanent);
+            }
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEquippedPredicate ignored -> {
@@ -2717,6 +2750,27 @@ public class PredicateEvaluationService {
                 .filter(entry -> entry.getValue().getAttachedTo().equals(permanent.getId()))
                 .anyMatch(entry -> sourceControllerId.equals(
                         gameData.simultaneousDyingControllers.get(entry.getKey())));
+    }
+
+    private int countAttachedAuras(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null) {
+            return 0;
+        }
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent attached : battlefield) {
+                if (attached.getCard().isAura()
+                        && attached.isAttached()
+                        && permanent.getId().equals(attached.getAttachedTo())) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /**
@@ -3467,6 +3521,7 @@ public class PredicateEvaluationService {
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
+            case StackEntryManaValueGreaterThanControllerExperienceCountersPredicate ignored -> false;
             case StackEntryManaValueEqualsSourcePowerPredicate ignored -> false;
             case StackEntryManaValueAtMostSourcePowerPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;

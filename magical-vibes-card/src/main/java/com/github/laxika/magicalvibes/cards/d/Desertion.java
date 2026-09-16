@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "64")
 @CardRegistration(set = "VIS", collectorNumber = "30")
+@CardRegistration(set = "SPG", collectorNumber = "31")
 public class Desertion extends Card {
 
     public Desertion() {

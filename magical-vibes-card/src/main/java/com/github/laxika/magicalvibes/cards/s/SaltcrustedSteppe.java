@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "277")
+@CardRegistration(set = "TSR", collectorNumber = "283")
 public class SaltcrustedSteppe extends Card {
 
     public SaltcrustedSteppe() {

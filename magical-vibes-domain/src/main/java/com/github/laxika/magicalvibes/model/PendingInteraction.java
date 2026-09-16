@@ -56,7 +56,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
-        PendingInteraction.ExiledCardMayPlayChoice,
+        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice,
         PendingInteraction.LudevicCopyChoice,
          PendingInteraction.KohExiledCreatureChoice,
          PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
@@ -2072,6 +2072,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Chooses one matching face-up card from exile to return to the battlefield. */
     record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Chooses one of the controller's commanders to put into their hand. */
+    record CommandZoneCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String prompt)
+            implements PendingInteraction {
+
+        public CommandZoneCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {

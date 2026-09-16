@@ -13,6 +13,10 @@ import java.util.*;
  */
 public class CombatDamageState {
 
+    /** Redirect shields present at the start of this simultaneous damage event. */
+    public List<SourcePermanentAndControllerNextDamageRedirectShield> sharedRedirectShields = List.of();
+    public List<SourceNextDamageToAnyTargetShield> sourceDamageShields = List.of();
+
     public int damageToDefendingPlayer;
     public int poisonDamageToDefendingPlayer;
     public int unpreventableDamageToDefendingPlayer;

@@ -81,6 +81,29 @@ class CetaSanctuaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Falls back to one draw when the green permanent leaves before resolution")
+    void fallsBackToOneDrawWhenGreenPermanentLeavesBeforeResolution() {
+        harness.setLibrary(player1, List.of(new Forest(), new Mountain()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new CetaSanctuary());
+        harness.addToBattlefield(player1, new GoblinRaider());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
     @DisplayName("Does not draw or discard without a red or green permanent")
     void doesNotDrawOrDiscardWithoutRedOrGreenPermanent() {
         harness.setLibrary(player1, List.of(new Forest()));

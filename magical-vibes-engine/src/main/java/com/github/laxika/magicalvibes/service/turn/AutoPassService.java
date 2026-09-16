@@ -475,6 +475,12 @@ public class AutoPassService {
                 }
 
                 // Skip declare-blockers-only abilities outside that step
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED
+                        && gameData.currentStep != TurnStep.DECLARE_BLOCKERS
+                        && gameData.currentStep != TurnStep.COMBAT_DAMAGE
+                        && gameData.currentStep != TurnStep.END_OF_COMBAT) {
+                    continue;
+                }
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS
                         && gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {
                     continue;

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGra
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "139")
+@CardRegistration(set = "UMA", collectorNumber = "230")
 public class MyrServitor extends Card {
 
     public MyrServitor() {

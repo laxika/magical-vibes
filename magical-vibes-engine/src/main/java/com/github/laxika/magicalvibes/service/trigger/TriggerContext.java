@@ -222,8 +222,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
-    /** Context for a creature controlled by a player exploiting a nontoken creature. */
-    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard)
+    /** Context for a creature controlled by a player exploiting another creature. */
+    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard,
+                           int exploitedPower)
             implements TriggerContext {}
 
     record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
@@ -251,7 +252,14 @@ public sealed interface TriggerContext {
 
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
-                                          int damageDealt, boolean combatDamage) implements TriggerContext {}
+                                          int damageDealt, boolean combatDamage,
+                                          Permanent damagedCreature, UUID damagedCreatureControllerId)
+            implements TriggerContext {
+        public CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
+                                              int damageDealt, boolean combatDamage) {
+            this(damageSource, damagedCreatureId, damageDealt, combatDamage, null, null);
+        }
+    }
 
     /** Context for a creature fighting another creature. */
     record CreatureFights(Permanent fightingCreature) implements TriggerContext {}
@@ -343,7 +351,8 @@ public sealed interface TriggerContext {
     record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 
     /**
-     * Context for enter-the-battlefield triggers (ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+     * Context for enter-the-battlefield triggers (ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+     * ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
      * ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD).
      *
@@ -730,6 +739,10 @@ public sealed interface TriggerContext {
             creatureCards = List.copyOf(creatureCards);
         }
     }
+
+    /** Context for creatures exiled from the battlefield, regardless of controller. */
+    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
+            implements TriggerContext {}
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}

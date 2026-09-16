@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AggravatedAssault.class, GrizzlyBears.class})
+@CardUsed({AggravatedAssault.class, GlorySeeker.class})
 class AggravatedAssaultTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activation untaps your creatures and grants an additional combat/main phase pair")
     void activationUntapsCreaturesAndGrantsAdditionalCombatMainPhasePair() {
         harness.addToBattlefield(player1, new AggravatedAssault());
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GlorySeeker());
         creature.tap();
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GlorySeeker());
         opponentCreature.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 2);
@@ -48,5 +48,32 @@ class AggravatedAssaultTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Additional combat and main phases follow the current main phase")
+    void additionalCombatAndMainPhasesFollowCurrentMainPhase() {
+        harness.addToBattlefield(player1, new AggravatedAssault());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.additionalCombatMainPhasePairs).isZero();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
     }
 }

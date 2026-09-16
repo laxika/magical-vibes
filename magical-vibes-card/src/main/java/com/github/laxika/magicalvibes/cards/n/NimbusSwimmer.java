@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "181")
 @CardRegistration(set = "DDO", collectorNumber = "54")
+@CardRegistration(set = "GK2", collectorNumber = "120")
 public class NimbusSwimmer extends Card {
 
     public NimbusSwimmer() {

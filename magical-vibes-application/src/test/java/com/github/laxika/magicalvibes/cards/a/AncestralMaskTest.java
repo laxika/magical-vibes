@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.FamiliarGround;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BogSmugglers;
+import com.github.laxika.magicalvibes.cards.v.VernalEquinox;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,67 +13,73 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AncestralMask.class, BogSmugglers.class, VernalEquinox.class})
 class AncestralMaskTest extends BaseCardTest {
 
     @Test
     void doesNotCountItself() {
-        Permanent bears = addCreature(player1);
-        attachMask(bears);
+        Permanent creature = addCreatureReady(player1, new BogSmugglers());
+        attachMask(creature);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
     void getsTwoForEachOtherEnchantmentOnTheBattlefield() {
-        Permanent bears = addCreature(player1);
-        attachMask(bears);
+        Permanent creature = addCreatureReady(player1, new BogSmugglers());
+        attachMask(creature);
 
-        harness.addToBattlefield(player1, new FamiliarGround());
-        harness.addToBattlefield(player2, new FamiliarGround());
+        harness.addToBattlefield(player1, new VernalEquinox());
+        harness.addToBattlefield(player2, new VernalEquinox());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
+    @Test
+    void canEnchantAnOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new BogSmugglers());
+        harness.setHand(player1, List.of(new AncestralMask()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
     void boostUpdatesAsOtherEnchantmentsEnterAndLeave() {
-        Permanent bears = addCreature(player1);
-        attachMask(bears);
+        Permanent creature = addCreatureReady(player1, new BogSmugglers());
+        attachMask(creature);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
 
-        harness.addToBattlefield(player1, new FamiliarGround());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        harness.addToBattlefield(player1, new VernalEquinox());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
 
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getName().equals("Familiar Ground"));
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+                .removeIf(permanent -> permanent.getCard().getName().equals("Vernal Equinox"));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 
     @Test
     void cannotEnchantNonCreaturePermanent() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new VernalEquinox());
         harness.setHand(player1, List.of(new AncestralMask()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent attachMask(Permanent creature) {
-        Permanent mask = new Permanent(new AncestralMask());
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new AncestralMask());
         mask.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(mask);
         return mask;
     }
 }

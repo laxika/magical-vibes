@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "143")
+@CardRegistration(set = "PIO", collectorNumber = "198")
 public class UnravelTheAether extends Card {
 
     public UnravelTheAether() {

@@ -66,7 +66,8 @@ public class PlayCardRequestDispatchService {
                     request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
                     request.damageAssignments(), listOrEmpty(request.beholdPermanentIds()),
                     listOrEmpty(request.beholdHandCardIndices()),
-                    nullIfEmpty(request.discardHandCardIndices()));
+                    nullIfEmpty(request.discardHandCardIndices()),
+                    listOrEmpty(request.convokeCreatureIds()));
             return;
         }
         if (request.fromExileCardId() != null) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "RAV", collectorNumber = "92")
 @CardRegistration(set = "DDD", collectorNumber = "44")
 @CardRegistration(set = "GVL", collectorNumber = "44")
+@CardRegistration(set = "GK2", collectorNumber = "31")
 public class KeeningBanshee extends Card {
 
     public KeeningBanshee() {

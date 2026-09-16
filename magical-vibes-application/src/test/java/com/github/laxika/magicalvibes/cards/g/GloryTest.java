@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Glory.class, GrizzlyBears.class})
+@CardUsed({Glory.class, GiantWarthog.class})
 class GloryTest extends BaseCardTest {
 
     @Test
@@ -28,10 +28,23 @@ class GloryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard ability requires its full mana cost")
+    void abilityRequiresFullManaCost() {
+        harness.setGraveyard(player1, List.of(new Glory()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Grants your creatures protection from the chosen color")
     void grantsOwnCreaturesProtectionFromChosenColor() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GiantWarthog());
+        Permanent opposingCreature = addCreatureReady(player2, new GiantWarthog());
         harness.setGraveyard(player1, List.of(new Glory()));
         prepareAbilityMana();
 
@@ -47,7 +60,7 @@ class GloryTest extends BaseCardTest {
     @Test
     @DisplayName("Protection granted by Glory expires at end of turn")
     void protectionExpiresAtEndOfTurn() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GiantWarthog());
         harness.setGraveyard(player1, List.of(new Glory()));
         prepareAbilityMana();
 

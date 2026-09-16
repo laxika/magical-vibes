@@ -142,6 +142,10 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
+            expropriateEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
+            voteForDenialOrDuplicationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
             tyrantsChoiceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GraceOrCondemnationEffectHandler
@@ -487,6 +491,10 @@ public class ChoiceHandlerService {
             handleSpellCardTypeChoice(gameData, player, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellLandOrNonlandChoice) {
+            handleSpellLandOrNonlandChoice(gameData, player, colorName, colorChoice.options());
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
             handleSpellColorChoice(gameData, player, colorName);
             return;
@@ -720,6 +728,28 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ExpropriateChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Expropriate vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            expropriateEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.VoteForDenialOrDuplicationChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Split Decision vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            voteForDenialOrDuplicationEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -3888,6 +3918,22 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleSpellLandOrNonlandChoice(GameData gameData, Player player, String choice,
+                                                 List<String> options) {
+        if (!options.contains(choice)) {
+            throw new IllegalArgumentException("Invalid land or nonland choice: " + choice);
+        }
+
+        gameData.chosenSpellLandOrNonland = choice.equals("LAND");
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + choice.toLowerCase() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(), choice.toLowerCase());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleTurnaboutChoice(GameData gameData, Player player, String choice) {
         CardType chosenType;
         boolean tap;
@@ -4048,14 +4094,19 @@ public class ChoiceHandlerService {
             ChoiceContext.CounterDistributionAssignment next =
                     new ChoiceContext.CounterDistributionAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
-                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex);
+                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
+                            ctx.allowsPartialDistribution());
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
-        if (assigned != ctx.total()) {
-            throw new IllegalStateException("Counter assignments must total " + ctx.total());
+        if (ctx.allowsPartialDistribution()
+                ? assigned <= 0 || assigned > ctx.total()
+                : assigned != ctx.total()) {
+            throw new IllegalStateException(ctx.allowsPartialDistribution()
+                    ? "Counter assignments must not exceed " + ctx.total()
+                    : "Counter assignments must total " + ctx.total());
         }
 
         gameData.interaction.clearAwaitingInput();

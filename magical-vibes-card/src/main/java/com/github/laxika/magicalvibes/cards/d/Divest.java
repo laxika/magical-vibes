@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "87")
+@CardRegistration(set = "2XM", collectorNumber = "87")
 public class Divest extends Card {
 
     public Divest() {

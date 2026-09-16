@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "144")
+@CardRegistration(set = "PIO", collectorNumber = "212")
 public class Chromanticore extends Card {
 
     public Chromanticore() {

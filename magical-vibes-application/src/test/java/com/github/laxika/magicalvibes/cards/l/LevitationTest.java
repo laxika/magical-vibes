@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Levitation.class, GiantCockroach.class})
+@CardUsed({Levitation.class, GiantCockroach.class, Opalescence.class})
 class LevitationTest extends BaseCardTest {
 
     @Test
@@ -32,6 +33,25 @@ class LevitationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Levitation());
 
         assertThat(gqs.hasKeyword(gd, cockroach, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering under your control gain flying")
+    void laterCreaturesGainFlying() {
+        harness.addToBattlefield(player1, new Levitation());
+        Permanent cockroach = harness.enterBattlefieldAndReturn(player1, new GiantCockroach());
+
+        assertThat(gqs.hasKeyword(gd, cockroach, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Levitation gains flying when it becomes a creature")
+    void levitationGainsFlyingWhenItBecomesCreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent levitation = harness.addToBattlefieldAndReturn(player1, new Levitation());
+
+        assertThat(gqs.isCreature(gd, levitation)).isTrue();
+        assertThat(gqs.hasKeyword(gd, levitation, Keyword.FLYING)).isTrue();
     }
 
     @Test

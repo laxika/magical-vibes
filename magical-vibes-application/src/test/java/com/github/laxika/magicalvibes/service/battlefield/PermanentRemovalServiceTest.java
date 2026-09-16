@@ -604,7 +604,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, artifact);
 
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
                     Map.of(CounterType.CHARGE, 2), false);
         }
 
@@ -623,7 +623,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
                     Map.of(CounterType.CHARGE, 2), true);
         }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ALA", collectorNumber = "166")
+@CardRegistration(set = "2X2", collectorNumber = "209")
 public class EmpyrialArchangel extends Card {
 
     public EmpyrialArchangel() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "80")
+@CardRegistration(set = "PIO", collectorNumber = "74")
 public class SilundiVision extends Card {
 
     public SilundiVision() {

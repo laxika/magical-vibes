@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "203")
+@CardRegistration(set = "SIR", collectorNumber = "270")
 public class GeierReachSanitarium extends Card {
 
     public GeierReachSanitarium() {

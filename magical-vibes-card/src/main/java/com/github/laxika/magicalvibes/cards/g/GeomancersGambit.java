@@ -16,12 +16,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GeomancersGambit extends Card {
 
     public GeomancersGambit() {
+        // Destroy target land. Its controller may search their library for a basic land card,
+        // put it onto the battlefield, then shuffle. Draw a card.
         target(TargetFilters.land())
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
                         new SearchLibraryEffect(
                                 CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD),
                         ThenEffectRecipient.TARGET_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

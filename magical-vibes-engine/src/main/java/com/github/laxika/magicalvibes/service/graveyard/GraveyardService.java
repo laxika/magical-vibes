@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -149,8 +150,10 @@ public class GraveyardService {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
         int additionalCards = 0;
+        int millMultiplier = 1;
         if (count > 0) {
             int[] bonus = {0};
+            int[] multiplier = {1};
             gameData.forEachPermanent((controllerId, permanent) -> {
                 if (controllerId.equals(targetPlayerId)
                         || permanent.isFaceDown()
@@ -161,11 +164,15 @@ public class GraveyardService {
                     if (effect instanceof ControllerOpponentMillBonusEffect millBonus) {
                         bonus[0] += millBonus.amount();
                     }
+                    if (effect instanceof ControllerOpponentMillMultiplyingEffect millMultiplierEffect) {
+                        multiplier[0] *= millMultiplierEffect.millMultiplier();
+                    }
                 }
             });
             additionalCards = bonus[0];
+            millMultiplier = multiplier[0];
         }
-        int cardsToMill = Math.min(count + additionalCards, deck.size());
+        int cardsToMill = Math.min((count + additionalCards) * millMultiplier, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
@@ -658,7 +665,7 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-            if (sourceZone == Zone.LIBRARY && !suppressLibraryMillTriggers) {
+            if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
             }
         }

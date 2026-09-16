@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.g.GoblinSledder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FoothillGuide.class)
+@CardUsed({FoothillGuide.class, GoblinSledder.class, GlorySeeker.class})
 class FoothillGuideTest extends BaseCardTest {
 
     @Test
@@ -40,31 +39,45 @@ class FoothillGuideTest extends BaseCardTest {
 
     @Test
     void takesNoCombatDamageFromGoblinCreature() {
-        Card goblin = new Card();
-        goblin.setName("Goblin Piker");
-        goblin.setType(CardType.CREATURE);
-        goblin.setManaCost("{1}");
-        goblin.setColor(CardColor.RED);
-        goblin.setPower(2);
-        goblin.setToughness(1);
-        goblin.setSubtypes(List.of(CardSubtype.GOBLIN));
-
-        Permanent attacker = new Permanent(goblin);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GoblinSledder());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent guide = new Permanent(new FoothillGuide());
-        guide.setSummoningSick(false);
+        Permanent guide = addCreatureReady(player2, new FoothillGuide());
         guide.setBlocking(true);
         guide.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(guide);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         harness.assertOnBattlefield(player2, "Foothill Guide");
+        assertThat(guide.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+    }
+
+    @Test
+    void goblinCreatureCannotBlockFoothillGuide() {
+        Permanent guide = addCreatureReady(player1, new FoothillGuide());
+        guide.setAttacking(true);
+        addCreatureReady(player2, new GoblinSledder());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    void takesNormalCombatDamageFromNonGoblinCreature() {
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        attacker.setAttacking(true);
+
+        Permanent guide = addCreatureReady(player2, new FoothillGuide());
+        guide.setBlocking(true);
+        guide.addBlockingTarget(0);
+
+        resolveCombat(player1);
+
+        harness.assertNotOnBattlefield(player2, "Foothill Guide");
     }
 }

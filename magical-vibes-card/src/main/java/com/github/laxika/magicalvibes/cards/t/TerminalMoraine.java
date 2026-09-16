@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "142")
+@CardRegistration(set = "DMR", collectorNumber = "259")
 public class TerminalMoraine extends Card {
 
     public TerminalMoraine() {
