@@ -45,6 +45,7 @@ public enum Keyword {
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    AGGRESSIVE,
     DETHRONE,
     LIVING_WEAPON,
     DEATHTOUCH,
@@ -132,6 +133,7 @@ public enum Keyword {
     ALLIANCE,
     RECRUIT,
     STORIED,
+    UNDERDOG,
     DISGUISE,
     STATION;
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 @CardRegistration(set = "BNG", collectorNumber = "119")
 @CardRegistration(set = "CP2", collectorNumber = "6")
 @CardRegistration(set = "A25", collectorNumber = "164")
+@CardRegistration(set = "MB1", collectorNumber = "164")
 public class CourserOfKruphix extends Card {
 
     public CourserOfKruphix() {

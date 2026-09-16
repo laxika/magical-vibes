@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "136")
+@CardRegistration(set = "MB1", collectorNumber = "181")
 public class ColdsteelHeart extends Card {
 
     public ColdsteelHeart() {

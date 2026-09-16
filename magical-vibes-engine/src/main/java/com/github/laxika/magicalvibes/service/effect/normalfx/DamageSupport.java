@@ -1278,6 +1278,13 @@ public class DamageSupport {
             }
             playerId = redirectedPlayerId;
         }
+        if (gameQueryService.playerHasFlying(gameData, playerId)
+                && gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent)
+                && !gameQueryService.sourceHasKeyword(gameData, entry, sourcePermanent, Keyword.FLYING)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented by flying."));
+            return;
+        }
         if (gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(gameData, entry, playerId)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));

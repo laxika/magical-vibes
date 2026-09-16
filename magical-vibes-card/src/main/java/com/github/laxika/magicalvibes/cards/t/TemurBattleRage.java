@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "116")
+@CardRegistration(set = "MB1", collectorNumber = "116")
 public class TemurBattleRage extends Card {
 
     public TemurBattleRage() {

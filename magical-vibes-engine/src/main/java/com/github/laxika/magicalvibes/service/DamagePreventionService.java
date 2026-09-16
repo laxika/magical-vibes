@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
@@ -407,6 +408,10 @@ public class DamagePreventionService {
         // preventOnlyIfCounterAvailable=true (Rock Hydra), only the damage represented by removed
         // counters is prevented. Otherwise, all damage is prevented. Ugin's Conjurant applies only
         // while it has a +1/+1 counter.
+        if (damage > 0 && damagePreventionReplacementSupport
+                .applyDamageToPermanentByRemovingCountersOrSacrificing(gameData, permanent, damage)) {
+            return 0;
+        }
         var preventRemoveEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)
                 .map(e -> (PreventDamageAndRemovePlusOnePlusOneCountersEffect) e)
@@ -1385,7 +1390,8 @@ public class DamagePreventionService {
             }
             if (shield.damageMultiplier() != 0) {
                 it.remove();
-                return damage * shield.damageMultiplier();
+                return damage * shield.damageMultiplier()
+                        * MaroGoneNutsSupport.doublingFactor(gameData);
             }
             if (!preventable) {
                 return damage;

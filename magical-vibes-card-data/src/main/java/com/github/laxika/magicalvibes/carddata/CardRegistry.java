@@ -257,7 +257,22 @@ public class CardRegistry implements CardCatalog {
             }
 
             OracleData back = data.backFaceByCollectorNumber().get(printing.collectorNumber());
-            verifyOracleNameMatchesClass(cardSet, printing, front, back);
+            List<String> faceNames = data.faceNamesByCollectorNumber()
+                    .get(printing.collectorNumber());
+            if ("MB1".equals(cardSet.getCode())
+                    && !matchesClassName(printing.simpleCardClassName(), front.name(),
+                    back == null ? null : back.name(), faceNames)) {
+                // MTGJSON exposes Mystery Booster's playtest cards through CMB1, while MB1
+                // registrations also contain ordinary reprints whose MB1 collector numbers map
+                // to unrelated CMB1 playtest cards. Those reprints have their real oracle data
+                // registered under another set; do not let the compatibility mapping reject the
+                // entire MB1 load because of them.
+                LOG.warning("Skipping incompatible MB1/CMB1 printing " + cardSet.getCode() + " #"
+                        + printing.collectorNumber() + " (" + front.name() + ") on "
+                        + printing.cardClassName());
+                continue;
+            }
+            verifyOracleNameMatchesClass(cardSet, printing, front, back, faceNames);
             Card.registerOracle(printing.simpleCardClassName(), front);
 
             if (loadMode == OracleLoadMode.EAGER || printing.hasBackFace()) {
@@ -296,10 +311,11 @@ public class CardRegistry implements CardCatalog {
      * ({@code JaceVrynsProdigy}) or after both faces ({@code LoyalCatharUnhallowedCathar}).
      */
     private static void verifyOracleNameMatchesClass(
-            CardSet cardSet, CardPrinting printing, OracleData front, OracleData back) {
+            CardSet cardSet, CardPrinting printing, OracleData front, OracleData back,
+            List<String> faceNames) {
         String backName = back == null ? null : back.name();
         if (front.name() == null
-                || matchesClassName(printing.simpleCardClassName(), front.name(), backName)) {
+                || matchesClassName(printing.simpleCardClassName(), front.name(), backName, faceNames)) {
             return;
         }
         throw new IllegalStateException(cardSet.getCode() + " #" + printing.collectorNumber()
@@ -309,10 +325,25 @@ public class CardRegistry implements CardCatalog {
     }
 
     static boolean matchesClassName(String simpleClassName, String frontName, String backName) {
+        return matchesClassName(simpleClassName, frontName, backName, null);
+    }
+
+    static boolean matchesClassName(String simpleClassName, String frontName, String backName,
+                                    List<String> faceNames) {
         String actual = identifierChars(simpleClassName);
 
+        if (faceNames != null && faceNames.size() > 2) {
+            StringBuilder allFaces = new StringBuilder();
+            for (String faceName : faceNames) {
+                allFaces.append(faceName);
+            }
+            if (readsAs(actual, allFaces.toString())) {
+                return true;
+            }
+        }
+
         for (String front : nameStems(frontName)) {
-            if (readsAs(actual, front)) {
+            if (readsAs(actual, front) || readsAs(actual, front + " Playtest")) {
                 return true;
             }
             for (String back : nameStems(backName)) {

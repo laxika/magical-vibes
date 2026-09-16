@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "119")
+@CardRegistration(set = "MB1", collectorNumber = "243")
 public class PeaceStrider extends Card {
 
     public PeaceStrider() {

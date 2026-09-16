@@ -424,7 +424,8 @@ public class GameViewProjectionFactory {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
                 List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
-                boolean revealEntireOpponentHand = fullHandRevealed;
+                boolean revealEntireOpponentHand = fullHandRevealed
+                        || gameData.playersWithHandRevealed.contains(opponentId);
                 return opponentHand.stream()
                         .filter(card -> revealEntireOpponentHand
                                 || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId())))

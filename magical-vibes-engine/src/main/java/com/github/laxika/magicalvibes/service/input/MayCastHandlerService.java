@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffec
 import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -1353,6 +1354,21 @@ public class MayCastHandlerService {
     /** Handles casting one Eldrazi spell from the controller's outside-the-game card pool. */
     public void handleCastFromOutsideGameChoice(GameData gameData, Player player, boolean accepted,
                                                 PendingMayAbility ability) {
+        handleCastFromOutsideGameChoice(gameData, player, accepted, ability, player.getId(), null);
+    }
+
+    /** Handles casting one card from a targeted player's sideboard for free. */
+    public void handleCastFromSideboardWithoutPayingManaCost(GameData gameData, Player player,
+                                                              boolean accepted,
+                                                              PendingMayAbility ability,
+                                                              UUID sideboardOwnerId) {
+        handleCastFromOutsideGameChoice(gameData, player, accepted, ability, sideboardOwnerId,
+                MayCastFromSideboardWithoutPayingManaCostEffect.class);
+    }
+
+    private void handleCastFromOutsideGameChoice(GameData gameData, Player player, boolean accepted,
+                                                 PendingMayAbility ability, UUID sideboardOwnerId,
+                                                 Class<? extends CardEffect> pendingEffectType) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
         if (!accepted) {
@@ -1362,7 +1378,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        List<Card> sideboard = gameData.playerSideboards.get(player.getId());
+        List<Card> sideboard = gameData.playerSideboards.get(sideboardOwnerId);
         int cardIndex = -1;
         if (sideboard != null) {
             for (int i = 0; i < sideboard.size(); i++) {
@@ -1397,7 +1413,7 @@ public class MayCastHandlerService {
                 ? List.of()
                 : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(cardToCast)) {
+        if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
             if (validTargets.isEmpty()) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -1406,11 +1422,16 @@ public class MayCastHandlerService {
                 return;
             }
 
+            if (pendingEffectType != null) {
+                gameData.pendingMayAbilities.removeIf(pma ->
+                        pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+            }
             sideboard.remove(cardIndex);
             gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
-                            cardToCast, player.getId(), spellEffects, spellType));
+                            cardToCast, player.getId(), spellEffects, spellType, null, null,
+                            sideboardOwnerId));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToCast.getName() + ".");
             gameLogService.append(gameData, GameLog.textCardText(
@@ -1418,11 +1439,18 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (pendingEffectType != null) {
+            gameData.pendingMayAbilities.removeIf(pma ->
+                    pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+        }
         sideboard.remove(cardIndex);
         gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 spellType, cardToCast, player.getId(), cardToCast.getName(),
-                spellEffects, 0, (UUID) null, null));
+                spellEffects, 0, (UUID) null, null);
+        stackEntry.setOwnerIdOverride(sideboardOwnerId);
+        stackEntry.setSourceZone(Zone.OUTSIDE_GAME);
+        gameData.stack.add(stackEntry);
         gameData.recordSpellCast(player.getId(), cardToCast);
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(

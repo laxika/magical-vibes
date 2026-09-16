@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -314,6 +316,12 @@ public class StaticEffectSupport {
      */
     public boolean matchesStaticFilter(StaticEffectContext context, Permanent target, PermanentPredicate filter) {
         return predicateEvaluationService.matchesStaticFilter(target, filter, filterContextOf(context));
+    }
+
+    /** Matches a card predicate using the source-relative context of a static effect. */
+    public boolean matchesCardFilter(StaticEffectContext context, Card target, CardPredicate filter) {
+        return predicateEvaluationService.matchesCardPredicate(
+                target, filter, context.sourceCard().getId(), context.gameData(), context.sourceControllerId());
     }
 
     /**

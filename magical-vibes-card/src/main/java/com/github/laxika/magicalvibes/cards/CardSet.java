@@ -232,7 +232,11 @@ public enum CardSet {
     SET_PD3("PD3"),
     SET_MD1("MD1"),
     SET_G17("G17"),
-    SET_EMA("EMA");
+    SET_EMA("EMA"),
+    SET_MB1("MB1"),
+    SET_SS2("SS2"),
+    SET_MH1("MH1"),
+    SET_C15("C15");
 
     @Getter
     private final String code;

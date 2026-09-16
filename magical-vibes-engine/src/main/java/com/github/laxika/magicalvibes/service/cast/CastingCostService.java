@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingS
 import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCountCastCostReductionEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetBasedCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
@@ -772,8 +773,40 @@ public class CastingCostService {
                                              List<UUID> targetIds) {
         return getTargetingSubtypeTax(gameData, casterId, targetId, targetIds, false)
                 - getTargetingControlledPermanentReduction(gameData, casterId, targetId, targetIds)
+                - getTargetedSpellCostReduction(gameData, targetId, targetIds)
                 + getOwnTargetingCastCostIncrease(gameData, card, targetId, targetIds)
                 + getOpponentCastCostPerTarget(gameData, casterId, targetCount(targetId, targetIds));
+    }
+
+    private int getTargetedSpellCostReduction(GameData gameData, UUID targetId, List<UUID> targetIds) {
+        if (targetCount(targetId, targetIds) == 0) {
+            return 0;
+        }
+
+        int reduction = 0;
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent source : battlefield) {
+                List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.STATIC));
+                effects.addAll(gameQueryService.getGrantedEffects(gameData, source));
+                for (CardEffect effect : effects) {
+                    CardEffect activeEffect = effect;
+                    while (activeEffect instanceof ConditionalEffect conditional) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forStaticEffect(source, controllerId))) {
+                            activeEffect = null;
+                            break;
+                        }
+                        activeEffect = conditional.wrapped();
+                    }
+                    if (activeEffect instanceof TargetedCostReducingEffect reducingEffect) {
+                        reduction += reducingEffect.amount();
+                    }
+                }
+            }
+        }
+        return reduction;
     }
 
     private int getOpponentCastCostPerTarget(GameData gameData, UUID casterId, int targetCount) {
@@ -1114,12 +1147,31 @@ public class CastingCostService {
                 Integer.MAX_VALUE);
     }
 
+    public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,
+                                                          ActivatedAbility ability, UUID targetId,
+                                                          List<UUID> targetIds) {
+        return getActivatedAbilityActivationCostReduction(gameData, sourcePermanent, ability,
+                targetId, targetIds, Integer.MAX_VALUE);
+    }
+
     /**
      * Generic mana removed from an activated ability, honoring reducers that explicitly require
      * at least one mana to remain while allowing other reducers to make an ability free.
      */
     public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,
                                                           ActivatedAbility ability,
+                                                          int maximumReductionForMinimumOneMana) {
+        return getActivatedAbilityActivationCostReduction(gameData, sourcePermanent, ability,
+                null, List.of(), maximumReductionForMinimumOneMana);
+    }
+
+    /**
+     * Generic mana removed from a targeted activated ability, including reductions that depend on
+     * the ability having a target.
+     */
+    public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,
+                                                          ActivatedAbility ability, UUID targetId,
+                                                          List<UUID> targetIds,
                                                           int maximumReductionForMinimumOneMana) {
         int reduction = 0;
         boolean preventsReductionBelowOneMana = false;
@@ -1132,7 +1184,9 @@ public class CastingCostService {
                             gameData, effect, perm, pid);
                     if (reducingEffect != null
                             && reducingEffect.appliesSymmetrically()
-                            && (ability == null || reducingEffect.appliesTo(ability))
+                            && (ability == null
+                            ? !(reducingEffect instanceof TargetedCostReducingEffect)
+                            : reducingEffect.appliesTo(ability, perm.getId(), targetId, targetIds))
                             && predicateEvaluationService.matchesPermanentPredicate(
                                 sourcePermanent, reducingEffect.affectedPermanents(),
                                 FilterContext.of(gameData)

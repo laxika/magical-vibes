@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "153")
 @CardRegistration(set = "DDJ", collectorNumber = "2")
+@CardRegistration(set = "MB1", collectorNumber = "137")
 public class KilnFiend extends Card {
 
     public KilnFiend() {

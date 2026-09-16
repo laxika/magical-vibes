@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "242")
+@CardRegistration(set = "MB1", collectorNumber = "242")
 public class AetherHub extends Card {
 
     public AetherHub() {

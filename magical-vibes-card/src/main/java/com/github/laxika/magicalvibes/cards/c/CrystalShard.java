@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "159")
+@CardRegistration(set = "MB1", collectorNumber = "159")
 public class CrystalShard extends Card {
 
     public CrystalShard() {

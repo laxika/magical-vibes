@@ -27,11 +27,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.StartInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -717,6 +719,99 @@ public class MayMiscHandlerService {
 
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             // All leyline choices resolved — continue with game start
+            mulliganService.continueStartGame(gameData);
+        }
+    }
+
+    public void handleStartInGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                              PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        StartInGraveyardEffect effect = ability.effects().stream()
+                .filter(StartInGraveyardEffect.class::isInstance)
+                .map(StartInGraveyardEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean sourceInHand = hand != null && hand.stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
+
+        if (accepted && sourceInHand) {
+            hand.removeIf(handCard -> handCard.getId().equals(card.getId()));
+            gameData.playerGraveyards.get(controllerId).add(card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " begins the game with ", card, " in their graveyard."));
+            lifeSupport.applyLifeLoss(gameData, controllerId, effect.lifeLoss(), card.getName());
+            log.info("Game {} - {} starts with {} in their graveyard", gameData.id,
+                    player.getUsername(), card.getName());
+        } else {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + (accepted ? " cannot begin the game with " : " declines to begin the game with "),
+                    card, " in their graveyard."));
+            log.info("Game {} - {} declines to start with {} in their graveyard", gameData.id,
+                    player.getUsername(), card.getName());
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            mulliganService.continueStartGame(gameData);
+        }
+    }
+
+    public void handleBecomeStartingPlayerChoice(GameData gameData, Player player, boolean accepted,
+                                                  PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean sourceInHand = hand != null && hand.stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
+        boolean stillNonStartingPlayer = !controllerId.equals(gameData.startingPlayerId);
+
+        if (accepted && sourceInHand && stillNonStartingPlayer) {
+            gameData.startingPlayerId = controllerId;
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " becomes the starting player because of ", card, "."));
+            log.info("Game {} - {} becomes the starting player because of {}",
+                    gameData.id, player.getUsername(), card.getName());
+        } else {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + (accepted ? " cannot become the starting player with "
+                            : " declines to become the starting player with "), card, "."));
+            log.info("Game {} - {} declines to become the starting player with {}",
+                    gameData.id, player.getUsername(), card.getName());
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            mulliganService.continueStartGame(gameData);
+        }
+    }
+
+    public void handleChooseLegacyWordChoice(GameData gameData, Player player, boolean accepted,
+                                              PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean sourceInHand = hand != null && hand.stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
+        ChooseLegacyWordEffect effect = ability.effects().stream()
+                .filter(ChooseLegacyWordEffect.class::isInstance)
+                .map(ChooseLegacyWordEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
+
+        if (accepted && sourceInHand) {
+            playerInputService.beginPregameLegacyWordChoice(gameData, controllerId, card, effect.options());
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + (accepted ? " cannot choose a Legacy word for "
+                        : " declines to choose a Legacy word for "), card, "."));
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             mulliganService.continueStartGame(gameData);
         }
     }

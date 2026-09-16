@@ -14,5 +14,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * multiplicatively. Used by Gisela, Blade of Goldnight together with
  * {@link PreventHalfDamageToControllerAndTheirPermanentsEffect}.
  */
-public record DoubleDamageToOpponentsAndTheirPermanentsEffect() implements CardEffect {
+public record DoubleDamageToOpponentsAndTheirPermanentsEffect() implements CardEffect, DoublingEffect {
 }

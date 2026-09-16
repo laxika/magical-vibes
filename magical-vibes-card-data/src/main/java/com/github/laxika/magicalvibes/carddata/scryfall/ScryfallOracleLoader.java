@@ -60,7 +60,8 @@ public class ScryfallOracleLoader implements OracleLoader {
     @Override
     public SetOracleData loadSet(String setCode, Set<String> implementedCollectorNumbers) {
         try {
-            Map<String, JsonNode> cardsByCollectorNumber = parseSetJson(cache.get(setCode));
+            String sourceSetCode = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+            Map<String, JsonNode> cardsByCollectorNumber = parseSetJson(cache.get(sourceSetCode));
 
             String setName = null;
             if (!cardsByCollectorNumber.isEmpty()) {
@@ -82,12 +83,14 @@ public class ScryfallOracleLoader implements OracleLoader {
             // Oracle text is parsed only for printings the game implements.
             Map<String, OracleData> frontFaces = new HashMap<>();
             Map<String, OracleData> backFaces = new HashMap<>();
+            Map<String, List<String>> faceNames = new HashMap<>();
             for (String collectorNumber : implementedCollectorNumbers) {
                 JsonNode cardNode = cardsByCollectorNumber.get(collectorNumber);
                 if (cardNode == null) {
                     continue;
                 }
                 frontFaces.put(collectorNumber, parseOracleData(cardNode));
+                faceNames.put(collectorNumber, parseFaceNames(cardNode));
 
                 OracleData backFaceData = parseBackFaceOracleData(cardNode);
                 if (backFaceData != null) {
@@ -96,7 +99,7 @@ public class ScryfallOracleLoader implements OracleLoader {
             }
 
             return new SetOracleData(setName, cardsByCollectorNumber.size(), rarities,
-                    frontFaces, backFaces, loadTokens(setCode));
+                    frontFaces, backFaces, faceNames, loadTokens(sourceSetCode));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load Scryfall oracle data for set " + setCode, e);
         }
@@ -207,6 +210,22 @@ public class ScryfallOracleLoader implements OracleLoader {
 
     static OracleData parseOracleData(JsonNode card) {
         return FaceOracleMapper.toOracleData(toRawFrontFace(card), false);
+    }
+
+    static List<String> parseFaceNames(JsonNode card) {
+        List<String> names = new ArrayList<>();
+        JsonNode faces = card.get("card_faces");
+        if (faces != null && faces.isArray()) {
+            for (JsonNode face : faces) {
+                if (face.has("name")) {
+                    names.add(face.get("name").asText());
+                }
+            }
+        }
+        if (names.isEmpty() && card.has("name")) {
+            names.add(card.get("name").asText());
+        }
+        return List.copyOf(names);
     }
 
     /**

@@ -54,7 +54,8 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
             Card card = deck.removeFirst();
             revealedCards.add(card);
             if (predicateEvaluationService.matchesCardPredicate(
-                    card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId)) {
+                    card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId,
+                    entry.getSourcePermanentId(), null)) {
                 foundCard = card;
                 break;
             }
@@ -83,7 +84,9 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
                         .reorderRemainingToBottom(true)
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
-                        .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
+                        .destination(typedEffect.shuffleLibrary()
+                                ? LibrarySearchDestination.CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY
+                                : LibrarySearchDestination.CAST_WITHOUT_PAYING)
                         .build(),
                 prompt,
                 true));

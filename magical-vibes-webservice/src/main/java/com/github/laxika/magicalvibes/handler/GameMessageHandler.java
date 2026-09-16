@@ -704,7 +704,8 @@ public class GameMessageHandler implements MessageHandler {
             case LIST_PICK -> new InteractionAnswer.ListChoiceMade(request.choice());
             case ACCEPT_DECLINE -> new InteractionAnswer.MayAbilityChosen(Boolean.TRUE.equals(request.accepted()));
             case NUMBER_PICK -> new InteractionAnswer.NumberChosen(request.number());
-            case SCRY_ORDER -> new InteractionAnswer.ScryOrder(request.order(), request.secondOrder());
+            case SCRY_ORDER -> new InteractionAnswer.ScryOrder(
+                    request.order(), request.secondOrder(), request.scrycastIndex());
             case CARD_ORDER -> new InteractionAnswer.CardOrder(request.order());
             case HAND_TOP_BOTTOM -> new InteractionAnswer.HandTopBottom(request.index(), request.secondIndex());
             case HAND_BOTTOM_EXILE -> new InteractionAnswer.HandBottomExile(request.index(), request.secondIndex());

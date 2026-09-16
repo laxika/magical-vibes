@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "M14", collectorNumber = "19")
 @CardRegistration(set = "TSP", collectorNumber = "19")
 @CardRegistration(set = "MM2", collectorNumber = "17")
+@CardRegistration(set = "MB1", collectorNumber = "114")
 public class Fortify extends Card {
 
     public Fortify() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "173")
+@CardRegistration(set = "MB1", collectorNumber = "173")
 public class RenegadeMap extends Card {
 
     public RenegadeMap() {

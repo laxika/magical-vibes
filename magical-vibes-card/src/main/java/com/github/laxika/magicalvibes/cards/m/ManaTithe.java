@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "25")
+@CardRegistration(set = "MB1", collectorNumber = "171")
 public class ManaTithe extends Card {
 
     public ManaTithe() {

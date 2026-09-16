@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "235")
+@CardRegistration(set = "MB1", collectorNumber = "235")
 public class FountainOfRenewal extends Card {
 
     public FountainOfRenewal() {

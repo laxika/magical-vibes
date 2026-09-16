@@ -211,7 +211,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -1947,6 +1947,11 @@ public class StepTriggerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
+            triggerCollectionService.processNextEmblemTriggerTarget(gameData);
+            return;
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -2626,10 +2631,10 @@ public class StepTriggerService {
                 if (openingHandEffects == null || openingHandEffects.isEmpty()) continue;
 
                 for (CardEffect effect : openingHandEffects) {
-                    // Leyline effects are handled during the pregame procedure
+                    // Pregame choices are handled during the pregame procedure
                     // (MulliganService.startGame), not during the first upkeep.
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect) {
+                            && may.wrapped() instanceof PregameChoiceEffect) {
                         continue;
                     }
                     if (effect instanceof MayEffect may) {

@@ -1367,18 +1367,66 @@ public class TargetLegalityService {
         return java.util.stream.Stream.concat(
                         targetId == null ? java.util.stream.Stream.empty() : java.util.stream.Stream.of(targetId),
                         targetIds.stream())
-                .map(id -> gameQueryService.findPermanentById(gameData, id))
-                .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent));
+                .anyMatch(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent != null
+                            ? gameQueryService.isFlagbearer(gameData, permanent)
+                            : gameQueryService.isFlagbearer(gameData, id);
+                });
     }
 
     private boolean hasLegalFlagbearerSpellTarget(GameData gameData, Card card,
                                                    List<CardEffect> spellEffects, UUID controllerId,
                                                    int xValue, TargetFilter targetFilter) {
-        return gameData.playerBattlefields.values().stream()
+        boolean legalPermanentTarget = gameData.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .filter(permanent -> gameQueryService.isFlagbearer(gameData, permanent))
                 .anyMatch(permanent -> isLegalFlagbearerSpellTarget(
                         gameData, card, spellEffects, permanent, controllerId, xValue, targetFilter));
+        if (legalPermanentTarget) {
+            return true;
+        }
+        return gameData.playerIds.stream()
+                .filter(playerId -> gameQueryService.isFlagbearer(gameData, playerId))
+                .anyMatch(playerId -> isLegalFlagbearerPlayerSpellTarget(
+                        gameData, card, spellEffects, playerId, controllerId, xValue, targetFilter));
+    }
+
+    private boolean isLegalFlagbearerPlayerSpellTarget(GameData gameData, Card card,
+                                                        List<CardEffect> spellEffects, UUID candidate,
+                                                        UUID controllerId, int xValue,
+                                                        TargetFilter targetFilter) {
+        if (!EffectResolution.computeAllowedTargets(
+                spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                card.isAura(), card.isEnchantPlayer()).contains(TargetType.PLAYER)) {
+            return false;
+        }
+        if (peaceTalksUntargetableReason(gameData) != null
+                || checkPlayerUntargetableReason(gameData, candidate, controllerId, card) != null) {
+            return false;
+        }
+        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, card);
+        if (effectiveColor != null
+                && gameQueryService.playerHasProtectionFromColor(gameData, candidate, effectiveColor)) {
+            return false;
+        }
+        if (gameQueryService.playerHasProtectionFromChosenName(gameData, candidate, card.getName())) {
+            return false;
+        }
+        if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
+                && !matchesPlayerPredicate(gameData, controllerId, candidate, playerFilter.predicate())) {
+            return false;
+        }
+        if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter
+                && !matchesPlayerPredicate(gameData, controllerId, candidate, anyFilter.playerPredicate())) {
+            return false;
+        }
+        if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
+            return false;
+        }
+        return targetValidationService.checkEffectTargets(spellEffects,
+                new TargetValidationContext(gameData, candidate, Zone.BATTLEFIELD,
+                        card, xValue, controllerId, null)).isEmpty();
     }
 
     private boolean isLegalFlagbearerSpellTarget(GameData gameData, Card card,
@@ -1445,6 +1493,16 @@ public class TargetLegalityService {
                                 positionFilter != null
                                         ? targetFilterForKickedCast(positionFilter, kicked)
                                         : targetFilterForKickedCast(card.getTargetFilter(), kicked))));
+        if (!legalFlagbearer) {
+            legalFlagbearer = gameData.playerIds.stream()
+                    .filter(playerId -> gameQueryService.isFlagbearer(gameData, playerId))
+                    .anyMatch(playerId -> selectedPositionFilters.stream().anyMatch(positionFilter ->
+                            isLegalFlagbearerPlayerSpellTarget(gameData, card, spellEffects, playerId,
+                                    controllerId, xValue,
+                                    positionFilter != null
+                                            ? targetFilterForKickedCast(positionFilter, kicked)
+                                            : targetFilterForKickedCast(card.getTargetFilter(), kicked))));
+        }
         if (legalFlagbearer) {
             throw new IllegalStateException("Must target a Flagbearer if able");
         }
@@ -1457,16 +1515,59 @@ public class TargetLegalityService {
         if (targetId == null || !gameQueryService.hasFlagbearerControlledByOpponent(gameData, playerId)) {
             return false;
         }
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, targetId);
-        if (chosenPermanent != null && gameQueryService.isFlagbearer(gameData, chosenPermanent)) {
+        if (isFlagbearerTarget(gameData, targetId)) {
             return false;
         }
-        return gameData.playerBattlefields.values().stream()
+        boolean legalPermanentTarget = gameData.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .filter(permanent -> gameQueryService.isFlagbearer(gameData, permanent))
                 .anyMatch(permanent -> isLegalFlagbearerAbilityTarget(
                         gameData, playerId, ability, abilityEffects, permanent, sourceCard, xValue,
                         ability.getTargetFilter()));
+        if (legalPermanentTarget) {
+            return true;
+        }
+        return gameData.playerIds.stream()
+                .filter(candidate -> gameQueryService.isFlagbearer(gameData, candidate))
+                .anyMatch(candidate -> isLegalFlagbearerPlayerAbilityTarget(
+                        gameData, playerId, ability, abilityEffects, candidate, sourceCard, xValue,
+                        ability.getTargetFilter()));
+    }
+
+    private boolean isFlagbearerTarget(GameData gameData, UUID targetId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+        return permanent != null
+                ? gameQueryService.isFlagbearer(gameData, permanent)
+                : gameQueryService.isFlagbearer(gameData, targetId);
+    }
+
+    private boolean isLegalFlagbearerPlayerAbilityTarget(GameData gameData, UUID playerId,
+                                                          ActivatedAbility ability,
+                                                          List<CardEffect> abilityEffects,
+                                                          UUID candidate, Card sourceCard, int xValue,
+                                                          TargetFilter targetFilter) {
+        if (abilityEffects.stream().noneMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+            return false;
+        }
+        if (peaceTalksUntargetableReason(gameData) != null
+                || checkPlayerUntargetableReason(gameData, candidate, playerId) != null) {
+            return false;
+        }
+        if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
+                && !matchesPlayerPredicate(gameData, playerId, candidate, playerFilter.predicate())) {
+            return false;
+        }
+        if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter
+                && !matchesPlayerPredicate(gameData, playerId, candidate, anyFilter.playerPredicate())) {
+            return false;
+        }
+        if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
+            return false;
+        }
+        return targetValidationService.checkEffectTargets(abilityEffects,
+                new TargetValidationContext(gameData, candidate, Zone.BATTLEFIELD,
+                        sourceCard, xValue, playerId, null)).isEmpty();
     }
 
     private boolean isLegalFlagbearerAbilityTarget(GameData gameData, UUID playerId,
@@ -1527,8 +1628,7 @@ public class TargetLegalityService {
                                                                List<UUID> targetIds, Card sourceCard,
                                                                int xValue) {
         if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, playerId)
-                || targetIds.stream().map(id -> gameQueryService.findPermanentById(gameData, id))
-                .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
+                || targetIds.stream().anyMatch(id -> isFlagbearerTarget(gameData, id))) {
             return;
         }
         int positionCount = targetIds.size();
@@ -1541,6 +1641,16 @@ public class TargetLegalityService {
                         .anyMatch(positionFilter -> isLegalFlagbearerAbilityTarget(
                                 gameData, playerId, ability, abilityEffects, permanent, sourceCard, xValue,
                                 positionFilter)));
+        if (!legalFlagbearer) {
+            legalFlagbearer = gameData.playerIds.stream()
+                    .filter(candidate -> gameQueryService.isFlagbearer(gameData, candidate))
+                    .anyMatch(candidate -> java.util.stream.IntStream.range(0, positionCount)
+                            .mapToObj(index -> index < ability.getMultiTargetFilters().size()
+                                    ? ability.getMultiTargetFilters().get(index) : ability.getTargetFilter())
+                            .anyMatch(positionFilter -> isLegalFlagbearerPlayerAbilityTarget(
+                                    gameData, playerId, ability, abilityEffects, candidate, sourceCard,
+                                    xValue, positionFilter)));
+        }
         if (legalFlagbearer) {
             throw new IllegalStateException("Must target a Flagbearer if able");
         }
@@ -3564,6 +3674,10 @@ public class TargetLegalityService {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (gameQueryService.cantBeAffectedByOwnEffects(gameData, target, sourcePlayerId)) {
+            return target.getCard().getName()
+                    + " can't be targeted by its controller's spells or abilities";
+        }
         // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
         boolean hexproofLifted = gameQueryService.ignoresOpponentPermanentHexproof(gameData, sourcePlayerId)
                 || (gameQueryService.isCreature(gameData, target)

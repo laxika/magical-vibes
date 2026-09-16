@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "98")
+@CardRegistration(set = "MB1", collectorNumber = "129")
 public class Nighthowler extends Card {
 
     public Nighthowler() {

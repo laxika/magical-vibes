@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
@@ -144,6 +145,8 @@ public class TurnProgressionService {
             gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
             gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
+            gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
+            gameData.onlyPermanentCanAttackThisCombatId = null;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
 
@@ -151,7 +154,8 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
 
         if (gameData.currentStep == TurnStep.COMBAT_DAMAGE
-                && gameData.combatDamageFirstStrikeStepComplete
+                && (gameData.combatDamageFirstestStrikeStepComplete
+                || gameData.combatDamageFirstStrikeStepComplete)
                 && !gameData.combatDamagePhase1Complete) {
             handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             return;
@@ -209,9 +213,20 @@ public class TurnProgressionService {
 
         // Finest Hour: an additional combat phase with no additional main phase — loop straight from
         // this combat's end back into another combat phase (skipping the postcombat main phase).
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.combatPhasesThisTurn == 1
+                && controlsAggressiveCreature(gameData, gameData.activePlayerId)) {
+            gameData.additionalCombatPhasesOnly++;
+            gameData.aggressiveCombatPhasesOnly++;
+        }
+
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.additionalCombatPhasesOnly > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatPhasesOnly--;
+            if (gameData.aggressiveCombatPhasesOnly > 0) {
+                gameData.aggressiveCombatPhasesOnly--;
+                gameData.onlyAggressiveCreaturesCanAttackThisCombat = true;
+            }
             additionalCombatPhase = true;
         }
 
@@ -276,6 +291,25 @@ public class TurnProgressionService {
         }
 
         next = skipChosenPhases(gameData, next);
+
+        // An additional combat created by a Throat Wolf is controlled by that Wolf's controller,
+        // not necessarily by the player whose combat just ended. Restore the original active
+        // player after the inserted combat has finished.
+        if (next == TurnStep.BEGINNING_OF_COMBAT && additionalCombatPhase) {
+            DelayedAdditionalCombatBeginningEffect pending =
+                    gameData.peekFirstDelayedAction(DelayedAdditionalCombatBeginningEffect.class);
+            if (pending != null && pending.controllerId() != null
+                    && !pending.controllerId().equals(gameData.activePlayerId)) {
+                if (gameData.additionalCombatReturnActivePlayerId == null) {
+                    gameData.additionalCombatReturnActivePlayerId = gameData.activePlayerId;
+                }
+                gameData.activePlayerId = pending.controllerId();
+            }
+        } else if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.additionalCombatReturnActivePlayerId != null) {
+            gameData.activePlayerId = gameData.additionalCombatReturnActivePlayerId;
+            gameData.additionalCombatReturnActivePlayerId = null;
+        }
 
         if (next == TurnStep.END_STEP) {
             gameData.endStepsThisTurn++;
@@ -425,7 +459,9 @@ public class TurnProgressionService {
                     pending.sourceCard(),
                     pending.controllerId(),
                     pending.sourceCard().getName() + "'s additional combat trigger",
-                    new ArrayList<>(List.of(pending.effect()))
+                    new ArrayList<>(List.of(pending.effect())),
+                    null,
+                    pending.sourcePermanentId()
             ));
             gameLogService.append(gameData,
                     GameLog.cardThen(pending.sourceCard(), "'s additional combat trigger triggers."));
@@ -466,8 +502,12 @@ public class TurnProgressionService {
                 logSkippedPhase(gameData, "combat phase");
                 if (gameData.additionalCombatPhasesOnly > 0) {
                     gameData.additionalCombatPhasesOnly--;
+                    if (gameData.aggressiveCombatPhasesOnly > 0) {
+                        gameData.aggressiveCombatPhasesOnly--;
+                    }
                     next = TurnStep.BEGINNING_OF_COMBAT;
                 } else {
+                    gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
                     next = TurnStep.POSTCOMBAT_MAIN;
                 }
                 continue;
@@ -485,6 +525,13 @@ public class TurnProgressionService {
             break;
         }
         return next;
+    }
+
+    private boolean controlsAggressiveCreature(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .anyMatch(permanent -> gameQueryService.hasKeyword(gameData, permanent, Keyword.AGGRESSIVE));
     }
 
     private void logSkippedPhase(GameData gameData, String phaseName) {
@@ -688,6 +735,7 @@ public class TurnProgressionService {
         gameData.faceDownPermanentsEnteredBattlefieldThisTurn.clear();
         gameData.playersWhoTurnedPermanentsFaceUpThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
+        gameData.clearGreatestStackSourceCountThisTurn();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.clearSpellsCastFromHandThisTurn();
         gameData.controllerNoncombatDamageBonusThisTurn.clear();
@@ -731,6 +779,7 @@ public class TurnProgressionService {
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
         gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();
+        gameData.playersWhoActivatedSparkAbilityThisTurn.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
@@ -853,7 +902,10 @@ public class TurnProgressionService {
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatMainPhasePairsReturnStep = null;
         gameData.additionalCombatPhasesOnly = 0;
+        gameData.aggressiveCombatPhasesOnly = 0;
+        gameData.additionalCombatReturnActivePlayerId = null;
         gameData.onlyLandCreaturesCanAttackThisCombat = false;
+        gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;
@@ -946,6 +998,9 @@ public class TurnProgressionService {
                 }
             }
         }
+
+        gameData.turnUntapStepSkipped = skipUntapStep;
+        gameData.captureTurnStartSnapshot();
 
         // Savor the Moment (extra-turn flag) or Sands of Time (global static): skip the entire
         // untap step — no phasing, no Storage Matrix / Static Orb choice — but summoning sickness
@@ -1048,6 +1103,27 @@ public class TurnProgressionService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, activeName);
         invalidateForAllPlayers(gameData);
+    }
+
+    /** Restarts the current turn from its untap step after a turn-start snapshot was restored. */
+    public void restartTurnFromBeginning(GameData gameData) {
+        gameData.currentStep = TurnStep.UNTAP;
+        gameData.priorityPassedBy.clear();
+        gameData.interaction.clearAwaitingInput();
+        gameData.captureTurnStartSnapshot();
+
+        if (gameData.turnUntapStepSkipped || untapStepService.playersSkipUntapStepApplies(gameData)) {
+            untapStepService.untapPermanents(gameData, gameData.activePlayerId, null, true);
+        } else {
+            untapStepService.untapPermanents(gameData, gameData.activePlayerId);
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        completeTurnAdvance(gameData);
     }
 
     public void handleCombatResult(CombatResult result, GameData gameData) {

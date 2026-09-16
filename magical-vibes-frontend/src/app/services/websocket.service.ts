@@ -546,6 +546,7 @@ export interface InteractionPromptNotification {
   disabledOptions?: string[];
   minCount?: number;
   manaPayment?: boolean;
+  scrycastCardIndices?: number[];
 }
 
 export interface RevealHandNotification {

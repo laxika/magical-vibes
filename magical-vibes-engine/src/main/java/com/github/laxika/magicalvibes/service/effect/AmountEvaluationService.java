@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
@@ -170,6 +171,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.amount.GreatestStackSourceCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
@@ -456,6 +458,8 @@ public class AmountEvaluationService {
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
                     // is a ConcurrentHashMap, which rejects null keys.
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+            case TurnsTakenByController ignored ->
+                    ctx.controllerId() == null ? 0 : gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
             case HighestLifeTotalAmongPlayers ignored ->
@@ -491,6 +495,8 @@ public class AmountEvaluationService {
                     greatestManaValueAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
+            case GreatestStackSourceCountThisTurn ignored ->
+                    gameData.getGreatestStackSourceCountThisTurn();
             case GreatestCreatureCountAmongPlayers ignored ->
                     greatestCreatureCountAmongPlayers(gameData);
             case GreatestCreatureTypeCountAmongControlled ignored ->
@@ -1083,7 +1089,8 @@ public class AmountEvaluationService {
                         ? predicateEvaluationService.matchesStaticFilter(permanent, count.filter(), filterContext)
                         : predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext);
                 if (matchesFilter) {
-                    matches++;
+                    matches += CreatureCountSupport.countsCreatures(count.filter())
+                            ? CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService) : 1;
                 }
             }
         }
@@ -1091,7 +1098,8 @@ public class AmountEvaluationService {
                 && isPlayerInScope(gameData, ctx.controllerId(), count.scope(), ctx)
                 && gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
                 && predicateEvaluationService.matchesPermanentPredicate(ctx.sourcePermanent(), count.filter(), filterContext)) {
-            matches++;
+            matches += CreatureCountSupport.countsCreatures(count.filter())
+                    ? CreatureCountSupport.creatureCount(gameData, ctx.sourcePermanent(), gameQueryService) : 1;
         }
         return matches;
     }
@@ -1638,9 +1646,9 @@ public class AmountEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
         int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
-                count++;
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    count += CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService);
             }
         }
         return count;
@@ -1770,7 +1778,7 @@ public class AmountEvaluationService {
             int creatureCount = 0;
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    creatureCount++;
+                    creatureCount += CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService);
                 }
             }
             greatest = Math.max(greatest, creatureCount);

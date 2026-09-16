@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param affectedSubtype the token subtype this replacement applies to, or {@code null} for all tokens
  */
 public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype, boolean creatureTokensOnly)
-        implements TokenCreationReplacementEffect {
+        implements TokenCreationReplacementEffect, DoublingEffect {
         public MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSubtype) {
             this(multiplier, affectedSubtype, false);
         }
@@ -34,5 +34,10 @@ public record MultiplyTokenCreationEffect(int multiplier, CardSubtype affectedSu
     @Override
     public int replacementOrder() {
         return 1;
+    }
+
+    @Override
+    public boolean isDoublingEffect() {
+        return multiplier == 2;
     }
 }

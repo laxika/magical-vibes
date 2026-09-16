@@ -2310,6 +2310,11 @@ public class SpellCastTriggerCollectorService {
                 sourceOriginalCardId,
                 match.gameData(), castingPlayerId)) return false;
 
+        if (trigger.requiresTwoOrMoreCardTypes()
+                && !hasAtLeastTwoCardTypes(match.gameData(), spellCard, castingPlayerId)) {
+            return false;
+        }
+
         if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(match.gameData(), trigger, castingPlayerId)) {
             return false;
         }
@@ -2522,6 +2527,17 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean hasAtLeastTwoCardTypes(GameData gameData, Card card, UUID playerId) {
+        int cardTypeCount = 0;
+        for (CardType cardType : CardType.values()) {
+            if (gameQueryService.cardHasType(card, cardType, gameData, playerId)
+                    && ++cardTypeCount >= 2) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void preservePlanarSource(StackEntry entry, TriggerMatchContext match) {

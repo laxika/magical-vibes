@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
@@ -115,6 +116,7 @@ import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
@@ -180,6 +182,7 @@ public class ActivatedAbilityExecutionService {
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
     private final LandManaTypeSupport landManaTypeSupport;
+    private final ManaSourceColorSupport manaSourceColorSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
 
@@ -1240,9 +1243,10 @@ public class ActivatedAbilityExecutionService {
                 log.info("Game {} - Awaiting {} to choose a player to receive mana", gameData.id, player.getUsername());
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
+                int multiplier = MaroGoneNutsSupport.apply(gameData, effect, 2);
                 for (ManaColor color : ManaColor.values()) {
                     int current = pool.get(color);
-                    for (int i = 0; i < current; i++) {
+                    for (int i = 1; i < multiplier; i++) {
                         pool.add(color);
                     }
                 }
@@ -1294,6 +1298,9 @@ public class ActivatedAbilityExecutionService {
                             permanent, ofColors.colors().get(0));
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
+                    if (manaSourceColorSupport.canProduceMultipleColors(gameData, permanent)) {
+                        pool.addMulticoloredSourceManaTag(manaColor, picks);
+                    }
                     if (caveSource) {
                         pool.addCaveManaTag(manaColor, picks);
                     }
@@ -1308,7 +1315,8 @@ public class ActivatedAbilityExecutionService {
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
-                            .withCaveSource(caveSource);
+                            .withCaveSource(caveSource)
+                            .withSourcePermanentId(permanent.getId());
                     if (ofColors.grantsRiot()) {
                         choiceContext = choiceContext.withRiot();
                     }
@@ -1857,7 +1865,8 @@ public class ActivatedAbilityExecutionService {
                     total += amount;
                 }
             } else if (effect instanceof DoubleManaPoolEffect) {
-                total += gameData.playerManaPools.get(playerId).getTotal();
+                total += gameData.playerManaPools.get(playerId).getTotal()
+                        * MaroGoneNutsSupport.apply(gameData, effect, 2);
             } else {
                 ManaAbilityEffectHandler handler = manaAbilityEffectHandlerRegistry.getHandler(effect);
                 if (handler != null) {

@@ -64,6 +64,7 @@ class CostEffectClassificationTest {
             "PayEnergyCost",
             "PayLifeForEachCardInHandCost",
             "PayManaCost",
+            "PayMulticoloredSourceManaCost",
             "PutCounterOnSourceCost",
             "PutCounterOnOpponentCreatureCost",
             "PutTypedCounterOnSourceCost",

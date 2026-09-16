@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "344")
 @CardRegistration(set = "EMN", collectorNumber = "35")
 @CardRegistration(set = "A25", collectorNumber = "24")
+@CardRegistration(set = "MB1", collectorNumber = "169")
 public class LunarchMantle extends Card {
 
     public LunarchMantle() {

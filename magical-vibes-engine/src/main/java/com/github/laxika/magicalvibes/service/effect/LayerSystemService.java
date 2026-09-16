@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnly
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
@@ -618,8 +619,8 @@ public class LayerSystemService {
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
      *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
      *     (cheap insurance — no L4-L6 input reads hands today);</li>
-     * <li>player life totals, which dynamic base P/T setters may read while producing layer-7b
-     *     entries;</li>
+     * <li>player life totals and turns taken, which dynamic base P/T setters may read while
+     *     producing layer-7b entries;</li>
      * <li>{@code timestampCounter} as stamp-event insurance.</li>
      * </ul>
      *
@@ -652,6 +653,7 @@ public class LayerSystemService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
+            h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
@@ -1562,8 +1564,19 @@ public class LayerSystemService {
                 for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
-                            null, false, false, grant.cardType(), null));
+                        null, false, false, grant.cardType(), null));
                 }
+            }
+            case GrantCardTypeToOwnCardsEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedCardTypes().stream().findFirst().ifPresent(grantedType -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addCardType(grantedType);
+                            record(board, instance, target, new L4Contribution(
+                                    null, false, false, grantedType, null));
+                        }));
             }
             case GrantCardTypeToOwnNonlandPermanentsEffect grant -> {
                 manage(board, instance);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "114")
+@CardRegistration(set = "MB1", collectorNumber = "168")
 public class VampireHexmage extends Card {
 
     public VampireHexmage() {

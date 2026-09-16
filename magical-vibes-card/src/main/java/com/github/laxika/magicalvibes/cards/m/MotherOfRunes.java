@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "ULG", collectorNumber = "14")
 @CardRegistration(set = "EMA", collectorNumber = "22")
 @CardRegistration(set = "DDO", collectorNumber = "20")
+@CardRegistration(set = "MB1", collectorNumber = "183")
 public class MotherOfRunes extends Card {
 
     public MotherOfRunes() {

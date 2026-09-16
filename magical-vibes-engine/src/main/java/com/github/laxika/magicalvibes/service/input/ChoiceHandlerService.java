@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacyWordSupport;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -146,6 +148,7 @@ public class ChoiceHandlerService {
             graceOrCondemnationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
             coercivePortalEffectHandler;
+    private final ManaSourceColorSupport manaSourceColorSupport;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -357,6 +360,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice ctx) {
             handleKeywordGrantChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.LegacyWordChoice ctx) {
+            handleLegacyWordChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.LandwalkGrantChoice ctx) {
@@ -1243,6 +1250,7 @@ public class ChoiceHandlerService {
                         new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
             } else {
                 manaPool.add(manaColor, 1);
+                tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
                 if (ctx.fromSnowSource()) {
                     manaPool.addSnowManaTag(manaColor, 1);
                 }
@@ -1387,6 +1395,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} artifact-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else {
             manaPool.add(manaColor, amount);
+            tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
             }
@@ -1439,6 +1448,17 @@ public class ChoiceHandlerService {
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void tagMulticoloredSourceMana(GameData gameData, UUID sourcePermanentId,
+                                           ManaPool manaPool, ManaColor color, int amount) {
+        if (sourcePermanentId == null) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (manaSourceColorSupport.canProduceMultipleColors(gameData, source)) {
+            manaPool.addMulticoloredSourceManaTag(color, amount);
+        }
     }
 
     private void handleSingleColorSubtypeSpellOrAbilityManaChosen(
@@ -2039,6 +2059,28 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleLegacyWordChoice(GameData gameData, Player player, String chosenWord,
+                                        ChoiceContext.LegacyWordChoice ctx) {
+        String normalizedWord = LegacyWordSupport.normalize(chosenWord);
+        boolean validChoice = ctx.options().stream()
+                .anyMatch(option -> LegacyWordSupport.normalize(option).equals(normalizedWord));
+        if (!validChoice) {
+            throw new IllegalArgumentException("Invalid Legacy keyword or ability word choice: " + chosenWord);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.legacyChosenWordsByCardId.put(ctx.sourceCard().getId(), normalizedWord);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses " + normalizedWord + " for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), normalizedWord,
+                ctx.sourceCard().getName());
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            mulliganService.continueStartGame(gameData);
+        }
     }
 
     private void handleLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,

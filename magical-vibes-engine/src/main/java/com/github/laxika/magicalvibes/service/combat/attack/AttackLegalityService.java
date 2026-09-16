@@ -86,6 +86,14 @@ public class AttackLegalityService {
         if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
             return false;
         }
+        if (gameData.onlyAggressiveCreaturesCanAttackThisCombat
+                && !gameQueryService.hasKeyword(gameData, creature, Keyword.AGGRESSIVE)) {
+            return false;
+        }
+        if (gameData.onlyPermanentCanAttackThisCombatId != null
+                && !gameData.onlyPermanentCanAttackThisCombatId.equals(creature.getId())) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
