@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BattleScreech.class, BishopsSoldier.class})
+@CardUsed({BattleScreech.class, SuntailHawk.class, Brawn.class, KrosanVerge.class})
 class BattleScreechTest extends BaseCardTest {
 
     @Test
@@ -28,8 +31,8 @@ class BattleScreechTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(birdTokens()).hasSize(2);
-        assertThat(birdTokens()).allSatisfy(bird -> {
+        assertThat(findPermanents(player1, "Bird")).hasSize(2);
+        assertThat(findPermanents(player1, "Bird")).allSatisfy(bird -> {
             assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
             assertThat(bird.getCard().getKeywords()).contains(Keyword.FLYING);
@@ -41,9 +44,9 @@ class BattleScreechTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback taps three untapped white creatures and creates two more Birds")
     void flashbackTapsThreeWhiteCreaturesAndCreatesBirds() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
-        Permanent third = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         Card spell = new BattleScreech();
         harness.setGraveyard(player1, List.of(spell));
 
@@ -54,14 +57,106 @@ class BattleScreechTest extends BaseCardTest {
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
         assertThat(third.isTapped()).isTrue();
-        assertThat(birdTokens()).hasSize(2);
+        assertThat(findPermanents(player1, "Bird")).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
-    private List<Permanent> birdTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Bird"))
-                .toList();
+    @Test
+    @DisplayName("Flashback rejects a nonwhite creature")
+    void flashbackRequiresWhiteCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent nonwhite = harness.addToBattlefieldAndReturn(player1, new Brawn());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId(), nonwhite.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("required filter");
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        assertThat(nonwhite.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback rejects a noncreature permanent")
+    void flashbackRequiresCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId(), land.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("required filter");
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback rejects tapped creatures and creatures controlled by an opponent")
+    void flashbackRequiresUntappedCreaturesYouControl() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        first.tap();
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(second.getId(), third.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        assertThat(fourth.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+
+        first.untap();
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId(), opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not found on your battlefield");
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(opponentCreature.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Duplicate flashback tap choices do not partially pay the cost")
+    void duplicateFlashbackTapChoicesAreRejectedAtomically() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 }

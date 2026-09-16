@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "DDM", collectorNumber = "26")
 @CardRegistration(set = "MM2", collectorNumber = "55")
 @CardRegistration(set = "TSR", collectorNumber = "316")
+@CardRegistration(set = "RVR", collectorNumber = "59")
 public class Remand extends Card {
 
     public Remand() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "155")
+@CardRegistration(set = "PA1", collectorNumber = "3")
 public class MagmaticInsight extends Card {
 
     public MagmaticInsight() {

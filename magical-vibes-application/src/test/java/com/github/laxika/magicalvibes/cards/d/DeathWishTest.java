@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathWish.class, GrizzlyBears.class})
+@CardUsed({DeathWish.class, AvenFogbringer.class})
 class DeathWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts a chosen outside-the-game card into hand, loses half life rounded up, and exiles Death Wish")
     void choosesOutsideTheGameCard() {
-        Card chosen = new GrizzlyBears();
+        Card chosen = new AvenFogbringer();
         setSideboard(chosen);
         harness.setLife(player1, 11);
 
@@ -30,6 +29,8 @@ class DeathWishTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = pendingSearch();
         assertThat(search.params().cards()).containsExactly(chosen);
         assertThat(search.params().reveals()).isFalse();
+        assertThat(search.params().canFailToFind()).isTrue();
+        assertThat(search.params().sourceSideboard()).isTrue();
         choose(chosen);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
@@ -41,7 +42,7 @@ class DeathWishTest extends BaseCardTest {
     @Test
     @DisplayName("May decline the outside-the-game card and still loses half life and exiles Death Wish")
     void mayDeclineOutsideTheGameCard() {
-        Card available = new GrizzlyBears();
+        Card available = new AvenFogbringer();
         setSideboard(available);
         harness.setLife(player1, 20);
 
@@ -71,8 +72,7 @@ class DeathWishTest extends BaseCardTest {
         harness.setHand(player1, List.of(wish));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         return wish;
     }
 
@@ -87,6 +87,6 @@ class DeathWishTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

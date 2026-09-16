@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 
 @CardRegistration(set = "CSP", collectorNumber = "50")
+@CardRegistration(set = "DMR", collectorNumber = "73")
 public class VexingSphinx extends Card {
 
     public VexingSphinx() {

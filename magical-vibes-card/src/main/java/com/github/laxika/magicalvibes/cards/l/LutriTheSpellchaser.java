@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "227")
+@CardRegistration(set = "MUL", collectorNumber = "52")
+@CardRegistration(set = "MUL", collectorNumber = "117")
+@CardRegistration(set = "MUL", collectorNumber = "182")
 public class LutriTheSpellchaser extends Card {
 
     public LutriTheSpellchaser() {

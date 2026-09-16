@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersOnAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -329,6 +331,14 @@ class GameQueryServiceTest {
         gd.playerBattlefields.get(player2Id).add(firstPlayersLand);
 
         assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isNull();
+    }
+
+    @Test
+    void globalTokenReplacementAppliesToAnOpponent() {
+        addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                "Primal Vigor", MultiplyTokenCreationEffect.forAllPlayers(2)));
+
+        assertThat(gqs.getTokenCreationAmount(gd, player2Id, 1, null)).isEqualTo(2);
     }
 
     private static final class CountingLayerSystemService extends LayerSystemService {
@@ -1367,6 +1377,19 @@ class GameQueryServiceTest {
             Permanent artifact = addPermanent(player1Id, createArtifact("Sol Ring"));
 
             assertThat(gqs.doublePlusOnePlusOneCounters(gd, artifact, 1)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("global replacement doubles +1/+1 counters on an opponent's creature only")
+        void globalReplacementTargetsAllCreatures() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Primal Vigor", new DoublePlusOnePlusOneCountersOnAllCreaturesEffect()));
+            Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2, CardColor.GREEN));
+            Permanent artifact = addPermanent(player2Id, createArtifact("Artifact"));
+
+            assertThat(gqs.replaceCounters(gd, creature, CounterType.PLUS_ONE_PLUS_ONE, 1)).isEqualTo(2);
+            assertThat(gqs.replaceCounters(gd, creature, CounterType.CHARGE, 1)).isEqualTo(1);
+            assertThat(gqs.replaceCounters(gd, artifact, CounterType.PLUS_ONE_PLUS_ONE, 1)).isEqualTo(1);
         }
     }
 

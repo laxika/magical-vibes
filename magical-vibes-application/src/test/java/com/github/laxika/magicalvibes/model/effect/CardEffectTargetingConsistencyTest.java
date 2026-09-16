@@ -82,6 +82,9 @@ class CardEffectTargetingConsistencyTest {
             "TargetPlayerCantCastSpellTypesThisTurnEffect",
             "TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect",
             "TargetPlayerCantGainLifeRestOfGameEffect",
+            // Pre-resolved: Wasitora's combat damage trigger carries the damaged player's UUID;
+            // that player makes a non-targeted sacrifice choice when the trigger resolves.
+            "TargetPlayerSacrificesCreatureOrCreatesTokenEffect",
             // Piggyback: reads the player-or-planeswalker target selected for the companion effect
             // on Flames of the Blood Hand; it never contributes a target of its own.
             "TargetPlayerCantGainLifeThisTurnEffect",

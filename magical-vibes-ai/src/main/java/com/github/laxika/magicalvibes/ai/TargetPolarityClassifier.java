@@ -478,6 +478,7 @@ public class TargetPolarityClassifier {
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("GoadTargetCreatureUntilNextTurnEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
@@ -586,6 +587,8 @@ public class TargetPolarityClassifier {
             entry("CreateTokenCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
+            // Fell the Mighty uses the target's power as a threshold and spares the target itself.
+            entry("DestroyAllCreaturesWithPowerGreaterThanTargetEffect", TargetPolarity.NEUTRAL),
             entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

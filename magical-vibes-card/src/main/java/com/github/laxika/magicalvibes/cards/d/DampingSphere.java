@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPer
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "213")
+@CardRegistration(set = "DMR", collectorNumber = "219")
 public class DampingSphere extends Card {
 
     public DampingSphere() {

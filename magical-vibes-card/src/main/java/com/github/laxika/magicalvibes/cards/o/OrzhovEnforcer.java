@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "79")
+@CardRegistration(set = "RVR", collectorNumber = "87")
 public class OrzhovEnforcer extends Card {
 
     public OrzhovEnforcer() {

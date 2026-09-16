@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.b.BirdMaiden;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.g.GustcloakHarrier;
+import com.github.laxika.magicalvibes.cards.g.GustcloakRunner;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,18 +11,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AvenBrigadier.class, AvenSquire.class, BirdMaiden.class, EliteVanguard.class, GrizzlyBears.class})
+@CardUsed({AvenBrigadier.class, AvenSoulgazer.class, GustcloakRunner.class,
+        GustcloakHarrier.class, ElvishWarrior.class})
 class AvenBrigadierTest extends BaseCardTest {
 
     @Test
     @DisplayName("Birds and Soldiers get +1/+1, and creatures with both types get +2/+2")
     void buffsBirdsAndSoldiers() {
-        harness.addToBattlefield(player1, new BirdMaiden());
-        harness.addToBattlefield(player1, new EliteVanguard());
-        harness.addToBattlefield(player1, new AvenSquire());
-        Permanent bird = findPermanent(player1, "Bird Maiden");
-        Permanent soldier = findPermanent(player1, "Elite Vanguard");
-        Permanent birdAndSoldier = findPermanent(player1, "Aven Squire");
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new AvenSoulgazer());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new GustcloakRunner());
+        Permanent birdAndSoldier = harness.addToBattlefieldAndReturn(player1, new GustcloakHarrier());
         int birdBasePower = gqs.getEffectivePower(gd, bird);
         int birdBaseToughness = gqs.getEffectiveToughness(gd, bird);
         int soldierBasePower = gqs.getEffectivePower(gd, soldier);
@@ -45,9 +43,7 @@ class AvenBrigadierTest extends BaseCardTest {
         AvenBrigadier card = new AvenBrigadier();
         card.setPower(10);
         card.setToughness(10);
-        harness.addToBattlefield(player1, card);
-
-        Permanent brigadier = findPermanent(player1, "Aven Brigadier");
+        Permanent brigadier = harness.addToBattlefieldAndReturn(player1, card);
 
         assertThat(gqs.getEffectivePower(gd, brigadier)).isEqualTo(10);
         assertThat(gqs.getEffectiveToughness(gd, brigadier)).isEqualTo(10);
@@ -56,10 +52,8 @@ class AvenBrigadierTest extends BaseCardTest {
     @Test
     @DisplayName("Aven Brigadier buffs Birds and Soldiers controlled by an opponent")
     void buffsOpponentsBirdsAndSoldiers() {
-        harness.addToBattlefield(player2, new BirdMaiden());
-        harness.addToBattlefield(player2, new EliteVanguard());
-        Permanent bird = findPermanent(player2, "Bird Maiden");
-        Permanent soldier = findPermanent(player2, "Elite Vanguard");
+        Permanent bird = harness.addToBattlefieldAndReturn(player2, new AvenSoulgazer());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player2, new GustcloakRunner());
         int birdBasePower = gqs.getEffectivePower(gd, bird);
         int birdBaseToughness = gqs.getEffectiveToughness(gd, bird);
         int soldierBasePower = gqs.getEffectivePower(gd, soldier);
@@ -76,14 +70,32 @@ class AvenBrigadierTest extends BaseCardTest {
     @Test
     @DisplayName("Aven Brigadier does not buff creatures without either type")
     void doesNotBuffOtherCreatureTypes() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        int basePower = gqs.getEffectivePower(gd, bears);
-        int baseToughness = gqs.getEffectiveToughness(gd, bears);
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        int basePower = gqs.getEffectivePower(gd, otherCreature);
+        int baseToughness = gqs.getEffectiveToughness(gd, otherCreature);
 
         harness.addToBattlefield(player1, new AvenBrigadier());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(baseToughness);
+    }
+
+    @Test
+    @DisplayName("Two Aven Brigadiers buff each other for both creature types")
+    void twoBrigadiersBuffEachOther() {
+        AvenBrigadier firstCard = new AvenBrigadier();
+        firstCard.setPower(10);
+        firstCard.setToughness(10);
+        AvenBrigadier secondCard = new AvenBrigadier();
+        secondCard.setPower(10);
+        secondCard.setToughness(10);
+
+        Permanent first = harness.addToBattlefieldAndReturn(player1, firstCard);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, secondCard);
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(12);
     }
 }

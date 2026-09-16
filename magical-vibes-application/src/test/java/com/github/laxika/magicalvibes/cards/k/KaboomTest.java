@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -15,16 +17,16 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Kaboom.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({Kaboom.class, Forest.class, GlorySeeker.class, Island.class, JaceBeleren.class})
 class KaboomTest extends BaseCardTest {
 
     @Test
     void revealsAndDealsSeparatelyForEachTarget() {
         Card forest = new Forest();
-        Card firstBears = new GrizzlyBears();
+        Card firstGlorySeeker = new GlorySeeker();
         Card island = new Island();
-        Card secondBears = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(forest, firstBears, island, secondBears));
+        Card secondGlorySeeker = new GlorySeeker();
+        harness.setLibrary(player1, List.of(forest, firstGlorySeeker, island, secondGlorySeeker));
         harness.setHand(player1, List.of(new Kaboom()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -37,17 +39,64 @@ class KaboomTest extends BaseCardTest {
 
         PendingInteraction.LibraryReorder firstReorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-        assertThat(firstReorder.cards()).containsExactly(forest, firstBears);
+        assertThat(firstReorder.cards()).containsExactly(forest, firstGlorySeeker);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         PendingInteraction.LibraryReorder secondReorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-        assertThat(secondReorder.cards()).containsExactly(island, secondBears);
+        assertThat(secondReorder.cards()).containsExactly(island, secondGlorySeeker);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactly(firstBears, forest, secondBears, island);
+                .containsExactly(firstGlorySeeker, forest, secondGlorySeeker, island);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canTargetPlaneswalkerAndDealsRevealedManaValueAsLoyaltyDamage() {
+        var jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Card revealed = new GlorySeeker();
+        harness.setLibrary(player1, List.of(revealed));
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(jace.getId()));
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void targetedEmptyLibraryDealsNoDamage() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void targetedAllLandLibraryPutsAllRevealedCardsOnBottomWithoutDamage() {
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island, forest);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -56,8 +105,7 @@ class KaboomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Kaboom()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -66,7 +114,7 @@ class KaboomTest extends BaseCardTest {
 
     @Test
     void cannotTargetCreature() {
-        var creature = addCreatureReady(player2, new GrizzlyBears());
+        var creature = addCreatureReady(player2, new GlorySeeker());
         harness.setHand(player1, List.of(new Kaboom()));
         harness.addMana(player1, ManaColor.RED, 5);
 

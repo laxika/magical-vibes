@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PearlspearCourier.class, GrizzlyBears.class})
+@CardUsed({PearlspearCourier.class, WirewoodElf.class})
 class PearlspearCourierTest extends BaseCardTest {
 
     @Test
@@ -71,14 +69,32 @@ class PearlspearCourierTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability cannot target a non-Soldier creature")
-    void cannotTargetNonSoldierCreature() {
-        addReadyCourier(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+    @DisplayName("The courier may remain tapped during its controller's untap step")
+    void courierCanRemainTapped() {
+        Permanent courier = addReadyCourier(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+        harness.activateAbility(player1, 0, 0, null, courier.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurnWithMayChoice(player2, false);
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, courier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability cannot target a non-Soldier creature")
+    void cannotTargetNonSoldierCreature() {
+        addReadyCourier(player1);
+        Permanent elf = addCreatureReady(player2, new WirewoodElf());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, elf.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Soldier creature");
     }
@@ -89,13 +105,11 @@ class PearlspearCourierTest extends BaseCardTest {
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
 
-        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

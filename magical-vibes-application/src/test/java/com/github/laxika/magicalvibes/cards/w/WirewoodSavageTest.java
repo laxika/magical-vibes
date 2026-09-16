@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WirewoodSavage.class, BarkhideMauler.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WirewoodSavage.class, BarkhideMauler.class, WirewoodElf.class, Shock.class})
 class WirewoodSavageTest extends BaseCardTest {
 
     @Test
@@ -68,14 +66,34 @@ class WirewoodSavageTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(WoodlandChangeling.class)
+    @DisplayName("Treats a Changeling creature as a Beast")
+    void drawsForChangelingCreature() {
+        harness.addToBattlefield(player1, new WirewoodSavage());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Shock()));
+
+        harness.castFromHand(player1, new WoodlandChangeling(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice mayChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(mayChoice).isNotNull();
+        assertThat(mayChoice.playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Shock");
+    }
+
+    @Test
     @DisplayName("Does not trigger for a non-Beast creature")
     void ignoresNonBeastCreature() {
         harness.addToBattlefield(player1, new WirewoodSavage());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new WirewoodElf(), "{1}{G}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -83,10 +101,7 @@ class WirewoodSavageTest extends BaseCardTest {
     }
 
     private void castBeast(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new BarkhideMauler()));
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 4);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new BarkhideMauler(), "{4}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

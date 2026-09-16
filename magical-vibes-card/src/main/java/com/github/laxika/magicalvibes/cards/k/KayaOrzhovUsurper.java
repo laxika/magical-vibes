@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "186")
+@CardRegistration(set = "RVR", collectorNumber = "194")
 public class KayaOrzhovUsurper extends Card {
 
     public KayaOrzhovUsurper() {

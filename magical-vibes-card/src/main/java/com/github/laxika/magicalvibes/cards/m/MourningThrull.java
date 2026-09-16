@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "146")
+@CardRegistration(set = "RVR", collectorNumber = "204")
 public class MourningThrull extends Card {
 
     public MourningThrull() {

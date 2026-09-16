@@ -498,6 +498,8 @@ public class GameData {
     /** Tracks exiled card UUIDs that have hatching counters (The Dragon-Kami Reborn). */
     public final Set<UUID> exiledCardsWithHatchingCounters = ConcurrentHashMap.newKeySet();
     public final Set<UUID> exiledCardsWithStudyCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have intel counters (Flamewar, Streetwise Operative). */
+    public final Set<UUID> exiledCardsWithIntelCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have kick counters (Zethi, Arcane Blademaster). */
     public final Set<UUID> exiledCardsWithKickCounters = ConcurrentHashMap.newKeySet();
     /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
@@ -1856,6 +1858,12 @@ public class GameData {
     public final Map<UUID, Set<UUID>> creaturesThatCrewedPermanentThisTurn = new ConcurrentHashMap<>();
     public final TargetOpponentsDiscardThenDrawState targetOpponentsDiscardThenDraw =
             new TargetOpponentsDiscardThenDrawState();
+    /** Full beginning phases queued after the current combat phase. */
+    public int additionalBeginningPhasesAfterCombat;
+    /** The normal step to resume after all queued beginning phases are complete. */
+    public TurnStep additionalBeginningPhaseReturnStep;
+    /** Whether the engine is processing an inserted beginning phase's untap step. */
+    public boolean additionalBeginningPhaseUntapInProgress;
     public int additionalUpkeepStepsAfterCombat;
     public TurnStep additionalUpkeepReturnStep;
     public final Set<UUID> cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn =
@@ -4327,6 +4335,7 @@ public class GameData {
             exiledCardsWithCollectionCounters.remove(cardId);
             exiledCardsWithHatchingCounters.remove(cardId);
             exiledCardsWithStudyCounters.remove(cardId);
+            exiledCardsWithIntelCounters.remove(cardId);
             exiledCardsWithKickCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
@@ -4478,6 +4487,7 @@ public class GameData {
         removedIds.forEach(exiledCardScreamCounters::remove);
         removedIds.forEach(exiledCardRefineCounters::remove);
         removedIds.forEach(exiledCardsWithStudyCounters::remove);
+        removedIds.forEach(exiledCardsWithIntelCounters::remove);
         removedIds.forEach(exiledCardsWithKickCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
@@ -5092,6 +5102,7 @@ public class GameData {
         copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
         copy.exiledCardsWithCollectionCounters.addAll(this.exiledCardsWithCollectionCounters);
         copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
+        copy.exiledCardsWithIntelCounters.addAll(this.exiledCardsWithIntelCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -6081,6 +6092,9 @@ public class GameData {
                 this.targetOpponentsDiscardThenDraw.noDiscardPlayers);
         copy.targetOpponentsDiscardThenDraw.selectedDiscards.addAll(
                 this.targetOpponentsDiscardThenDraw.selectedDiscards);
+        copy.additionalBeginningPhasesAfterCombat = this.additionalBeginningPhasesAfterCombat;
+        copy.additionalBeginningPhaseReturnStep = this.additionalBeginningPhaseReturnStep;
+        copy.additionalBeginningPhaseUntapInProgress = this.additionalBeginningPhaseUntapInProgress;
         copy.additionalUpkeepStepsAfterCombat = this.additionalUpkeepStepsAfterCombat;
         copy.additionalUpkeepReturnStep = this.additionalUpkeepReturnStep;
         copy.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.addAll(

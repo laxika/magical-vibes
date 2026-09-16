@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFisher;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZombieInfestation.class, AvenFisher.class, Mountain.class, Forest.class})
 class ZombieInfestationTest extends BaseCardTest {
 
     @Test
@@ -23,7 +26,7 @@ class ZombieInfestationTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addToBattlefield(player1, new ZombieInfestation());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
+        harness.setHand(player1, List.of(new AvenFisher(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -37,8 +40,30 @@ class ZombieInfestationTest extends BaseCardTest {
         assertThat(token.getEffectivePower()).isEqualTo(2);
         assertThat(token.getEffectiveToughness()).isEqualTo(2);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Aven Fisher");
         harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Discarding two cards leaves the rest of the hand untouched")
+    void discardingTwoLeavesRemainingCardsInHand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new ZombieInfestation());
+        AvenFisher remainingCard = new AvenFisher();
+        harness.setHand(player1, List.of(remainingCard, new Mountain(), new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCard);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())).hasSize(1);
     }
 
     @Test
@@ -48,7 +73,7 @@ class ZombieInfestationTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addToBattlefield(player1, new ZombieInfestation());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AvenFisher()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

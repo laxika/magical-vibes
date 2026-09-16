@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(CallOfTheHerd.class)
 class CallOfTheHerdTest extends BaseCardTest {
 
     @Test
@@ -52,9 +54,8 @@ class CallOfTheHerdTest extends BaseCardTest {
     }
 
     private List<Permanent> elephantTokens() {
-        return harness.getGameData().playerBattlefields.get(player1.getId()).stream()
+        return findPermanents(player1, "Elephant").stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Elephant"))
                 .toList();
     }
 }

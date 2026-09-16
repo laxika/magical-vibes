@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplierEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "143")
+@CardRegistration(set = "WOT", collectorNumber = "42")
 public class FieryEmancipation extends Card {
 
     public FieryEmancipation() {

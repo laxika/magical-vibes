@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.MuscleBurst;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DiligentFarmhand.class, Forest.class, Island.class, MuscleBurst.class})
 class DiligentFarmhandTest extends BaseCardTest {
 
     @Test
@@ -41,7 +41,7 @@ class DiligentFarmhandTest extends BaseCardTest {
         activateAbility();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Forest")
@@ -53,16 +53,13 @@ class DiligentFarmhandTest extends BaseCardTest {
     @DisplayName("The basic land search may fail to find")
     void searchMayFailToFind() {
         harness.addToBattlefield(player1, new DiligentFarmhand());
-        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new MuscleBurst()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Forest")
@@ -70,13 +67,32 @@ class DiligentFarmhandTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A Diligent Farmhand in a graveyard counts as a Muscle Burst card")
+    void graveyardFarmhandCountsAsMuscleBurst() {
+        harness.addToBattlefield(player1, new DiligentFarmhand());
+        var target = harness.addToBattlefieldAndReturn(player1, new DiligentFarmhand());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.setHand(player1, List.of(new MuscleBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+    }
+
     private void activateAbility() {
         harness.addToBattlefield(player1, new DiligentFarmhand());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new MuscleBurst()));
 
         harness.activateAbility(player1, 0, null, null);
     }

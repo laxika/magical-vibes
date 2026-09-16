@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AncestralTribute;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,17 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MysticZealot.class, AncestralTribute.class})
 class MysticZealotTest extends BaseCardTest {
 
     @Test
     @DisplayName("Has no threshold bonus with fewer than seven cards in its controller's graveyard")
     void noThresholdBonus() {
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.addToBattlefield(player1, new MysticZealot());
+                new AncestralTribute(), new AncestralTribute(), new AncestralTribute(),
+                new AncestralTribute(), new AncestralTribute(), new AncestralTribute()));
 
-        Permanent zealot = findZealot();
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
         assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isFalse();
@@ -32,9 +33,8 @@ class MysticZealotTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 and flying with seven cards in its controller's graveyard")
     void thresholdBonus() {
         harness.setGraveyard(player1, graveyardWithSevenCards());
-        harness.addToBattlefield(player1, new MysticZealot());
 
-        Permanent zealot = findZealot();
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
         assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isTrue();
@@ -44,9 +44,8 @@ class MysticZealotTest extends BaseCardTest {
     @DisplayName("An opponent's graveyard does not enable threshold")
     void opponentGraveyardDoesNotCount() {
         harness.setGraveyard(player2, graveyardWithSevenCards());
-        harness.addToBattlefield(player1, new MysticZealot());
 
-        Permanent zealot = findZealot();
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
         assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isFalse();
@@ -56,8 +55,7 @@ class MysticZealotTest extends BaseCardTest {
     @DisplayName("Loses the threshold bonus when its controller's graveyard drops below seven cards")
     void losesThresholdBonusWhenGraveyardChanges() {
         harness.setGraveyard(player1, graveyardWithSevenCards());
-        harness.addToBattlefield(player1, new MysticZealot());
-        Permanent zealot = findZealot();
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
 
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isTrue();
 
@@ -68,13 +66,9 @@ class MysticZealotTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isFalse();
     }
 
-    private Permanent findZealot() {
-        return findPermanent(player1, "Mystic Zealot");
-    }
-
     private List<Card> graveyardWithSevenCards() {
         return List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new AncestralTribute(), new AncestralTribute(), new AncestralTribute(), new AncestralTribute(),
+                new AncestralTribute(), new AncestralTribute(), new AncestralTribute());
     }
 }

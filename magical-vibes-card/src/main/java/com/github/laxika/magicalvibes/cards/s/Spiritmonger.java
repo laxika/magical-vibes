@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "APC", collectorNumber = "121")
 @CardRegistration(set = "IMA", collectorNumber = "209")
 @CardRegistration(set = "VMA", collectorNumber = "262")
+@CardRegistration(set = "DMR", collectorNumber = "202")
 public class Spiritmonger extends Card {
 
     public Spiritmonger() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Demystify.class, AngelicChorus.class, GrizzlyBears.class})
 class DemystifyTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -50,8 +52,7 @@ class DemystifyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertInGraveyard(player2, "Angelic Chorus");
@@ -65,8 +66,7 @@ class DemystifyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Angelic Chorus");
         harness.assertInGraveyard(player1, "Angelic Chorus");
@@ -80,8 +80,7 @@ class DemystifyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();

@@ -108,6 +108,8 @@ public class CharacteristicState {
         if (!permanent.isFaceDown()) {
             this.supertypes.addAll(card.getSupertypes());
             this.subtypes.addAll(card.getSubtypes());
+        } else {
+            this.subtypes.addAll(permanent.getFaceDownSubtypes());
         }
         for (CardSubtype granted : permanent.getGrantedSubtypes()) {
             addSubtype(granted);

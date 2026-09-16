@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 
 @CardRegistration(set = "UDS", collectorNumber = "142")
+@CardRegistration(set = "DMR", collectorNumber = "239")
 public class UrzasIncubator extends Card {
 
     public UrzasIncubator() {

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CustodyBattle.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CustodyBattle.class, Forest.class, ElvishWarrior.class})
 class CustodyBattleTest extends BaseCardTest {
 
     @Test
     @DisplayName("The enchanted creature's controller chooses an opponent for the upkeep trigger")
     void targetsOpponentOfEnchantedCreatureController() {
-        Permanent bears = addBattle();
+        Permanent creature = addBattle();
 
         advanceToUpkeep(player1);
 
@@ -29,14 +29,14 @@ class CustodyBattleTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
     }
 
     @Test
     @DisplayName("Sacrificing a land keeps control of the enchanted creature")
     void sacrificingLandPreventsControlChange() {
-        Permanent bears = addBattle();
+        Permanent creature = addBattle();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         advanceToUpkeep(player1);
@@ -46,14 +46,14 @@ class CustodyBattleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears).doesNotContain(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature).doesNotContain(forest);
         harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
     @DisplayName("Declining the land sacrifice gives the enchanted creature to the target opponent")
     void decliningSacrificeChangesControl() {
-        Permanent bears = addBattle();
+        Permanent creature = addBattle();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         advanceToUpkeep(player1);
@@ -61,8 +61,44 @@ class CustodyBattleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears).contains(forest);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature).contains(forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("With no land to sacrifice, the enchanted creature changes control without a may prompt")
+    void noLandToSacrificeChangesControlImmediately() {
+        Permanent creature = addBattle();
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller chooses which land to sacrifice")
+    void choosesLandToSacrificeWhenSeveralAreAvailable() {
+        Permanent creature = addBattle();
+        Permanent keptForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent sacrificedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, sacrificedForest.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, keptForest)
+                .doesNotContain(sacrificedForest);
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -77,9 +113,9 @@ class CustodyBattleTest extends BaseCardTest {
     }
 
     private Permanent addBattle() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new CustodyBattle());
-        aura.setAttachedTo(bears.getId());
-        return bears;
+        aura.setAttachedTo(creature.getId());
+        return creature;
     }
 }

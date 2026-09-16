@@ -14,17 +14,19 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPG", collectorNumber = "25")
+@CardRegistration(set = "MH1", collectorNumber = "160")
 public class CrashingFootfalls extends Card {
 
     public CrashingFootfalls() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Rhino", 4, 4, CardColor.GREEN,
-                List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
                 List.of(),
-                "Suspend 4\u2014{G}",
+                "Suspend 4—{G}",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(4));
+
+        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Rhino", 4, 4, CardColor.GREEN,
+                List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
     }
 }

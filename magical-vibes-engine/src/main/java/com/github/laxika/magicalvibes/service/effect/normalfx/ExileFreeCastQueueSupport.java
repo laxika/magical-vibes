@@ -371,8 +371,11 @@ public class ExileFreeCastQueueSupport {
                 }
                 boolean willGoToGraveyard = gameData.pendingExileFreeCastRemainderToGraveyard
                         .contains(physicalCard.getId());
+                boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom
+                        .contains(physicalCard.getId());
                 gameLogService.append(gameData, GameLog.cardThen(physicalCard, willGoToGraveyard
                         ? " has no valid targets and will be put into the graveyard."
+                        : willGoToBottom ? " has no valid targets and will be put on the bottom of its owner's library."
                         : asCopy ? " has no valid targets."
                         : " has no valid targets and stays exiled."));
                 castNextFromQueue(gameData, playerId);
@@ -426,8 +429,10 @@ public class ExileFreeCastQueueSupport {
         if (asCopy) {
             gameData.removeFromExile(card.getId());
         }
+        boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom.contains(card.getId());
         gameLogService.append(gameData, GameLog.cardThen(card, asCopy
                 ? " has an additional cast cost that can't be paid and ceases to exist."
+                : willGoToBottom ? " has an additional cast cost that can't be paid and will be put on the bottom of its owner's library."
                 : " has an additional cast cost that can't be paid and stays exiled."));
         castNextFromQueue(gameData, playerId);
     }
@@ -436,8 +441,10 @@ public class ExileFreeCastQueueSupport {
         if (asCopy) {
             gameData.removeFromExile(card.getId());
         }
+        boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom.contains(card.getId());
         gameLogService.append(gameData, GameLog.cardThen(card, asCopy
                 ? " has no legal mode and ceases to exist."
+                : willGoToBottom ? " has no legal mode and will be put on the bottom of its owner's library."
                 : " has no legal mode and stays exiled."));
         castNextFromQueue(gameData, playerId);
     }

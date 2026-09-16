@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,6 +73,29 @@ class CardRegistryOnDemandTest {
         registry.findByCollectorNumber(CardSet.SET_10E, "31");
 
         assertThat(loader.loadedSetCodes).containsExactly(preferredSet, "10E");
+    }
+
+    @Test
+    void missingPreferredPrintingFallsBackToAnotherRegisteredSet() {
+        List<CardSet> cardSets = Arrays.stream(CardSet.values())
+                .filter(set -> CardScanner.collectorNumberOf(Pacifism.class, set.getCode()).isPresent())
+                .sorted(Comparator.comparingInt(CardSet::ordinal).reversed())
+                .toList();
+        RecordingLoader loader = new RecordingLoader();
+        loader.omittedPrintings.add(cardSets.getFirst().getCode() + " #"
+                + CardScanner.collectorNumberOf(Pacifism.class, cardSets.getFirst().getCode()).orElseThrow());
+        registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
+        registry.load();
+
+        Pacifism first = new Pacifism();
+        Pacifism second = new Pacifism();
+
+        assertThat(first.getName()).isEqualTo("Pacifism");
+        assertThat(first.getManaCost()).isEqualTo("{1}{W}");
+        assertThat(first.getCardText()).startsWith(cardSets.get(1).getCode() + " #");
+        assertThat(second.getCardText()).isEqualTo(first.getCardText());
+        assertThat(loader.loadedSetCodes)
+                .containsExactly(cardSets.getFirst().getCode(), cardSets.get(1).getCode());
     }
 
     @Test
@@ -150,6 +174,7 @@ class CardRegistryOnDemandTest {
 
         private final List<String> loadedSetCodes = new ArrayList<>();
         private final Set<String> setsFailingNextLoad = new HashSet<>();
+        private final Set<String> omittedPrintings = new HashSet<>();
         private final Map<CardSet, List<CardPrinting>> printings = CardScanner.scan();
 
         void failNextLoadOf(String setCode) {
@@ -166,7 +191,8 @@ class CardRegistryOnDemandTest {
             Map<String, OracleData> fronts = new HashMap<>();
             Map<String, OracleData> backs = new HashMap<>();
             for (CardPrinting printing : printings.get(CardSet.findByCode(setCode))) {
-                if (implementedCollectorNumbers.contains(printing.collectorNumber())) {
+                if (implementedCollectorNumbers.contains(printing.collectorNumber())
+                        && !omittedPrintings.contains(setCode + " #" + printing.collectorNumber())) {
                     fronts.put(printing.collectorNumber(), oracle(printing.simpleCardClassName(),
                             setCode + " #" + printing.collectorNumber()));
                     if (printing.cardClassName().equals(HuntmasterOfTheFells.class.getName())) {

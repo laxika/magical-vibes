@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "227")
+@CardRegistration(set = "PA1", collectorNumber = "10")
 public class EncroachingWastes extends Card {
 
     public EncroachingWastes() {

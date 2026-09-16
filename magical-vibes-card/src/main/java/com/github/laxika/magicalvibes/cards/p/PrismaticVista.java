@@ -11,13 +11,12 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "244")
 @CardRegistration(set = "ZNE", collectorNumber = "27")
 @CardRegistration(set = "SPG", collectorNumber = "38")
 public class PrismaticVista extends Card {
 
     public PrismaticVista() {
-        // {T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card,
-        // put it onto the battlefield, then shuffle.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
@@ -27,7 +26,7 @@ public class PrismaticVista extends Card {
                         new SearchLibraryEffect(CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD)
                 ),
-                "{T}, Pay 1 life, Sacrifice Prismatic Vista: Search your library for a basic land card, put it onto the battlefield, then shuffle."
+                "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle."
         ));
     }
 }

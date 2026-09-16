@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RayOfDistortion.class, FountainOfYouth.class, GloriousAnthem.class, GrizzlyBears.class})
 class RayOfDistortionTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class RayOfDistortionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
@@ -39,8 +40,7 @@ class RayOfDistortionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInGraveyard(player2, "Glorious Anthem");
@@ -66,8 +66,7 @@ class RayOfDistortionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInGraveyard(player2, "Glorious Anthem");

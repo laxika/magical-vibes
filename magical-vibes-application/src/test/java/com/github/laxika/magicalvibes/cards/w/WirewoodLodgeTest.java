@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IronfistCrusher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WirewoodLodge.class, ElvishWarrior.class, GrizzlyBears.class})
+@CardUsed({WirewoodLodge.class, ElvishWarrior.class, IronfistCrusher.class})
 class WirewoodLodgeTest extends BaseCardTest {
 
     @Test
@@ -45,10 +45,10 @@ class WirewoodLodgeTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Elf permanent")
     void cannotTargetNonElf() {
         harness.addToBattlefieldAndReturn(player1, new WirewoodLodge());
-        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonElf = addCreatureReady(player2, new IronfistCrusher());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bear.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, nonElf.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target does not match the required predicate");
     }

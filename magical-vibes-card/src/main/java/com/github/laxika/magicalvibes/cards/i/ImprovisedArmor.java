@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONS", collectorNumber = "40")
+@CardRegistration(set = "DMR", collectorNumber = "10")
 public class ImprovisedArmor extends Card {
 
     public ImprovisedArmor() {

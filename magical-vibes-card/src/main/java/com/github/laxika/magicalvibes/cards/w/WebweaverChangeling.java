@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
+@CardRegistration(set = "MH1", collectorNumber = "192")
 @CardRegistration(set = "2X2", collectorNumber = "164")
 public class WebweaverChangeling extends Card {
 

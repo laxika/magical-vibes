@@ -33,6 +33,9 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var permission =
+                (ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect)
+                        effect;
         UUID damagedPlayerId = entry.getTargetId();
         UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
                 ? entry.getTriggeringPermanentControllerId()
@@ -49,22 +52,27 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
             return;
         }
 
-        Card topCard = deck.removeFirst();
-        exileService.exileCard(gameData, damagedPlayerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), creatureControllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
-        if (!topCard.hasType(CardType.LAND)) {
-            gameData.exilePlayAnyManaType.add(topCard.getId());
-        }
-
+        int toExile = Math.min(permission.count(), deck.size());
         String creatureControllerName = gameData.playerIdToName.get(creatureControllerId);
-        gameLogService.append(gameData, GameLog.builder()
-                .text(damagedPlayerName + " exiles ").card(topCard)
-                .text(" from the top of their library — ")
-                .text(creatureControllerName + " may play it this turn.")
-                .build());
-        log.info("Game {} - {} exiles {} from {}'s library top; {} may play it this turn",
-                gameData.id, damagedPlayerName, topCard.getName(), damagedPlayerName,
-                creatureControllerName);
+        for (int i = 0; i < toExile; i++) {
+            Card topCard = deck.removeFirst();
+            exileService.exileCard(gameData, damagedPlayerId, topCard);
+            gameData.exilePlayPermissions.put(topCard.getId(), creatureControllerId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            if (permission.withoutPayingManaCost()) {
+                gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+            } else if (!topCard.hasType(CardType.LAND)) {
+                gameData.exilePlayAnyManaType.add(topCard.getId());
+            }
+
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(damagedPlayerName + " exiles ").card(topCard)
+                    .text(" from the top of their library — ")
+                    .text(creatureControllerName + " may play it this turn.")
+                    .build());
+            log.info("Game {} - {} exiles {} from {}'s library top; {} may play it this turn",
+                    gameData.id, damagedPlayerName, topCard.getName(), damagedPlayerName,
+                    creatureControllerName);
+        }
     }
 }

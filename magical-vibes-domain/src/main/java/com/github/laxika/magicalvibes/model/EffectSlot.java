@@ -591,6 +591,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever any player gains one or more life. */
     ON_ANY_PLAYER_GAINS_LIFE,
     ON_CONTROLLER_GAINS_LIFE,
+    /** Triggers whenever this permanent's controller becomes the monarch. */
+    ON_CONTROLLER_BECOMES_MONARCH,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
     ON_OPPONENT_GAINS_LIFE,
     /** Triggers whenever this permanent's controller gets one or more energy counters. */
@@ -770,6 +772,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  exile from the battlefield. Checked after the permanent has been removed and its card has
      *  entered exile. */
     ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD,
+    /** Triggers whenever a creature is put into exile from the battlefield, regardless of its
+     *  controller. Checked after the permanent has been removed and its card has entered exile. */
+    ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
     ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     ON_SELF_OR_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
@@ -1096,6 +1101,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */
     GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
+    /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
+     *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
+    GRANT_CASCADE_TO_SLIVER_SPELL,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
