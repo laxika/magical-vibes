@@ -293,6 +293,7 @@ public enum CardSet {
     SET_PIO("PIO"),
     SET_REX("REX"),
     SET_AA1("AA1"),
+    SET_AA4("AA4"),
     SET_PA1("PA1"),
     SET_CN2("CN2"),
     SET_PZA("PZA");
