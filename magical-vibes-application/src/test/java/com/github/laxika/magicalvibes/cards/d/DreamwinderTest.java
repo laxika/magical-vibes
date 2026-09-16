@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Dreamwinder.class, AvenFlock.class, Forest.class, Island.class})
 class DreamwinderTest extends BaseCardTest {
 
     @Test
@@ -63,10 +65,10 @@ class DreamwinderTest extends BaseCardTest {
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Dreamwinder());
         harness.addToBattlefield(player1, new Island());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonLandPermanent = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonLandPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
@@ -75,9 +77,9 @@ class DreamwinderTest extends BaseCardTest {
     @DisplayName("Can attack when the defending player controls an Island")
     void canAttackWithDefendingIsland() {
         harness.addToBattlefield(player2, new Island());
-        readyAttacker();
+        addCreatureReady(player1, new Dreamwinder());
 
-        declareAttackers();
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -85,15 +87,36 @@ class DreamwinderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack when the defending player controls no Island")
     void cannotAttackWithoutDefendingIsland() {
-        readyAttacker();
+        addCreatureReady(player1, new Dreamwinder());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot attack when only the attacking player controls an Island")
+    void cannotAttackWhenOnlyAttackingPlayerControlsIsland() {
+        addCreatureReady(player1, new Dreamwinder());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Turning an opponent's land into an Island allows attacking")
+    void turningOpponentsLandIntoIslandAllowsAttacking() {
+        addCreatureReady(player1, new Dreamwinder());
+        harness.addToBattlefield(player1, new Island());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, opponentForest.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     private Permanent activateOnForest() {
@@ -105,20 +128,5 @@ class DreamwinderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
         return forest;
-    }
-
-    private void readyAttacker() {
-        Permanent dreamwinder = new Permanent(new Dreamwinder());
-        dreamwinder.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(dreamwinder);
-    }
-
-    private void declareAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
     }
 }

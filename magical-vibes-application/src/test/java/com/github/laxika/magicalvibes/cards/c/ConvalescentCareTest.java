@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,13 +11,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ConvalescentCare.class, GrizzlyBears.class})
+@CardUsed({ConvalescentCare.class, Plains.class})
 class ConvalescentCareTest extends BaseCardTest {
 
     @Test
     @DisplayName("At 5 or less life, the upkeep trigger gains 3 life and draws a card")
     void lowLifeGainsLifeAndDraws() {
-        Card libraryCard = new GrizzlyBears();
+        Card libraryCard = new Plains();
         harness.addToBattlefield(player1, new ConvalescentCare());
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setLife(player1, 5);
@@ -35,7 +35,7 @@ class ConvalescentCareTest extends BaseCardTest {
     @Test
     @DisplayName("Above 5 life, the upkeep trigger does nothing")
     void aboveThresholdDoesNothing() {
-        Card libraryCard = new GrizzlyBears();
+        Card libraryCard = new Plains();
         harness.addToBattlefield(player1, new ConvalescentCare());
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setLife(player1, 6);
@@ -51,7 +51,7 @@ class ConvalescentCareTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger fires only during its controller's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
-        Card libraryCard = new GrizzlyBears();
+        Card libraryCard = new Plains();
         harness.addToBattlefield(player1, new ConvalescentCare());
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setLife(player1, 5);
@@ -61,6 +61,23 @@ class ConvalescentCareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore).doesNotContain(libraryCard);
+    }
+
+    @Test
+    @DisplayName("If life rises above 5 before resolution, the trigger does nothing")
+    void lifeRisesAboveThresholdBeforeResolution() {
+        Card libraryCard = new Plains();
+        harness.addToBattlefield(player1, new ConvalescentCare());
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setLife(player1, 5);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 6);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(6);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore).doesNotContain(libraryCard);
     }
 }

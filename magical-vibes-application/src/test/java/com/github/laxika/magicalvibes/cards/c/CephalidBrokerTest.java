@@ -1,28 +1,28 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CephalidBroker.class, AvenFlock.class, Forest.class})
 class CephalidBrokerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target opponent draws two cards, then discards two cards")
     void opponentDrawsThenDiscards() {
         Permanent broker = addCreatureReady(player1, new CephalidBroker());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of(new AvenFlock(), new AvenFlock()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         assertThat(broker.isTapped()).isTrue();
@@ -44,14 +44,13 @@ class CephalidBrokerTest extends BaseCardTest {
     @DisplayName("Can target the controller and cannot target a permanent")
     void targetsPlayersOnly() {
         addCreatureReady(player1, new CephalidBroker());
-        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent flock = addCreatureReady(player2, new AvenFlock());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, flock.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new AvenFlock(), new AvenFlock()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();

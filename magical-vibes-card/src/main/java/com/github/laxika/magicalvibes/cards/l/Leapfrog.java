@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "42")
+@CardRegistration(set = "RVR", collectorNumber = "49")
 public class Leapfrog extends Card {
 
     public Leapfrog() {

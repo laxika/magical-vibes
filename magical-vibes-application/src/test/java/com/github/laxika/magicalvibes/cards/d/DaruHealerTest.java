@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +19,7 @@ class DaruHealerTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents the next damage dealt to a targeted player")
     void preventsNextDamageToTargetPlayer() {
-        addReadyHealer(player1);
+        addCreatureReady(player1, new DaruHealer());
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -27,16 +27,75 @@ class DaruHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        Permanent attacker = new Permanent(new DaruHealer());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent attacker = addCreatureReady(player1, new DaruHealer());
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat(player1);
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents the next damage dealt to a targeted creature")
+    void preventsNextDamageToTargetCreature() {
+        addCreatureReady(player1, new DaruHealer());
+        Permanent attacker = addCreatureReady(player1, new DaruHealer());
+        Permanent target = addCreatureReady(player2, new DaruHealer());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(target),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        resolveCombat(player1);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents only the next 1 damage dealt to a targeted player")
+    void preventsOnlyNextDamageToTargetPlayer() {
+        addCreatureReady(player1, new DaruHealer());
+        Permanent firstAttacker = addCreatureReady(player1, new DaruHealer());
+        Permanent secondAttacker = addCreatureReady(player1, new DaruHealer());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        int firstAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker);
+        int secondAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker);
+        declareAttackers(player1, List.of(firstAttackerIndex, secondAttackerIndex));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Unused prevention shield wears off at end of turn")
+    void unusedPreventionShieldWearsOffAtEndOfTurn() {
+        addCreatureReady(player1, new DaruHealer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -61,10 +120,4 @@ class DaruHealerTest extends BaseCardTest {
         assertThat(healer.isFaceDown()).isFalse();
     }
 
-    private Permanent addReadyHealer(Player player) {
-        Permanent healer = new Permanent(new DaruHealer());
-        healer.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(healer);
-        return healer;
-    }
 }

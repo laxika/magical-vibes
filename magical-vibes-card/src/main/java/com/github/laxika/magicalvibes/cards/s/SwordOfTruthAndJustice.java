@@ -17,16 +17,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "AA1", collectorNumber = "15")
+@CardRegistration(set = "MH1", collectorNumber = "229")
 public class SwordOfTruthAndJustice extends Card {
 
     public SwordOfTruthAndJustice() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
-                Set.of(CardColor.WHITE, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE, SequenceEffect.of(
-                new PutCounterOnChosenOwnPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
-                new ProliferateEffect()));
+        addEffect(EffectSlot.STATIC,
+                new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                SequenceEffect.of(
+                        new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                                new PermanentIsCreaturePredicate()),
+                        new ProliferateEffect()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

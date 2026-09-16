@@ -100,6 +100,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB reveal top card - artifact to hand, otherwise graveyard | `n/NeurokFamiliar.java` | RevealTopCardMatchingToHandElseGraveyardEffect(CardTypePredicate(ARTIFACT)) — reveal the top card of your library; artifact cards go to hand and all other cards go to the graveyard |
 | ETB repeating random sacrifice | `t/TyrantOfDiscord.java` | target(PlayerPredicateTargetFilter(OPPONENT)) + TargetPlayerSacrificesRandomPermanentsUntilLandEffect() — opponent sacrifices random permanents until a land is hit |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryEffect(CardPredicateUtils.basicLand())) |
+| ETB search for a creature with a maximum mana value | `r/RangerCaptainOfEos.java` | MayEffect(SearchLibraryEffect(CardAllOfPredicate(CREATURE, CardMaxManaValuePredicate(1)))) |
 | ETB may search library and/or graveyard for a vanilla creature | `f/FangDruidSummoner.java` | MayEffect(SearchLibraryAndOrGraveyardForCardToHandEffect(CardAllOf(CREATURE, CardHasNoAbilitiesPredicate))) |
 | ETB opponent search (downside) | `o/OldGrowthDryads.java` | EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect — each opponent may search for a basic land (tapped). No targeting. APNAP order |
 | ETB opponent search (creature, downside) | `b/BoldwyrHeavyweights.java` | EachOpponentMaySearchLibraryForCreatureToBattlefieldEffect — each opponent may tutor a creature onto the battlefield (untapped). No targeting. APNAP order |

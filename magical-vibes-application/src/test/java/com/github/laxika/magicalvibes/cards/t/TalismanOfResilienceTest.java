@@ -57,6 +57,7 @@ class TalismanOfResilienceTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "GREEN");
 
         Permanent talisman = gd.playerBattlefields.get(player1.getId()).getFirst();

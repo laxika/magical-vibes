@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.h.Halberdier;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CentaurGarden.class, Halberdier.class, Swamp.class})
 class CentaurGardenTest extends BaseCardTest {
 
     @Test
@@ -31,17 +33,29 @@ class CentaurGardenTest extends BaseCardTest {
     @Test
     void thresholdAbilityGivesCreaturePlusThreePlusThreeAndSacrificesTheLand() {
         harness.addToBattlefield(player1, new CentaurGarden());
-        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
         harness.setGraveyard(player1, cards(7));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 0, 1, null, elemental.getId());
+        harness.activateAbility(player1, 0, 1, null, halberdier.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(7);
-        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, halberdier)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, halberdier)).isEqualTo(4);
         harness.assertNotOnBattlefield(player1, "Centaur Garden");
         harness.assertInGraveyard(player1, "Centaur Garden");
+    }
+
+    @Test
+    void thresholdAbilityCountsOnlyTheActivatingPlayersGraveyard() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
+        harness.setGraveyard(player2, cards(7));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, halberdier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cards in your graveyard");
     }
 
     @Test
@@ -65,6 +79,17 @@ class CentaurGardenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, swamp.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void manaAbilityCannotBeActivatedWhileTheLandIsTapped() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     private List<Card> cards(int count) {

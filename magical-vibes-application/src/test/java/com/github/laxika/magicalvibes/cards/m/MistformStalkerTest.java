@@ -16,7 +16,7 @@ class MistformStalkerTest extends BaseCardTest {
 
     @Test
     void chosenCreatureTypeReplacesOldTypeUntilEndOfTurn() {
-        Permanent stalker = addReadyStalker();
+        Permanent stalker = addCreatureReady(player1, new MistformStalker());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -27,8 +27,24 @@ class MistformStalkerTest extends BaseCardTest {
     }
 
     @Test
+    void chosenCreatureTypeWearsOffAtEndOfTurn() {
+        Permanent stalker = addCreatureReady(player1, new MistformStalker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, stalker)).containsExactly(CardSubtype.ILLUSION);
+    }
+
+    @Test
     void secondAbilityBoostsAndGrantsFlying() {
-        Permanent stalker = addReadyStalker();
+        Permanent stalker = addCreatureReady(player1, new MistformStalker());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -42,7 +58,7 @@ class MistformStalkerTest extends BaseCardTest {
 
     @Test
     void secondAbilityWearsOffAtEndOfTurn() {
-        Permanent stalker = addReadyStalker();
+        Permanent stalker = addCreatureReady(player1, new MistformStalker());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -56,12 +72,5 @@ class MistformStalkerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, stalker, Keyword.FLYING)).isFalse();
-    }
-
-    private Permanent addReadyStalker() {
-        Permanent stalker = new Permanent(new MistformStalker());
-        stalker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(stalker);
-        return stalker;
     }
 }

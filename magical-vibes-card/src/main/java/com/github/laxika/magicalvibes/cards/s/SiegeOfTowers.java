@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "76")
+@CardRegistration(set = "RVR", collectorNumber = "123")
 public class SiegeOfTowers extends Card {
 
     public SiegeOfTowers() {

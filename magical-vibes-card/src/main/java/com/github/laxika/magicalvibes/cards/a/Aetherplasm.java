@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "22")
+@CardRegistration(set = "RVR", collectorNumber = "34")
 public class Aetherplasm extends Card {
 
     public Aetherplasm() {

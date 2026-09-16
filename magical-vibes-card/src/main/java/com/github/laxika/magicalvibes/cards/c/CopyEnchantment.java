@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "42")
+@CardRegistration(set = "RVR", collectorNumber = "39")
+@CardRegistration(set = "RVR", collectorNumber = "312")
 @CardRegistration(set = "WOT", collectorNumber = "16")
 public class CopyEnchantment extends Card {
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
+import com.github.laxika.magicalvibes.cards.c.CrudeRampart;
+import com.github.laxika.magicalvibes.cards.f.ForgottenCave;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkirkCommando.class, PrimordialWurm.class})
+@CardUsed({SkirkCommando.class, CrudeRampart.class, ForgottenCave.class, SoltariPriest.class})
 class SkirkCommandoTest extends BaseCardTest {
 
     @Test
@@ -40,7 +41,7 @@ class SkirkCommandoTest extends BaseCardTest {
     void combatDamageTriggerMayDealTwoDamageToDamagedPlayersCreature() {
         Permanent commando = addCreatureReady(player1, new SkirkCommando());
         commando.setAttacking(true);
-        Permanent target = addCreatureReady(player2, new PrimordialWurm());
+        Permanent target = addCreatureReady(player2, new CrudeRampart());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -59,10 +60,58 @@ class SkirkCommandoTest extends BaseCardTest {
     }
 
     @Test
+    void canOnlyTargetCreaturesControlledByDamagedPlayer() {
+        Permanent commando = addCreatureReady(player1, new SkirkCommando());
+        commando.setAttacking(true);
+        Permanent ownCreature = addCreatureReady(player1, new CrudeRampart());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new ForgottenCave());
+        Permanent target = addCreatureReady(player2, new CrudeRampart());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(target.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(nonCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void cannotTargetCreatureWithProtectionFromRed() {
+        Permanent commando = addCreatureReady(player1, new SkirkCommando());
+        commando.setAttacking(true);
+        Permanent protectedTarget = addCreatureReady(player2, new SoltariPriest());
+        Permanent validTarget = addCreatureReady(player2, new CrudeRampart());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(validTarget.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(validTarget.getId()));
+
+        assertThat(validTarget.getMarkedDamage()).isEqualTo(2);
+        assertThat(protectedTarget.getMarkedDamage()).isZero();
+    }
+
+    @Test
     void decliningCombatDamageTriggerDealsNoAdditionalDamage() {
         Permanent commando = addCreatureReady(player1, new SkirkCommando());
         commando.setAttacking(true);
-        Permanent target = addCreatureReady(player2, new PrimordialWurm());
+        Permanent target = addCreatureReady(player2, new CrudeRampart());
 
         resolveCombat();
         harness.passBothPriorities();

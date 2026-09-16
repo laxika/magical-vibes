@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "227")
 @CardRegistration(set = "GK2", collectorNumber = "130")
 @CardRegistration(set = "AA1", collectorNumber = "12")
+@CardRegistration(set = "RVR", collectorNumber = "269")
 public class SimicSignet extends Card {
 
     public SimicSignet() {

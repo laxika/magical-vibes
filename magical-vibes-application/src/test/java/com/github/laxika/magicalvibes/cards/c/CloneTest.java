@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,9 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +27,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Clone.class, AirElemental.class, AngelOfMercy.class, AngelicChorus.class,
-        ChoMannoRevolutionary.class, GrizzlyBears.class, Spellbook.class, TreasureHunter.class})
+        ChoMannoRevolutionary.class, GrizzlyBears.class, Spellbook.class, Shock.class,
+        TreasureHunter.class, Unsummon.class})
 class CloneTest extends BaseCardTest {
 
     // ===== Copying a creature =====
@@ -131,9 +135,10 @@ class CloneTest extends BaseCardTest {
                 .findFirst().orElse(null);
         assertThat(clonePerm).isNotNull();
 
-        // Remove it manually (simulating destruction)
-        gd.playerBattlefields.get(player1.getId()).remove(clonePerm);
-        gd.playerGraveyards.get(player1.getId()).add(clonePerm.getOriginalCard());
+        // Destroy it through the engine with Shock.
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, clonePerm.getId());
 
         // In graveyard it should be "Clone", not "Grizzly Bears"
         harness.assertInGraveyard(player1, "Clone");
@@ -155,17 +160,19 @@ class CloneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        // Simulate bouncing by using the Permanent's getOriginalCard
         Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getOriginalCard().getName().equals("Clone"))
                 .findFirst().orElse(null);
         assertThat(clonePerm).isNotNull();
 
-        gd.playerBattlefields.get(player1.getId()).remove(clonePerm);
-        gd.playerHands.get(player1.getId()).add(clonePerm.getOriginalCard());
+        // Bounce it through the engine.
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, clonePerm.getId());
 
         // In hand it should be "Clone", not "Grizzly Bears"
         harness.assertInHand(player1, "Clone");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     // ===== Legend rule =====
@@ -231,6 +238,19 @@ class CloneTest extends BaseCardTest {
                 .noneMatch(p -> p.getOriginalCard().getName().equals("Clone"));
 
         // Clone should be in graveyard as "Clone"
+        harness.assertInGraveyard(player1, "Clone");
+    }
+
+    @Test
+    @DisplayName("Clone does not copy a noncreature permanent")
+    void diesWhenOnlyNoncreatureIsOnBattlefield() {
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Clone");
+        harness.assertOnBattlefield(player2, "Spellbook");
         harness.assertInGraveyard(player1, "Clone");
     }
 

@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DoomedNecromancer.class, AngelOfMercy.class, GrizzlyBears.class, HolyDay.class})
 class DoomedNecromancerTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Doomed Necromancer puts it on the stack and resolves to battlefield")
@@ -32,8 +30,6 @@ class DoomedNecromancerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Doomed Necromancer");
-
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -51,18 +47,17 @@ class DoomedNecromancerTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Activating ability =====
-
     @Test
     @DisplayName("Activating ability sacrifices Doomed Necromancer and puts ability on the stack")
     void activatingAbilitySacrificesAndPutsOnStack() {
-        Permanent necromancer = addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
         // Doomed Necromancer should be sacrificed (not on battlefield, in graveyard)
         harness.assertNotOnBattlefield(player1, "Doomed Necromancer");
@@ -71,171 +66,147 @@ class DoomedNecromancerTest extends BaseCardTest {
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Doomed Necromancer");
-    }
-
-    @Test
-    @DisplayName("Activating ability taps the Doomed Necromancer")
-    void activatingAbilityTapsNecromancer() {
-        Permanent necromancer = addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        // Necromancer is sacrificed on activation, but tap happens before sacrifice
-        // We verify that it was tapped by checking the tap happened (implicit in activation flow)
-        harness.activateAbility(player1, 0, null, null);
-
-        // Necromancer is in graveyard after sacrifice
-        harness.assertInGraveyard(player1, "Doomed Necromancer");
     }
 
     @Test
     @DisplayName("Activating ability consumes {B} mana")
     void activatingAbilityConsumesMana() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
-        // Should have 1 black mana remaining (2 - 1 for ability cost)
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Resolution — returning creature from graveyard =====
-
     @Test
-    @DisplayName("Returns creature from graveyard to battlefield")
+    @DisplayName("Returns the targeted creature from the graveyard to the battlefield")
     void returnsCreatureFromGraveyardToBattlefield() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
-
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Choosing specific creature when multiple are in graveyard")
-    void choosesSpecificCreatureFromGraveyard() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new AngelOfMercy()));
+    @DisplayName("Returns the specifically targeted creature when multiple creatures are in the graveyard")
+    void returnsSpecificCreatureFromGraveyard() {
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears bears = new GrizzlyBears();
+        AngelOfMercy angel = new AngelOfMercy();
+        harness.setGraveyard(player1, List.of(bears, angel));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(angel.getId()));
         harness.passBothPriorities();
 
-        // Choose Angel of Mercy (index 1 in graveyard, but Doomed Necromancer was added to graveyard
-        // on sacrifice, shifting indices — we need to account for that)
-        // Graveyard after sacrifice: [Grizzly Bears, Angel of Mercy, Doomed Necromancer]
-        // Only creatures at indices 0, 1, 2 are valid; choose Angel of Mercy at index 1
-        harness.handleGraveyardCardChosen(player1, 1);
-
         harness.assertOnBattlefield(player1, "Angel of Mercy");
-        // Grizzly Bears stays in graveyard
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
     @Test
-    @DisplayName("Doomed Necromancer itself is in the graveyard during resolution and could be a valid choice")
-    void necromancerIsInGraveyardDuringResolution() {
-        addReadyNecromancer(player1);
-        // Empty graveyard initially — only Doomed Necromancer will be there after sacrifice
+    @DisplayName("Does nothing if the targeted creature leaves the graveyard before resolution")
+    void targetThatLeavesGraveyardBeforeResolutionIsNotReturned() {
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot activate when no creature card is available as a target")
+    void cannotActivateWithoutCreatureTarget() {
+        addCreatureReady(player1, new DoomedNecromancer());
         harness.setGraveyard(player1, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
-
-        // Doomed Necromancer is now in graveyard after sacrifice
-        harness.assertInGraveyard(player1, "Doomed Necromancer");
-
-        harness.passBothPriorities();
-
-        // Should prompt graveyard choice since Doomed Necromancer (a creature) is in the graveyard
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        // Choose the Doomed Necromancer itself
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Doomed Necromancer");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Empty graveyard =====
-
     @Test
-    @DisplayName("Ability resolves with no effect if graveyard has only non-creature cards")
-    void noEffectWithOnlyNonCreaturesInGraveyard() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new HolyDay()));
+    @DisplayName("Cannot target a non-creature card from the graveyard")
+    void cannotTargetNonCreatureCard() {
+        addCreatureReady(player1, new DoomedNecromancer());
+        HolyDay target = new HolyDay();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
-        // Note: Doomed Necromancer goes to graveyard on sacrifice, so there IS a creature now
-        // Graveyard after sacrifice: [HolyDay, DoomedNecromancer]
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
 
-        // Should still prompt for graveyard choice (Doomed Necromancer itself is a valid creature)
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.assertOnBattlefield(player1, "Doomed Necromancer");
+        harness.assertInGraveyard(player1, "Holy Day");
     }
-
-    // ===== ETB on returned creature =====
 
     @Test
     @DisplayName("Returned creature's ETB ability triggers")
     void returnedCreatureTriggersETB() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new AngelOfMercy()));
+        addCreatureReady(player1, new DoomedNecromancer());
+        AngelOfMercy target = new AngelOfMercy();
+        harness.setGraveyard(player1, List.of(target));
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
-        // Angel of Mercy's ETB (gain 3 life) should be on the stack
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Angel of Mercy");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(AngelOfMercy.class);
 
-        // Resolve the ETB
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
-    // ===== Validation — cannot activate =====
-
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        // No mana added
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -243,14 +214,16 @@ class DoomedNecromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent necromancer = addReadyNecromancer(player1);
+        Permanent necromancer = addCreatureReady(player1, new DoomedNecromancer());
         necromancer.tap();
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
@@ -258,83 +231,68 @@ class DoomedNecromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        // Use addToBattlefield which creates a permanent with summoning sickness by default
-        DoomedNecromancer card = new DoomedNecromancer();
-        harness.addToBattlefield(player1, card);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
 
-    // ===== Invalid graveyard choice =====
-
     @Test
-    @DisplayName("Cannot choose non-creature card from graveyard")
-    void cannotChooseNonCreatureFromGraveyard() {
-        addReadyNecromancer(player1);
-        // Set graveyard with a non-creature followed by a creature
-        harness.setGraveyard(player1, List.of(new HolyDay(), new GrizzlyBears()));
+    @DisplayName("Cannot target a creature in an opponent's graveyard")
+    void cannotTargetOpponentGraveyard() {
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        // Index 0 is HolyDay (instant, not creature) — not a valid choice
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+                .hasMessageContaining("your graveyard");
+
+        harness.assertOnBattlefield(player1, "Doomed Necromancer");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Opponent cannot make graveyard choice for controller")
-    void opponentCannotChoose() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+    @DisplayName("Can activate during an opponent's turn")
+    void canActivateOnOpponentsTurn() {
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.forceActivePlayer(player1);
+        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not your turn to choose");
+        assertThat(gd.stack).hasSize(1);
     }
-
-    // ===== Stack is empty after full resolution =====
 
     @Test
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterResolution() {
-        addReadyNecromancer(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addReadyNecromancer(Player player) {
-        DoomedNecromancer card = new DoomedNecromancer();
-        Permanent necromancer = new Permanent(card);
-        necromancer.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(necromancer);
-        return necromancer;
     }
 }
 

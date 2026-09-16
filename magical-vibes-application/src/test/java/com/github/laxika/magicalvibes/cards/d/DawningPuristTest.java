@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AstralSlide;
+import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,52 +14,64 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DawningPurist.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({DawningPurist.class, AstralSlide.class, BarkhideMauler.class})
 class DawningPuristTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the combat damage trigger destroys an enchantment controlled by the damaged player")
     void destroysDamagedPlayersEnchantment() {
         attackWithPurist();
-        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent slide = harness.addToBattlefieldAndReturn(player2, new AstralSlide());
 
         resolveCombat();
 
-        harness.handlePermanentChosen(player1, anthem.getId());
+        harness.handlePermanentChosen(player1, slide.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Astral Slide");
+        harness.assertInGraveyard(player2, "Astral Slide");
     }
 
     @Test
     @DisplayName("Declining the combat damage trigger leaves the enchantment on the battlefield")
     void declineLeavesEnchantment() {
         attackWithPurist();
-        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.addToBattlefield(player2, new AstralSlide());
 
         resolveCombat();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Glorious Anthem"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Astral Slide"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player2, "Astral Slide");
     }
 
     @Test
     @DisplayName("Only enchantments controlled by the damaged player are legal choices")
     void onlyDamagedPlayersEnchantmentsAreChoices() {
         attackWithPurist();
-        Permanent ownAnthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
-        Permanent enemyAnthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
-        Permanent enemyCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownSlide = harness.addToBattlefieldAndReturn(player1, new AstralSlide());
+        Permanent enemySlide = harness.addToBattlefieldAndReturn(player2, new AstralSlide());
+        Permanent enemyCreature = harness.addToBattlefieldAndReturn(player2, new BarkhideMauler());
 
         resolveCombat();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(enemyAnthem.getId())
-                .doesNotContain(ownAnthem.getId(), enemyCreature.getId());
+                .containsExactly(enemySlide.getId())
+                .doesNotContain(ownSlide.getId(), enemyCreature.getId());
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger is skipped when the damaged player controls no enchantments")
+    void noTriggerWithoutValidEnchantmentTarget() {
+        attackWithPurist();
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

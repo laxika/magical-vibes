@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.h.HowlingGale;
+import com.github.laxika.magicalvibes.cards.p.PardicFirecat;
+import com.github.laxika.magicalvibes.cards.s.ScorchingMissile;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +14,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SphereOfLaw.class, Firebolt.class, HowlingGale.class, ScorchingMissile.class, PardicFirecat.class})
 class SphereOfLawTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Prevents 2 damage from a red noncombat source")
+    @DisplayName("Prevents 2 damage from a red source")
     void preventsDamageFromRedSource() {
         harness.addToBattlefield(player1, new SphereOfLaw());
         harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Firebolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
@@ -37,39 +35,55 @@ class SphereOfLawTest extends BaseCardTest {
     void doesNotPreventDamageFromNonRedSource() {
         harness.addToBattlefield(player1, new SphereOfLaw());
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new Hurricane()));
-        harness.addMana(player2, ManaColor.GREEN, 5);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new HowlingGale()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player2, 0, 4);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
     @Test
-    @DisplayName("Prevents red combat damage to the controller")
-    void preventsRedCombatDamage() {
+    @DisplayName("Protects only its controller from red damage")
+    void protectsOnlyItsController() {
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Firebolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player2, 0, player2.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevents only 2 damage from a red source")
+    void preventsOnlyTwoDamageFromRedSource() {
+        harness.addToBattlefield(player1, new SphereOfLaw());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new ScorchingMissile()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevents 2 damage from each red combat source")
+    void preventsDamageFromEachRedCombatSource() {
         harness.addToBattlefield(player1, new SphereOfLaw());
         harness.setLife(player1, 20);
 
-        Permanent attacker = new Permanent(new RagingGoblin());
-        attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        addCreatureReady(player2, new PardicFirecat());
+        addCreatureReady(player2, new PardicFirecat());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.<BlockerAssignment>of());
-        harness.passBothPriorities();
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }

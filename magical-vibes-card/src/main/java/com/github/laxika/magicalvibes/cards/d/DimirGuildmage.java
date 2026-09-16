@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "192")
 @CardRegistration(set = "UMA", collectorNumber = "213")
 @CardRegistration(set = "GK1", collectorNumber = "13")
+@CardRegistration(set = "RVR", collectorNumber = "178")
 public class DimirGuildmage extends Card {
 
     public DimirGuildmage() {

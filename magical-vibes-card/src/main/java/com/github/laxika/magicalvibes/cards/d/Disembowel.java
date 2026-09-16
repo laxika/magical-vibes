@@ -17,6 +17,7 @@ import java.util.List;
  * Destroy target creature with mana value X.
  */
 @CardRegistration(set = "RAV", collectorNumber = "85")
+@CardRegistration(set = "RVR", collectorNumber = "74")
 public class Disembowel extends Card {
 
     private static final PermanentPredicate CREATURE_WITH_MANA_VALUE_X = new PermanentAllOfPredicate(List.of(

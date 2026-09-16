@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWilding.class, GrizzlyBears.class})
+@CardUsed({WordsOfWilding.class, Forest.class})
 class WordsOfWildingTest extends BaseCardTest {
 
     @Test
@@ -24,7 +24,7 @@ class WordsOfWildingTest extends BaseCardTest {
     void replacesNextDrawWithBearToken() {
         harness.addToBattlefield(player1, new WordsOfWilding());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         activateWordsOfWilding(1);
         draw(player1);
@@ -46,7 +46,7 @@ class WordsOfWildingTest extends BaseCardTest {
     void repeatedActivationsReplaceSuccessiveDraws() {
         harness.addToBattlefield(player1, new WordsOfWilding());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
         activateWordsOfWilding(2);
         draw(player1);
@@ -62,14 +62,14 @@ class WordsOfWildingTest extends BaseCardTest {
     void laterDrawIsNormal() {
         harness.addToBattlefield(player1, new WordsOfWilding());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         activateWordsOfWilding(1);
         draw(player1);
         draw(player1);
 
         assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
@@ -78,7 +78,7 @@ class WordsOfWildingTest extends BaseCardTest {
     void replacementExpiresAtCleanup() {
         harness.addToBattlefield(player1, new WordsOfWilding());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         activateWordsOfWilding(1);
 
@@ -88,7 +88,43 @@ class WordsOfWildingTest extends BaseCardTest {
         draw(player1);
 
         assertThat(countPermanents(player1, "Bear")).isZero();
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The replacement applies only to its controller's draw")
+    void replacementAppliesOnlyToControllerDraw() {
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        activateWordsOfWilding(1);
+        draw(player2);
+
+        assertThat(countPermanents(player1, "Bear")).isZero();
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        draw(player1);
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The replacement creates a Bear even when the library is empty")
+    void replacementWorksWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        activateWordsOfWilding(1);
+        draw(player1);
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     private void activateWordsOfWilding(int activations) {

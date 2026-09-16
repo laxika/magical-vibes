@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -12,6 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NomadStadium.class, NantukoElder.class})
 class NomadStadiumTest extends BaseCardTest {
 
     @Test
@@ -36,6 +37,7 @@ class NomadStadiumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
         harness.assertNotOnBattlefield(player1, "Nomad Stadium");
         harness.assertInGraveyard(player1, "Nomad Stadium");
@@ -52,10 +54,32 @@ class NomadStadiumTest extends BaseCardTest {
                 .hasMessageContaining("cards in your graveyard");
     }
 
+    @Test
+    void thresholdAbilityDoesNotCountOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new NomadStadium());
+        harness.setGraveyard(player2, graveyardCards(7));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cards in your graveyard");
+    }
+
+    @Test
+    void manaAbilityCannotBeActivatedWhileTheLandIsTapped() {
+        harness.addToBattlefield(player1, new NomadStadium());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new NantukoElder());
         }
         return cards;
     }

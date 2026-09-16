@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "20")
+@CardRegistration(set = "RVR", collectorNumber = "30")
 public class ToArms extends Card {
 
     public ToArms() {

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,10 +23,8 @@ public class ElephantGuide extends Card {
     public ElephantGuide() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_DEATH,
+                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
-                                List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()),
-                        GrantScope.ENCHANTED_CREATURE));
+                                List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()));
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -69,11 +68,44 @@ class SwordOfTruthAndJusticeTest extends BaseCardTest {
         assertThat(sword.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Combat damage puts a counter on a chosen creature and proliferates")
+    void combatDamagePutsCounterAndProliferates() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        otherCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        creature.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
+
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Combat damage trigger does not fire when the equipped creature is blocked")
+    void blockedCreatureDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        otherCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent addSwordReady(Player player) {

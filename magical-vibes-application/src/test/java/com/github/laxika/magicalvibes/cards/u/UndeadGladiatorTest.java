@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -8,20 +8,19 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UndeadGladiator.class, GrizzlyBears.class})
+@CardUsed({UndeadGladiator.class, Swamp.class})
 class UndeadGladiatorTest extends BaseCardTest {
 
     @Test
     void returnsFromGraveyardToHandAfterDiscardingDuringUpkeep() {
         UndeadGladiator gladiator = new UndeadGladiator();
         harness.setGraveyard(player1, List.of(gladiator));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Swamp()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
@@ -34,7 +33,7 @@ class UndeadGladiatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Undead Gladiator");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Swamp");
     }
 
     @Test
@@ -53,7 +52,7 @@ class UndeadGladiatorTest extends BaseCardTest {
     @Test
     void canOnlyActivateGraveyardAbilityDuringYourUpkeep() {
         harness.setGraveyard(player1, List.of(new UndeadGladiator()));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Swamp()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
@@ -65,11 +64,47 @@ class UndeadGladiatorTest extends BaseCardTest {
     }
 
     @Test
+    void cannotReturnFromGraveyardDuringOpponentUpkeep() {
+        harness.setGraveyard(player1, List.of(new UndeadGladiator()));
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your upkeep");
+    }
+
+    @Test
+    void returnsOnlyTheActivatedCopyFromGraveyard() {
+        UndeadGladiator otherGladiator = new UndeadGladiator();
+        UndeadGladiator activatedGladiator = new UndeadGladiator();
+        Swamp discardedCard = new Swamp();
+        harness.setGraveyard(player1, List.of(otherGladiator, activatedGladiator));
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateGraveyardAbility(player1, 1);
+
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(activatedGladiator);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(otherGladiator, discardedCard);
+    }
+
+    @Test
     void cyclesFromHandByDiscardingItAndDrawing() {
         harness.setHand(player1, List.of(new UndeadGladiator()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setLibrary(player1, List.of(new Swamp()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -78,6 +113,6 @@ class UndeadGladiatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Undead Gladiator");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Swamp");
     }
 }

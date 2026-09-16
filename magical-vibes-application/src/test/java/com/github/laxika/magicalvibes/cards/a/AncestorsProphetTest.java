@@ -1,19 +1,17 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MasterApothecary;
+import com.github.laxika.magicalvibes.cards.d.DiscipleOfGrace;
+import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AncestorsProphet.class, MasterApothecary.class, GrizzlyBears.class})
+@CardUsed({AncestorsProphet.class, DiscipleOfGrace.class, FesteringGoblin.class})
 class AncestorsProphetTest extends BaseCardTest {
 
     @Test
@@ -22,7 +20,7 @@ class AncestorsProphetTest extends BaseCardTest {
         harness.setLife(player1, 10);
         Permanent prophet = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
         for (int i = 0; i < 4; i++) {
-            harness.addToBattlefield(player1, new MasterApothecary());
+            harness.addToBattlefield(player1, new DiscipleOfGrace());
         }
 
         harness.activateAbility(player1, 0, null, null);
@@ -39,9 +37,9 @@ class AncestorsProphetTest extends BaseCardTest {
     void cannotActivateWithoutFiveUntappedClerics() {
         harness.addToBattlefield(player1, new AncestorsProphet());
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefield(player1, new MasterApothecary());
+            harness.addToBattlefield(player1, new DiscipleOfGrace());
         }
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FesteringGoblin());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -51,13 +49,28 @@ class AncestorsProphetTest extends BaseCardTest {
     @DisplayName("A tapped Cleric cannot be tapped again to pay the cost")
     void tappedClericDoesNotCount() {
         harness.addToBattlefield(player1, new AncestorsProphet());
-        for (int i = 0; i < 4; i++) {
-            harness.addToBattlefield(player1, new MasterApothecary());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new DiscipleOfGrace());
         }
-        List<Permanent> clerics = gd.playerBattlefields.get(player1.getId());
-        clerics.get(1).tap();
+        Permanent tappedCleric = harness.addToBattlefieldAndReturn(player1, new DiscipleOfGrace());
+        tappedCleric.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's Cleric cannot be tapped to pay the cost")
+    void opponentClericsDoNotCount() {
+        harness.addToBattlefield(player1, new AncestorsProphet());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new DiscipleOfGrace());
+        }
+        harness.addToBattlefield(player2, new DiscipleOfGrace());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId())).allMatch(permanent -> !permanent.isTapped());
     }
 }

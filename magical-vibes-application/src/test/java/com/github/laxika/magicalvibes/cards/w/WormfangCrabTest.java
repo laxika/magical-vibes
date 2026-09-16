@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,15 +19,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WormfangCrab.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({WormfangCrab.class, GiantWarthog.class, FuneralPyre.class, BattleScreech.class})
 class WormfangCrabTest extends BaseCardTest {
 
     @Test
     @DisplayName("An opponent chooses an eligible permanent you control to exile")
     void opponentChoosesPermanentToExile() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
         Permanent crab = castCrab();
 
         PendingInteraction.PermanentChoice choice =
@@ -47,8 +49,8 @@ class WormfangCrabTest extends BaseCardTest {
     @Test
     @DisplayName("The leaves-the-battlefield ability returns the exiled permanent")
     void leavesTheBattlefieldReturnsExiledPermanent() {
-        Permanent exiled = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent exiled = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
         Permanent crab = castCrab();
         harness.handlePermanentChosen(player2, exiled.getId());
 
@@ -64,14 +66,70 @@ class WormfangCrabTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The enters-the-battlefield ability does nothing when you control no other permanent")
+    void enteringTheBattlefieldDoesNothingWithoutAnotherPermanent() {
+        Permanent crab = castCrab();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(crab);
+    }
+
+    @Test
+    @DisplayName("A token chosen by the enters-the-battlefield ability is not returned later")
+    void tokenChosenByEnterTriggerCeasesToExistBeforeItCanReturn() {
+        Card graveyardCard = new BattleScreech();
+        graveyardCard.setOwnerId(player1.getId());
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setHand(player1, List.of(new FuneralPyre()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, graveyardCard.getId());
+
+        Permanent token = findPermanent(player1, "Spirit");
+        assertThat(token.getCard().isToken()).isTrue();
+
+        Permanent crab = castCrab();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().isToken());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, crab));
+        resolvePendingTrigger();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().isToken());
+    }
+
+    @Test
+    @DisplayName("The leaves-the-battlefield ability returns the card under its owner's control")
+    void leavesTheBattlefieldReturnsCardToItsOwner() {
+        Card ownedByOpponent = new GiantWarthog();
+        ownedByOpponent.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, ownedByOpponent);
+        Permanent crab = castCrab();
+
+        assertThat(gd.exiledCards)
+                .filteredOn(ExiledCardEntry::sourcePermanentId, crab.getId())
+                .extracting(ExiledCardEntry::ownerId)
+                .containsExactly(player2.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, crab));
+        resolvePendingTrigger();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(stolen);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == ownedByOpponent);
+    }
+
+    @Test
     @DisplayName("If it leaves before its enters-the-battlefield ability resolves, the card stays exiled")
     void leavingBeforeEnterTriggerResolvesLeavesCardExiled() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        harness.setHand(player1, List.of(new WormfangCrab()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        harness.castFromHand(player1, new WormfangCrab(), "{3}{U}");
         harness.passBothPriorities();
 
         Permanent crab = findPermanent(player1, "Wormfang Crab");
@@ -94,13 +152,9 @@ class WormfangCrabTest extends BaseCardTest {
     @Test
     @DisplayName("Wormfang Crab cannot be blocked")
     void cannotBeBlocked() {
-        Permanent crab = new Permanent(new WormfangCrab());
-        crab.setSummoningSick(false);
+        Permanent crab = addCreatureReady(player1, new WormfangCrab());
         crab.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(crab);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -115,10 +169,7 @@ class WormfangCrabTest extends BaseCardTest {
     }
 
     private Permanent castCrab() {
-        harness.setHand(player1, List.of(new WormfangCrab()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WormfangCrab(), "{3}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         return findPermanent(player1, "Wormfang Crab");
