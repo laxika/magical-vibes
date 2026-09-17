@@ -26,6 +26,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
 | destroy, terror, wrath, board wipe | CARD_PATTERNS_LANDS_SPELLS.md |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
+| opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -55,6 +56,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
+| destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureThenCreateHalfTokenCopiesEffect` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |

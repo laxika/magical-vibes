@@ -1251,7 +1251,8 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
-            boolean faceUp = filterPredicate != null
+            boolean faceUp = librarySearch.reveals()
+                    || filterPredicate != null
                     || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP;
             if (faceUp) {
                 exileService.exileCard(gameData, deckOwnerId, chosenCard);
@@ -1259,6 +1260,51 @@ public class LibraryChoiceHandlerService {
                 exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
             }
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            if (librarySearch.allowAnyManaType()) {
+                gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+            }
+
+            if (destination == LibrarySearchDestination.EXILE_PLAYABLE && remainingCount > 1) {
+                int newRemaining = remainingCount - 1;
+                List<Card> remainingMatches;
+                if (filterCardName != null) {
+                    remainingMatches = deck.stream().filter(c -> filterCardName.equals(c.getName())).toList();
+                } else if (filterPredicate != null) {
+                    remainingMatches = deck.stream().filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, filterPredicate, null, gameData, deckOwnerId)).toList();
+                } else if (filterCardTypes != null) {
+                    remainingMatches = deck.stream()
+                            .filter(c -> filterCardTypes.contains(c.getType())
+                                    || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains))
+                            .toList();
+                } else {
+                    remainingMatches = new ArrayList<>(deck);
+                }
+
+                if (!remainingMatches.isEmpty()) {
+                    String searchPrompt = targetPlayerId != null
+                            ? "Choose another card for " + gameData.playerIdToName.get(targetPlayerId)
+                                    + " to find and exile from their library (" + newRemaining + " remaining)."
+                            : "Choose another card to find and exile from your library ("
+                                    + newRemaining + " remaining).";
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                            LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
+                                    .reveals(true)
+                                    .canFailToFind(canFailToFind)
+                                    .targetPlayerId(targetPlayerId)
+                                    .remainingCount(newRemaining)
+                                    .destination(destination)
+                                    .filterCardName(filterCardName)
+                                    .filterPredicate(filterPredicate)
+                                    .filterCardTypes(filterCardTypes)
+                                    .shuffleAfterSelection(shuffleAfterSelection)
+                                    .allowAnyManaType(librarySearch.allowAnyManaType())
+                                    .build(),
+                            searchPrompt, canFailToFind));
+                    return;
+                }
+            }
+
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
                 // card is put into its owner's graveyard then.

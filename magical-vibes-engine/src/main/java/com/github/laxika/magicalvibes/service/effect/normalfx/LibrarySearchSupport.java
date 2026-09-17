@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -737,17 +738,24 @@ public class LibrarySearchSupport {
                 && !params.sourceSideboard()
                 && params.sourceCards() == null;
         if (ownLibrarySearch) {
-            params = params.withAllowCastFromLibraryWhileSearching(true);
-            List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
-            if (!castableCards.isEmpty()) {
-                Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
-                List<Card> cards = new ArrayList<>(params.cards());
-                castableCards.stream()
-                        .filter(card -> !existingCardIds.contains(card.getId()))
-                        .forEach(cards::add);
-                if (cards.size() > params.cards().size()) {
-                    params = params.withCards(cards);
-                    prompt += " You may also cast a card with a library-search permission.";
+            UUID oppositionAgentControllerId = oppositionAgentController(gameData, playerId);
+            if (oppositionAgentControllerId != null) {
+                params = params.withOppositionAgentController(oppositionAgentControllerId);
+                prompt = "Choose a card for " + gameData.playerIdToName.get(playerId)
+                        + " to find and exile from their library.";
+            } else {
+                params = params.withAllowCastFromLibraryWhileSearching(true);
+                List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
+                if (!castableCards.isEmpty()) {
+                    Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+                    List<Card> cards = new ArrayList<>(params.cards());
+                    castableCards.stream()
+                            .filter(card -> !existingCardIds.contains(card.getId()))
+                            .forEach(cards::add);
+                    if (cards.size() > params.cards().size()) {
+                        params = params.withCards(cards);
+                        prompt += " You may also cast a card with a library-search permission.";
+                    }
                 }
             }
         }
@@ -756,6 +764,24 @@ public class LibrarySearchSupport {
                 params, prompt, canFailToFind));
 
         gameLogService.append(gameData, GameLog.text(logMessage));
+    }
+
+    /** Returns the most recently entered Opposition Agent controlled by an opponent of the searcher. */
+    private UUID oppositionAgentController(GameData gameData, UUID searchingPlayerId) {
+        UUID controllerId = null;
+        long latestTimestamp = Long.MIN_VALUE;
+        for (UUID candidateControllerId : gameData.orderedPlayerIds) {
+            if (candidateControllerId.equals(searchingPlayerId)) continue;
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(candidateControllerId, List.of())) {
+                boolean hasAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OppositionAgentEffect.class::isInstance);
+                if (hasAgent && permanent.getTimestamp() >= latestTimestamp) {
+                    latestTimestamp = permanent.getTimestamp();
+                    controllerId = candidateControllerId;
+                }
+            }
+        }
+        return controllerId;
     }
 
     /**

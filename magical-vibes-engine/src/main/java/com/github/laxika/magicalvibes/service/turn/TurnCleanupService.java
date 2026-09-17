@@ -265,6 +265,7 @@ public class TurnCleanupService {
         gameData.channelHarmShields.clear();
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
+        gameData.comeuppanceShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
@@ -364,7 +365,7 @@ public class TurnCleanupService {
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
-                !watcher.untilEndOfNextTurn()
+                (!watcher.untilEndOfNextTurn() && !watcher.untilNextTurnStart())
                         || (gameData.activePlayerId.equals(watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
@@ -450,6 +451,7 @@ public class TurnCleanupService {
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();

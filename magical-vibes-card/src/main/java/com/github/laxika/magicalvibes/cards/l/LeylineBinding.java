@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OTP", collectorNumber = "4")
 @CardRegistration(set = "OTP", collectorNumber = "66")
+@CardRegistration(set = "MAR", collectorNumber = "2")
 public class LeylineBinding extends Card {
 
     public LeylineBinding() {

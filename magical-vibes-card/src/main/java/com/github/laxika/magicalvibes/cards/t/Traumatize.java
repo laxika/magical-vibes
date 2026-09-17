@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "77")
 @CardRegistration(set = "M14", collectorNumber = "77")
 @CardRegistration(set = "ODY", collectorNumber = "110")
+@CardRegistration(set = "MAR", collectorNumber = "15")
 public class Traumatize extends Card {
 
     public Traumatize() {

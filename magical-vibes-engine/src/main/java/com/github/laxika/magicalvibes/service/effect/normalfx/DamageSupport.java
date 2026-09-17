@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
+import com.github.laxika.magicalvibes.model.PendingComeuppanceDamage;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -457,8 +458,14 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
-        int damage = damagePreventionService.applyCreaturePreventionShield(
-                gameData, target, rawDamage, false, effectiveDamageSource);
+        int damage = rawDamage;
+        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
+            damage = damagePreventionService.applyComeuppanceShield(
+                    gameData, targetControllerId, target, effectiveDamageSource, sourceControllerId, damage, false);
+            processPendingComeuppanceDamage(gameData);
+        }
+        damage = damagePreventionService.applyCreaturePreventionShield(
+                gameData, target, damage, false, effectiveDamageSource);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
         // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
         // reduced amount; the loyalty branch below then removes the reduced amount.
@@ -1045,6 +1052,13 @@ public class DamageSupport {
                 Permanent sourcePermanent = entry.getSourcePermanentId() == null
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                loyaltyDamage = damagePreventionService.applyComeuppanceShield(
+                        gameData, pwControllerId, targetPermanent, sourcePermanent,
+                        sourceControllerId, loyaltyDamage, false);
+                processPendingComeuppanceDamage(gameData);
+                if (loyaltyDamage <= 0) {
+                    return 0;
+                }
                 Set<CardColor> sourceColors = sourcePermanent == null
                         ? sourceCardColors(source)
                         : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
@@ -1405,6 +1419,9 @@ public class DamageSupport {
         rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(
                 gameData, playerId, entry == null ? null : entry.getSourcePermanentId(), rawDamage);
         processSourceRedirectDamage(gameData);
+        rawDamage = damagePreventionService.applyComeuppanceShield(
+                gameData, playerId, null, sourcePermanent, sourceControllerId, rawDamage, false);
+        processPendingComeuppanceDamage(gameData);
         if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
@@ -1819,6 +1836,34 @@ public class DamageSupport {
             return protectedPermanent == null ? "the target creature" : protectedPermanent.getCard().getName();
         }
         return gameData.playerIdToName.get(redirect.protectedPlayerId());
+    }
+
+    /** Deals the damage Comeuppance prevented to the original source creature or its controller. */
+    public void processPendingComeuppanceDamage(GameData gameData) {
+        while (!gameData.pendingComeuppanceDamage.isEmpty()) {
+            List<PendingComeuppanceDamage> toProcess = new ArrayList<>(gameData.pendingComeuppanceDamage);
+            gameData.pendingComeuppanceDamage.clear();
+
+            for (PendingComeuppanceDamage pending : toProcess) {
+                if (pending.sourceCard() == null || pending.amount() <= 0) continue;
+                StackEntry tempEntry = new StackEntry(
+                        StackEntryType.INSTANT_SPELL,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName(),
+                        List.of(),
+                        pending.targetId(),
+                        (UUID) null);
+                if (gameData.playerIds.contains(pending.targetId())) {
+                    dealDamageToPlayer(gameData, tempEntry, pending.targetId(), pending.amount());
+                } else {
+                    Permanent target = gameQueryService.findPermanentById(gameData, pending.targetId());
+                    if (target != null) {
+                        dealCreatureDamage(gameData, tempEntry, target, pending.amount());
+                    }
+                }
+            }
+        }
     }
 
     /**

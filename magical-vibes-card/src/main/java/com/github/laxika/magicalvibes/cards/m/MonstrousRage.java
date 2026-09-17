@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "142")
+@CardRegistration(set = "MAR", collectorNumber = "72")
 public class MonstrousRage extends Card {
 
     public MonstrousRage() {

@@ -2006,6 +2006,14 @@ public class DrawService {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId)
+                                        .withTargetId(drawingPlayerId))) {
+                            continue;
+                        }
+                        effect = conditional.wrapped();
+                    }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);
                     } else {

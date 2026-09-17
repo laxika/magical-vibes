@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "102")
+@CardRegistration(set = "MAR", collectorNumber = "16")
 public class FeedTheSwarm extends Card {
 
     public FeedTheSwarm() {

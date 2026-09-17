@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "53")
+@CardRegistration(set = "MAR", collectorNumber = "10")
 public class LorthosTheTidemaker extends Card {
 
     public LorthosTheTidemaker() {

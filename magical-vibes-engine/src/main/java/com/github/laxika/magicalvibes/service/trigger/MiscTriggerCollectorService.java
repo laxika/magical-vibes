@@ -1129,6 +1129,33 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_GAINS_LIFE)
+    private boolean handleConditionalOnOpponentLifeGain(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                        .withTargetId(lifeGain.gainingPlayerId()))) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeGain.lifeGainedAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent life gain", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounterOnTarget(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {

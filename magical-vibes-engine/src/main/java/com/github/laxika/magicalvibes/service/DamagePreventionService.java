@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
+import com.github.laxika.magicalvibes.model.ComeuppanceShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingComeuppanceDamage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -1133,6 +1135,40 @@ public class DamagePreventionService {
     public int applySourceDamagePreventionForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                     int damage, Set<CardColor> sourceColors) {
         return applySourceDamagePreventionForPlayer(gameData, playerId, sourcePermanentId, damage, sourceColors, false);
+    }
+
+    /**
+     * Applies Comeuppance to damage headed to a player or one of their planeswalkers. The return
+     * damage is queued separately because its source is Comeuppance, not the source of the
+     * prevented damage.
+     */
+    public int applyComeuppanceShield(GameData gameData, UUID protectedPlayerId,
+                                      Permanent protectedPermanent, Permanent damageSource,
+                                      UUID damageSourceControllerId, int damage,
+                                      boolean combatDamage) {
+        if (damage <= 0 || protectedPlayerId == null
+                || (protectedPermanent != null && !gameQueryService.isPlaneswalker(gameData, protectedPermanent))
+                || (protectedPermanent == null && !gameData.playerIds.contains(protectedPlayerId))
+                || !gameQueryService.isDamagePreventable(gameData, combatDamage)
+                || gameData.comeuppanceShields.isEmpty()
+                || damageSourceControllerId == null
+                || damageSourceControllerId.equals(protectedPlayerId)) {
+            return damage;
+        }
+
+        boolean sourceIsCreature = damageSource != null && gameQueryService.isCreature(gameData, damageSource);
+        UUID returnTargetId = sourceIsCreature ? damageSource.getId() : damageSourceControllerId;
+        int remaining = damage;
+        for (ComeuppanceShield shield : gameData.comeuppanceShields) {
+            if (remaining <= 0 || !shield.protectedPlayerId().equals(protectedPlayerId)) {
+                continue;
+            }
+            int prevented = remaining;
+            remaining = 0;
+            gameData.pendingComeuppanceDamage.add(new PendingComeuppanceDamage(
+                    returnTargetId, prevented, shield.protectedPlayerId(), shield.sourceCard()));
+        }
+        return remaining;
     }
 
     public int applySourceDamagePreventionForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,

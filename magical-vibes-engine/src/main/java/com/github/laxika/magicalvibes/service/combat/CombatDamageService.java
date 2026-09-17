@@ -3480,6 +3480,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyChannelHarmPreventionToPermanent(
                     gameData, pw, sourceControllerId, damage);
             damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage, true);
+            damage = damagePreventionService.applyComeuppanceShield(
+                    gameData, pwControllerId, pw, atk, sourceControllerId, damage, true);
+            damageSupport.processPendingComeuppanceDamage(gameData);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(
                     gameData, pwControllerId, damage, true);
@@ -3682,6 +3685,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyPlayerNextDamageRedirectShields(
                     gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
+            damage = damagePreventionService.applyComeuppanceShield(
+                    gameData, defenderId, null, atk, sourceControllerId, damage, true);
+            damageSupport.processPendingComeuppanceDamage(gameData);
             // Ghostly Flame can make the attacker a colourless source of damage.
             CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());
             if (damage > 0

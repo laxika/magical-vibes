@@ -114,6 +114,27 @@ public record LibrarySearchParams(
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
+    /**
+     * Redirects a search of this player's library to the player controlling an Opposition Agent.
+     * The redirected player makes the search choices, while the original player remains the
+     * library owner.
+     */
+    public LibrarySearchParams withOppositionAgentController(UUID controllerId) {
+        return new LibrarySearchParams(controllerId, cards, true, canFailToFind, playerId,
+                remainingCount, null, false, false, false, false, shuffleAfterSelection, prompt,
+                LibrarySearchDestination.EXILE_PLAYABLE, topLibraryPosition, discoverValue,
+                filterCardTypes, accumulatedCards, filterCardName, attachToPlayerId,
+                attachToPermanentId, battlefieldControllerId, filterPredicate, sourcePermanentId,
+                followUp, requireDifferentNames, manaValueBoundValue, manaValueExact,
+                totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters,
+                repeatUntilDecline, tokenTemplate, sourceSetCode, false,
+                battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
+                placeBattlefieldCardsSimultaneously, false, true, true, false,
+                mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
+    }
+
     public static class Builder {
         private final UUID playerId;
         private final List<Card> cards;

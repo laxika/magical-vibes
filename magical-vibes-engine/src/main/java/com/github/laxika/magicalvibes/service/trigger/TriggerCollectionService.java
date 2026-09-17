@@ -1088,6 +1088,27 @@ public class TriggerCollectionService {
             }
         }
 
+        // "The next instant or sorcery spell you cast this turn has Storm" (Storm, Force of Nature).
+        Integer pendingStorms = gameData.pendingNextInstantSorceryStormThisTurnCount.get(castingPlayerId);
+        if (pendingStorms != null && pendingStorms > 0
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                for (int i = 0; i < pendingStorms; i++) {
+                    queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry, false, false);
+                }
+                gameData.pendingNextInstantSorceryStormThisTurnCount.remove(castingPlayerId);
+                log.info("Game {} - {} delayed Storm grant(s) applied to {}",
+                        gameData.id, pendingStorms, spellCard.getName());
+            }
+        }
+
         Integer pendingSpellCopies = gameData.pendingNextSpellCopyThisTurnCount.get(castingPlayerId);
         if (pendingSpellCopies != null && pendingSpellCopies > 0) {
             StackEntry spellEntry = null;
@@ -1439,23 +1460,8 @@ public class TriggerCollectionService {
 
                 // "for each spell cast before it this turn" — this spell is already recorded, so
                 // subtract it out. Count is fixed here (spells cast after can't precede this one).
-                int copies = Math.max(0, storm.instantOrSorceryOnly()
-                        ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
-                                .filter(card -> card.hasType(CardType.INSTANT)
-                                        || card.hasType(CardType.SORCERY))
-                                .count() - 1
-                        : gameData.getTotalSpellsCastThisTurnCount() - 1);
-                StackEntry snapshot = new StackEntry(spellEntry);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(new StormCopyEffect(
-                                snapshot, castingPlayerId, copies, storm.tokenCopy())))
-                ));
-                log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
-                        gameData.id, spellCard.getName(), copies, castingPlayerId);
+                queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
+                        storm.instantOrSorceryOnly(), storm.tokenCopy());
             } else {
                 selfCastTriggeredEffects.add(effect);
             }
@@ -1650,6 +1656,25 @@ public class TriggerCollectionService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                   StackEntry spellEntry, boolean instantOrSorceryOnly, boolean tokenCopy) {
+        int copies = Math.max(0, instantOrSorceryOnly
+                ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
+                        .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                        .count() - 1
+                : gameData.getTotalSpellsCastThisTurnCount() - 1);
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                spellCard,
+                castingPlayerId,
+                spellCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new StormCopyEffect(
+                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy)))
+        ));
+        log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
+                gameData.id, spellCard.getName(), copies, castingPlayerId);
     }
 
     private void dispatchSuspendedExiledCardSpellCastTriggers(GameData gameData, UUID castingPlayerId,
@@ -5841,6 +5866,12 @@ public class TriggerCollectionService {
     /** Collects turn-scoped global triggers for an event that identifies a permanent. */
     public void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
                                                int eventValue) {
+        collectTemporaryGlobalTriggers(gameData, slot, targetId, eventValue, null);
+    }
+
+    /** Collects turn-scoped global triggers while applying controller-relative permanent scopes. */
+    public void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
+                                               int eventValue, UUID targetControllerId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (watcher.slot() != slot
                     || (slot == EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES
@@ -5848,22 +5879,55 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            enqueueTemporaryGlobalTrigger(gameData, watcher, targetId, eventValue);
+            if (slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
+                    && (targetControllerId == null || !watcher.controllerId().equals(targetControllerId))) {
+                continue;
+            }
+            if (slot == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED
+                    && (targetControllerId == null || watcher.controllerId().equals(targetControllerId))) {
+                continue;
+            }
+
+            CardEffect resolvedEffect = watcher.effect();
+            if (targetId != null && (slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
+                    || slot == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
+                    && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
+                Permanent triggeringPermanent = gameQueryService.findPermanentById(gameData, targetId);
+                if (triggeringPermanent == null
+                        || !predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, triggeringPermanent, conditional.predicate())) {
+                    continue;
+                }
+                resolvedEffect = conditional.wrapped();
+            }
+
+            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, targetId, eventValue);
         }
     }
 
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
                                                 TemporaryGlobalTriggeredAbility watcher,
                                                 UUID targetId, int eventValue) {
+        enqueueTemporaryGlobalTrigger(gameData, watcher, watcher.effect(), targetId, eventValue);
+    }
+
+    private void enqueueTemporaryGlobalTrigger(GameData gameData,
+                                                TemporaryGlobalTriggeredAbility watcher,
+                                                CardEffect effect,
+                                                UUID targetId, int eventValue) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 watcher.sourceCard(),
                 watcher.controllerId(),
                 watcher.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(watcher.effect())));
+                new ArrayList<>(List.of(effect)));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
         entry.setNonTargeting(true);
+        if (watcher.slot() == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
+                || watcher.slot() == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED) {
+            entry.setTriggeringPermanentId(targetId);
+        }
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         log.info("Game {} - {} temporary global {} trigger fires",
@@ -6075,6 +6139,11 @@ public class TriggerCollectionService {
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
             }
         });
+
+        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+                tappedPermanent.getId(), 0, controllerId);
+        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
+                tappedPermanent.getId(), 0, controllerId);
 
         // "Whenever you tap an untapped creature an opponent controls" triggers. The tapping
         // player is tracked separately from the tapped permanent's controller because an effect

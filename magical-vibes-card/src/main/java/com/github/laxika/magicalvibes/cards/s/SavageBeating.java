@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "67")
+@CardRegistration(set = "MAR", collectorNumber = "26")
 public class SavageBeating extends Card {
 
     public SavageBeating() {

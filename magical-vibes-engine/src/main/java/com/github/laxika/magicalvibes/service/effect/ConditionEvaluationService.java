@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsIn
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
@@ -291,6 +292,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisT
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
@@ -826,6 +828,8 @@ public class ConditionEvaluationService {
                             > countCardsInHand(gameData, ctx.controllerId());
             case TargetPlayerControlsPermanent c ->
                     targetPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
+            case TargetPlayerTurn ignored ->
+                    ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
             case TargetPlayerLostLifeThisTurn ignored ->
@@ -975,6 +979,10 @@ public class ConditionEvaluationService {
                     ctx.sourcePermanentId() != null
                             && gameData.damageDealtThisTurnBySource.getOrDefault(ctx.sourcePermanentId(), 0)
                             >= c.minimumAmount();
+            case SelfDealtDamageToCreatureThisTurn ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.sourcesThatDealtDamageToCreaturesThisTurn
+                                    .contains(ctx.sourcePermanentId());
             case SourceHasDealtDamage ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.permanentsThatHaveDealtDamage.contains(ctx.sourcePermanentId());

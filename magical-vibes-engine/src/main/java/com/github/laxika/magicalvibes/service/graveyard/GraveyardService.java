@@ -595,6 +595,9 @@ public class GraveyardService {
             } else {
                 exileService.exileCard(gameData, ownerId, card);
             }
+            if (opponentExileReplacement.effect().counterType() == CounterType.VOID) {
+                gameData.exiledCardsWithVoidCounters.add(card.getId());
+            }
             
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
@@ -1199,6 +1202,9 @@ public class GraveyardService {
             return;
         }
 
+        if (!sourcePermanentId.equals(damagedCreature.getId())) {
+            gameData.sourcesThatDealtDamageToCreaturesThisTurn.add(sourcePermanentId);
+        }
         gameData.creatureCardsDamagedThisTurnBySourcePermanent
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());

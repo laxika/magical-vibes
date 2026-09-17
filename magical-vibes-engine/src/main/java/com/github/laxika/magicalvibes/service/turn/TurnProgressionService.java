@@ -696,6 +696,10 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
+                watcher.untilNextTurnStart()
+                        && nextActive.equals(watcher.controllerId())
+                        && gameData.turnNumber != watcher.registrationTurnNumber());
         gameData.cardPutIntoExileThisTurn = false;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
@@ -873,6 +877,7 @@ public class TurnProgressionService {
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
+        gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
         gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();

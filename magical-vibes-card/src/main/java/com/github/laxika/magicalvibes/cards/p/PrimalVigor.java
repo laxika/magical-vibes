@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersO
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "WOT", collectorNumber = "59")
+@CardRegistration(set = "MAR", collectorNumber = "81")
 public class PrimalVigor extends Card {
 
     public PrimalVigor() {

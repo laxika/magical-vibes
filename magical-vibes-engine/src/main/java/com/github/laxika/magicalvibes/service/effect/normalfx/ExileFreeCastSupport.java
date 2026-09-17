@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -25,8 +27,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Casts a real (non-copy) card that already sits in exile "without paying its mana cost", choosing a
- * target first when required. Used when a player is offered to play a card put into exile by an
+ * Plays or casts a real (non-copy) card that already sits in exile "without paying its mana cost",
+ * choosing a target first when required. Used when a player is offered to play a card put into exile by an
  * effect such as Guile's counter-replacement. Timing/priority restrictions are ignored (the play is
  * part of another effect's resolution); if the spell can't be legally cast it stays exiled.
  */
@@ -39,18 +41,21 @@ public class ExileFreeCastSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
     public ExileFreeCastSupport(GameLogService gameLogService,
                                 @Lazy PlayerInputService playerInputService,
                                 @Lazy TriggerCollectionService triggerCollectionService,
                                 @Lazy InputCompletionService inputCompletionService,
-                                ExileCastTargetSupport exileCastTargetSupport) {
+                                ExileCastTargetSupport exileCastTargetSupport,
+                                @Lazy BattlefieldEntryService battlefieldEntryService) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
+        this.battlefieldEntryService = battlefieldEntryService;
     }
 
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId) {
@@ -84,6 +89,24 @@ public class ExileFreeCastSupport {
             return;
         }
         String playerName = player.getUsername();
+        if (card.hasType(CardType.LAND)) {
+            gameData.removeFromExile(exileCardId);
+            gameData.recordCardPlayedFromExile(playerId);
+            Permanent permanent = new Permanent(card);
+            permanent.setEnteredFromExile(true);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+            gameLogService.append(gameData,
+                    GameLog.playerPlays(playerName, card, " without paying its mana cost."));
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card, Zone.EXILE);
+            }
+            log.info("Game {} - {} plays land {} from exile without paying mana",
+                    gameData.id, playerName, card.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 

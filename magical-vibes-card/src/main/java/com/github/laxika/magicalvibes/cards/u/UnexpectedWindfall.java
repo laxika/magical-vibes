@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "164")
+@CardRegistration(set = "MAR", collectorNumber = "29")
 public class UnexpectedWindfall extends Card {
 
     public UnexpectedWindfall() {

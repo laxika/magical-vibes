@@ -416,6 +416,8 @@ public class GameData {
     /** Counts creature deaths by effective creature subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
+    /** Permanent IDs that dealt damage to another creature this turn; survives that creature leaving the battlefield. */
+    public final Set<UUID> sourcesThatDealtDamageToCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Source permanent ids that dealt damage to a creature which later died this turn (Krovikan Vampire
      * intervening-if). Survives the card leaving the graveyard; cleared at turn cleanup.
@@ -491,6 +493,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have ice counters (Draugr Necromancer). */
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have void counters (Dauthi Voidwalker). */
+    public final Set<UUID> exiledCardsWithVoidCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have croak counters (Grolnok, the Omnivore). */
     public final Set<UUID> exiledCardsWithCroakCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have collection counters (Evelyn, the Covetous). */
@@ -1124,9 +1128,13 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Comeuppance shields: prevent damage to a player and their planeswalkers from opponents' sources. */
+    public final List<ComeuppanceShield> comeuppanceShields = Collections.synchronizedList(new ArrayList<>());
     public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
+    /** Pending damage that Comeuppance deals back to the source creature or its controller. */
+    public final List<PendingComeuppanceDamage> pendingComeuppanceDamage = Collections.synchronizedList(new ArrayList<>());
     /** Source-specific damage redirect shields (e.g. Harm's Way): prevent damage from a chosen source and redirect to any target. */
     public final List<SourceDamageRedirectShield> sourceDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Target+source-specific damage prevention shields (e.g. Healing Grace): prevent next N damage from a chosen source to a specific target. */
@@ -1562,6 +1570,8 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+    /** Pending one-shot grants that give the next instant or sorcery spell Storm this turn. */
+    public final Map<UUID, Integer> pendingNextInstantSorceryStormThisTurnCount = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount =
             new ConcurrentHashMap<>();
 
@@ -4235,6 +4245,12 @@ public class GameData {
         exiledCardsWithIceCounters.add(card.getId());
     }
 
+    /** Adds a card to exile and marks it with a void counter. */
+    public void addToExileWithVoidCounter(UUID ownerId, Card card) {
+        addToExile(ownerId, card);
+        exiledCardsWithVoidCounters.add(card.getId());
+    }
+
     /** Adds a card to exile and marks it with a croak counter. */
     public void addToExileWithCroakCounter(UUID ownerId, Card card) {
         addToExile(ownerId, card);
@@ -4331,6 +4347,7 @@ public class GameData {
             stashCounterCardIds.remove(cardId);
             exiledCardScreamCounters.remove(cardId);
             exiledCardsWithIceCounters.remove(cardId);
+            exiledCardsWithVoidCounters.remove(cardId);
             exiledCardsWithCroakCounters.remove(cardId);
             exiledCardsWithCollectionCounters.remove(cardId);
             exiledCardsWithHatchingCounters.remove(cardId);
@@ -5072,6 +5089,7 @@ public class GameData {
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
+        copy.comeuppanceShields.addAll(this.comeuppanceShields);
         copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
@@ -5099,6 +5117,7 @@ public class GameData {
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
+        copy.exiledCardsWithVoidCounters.addAll(this.exiledCardsWithVoidCounters);
         copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
         copy.exiledCardsWithCollectionCounters.addAll(this.exiledCardsWithCollectionCounters);
         copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
@@ -5452,6 +5471,7 @@ public class GameData {
                 copy.sacrificedPermanentSubtypeCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
+        copy.sourcesThatDealtDamageToCreaturesThisTurn.addAll(this.sourcesThatDealtDamageToCreaturesThisTurn);
         copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
         this.creatureCardsDamagedBySourceThatDiedThisTurn.forEach((k, v) ->
                 copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));
@@ -5833,6 +5853,7 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.pendingNextInstantSorceryStormThisTurnCount.putAll(this.pendingNextInstantSorceryStormThisTurnCount);
         copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
                 .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
         copy.pendingNextSpellUncounterableThisTurnCount.putAll(this.pendingNextSpellUncounterableThisTurnCount);
@@ -6053,6 +6074,7 @@ public class GameData {
         copy.targetSpellDamagePreventionShields.addAll(this.targetSpellDamagePreventionShields);
         copy.targetSorceryDamageRedirectShields.addAll(this.targetSorceryDamageRedirectShields);
         copy.pendingRedirectDamage.addAll(this.pendingRedirectDamage);
+        copy.pendingComeuppanceDamage.addAll(this.pendingComeuppanceDamage);
         copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
 
         // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---
