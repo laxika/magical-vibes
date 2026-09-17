@@ -1877,7 +1877,7 @@ class CastingCostServiceTest {
             Card spell = spellWith(new SacrificePermanentCost(filter, "a creature"));
             Permanent creature = new Permanent(graveyardCard("Land creature", CardType.CREATURE));
             gd.playerBattlefields.get(player1Id).add(creature);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+            lenient().when(gameQueryService.canPayLifeForCosts(gd)).thenReturn(false);
             when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
             when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(true);
 

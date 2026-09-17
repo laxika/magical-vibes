@@ -662,7 +662,10 @@ public class GameQueryService {
                     && !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
         }
         if (!permanent.getCard().getSupertypes().contains(supertype)) {
-            if (gameData == null) {
+            // A departing permanent may still be queried while its attached Aura is being removed.
+            // It is absent from the layered board, so rebuilding its static bonus would recurse
+            // through the Aura's supertype filter without ever finding a layered state.
+            if (gameData == null || findPermanentById(gameData, permanent.getId()) == null) {
                 return false;
             }
             return computeStaticBonus(gameData, permanent).grantedSupertypes().contains(supertype);

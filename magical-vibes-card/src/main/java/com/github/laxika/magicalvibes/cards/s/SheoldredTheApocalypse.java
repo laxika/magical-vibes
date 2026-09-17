@@ -13,6 +13,6 @@ public class SheoldredTheApocalypse extends Card {
 
     public SheoldredTheApocalypse() {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new GainLifeEffect(2));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

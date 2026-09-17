@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MeriaScholarOfAntiquity.class, MoxOpal.class, Forest.class})
+@CardUsed({MeriaScholarOfAntiquity.class, Ornithopter.class, Forest.class})
 class MeriaScholarOfAntiquityTest extends BaseCardTest {
 
     @Test
@@ -56,7 +57,7 @@ class MeriaScholarOfAntiquityTest extends BaseCardTest {
     @DisplayName("Cannot tap a token artifact for either ability")
     void cannotUseTokenArtifact() {
         Permanent meria = addMeria();
-        Card tokenCard = new MoxOpal().createRuntimeCopy();
+        Card tokenCard = new Ornithopter().createRuntimeCopy();
         tokenCard.setToken(true);
         Permanent tokenArtifact = harness.addToBattlefieldAndReturn(player1, tokenCard);
         tokenArtifact.setSummoningSick(false);
@@ -75,7 +76,7 @@ class MeriaScholarOfAntiquityTest extends BaseCardTest {
     }
 
     private Permanent addArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MoxOpal());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         artifact.setSummoningSick(false);
         return artifact;
     }

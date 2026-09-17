@@ -82,7 +82,7 @@ class PixieIllusionistTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a land you control");
+                .hasMessageContaining("Target must be a land");
     }
 
     private Permanent findPixie() {

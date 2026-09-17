@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,6 +50,7 @@ class RonasVortexTest extends BaseCardTest {
     @Test
     void putsKickedOpponentsPlaneswalkerOnBottomOfOwnersLibrary() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 6);
         harness.setLibrary(player2, List.of(new Shock()));
         prepareSpell(true);
 

@@ -1765,7 +1765,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)).thenReturn(false);
+            when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)

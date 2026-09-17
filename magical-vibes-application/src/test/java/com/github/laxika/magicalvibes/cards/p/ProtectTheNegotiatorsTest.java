@@ -28,7 +28,8 @@ class ProtectTheNegotiatorsTest extends BaseCardTest {
 
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new ProtectTheNegotiators()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castKickedInstant(player2, 0, targetSpell.getId());
         harness.passBothPriorities();
@@ -43,12 +44,13 @@ class ProtectTheNegotiatorsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         GrizzlyBears targetSpell = new GrizzlyBears();
         harness.setHand(player1, List.of(targetSpell));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
 
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new ProtectTheNegotiators()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castKickedInstant(player2, 0, targetSpell.getId());
         harness.passBothPriorities();
