@@ -88,9 +88,8 @@ class LutriTheSpellchaserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(lutri.getId()));
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);

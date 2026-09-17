@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KrosanCloudscraper;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.t.TwistedAbomination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,12 +14,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonFangs.class, GrizzlyBears.class, KrosanCloudscraper.class})
+@CardUsed({DragonFangs.class, GoblinBrigand.class, TwistedAbomination.class})
 class DragonFangsTest extends BaseCardTest {
 
     @Test
     void resolvingAuraBoostsEnchantedCreatureAndGrantsTrample() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GoblinBrigand());
         harness.setHand(player1, List.of(new DragonFangs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -35,17 +35,17 @@ class DragonFangsTest extends BaseCardTest {
     }
 
     @Test
-    void highManaValueCreatureEnteringUnderAnyPlayersControlTriggersReturn() {
+    void sixManaValueCreatureEnteringUnderAnyPlayersControlTriggersReturn() {
         DragonFangs fangs = new DragonFangs();
         harness.setGraveyard(player1, List.of(fangs));
-        Permanent creature = harness.enterBattlefieldAndReturn(player2, new KrosanCloudscraper());
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new TwistedAbomination());
 
         resolveMayAbility(true);
 
         Permanent returnedFangs = findPermanent(player1, "Dragon Fangs");
         assertThat(returnedFangs.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(14);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(14);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         harness.assertNotInGraveyard(player1, "Dragon Fangs");
     }
@@ -53,7 +53,7 @@ class DragonFangsTest extends BaseCardTest {
     @Test
     void smallerCreatureDoesNotTriggerReturn() {
         harness.setGraveyard(player1, List.of(new DragonFangs()));
-        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new GoblinBrigand());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Dragon Fangs");
@@ -62,7 +62,7 @@ class DragonFangsTest extends BaseCardTest {
     @Test
     void decliningReturnKeepsAuraInGraveyard() {
         harness.setGraveyard(player1, List.of(new DragonFangs()));
-        harness.enterBattlefieldAndReturn(player1, new KrosanCloudscraper());
+        harness.enterBattlefieldAndReturn(player1, new TwistedAbomination());
 
         resolveMayAbility(false);
 

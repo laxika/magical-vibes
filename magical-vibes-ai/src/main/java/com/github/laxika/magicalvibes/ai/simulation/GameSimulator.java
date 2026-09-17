@@ -179,6 +179,7 @@ public class GameSimulator {
      * Returns the list of legal actions for the given player in the current game state.
      */
     public List<SimulationAction> getLegalActions(GameData gd, UUID playerId) {
+        if (gd.session.active() != gd) return getLegalActions(gd.session.active(), playerId);
         List<SimulationAction> actions = new ArrayList<>();
 
         PendingInteraction awaitingInput = gd.interaction.activeInteraction();
@@ -344,6 +345,7 @@ public class GameSimulator {
      * After applying, auto-resolves any pending decisions for other players.
      */
     public void applyAction(GameData gd, UUID playerId, SimulationAction action) {
+        if (gd.session.active() != gd) { applyAction(gd.session.active(), playerId, action); return; }
         Player player = new Player(playerId, gd.playerIdToName.getOrDefault(playerId, "AI"));
 
         try {
@@ -384,6 +386,8 @@ public class GameSimulator {
      * Returns true if the game is over (finished or a player is at 0 or less life).
      */
     public boolean isTerminal(GameData gd) {
+        gd = gd.session.root();
+        if (gd.session.depth() > 0) return gd.status == GameStatus.FINISHED;
         if (gd.status == GameStatus.FINISHED) return true;
         for (UUID pid : gd.orderedPlayerIds) {
             if (gd.getLife(pid) <= 0) return true;
@@ -396,6 +400,7 @@ public class GameSimulator {
      * 1.0 = AI wins, 0.0 = opponent wins, 0.5 = even.
      */
     public double evaluate(GameData gd, UUID aiPlayerId) {
+        if (gd.session.active() != gd) return evaluate(gd.session.active(), aiPlayerId);
         double raw = boardEvaluator.evaluateMctsHorizon(gd, aiPlayerId);
         // Normalize using sigmoid-like function: map (-inf, inf) to (0, 1)
         return 1.0 / (1.0 + Math.exp(-raw / 50.0));
@@ -433,6 +438,14 @@ public class GameSimulator {
      */
     private void autoResolveDecisions(GameData gd, UUID mctsPlayerId, int maxIterations) {
         for (int i = 0; i < maxIterations; i++) {
+            gd = gd.session.active();
+            if (gd.status == GameStatus.MULLIGAN) {
+                for (UUID seat : List.copyOf(gd.orderedPlayerIds)) {
+                    if (!gd.playerKeptHand.contains(seat)) gameService.keepHand(gd, new Player(seat, gd.playerIdToName.get(seat)));
+                    if (gd.session.active() != gd) break;
+                }
+                continue;
+            }
             if (isTerminal(gd)) return;
 
             PendingInteraction awaiting = gd.interaction.activeInteraction();

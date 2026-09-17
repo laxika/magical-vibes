@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,31 +13,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HomewardPathTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Mana ability taps for {C}")
-    void manaAbilityAddsColorless() {
-        harness.addToBattlefield(player1, new HomewardPath());
+    void manaAbilityAddsColorlessMana() {
+        Permanent path = addReadyPath();
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, battlefieldIndex(path), 0, null, null);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS))
-                .isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(path.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Each player regains control of creatures they own")
-    void returnsOwnedCreaturesToTheirOwners() {
-        harness.addToBattlefield(player1, new HomewardPath());
+    void eachPlayerRegainsControlOfTheirOwnedCreatures() {
+        Permanent path = addReadyPath();
+        Permanent player2Creature = addCreatureReady(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(player2Creature.getId(), player2.getId());
+        Permanent player1Creature = addCreatureReady(player2, new GrizzlyBears());
+        gd.stolenCreatures.put(player1Creature.getId(), player1.getId());
 
-        Permanent playerOneCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.stolenCreatures.put(playerOneCreature.getId(), player1.getId());
-        Permanent playerTwoCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(playerTwoCreature.getId(), player2.getId());
-
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, battlefieldIndex(path), 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(playerOneCreature);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(playerTwoCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(path, player1Creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(player2Creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(player2Creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(player1Creature);
+    }
+
+    private Permanent addReadyPath() {
+        Permanent path = harness.addToBattlefieldAndReturn(player1, new HomewardPath());
+        path.setSummoningSick(false);
+        return path;
+    }
+
+    private int battlefieldIndex(Permanent permanent) {
+        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
 }

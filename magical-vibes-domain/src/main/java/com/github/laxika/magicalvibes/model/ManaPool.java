@@ -20,6 +20,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> caveMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a Treasure, tracked as a tag on unrestricted mana. */
     private final EnumMap<ManaColor, Integer> treasureMana = new EnumMap<>(ManaColor.class);
+    /** Mana produced by a non-Treasure artifact source, tracked as a tag on unrestricted mana. */
+    private final EnumMap<ManaColor, Integer> artifactSourceMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a basic land, tracked as a tag on regular mana. */
     private final EnumMap<ManaColor, Integer> basicLandMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a source that could produce at least two colors. */
@@ -245,6 +247,7 @@ public class ManaPool {
             snowMana.put(color, 0);
             caveMana.put(color, 0);
             treasureMana.put(color, 0);
+            artifactSourceMana.put(color, 0);
             basicLandMana.put(color, 0);
             multicoloredSourceMana.put(color, 0);
             creatureMana.put(color, 0);
@@ -301,6 +304,7 @@ public class ManaPool {
         snowMana.putAll(source.snowMana);
         caveMana.putAll(source.caveMana);
         treasureMana.putAll(source.treasureMana);
+        artifactSourceMana.putAll(source.artifactSourceMana);
         basicLandMana.putAll(source.basicLandMana);
         multicoloredSourceMana.putAll(source.multicoloredSourceMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.spellCastTriggerMana.entrySet()) {
@@ -603,6 +607,23 @@ public class ManaPool {
         return new EnumMap<>(treasureMana);
     }
 
+    /** Copies a non-Treasure artifact-source tag onto mana already present in this pool. */
+    public void addArtifactSourceManaTag(ManaColor color, int amount) {
+        if (amount > 0) {
+            artifactSourceMana.merge(color, amount, Integer::sum);
+        }
+    }
+
+    /** Returns the total amount of non-Treasure artifact-source mana currently available. */
+    public int getArtifactSourceManaTotal() {
+        return artifactSourceMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Returns a defensive snapshot of non-Treasure artifact-source tags currently available by color. */
+    public EnumMap<ManaColor, Integer> getArtifactSourceManaTotals() {
+        return new EnumMap<>(artifactSourceMana);
+    }
+
     /** Creates a payment pool containing only the Treasure-produced mana in this pool. */
     public ManaPool copyForTreasurePayment() {
         ManaPool copy = new ManaPool();
@@ -762,6 +783,7 @@ public class ManaPool {
             snowMana.put(color, 0);
             caveMana.put(color, 0);
             treasureMana.put(color, 0);
+            artifactSourceMana.put(color, 0);
             basicLandMana.put(color, 0);
             multicoloredSourceMana.put(color, 0);
             creatureMana.put(color, 0);
@@ -1196,6 +1218,10 @@ public class ManaPool {
         if (treasure > 0) {
             treasureMana.put(color, treasure - 1);
         }
+        int artifactSource = artifactSourceMana.getOrDefault(color, 0);
+        if (artifactSource > 0) {
+            artifactSourceMana.put(color, artifactSource - 1);
+        }
         int basicLand = basicLandMana.getOrDefault(color, 0);
         if (basicLand > 0) {
             basicLandMana.put(color, basicLand - 1);
@@ -1282,6 +1308,9 @@ public class ManaPool {
         }
         if (treasureMana.getOrDefault(color, 0) > total) {
             treasureMana.put(color, total);
+        }
+        if (artifactSourceMana.getOrDefault(color, 0) > total) {
+            artifactSourceMana.put(color, total);
         }
     }
 
@@ -3616,6 +3645,7 @@ public class ManaPool {
             moveTaggedManaToColorless(snowMana, color, amount);
             moveTaggedManaToColorless(caveMana, color, amount);
             moveTaggedManaToColorless(treasureMana, color, amount);
+            moveTaggedManaToColorless(artifactSourceMana, color, amount);
             moveTaggedManaToColorless(basicLandMana, color, amount);
             moveTaggedManaToColorless(creatureMana, color, amount);
             moveTaggedManaToColorless(spellOnlyMana, color, amount);
@@ -3702,6 +3732,7 @@ public class ManaPool {
             pool.merge(replacementColor, amount, Integer::sum);
             moveTaggedMana(snowMana, color, replacementColor, amount);
             moveTaggedMana(treasureMana, color, replacementColor, amount);
+            moveTaggedMana(artifactSourceMana, color, replacementColor, amount);
             moveTaggedMana(basicLandMana, color, replacementColor, amount);
             moveTaggedMana(creatureMana, color, replacementColor, amount);
             moveTaggedMana(spellOnlyMana, color, replacementColor, amount);
@@ -3951,6 +3982,7 @@ public class ManaPool {
         clampColorTag(snowMana, protectedColors);
         clampColorTag(caveMana, protectedColors);
         clampColorTag(treasureMana, protectedColors);
+        clampColorTag(artifactSourceMana, protectedColors);
         clampColorTag(basicLandMana, protectedColors);
         clampColorTag(multicoloredSourceMana, protectedColors);
         clampColorTag(spellOnlyMana, protectedColors);

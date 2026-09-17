@@ -37,5 +37,8 @@ public enum GameEventKind {
     /**
      * The game reached a terminal win or draw result.
      */
-    GAME_ENDED
+    GAME_ENDED,
+    SUBGAME_STARTED,
+    SUBGAME_ENDED,
+    ACTIVE_GAME_CHANGED
 }

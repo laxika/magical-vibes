@@ -158,7 +158,7 @@ class FlamewaveInvokerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player");
+                .hasMessageContaining("Target must be a planeswalker or player");
     }
 
     // ===== Helpers =====

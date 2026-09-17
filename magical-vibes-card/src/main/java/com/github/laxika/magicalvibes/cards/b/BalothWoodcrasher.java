@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ZEN", collectorNumber = "157")
 @CardRegistration(set = "C13", collectorNumber = "136")
+@CardRegistration(set = "CMD", collectorNumber = "143")
 public class BalothWoodcrasher extends Card {
 
     public BalothWoodcrasher() {

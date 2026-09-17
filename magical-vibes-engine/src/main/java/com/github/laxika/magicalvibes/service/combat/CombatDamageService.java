@@ -611,9 +611,11 @@ public class CombatDamageService {
         processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
         // Process defender-side damage triggers (e.g. Dissipation Field, Living Artifact)
+        Set<String> firedBatchedTriggerKeys = new HashSet<>();
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
-                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId(), true);
+                triggerCollectionService.checkDamageDealtToControllerTriggers(
+                        gameData, defenderId, dmgEntry.getKey().getId(), true, firedBatchedTriggerKeys);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, defenderId, dmgEntry.getKey().getId(), dmgEntry.getValue());
                 // Combat damage to the defender always comes from the active player's attackers, so the
                 // source's controller is the active player (an opponent of the defender).
@@ -4038,7 +4040,9 @@ public class CombatDamageService {
             }
         }
         state.combatDamageDealt.merge(atk, damage, Integer::sum);
-        state.combatDamageDealtToPlayer.merge(atk, damage, Integer::sum);
+        if (redirectTarget == null) {
+            state.combatDamageDealtToPlayer.merge(atk, damage, Integer::sum);
+        }
     }
 
     private Map<Integer, Integer> precomputeBlockerDamage(DamagePhaseSnapshot snap,

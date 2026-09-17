@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "128")
+@CardRegistration(set = "HOC", collectorNumber = "128")
 public class LittleBear extends Card {
 
     public LittleBear() {

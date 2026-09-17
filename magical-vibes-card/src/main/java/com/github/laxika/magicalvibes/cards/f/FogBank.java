@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 @CardRegistration(set = "IMA", collectorNumber = "56")
 @CardRegistration(set = "GN3", collectorNumber = "28")
 @CardRegistration(set = "C13", collectorNumber = "44")
+@CardRegistration(set = "CMD", collectorNumber = "47")
 public class FogBank extends Card {
 
     public FogBank() {

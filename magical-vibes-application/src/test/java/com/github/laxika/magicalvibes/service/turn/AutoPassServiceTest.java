@@ -138,6 +138,22 @@ class AutoPassServiceTest {
         }
 
         @Test
+        void checksForLossesAfterLeavingUntapBeforeOfferingPriority() {
+            gd.currentStep = TurnStep.UNTAP;
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(null);
+            org.mockito.Mockito.doAnswer(invocation -> {
+                if (gd.currentStep == TurnStep.UPKEEP) gd.status = GameStatus.FINISHED;
+                return null;
+            }).when(stateBasedActionService).performStateBasedActions(gd);
+
+            sut.resolveAutoPass(gd, game -> game.currentStep = TurnStep.UPKEEP);
+
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+            verify(stateBasedActionService, times(2)).performStateBasedActions(gd);
+            verifyNoInteractions(actionAvailabilityService);
+        }
+
+        @Test
         @DisplayName("Runs state-based actions before handing off priority")
         void runsStateBasedActionsBeforeHandingOffPriority() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);

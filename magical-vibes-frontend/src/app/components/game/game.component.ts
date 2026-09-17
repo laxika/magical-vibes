@@ -88,41 +88,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.game.set(this.websocketService.currentGame);
 
-    // Reset local component state from any previous game
-    this.gameOverActive.set(false);
-    this.gameOverWinner.set(null);
-    this.gameOverWinnerId.set(null);
-    this.declaringAttackers.set(false);
-    this.declaringBlockers.set(false);
-    this.choosingAttackersForOpponent.set(false);
-    this.choosingBlocksForOpponent.set(false);
-    this.attackTaxPerCreature.set(0);
-    this.mustAttackWithAtLeastOne.set(false);
-    this.availableAttackerIndices.set(new Set());
-    this.mustAttackIndices.set(new Set());
-    this.availableBlockerIndices.set(new Set());
-    this.selectedAttackerIndices.set(new Set());
-    this.bandAssignments.set(new Map());
-    this.opponentAttackerIndices.set([]);
-    this.blockerAssignments.set(new Map());
-    this.legalBlockPairs.set(new Map());
-    this.selectedBlockerIndex.set(null);
-    this.playableCardIndices.set(new Set());
-    this.potentialPlayableCardIndices.set(new Set());
-    this.potentialManaTotal.set(0);
-    this.potentialPayableAbilityIndices.set({});
-    this.playableGraveyardLandIndices.set(new Set());
-    this.playableFlashbackIndices.set(new Set());
-    this.playableExileCards.set([]);
-    this.playableLibraryTopCards.set([]);
-    this.searchTaxCost.set(0);
-    this.hoveredCard.set(null);
-    this.hoveredPermanent.set(null);
-    this.clearModifierTooltip();
-    this.stackTargetId.set(null);
-    this.combatShiftX.set(new Map());
-    this.showShortcutsPopup.set(false);
-    this.connectionLost.set(false);
+    this.resetGameState();
 
     this.choice.init(
       this.game,
@@ -185,6 +151,53 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.pendingGameInputMessage = null;
   }
 
+  subgameDepth = signal(0);
+
+  private resetGameState(): void {
+    // Reset local component state from any previous game
+    this.gameOverActive.set(false);
+    this.gameOverWinner.set(null);
+    this.gameOverWinnerId.set(null);
+    this.declaringAttackers.set(false);
+    this.declaringBlockers.set(false);
+    this.choosingAttackersForOpponent.set(false);
+    this.choosingBlocksForOpponent.set(false);
+    this.attackTaxPerCreature.set(0);
+    this.mustAttackWithAtLeastOne.set(false);
+    this.availableAttackerIndices.set(new Set());
+    this.mustAttackIndices.set(new Set());
+    this.availableBlockerIndices.set(new Set());
+    this.selectedAttackerIndices.set(new Set());
+    this.bandAssignments.set(new Map());
+    this.opponentAttackerIndices.set([]);
+    this.blockerAssignments.set(new Map());
+    this.legalBlockPairs.set(new Map());
+    this.selectedBlockerIndex.set(null);
+    this.playableCardIndices.set(new Set());
+    this.potentialPlayableCardIndices.set(new Set());
+    this.potentialManaTotal.set(0);
+    this.potentialPayableAbilityIndices.set({});
+    this.playableGraveyardLandIndices.set(new Set());
+    this.playableFlashbackIndices.set(new Set());
+    this.playableExileCards.set([]);
+    this.playableLibraryTopCards.set([]);
+    this.searchTaxCost.set(0);
+    this.hoveredCard.set(null);
+    this.hoveredPermanent.set(null);
+    this.clearModifierTooltip();
+    this.stackTargetId.set(null);
+    this.combatShiftX.set(new Map());
+    this.showShortcutsPopup.set(false);
+    this.showSurrenderConfirm.set(false);
+    this.connectionLost.set(false);
+    this.choice.reset();
+    this.mulliganModal?.resetState();
+    this.onRevealHandDragEnd();
+    this.revealHandPos.set(null);
+    this.autoStopSteps.set(new Set(this.websocketService.currentGame?.autoStopSteps ?? []));
+    this.subgameDepth.set(this.websocketService.subgameDepth ?? 0);
+  }
+
   private processGameMessage(message: WebSocketMessage): void {
     console.log(message);
 
@@ -193,6 +206,12 @@ export class GameComponent implements OnInit, OnDestroy {
     // only mutate plain service state that templates read — mark the view dirty so
     // every message renders.
     this.cdr.markForCheck();
+
+    if (message.type === MessageType.ACTIVE_GAME_CHANGED) {
+      this.resetGameState();
+      this.game.set(this.websocketService.currentGame);
+      return;
+    }
 
     if (message.type === MessageType.OPPONENT_JOINED) {
       const notification = message as GameNotification;

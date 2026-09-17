@@ -126,6 +126,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPerman
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
@@ -172,6 +173,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLostGameThisMatc
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterCountAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterKindsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalToughnessAtLeast;
@@ -298,6 +300,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisT
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
@@ -703,6 +706,8 @@ public class ConditionEvaluationService {
                     controlsMatchingPermanentsWithSameName(gameData, ctx, c.minCount(), c.filter());
             case ControlledCreatureCounterCountAtLeast c ->
                     controlledCreatureCounterCount(gameData, ctx) >= c.threshold();
+            case ControlledPermanentCounterTotalAtLeast c ->
+                    controlledPermanentCounterTotal(gameData, ctx, c.counterType(), c.filter()) >= c.threshold();
             case ControlledCreatureCounterKindsAtLeast c ->
                     controlledCreatureCounterKinds(gameData, ctx) >= c.threshold();
             case ControlsOtherPermanentCount c ->
@@ -857,6 +862,8 @@ public class ConditionEvaluationService {
                             > countCardsInHand(gameData, ctx.controllerId());
             case TargetPlayerControlsPermanent c ->
                     targetPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
+            case TargetPlayerTurn ignored ->
+                    ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsActivePlayer ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->
@@ -1010,6 +1017,10 @@ public class ConditionEvaluationService {
                     ctx.sourcePermanentId() != null
                             && gameData.damageDealtThisTurnBySource.getOrDefault(ctx.sourcePermanentId(), 0)
                             >= c.minimumAmount();
+            case SelfDealtDamageToCreatureThisTurn ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.sourcesThatDealtDamageToCreaturesThisTurn
+                                    .contains(ctx.sourcePermanentId());
             case SourceHasDealtDamage ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.permanentsThatHaveDealtDamage.contains(ctx.sourcePermanentId());
@@ -2650,6 +2661,20 @@ public class ConditionEvaluationService {
                 .mapToLong(permanent -> permanent.getCounters().values().stream()
                         .mapToLong(Integer::longValue)
                         .sum())
+                .sum();
+    }
+
+    private long controlledPermanentCounterTotal(GameData gameData, ConditionContext ctx,
+                                                  CounterType counterType, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        return battlefield.stream()
+                .filter(permanent -> matchesPermanent(gameData, permanent, filter, ctx))
+                .mapToLong(permanent -> counterType == CounterType.ANY
+                        ? permanent.getCounters().values().stream().mapToLong(Integer::longValue).sum()
+                        : permanent.getCounterCount(counterType))
                 .sum();
     }
 

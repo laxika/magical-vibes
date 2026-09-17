@@ -151,6 +151,9 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerEffectHandler
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachOpponentSacrificesCreatureCreateTokensEffectHandler
+            eachOpponentSacrificesCreatureCreateTokensHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
             controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -276,6 +279,10 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
@@ -746,6 +753,11 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx) {
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler.completeChoice(
                     gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx) {
+            eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }

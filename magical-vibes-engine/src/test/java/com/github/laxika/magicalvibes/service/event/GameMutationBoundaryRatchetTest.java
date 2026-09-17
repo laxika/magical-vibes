@@ -61,7 +61,12 @@ class GameMutationBoundaryRatchetTest {
         for (String callback : List.of(
                 "onPlayerDisconnect", "onPlayerReconnect", "singleGoneTimerFired", "bothGoneTimerFired")) {
             MethodSource method = method(timeoutService, callback);
-            if (!method.body().contains("mutationCoordinator")) {
+            // Session-aware callbacks lock the session before selecting its active frame.
+            // The locked helper then enters the coordinator for that frame.
+            if (method.body().contains(callback + "Locked(")) {
+                method = method(timeoutService, callback + "Locked");
+            }
+            if (!method.body().contains("mutationCoordinator.mutate")) {
                 bypasses.add("GameTimeoutService." + callback);
             }
         }

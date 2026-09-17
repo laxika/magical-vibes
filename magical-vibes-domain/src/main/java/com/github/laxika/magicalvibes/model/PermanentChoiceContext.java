@@ -565,10 +565,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       List<UUID> chosenSoFar,
                                       ActivatedAbility ability,
                                       Permanent sourcePermanentSnapshot,
-                                      Card sourceCard) implements PermanentChoiceContext {
+                                      Card sourceCard,
+                                      Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {
 
         public ActivatedAbilityCostChoice {
             targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();
+            damageAssignments = damageAssignments != null ? Map.copyOf(damageAssignments) : Map.of();
+        }
+
+        public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
+                                          Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                          CardEffect costEffect, int remaining, List<UUID> chosenSoFar,
+                                          ActivatedAbility ability, Permanent sourcePermanentSnapshot,
+                                          Card sourceCard) {
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, targetIds,
+                    costEffect, remaining, chosenSoFar, ability, sourcePermanentSnapshot, sourceCard, Map.of());
         }
         /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
          *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */
@@ -1255,6 +1266,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     record PlayerWithLowestLifeChoice(Card sourceCard) implements PermanentChoiceContext {}
+
+    /** The Black Gate's resolution-time choice of a player tied for most life. */
+    record BlackGateMostLifeChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                   UUID targetCreatureId, List<UUID> eligiblePlayerIds)
+            implements PermanentChoiceContext {
+        public BlackGateMostLifeChoice {
+            eligiblePlayerIds = List.copyOf(eligiblePlayerIds);
+        }
+    }
 
     record LeastToughnessDamageChoice(Card sourceCard, int damage) implements PermanentChoiceContext {}
 
@@ -2182,6 +2202,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
 
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    /** The controller is choosing the creature that will be their Ring-bearer. */
+    record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     /** Chooses a controlled permanent from which a counter will be removed. */
     record RemoveCounterFromChosenOwnPermanent(PermanentPredicate permanentFilter)

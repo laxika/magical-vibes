@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "177")
+@CardRegistration(set = "DBL", collectorNumber = "444")
 public class SanguineStatuette extends Card {
 
     public SanguineStatuette() {

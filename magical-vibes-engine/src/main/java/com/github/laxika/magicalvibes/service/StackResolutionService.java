@@ -186,6 +186,8 @@ public class StackResolutionService {
             gameData.currentlyResolvingControllerId = null;
         }
 
+        if (gameData.waitingForSubgame) return;
+
         // Resolution-time may choices are part of the resolving ability, so present them before
         // state-based actions can orphan an Aura that the choice may move.
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
@@ -526,6 +528,17 @@ public class StackResolutionService {
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
+        // Buyback on a creature (Innocuous Insect) returns it as it resolves,
+        // before it can enter the battlefield.
+        if (entry.isBuyback()) {
+            if (!entry.isCopy()) {
+                gameData.addCardToHand(entry.getOwnerId(), entry.getPhysicalCard());
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        " is returned to its owner's hand."));
+            }
+            return;
+        }
+
         Card card = entry.getCard();
         Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
@@ -1187,6 +1200,8 @@ public class StackResolutionService {
                 return;
             }
 
+            checkSagaFinalChapterResolution(gameData, entry);
+
             if (gameData.restartTurnRequested) {
                 gameData.restartTurnRequested = false;
                 if (isNonCopySpell(entry)) {
@@ -1221,6 +1236,7 @@ public class StackResolutionService {
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
@@ -1235,7 +1251,28 @@ public class StackResolutionService {
 
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
+        checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
+    }
+
+    private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        if (card == null || !card.isSaga() || entry.getDescription() == null) return;
+
+        String finalChapter = switch (card.getSagaFinalChapter()) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            default -> null;
+        };
+        if (finalChapter == null
+                || !entry.getDescription().equals(card.getName() + "'s chapter " + finalChapter + " ability")) {
+            return;
+        }
+        triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
+                gameData, entry.getControllerId());
     }
 
     /**
@@ -1604,7 +1641,7 @@ public class StackResolutionService {
             case LIBRARY -> removeCardFromList(gameData.playerDecks.get(ownerId), cardId);
             case GRAVEYARD -> removeCardFromList(gameData.playerGraveyards.get(ownerId), cardId);
             case EXILE -> gameData.removeFromExile(cardId);
-            case OUTSIDE_GAME -> removeCardFromList(gameData.playerSideboards.get(ownerId), cardId);
+            case OUTSIDE_GAME -> removeCardFromList(com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, ownerId), cardId);
             case COMMAND -> removeCardFromList(gameData.playerCommandZones.get(ownerId), cardId);
             default -> {
             }

@@ -647,6 +647,14 @@ public final class EffectResolution {
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {
+        if (e == null) {
+            return;
+        }
+        if (e instanceof ConditionalReplacementEffect replacement) {
+            collectTargetTypes(replacement.baseEffect(), out);
+            collectTargetTypes(replacement.upgradedEffect(), out);
+            return;
+        }
         TargetSpec spec = e.targetSpec();
         if (spec.admits(TargetPredicate.Kind.PLAYER)) out.add(TargetType.PLAYER);
         if (spec.admits(TargetPredicate.Kind.PERMANENT)) out.add(TargetType.PERMANENT);

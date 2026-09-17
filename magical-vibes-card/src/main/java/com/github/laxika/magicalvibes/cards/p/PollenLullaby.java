@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "36")
+@CardRegistration(set = "CMD", collectorNumber = "26")
 public class PollenLullaby extends Card {
 
     public PollenLullaby() {

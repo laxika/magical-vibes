@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "APC", collectorNumber = "2")
 public class CoalitionFlag extends Card {
 
     public CoalitionFlag() {
+        addEffect(EffectSlot.STATIC, new RequireFlagbearerTargetEffect());
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.STATIC,
                         new GrantSubtypeEffect(CardSubtype.FLAGBEARER, GrantScope.ENCHANTED_CREATURE));

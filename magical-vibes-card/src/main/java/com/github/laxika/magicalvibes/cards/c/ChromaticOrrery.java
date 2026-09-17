@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "228")
+@CardRegistration(set = "SLZ", collectorNumber = "97")
+@CardRegistration(set = "SLZ", collectorNumber = "218")
+@CardRegistration(set = "SLZ", collectorNumber = "339")
 public class ChromaticOrrery extends Card {
 
     public ChromaticOrrery() {

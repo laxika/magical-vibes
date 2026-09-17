@@ -301,6 +301,15 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 new Fixed(1), false, Set.of(), true);
     }
 
+    /** Creates a tapped and attacking copy with optional legendary removal and end-step exile. */
+    public static CreateTokenCopyOfTargetPermanentEffect tappedAndAttackingCopy(
+            boolean removeLegendary, boolean exileAtEndStep) {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, exileAtEndStep, false, true,
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, removeLegendary,
+                new Fixed(1), false, Set.of(), false);
+    }
+
     public static CreateTokenCopyOfTargetPermanentEffect exiledAtEndOfCombat() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,

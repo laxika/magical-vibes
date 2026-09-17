@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "200")
+@CardRegistration(set = "SLZ", collectorNumber = "103")
+@CardRegistration(set = "SLZ", collectorNumber = "224")
+@CardRegistration(set = "SLZ", collectorNumber = "345")
 public class EternityVessel extends Card {
 
     public EternityVessel() {

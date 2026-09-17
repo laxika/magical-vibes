@@ -255,6 +255,21 @@ class DrawServiceTest {
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
         }
+
+        @Test
+        @DisplayName("duplicates a draw trigger when an additional-trigger effect applies")
+        void additionalTriggerEffectDuplicatesDrawTrigger() {
+            Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
+            crawlerCard.addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new BoostSelfEffect(1, 1));
+            Permanent crawler = new Permanent(crawlerCard);
+            gd.playerBattlefields.get(player1Id).add(crawler);
+            when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, player1Id, crawler))
+                    .thenReturn(1);
+
+            sut.checkControllerDrawTriggers(gd, player1Id);
+
+            assertThat(gd.stack).hasSize(2);
+        }
     }
 
     @Test

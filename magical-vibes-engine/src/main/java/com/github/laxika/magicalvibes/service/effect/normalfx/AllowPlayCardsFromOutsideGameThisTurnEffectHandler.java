@@ -31,7 +31,7 @@ public class AllowPlayCardsFromOutsideGameThisTurnEffectHandler implements Norma
         AllowPlayCardsFromOutsideGameThisTurnEffect permissionEffect =
                 (AllowPlayCardsFromOutsideGameThisTurnEffect) effect;
         UUID controllerId = entry.getControllerId();
-        List<Card> sideboard = gameData.playerSideboards.get(controllerId);
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId);
         if (sideboard != null) {
             for (Card card : List.copyOf(sideboard)) {
                 if (permissionEffect.filter() == null

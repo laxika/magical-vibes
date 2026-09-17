@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "160")
+@CardRegistration(set = "CMD", collectorNumber = "215")
 public class NumotTheDevastator extends Card {
 
     public NumotTheDevastator() {

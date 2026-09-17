@@ -14,6 +14,7 @@ export enum MessageType {
   REGISTER_FAILURE = 'REGISTER_FAILURE',
   TIMEOUT = 'TIMEOUT',
   GAME_JOINED = 'GAME_JOINED',
+  ACTIVE_GAME_CHANGED = 'ACTIVE_GAME_CHANGED',
   OPPONENT_JOINED = 'OPPONENT_JOINED',
   NEW_GAME = 'NEW_GAME',
   GAME_UPDATED = 'GAME_UPDATED',
@@ -752,6 +753,9 @@ export class WebsocketService {
       this.authenticated = false;
       this.currentUser = null;
       this.currentGame = null;
+      this.gameContext = null;
+      this.subgameDepth = 0;
+      this.pendingGameInputMessage = null;
       this.initialGames = [];
 
       this.ws = new WebSocket(this.WS_URL);
@@ -767,6 +771,20 @@ export class WebsocketService {
       this.ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
+          if ([MessageType.GAME_JOINED, MessageType.OPPONENT_JOINED].includes(message.type)) {
+            const incoming = (message as GameNotification).game;
+            if (incoming && this.gameContext && incoming.id !== this.gameContext.activeGameId) {
+              this.gameContext = null;
+              this.subgameDepth = 0;
+            }
+          }
+          if (message.type === MessageType.ACTIVE_GAME_CHANGED) {
+            const changed = message as WebSocketMessage & { context: NonNullable<WebsocketService['gameContext']>; depth: number; game: Game };
+            this.gameContext = changed.context;
+            this.subgameDepth = changed.depth;
+            this.currentGame = changed.game;
+            this.pendingGameInputMessage = null;
+          }
 
           // Before authenticated, only handle login responses
           if (!this.authenticated) {
@@ -879,9 +897,12 @@ export class WebsocketService {
     });
   }
 
+  gameContext: { sessionId: string; activeGameId: string; activationEpoch: number } | null = null;
+  subgameDepth = 0;
+
   send(message: object): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+      this.ws.send(JSON.stringify({ ...message, gameContext: this.gameContext }));
     }
   }
 
@@ -911,6 +932,8 @@ export class WebsocketService {
     this.ws = null;
     this.currentUser = null;
     this.currentGame = null;
+    this.gameContext = null;
+    this.subgameDepth = 0;
     this.initialGames = [];
     this.availableDecks = [];
     this.availableSets = [];

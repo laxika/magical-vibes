@@ -513,6 +513,10 @@ public class DamageSupport {
                     gameData, target, damage, sourceControllerId,
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
+            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
+                    gameData, target, damage, sourceControllerId,
+                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
+                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
                     gameData, sourceControllerId, target, damage);
 
@@ -752,6 +756,9 @@ public class DamageSupport {
             triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                     gameData, sourcePermanent, target, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
+                    entry.getSourcePermanentId());
+            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
                     gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
                     entry.getSourcePermanentId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(

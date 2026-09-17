@@ -2530,10 +2530,18 @@ public class SpellCastTriggerCollectorService {
                     entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
                 }
             }
+            if (match.permanent() != null && containsChosenPlayerMill(resolved)) {
+                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            }
             preservePlanarSource(entry, match);
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean containsChosenPlayerMill(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect -> effect instanceof MillEffect mill
+                && mill.recipient() == MillRecipient.CHOSEN_PLAYER);
     }
 
     private boolean hasAtLeastTwoCardTypes(GameData gameData, Card card, UUID playerId) {
@@ -2628,6 +2636,10 @@ public class SpellCastTriggerCollectorService {
     private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
                                                UUID castingPlayerId, GameData gameData,
                                                UUID sourceControllerId) {
+        if (effect instanceof TriggeringSpellManaValueEffect manaValueAware) {
+            return manaValueAware.snapshotTriggeringSpellManaValue(
+                    spellSnapshot.getCard().getManaValue() + spellSnapshot.getXValue());
+        }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() instanceof TriggeringSpellTargetCount targetCount) {
             return new PutCountersOnSelfEffect(

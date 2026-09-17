@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
+@CardRegistration(set = "MAR", collectorNumber = "63")
 @CardRegistration(set = "AA3", collectorNumber = "8")
 public class DauthiVoidwalker extends Card {
 

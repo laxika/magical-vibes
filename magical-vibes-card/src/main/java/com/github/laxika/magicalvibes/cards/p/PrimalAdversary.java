@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "194")
+@CardRegistration(set = "DBL", collectorNumber = "194")
 public class PrimalAdversary extends Card {
 
     public PrimalAdversary() {

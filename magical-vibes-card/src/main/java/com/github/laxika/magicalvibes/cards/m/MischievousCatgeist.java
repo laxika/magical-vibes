@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "69")
+@CardRegistration(set = "DBL", collectorNumber = "336")
 public class MischievousCatgeist extends Card {
 
     public MischievousCatgeist() {

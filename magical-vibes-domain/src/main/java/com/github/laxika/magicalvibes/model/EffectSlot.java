@@ -513,6 +513,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_LAND_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
+    /** Triggers whenever this permanent is dealt noncombat damage. The amount is snapshotted onto
+     *  the triggered ability's event value. */
+    ON_NONCOMBAT_DAMAGE_TO_SELF,
     /** Triggers whenever this creature is dealt combat damage. The amount of combat damage dealt
      *  is snapshotted onto the triggered ability's event value. */
     ON_COMBAT_DAMAGE_TO_SELF,
@@ -601,6 +604,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
     /** Triggers whenever this permanent's controller becomes the monarch. */
     ON_CONTROLLER_BECOMES_MONARCH,
+    /** Triggers whenever this permanent's controller is tempted by the Ring. */
+    ON_RING_TEMPTS_YOU,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
     ON_OPPONENT_GAINS_LIFE,
     /** Triggers whenever this permanent's controller gets one or more energy counters. */
@@ -653,6 +658,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_IV,
     /** Saga chapter V ability. Triggers when the fifth lore counter is placed. */
     SAGA_CHAPTER_V,
+    /** Triggers when the final chapter ability of a Saga finishes resolving. */
+    ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,

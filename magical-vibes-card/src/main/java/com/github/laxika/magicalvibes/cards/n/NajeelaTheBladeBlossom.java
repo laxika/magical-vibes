@@ -23,31 +23,34 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MAR", collectorNumber = "24")
 @CardRegistration(set = "FCA", collectorNumber = "42")
 @CardRegistration(set = "OMB", collectorNumber = "24")
 public class NajeelaTheBladeBlossom extends Card {
 
     public NajeelaTheBladeBlossom() {
+        MayEffect createToken = new MayEffect(
+                new CreateTokenForTriggeringPlayerEffect(
+                        new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.WHITE,
+                                List.of(CardSubtype.WARRIOR), true)),
+                "Have its controller create a 1/1 white Warrior creature token that's tapped and attacking?");
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.WARRIOR),
-                        new MayEffect(
-                                new CreateTokenForTriggeringPlayerEffect(new CreateTokenEffect(
-                                        1, "Warrior", 1, 1, CardColor.WHITE,
-                                        List.of(CardSubtype.WARRIOR), true)),
-                                "Create a 1/1 white Warrior creature token that's tapped and attacking?")));
+                        new PermanentHasSubtypePredicate(CardSubtype.WARRIOR), createToken));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES),
-                        new GrantKeywordEffect(
-                                Set.of(Keyword.TRAMPLE, Keyword.LIFELINK, Keyword.HASTE),
+                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
+                                new PermanentIsAttackingPredicate()),
+                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.LIFELINK, Keyword.HASTE),
                                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                                 new PermanentIsAttackingPredicate()),
-                        new AdditionalCombatPhaseEffect(1)),
+                        new AdditionalCombatPhaseEffect(1)
+                ),
                 "{W}{U}{B}{R}{G}: Untap all attacking creatures. They gain trample, lifelink, and haste until end of turn. After this phase, there is an additional combat phase. Activate only during combat.",
-                ActivationTimingRestriction.ONLY_DURING_COMBAT));
+                ActivationTimingRestriction.ONLY_DURING_COMBAT
+        ));
     }
 }

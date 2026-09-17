@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "90")
+@CardRegistration(set = "DBL", collectorNumber = "357")
 public class WitnessTheFuture extends Card {
 
     public WitnessTheFuture() {

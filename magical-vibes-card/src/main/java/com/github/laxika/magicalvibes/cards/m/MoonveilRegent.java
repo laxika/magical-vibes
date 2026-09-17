@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "149")
+@CardRegistration(set = "DBL", collectorNumber = "149")
 public class MoonveilRegent extends Card {
 
     public MoonveilRegent() {

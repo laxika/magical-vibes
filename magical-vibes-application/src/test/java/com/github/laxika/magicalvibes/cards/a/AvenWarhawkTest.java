@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BeaconOfDestiny;
 import com.github.laxika.magicalvibes.cards.d.DaruStinger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,9 @@ class AvenWarhawkTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, gd.interaction
+                .activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class).validCardIds());
 
         assertThat(findPermanent(player1, "Aven Warhawk")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

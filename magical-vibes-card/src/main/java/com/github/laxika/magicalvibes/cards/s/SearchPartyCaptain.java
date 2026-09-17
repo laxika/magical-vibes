@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "32")
+@CardRegistration(set = "DBL", collectorNumber = "32")
 public class SearchPartyCaptain extends Card {
 
     public SearchPartyCaptain() {

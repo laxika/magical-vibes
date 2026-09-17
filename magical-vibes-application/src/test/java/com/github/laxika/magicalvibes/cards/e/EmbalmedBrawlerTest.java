@@ -31,6 +31,8 @@ class EmbalmedBrawlerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, gd.interaction
+                .activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class).validCardIds());
 
         assertThat(findPermanent(player1, brawler.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(2);

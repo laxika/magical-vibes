@@ -752,6 +752,20 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
+        @DisplayName("Stack entry preserves the active player")
+        void stackEntryHasCorrectActivePlayer() {
+            gameData.activePlayerId = player2Id;
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.stack.getFirst().getActivePlayerId()).isEqualTo(player2Id);
+        }
+
+        @Test
         @DisplayName("Stack entry has correct source permanent ID")
         void stackEntryHasCorrectSourcePermanent() {
             Card card = createCreature("Test Creature");

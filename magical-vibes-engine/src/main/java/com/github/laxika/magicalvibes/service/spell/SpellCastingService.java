@@ -8893,7 +8893,7 @@ public class SpellCastingService {
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         boolean fromOutsideGame = exiledEntry == null
                 && (gameData.outsideGamePlayPermissions.contains(exileCardId)
-                || gameData.playerSideboards.getOrDefault(playerId, List.of()).stream()
+                || com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId).stream()
                         .anyMatch(sideboardCard -> sideboardCard.getId().equals(exileCardId)));
         if (exiledEntry == null && !fromOutsideGame) {
             throw new IllegalStateException("Card not found in exile");
@@ -8902,7 +8902,7 @@ public class SpellCastingService {
                 ? sourceZoneOverride : fromOutsideGame ? Zone.OUTSIDE_GAME : Zone.EXILE;
         Card card;
         if (fromOutsideGame) {
-            card = gameData.playerSideboards.getOrDefault(playerId, List.of()).stream()
+            card = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId).stream()
                     .filter(sideboardCard -> sideboardCard.getId().equals(exileCardId))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Card not found outside the game"));
@@ -9397,7 +9397,7 @@ public class SpellCastingService {
                                  boolean sourceFreeCast, boolean collectionCounterPermission,
                                  boolean copy, boolean directExilePlayPermission, boolean fromOutsideGame) {
         if (fromOutsideGame) {
-            List<Card> sideboard = gameData.playerSideboards.get(playerId);
+            List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
             boolean removed = sideboard != null && sideboard.removeIf(card -> card.getId().equals(exileCardId));
             if (!removed) {
                 throw new IllegalStateException("Outside-game play permission is no longer available");
@@ -10062,6 +10062,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
+        int artifactSourceManaBefore = pool.getArtifactSourceManaTotal();
         var caveManaBefore = pool.getCaveManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
@@ -10089,6 +10090,8 @@ public class SpellCastingService {
         recordTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordCaveManaSpent(gameData, card, caveManaBefore, pool.getCaveManaTotals());
         recordSpellCastTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
+        recordSpellCastArtifactManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal(),
+                artifactSourceManaBefore, pool.getArtifactSourceManaTotal());
         recordSpellCastManaSources(gameData, card, spellCastManaSourcesBefore,
                 pool.getSpellCastTriggerManaTotals());
         applyUncounterableGrantingMana(gameData, playerId, card);
@@ -10130,6 +10133,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
+        int artifactSourceManaBefore = pool.getArtifactSourceManaTotal();
         var caveManaBefore = pool.getCaveManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
@@ -10147,6 +10151,8 @@ public class SpellCastingService {
         recordTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordCaveManaSpent(gameData, card, caveManaBefore, pool.getCaveManaTotals());
         recordSpellCastTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
+        recordSpellCastArtifactManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal(),
+                artifactSourceManaBefore, pool.getArtifactSourceManaTotal());
         recordSpellCastManaSources(gameData, card, spellCastManaSourcesBefore,
                 pool.getSpellCastTriggerManaTotals());
         applyUncounterableGrantingMana(gameData, playerId, card);
@@ -10163,6 +10169,14 @@ public class SpellCastingService {
         if (treasureManaAfter < treasureManaBefore) {
             gameData.markSpellCastUsedTreasureMana(card.getId());
         }
+    }
+
+    private void recordSpellCastArtifactManaSpent(GameData gameData, Card card,
+                                                  int treasureManaBefore, int treasureManaAfter,
+                                                  int artifactSourceManaBefore, int artifactSourceManaAfter) {
+        int treasureSpent = Math.max(0, treasureManaBefore - treasureManaAfter);
+        int artifactSourceSpent = Math.max(0, artifactSourceManaBefore - artifactSourceManaAfter);
+        gameData.addSpellCastArtifactManaSpent(card.getId(), treasureSpent + artifactSourceSpent);
     }
 
     private void recordSnowManaSpent(GameData gameData, Card card,

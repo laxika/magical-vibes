@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "205")
+@CardRegistration(set = "DBL", collectorNumber = "472")
 public class HowlpackPiper extends Card {
 
     public HowlpackPiper() {

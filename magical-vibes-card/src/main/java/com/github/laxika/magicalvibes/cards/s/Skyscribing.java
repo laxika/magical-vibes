@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "32")
 @CardRegistration(set = "C13", collectorNumber = "57")
+@CardRegistration(set = "CMD", collectorNumber = "61")
 public class Skyscribing extends Card {
 
     public Skyscribing() {

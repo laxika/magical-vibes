@@ -1216,6 +1216,9 @@ public class GraveyardService {
             return;
         }
 
+        if (!sourcePermanentId.equals(damagedCreature.getId())) {
+            gameData.sourcesThatDealtDamageToCreaturesThisTurn.add(sourcePermanentId);
+        }
         gameData.creatureCardsDamagedThisTurnBySourcePermanent
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());

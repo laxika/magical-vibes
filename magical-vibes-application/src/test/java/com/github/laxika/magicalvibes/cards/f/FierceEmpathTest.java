@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.e.ElvishAberration;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.t.TempleOfTheFalseGod;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FierceEmpath.class, ElvishAberration.class, GoblinBrigand.class, TempleOfTheFalseGod.class})
 class FierceEmpathTest extends BaseCardTest {
 
     @Test
@@ -27,11 +26,14 @@ class FierceEmpathTest extends BaseCardTest {
 
         resolveMayAbility(true);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards())
                 .extracting(Card::getName)
-                .containsExactly("Colossal Dreadmaw");
+                .containsExactly("Elvish Aberration");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
+                .isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind())
+                .isTrue();
     }
 
     @Test
@@ -42,11 +44,28 @@ class FierceEmpathTest extends BaseCardTest {
 
         resolveMayAbility(true);
 
-        GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertInHand(player1, "Colossal Dreadmaw");
+        harness.assertInHand(player1, "Elvish Aberration");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the ETB may ability with no matching creature finds nothing and shuffles")
+    void acceptingMayWithNoMatchingCreatureFindsNothing() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new GoblinBrigand(), new TempleOfTheFalseGod()));
+
+        resolveMayAbility(true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Goblin Brigand", "Temple of the False God");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Goblin Brigand", "Temple of the False God");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -68,9 +87,8 @@ class FierceEmpathTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new ColossalDreadmaw(), new AirElemental(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(
+                new ElvishAberration(), new GoblinBrigand(), new TempleOfTheFalseGod()));
     }
 
     private void resolveMayAbility(boolean accept) {

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "148")
+@CardRegistration(set = "HOC", collectorNumber = "148")
 public class BolgOfTheNorth extends Card {
 
     public BolgOfTheNorth() {

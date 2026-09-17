@@ -334,7 +334,7 @@ public class CombatAttackService {
 
     /**
      * Returns the subset of attackable indices whose creatures have at least one
-     * "attacks each combat if able" requirement. Returns empty if an attack tax is in effect.
+     * "attacks each combat if able" requirement that can be met without paying an attack tax.
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         return gameQueryService.withQueryScope(gameData,
@@ -343,10 +343,6 @@ public class CombatAttackService {
 
     private List<Integer> getMustAttackIndicesUnscoped(GameData gameData, UUID playerId,
                                                         List<Integer> attackableIndices) {
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
-        if (taxPerCreature > 0) {
-            return List.of();
-        }
         if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
@@ -362,7 +358,7 @@ public class CombatAttackService {
         for (int idx : attackableIndices) {
             Permanent p = battlefield.get(idx);
             if (restrictionValidAttackers.contains(idx)
-                    && attackLegalityService.getMustAttackRequirementCount(gameData, p) > 0) {
+                    && getMaximumUnpaidAttackRequirementCount(gameData, p) > 0) {
                 mustAttack.add(idx);
             }
         }
@@ -2463,10 +2459,6 @@ public class CombatAttackService {
                                                     List<Integer> attackableIndices,
                                                     Set<Integer> declaredAttackerIndices,
                                                     Map<Integer, UUID> attackTargets) {
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
-        if (taxPerCreature > 0) {
-            return;
-        }
         if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
         }
@@ -2477,13 +2469,13 @@ public class CombatAttackService {
                 gameData, playerId, attackableIndices);
         int maxRequirements = 0;
         for (int idx : restrictionValidGroupAttackers) {
-            maxRequirements += attackLegalityService.getMaximumMustAttackRequirementCount(
+            maxRequirements += getMaximumUnpaidAttackRequirementCount(
                     gameData, battlefield.get(idx));
         }
         for (int idx : attackableIndices) {
             if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
                 maxRequirements = Math.max(maxRequirements,
-                        attackLegalityService.getMaximumMustAttackRequirementCount(
+                        getMaximumUnpaidAttackRequirementCount(
                                 gameData, battlefield.get(idx)));
             }
         }
@@ -2508,13 +2500,23 @@ public class CombatAttackService {
             }
             for (int idx : restrictionValidAttackers) {
                 if (!declaredAttackerIndices.contains(idx)
-                        && attackLegalityService.getMaximumMustAttackRequirementCount(
+                        && getMaximumUnpaidAttackRequirementCount(
                         gameData, battlefield.get(idx)) > 0) {
                     throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
                 }
             }
             throw new IllegalStateException("Attack declaration satisfies too few attack requirements");
         }
+    }
+
+    private int getMaximumUnpaidAttackRequirementCount(GameData gameData, Permanent creature) {
+        UUID controllerId = gameData.findControllerOf(creature);
+        if (controllerId == null) return 0;
+        return attackLegalityService.getValidAttackTargetIds(gameData, controllerId).stream()
+                .filter(targetId -> attackLegalityService.canAttackDefender(gameData, creature, targetId))
+                .filter(targetId -> castingCostService.getAttackPaymentPerCreature(gameData, controllerId, targetId) == 0)
+                .mapToInt(targetId -> attackLegalityService.getMustAttackRequirementCount(gameData, creature, targetId))
+                .max().orElse(0);
     }
 
     /**

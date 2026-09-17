@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "MID", collectorNumber = "8")
+@CardRegistration(set = "DBL", collectorNumber = "8")
 public class CandlegroveWitch extends Card {
 
     public CandlegroveWitch() {

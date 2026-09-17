@@ -40,6 +40,8 @@ public class Permanent {
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
      *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
     @Setter private boolean entryCostPaid;
+    /** Null until the controller has chosen the cards to reveal for Amplify. */
+    @Setter private Integer amplifyRevealedCards;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
@@ -702,6 +704,7 @@ public class Permanent {
         this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
+        this.amplifyRevealedCards = source.amplifyRevealedCards;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;

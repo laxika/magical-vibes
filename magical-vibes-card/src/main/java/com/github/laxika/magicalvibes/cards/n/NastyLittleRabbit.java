@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "130")
+@CardRegistration(set = "HOC", collectorNumber = "130")
 public class NastyLittleRabbit extends Card {
 
     public NastyLittleRabbit() {

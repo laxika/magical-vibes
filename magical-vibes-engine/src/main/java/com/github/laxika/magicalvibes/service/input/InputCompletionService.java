@@ -75,6 +75,7 @@ public class InputCompletionService {
     }
 
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
+        if (gameData.waitingForSubgame) return;
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
@@ -116,6 +117,7 @@ public class InputCompletionService {
                 effectResolutionService.resolveEffectsFrom(gameData,
                         gameData.pendingEffectResolutionEntry,
                         gameData.pendingEffectResolutionIndex);
+                if (gameData.waitingForSubgame) return;
             }
 
             if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {

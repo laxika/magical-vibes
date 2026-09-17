@@ -616,7 +616,7 @@ public class GameViewProjectionFactory {
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
         Set<UUID> alreadyIncluded = new HashSet<>();
         for (Card c : exiledCards) alreadyIncluded.add(c.getId());
-        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+        for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)) {
             if (gameData.outsideGamePlayPermissions.contains(card.getId())
                     && alreadyIncluded.add(card.getId())) {
                 exiledCards.add(card);

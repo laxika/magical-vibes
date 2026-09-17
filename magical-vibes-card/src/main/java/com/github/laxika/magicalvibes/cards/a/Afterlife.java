@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MIR", collectorNumber = "1")
 @CardRegistration(set = "MMQ", collectorNumber = "1")
 @CardRegistration(set = "VMA", collectorNumber = "10")
+@CardRegistration(set = "CMD", collectorNumber = "2")
 public class Afterlife extends Card {
 
     public Afterlife() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "31")
+@CardRegistration(set = "DBL", collectorNumber = "298")
 public class RadiantGrace extends Card {
 
     public RadiantGrace() {

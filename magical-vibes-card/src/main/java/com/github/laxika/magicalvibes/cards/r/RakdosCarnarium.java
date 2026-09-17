@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "245")
 @CardRegistration(set = "2X2", collectorNumber = "329")
 @CardRegistration(set = "C13", collectorNumber = "313")
+@CardRegistration(set = "CMD", collectorNumber = "284")
 public class RakdosCarnarium extends Card {
 
     public RakdosCarnarium() {

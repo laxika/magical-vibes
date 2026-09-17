@@ -1,8 +1,5 @@
-package com.github.laxika.magicalvibes.service.battlefield;
+package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
@@ -62,5 +59,11 @@ public record BattlefieldEntryRequest(UUID controllerId,
         enterTappedTypes = Set.copyOf(enterTappedTypes);
         simultaneouslyEntered = List.copyOf(simultaneouslyEntered);
         repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+    }
+
+    public BattlefieldEntryRequest deepCopy() {
+        return new BattlefieldEntryRequest(controllerId, new Permanent(permanent), enterTappedTypes,
+                simultaneouslyEntered.stream().map(Permanent::new).toList(), xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters, landPlayZone);
     }
 }

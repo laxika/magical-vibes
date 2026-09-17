@@ -73,7 +73,7 @@ public class TurtlesForeverSearchChoiceInteractionHandler
         List<Card> chosen = cardIds.stream().map(cardsById::get).toList();
         gameData.interaction.clearAwaitingInput();
         List<Card> deck = gameData.playerDecks.get(interaction.playerId());
-        List<Card> sideboard = gameData.playerSideboards.get(interaction.playerId());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId());
         deck.removeIf(card -> chosenIds.contains(card.getId()));
         if (sideboard != null) {
             sideboard.removeIf(card -> chosenIds.contains(card.getId()));
@@ -105,7 +105,7 @@ public class TurtlesForeverSearchChoiceInteractionHandler
         }
         List<Card> source = librarySource
                 ? gameData.playerDecks.get(interaction.playerId())
-                : gameData.playerSideboards.get(interaction.playerId());
+                : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId());
         if (source == null || source.stream().noneMatch(card -> card.getId().equals(cardId))) {
             throw new IllegalStateException("Card is no longer available: " + cardId);
         }

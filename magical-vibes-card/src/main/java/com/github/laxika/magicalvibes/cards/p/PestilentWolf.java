@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "192")
+@CardRegistration(set = "DBL", collectorNumber = "192")
 public class PestilentWolf extends Card {
 
     public PestilentWolf() {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
@@ -95,6 +96,7 @@ public class StateBasedActionService {
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
     public void performStateBasedActions(GameData gameData) {
+        if (gameData.waitingForSubgame) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (graveyardService.hasPendingRegenerationChoice(gameData)) {
             graveyardService.processPendingRegenerationChoice(gameData);
@@ -235,6 +237,7 @@ public class StateBasedActionService {
             gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
+
             gameData.exiledCardsWithCroakCounters.remove(cardId);
             gameData.exiledCardsWithVoidCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
@@ -399,10 +402,13 @@ public class StateBasedActionService {
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        List<CardEffect> grantedCreatureDeathEffects = new ArrayList<>(
+                                entry.permanent().getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
+                        grantedCreatureDeathEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                                gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES));
                         gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
                                 entry.permanent().getId(),
-                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
+                                List.copyOf(grantedCreatureDeathEffects));
                     }
                 }
             }
@@ -646,7 +652,10 @@ public class StateBasedActionService {
     private void checkEmptyLibraryLoss(GameData gameData) {
         if (gameData.deferPlayerLossCheck) return;
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
+        if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.MULLIGAN
+                || gameData.currentStep == com.github.laxika.magicalvibes.model.TurnStep.UNTAP) return;
 
+        List<UUID> losers = new java.util.ArrayList<>();
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
             // Consume the flag before resolving rather than clearing the whole set afterwards: a
             // replacement can re-arm it during this very pass (Lich's Mirror running the library
@@ -655,13 +664,14 @@ public class StateBasedActionService {
             gameData.playersAttemptedDrawFromEmptyLibrary.remove(playerId);
 
             if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
-                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
-                gameOutcomeService.declareWinner(gameData, winnerId);
+                losers.add(playerId);
             }
         }
+        if (losers.size() == gameData.playerIds.size()) gameOutcomeService.declareDraw(gameData);
+        else if (!losers.isEmpty()) gameOutcomeService.declareWinner(gameData, gameQueryService.getOpponentId(gameData, losers.getFirst()));
     }
 
     /**
