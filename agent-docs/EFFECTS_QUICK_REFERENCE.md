@@ -1,4 +1,6 @@
 # EFFECTS_QUICK_REFERENCE
+- `LoseLifeEqualToLifeTotalAsEntersEffect()` - entry replacement that applies life loss equal to the controller's current life total through `LifeSupport`; zero and negative totals lose no life. Lich.
+- `SacrificePermanentsOrLoseGameEffect(DynamicAmount count, PermanentPredicate filter)` - controller sacrifices matching permanents through the existing forced-sacrifice choice flow; if fewer than required can be sacrificed, sacrifices what is possible and applies `ControllerLosesGameEffect`. Lich uses damage `EventValue` and a nontoken filter.
 - `EachOpponentLosesAllCountersEffect()` - non-targeting: each opponent of the resolving controller loses all tracked player counters (poison, energy, and experience). Used by Final Act (MAR 66).
 - `ExileTargetCreatureCardFromGraveyardThenReflexiveEffect(CardEffect reflexiveEffect)` — exile the targeted creature card from any graveyard, record its printed toughness as the event value, and queue `reflexiveEffect` as a reflexive ability only after the exile succeeds. Use `EventValue` in the follow-up amount; Venom, Deadly Devourer (SPE 22)
 

@@ -1,4 +1,6 @@
 # ORACLE_TEXT_EFFECT_MAP
+- "As this enchantment enters, you lose life equal to your life total" -> `LoseLifeEqualToLifeTotalAsEntersEffect()` on `ON_ENTER_BATTLEFIELD` (replacement, no stack). Lich (2ED 114).
+- "Whenever you're dealt damage, sacrifice that many nontoken permanents. If you can't, you lose the game" -> `SacrificePermanentsOrLoseGameEffect(new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate()))` on `ON_CONTROLLER_DEALT_DAMAGE`. Lich (2ED 114).
 - Final Act (MAR 66): "Choose one or more" modes map to `DestroyAllPermanentsEffect` for creatures, planeswalkers, and battles, `ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS)`, and `EachOpponentLosesAllCountersEffect()`.
 | "Exile target creature card from a graveyard. When you do, put X +1/+1 counters on target Symbiote, where X is the exiled card's toughness" | `ExileTargetCreatureCardFromGraveyardThenReflexiveEffect(PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, EventValue, Symbiote))` | ACTIVATED_ABILITY | Venom, Deadly Devourer (SPE 22) — exile first, then choose the Symbiote target for the reflexive ability using the captured toughness |
 
