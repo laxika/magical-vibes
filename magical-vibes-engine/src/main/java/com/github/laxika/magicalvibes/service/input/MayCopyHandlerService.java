@@ -295,6 +295,11 @@ public class MayCopyHandlerService {
 
             List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);
             for (UUID pid : gameData.orderedPlayerIds) {
+                if (targetZone == Zone.GRAVEYARD) {
+                    for (Card graveyardCard : gameData.playerGraveyards.getOrDefault(pid, List.of())) {
+                        candidateTargets.add(graveyardCard.getId());
+                    }
+                }
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) {
                     continue;
@@ -306,13 +311,14 @@ public class MayCopyHandlerService {
 
             for (UUID candidate : candidateTargets) {
                 try {
-                    targetLegalityService.validateSpellTargeting(
-                            gameData,
-                            copiedCard,
-                            candidate,
-                            targetZone,
-                            copyEntry.getControllerId()
-                    );
+                    if (targetZone == Zone.GRAVEYARD) {
+                        targetLegalityService.validateEffectTargetInZone(
+                                gameData, copiedCard, candidate, targetZone,
+                                copyEntry.getXValue(), copyEntry.getControllerId());
+                    } else {
+                        targetLegalityService.validateSpellTargeting(
+                                gameData, copiedCard, candidate, targetZone, copyEntry.getControllerId());
+                    }
                     validTargets.add(candidate);
                 } catch (IllegalStateException ignored) {
                     // Candidate is not legal for this copied spell.

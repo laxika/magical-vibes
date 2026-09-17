@@ -2149,8 +2149,12 @@ public class CombatDamageService {
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
                     }
+                    // Player recipients on this trigger slot normally mean "that player":
+                    // bind the damaged player unless the card explicitly declares a target.
                     if (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect)))) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
                         OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);

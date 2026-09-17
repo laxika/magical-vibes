@@ -5713,7 +5713,8 @@ public class StepTriggerService {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
-                        enchantedPermanentControllerId,
+                        effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect
+                                ? auraOwnerId : enchantedPermanentControllerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
                         perm.getAttachedTo(),
@@ -5721,6 +5722,7 @@ public class StepTriggerService {
                 );
                 entry.setNonTargeting(true);
                 entry.setTriggeringPermanentId(perm.getAttachedTo());
+                entry.setTriggeringPermanentControllerId(enchantedPermanentControllerId);
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 gameData.stack.add(entry);
 

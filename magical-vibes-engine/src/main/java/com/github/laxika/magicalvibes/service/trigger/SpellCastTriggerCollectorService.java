@@ -2780,7 +2780,11 @@ public class SpellCastTriggerCollectorService {
 
     private int spellManaValue(com.github.laxika.magicalvibes.model.GameData gameData, Card spellCard) {
         StackEntry spellEntry = findStackEntryForCard(gameData, spellCard.getId());
-        return spellCard.getManaValue() + (spellEntry == null ? 0 : spellEntry.getXValue());
+        if (spellEntry != null && spellEntry.isCastFaceDown()) {
+            return 0;
+        }
+        return spellCard.getManaValue() + (spellEntry == null || spellCard.getParsedManaCost() == null
+                ? 0 : spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount());
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {

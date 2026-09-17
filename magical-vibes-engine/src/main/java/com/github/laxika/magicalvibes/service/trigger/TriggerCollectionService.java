@@ -2998,6 +2998,8 @@ public class TriggerCollectionService {
                     auraControllerId,
                     aura.getId());
             entry.setEventValue(damageDealt);
+            entry.setSourcePermanentSnapshot(new Permanent(aura));
+            entry.setNonTargeting(true);
             entries.add(entry);
         });
     }

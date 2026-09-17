@@ -683,7 +683,9 @@ public class PredicateEvaluationService {
             case CardManaValueLessThanXPredicate ignored ->
                     xValue != null && card.getManaValue() < xValue;
             case CardMinManaValuePredicate p ->
-                    card.getManaValue() + (p.includeXValue() && xValue != null ? xValue : 0)
+                    card.getManaValue() + (p.includeXValue() && xValue != null
+                            && card.getParsedManaCost() != null
+                            ? xValue * card.getParsedManaCost().getXSymbolCount() : 0)
                             >= p.minManaValue();
             case CardPowerAtLeastPredicate p ->
                     card.getPower() != null && card.getPower() >= p.minPower();

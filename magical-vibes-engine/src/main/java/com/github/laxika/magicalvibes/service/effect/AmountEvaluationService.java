@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
@@ -286,10 +287,14 @@ public class AmountEvaluationService {
             case WebSlingingReturnedCreatureManaValue ignored ->
                     ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
                             ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
+            // Cast triggers carry the triggering spell's payment in X, independently of
+            // the mana spent on the permanent that owns the ability.
             case ManaSpentToCast ignored ->
-                    ctx.sourcePermanent() != null
+                    ctx.stackEntry() != null && ctx.stackEntry().getTriggeringCardId() != null
+                            ? ctx.xValue()
+                            : ctx.sourcePermanent() != null
                             ? ctx.sourcePermanent().getManaSpentToCast()
-                            : ctx.stackEntry() != null
+                            : ctx.stackEntry() != null && ctx.stackEntry().getEntryType() != StackEntryType.TRIGGERED_ABILITY
                             ? ctx.stackEntry().getManaSpentToCast()
                             : ctx.xValue();
             case SnowManaSpentToCast ignored ->
@@ -2028,7 +2033,7 @@ public class AmountEvaluationService {
                     permanent, amount.filter(), filterContext)) {
                 continue;
             }
-            greatest = Math.max(greatest, permanent.getCard().getManaValue());
+            greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
         }
         return greatest;
     }

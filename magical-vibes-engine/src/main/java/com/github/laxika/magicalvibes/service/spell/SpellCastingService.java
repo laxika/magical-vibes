@@ -13189,7 +13189,15 @@ public class SpellCastingService {
             }
         }
         Card castCharacteristics = card;
-        if (castEntry != null && card.getBackFaceCard() != null
+        if (castEntry != null && castEntry.isCastFaceDown()) {
+            Card faceDown = new Card();
+            faceDown.setName("");
+            faceDown.setType(CardType.CREATURE);
+            faceDown.setPower(2);
+            faceDown.setToughness(2);
+            castCharacteristics = card.createRuntimeCopyWithFace(faceDown);
+            castCharacteristics.freeze();
+        } else if (castEntry != null && card.getBackFaceCard() != null
                 && (castEntry.isCastWithAdventure() || castEntry.isCastWithOmen()
                 || castEntry.isCastWithDisturb() || castEntry.isCastTransformed())) {
             castCharacteristics = card.createRuntimeCopyWithFace(card.getBackFaceCard());

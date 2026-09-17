@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -3506,7 +3508,19 @@ public class TargetLegalityService {
     }
 
     private UUID targetPredicateController(StackEntry entry) {
-        return entry.getActivePlayerId() != null ? entry.getActivePlayerId() : entry.getControllerId();
+        // Only abilities that ask the active player to choose (the Oaths, for example)
+        // evaluate "opponent" relative to that player. A block trigger still uses its controller.
+        if (entry.getActivePlayerId() != null && entry.getCard() != null) {
+            for (CardEffect effect : entry.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)) {
+                if (effect instanceof MayEffect may
+                        && may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
+                        && (entry.getEffectsToResolve().contains(may)
+                        || entry.getEffectsToResolve().contains(may.wrapped()))) {
+                    return entry.getActivePlayerId();
+                }
+            }
+        }
+        return entry.getControllerId();
     }
 
     private TargetFilter primaryTargetFilter(StackEntry entry) {
