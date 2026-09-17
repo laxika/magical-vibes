@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Stores a global trigger through the beginning of its controller's next turn. */
+/** Stores a global trigger until the beginning of its controller's next turn. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -32,7 +32,7 @@ public class RegisterGlobalTriggeredAbilityUntilNextTurnEffectHandler implements
                 null, false, true, gameData.turnNumber));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until their next turn."));
-        log.info("Game {} - {} registers a global {} trigger until the beginning of their next turn",
+        log.info("Game {} - {} registers a global {} trigger until their next turn",
                 gameData.id, entry.getCard().getName(), registration.slot().name());
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.carddata;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry.TokenImageData;
 import com.github.laxika.magicalvibes.model.OracleData;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,6 +25,8 @@ import java.util.Map;
  *                                   that number.
  * @param backFaceByCollectorNumber  back-face oracle data, present only for printings that have a
  *                                   back face
+ * @param faceNamesByCollectorNumber every printed face name, used to validate class names for
+ *                                   split cards with more than two faces
  * @param tokenImages                token art keyed by {@link CardPrintingRegistry#buildTokenKey}.
  *                                   Empty when the set has no tokens or they could not be loaded —
  *                                   token failures are not set-load failures.
@@ -34,5 +37,14 @@ public record SetOracleData(
         Map<String, String> rarityByCollectorNumber,
         Map<String, OracleData> frontFaceByCollectorNumber,
         Map<String, OracleData> backFaceByCollectorNumber,
+        Map<String, List<String>> faceNamesByCollectorNumber,
         Map<String, TokenImageData> tokenImages) {
+
+    public SetOracleData(String setName, int cardTotal, Map<String, String> rarityByCollectorNumber,
+                         Map<String, OracleData> frontFaceByCollectorNumber,
+                         Map<String, OracleData> backFaceByCollectorNumber,
+                         Map<String, TokenImageData> tokenImages) {
+        this(setName, cardTotal, rarityByCollectorNumber, frontFaceByCollectorNumber,
+                backFaceByCollectorNumber, Map.of(), tokenImages);
+    }
 }

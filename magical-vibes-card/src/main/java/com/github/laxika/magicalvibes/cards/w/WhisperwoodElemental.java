@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "145")
+@CardRegistration(set = "PIO", collectorNumber = "200")
 public class WhisperwoodElemental extends Card {
 
     public WhisperwoodElemental() {

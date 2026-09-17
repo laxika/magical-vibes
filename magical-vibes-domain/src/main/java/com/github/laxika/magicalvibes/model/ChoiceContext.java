@@ -733,6 +733,12 @@ public sealed interface ChoiceContext {
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
+    record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
+        public LegacyWordChoice {
+            options = List.copyOf(options);
+        }
+    }
+
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 
@@ -1571,6 +1577,24 @@ public sealed interface ChoiceContext {
                 case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
                 default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
             };
+        }
+    }
+
+    record RemoveUpToCountersFromAllPermanentsChoice(StackEntry resolvingEntry, CounterType counterType,
+                                                     int remaining, Map<String, UUID> permanentOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveUpToCountersFromAllPermanentsChoice {
+            permanentOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(permanentOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
         }
     }
 

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
+@CardRegistration(set = "C15", collectorNumber = "52")
+@CardRegistration(set = "MB1", collectorNumber = "213")
 @CardRegistration(set = "IMA", collectorNumber = "227")
 @CardRegistration(set = "2XM", collectorNumber = "285")
 public class SandstoneOracle extends Card {

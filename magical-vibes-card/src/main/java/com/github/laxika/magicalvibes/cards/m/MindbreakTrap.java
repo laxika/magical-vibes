@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "OTP", collectorNumber = "12")
 @CardRegistration(set = "OTP", collectorNumber = "68")
 @CardRegistration(set = "MAR", collectorNumber = "11")
+@CardRegistration(set = "OMB", collectorNumber = "11")
 public class MindbreakTrap extends Card {
 
     public MindbreakTrap() {

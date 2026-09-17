@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "105")
+@CardRegistration(set = "AA4", collectorNumber = "11")
 public class BalefulForce extends Card {
 
     public BalefulForce() {

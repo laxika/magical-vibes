@@ -14,7 +14,7 @@ import java.util.UUID;
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
                                               CardEffect effect, TargetFilter targetFilter,
-                                              boolean untilEndOfNextTurn, boolean untilNextTurnStart,
+                                              boolean untilEndOfNextTurn, boolean untilNextTurn,
                                               int registrationTurnNumber) {
 
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
@@ -22,7 +22,6 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
         this(controllerId, sourceCard, slot, effect, null, false, false, -1);
     }
 
-    /** Backward-compatible constructor for end-of-next-turn registrations. */
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
                                            CardEffect effect, TargetFilter targetFilter,
                                            boolean untilEndOfNextTurn, int registrationTurnNumber) {

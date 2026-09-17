@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "114")
+@CardRegistration(set = "PIO", collectorNumber = "162")
 public class AlphaAuthority extends Card {
 
     public AlphaAuthority() {

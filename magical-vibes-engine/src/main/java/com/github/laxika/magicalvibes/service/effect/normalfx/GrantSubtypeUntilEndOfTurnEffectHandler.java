@@ -99,7 +99,12 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             return;
         }
 
-        for (UUID targetId : entry.targetsForEffect(e)) {
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null
+                && (entry.getTargetingCard() == null || !entry.getTargetingCard().hasEffectTargetIndex(e))) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;

@@ -42,6 +42,27 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class StateBasedActionService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry commanderInteractions;
+
+    private boolean offerCommanderReturn(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput() || gameData.deferPlayerLossCheck) return false;
+        for (UUID owner : gameData.orderedPlayerIds) {
+            for (Card card : gameData.playerCommanders.getOrDefault(owner, List.of())) {
+                if (!gameData.commanderReturnCandidates.remove(card.getId())) continue;
+                var zone = gameData.playerGraveyards.getOrDefault(owner, List.of()).stream().anyMatch(c -> c.getId().equals(card.getId()))
+                        ? com.github.laxika.magicalvibes.model.Zone.GRAVEYARD
+                        : gameData.findExiledCard(card.getId()) != null ? com.github.laxika.magicalvibes.model.Zone.EXILE : null;
+                if (zone != null) {
+                    commanderInteractions.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.CommanderReturnChoice(owner, card, zone));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
 
 
@@ -71,7 +92,11 @@ public class StateBasedActionService {
      */
     private static final int MAX_SBA_PASSES = 100;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
     public void performStateBasedActions(GameData gameData) {
+        if (gameData.waitingForSubgame) return;
+        if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (graveyardService.hasPendingRegenerationChoice(gameData)) {
             graveyardService.processPendingRegenerationChoice(gameData);
             return;
@@ -147,6 +172,8 @@ public class StateBasedActionService {
             }
         }
 
+        if (offerCommanderReturn(gameData)) return;
+
         // CR 603.8 — check state-triggered abilities after SBAs
         stateTriggerService.checkStateTriggers(gameData);
 
@@ -186,7 +213,7 @@ public class StateBasedActionService {
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.removeIf(entry -> {
                 Card card = entry.card();
-                if (!card.isToken()) {
+                if (!card.isToken() || card.isTokenCard()) {
                     return false;
                 }
                 if (removedTokenIds.add(card.getId())) {
@@ -209,8 +236,9 @@ public class StateBasedActionService {
             gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
-            gameData.exiledCardsWithVoidCounters.remove(cardId);
+
             gameData.exiledCardsWithCroakCounters.remove(cardId);
+            gameData.exiledCardsWithVoidCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);
@@ -248,7 +276,7 @@ public class StateBasedActionService {
 
     private void removeTokensFromZone(List<Card> zone, List<Card> removedTokens, Set<UUID> removedTokenIds) {
         zone.removeIf(card -> {
-            if (!card.isToken()) {
+            if (!card.isToken() || card.isTokenCard()) {
                 return false;
             }
             if (removedTokenIds.add(card.getId())) {
@@ -620,7 +648,10 @@ public class StateBasedActionService {
     private void checkEmptyLibraryLoss(GameData gameData) {
         if (gameData.deferPlayerLossCheck) return;
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
+        if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.MULLIGAN
+                || gameData.currentStep == com.github.laxika.magicalvibes.model.TurnStep.UNTAP) return;
 
+        List<UUID> losers = new java.util.ArrayList<>();
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
             // Consume the flag before resolving rather than clearing the whole set afterwards: a
             // replacement can re-arm it during this very pass (Lich's Mirror running the library
@@ -629,13 +660,14 @@ public class StateBasedActionService {
             gameData.playersAttemptedDrawFromEmptyLibrary.remove(playerId);
 
             if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
-                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
-                gameOutcomeService.declareWinner(gameData, winnerId);
+                losers.add(playerId);
             }
         }
+        if (losers.size() == gameData.playerIds.size()) gameOutcomeService.declareDraw(gameData);
+        else if (!losers.isEmpty()) gameOutcomeService.declareWinner(gameData, gameQueryService.getOpponentId(gameData, losers.getFirst()));
     }
 
     /**

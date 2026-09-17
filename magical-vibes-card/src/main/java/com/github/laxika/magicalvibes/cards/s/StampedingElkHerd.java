@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "DTK", collectorNumber = "208")
+@CardRegistration(set = "PIO", collectorNumber = "350")
 public class StampedingElkHerd extends Card {
 
     public StampedingElkHerd() {

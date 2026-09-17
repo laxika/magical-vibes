@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "DDF", collectorNumber = "21")
 @CardRegistration(set = "MM2", collectorNumber = "34")
 @CardRegistration(set = "DDO", collectorNumber = "26")
+@CardRegistration(set = "MB1", collectorNumber = "249")
 @CardRegistration(set = "TSR", collectorNumber = "47")
 public class Sunlance extends Card {
 

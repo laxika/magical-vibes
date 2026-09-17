@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MAR", collectorNumber = "93")
+@CardRegistration(set = "REX", collectorNumber = "18")
+@CardRegistration(set = "REX", collectorNumber = "43")
 public class RavenousTyrannosaurus extends Card {
 
     public RavenousTyrannosaurus() {

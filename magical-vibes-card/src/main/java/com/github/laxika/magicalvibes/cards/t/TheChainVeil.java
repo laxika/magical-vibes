@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "215")
+@CardRegistration(set = "PIO", collectorNumber = "358")
 public class TheChainVeil extends Card {
 
     public TheChainVeil() {

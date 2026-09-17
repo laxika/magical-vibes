@@ -40,6 +40,8 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
     private final EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport eachPlayerRevealSupport;
+    private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService battlefieldPlacementService;
+    private final com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService asEntersInteractionService;
 
     @Override
     public Class<PendingInteraction.RevealAnyNumberOfCardsFromHandChoice> handledType() {
@@ -109,6 +111,18 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
+
+        if (interaction.amplifyEntry() != null) {
+            var request = interaction.amplifyEntry();
+            Permanent permanent = request.permanent();
+            permanent.setAmplifyRevealedCards(selectedCards.size());
+            battlefieldPlacementService.place(gameData, request);
+            asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),
+                    permanent.getCard(), null, permanent.getCastFromZone() == com.github.laxika.magicalvibes.model.Zone.HAND,
+                    request.xValue(), request.xValue(), request.kicked(), List.of(), request.repeatedAdditionalCosts());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         PendingInteraction.ManaAbilityRevealContext manaContext = interaction.manaAbilityContext();
         if (manaContext != null) {

@@ -78,6 +78,7 @@ class CabalSlaverTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
 
         harness.handleCardChosen(player2, 0);

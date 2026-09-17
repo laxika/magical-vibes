@@ -21,9 +21,56 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThrasiosTritonHeroTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Scries then puts a revealed land onto the battlefield tapped")
+    void scriesThenPutsLandOntoBattlefieldTapped() {
+        addThrasios();
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).hasSize(1);
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof Forest)
+                .findFirst()
+                .orElseThrow();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Draws the revealed nonland card after scrying")
+    void drawsRevealedNonlandCard() {
+        addThrasios();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Forest");
+    }
+
+    @Test
     @DisplayName("Ability resolves scry 1 before revealing the top card")
     void scriesBeforeReveal() {
-        addReadyThrasios();
+        addThrasios();
         Card topCard = new GrizzlyBears();
         Card nextCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, nextCard));
@@ -43,7 +90,7 @@ class ThrasiosTritonHeroTest extends BaseCardTest {
     @Test
     @DisplayName("Revealed land enters the battlefield tapped")
     void putsRevealedLandOntoBattlefieldTapped() {
-        addReadyThrasios();
+        addThrasios();
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -64,7 +111,7 @@ class ThrasiosTritonHeroTest extends BaseCardTest {
     @Test
     @DisplayName("Revealed nonland card is drawn")
     void drawsRevealedNonland() {
-        addReadyThrasios();
+        addThrasios();
         Card nonland = new GrizzlyBears();
         harness.setLibrary(player1, List.of(nonland));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -78,8 +125,9 @@ class ThrasiosTritonHeroTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(nonland);
     }
 
-    private Permanent addReadyThrasios() {
-        Permanent thrasios = addCreatureReady(player1, new ThrasiosTritonHero());
+    private Permanent addThrasios() {
+        Permanent thrasios = harness.addToBattlefieldAndReturn(player1, new ThrasiosTritonHero());
+        thrasios.setSummoningSick(false);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return thrasios;

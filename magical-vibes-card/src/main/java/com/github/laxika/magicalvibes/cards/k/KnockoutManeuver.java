@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTarge
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TDM", collectorNumber = "147")
+@CardRegistration(set = "SOA", collectorNumber = "54")
 public class KnockoutManeuver extends Card {
 
     public KnockoutManeuver() {

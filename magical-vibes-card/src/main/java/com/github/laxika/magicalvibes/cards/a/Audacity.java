@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "169")
+@CardRegistration(set = "PIO", collectorNumber = "164")
 public class Audacity extends Card {
 
     public Audacity() {

@@ -54,11 +54,9 @@ class GlowriderTest extends BaseCardTest {
     @DisplayName("Creature spells are not affected")
     void creatureSpellsAreNotAffected() {
         harness.addToBattlefield(player1, new Glowrider());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
     }

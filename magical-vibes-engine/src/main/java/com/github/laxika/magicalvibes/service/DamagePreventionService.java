@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
-import com.github.laxika.magicalvibes.model.ComeuppanceShield;
+import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingComeuppanceDamage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
@@ -409,6 +410,10 @@ public class DamagePreventionService {
         // preventOnlyIfCounterAvailable=true (Rock Hydra), only the damage represented by removed
         // counters is prevented. Otherwise, all damage is prevented. Ugin's Conjurant applies only
         // while it has a +1/+1 counter.
+        if (damage > 0 && damagePreventionReplacementSupport
+                .applyDamageToPermanentByRemovingCountersOrSacrificing(gameData, permanent, damage)) {
+            return 0;
+        }
         var preventRemoveEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)
                 .map(e -> (PreventDamageAndRemovePlusOnePlusOneCountersEffect) e)
@@ -1137,40 +1142,6 @@ public class DamagePreventionService {
         return applySourceDamagePreventionForPlayer(gameData, playerId, sourcePermanentId, damage, sourceColors, false);
     }
 
-    /**
-     * Applies Comeuppance to damage headed to a player or one of their planeswalkers. The return
-     * damage is queued separately because its source is Comeuppance, not the source of the
-     * prevented damage.
-     */
-    public int applyComeuppanceShield(GameData gameData, UUID protectedPlayerId,
-                                      Permanent protectedPermanent, Permanent damageSource,
-                                      UUID damageSourceControllerId, int damage,
-                                      boolean combatDamage) {
-        if (damage <= 0 || protectedPlayerId == null
-                || (protectedPermanent != null && !gameQueryService.isPlaneswalker(gameData, protectedPermanent))
-                || (protectedPermanent == null && !gameData.playerIds.contains(protectedPlayerId))
-                || !gameQueryService.isDamagePreventable(gameData, combatDamage)
-                || gameData.comeuppanceShields.isEmpty()
-                || damageSourceControllerId == null
-                || damageSourceControllerId.equals(protectedPlayerId)) {
-            return damage;
-        }
-
-        boolean sourceIsCreature = damageSource != null && gameQueryService.isCreature(gameData, damageSource);
-        UUID returnTargetId = sourceIsCreature ? damageSource.getId() : damageSourceControllerId;
-        int remaining = damage;
-        for (ComeuppanceShield shield : gameData.comeuppanceShields) {
-            if (remaining <= 0 || !shield.protectedPlayerId().equals(protectedPlayerId)) {
-                continue;
-            }
-            int prevented = remaining;
-            remaining = 0;
-            gameData.pendingComeuppanceDamage.add(new PendingComeuppanceDamage(
-                    returnTargetId, prevented, shield.protectedPlayerId(), shield.sourceCard()));
-        }
-        return remaining;
-    }
-
     public int applySourceDamagePreventionForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                     int damage, Set<CardColor> sourceColors, boolean combatDamage) {
         if (!isSourceDamagePreventedForPlayer(gameData, playerId, sourcePermanentId, combatDamage)) return damage;
@@ -1427,7 +1398,8 @@ public class DamagePreventionService {
             }
             if (shield.damageMultiplier() != 0) {
                 it.remove();
-                return damage * shield.damageMultiplier();
+                return damage * shield.damageMultiplier()
+                        * MaroGoneNutsSupport.doublingFactor(gameData);
             }
             if (!preventable) {
                 return damage;
@@ -2227,6 +2199,41 @@ public class DamagePreventionService {
 
         if (totalReduction <= 0) return damage;
         return (int) (damage - totalReduction);
+    }
+
+    /**
+     * Applies Comeuppance prevention to damage dealt to a player or one of their planeswalkers.
+     * Creature-source damage is queued back to that creature; other damage is queued back to the
+     * source's controller.
+     */
+    public int applyComeuppancePrevention(GameData gameData, UUID protectedPlayerId, int damage,
+                                          Card sourceCard, Permanent sourcePermanent,
+                                          UUID sourceControllerId, boolean combatDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
+                || damage <= 0 || protectedPlayerId == null || sourceControllerId == null
+                || sourceControllerId.equals(protectedPlayerId)
+                || gameData.comeuppanceDamagePreventionShields.isEmpty()) {
+            return damage;
+        }
+
+        boolean creatureSource = sourcePermanent != null
+                ? gameQueryService.isCreature(gameData, sourcePermanent)
+                : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
+        for (ComeuppanceDamagePreventionShield shield : gameData.comeuppanceDamagePreventionShields) {
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
+
+            if (creatureSource && sourcePermanent != null) {
+                gameData.pendingRedirectDamage.add(new DamageRedirectShield(
+                        protectedPlayerId, damage, null, shield.sourceCard(), sourcePermanent.getId()));
+            } else if (!creatureSource && gameData.playerIds.contains(sourceControllerId)) {
+                gameData.pendingRedirectDamage.add(new DamageRedirectShield(
+                        protectedPlayerId, damage, null, shield.sourceCard(), sourceControllerId));
+            }
+            gameLogService.append(gameData, GameLog.cardThen(shield.sourceCard(),
+                    " prevents " + damage + " damage to its controller or a planeswalker they control."));
+            return 0;
+        }
+        return damage;
     }
 
     /**

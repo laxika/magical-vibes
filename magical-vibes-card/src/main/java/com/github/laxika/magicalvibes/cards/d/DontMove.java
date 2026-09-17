@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -15,19 +14,17 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAR", collectorNumber = "43")
+@CardRegistration(set = "REX", collectorNumber = "1")
+@CardRegistration(set = "REX", collectorNumber = "27")
 public class DontMove extends Card {
 
     public DontMove() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentIsTappedPredicate()))));
-
-        var destroyTappedCreature = new TriggeringPermanentConditionalEffect(
-                new PermanentIsCreaturePredicate(),
-                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsTappedPredicate()))));
         addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(
-                EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, destroyTappedCreature));
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(
-                EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, destroyTappedCreature));
+                EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED,
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING)));
     }
 }

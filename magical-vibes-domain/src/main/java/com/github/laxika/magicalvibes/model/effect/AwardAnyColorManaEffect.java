@@ -212,6 +212,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
             case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,
+                 LEGENDARY_SPELLS,
                  INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, ARTIFACT_SPELLS_OR_ABILITIES,
                  FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
                  MULTICOLORED_SPELLS,

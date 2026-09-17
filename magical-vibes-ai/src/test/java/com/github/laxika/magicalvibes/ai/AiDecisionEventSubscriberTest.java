@@ -25,6 +25,33 @@ class AiDecisionEventSubscriberTest {
     private final UUID otherPlayerId = UUID.randomUUID();
 
     @Test
+    void childDecisionsWakeTheSessionAiWithoutClosingItOnSubgameEnd() {
+        var root = new com.github.laxika.magicalvibes.model.GameData(gameId, "root", aiPlayerId, "AI");
+        var child = new com.github.laxika.magicalvibes.model.GameData(UUID.randomUUID(), "child", aiPlayerId, "AI");
+        var registry = new com.github.laxika.magicalvibes.service.GameRegistry();
+        registry.register(root);
+        registry.register(child);
+        root.session.push(child);
+        AiDecisionEventSubscriber subscriber = new AiDecisionEventSubscriber();
+        org.springframework.test.util.ReflectionTestUtils.setField(subscriber, "registry", registry);
+        AiDecisionScheduler scheduler = mock(AiDecisionScheduler.class);
+        subscriber.register(root.id, aiPlayerId, scheduler);
+        var coordinator = new com.github.laxika.magicalvibes.service.event.GameMutationCoordinator(
+                new GameEventDispatcher(List.of(subscriber)));
+        coordinator.mutate(child, () -> {
+            coordinator.emit(child, new GameEventFact.DecisionRequested(UUID.randomUUID(), aiPlayerId,
+                    GameEventFact.DecisionKind.MULLIGAN), GameEventAudience.player(aiPlayerId));
+            coordinator.emit(child, new GameEventFact.SubgameEnded(GameEventFact.GameResult.WIN, aiPlayerId));
+        });
+        verify(scheduler).scheduleDecision(AiDecisionKind.MULLIGAN);
+        verify(scheduler, never()).close();
+        root.session.pop();
+        coordinator.mutate(root, () -> coordinator.emit(root,
+                new GameEventFact.GameEnded(GameEventFact.GameResult.WIN, aiPlayerId)));
+        verify(scheduler).close();
+    }
+
+    @Test
     void schedulesEveryDecisionShapeDirectlyFromCanonicalFactsInOrder() {
         AiDecisionEventSubscriber subscriber = new AiDecisionEventSubscriber();
         AiDecisionScheduler connection = mock(AiDecisionScheduler.class);

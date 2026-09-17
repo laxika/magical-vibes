@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-deck-formats
+      author: codex
+      changes:
+        - addColumn:
+            tableName: decks
+            columns:
+              - column:
+                  name: format
+                  type: VARCHAR(24)
+                  defaultValue: CASUAL
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sideboard_json
+                  type: TEXT
+              - column:
+                  name: commander_json
+                  type: TEXT

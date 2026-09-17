@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public class LibrarySearchSupport {
 
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    private ReverseMiracleSupport reverseMiracleSupport;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the
@@ -155,6 +158,7 @@ public class LibrarySearchSupport {
                     .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
+            params = applyOppositionAgentControl(gameData, params);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library."));
             return true;
@@ -697,6 +701,37 @@ public class LibrarySearchSupport {
         return deck.stream().filter(this::isLibrarySearchCastableCard).toList();
     }
 
+    /** Applies the controller of the most recently entered opposing Opposition Agent, if any. */
+    public LibrarySearchParams applyOppositionAgentControl(GameData gameData, LibrarySearchParams params) {
+        if (params.decisionPlayerId() != null
+                || params.sourceSideboard()
+                || params.sourceCards() != null
+                || (params.targetPlayerId() != null && !params.targetPlayerId().equals(params.playerId()))) {
+            return params;
+        }
+
+        UUID controllerId = null;
+        long newestTimestamp = Long.MIN_VALUE;
+        for (UUID battlefieldControllerId : gameData.orderedPlayerIds) {
+            if (battlefieldControllerId.equals(params.playerId())) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                boolean isOppositionAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OppositionAgentEffect.class::isInstance);
+                if (isOppositionAgent && permanent.getTimestamp() >= newestTimestamp) {
+                    newestTimestamp = permanent.getTimestamp();
+                    controllerId = battlefieldControllerId;
+                }
+            }
+        }
+        return controllerId == null ? params : params.withDecisionPlayerId(controllerId);
+    }
+
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind) {
         String playerName = gameData.playerIdToName.get(playerId);
@@ -738,50 +773,32 @@ public class LibrarySearchSupport {
                 && !params.sourceSideboard()
                 && params.sourceCards() == null;
         if (ownLibrarySearch) {
-            UUID oppositionAgentControllerId = oppositionAgentController(gameData, playerId);
-            if (oppositionAgentControllerId != null) {
-                params = params.withOppositionAgentController(oppositionAgentControllerId);
-                prompt = "Choose a card for " + gameData.playerIdToName.get(playerId)
-                        + " to find and exile from their library.";
-            } else {
-                params = params.withAllowCastFromLibraryWhileSearching(true);
-                List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
-                if (!castableCards.isEmpty()) {
-                    Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
-                    List<Card> cards = new ArrayList<>(params.cards());
-                    castableCards.stream()
-                            .filter(card -> !existingCardIds.contains(card.getId()))
-                            .forEach(cards::add);
-                    if (cards.size() > params.cards().size()) {
-                        params = params.withCards(cards);
-                        prompt += " You may also cast a card with a library-search permission.";
-                    }
+            params = params.withAllowCastFromLibraryWhileSearching(true);
+            List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
+            if (!castableCards.isEmpty()) {
+                Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+                List<Card> cards = new ArrayList<>(params.cards());
+                castableCards.stream()
+                        .filter(card -> !existingCardIds.contains(card.getId()))
+                        .forEach(cards::add);
+                if (cards.size() > params.cards().size()) {
+                    params = params.withCards(cards);
+                    prompt += " You may also cast a card with a library-search permission.";
                 }
             }
+        }
+
+        params = applyOppositionAgentControl(gameData, params);
+
+        if (reverseMiracleSupport != null && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
+                prompt, canFailToFind, logMessage)) {
+            return;
         }
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
                 params, prompt, canFailToFind));
 
         gameLogService.append(gameData, GameLog.text(logMessage));
-    }
-
-    /** Returns the most recently entered Opposition Agent controlled by an opponent of the searcher. */
-    private UUID oppositionAgentController(GameData gameData, UUID searchingPlayerId) {
-        UUID controllerId = null;
-        long latestTimestamp = Long.MIN_VALUE;
-        for (UUID candidateControllerId : gameData.orderedPlayerIds) {
-            if (candidateControllerId.equals(searchingPlayerId)) continue;
-            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(candidateControllerId, List.of())) {
-                boolean hasAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(OppositionAgentEffect.class::isInstance);
-                if (hasAgent && permanent.getTimestamp() >= latestTimestamp) {
-                    latestTimestamp = permanent.getTimestamp();
-                    controllerId = candidateControllerId;
-                }
-            }
-        }
-        return controllerId;
     }
 
     /**

@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "320")
+@CardRegistration(set = "EOS", collectorNumber = "11")
+@CardRegistration(set = "EOS", collectorNumber = "56")
+@CardRegistration(set = "EOS", collectorNumber = "101")
+@CardRegistration(set = "EOS", collectorNumber = "146")
 public class DesertedTemple extends Card {
 
     public DesertedTemple() {

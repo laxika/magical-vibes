@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Static replacement effect: "If a source would deal damage to an opponent, it deals double that
  * damage to that player instead."
  */
-public record DoubleDamageToOpponentsEffect() implements OpponentRecipientDamageMultiplyingEffect {
+public record DoubleDamageToOpponentsEffect() implements OpponentRecipientDamageMultiplyingEffect, DoublingEffect {
 
     @Override
     public int damageMultiplier() {

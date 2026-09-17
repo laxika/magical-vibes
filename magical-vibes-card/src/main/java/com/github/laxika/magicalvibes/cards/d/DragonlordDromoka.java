@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 
 @CardRegistration(set = "DTK", collectorNumber = "217")
 @CardRegistration(set = "2X2", collectorNumber = "202")
+@CardRegistration(set = "PIO", collectorNumber = "217")
 public class DragonlordDromoka extends Card {
 
     public DragonlordDromoka() {

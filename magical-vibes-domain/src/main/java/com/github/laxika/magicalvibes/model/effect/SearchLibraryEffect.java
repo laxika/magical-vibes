@@ -249,7 +249,8 @@ public record SearchLibraryEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER) {
+        if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER
+                || searchPlayer == LibrarySearchPlayer.TARGET_PLAYER) {
             return TargetSpec.benign(TargetPredicates.player());
         }
         // Tithe: count scales off whether the targeted opponent controls more lands.

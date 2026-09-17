@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "23")
+@CardRegistration(set = "PIO", collectorNumber = "12")
 public class ExtricatorOfSin extends Card {
 
     public ExtricatorOfSin() {

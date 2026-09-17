@@ -20,12 +20,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RavenousTyrannosaurusTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Devouring two creatures gives six +1/+1 counters")
-    void devourTwoAddsSixCounters() {
-        Permanent fodderA = addCreatureReady(player1, new GrizzlyBears());
-        Permanent fodderB = addCreatureReady(player1, new GrizzlyBears());
+    @DisplayName("Devour 3 puts three +1/+1 counters on it per sacrificed creature")
+    void devourPutsCountersOnEntry() {
+        Permanent fodderA = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent fodderB = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, new ArrayList<>(List.of(new RavenousTyrannosaurus())));
+        addManaForRavenousTyrannosaurus();
 
-        castRavenousTyrannosaurus();
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
@@ -33,30 +35,44 @@ class RavenousTyrannosaurusTest extends BaseCardTest {
 
         Permanent tyrannosaurus = findPermanent(player1, "Ravenous Tyrannosaurus");
         assertThat(tyrannosaurus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(fodderA.getId())
+                        || permanent.getId().equals(fodderB.getId()));
     }
 
     @Test
-    @DisplayName("The attack trigger deals excess damage to the target creature's controller")
-    void attackTriggerDealsExcessDamageToCreatureController() {
-        Permanent tyrannosaurus = addCreatureReady(player1, new RavenousTyrannosaurus());
+    @DisplayName("Attacking deals its power to another creature and excess to that creature's controller")
+    void attackDealsExcessDamageToController() {
+        addCreatureReady(player1, new RavenousTyrannosaurus());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setLife(player2, 30);
+        gd.playerLifeTotals.put(player2.getId(), 20);
 
         declareAttackers(List.of(0));
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(tyrannosaurus.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("The attack target is optional")
+    void attackCanDeclineTarget() {
+        addCreatureReady(player1, new RavenousTyrannosaurus());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("The attack trigger cannot target Ravenous Tyrannosaurus itself")
-    void attackTriggerCannotTargetItself() {
+    void attackCannotTargetItself() {
         Permanent tyrannosaurus = addCreatureReady(player1, new RavenousTyrannosaurus());
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -66,26 +82,7 @@ class RavenousTyrannosaurusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    @Test
-    @DisplayName("The attack trigger can resolve without a target")
-    void attackTriggerCanResolveWithoutTarget() {
-        addCreatureReady(player1, new RavenousTyrannosaurus());
-        harness.setLife(player2, 30);
-
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Ravenous Tyrannosaurus");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
-    }
-
-    private void castRavenousTyrannosaurus() {
-        harness.setHand(player1, new ArrayList<>(List.of(new RavenousTyrannosaurus())));
-        addMana();
-        harness.castCreature(player1, 0);
-    }
-
-    private void addMana() {
+    private void addManaForRavenousTyrannosaurus() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "2X2", collectorNumber = "11")
 @CardRegistration(set = "2XM", collectorNumber = "16")
 @CardRegistration(set = "TSR", collectorNumber = "294")
+@CardRegistration(set = "AA3", collectorNumber = "3")
 public class Flickerwisp extends Card {
 
     public Flickerwisp() {

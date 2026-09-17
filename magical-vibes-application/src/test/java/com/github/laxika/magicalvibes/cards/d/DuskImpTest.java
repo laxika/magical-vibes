@@ -22,8 +22,7 @@ class DuskImpTest extends BaseCardTest {
         addCreatureReady(player1, new DuskImp());
         addCreatureReady(player2, new WoodlandDruid());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -37,8 +36,7 @@ class DuskImpTest extends BaseCardTest {
         addCreatureReady(player1, new DuskImp());
         Permanent blocker = addCreatureReady(player2, new DuskImp());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

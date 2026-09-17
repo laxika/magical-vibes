@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record LibrarySearchParams(
         UUID playerId,
+        UUID decisionPlayerId,
         List<Card> cards,
         boolean reveals,
         boolean canFailToFind,
@@ -83,7 +84,7 @@ public record LibrarySearchParams(
 
     /** Returns a copy with a different searchable card list (all other fields unchanged). */
     public LibrarySearchParams withCards(List<Card> newCards) {
-        return new LibrarySearchParams(playerId, newCards, reveals, canFailToFind, targetPlayerId,
+        return new LibrarySearchParams(playerId, decisionPlayerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
@@ -99,7 +100,7 @@ public record LibrarySearchParams(
     }
 
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
-        return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
+        return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
@@ -114,30 +115,52 @@ public record LibrarySearchParams(
                 mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
-    /**
-     * Redirects a search of this player's library to the player controlling an Opposition Agent.
-     * The redirected player makes the search choices, while the original player remains the
-     * library owner.
-     */
-    public LibrarySearchParams withOppositionAgentController(UUID controllerId) {
-        return new LibrarySearchParams(controllerId, cards, true, canFailToFind, playerId,
-                remainingCount, null, false, false, false, false, shuffleAfterSelection, prompt,
-                LibrarySearchDestination.EXILE_PLAYABLE, topLibraryPosition, discoverValue,
-                filterCardTypes, accumulatedCards, filterCardName, attachToPlayerId,
-                attachToPermanentId, battlefieldControllerId, filterPredicate, sourcePermanentId,
-                followUp, requireDifferentNames, manaValueBoundValue, manaValueExact,
-                totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
-                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters,
-                repeatUntilDecline, tokenTemplate, sourceSetCode, false,
-                battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
-                battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
-                placeBattlefieldCardsSimultaneously, false, true, true, false,
-                mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
+    public LibrarySearchParams withRemainingCount(int count) {
+        return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
+                count, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped, placeBattlefieldCardsSimultaneously,
+                allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
+    }
+
+    public LibrarySearchParams withDecisionPlayerId(UUID decisionPlayerId) {
+        return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
+                remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped, placeBattlefieldCardsSimultaneously,
+                allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
+    }
+
+    public LibrarySearchParams withExcludedCardNames(List<String> names) {
+        return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
+                remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                manaValueBoundValue, manaValueExact, totalManaValueBound, names, grantHaste, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped, placeBattlefieldCardsSimultaneously,
+                allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
     public static class Builder {
         private final UUID playerId;
         private final List<Card> cards;
+        private UUID decisionPlayerId;
         private boolean reveals;
         private boolean canFailToFind;
         private UUID targetPlayerId;
@@ -205,6 +228,11 @@ public record LibrarySearchParams(
 
         public Builder targetPlayerId(UUID targetPlayerId) {
             this.targetPlayerId = targetPlayerId;
+            return this;
+        }
+
+        public Builder decisionPlayerId(UUID decisionPlayerId) {
+            this.decisionPlayerId = decisionPlayerId;
             return this;
         }
 
@@ -436,7 +464,7 @@ public record LibrarySearchParams(
         }
 
         public LibrarySearchParams build() {
-            return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
+            return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,

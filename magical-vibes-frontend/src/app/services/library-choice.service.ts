@@ -15,6 +15,7 @@ export class LibraryChoiceService {
   scryPrompt = '';
   scryTopIndices: number[] = [];
   scryBottomIndices: number[] = [];
+  scrycastCardIndices: number[] = [];
   // Surveil reuses the scry pile UI, but the reject pile goes to the graveyard, not the bottom.
   scryToGraveyard = false;
 
@@ -48,6 +49,7 @@ export class LibraryChoiceService {
     this.scryPrompt = '';
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
+    this.scrycastCardIndices = [];
     this.scryToGraveyard = false;
     this.searchingLibrary = false;
     this.librarySearchCards = [];
@@ -76,6 +78,7 @@ export class LibraryChoiceService {
     this.scryPrompt = msg.prompt;
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
+    this.scrycastCardIndices = msg.scrycastCardIndices ?? [];
     this.scryToGraveyard = msg.allGraveyards === true;
   }
 
@@ -139,6 +142,30 @@ export class LibraryChoiceService {
     this.scryBottomIndices = [...this.scryBottomIndices, originalIndex];
   }
 
+  canScrycast(originalIndex: number): boolean {
+    return !this.scryToGraveyard
+      && this.scrycastCardIndices.includes(originalIndex)
+      && this.scryAvailableCards.length === 1;
+  }
+
+  scrycast(originalIndex: number): void {
+    if (!this.canScrycast(originalIndex)) return;
+    this.websocketService.send({
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'SCRY_ORDER',
+      order: this.scryTopIndices,
+      secondOrder: this.scryBottomIndices,
+      scrycastIndex: originalIndex
+    });
+    this.scrying = false;
+    this.scryCards = [];
+    this.scryPrompt = '';
+    this.scryTopIndices = [];
+    this.scryBottomIndices = [];
+    this.scrycastCardIndices = [];
+    this.scryToGraveyard = false;
+  }
+
   undoScry(): void {
     // Undo last action from either pile
     if (this.scryBottomIndices.length > 0 && (this.scryTopIndices.length === 0 ||
@@ -173,6 +200,7 @@ export class LibraryChoiceService {
     this.scryPrompt = '';
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
+    this.scrycastCardIndices = [];
     this.scryToGraveyard = false;
   }
 

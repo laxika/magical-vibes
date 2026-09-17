@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,60 +12,88 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AlibouAncientWitness.class, Ornithopter.class, AccordersShield.class, GrizzlyBears.class, Forest.class})
+@CardUsed(AlibouAncientWitness.class)
 class AlibouAncientWitnessTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Gives other artifact creatures you control haste")
-    void givesOtherArtifactCreaturesHaste() {
-        Permanent alibou = addCreatureReady(player1, new AlibouAncientWitness());
-        Permanent artifactCreature = addCreatureReady(player1, new Ornithopter());
-        Permanent nonArtifactCreature = addCreatureReady(player1, new GrizzlyBears());
+    @DisplayName("Gives other artifact creatures haste, but not itself or nonartifact creatures")
+    void grantsHasteToOtherArtifactCreatures() {
+        Permanent alibou = harness.addToBattlefieldAndReturn(player1, new AlibouAncientWitness());
+        Permanent artifactCreature = addCreatureReady(player1, artifactCreature("Artifact Creature"));
+        Permanent nonartifactCreature = addCreatureReady(player1, creature("Nonartifact Creature"));
 
-        assertThat(gqs.hasKeyword(gd, alibou, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, artifactCreature, Keyword.HASTE)).isTrue();
-        assertThat(gqs.hasKeyword(gd, nonArtifactCreature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, alibou, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonartifactCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
-    @DisplayName("Deals damage and scries based on tapped artifacts after an artifact creature attacks")
-    void attacksTriggerDamageAndScry() {
-        addCreatureReady(player1, new AlibouAncientWitness());
-        addCreatureReady(player1, new Ornithopter());
-        Permanent tappedArtifact = new Permanent(new AccordersShield());
-        tappedArtifact.setSummoningSick(false);
-        tappedArtifact.tap();
-        gd.playerBattlefields.get(player1.getId()).add(tappedArtifact);
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
-        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+    @DisplayName("Deals damage and scries for the number of tapped artifacts when an artifact creature attacks")
+    void artifactCreatureAttackDealsDamageAndScriesForTappedArtifacts() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new AlibouAncientWitness());
+        addCreatureReady(player1, artifactCreature("Artifact Creature 1"));
+        addCreatureReady(player1, artifactCreature("Artifact Creature 2"));
 
-        declareAttackers(List.of(1));
+        Permanent tappedArtifact = harness.addToBattlefieldAndReturn(player1, artifact("Tapped Artifact"));
+        tappedArtifact.tap();
+        harness.addToBattlefield(player1, artifact("Untapped Artifact"));
+        harness.setLibrary(player1, List.of(new Card(), new Card(), new Card(), new Card()));
+
+        declareAttackers(List.of(1, 2));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).hasSize(3);
 
         gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+                new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when only nonartifact creatures attack")
+    void doesNotTriggerForNonartifactAttackers() {
+        harness.addToBattlefield(player1, new AlibouAncientWitness());
+        addCreatureReady(player1, creature("Nonartifact Creature"));
+
+        declareAttackers(List.of(1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 
-    @Test
-    @DisplayName("Does not trigger when only a nonartifact creature attacks")
-    void doesNotTriggerForNonartifactAttacker() {
-        addCreatureReady(player1, new AlibouAncientWitness());
-        addCreatureReady(player1, new GrizzlyBears());
+    private Card artifactCreature(String name) {
+        Card card = artifact(name);
+        card.setAdditionalTypes(Set.of(CardType.CREATURE));
+        card.setPower(0);
+        card.setToughness(2);
+        return card;
+    }
 
-        declareAttackers(List.of(1));
+    private Card artifact(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        return card;
+    }
 
-        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Alibou, Ancient Witness"));
-        assertThat(gd.interaction.activeInteraction()).isNull();
+    private Card creature(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
     }
 }

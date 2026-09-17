@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MAR", collectorNumber = "31")
+@CardRegistration(set = "OMB", collectorNumber = "31")
 public class Arachnogenesis extends Card {
 
     public Arachnogenesis() {
@@ -24,7 +25,8 @@ public class Arachnogenesis extends Card {
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 new PermanentCount(new PermanentIsAttackingSourceControllerPredicate(), CountScope.ANY_PLAYER),
                 "Spider", 1, 2, CardColor.GREEN, List.of(CardSubtype.SPIDER),
-                Set.of(Keyword.REACH), Set.of()));
+                Set.of(Keyword.REACH), Set.of()
+        ));
 
         // Prevent all combat damage that would be dealt this turn by non-Spider creatures.
         addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatExcept(

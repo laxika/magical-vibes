@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "148")
+@CardRegistration(set = "PIO", collectorNumber = "145")
 public class MakindiSliderunner extends Card {
 
     public MakindiSliderunner() {

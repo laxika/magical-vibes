@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAR", collectorNumber = "7")
+@CardRegistration(set = "OMB", collectorNumber = "7")
 public class WeddingRing extends Card {
 
     public WeddingRing() {

@@ -156,7 +156,9 @@ public class StackResolutionService {
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
 
-        StackEntry entry = gameData.stack.removeLast();
+        StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
+                ? gameData.stack.removeFirst()
+                : gameData.stack.removeLast();
         if (entry.getCard() != null && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                 && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
             gameData.spellsMadeUncounterable.remove(entry.getCard().getId());
@@ -183,6 +185,8 @@ public class StackResolutionService {
         } finally {
             gameData.currentlyResolvingControllerId = null;
         }
+
+        if (gameData.waitingForSubgame) return;
 
         // Resolution-time may choices are part of the resolving ability, so present them before
         // state-based actions can orphan an Aura that the choice may move.
@@ -524,6 +528,17 @@ public class StackResolutionService {
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
+        // Buyback on a creature (Innocuous Insect) returns it as it resolves,
+        // before it can enter the battlefield.
+        if (entry.isBuyback()) {
+            if (!entry.isCopy()) {
+                gameData.addCardToHand(entry.getOwnerId(), entry.getPhysicalCard());
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        " is returned to its owner's hand."));
+            }
+            return;
+        }
+
         Card card = entry.getCard();
         Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
@@ -1153,6 +1168,8 @@ public class StackResolutionService {
             log.info("Game {} - {} fizzles, target {} is illegal",
                     gameData.id, entry.getDescription(), entry.getTargetId());
 
+            triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, entry);
+
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
@@ -1180,6 +1197,16 @@ public class StackResolutionService {
 
             // A spell that pauses for input must remain undisposed until its effects finish.
             if (gameData.pendingEffectResolutionEntry != null) {
+                return;
+            }
+
+            if (gameData.restartTurnRequested) {
+                gameData.restartTurnRequested = false;
+                if (isNonCopySpell(entry)) {
+                    Card cardToExile = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
+                    removeCardFromRestartedSourceZone(gameData, entry, cardToExile);
+                    exileService.exileCard(gameData, entry.getOwnerId(), cardToExile);
+                }
                 return;
             }
 
@@ -1576,6 +1603,30 @@ public class StackResolutionService {
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    private static void removeCardFromRestartedSourceZone(GameData gameData, StackEntry entry, Card card) {
+        if (entry.getSourceZone() == null || card == null) {
+            return;
+        }
+        UUID cardId = card.getId();
+        UUID ownerId = entry.getOwnerId();
+        switch (entry.getSourceZone()) {
+            case HAND -> removeCardFromList(gameData.playerHands.get(ownerId), cardId);
+            case LIBRARY -> removeCardFromList(gameData.playerDecks.get(ownerId), cardId);
+            case GRAVEYARD -> removeCardFromList(gameData.playerGraveyards.get(ownerId), cardId);
+            case EXILE -> gameData.removeFromExile(cardId);
+            case OUTSIDE_GAME -> removeCardFromList(com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, ownerId), cardId);
+            case COMMAND -> removeCardFromList(gameData.playerCommandZones.get(ownerId), cardId);
+            default -> {
+            }
+        }
+    }
+
+    private static void removeCardFromList(List<Card> cards, UUID cardId) {
+        if (cards != null) {
+            cards.removeIf(card -> card.getId().equals(cardId));
         }
     }
 
