@@ -163,6 +163,7 @@ public class Permanent {
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
     @Setter private String chosenMode;
+    @Setter private AttackDirection chosenAttackDirection;
     /** Mode chosen by each player for an entering permanent whose ability says each player chooses. */
     private final Map<UUID, String> chosenModeByPlayer = new HashMap<>();
     /** The number last chosen for this permanent by a "choose a number between X and Y" effect
@@ -748,6 +749,7 @@ public class Permanent {
         this.chosenCardType = source.chosenCardType;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenMode = source.chosenMode;
+        this.chosenAttackDirection = source.chosenAttackDirection;
         this.chosenModeByPlayer.putAll(source.chosenModeByPlayer);
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);

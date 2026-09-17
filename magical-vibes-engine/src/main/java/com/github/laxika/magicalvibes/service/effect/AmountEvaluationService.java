@@ -148,6 +148,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
@@ -284,7 +285,11 @@ public class AmountEvaluationService {
                     ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
                             ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
             case ManaSpentToCast ignored ->
-                    ctx.xValue();
+                    ctx.sourcePermanent() != null
+                            ? ctx.sourcePermanent().getManaSpentToCast()
+                            : ctx.stackEntry() != null
+                            ? ctx.stackEntry().getManaSpentToCast()
+                            : ctx.xValue();
             case SnowManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
             case TreasureManaSpentToCast ignored ->
@@ -483,6 +488,8 @@ public class AmountEvaluationService {
                     highestOpponentLifeTotal(gameData, ctx);
             case GreatestOpponentHandSize ignored ->
                     greatestOpponentHandSize(gameData, ctx);
+            case OpponentsWithAtLeastTwoMoreLandsThanController ignored ->
+                    opponentsWithAtLeastTwoMoreLandsThanController(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
@@ -2260,6 +2267,19 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(ctx.controllerId())) continue;
             if (gameData.playerHands.getOrDefault(playerId, List.of()).size() > controllerHandSize) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithAtLeastTwoMoreLandsThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerLandCount = countLandsControlledBy(gameData, ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && countLandsControlledBy(gameData, playerId) >= controllerLandCount + 2) {
                 count++;
             }
         }

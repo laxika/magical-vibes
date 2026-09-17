@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 
 @CardRegistration(set = "TSR", collectorNumber = "321")
+@CardRegistration(set = "C13", collectorNumber = "63")
 public class TrueNameNemesis extends Card {
 
     public TrueNameNemesis() {

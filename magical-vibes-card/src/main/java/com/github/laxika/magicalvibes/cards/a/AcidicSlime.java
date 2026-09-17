@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "DDM", collectorNumber = "64")
 @CardRegistration(set = "MB1", collectorNumber = "127")
 @CardRegistration(set = "HA7", collectorNumber = "14")
+@CardRegistration(set = "C13", collectorNumber = "134")
 public class AcidicSlime extends Card {
 
     public AcidicSlime() {

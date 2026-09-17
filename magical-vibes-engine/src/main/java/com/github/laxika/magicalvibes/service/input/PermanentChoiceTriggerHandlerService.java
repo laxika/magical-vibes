@@ -1013,6 +1013,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
             entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             if (att.triggeringPermanentId() != null) {
                 Permanent triggeringCreature = gameQueryService.findPermanentById(
@@ -1088,6 +1089,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttackedTargetId(att.attackedTargetId());
         }
         entry.setTriggeringPermanentId(att.triggeringPermanentId());
+        entry.setActivePlayerId(gameData.activePlayerId);
         pushTriggeredEntry(gameData, entry);
         if (att.triggeringPermanentId() != null) {
             Permanent triggeringCreature = gameQueryService.findPermanentById(

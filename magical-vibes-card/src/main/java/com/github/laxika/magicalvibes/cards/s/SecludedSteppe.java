@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "324")
+@CardRegistration(set = "C13", collectorNumber = "319")
 @CardRegistration(set = "DDC", collectorNumber = "25")
 @CardRegistration(set = "VMA", collectorNumber = "314")
 @CardRegistration(set = "DDO", collectorNumber = "29")

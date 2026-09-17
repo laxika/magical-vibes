@@ -59,6 +59,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
+    /** Triggers at the beginning of its controller's upkeep while the source card is in the command zone. */
+    COMMAND_ZONE_UPKEEP_TRIGGERED,
     GRAVEYARD_UPKEEP_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
     SUSPENDED_EACH_UPKEEP_TRIGGERED,

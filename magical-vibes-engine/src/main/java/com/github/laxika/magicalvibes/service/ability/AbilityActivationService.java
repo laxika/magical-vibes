@@ -615,6 +615,9 @@ public class AbilityActivationService {
         if (choice.context() instanceof ChoiceContext.DevotionManaColorChoice) {
             return true;
         }
+        if (choice.context() instanceof ChoiceContext.CommanderCounterManaColorChoice) {
+            return true;
+        }
         if (choice.context() instanceof ChoiceContext.RestrictedManaColorChoice) {
             return true;
         }
@@ -1169,6 +1172,17 @@ public class AbilityActivationService {
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null, null);
+    }
+
+    /** Activates an ability printed on a card in its controller's command zone. */
+    public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        List<Card> commandZone = gameData.playerCommandZones.getOrDefault(player.getId(), List.of());
+        Card card = commandZone.stream()
+                .filter(candidate -> candidate.getId().equals(cardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("That card is not in your command zone"));
+        activateAbilityInternal(gameData, player, -1, abilityIndex, null, null, null,
+                null, null, null, null, new Permanent(card, Zone.COMMAND), null);
     }
 
     /** Activates an ability printed on a spell while that spell is on the stack. */

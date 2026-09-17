@@ -2444,6 +2444,21 @@ public class GameQueryService {
         return countCreaturesControlled(gameData, playerId) > countCreaturesControlled(gameData, comparedPlayerId);
     }
 
+    /** Returns whether {@code playerId} controls the most creatures, including ties for most. */
+    public boolean controlsMostCreaturesOrTied(GameData gameData, UUID playerId) {
+        if (playerId == null) return false;
+        int playerCreatureCount = countCreaturesControlled(gameData, playerId);
+        boolean foundPlayer = false;
+        for (UUID candidatePlayerId : gameData.orderedPlayerIds) {
+            if (candidatePlayerId.equals(playerId)) {
+                foundPlayer = true;
+            } else if (playerCreatureCount < countCreaturesControlled(gameData, candidatePlayerId)) {
+                return false;
+            }
+        }
+        return foundPlayer;
+    }
+
     /**
      * Returns {@code true} if any opponent of the given player controls a creature with flying
      * (Groundling Pouncer's activation restriction).

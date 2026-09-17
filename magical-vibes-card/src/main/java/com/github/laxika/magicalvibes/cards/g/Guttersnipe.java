@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "GK1", collectorNumber = "31")
 @CardRegistration(set = "IMA", collectorNumber = "131")
 @CardRegistration(set = "RVR", collectorNumber = "110")
+@CardRegistration(set = "C13", collectorNumber = "112")
 public class Guttersnipe extends Card {
 
     public Guttersnipe() {

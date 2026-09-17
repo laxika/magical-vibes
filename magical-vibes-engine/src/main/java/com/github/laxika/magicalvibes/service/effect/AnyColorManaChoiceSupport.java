@@ -235,6 +235,9 @@ public final class AnyColorManaChoiceSupport {
                 manaPool.addKickedOnlyMana(effectiveColor, amount);
             } else {
                 manaPool.add(effectiveColor, amount);
+                if (effect.grantsCommanderCounter()) {
+                    manaPool.addCommanderCounterGrantingMana(effectiveColor, amount);
+                }
                 if (fromSnowSource) {
                     manaPool.addSnowManaTag(effectiveColor, amount);
                 }
@@ -279,6 +282,9 @@ public final class AnyColorManaChoiceSupport {
                                                Card sourceCard,
                                                UUID sourcePermanentId,
                                                Set<CardColor> sourceColors) {
+        if (effect.grantsCommanderCounter()) {
+            return new ChoiceContext.CommanderCounterManaColorChoice(playerId, amount);
+        }
         if (effect.differentColors()) {
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.differentColors(
                     playerId, fromCreature, amount, effect.allowedColors());

@@ -306,6 +306,11 @@ public class ChoiceHandlerService {
         }
 
         // Mana color choice (Chromatic Star, etc.)
+        if (colorChoice.context() instanceof ChoiceContext.CommanderCounterManaColorChoice ctx) {
+            handleCommanderCounterManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
@@ -1483,6 +1488,32 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCommanderCounterManaColorChosen(GameData gameData, Player player, String colorName,
+                                                       ChoiceContext.CommanderCounterManaColorChoice ctx,
+                                                       List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid commander color choice: " + colorName);
+        }
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, ctx.amount());
+        manaPool.addCommanderCounterGrantingMana(manaColor, ctx.amount());
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana (commander counter-granting mana)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

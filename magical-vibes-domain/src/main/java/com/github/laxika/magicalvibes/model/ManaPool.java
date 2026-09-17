@@ -72,6 +72,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> uncounterableGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a multicolored creature spell, it enters with an additional +1/+1 counter". */
     private final EnumMap<ManaColor, Integer> additionalCounterGrantingMana = new EnumMap<>(ManaColor.class);
+    /** Mana carrying the rider "if spent to cast a commander, it enters with additional +1/+1 counters". */
+    private final EnumMap<ManaColor, Integer> commanderCounterGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a creature spell, it gains riot". */
     private final EnumMap<ManaColor, Integer> riotGrantingMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
@@ -258,6 +260,7 @@ public class ManaPool {
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
+            commanderCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
@@ -320,6 +323,7 @@ public class ManaPool {
         }
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
+        commanderCounterGrantingMana.putAll(source.commanderCounterGrantingMana);
         riotGrantingMana.putAll(source.riotGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         graveyardOnlyMana.putAll(source.graveyardOnlyMana);
@@ -772,6 +776,7 @@ public class ManaPool {
             combatMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
+            commanderCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
@@ -1239,6 +1244,10 @@ public class ManaPool {
         if (additionalCounterGranting > 0) {
             additionalCounterGrantingMana.put(color, additionalCounterGranting - 1);
         }
+        int commanderCounterGranting = commanderCounterGrantingMana.getOrDefault(color, 0);
+        if (commanderCounterGranting > 0) {
+            commanderCounterGrantingMana.put(color, commanderCounterGranting - 1);
+        }
         int riotGranting = riotGrantingMana.getOrDefault(color, 0);
         if (riotGranting > 0) {
             riotGrantingMana.put(color, riotGranting - 1);
@@ -1264,6 +1273,9 @@ public class ManaPool {
         }
         if (additionalCounterGrantingMana.getOrDefault(color, 0) > total) {
             additionalCounterGrantingMana.put(color, total);
+        }
+        if (commanderCounterGrantingMana.getOrDefault(color, 0) > total) {
+            commanderCounterGrantingMana.put(color, total);
         }
         if (riotGrantingMana.getOrDefault(color, 0) > total) {
             riotGrantingMana.put(color, total);
@@ -1338,6 +1350,20 @@ public class ManaPool {
     public int getAdditionalCounterGrantingManaTotal() {
         int total = 0;
         for (int value : additionalCounterGrantingMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Adds mana carrying the "spent to cast a commander -> additional +1/+1 counters" rider. */
+    public void addCommanderCounterGrantingMana(ManaColor color, int amount) {
+        commanderCounterGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Total mana still carrying the commander-counter rider, across all colors. */
+    public int getCommanderCounterGrantingManaTotal() {
+        int total = 0;
+        for (int value : commanderCounterGrantingMana.values()) {
             total += value;
         }
         return total;
@@ -3600,6 +3626,7 @@ public class ManaPool {
             moveTaggedManaToColorlessBuckets(subtypeHasteGrantingMana, color, amount);
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
             moveTaggedManaToColorless(additionalCounterGrantingMana, color, amount);
+            moveTaggedManaToColorless(commanderCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(riotGrantingMana, color, amount);
         }
 
@@ -3685,6 +3712,7 @@ public class ManaPool {
             moveTaggedManaBuckets(subtypeHasteGrantingMana, color, replacementColor, amount);
             moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
             moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(commanderCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
         }
 
@@ -3930,6 +3958,7 @@ public class ManaPool {
         clampColorTagBuckets(subtypeHasteGrantingMana, protectedColors);
         clampColorTag(uncounterableGrantingMana, protectedColors);
         clampColorTag(additionalCounterGrantingMana, protectedColors);
+        clampColorTag(commanderCounterGrantingMana, protectedColors);
         clampColorTag(riotGrantingMana, protectedColors);
         drainColorMap(spellCastTriggerMana, protectedColors);
         drainColorBucket(abilityOnlyMana, protectedColors);

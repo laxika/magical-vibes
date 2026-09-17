@@ -37,6 +37,7 @@ public sealed interface Condition permits
         AnyPlayerControlsNoPermanent,
         AnyOf,
         AttachedPermanentControllerControlsNoOther,
+        AttacksEnchantedPlayer,
         AttackedTargetMatches,
         AttackedTargetIsOpponent,
         TargetPermanentAttackedTargetMatches,

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "239")
+@CardRegistration(set = "C13", collectorNumber = "168")
 public class SakuraTribeElder extends Card {
 
     public SakuraTribeElder() {

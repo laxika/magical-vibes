@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "153")
 @CardRegistration(set = "TD2", collectorNumber = "31")
+@CardRegistration(set = "C13", collectorNumber = "267")
 public class Thunderstaff extends Card {
 
     public Thunderstaff() {
