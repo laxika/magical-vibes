@@ -160,6 +160,7 @@ public sealed interface Condition permits
         ControlsPermanentsWithDifferentNames,
         ControlsPermanentsWithSameName,
         ControlledCreatureCounterCountAtLeast,
+        ControlledPermanentCounterTotalAtLeast,
         ControlledCreatureCounterKindsAtLeast,
         ControlledCreaturesTotalPowerAtLeast,
         ControlledCreaturesTotalToughnessAtLeast,

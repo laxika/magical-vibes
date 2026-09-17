@@ -2628,6 +2628,10 @@ public class SpellCastTriggerCollectorService {
     private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
                                                UUID castingPlayerId, GameData gameData,
                                                UUID sourceControllerId) {
+        if (effect instanceof TriggeringSpellManaValueEffect manaValueAware) {
+            return manaValueAware.snapshotTriggeringSpellManaValue(
+                    spellSnapshot.getCard().getManaValue() + spellSnapshot.getXValue());
+        }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() instanceof TriggeringSpellTargetCount targetCount) {
             return new PutCountersOnSelfEffect(

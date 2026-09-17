@@ -170,6 +170,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLostGameThisMatc
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterCountAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterKindsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalToughnessAtLeast;
@@ -701,6 +702,8 @@ public class ConditionEvaluationService {
                     controlsMatchingPermanentsWithSameName(gameData, ctx, c.minCount(), c.filter());
             case ControlledCreatureCounterCountAtLeast c ->
                     controlledCreatureCounterCount(gameData, ctx) >= c.threshold();
+            case ControlledPermanentCounterTotalAtLeast c ->
+                    controlledPermanentCounterTotal(gameData, ctx, c.counterType(), c.filter()) >= c.threshold();
             case ControlledCreatureCounterKindsAtLeast c ->
                     controlledCreatureCounterKinds(gameData, ctx) >= c.threshold();
             case ControlsOtherPermanentCount c ->
@@ -2644,6 +2647,20 @@ public class ConditionEvaluationService {
                 .mapToLong(permanent -> permanent.getCounters().values().stream()
                         .mapToLong(Integer::longValue)
                         .sum())
+                .sum();
+    }
+
+    private long controlledPermanentCounterTotal(GameData gameData, ConditionContext ctx,
+                                                  CounterType counterType, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        return battlefield.stream()
+                .filter(permanent -> matchesPermanent(gameData, permanent, filter, ctx))
+                .mapToLong(permanent -> counterType == CounterType.ANY
+                        ? permanent.getCounters().values().stream().mapToLong(Integer::longValue).sum()
+                        : permanent.getCounterCount(counterType))
                 .sum();
     }
 
