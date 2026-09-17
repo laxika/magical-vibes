@@ -2046,10 +2046,9 @@ public class DrawService {
                                         .withTargetId(drawingPlayerId))) {
                             continue;
                         }
-                        effect = conditional.wrapped();
                     }
                     if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may);
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, drawingPlayerId, perm.getId());
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
