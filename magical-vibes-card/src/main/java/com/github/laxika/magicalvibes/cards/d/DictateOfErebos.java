@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "JOU", collectorNumber = "65")
+@CardRegistration(set = "PIO", collectorNumber = "91")
 public class DictateOfErebos extends Card {
 
     public DictateOfErebos() {

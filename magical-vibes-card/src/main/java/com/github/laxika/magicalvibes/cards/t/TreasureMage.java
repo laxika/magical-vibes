@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "34")
 @CardRegistration(set = "DDU", collectorNumber = "40")
+@CardRegistration(set = "2XM", collectorNumber = "73")
 public class TreasureMage extends Card {
 
     public TreasureMage() {

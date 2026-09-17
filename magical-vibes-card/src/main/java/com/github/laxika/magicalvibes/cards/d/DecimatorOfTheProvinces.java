@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "2")
 @CardRegistration(set = "EMN", collectorNumber = "2")
+@CardRegistration(set = "SIR", collectorNumber = "2")
 public class DecimatorOfTheProvinces extends Card {
 
     public DecimatorOfTheProvinces() {

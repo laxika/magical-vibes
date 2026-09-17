@@ -29,13 +29,28 @@ class FirecatBlitzTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        List<Permanent> cats = catsOnBattlefield();
+        List<Permanent> cats = findPermanents(player1, "Elemental Cat");
         assertThat(cats).hasSize(2);
-        assertThat(cats).allMatch(cat -> gqs.hasKeyword(gd, cat, Keyword.HASTE));
+        assertThat(cats).allMatch(cat -> cat.getCard().isToken()
+                && gqs.hasKeyword(gd, cat, Keyword.HASTE));
 
-        advanceToEndStep();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
 
-        assertThat(catsOnBattlefield()).isEmpty();
+        assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting Firecat Blitz for X=0 creates no tokens")
+    void zeroXCreatesNoTokens() {
+        harness.setHand(player1, List.of(new FirecatBlitz()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
     }
 
     @Test
@@ -53,8 +68,10 @@ class FirecatBlitzTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(catsOnBattlefield()).hasSize(2);
-        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(findPermanents(player1, "Elemental Cat")).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(card -> card.getName().equals("Mountain"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Firecat Blitz"));
     }
@@ -70,19 +87,5 @@ class FirecatBlitzTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 2, null, List.of(), null, null,
                 List.of(), null, null, List.of(mountain), noDamageAssignments))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private List<Permanent> catsOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Elemental Cat"))
-                .toList();
-    }
-
-    private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 }

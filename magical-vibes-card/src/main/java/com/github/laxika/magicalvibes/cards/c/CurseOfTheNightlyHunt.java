@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "137")
+@CardRegistration(set = "MB1", collectorNumber = "90")
 public class CurseOfTheNightlyHunt extends Card {
 
     public CurseOfTheNightlyHunt() {

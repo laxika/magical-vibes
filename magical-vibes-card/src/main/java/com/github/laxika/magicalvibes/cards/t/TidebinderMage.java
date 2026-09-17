@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "73")
 @CardRegistration(set = "DDT", collectorNumber = "22")
+@CardRegistration(set = "PIO", collectorNumber = "78")
 public class TidebinderMage extends Card {
 
     public TidebinderMage() {

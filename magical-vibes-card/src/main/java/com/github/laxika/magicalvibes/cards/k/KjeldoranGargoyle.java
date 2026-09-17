@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "CSP", collectorNumber = "10")
+@CardRegistration(set = "DMR", collectorNumber = "11")
 public class KjeldoranGargoyle extends Card {
 
     public KjeldoranGargoyle() {

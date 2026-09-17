@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(CalderaKavu.class)
 class CalderaKavuTest extends BaseCardTest {
 
     @Test
@@ -24,6 +27,22 @@ class CalderaKavuTest extends BaseCardTest {
 
         assertThat(kavu.getEffectivePower()).isEqualTo(3);
         assertThat(kavu.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The black ability can be activated repeatedly for cumulative boosts")
+    void blackAbilityStacks() {
+        Permanent kavu = addReadyKavu();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(kavu.getEffectivePower()).isEqualTo(4);
+        assertThat(kavu.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test
@@ -65,8 +84,9 @@ class CalderaKavuTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
 
-        kavu.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(kavu.getEffectivePower()).isEqualTo(2);
         assertThat(kavu.getEffectiveToughness()).isEqualTo(2);
@@ -74,9 +94,6 @@ class CalderaKavuTest extends BaseCardTest {
     }
 
     private Permanent addReadyKavu() {
-        Permanent kavu = new Permanent(new CalderaKavu());
-        kavu.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kavu);
-        return kavu;
+        return addCreatureReady(player1, new CalderaKavu());
     }
 }

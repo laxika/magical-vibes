@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mobilization.class, HonorGuard.class, GrizzlyBears.class})
 class MobilizationTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -27,28 +27,21 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Mobilization puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Mobilization()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Mobilization(), "{2}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Mobilization");
     }
 
     @Test
     @DisplayName("Resolving puts Mobilization onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new Mobilization()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Mobilization(), "{2}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Mobilization");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     // ===== Token creation via mana-activated ability =====
@@ -56,7 +49,7 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts token creation on the stack")
     void activatingAbilityPutsOnStack() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -64,23 +57,30 @@ class MobilizationTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Mobilization");
+    }
+
+    @Test
+    @DisplayName("Activating the ability does not tap Mobilization")
+    void activatingAbilityDoesNotTapMobilization() {
+        Permanent mobilization = addCreatureReady(player1, new Mobilization());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mobilization.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Resolving ability creates a 1/1 Soldier token")
     void resolvingAbilityCreatesToken() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        Permanent token = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Soldier"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Soldier");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -91,7 +91,7 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Token enters with summoning sickness")
     void tokenEntersWithSummoningSickness() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -104,7 +104,7 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Can create multiple tokens")
     void canCreateMultipleTokens() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.activateAbility(player1, 0, null, null);
@@ -123,7 +123,7 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Soldier creatures have vigilance with Mobilization on battlefield")
     void soldiersGetVigilance() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addToBattlefield(player1, new HonorGuard());
 
         Permanent soldier = findPermanent(player1, "Honor Guard");
@@ -134,7 +134,7 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Soldier creatures do not get vigilance")
     void nonSoldiersDoNotGetVigilance() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
@@ -145,7 +145,7 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Token Soldier also gets vigilance from Mobilization")
     void tokenGetsVigilance() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -157,9 +157,18 @@ class MobilizationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Soldier creatures an opponent controls also have vigilance")
+    void opponentsSoldiersGetVigilance() {
+        addCreatureReady(player1, new Mobilization());
+        Permanent soldier = addCreatureReady(player2, new HonorGuard());
+
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Vigilance is removed when Mobilization leaves the battlefield")
     void vigilanceRemovedWhenMobilizationLeaves() {
-        addMobilizationReady(player1);
+        addCreatureReady(player1, new Mobilization());
         harness.addToBattlefield(player1, new HonorGuard());
 
         Permanent soldier = findPermanent(player1, "Honor Guard");
@@ -178,20 +187,11 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Soldier with vigilance does not tap when attacking")
     void soldierWithVigilanceDoesNotTapWhenAttacking() {
-        addMobilizationReady(player1);
-
-        HonorGuard guard = new HonorGuard();
-        Permanent soldier = new Permanent(guard);
-        soldier.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(soldier);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        addCreatureReady(player1, new Mobilization());
+        Permanent soldier = addCreatureReady(player1, new HonorGuard());
 
         // Soldier is at index 1 (Mobilization is at 0)
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
 
         // Combat resolves fully via auto-pass, clearing isAttacking; tapped state persists
         assertThat(soldier.isTapped()).isFalse();
@@ -200,33 +200,13 @@ class MobilizationTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Soldier creature still taps when attacking")
     void nonSoldierStillTapsWhenAttacking() {
-        addMobilizationReady(player1);
-
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent bearsPerm = new Permanent(bears);
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        addCreatureReady(player1, new Mobilization());
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         // Bears is at index 1 (Mobilization is at 0)
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
 
         // Combat resolves fully via auto-pass, clearing isAttacking; tapped state persists
         assertThat(bearsPerm.isTapped()).isTrue();
     }
-
-    // ===== Helper methods =====
-
-    private Permanent addMobilizationReady(Player player) {
-        Mobilization card = new Mobilization();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
-

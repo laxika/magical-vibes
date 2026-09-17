@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
  */
 @CardRegistration(set = "CHK", collectorNumber = "200")
 @CardRegistration(set = "DDS", collectorNumber = "41")
+@CardRegistration(set = "SLC", collectorNumber = "26")
+@CardRegistration(set = "SLC", collectorNumber = "53")
 public class ZoZuThePunisher extends Card {
 
     public ZoZuThePunisher() {

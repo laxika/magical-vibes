@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "33")
+@CardRegistration(set = "DBL", collectorNumber = "33")
 public class SigardasSplendor extends Card {
 
     public SigardasSplendor() {

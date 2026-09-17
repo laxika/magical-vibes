@@ -16,6 +16,12 @@ public enum ManaSpendRestriction {
     /** No rider — "Add N mana of any one color" lands in the ordinary pool (Birds of Paradise). */
     NONE,
 
+    /** Choose a color in the activating player's commander's color identity (Command Tower). */
+    COMMANDER_COLOR_IDENTITY,
+
+    /** Choose a color in the commander's color identity and scry when spent on a matching creature spell (Path of Ancestry). */
+    COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY,
+
     /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
     SPELL_ONLY,
 
@@ -32,6 +38,9 @@ public enum ManaSpendRestriction {
     EXILED_CARD_COLORS,
     /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
     SOURCE_PERMANENT_COLORS,
+
+    /** Spendable only to cast spells with the legendary supertype. */
+    LEGENDARY_SPELLS,
 
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it

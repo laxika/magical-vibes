@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandToBattlefieldEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "96")
+@CardRegistration(set = "SPG", collectorNumber = "21")
+@CardRegistration(set = "MAR", collectorNumber = "60")
 public class ShowAndTell extends Card {
 
     public ShowAndTell() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 
 @CardRegistration(set = "RAV", collectorNumber = "234")
 @CardRegistration(set = "GK1", collectorNumber = "20")
+@CardRegistration(set = "CMD", collectorNumber = "228")
 public class SzadekLordOfSecrets extends Card {
 
     public SzadekLordOfSecrets() {

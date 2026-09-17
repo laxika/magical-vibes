@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "29")
+@CardRegistration(set = "RVR", collectorNumber = "25")
 public class RisingPopulace extends Card {
 
     public RisingPopulace() {

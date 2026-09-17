@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -876,6 +877,61 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.cloneOperation.exileTwoAndAddOtherPowerCounters) {
+            if (gameData.cloneOperation.selectedGraveyardCopyCardIds.isEmpty()) {
+                if (cardIds.size() != 2) {
+                    throw new IllegalStateException("Choose exactly two creature cards");
+                }
+                List<Card> selectedCards = cardIds.stream()
+                        .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                        .toList();
+                if (selectedCards.stream().anyMatch(card -> card == null || !card.hasType(CardType.CREATURE))) {
+                    throw new IllegalStateException("Chosen creature card is no longer in a graveyard");
+                }
+
+                gameData.interaction.clearAwaitingInput();
+                gameData.cloneOperation.selectedGraveyardCopyCardIds = List.copyOf(cardIds);
+                playerInputService.beginMultiGraveyardChoice(
+                        gameData, player.getId(), selectedCards, 1, 1,
+                        "Choose one of those creature cards to copy.");
+                return;
+            }
+
+            if (cardIds.size() != 1
+                    || !gameData.cloneOperation.selectedGraveyardCopyCardIds.contains(cardIds.getFirst())) {
+                throw new IllegalStateException("Choose one of the selected creature cards to copy");
+            }
+
+            UUID copiedCardId = cardIds.getFirst();
+            Card copiedCard = gameQueryService.findCardInGraveyardById(gameData, copiedCardId);
+            UUID otherCardId = gameData.cloneOperation.selectedGraveyardCopyCardIds.stream()
+                    .filter(selectedCardId -> !selectedCardId.equals(copiedCardId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Missing other creature card"));
+            Card otherCard = gameQueryService.findCardInGraveyardById(gameData, otherCardId);
+            if (copiedCard == null || otherCard == null
+                    || !copiedCard.hasType(CardType.CREATURE) || !otherCard.hasType(CardType.CREATURE)) {
+                throw new IllegalStateException("Chosen creature card is no longer in a graveyard");
+            }
+
+            gameData.interaction.clearAwaitingInput();
+            for (UUID selectedCardId : gameData.cloneOperation.selectedGraveyardCopyCardIds) {
+                Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, selectedCardId);
+                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, selectedCardId);
+                permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, selectedCardId);
+                exileService.exileCard(gameData, ownerId, selectedCard);
+            }
+            gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
+            gameData.cloneOperation.graveyardCopyChoicePending = false;
+            gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
+            gameData.cloneOperation.additionalPlusOnePlusOneCounters = new Fixed(
+                    Math.max(0, otherCard.getPower() == null ? 0 : otherCard.getPower()));
+            gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
+            cloneService.completeCloneEntryFromGraveyardChoice(gameData, copiedCard);
+            finishCloneEntryAfterGraveyardChoice(gameData);
+            return;
+        }
+
         if (gameData.cloneOperation.copyCardFilter != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearPermanentChoiceContext();
@@ -916,27 +972,7 @@ public class GraveyardChoiceHandlerService {
 
             gameData.interaction.clearAwaitingInput();
             cloneService.completeCloneEntryFromGraveyardChoice(gameData, selectedCard);
-            stateBasedActionService.performStateBasedActions(gameData);
-
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-                triggerCollectionService.processNextDeathTriggerTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            if (!gameData.pendingMayAbilities.isEmpty()) {
-                playerInputService.processNextMayAbility(gameData);
-                return;
-            }
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            finishCloneEntryAfterGraveyardChoice(gameData);
             return;
         }
 
@@ -1724,6 +1760,30 @@ public class GraveyardChoiceHandlerService {
         if (graveyardTargets > effect.mixedZoneMaxGraveyardTargets()) {
             throw new IllegalStateException("Too many graveyard cards selected");
         }
+    }
+
+    private void finishCloneEntryAfterGraveyardChoice(GameData gameData) {
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {

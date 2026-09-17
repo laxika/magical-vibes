@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "170")
+@CardRegistration(set = "SOA", collectorNumber = "49")
 public class AwakenTheWoods extends Card {
 
     public AwakenTheWoods() {

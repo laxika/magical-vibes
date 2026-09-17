@@ -22,6 +22,7 @@ import java.util.Set;
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
  * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect},
  * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromMonocoloredEffect},
+ * {@code ProtectionFromEnemyColoredMulticoloredEffect},
  * {@code ProtectionFromAllOtherManaValuesEffect}).
  * Protection whose
  * protected set is only known at runtime from game state — a chosen color
@@ -38,6 +39,16 @@ public interface ProtectionGrantingEffect extends CardEffect {
 
     /** Whether this effect protects against sources with two or more colors. */
     default boolean protectionFromMulticolored() {
+        return false;
+    }
+
+    /** Whether this effect protects against sources with exactly two enemy colors. */
+    default boolean protectionFromEnemyColoredMulticolored() {
+        return false;
+    }
+
+    /** Whether this effect protects against modified creature permanents. */
+    default boolean protectionFromModifiedCreatures() {
         return false;
     }
 

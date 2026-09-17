@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,16 +32,28 @@ class CentaurRootcasterTest extends BaseCardTest {
     void acceptingMayPutsBasicLandOntoBattlefieldTapped() {
         Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
         rootcaster.setAttacking(true);
-        List<Card> library = gd.playerDecks.get(player1.getId());
-        library.clear();
-        library.addAll(List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
 
         resolveCombat();
         harness.handleMayAbilityChosen(player1, true);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting with no basic land does not put another card onto the battlefield")
+    void acceptingWithoutBasicLandDoesNothing() {
+        Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
+        rootcaster.setAttacking(true);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
     }
 
     @Test

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.c.CryptSliver;
+import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SynapseSliver.class, MetallicSliver.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SynapseSliver.class, CryptSliver.class, EnormousBaloth.class})
 class SynapseSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("A Sliver's combat damage lets its controller draw a card")
     void controllerMayDrawForSliverCombatDamage() {
         addAttackingCreature(player1, new SynapseSliver());
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new EnormousBaloth()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
@@ -37,7 +36,7 @@ class SynapseSliverTest extends BaseCardTest {
     @DisplayName("Declining the combat-damage choice does not draw")
     void controllerMayDeclineTheDraw() {
         addAttackingCreature(player1, new SynapseSliver());
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new EnormousBaloth()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
@@ -48,11 +47,46 @@ class SynapseSliverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Sliver that deals combat damage has its own draw trigger")
+    void eachSliverTriggersSeparately() {
+        addAttackingCreature(player1, new SynapseSliver());
+        addAttackingCreature(player1, new CryptSliver());
+        harness.setLibrary(player1, List.of(new EnormousBaloth(), new EnormousBaloth()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Multiple Synapse Slivers grant multiple draw triggers")
+    void multipleSynapseSliversStackTheirTriggers() {
+        addCreatureReady(player1, new SynapseSliver());
+        addCreatureReady(player1, new SynapseSliver());
+        addAttackingCreature(player1, new CryptSliver());
+        harness.setLibrary(player1, List.of(new EnormousBaloth(), new EnormousBaloth()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
     @DisplayName("The ability also lets an opposing Sliver's controller draw")
     void opposingSliverControllerMayDraw() {
         addCreatureReady(player1, new SynapseSliver());
-        addAttackingCreature(player2, new MetallicSliver());
-        harness.setLibrary(player2, List.of(new Forest()));
+        addAttackingCreature(player2, new CryptSliver());
+        harness.setLibrary(player2, List.of(new EnormousBaloth()));
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
         resolveCombat(player2);
@@ -66,8 +100,8 @@ class SynapseSliverTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Sliver does not gain the draw ability")
     void nonSliverDoesNotTrigger() {
-        addAttackingCreature(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new Forest()));
+        addAttackingCreature(player1, new EnormousBaloth());
+        harness.setLibrary(player1, List.of(new EnormousBaloth()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();

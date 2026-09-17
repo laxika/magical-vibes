@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "48")
+@CardRegistration(set = "PIO", collectorNumber = "55")
 public class FallajiArchaeologist extends Card {
 
     public FallajiArchaeologist() {

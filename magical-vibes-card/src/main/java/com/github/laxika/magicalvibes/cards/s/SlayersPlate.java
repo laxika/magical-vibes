@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "264")
+@CardRegistration(set = "SIR", collectorNumber = "257")
 public class SlayersPlate extends Card {
 
     public SlayersPlate() {

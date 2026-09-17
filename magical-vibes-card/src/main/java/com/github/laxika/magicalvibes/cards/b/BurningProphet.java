@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "117")
+@CardRegistration(set = "RVR", collectorNumber = "104")
 public class BurningProphet extends Card {
 
     public BurningProphet() {

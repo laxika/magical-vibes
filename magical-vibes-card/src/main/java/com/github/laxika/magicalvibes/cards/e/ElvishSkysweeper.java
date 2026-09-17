@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "162")
+@CardRegistration(set = "GN3", collectorNumber = "95")
 public class ElvishSkysweeper extends Card {
 
     public ElvishSkysweeper() {

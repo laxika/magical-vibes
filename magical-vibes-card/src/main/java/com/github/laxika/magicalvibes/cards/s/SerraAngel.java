@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "CMD", collectorNumber = "30")
 @CardRegistration(set = "FDN", collectorNumber = "147")
+@CardRegistration(set = "ANB", collectorNumber = "18")
 @CardRegistration(set = "OANA", collectorNumber = "9")
 @CardRegistration(set = "IMA", collectorNumber = "30")
 @CardRegistration(set = "W17", collectorNumber = "3")
@@ -27,5 +29,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "40")
 @CardRegistration(set = "EMA", collectorNumber = "28")
 @CardRegistration(set = "GNT", collectorNumber = "16")
+@CardRegistration(set = "DMR", collectorNumber = "25")
+@CardRegistration(set = "DMR", collectorNumber = "271")
+@CardRegistration(set = "GN3", collectorNumber = "17")
+@CardRegistration(set = "SLZ", collectorNumber = "10")
+@CardRegistration(set = "SLZ", collectorNumber = "131")
+@CardRegistration(set = "SLZ", collectorNumber = "252")
 public class SerraAngel extends Card {
 }

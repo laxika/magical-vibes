@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "136")
+@CardRegistration(set = "SLZ", collectorNumber = "110")
+@CardRegistration(set = "SLZ", collectorNumber = "231")
+@CardRegistration(set = "SLZ", collectorNumber = "352")
 public class PanopticMirror extends Card {
 
     public PanopticMirror() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterLoseGameAtEndStepEffe
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "124")
+@CardRegistration(set = "2X2", collectorNumber = "130")
 public class WarriorsOath extends Card {
 
     public WarriorsOath() {

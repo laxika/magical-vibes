@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "130")
+@CardRegistration(set = "2XM", collectorNumber = "117")
+@CardRegistration(set = "TMC", collectorNumber = "47")
 public class BlasphemousAct extends Card {
 
     public BlasphemousAct() {

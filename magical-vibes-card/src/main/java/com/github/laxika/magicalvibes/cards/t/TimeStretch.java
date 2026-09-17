@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "118")
 @CardRegistration(set = "ODY", collectorNumber = "108")
+@CardRegistration(set = "DMR", collectorNumber = "69")
 public class TimeStretch extends Card {
 
     public TimeStretch() {

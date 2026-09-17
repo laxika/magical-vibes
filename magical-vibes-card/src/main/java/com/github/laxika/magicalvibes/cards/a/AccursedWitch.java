@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "97")
+@CardRegistration(set = "SIR", collectorNumber = "97")
 public class AccursedWitch extends Card {
 
     public AccursedWitch() {

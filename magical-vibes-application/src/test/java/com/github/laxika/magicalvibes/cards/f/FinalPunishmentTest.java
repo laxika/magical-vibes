@@ -1,65 +1,93 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Carbonize;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({FinalPunishment.class, Carbonize.class})
 class FinalPunishmentTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target loses life equal to the damage dealt to them this turn")
     void losesLifeEqualToDamageThisTurn() {
-        shockPlayer(player2.getId());
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        carbonizePlayer(player2.getId());
+        harness.assertLife(player2, 17);
 
         castFinalPunishment(player2.getId());
 
-        // 2 damage dealt this turn -> loses 2 more life (18 -> 16)
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        // 3 damage dealt this turn -> loses 3 more life (17 -> 14)
+        harness.assertLife(player2, 14);
     }
 
     @Test
     @DisplayName("Accumulates damage from multiple sources this turn")
     void accumulatesDamageFromMultipleSources() {
-        shockPlayer(player2.getId());
-        shockPlayer(player2.getId());
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        carbonizePlayer(player2.getId());
+        carbonizePlayer(player2.getId());
+        harness.assertLife(player2, 14);
 
         castFinalPunishment(player2.getId());
 
-        // 4 damage dealt this turn -> loses 4 more life (16 -> 12)
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        // 6 damage dealt this turn -> loses 6 more life (14 -> 8)
+        harness.assertLife(player2, 8);
     }
 
     @Test
     @DisplayName("Target that took no damage loses no life")
     void noDamageMeansNoLifeLoss() {
-        shockPlayer(player2.getId());
+        carbonizePlayer(player2.getId());
 
         // Final Punishment targets player1, who took no damage this turn
         castFinalPunishment(player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
-    private void shockPlayer(UUID targetPlayerId) {
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetPlayerId);
+    @Test
+    @DisplayName("Does not count damage that was prevented")
+    void ignoresPreventedDamage() {
+        gd.playerDamagePreventionShields.put(player2.getId(), 3);
+
+        carbonizePlayer(player2.getId());
+        harness.assertLife(player2, 20);
+
+        castFinalPunishment(player2.getId());
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not count damage dealt during a previous turn")
+    void ignoresDamageFromPreviousTurn() {
+        carbonizePlayer(player2.getId());
+        harness.assertLife(player2, 17);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        castFinalPunishment(player2.getId());
+
+        harness.assertLife(player2, 17);
+    }
+
+    private void carbonizePlayer(UUID targetPlayerId) {
+        harness.setHand(player1, List.of(new Carbonize()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, targetPlayerId);
     }
 
     private void castFinalPunishment(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new FinalPunishment()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 }

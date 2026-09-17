@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "33")
+@CardRegistration(set = "TSR", collectorNumber = "57")
 public class Cloudseeder extends Card {
 
     public Cloudseeder() {

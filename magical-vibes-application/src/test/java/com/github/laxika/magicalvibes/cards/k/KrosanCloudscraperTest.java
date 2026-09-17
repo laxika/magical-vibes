@@ -66,4 +66,51 @@ class KrosanCloudscraperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Krosan Cloudscraper");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
+
+    @Test
+    @DisplayName("The upkeep trigger does not occur during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent cloudscraper = harness.addToBattlefieldAndReturn(player1, new KrosanCloudscraper());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cloudscraper);
+    }
+
+    @Test
+    @DisplayName("Choosing to pay without green mana sacrifices Krosan Cloudscraper")
+    void acceptingUpkeepPaymentWithoutGreenManaSacrificesIt() {
+        harness.addToBattlefield(player1, new KrosanCloudscraper());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Krosan Cloudscraper");
+        harness.assertInGraveyard(player1, "Krosan Cloudscraper");
+    }
+
+    @Test
+    @DisplayName("A face-down Krosan Cloudscraper has no upkeep trigger")
+    void faceDownCloudscraperHasNoUpkeepTrigger() {
+        harness.setHand(player1, List.of(new KrosanCloudscraper()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent cloudscraper = findPermanent(player1, "Krosan Cloudscraper");
+        assertThat(cloudscraper.isFaceDown()).isTrue();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cloudscraper);
+    }
 }

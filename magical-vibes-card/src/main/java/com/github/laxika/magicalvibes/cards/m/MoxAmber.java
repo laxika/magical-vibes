@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "224")
+@CardRegistration(set = "BRR", collectorNumber = "35")
+@CardRegistration(set = "HOC", collectorNumber = "96")
 public class MoxAmber extends Card {
 
     public MoxAmber() {

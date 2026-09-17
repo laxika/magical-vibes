@@ -193,6 +193,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.currentExtraTurnSequence = null;
         gameData.pendingLibraryBottomReorders.clear();
         gameData.openingHandRevealTriggers.clear();
+        gameData.legacyChosenWordsByCardId.clear();
         gameData.openingHandManaTriggers.clear();
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.playersWithNoMaximumHandSize.clear();
@@ -203,12 +204,14 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.cardTypeFlashGrantsUntilNextTurn.clear();
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.clear();
         gameData.playersWithProtectionFromEverythingUntilNextTurn.clear();
+        gameData.playersWithLifeTotalCantChangeUntilNextTurn.clear();
         gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
         gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
         gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();
         gameData.playersWithDamageFromNamedPlanesPrevented.clear();
         gameData.playersWhoCantGainLifeRestOfGame.clear();
+        gameData.playersWithHandRevealed.clear();
         gameData.priorityPassedBy.clear();
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedPermanentAction.class,
@@ -257,6 +260,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.combatDamageToPlayersThisCombat.clear();
         gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.clear();
+        gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
@@ -322,6 +326,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.sacrificedPermanentCountThisTurn.clear();
+        gameData.permanentsSacrificedThisTurn.clear();
         gameData.playersWhoSacrificedArtifactsThisTurn.clear();
         gameData.endTurnRequested = false;
         gameData.additionalCombatMainPhasePairs = 0;
@@ -377,6 +382,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.turnsTakenByPlayer.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
         gameData.sacrificedPermanentCountThisTurn.clear();
+        gameData.permanentsSacrificedThisTurn.clear();
 
         // Step 4: Each player draws 7 cards (CR 726 — pregame procedure)
         for (UUID playerId : gameData.orderedPlayerIds) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,13 +14,31 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VexingBeetle.class, Cancel.class, GrizzlyBears.class})
+@CardUsed({VexingBeetle.class, Cancel.class, GrizzlyBears.class, Forest.class})
 class VexingBeetleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets +3/+3 while no opponent controls a creature")
     void getsBoostWhileNoOpponentControlsCreature() {
         harness.addToBattlefield(player1, new VexingBeetle());
+
+        assertStats(6, 6);
+    }
+
+    @Test
+    @DisplayName("Its controller's creatures do not turn off the boost")
+    void ownCreaturesDoNotTurnOffBoost() {
+        harness.addToBattlefield(player1, new VexingBeetle());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertStats(6, 6);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature permanent does not turn off the boost")
+    void opponentNoncreatureDoesNotTurnOffBoost() {
+        harness.addToBattlefield(player1, new VexingBeetle());
+        harness.addToBattlefield(player2, new Forest());
 
         assertStats(6, 6);
     }

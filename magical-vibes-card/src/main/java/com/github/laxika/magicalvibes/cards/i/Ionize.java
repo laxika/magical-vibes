@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "179")
+@CardRegistration(set = "OTP", collectorNumber = "49")
 public class Ionize extends Card {
 
     public Ionize() {

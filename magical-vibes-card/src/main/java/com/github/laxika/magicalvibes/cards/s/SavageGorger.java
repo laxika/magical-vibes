@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "291")
+@CardRegistration(set = "ANB", collectorNumber = "58")
 public class SavageGorger extends Card {
 
     public SavageGorger() {

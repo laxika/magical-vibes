@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SPG", collectorNumber = "140")
 @CardRegistration(set = "DMU", collectorNumber = "167")
 public class LeafCrownedVisionary extends Card {
 

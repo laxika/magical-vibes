@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,101 +20,94 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RaffWeatherlightStalwartTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Casting an instant offers the tap-two-creatures draw choice")
-    void castingInstantOffersTapAndDrawChoice() {
-        addRaffAndTwoCreatures();
+    @DisplayName("Casting an instant may tap two creatures to draw a card")
+    void castingInstantMayTapTwoCreaturesToDraw() {
+        addCreatureReady(player1, new RaffWeatherlightStalwart());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        int handAfterCast = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-    }
-
-    @Test
-    @DisplayName("Tapping two creatures after accepting draws a card")
-    void acceptingTapCostDrawsCard() {
-        addRaffAndTwoCreatures();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
 
-        tapTwoCreatures(player1);
-
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
-                .filter(Permanent::isTapped)
-                .count()).isEqualTo(2);
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handAfterCast + 1);
     }
 
     @Test
-    @DisplayName("Declining the tap choice does not draw or tap creatures")
-    void decliningTapChoiceDoesNothing() {
-        addRaffAndTwoCreatures();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
-                .filter(Permanent::isTapped)
-                .count()).isZero();
-    }
-
-    @Test
-    @DisplayName("The activated ability boosts creatures and grants vigilance until end of turn")
-    void activatedAbilityBoostsAndGrantsVigilance() {
-        Permanent raff = addCreatureReady(player1, new RaffWeatherlightStalwart());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(raff.getEffectivePower()).isEqualTo(2);
-        assertThat(raff.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(raff.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isTrue();
-
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(raff.getEffectivePower()).isEqualTo(1);
-        assertThat(raff.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(raff.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isFalse();
-    }
-
-    private void addRaffAndTwoCreatures() {
+    @DisplayName("The spell-cast trigger can be declined")
+    void castingInstantCanDeclineTheDraw() {
         addCreatureReady(player1, new RaffWeatherlightStalwart());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        int handAfterCast = gd.playerHands.get(player1.getId()).size();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handAfterCast);
     }
 
-    private void tapTwoCreatures(com.github.laxika.magicalvibes.model.Player player) {
-        List<Permanent> creatures = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
-                .filter(permanent -> !permanent.getCard().getName().equals("Raff, Weatherlight Stalwart"))
-                .filter(permanent -> !permanent.isTapped())
-                .limit(2)
-                .toList();
-        creatures.forEach(creature -> harness.handlePermanentChosen(player, creature.getId()));
+    @Test
+    @DisplayName("The activated ability boosts own creatures and grants vigilance until end of turn")
+    void activatedAbilityBoostsOwnCreaturesAndGrantsVigilance() {
+        Permanent raff = addCreatureReady(player1, new RaffWeatherlightStalwart());
+        Permanent mine = addCreatureReady(player1, new GrizzlyBears());
+        Permanent theirs = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, raff)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raff)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, raff, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.VIGILANCE)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, raff)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, raff)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, raff, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The spell-cast trigger does not trigger for creature spells")
+    void creatureSpellDoesNotTrigger() {
+        addCreatureReady(player1, new RaffWeatherlightStalwart());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Raff, Weatherlight Stalwart"));
     }
 }

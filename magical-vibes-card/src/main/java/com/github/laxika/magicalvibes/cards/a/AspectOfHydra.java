@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "117")
+@CardRegistration(set = "PIO", collectorNumber = "163")
 public class AspectOfHydra extends Card {
 
     public AspectOfHydra() {

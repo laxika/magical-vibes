@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SteamVines.class, DuskImp.class, Mountain.class})
 class SteamVinesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cannot cast Steam Vines targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new DuskImp());
+        Permanent creature = findPermanent(player1, "Dusk Imp");
         harness.setHand(player1, List.of(new SteamVines()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.forceActivePlayer(player1);
@@ -41,7 +43,7 @@ class SteamVinesTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tappedLand);
@@ -60,7 +62,7 @@ class SteamVinesTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        resolveUntilChoice();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, landControlledByAuraController.getId());
@@ -81,7 +83,7 @@ class SteamVinesTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tappedLand, aura);
@@ -103,21 +105,21 @@ class SteamVinesTest extends BaseCardTest {
         return aura;
     }
 
-    private void resolveUntilChoice() {
-        for (int i = 0; i < 8; i++) {
-            if (gd.interaction.activeInteraction() != null) {
-                return;
-            }
-            if (gd.stack.isEmpty() && gd.pendingManaAbilityTriggers.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
-    }
+    @Test
+    @DisplayName("The tap trigger still destroys the land and deals damage if Steam Vines leaves first")
+    void triggerResolvesAfterAuraLeavesBattlefield() {
+        Permanent tappedLand = addLand(player1);
+        Permanent aura = attachAura(player1, tappedLand);
+        harness.setLife(player1, 20);
 
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
+        harness.tapPermanent(player1, 0);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tappedLand);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Steam Vines"));
     }
 }

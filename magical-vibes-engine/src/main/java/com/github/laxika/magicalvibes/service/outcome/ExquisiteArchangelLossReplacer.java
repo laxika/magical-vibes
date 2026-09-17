@@ -57,7 +57,7 @@ public class ExquisiteArchangelLossReplacer implements LossReplacer {
 
         gameLogService.append(gameData, GameLog.text(
                 playerName + " would lose the game — " + angelName + " is exiled instead."));
-        lifeSupport.applySetLifeTotal(gameData, losingPlayerId, GameData.STARTING_LIFE_TOTAL);
+        lifeSupport.applySetLifeTotal(gameData, losingPlayerId, gameData.startingLife());
         gameLogService.append(gameData, GameLog.text(
                 playerName + "'s life total becomes " + gameData.getLife(losingPlayerId) + "."));
         log.info("Game {} - {} loss ({}) replaced by {}", gameData.id, playerName, reason, angelName);

@@ -26,6 +26,7 @@ import java.util.List;
  * CR 702.96b, the spell chooses no targets at all.
  */
 @CardRegistration(set = "RTR", collectorNumber = "153")
+@CardRegistration(set = "PIO", collectorNumber = "213")
 public class Counterflux extends Card {
 
     public Counterflux() {

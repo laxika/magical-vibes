@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "23")
 @CardRegistration(set = "V11", collectorNumber = "6")
+@CardRegistration(set = "2X2", collectorNumber = "18")
 public class MikaeusTheLunarch extends Card {
 
     public MikaeusTheLunarch() {

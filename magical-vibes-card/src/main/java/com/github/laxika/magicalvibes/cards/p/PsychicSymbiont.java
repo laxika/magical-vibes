@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "221")
+@CardRegistration(set = "2X2", collectorNumber = "266")
 public class PsychicSymbiont extends Card {
 
     public PsychicSymbiont() {

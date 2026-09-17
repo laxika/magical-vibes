@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "143")
 @CardRegistration(set = "AKR", collectorNumber = "256")
+@CardRegistration(set = "2X2", collectorNumber = "269")
 public class RiverHoopoe extends Card {
 
     public RiverHoopoe() {

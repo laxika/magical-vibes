@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M19", collectorNumber = "7")
+@CardRegistration(set = "2XM", collectorNumber = "4")
 public class AngelOfTheDawn extends Card {
 
     public AngelOfTheDawn() {

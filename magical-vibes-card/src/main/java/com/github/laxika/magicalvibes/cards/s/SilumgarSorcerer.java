@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "76")
+@CardRegistration(set = "PIO", collectorNumber = "285")
 public class SilumgarSorcerer extends Card {
 
     public SilumgarSorcerer() {

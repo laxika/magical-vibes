@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "SOM", collectorNumber = "82")
+@CardRegistration(set = "AA3", collectorNumber = "10")
 public class AssaultStrobe extends Card {
 
     public AssaultStrobe() {

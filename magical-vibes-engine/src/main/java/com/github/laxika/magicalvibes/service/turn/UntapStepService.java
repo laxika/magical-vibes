@@ -148,7 +148,9 @@ public class UntapStepService {
 
     private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                  boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
-        snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+        if (!gameData.additionalBeginningPhaseUntapInProgress) {
+            snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+        }
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
         gameData.untapStepPlayerId = activePlayerId;
         gameData.untapStepUntappedPermanentCount = 0;
@@ -693,6 +695,9 @@ public class UntapStepService {
         List<CrossPlayerUntap> result = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
                 }

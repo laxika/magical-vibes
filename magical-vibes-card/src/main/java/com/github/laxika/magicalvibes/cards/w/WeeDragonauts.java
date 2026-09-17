@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "GPT", collectorNumber = "137")
 @CardRegistration(set = "EMA", collectorNumber = "212")
 @CardRegistration(set = "DDJ", collectorNumber = "6")
+@CardRegistration(set = "MB1", collectorNumber = "214")
 public class WeeDragonauts extends Card {
 
     public WeeDragonauts() {

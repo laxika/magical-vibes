@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AvenInitiate;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeasideHaven.class, AvenInitiate.class, GrizzlyBears.class})
+@CardUsed({SeasideHaven.class, SageAven.class, GlorySeeker.class})
 class SeasideHavenTest extends BaseCardTest {
 
     @Test
@@ -30,26 +29,28 @@ class SeasideHavenTest extends BaseCardTest {
     @Test
     void sacrificesBirdAndDrawsCard() {
         addReadyHaven(player1);
-        harness.addToBattlefield(player1, new AvenInitiate());
+        harness.addToBattlefield(player1, new SageAven());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        harness.assertInGraveyard(player1, "Aven Initiate");
+        harness.assertInGraveyard(player1, "Sage Aven");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(findPermanent(player1, "Seaside Haven").isTapped()).isTrue();
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        harness.assertInGraveyard(player1, "Aven Initiate");
+        harness.assertInGraveyard(player1, "Sage Aven");
         harness.assertOnBattlefield(player1, "Seaside Haven");
     }
 
     @Test
     void drawAbilityCannotSacrificeNonBirdCreature() {
         addReadyHaven(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GlorySeeker());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

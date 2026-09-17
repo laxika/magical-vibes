@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "49")
 @CardRegistration(set = "GNT", collectorNumber = "18")
+@CardRegistration(set = "SIR", collectorNumber = "54")
+@CardRegistration(set = "2X2", collectorNumber = "36")
 public class AdvancedStitchwing extends Card {
 
     public AdvancedStitchwing() {

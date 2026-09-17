@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "122")
+@CardRegistration(set = "PIO", collectorNumber = "109")
 public class SilumgarButcher extends Card {
 
     public SilumgarButcher() {

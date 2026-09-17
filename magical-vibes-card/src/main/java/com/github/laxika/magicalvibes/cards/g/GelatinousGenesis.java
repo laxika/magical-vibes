@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "183")
+@CardRegistration(set = "2XM", collectorNumber = "169")
 public class GelatinousGenesis extends Card {
 
     public GelatinousGenesis() {

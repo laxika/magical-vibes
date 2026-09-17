@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "216")
+@CardRegistration(set = "RVR", collectorNumber = "202")
 @CardRegistration(set = "DDH", collectorNumber = "51")
 @CardRegistration(set = "MM3", collectorNumber = "173")
 @CardRegistration(set = "GK1", collectorNumber = "18")

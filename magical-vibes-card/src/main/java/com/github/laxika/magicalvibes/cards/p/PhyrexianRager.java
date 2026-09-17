@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 @CardRegistration(set = "IMA", collectorNumber = "102")
 @CardRegistration(set = "EMA", collectorNumber = "102")
 @CardRegistration(set = "DMU", collectorNumber = "99")
+@CardRegistration(set = "DMR", collectorNumber = "99")
 public class PhyrexianRager extends Card {
 
     public PhyrexianRager() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "69")
 @CardRegistration(set = "MM3", collectorNumber = "44")
+@CardRegistration(set = "TSR", collectorNumber = "76")
 public class MysticalTeachings extends Card {
 
     public MysticalTeachings() {

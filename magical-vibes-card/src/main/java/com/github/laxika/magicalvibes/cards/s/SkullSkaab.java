@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "248")
+@CardRegistration(set = "DBL", collectorNumber = "515")
 public class SkullSkaab extends Card {
 
     public SkullSkaab() {

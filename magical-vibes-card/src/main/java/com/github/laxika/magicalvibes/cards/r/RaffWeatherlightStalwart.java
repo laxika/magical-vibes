@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MUL", collectorNumber = "56")
+@CardRegistration(set = "MUL", collectorNumber = "121")
+@CardRegistration(set = "MUL", collectorNumber = "186")
 @CardRegistration(set = "DMU", collectorNumber = "212")
 public class RaffWeatherlightStalwart extends Card {
 

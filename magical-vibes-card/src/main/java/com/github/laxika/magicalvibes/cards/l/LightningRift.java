@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "217")
 @CardRegistration(set = "VMA", collectorNumber = "178")
+@CardRegistration(set = "DMR", collectorNumber = "129")
 public class LightningRift extends Card {
 
     public LightningRift() {

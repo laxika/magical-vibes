@@ -36,6 +36,7 @@ import java.util.Set;
  * @param startingLoyaltyOverride starting loyalty for a planeswalker token, if non-null
  * @param initialPlusOnePlusOneCounters +1/+1 counters with which each token enters
  * @param tapped             if true, the token enters tapped without entering attacking
+ * @param excludedEffectType an effect type omitted from the token copy's copied effects
  */
 public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
                                             CardColor colorOverride, CardSubtype addedSubtype,
@@ -46,8 +47,26 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                             boolean tappedAndAttacking,
                                             Set<CardType> additionalTypes,
                                             Integer startingLoyaltyOverride,
-                                            boolean tapped, int initialPlusOnePlusOneCounters)
+                                            boolean tapped, int initialPlusOnePlusOneCounters,
+                                            Class<? extends CardEffect> excludedEffectType)
         implements CardEffect {
+        /** Backward-compatible constructor for a plain source copy. */
+        public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
+                                            CardColor colorOverride, CardSubtype addedSubtype,
+                                            boolean removeManaCost,
+                                            Integer powerOverride, Integer toughnessOverride,
+                                            boolean grantHaste, boolean exileAtEndStep,
+                                            Map<CounterType, DynamicAmount> initialCounters,
+                                            boolean tappedAndAttacking,
+                                            Set<CardType> additionalTypes,
+                                            Integer startingLoyaltyOverride,
+                                            boolean tapped, int initialPlusOnePlusOneCounters) {
+            this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
+                    powerOverride, toughnessOverride, grantHaste, exileAtEndStep, initialCounters,
+                    tappedAndAttacking, additionalTypes, startingLoyaltyOverride, tapped,
+                    initialPlusOnePlusOneCounters, null);
+        }
+
         public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
                                             CardColor colorOverride, CardSubtype addedSubtype,
                                             boolean removeManaCost,
@@ -149,5 +168,13 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
         return new CreateTokenCopyOfSourceEffect(
                 false, new Fixed(amount), null, null, false, null, null, false, false, Map.of(), false,
                 Set.of(), null, true, 0);
+    }
+
+    /** Creates a source copy while omitting the specified copied effect. */
+    public static CreateTokenCopyOfSourceEffect withoutSourceEffect(
+            Class<? extends CardEffect> excludedEffectType) {
+        return new CreateTokenCopyOfSourceEffect(
+                false, new Fixed(1), null, null, false, null, null, false, false,
+                Map.of(), false, Set.of(), null, false, 0, excludedEffectType);
     }
 }

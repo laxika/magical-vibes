@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DPA", collectorNumber = "106")
 @CardRegistration(set = "DMU", collectorNumber = "273")
+@CardRegistration(set = "CMD", collectorNumber = "312")
+@CardRegistration(set = "CMD", collectorNumber = "313")
+@CardRegistration(set = "GN3", collectorNumber = "131")
+@CardRegistration(set = "GN3", collectorNumber = "132")
+@CardRegistration(set = "GN3", collectorNumber = "133")
 @CardRegistration(set = "GN2", collectorNumber = "61")
 @CardRegistration(set = "GN2", collectorNumber = "62")
 @CardRegistration(set = "GK2", collectorNumber = "105")
@@ -94,6 +99,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SOM", collectorNumber = "244")
 @CardRegistration(set = "SOM", collectorNumber = "245")
 @CardRegistration(set = "SOI", collectorNumber = "294")
+@CardRegistration(set = "SIR", collectorNumber = "286")
+@CardRegistration(set = "SIR", collectorNumber = "287")
+@CardRegistration(set = "SIR", collectorNumber = "288")
 @CardRegistration(set = "ZEN", collectorNumber = "242")
 @CardRegistration(set = "ZEN", collectorNumber = "243")
 @CardRegistration(set = "ZEN", collectorNumber = "244")
@@ -461,11 +469,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "GK1", collectorNumber = "49")
 @CardRegistration(set = "GK1", collectorNumber = "101")
 @CardRegistration(set = "GS1", collectorNumber = "39")
+@CardRegistration(set = "ANB", collectorNumber = "114")
 @CardRegistration(set = "KLR", collectorNumber = "296")
 @CardRegistration(set = "KLR", collectorNumber = "298")
 @CardRegistration(set = "DMU", collectorNumber = "271")
 @CardRegistration(set = "DMU", collectorNumber = "272")
 @CardRegistration(set = "DMU", collectorNumber = "280")
+@CardRegistration(set = "REX", collectorNumber = "24")
+@CardRegistration(set = "CMD", collectorNumber = "311")
+@CardRegistration(set = "CMD", collectorNumber = "314")
 public class Mountain extends Card {
 
     public Mountain() {

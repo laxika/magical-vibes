@@ -34,16 +34,12 @@ class DaruSanctifierTest extends BaseCardTest {
     }
 
     private Permanent castFaceDown() {
-        DaruSanctifier card = new DaruSanctifier();
-        harness.setHand(player1, List.of(card));
+        harness.setHand(player1, List.of(new DaruSanctifier()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Daru Sanctifier");
     }
 }

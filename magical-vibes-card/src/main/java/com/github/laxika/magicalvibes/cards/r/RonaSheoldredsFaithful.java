@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MUL", collectorNumber = "58")
+@CardRegistration(set = "MUL", collectorNumber = "123")
+@CardRegistration(set = "MUL", collectorNumber = "188")
 @CardRegistration(set = "DMU", collectorNumber = "216")
 public class RonaSheoldredsFaithful extends Card {
 

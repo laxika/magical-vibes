@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "41")
+@CardRegistration(set = "OTP", collectorNumber = "7")
 public class ArchiveTrap extends Card {
 
     public ArchiveTrap() {

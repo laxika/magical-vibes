@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "201")
 @CardRegistration(set = "RAV", collectorNumber = "273")
+@CardRegistration(set = "SIR", collectorNumber = "261")
 public class Terrarion extends Card {
 
     public Terrarion() {

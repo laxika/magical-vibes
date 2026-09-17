@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "88")
+@CardRegistration(set = "DBL", collectorNumber = "88")
 public class BloodPact extends Card {
 
     public BloodPact() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEf
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "39")
+@CardRegistration(set = "RVR", collectorNumber = "36")
 public class CeruleanSphinx extends Card {
 
     public CeruleanSphinx() {

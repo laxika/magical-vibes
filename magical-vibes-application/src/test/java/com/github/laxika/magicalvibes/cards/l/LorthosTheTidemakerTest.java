@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,11 +32,9 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(lorthos)));
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        for (Permanent target : targets) {
-            harness.handlePermanentChosen(player1, target.getId());
-        }
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, targets.stream().map(Permanent::getId).toList());
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -62,9 +60,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(lorthos)));
-        harness.handlePermanentChosen(player1, bear.getId());
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId(), forest.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

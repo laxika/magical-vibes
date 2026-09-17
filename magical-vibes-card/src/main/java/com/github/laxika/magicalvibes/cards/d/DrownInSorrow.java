@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "65")
+@CardRegistration(set = "2XM", collectorNumber = "91")
 public class DrownInSorrow extends Card {
 
     public DrownInSorrow() {

@@ -1,21 +1,19 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WormfangDrake.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({WormfangDrake.class, SuntailHawk.class})
 class WormfangDrakeTest extends BaseCardTest {
 
     private void castWormfangDrake() {
@@ -38,45 +36,51 @@ class WormfangDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices itself when the only other creature is controlled by an opponent")
+    void sacrificesItselfWithoutCreatureItControls() {
+        harness.addToBattlefield(player2, new SuntailHawk());
+        castWormfangDrake();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wormfang Drake");
+        harness.assertInGraveyard(player1, "Wormfang Drake");
+        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Exiles another creature it controls")
     void exilesAnotherCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         castWormfangDrake();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, hawk.getId());
 
         harness.assertOnBattlefield(player1, "Wormfang Drake");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
     }
 
     @Test
     @DisplayName("Returns the exiled creature when it leaves the battlefield")
     void returnsExiledCreatureWhenItLeaves() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         castWormfangDrake();
         harness.passBothPriorities();
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, hawk.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        UUID drakeId = harness.getPermanentId(player1, "Wormfang Drake");
-        harness.castInstant(player1, 0, drakeId);
+        Permanent drake = findPermanent(player1, "Wormfang Drake");
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, drake));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wormfang Drake");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+                .noneMatch(card -> card.getName().equals("Suntail Hawk"));
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "7")
+@CardRegistration(set = "RVR", collectorNumber = "11")
 public class BulwarkGiant extends Card {
 
     public BulwarkGiant() {

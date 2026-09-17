@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ARB", collectorNumber = "16")
 @CardRegistration(set = "DDI", collectorNumber = "11")
 @CardRegistration(set = "MM3", collectorNumber = "201")
+@CardRegistration(set = "CMD", collectorNumber = "237")
 public class WallOfDenial extends Card {
 }

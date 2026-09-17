@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "36")
 @CardRegistration(set = "VIS", collectorNumber = "17")
+@CardRegistration(set = "DMR", collectorNumber = "22")
 public class Remedy extends Card {
 
     public Remedy() {

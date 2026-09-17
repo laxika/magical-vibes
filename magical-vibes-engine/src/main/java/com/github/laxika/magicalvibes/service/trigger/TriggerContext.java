@@ -21,6 +21,9 @@ import java.util.Set;
  */
 public sealed interface TriggerContext {
 
+    /** Context for a Saga's final chapter ability finishing resolution. */
+    record SagaFinalChapterAbilityResolved(UUID sagaControllerId) implements TriggerContext {}
+
     record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
         public Card spellCard() {
             return copiedSpell.getCard();
@@ -64,6 +67,9 @@ public sealed interface TriggerContext {
 
     /** Context for "whenever a spell you've cast is countered" triggers. */
     record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
+
+    /** Context for a spell's own "when this spell is countered or fizzles" ability. */
+    record SpellCounteredOrFizzled(StackEntry spellEntry) implements TriggerContext {}
 
     /**
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
@@ -110,6 +116,9 @@ public sealed interface TriggerContext {
             this(scryingPlayerId, 0);
         }
     }
+
+    /** Context for triggers caused by a player being tempted by the Ring. */
+    record RingTemptsYou(UUID temptedPlayerId) implements TriggerContext {}
 
     /** Context for controller-investigate triggers. */
     record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
@@ -219,8 +228,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
-    /** Context for a creature controlled by a player exploiting a nontoken creature. */
-    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard)
+    /** Context for a creature controlled by a player exploiting another creature. */
+    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard,
+                           int exploitedPower)
             implements TriggerContext {}
 
     record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
@@ -248,7 +258,14 @@ public sealed interface TriggerContext {
 
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
-                                          int damageDealt, boolean combatDamage) implements TriggerContext {}
+                                          int damageDealt, boolean combatDamage,
+                                          Permanent damagedCreature, UUID damagedCreatureControllerId)
+            implements TriggerContext {
+        public CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
+                                              int damageDealt, boolean combatDamage) {
+            this(damageSource, damagedCreatureId, damageDealt, combatDamage, null, null);
+        }
+    }
 
     /** Context for a creature fighting another creature. */
     record CreatureFights(Permanent fightingCreature) implements TriggerContext {}
@@ -728,6 +745,10 @@ public sealed interface TriggerContext {
             creatureCards = List.copyOf(creatureCards);
         }
     }
+
+    /** Context for creatures exiled from the battlefield, regardless of controller. */
+    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
+            implements TriggerContext {}
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "86")
 @CardRegistration(set = "UMA", collectorNumber = "100")
+@CardRegistration(set = "TSR", collectorNumber = "118")
 public class GraveScrabbler extends Card {
 
     public GraveScrabbler() {

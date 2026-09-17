@@ -14,6 +14,7 @@ export enum MessageType {
   REGISTER_FAILURE = 'REGISTER_FAILURE',
   TIMEOUT = 'TIMEOUT',
   GAME_JOINED = 'GAME_JOINED',
+  ACTIVE_GAME_CHANGED = 'ACTIVE_GAME_CHANGED',
   OPPONENT_JOINED = 'OPPONENT_JOINED',
   NEW_GAME = 'NEW_GAME',
   GAME_UPDATED = 'GAME_UPDATED',
@@ -65,6 +66,10 @@ export enum MessageType {
   LEAVE_DRAFT = 'LEAVE_DRAFT',
   LOBBY_GAMES_RESPONSE = 'LOBBY_GAMES_RESPONSE',
   GAME_REMOVED = 'GAME_REMOVED',
+  LOAD_DECK = 'LOAD_DECK',
+  LOAD_DECK_RESPONSE = 'LOAD_DECK_RESPONSE',
+  VALIDATE_DECK = 'VALIDATE_DECK',
+  VALIDATE_DECK_RESPONSE = 'VALIDATE_DECK_RESPONSE',
   SAVE_DECK = 'SAVE_DECK',
   SAVE_DECK_RESPONSE = 'SAVE_DECK_RESPONSE'
 }
@@ -347,8 +352,11 @@ export interface PlanechaseView {
   rollSequence: number;
 }
 
+export interface CommanderView { format: DeckFormat; commandZones: Record<string, Card[]>; commanders: Record<string, string[]>; tax: Record<string, number>; damageReceived: Record<string, Record<string, number>>; playableCardIds: string[]; }
 export interface Game {
+  commander?: CommanderView;
   planechase?: PlanechaseView | null;
+  monarchPlayerId: string | null;
   id: string;
   gameName: string;
   status: GameStatus;
@@ -379,6 +387,7 @@ export interface Game {
 }
 
 export interface LobbyGame {
+  format?: DeckFormat;
   planechase?: boolean;
   id: string;
   gameName: string;
@@ -388,7 +397,14 @@ export interface LobbyGame {
   allRandom: boolean;
 }
 
+export type DeckFormat = 'CASUAL' | 'STANDARD' | 'PIONEER' | 'MODERN' | 'LEGACY' | 'VINTAGE' | 'PAUPER' | 'COMMANDER';
+export const DECK_FORMATS: DeckFormat[] = ['CASUAL', 'STANDARD', 'PIONEER', 'MODERN', 'LEGACY', 'VINTAGE', 'PAUPER', 'COMMANDER'];
+export interface DeckValidation { errors: string[]; legalityUpdatedAt?: string | null; }
+export interface SavedDeckEntry { setCode: string; collectorNumber: string; count: number; }
+export interface SavedDeck { id?: string; name: string; format: DeckFormat; entries: SavedDeckEntry[]; sideboard: SavedDeckEntry[]; commander?: SavedDeckEntry | null; }
 export interface DeckInfo {
+  format?: DeckFormat;
+  validation?: DeckValidation;
   id: string;
   name: string;
 }
@@ -433,7 +449,9 @@ export interface LobbyGamesNotification {
 }
 
 export interface GameStateNotification {
+  commander?: CommanderView;
   planechase?: PlanechaseView | null;
+  monarchPlayerId: string | null;
   type: MessageType;
   status: GameStatus;
   activePlayerId: string;
@@ -547,6 +565,7 @@ export interface InteractionPromptNotification {
   disabledOptions?: string[];
   minCount?: number;
   manaPayment?: boolean;
+  scrycastCardIndices?: number[];
 }
 
 export interface RevealHandNotification {
@@ -735,6 +754,9 @@ export class WebsocketService {
       this.authenticated = false;
       this.currentUser = null;
       this.currentGame = null;
+      this.gameContext = null;
+      this.subgameDepth = 0;
+      this.pendingGameInputMessage = null;
       this.initialGames = [];
 
       this.ws = new WebSocket(this.WS_URL);
@@ -750,6 +772,20 @@ export class WebsocketService {
       this.ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
+          if ([MessageType.GAME_JOINED, MessageType.OPPONENT_JOINED].includes(message.type)) {
+            const incoming = (message as GameNotification).game;
+            if (incoming && this.gameContext && incoming.id !== this.gameContext.activeGameId) {
+              this.gameContext = null;
+              this.subgameDepth = 0;
+            }
+          }
+          if (message.type === MessageType.ACTIVE_GAME_CHANGED) {
+            const changed = message as WebSocketMessage & { context: NonNullable<WebsocketService['gameContext']>; depth: number; game: Game };
+            this.gameContext = changed.context;
+            this.subgameDepth = changed.depth;
+            this.currentGame = changed.game;
+            this.pendingGameInputMessage = null;
+          }
 
           // Before authenticated, only handle login responses
           if (!this.authenticated) {
@@ -862,9 +898,12 @@ export class WebsocketService {
     });
   }
 
+  gameContext: { sessionId: string; activeGameId: string; activationEpoch: number } | null = null;
+  subgameDepth = 0;
+
   send(message: object): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+      this.ws.send(JSON.stringify({ ...message, gameContext: this.gameContext }));
     }
   }
 
@@ -894,6 +933,8 @@ export class WebsocketService {
     this.ws = null;
     this.currentUser = null;
     this.currentGame = null;
+    this.gameContext = null;
+    this.subgameDepth = 0;
     this.initialGames = [];
     this.availableDecks = [];
     this.availableSets = [];

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "31")
+@CardRegistration(set = "2XM", collectorNumber = "64")
 public class Reshape extends Card {
 
     public Reshape() {

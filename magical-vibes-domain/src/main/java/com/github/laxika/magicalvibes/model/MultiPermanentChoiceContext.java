@@ -116,6 +116,11 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Selects multiple permanent targets for an attack trigger. */
+    record AttackTriggerTargets(PermanentChoiceContext.AttackTriggerTarget pending, int minTargets)
+            implements MultiPermanentChoiceContext {
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total)
             implements MultiPermanentChoiceContext {
@@ -127,6 +132,12 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Exile a permanent the damaged player controls (combat damage trigger). */
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
+    }
+
+    /** The defending player chooses the required number of permanents they control to exile. */
+    record DefendingPlayerChoosesPermanentsToExile(UUID defendingPlayerId, int requiredCount,
+                                                   String sourceCardName)
+            implements MultiPermanentChoiceContext {
     }
 
     /** Deal damage to a creature the damaged player controls (combat damage trigger). */
@@ -217,6 +228,11 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** The controller selected Equipment they control to attach to the targeted creature. */
     record AttachAnyNumberOfControlledEquipmentToTargetCreature(UUID targetCreatureId)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller selected Auras and Equipment they control to attach to the source creature. */
+    record AttachAnyNumberOfControlledAurasAndEquipmentToSource(UUID sourcePermanentId)
             implements MultiPermanentChoiceContext {
     }
 
@@ -460,6 +476,31 @@ public sealed interface MultiPermanentChoiceContext {
             StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
         public EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
+    /** Each opponent chooses a creature before the chosen creatures are sacrificed together. */
+    record EachOpponentSacrificesCreatureCreateTokens(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            CreateTokenEffect tokenTemplate,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesCreatureCreateTokens {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
+    /** The controller and a target opponent each choose a creature before both are sacrificed. */
+    record ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public ControllerAndTargetPlayerChooseCreaturesThenSacrifice {
             remainingChoosers = java.util.List.copyOf(remainingChoosers);
             accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
         }
@@ -1018,6 +1059,16 @@ public sealed interface MultiPermanentChoiceContext {
         public WillOfTheCouncilChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Expropriate: the controller chooses a permanent owned by the current money voter. */
+    record ExpropriatePermanentChoice(UUID effectControllerId, UUID voterId,
+                                      java.util.List<UUID> remainingMoneyVoterIds,
+                                      int timeVotes, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public ExpropriatePermanentChoice {
+            remainingMoneyVoterIds = java.util.List.copyOf(remainingMoneyVoterIds);
         }
     }
 

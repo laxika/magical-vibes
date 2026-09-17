@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPai
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "169")
+@CardRegistration(set = "PIO", collectorNumber = "161")
 public class ZurgoBellstriker extends Card {
 
     public ZurgoBellstriker() {

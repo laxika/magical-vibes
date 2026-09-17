@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "36")
+@CardRegistration(set = "SIR", collectorNumber = "41")
 public class ReaperOfFlightMoonsilver extends Card {
 
     public ReaperOfFlightMoonsilver() {

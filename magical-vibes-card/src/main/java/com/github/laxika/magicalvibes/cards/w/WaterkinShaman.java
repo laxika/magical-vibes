@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "288")
+@CardRegistration(set = "ANB", collectorNumber = "39")
 public class WaterkinShaman extends Card {
 
     public WaterkinShaman() {

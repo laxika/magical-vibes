@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "119")
+@CardRegistration(set = "TSR", collectorNumber = "123")
 public class Mindstab extends Card {
 
     public Mindstab() {

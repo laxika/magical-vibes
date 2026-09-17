@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacyWordSupport;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -128,6 +130,8 @@ public class ChoiceHandlerService {
     private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
+            removeUpToCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
@@ -140,12 +144,17 @@ public class ChoiceHandlerService {
             lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
             pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
+            expropriateEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
+            voteForDenialOrDuplicationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
             tyrantsChoiceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GraceOrCondemnationEffectHandler
             graceOrCondemnationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
             coercivePortalEffectHandler;
+    private final ManaSourceColorSupport manaSourceColorSupport;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -286,6 +295,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.PathOfAncestryManaColorChoice ctx) {
+            handlePathOfAncestryManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.ChosenPlayerManaColorChoice ctx) {
             handleChosenPlayerManaColorChosen(gameData, player, colorName, colorChoice, ctx);
             return;
@@ -357,6 +371,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice ctx) {
             handleKeywordGrantChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.LegacyWordChoice ctx) {
+            handleLegacyWordChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.LandwalkGrantChoice ctx) {
@@ -478,6 +496,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellCardTypeChoice) {
             handleSpellCardTypeChoice(gameData, player, colorName);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellLandOrNonlandChoice) {
+            handleSpellLandOrNonlandChoice(gameData, player, colorName, colorChoice.options());
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
@@ -695,6 +717,10 @@ public class ChoiceHandlerService {
             handleRemoveChosenCountersChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice ctx) {
+            handleRemoveUpToCountersFromAllPermanentsChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RemoveOneCounterChoice ctx) {
             handleRemoveOneCounterChoice(gameData, colorName, ctx);
             return;
@@ -713,6 +739,28 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ExpropriateChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Expropriate vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            expropriateEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.VoteForDenialOrDuplicationChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Split Decision vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            voteForDenialOrDuplicationEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1171,6 +1219,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromArtifactSource()) {
+                manaPool.addArtifactSourceManaTag(manaColor, 1);
+            }
             if (ctx.fromTreasureSource()) {
                 manaPool.addTreasureMana(manaColor, 1);
             }
@@ -1199,6 +1250,7 @@ public class ChoiceHandlerService {
                         .withCaveSource(ctx.fromCaveSource())
                         .withBasicLandSource(ctx.fromBasicLandSource());
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
+                nextCtx = nextCtx.withArtifactSource(ctx.fromArtifactSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -1243,8 +1295,12 @@ public class ChoiceHandlerService {
                         new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
             } else {
                 manaPool.add(manaColor, 1);
+                tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
                 if (ctx.fromSnowSource()) {
                     manaPool.addSnowManaTag(manaColor, 1);
+                }
+                if (ctx.fromArtifactSource()) {
+                    manaPool.addArtifactSourceManaTag(manaColor, 1);
                 }
                 if (ctx.fromCaveSource()) {
                     manaPool.addCaveManaTag(manaColor, 1);
@@ -1284,6 +1340,7 @@ public class ChoiceHandlerService {
                 }
                 List<String> colors = nextColors.stream().map(Enum::name).toList();
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
+                nextCtx = nextCtx.withArtifactSource(ctx.fromArtifactSource());
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -1341,6 +1398,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsAdditionalPlusOneCounter()) {
             manaPool.add(manaColor, amount);
             manaPool.addAdditionalCounterGrantingMana(manaColor, amount);
+            if (ctx.fromArtifactSource()) {
+                manaPool.addArtifactSourceManaTag(manaColor, amount);
+            }
             if (ctx.fromBasicLandSource()) {
                 manaPool.addBasicLandManaTag(manaColor, amount);
             }
@@ -1387,8 +1447,12 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} artifact-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else {
             manaPool.add(manaColor, amount);
+            tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
+            }
+            if (ctx.fromArtifactSource()) {
+                manaPool.addArtifactSourceManaTag(manaColor, amount);
             }
             if (ctx.fromTreasureSource()) {
                 manaPool.addTreasureMana(manaColor, amount);
@@ -1439,6 +1503,51 @@ public class ChoiceHandlerService {
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePathOfAncestryManaColorChosen(GameData gameData, Player player, String colorName,
+                                                     List<String> options,
+                                                     ChoiceContext.PathOfAncestryManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, 1);
+        if (ctx.sourcePermanentId() != null) {
+            manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
+        }
+
+        int remaining = ctx.amount() - 1;
+        if (remaining > 0) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null,
+                    new ChoiceContext.PathOfAncestryManaColorChoice(
+                            ctx.playerId(), ctx.sourcePermanentId(), remaining),
+                    options, "Choose a color in your commander's color identity."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        resolveProducedManaTriggers(gameData, manaColor);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds one "
+                + colorName.toLowerCase() + " mana."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void tagMulticoloredSourceMana(GameData gameData, UUID sourcePermanentId,
+                                           ManaPool manaPool, ManaColor color, int amount) {
+        if (sourcePermanentId == null) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (manaSourceColorSupport.canProduceMultipleColors(gameData, source)) {
+            manaPool.addMulticoloredSourceManaTag(color, amount);
+        }
     }
 
     private void handleSingleColorSubtypeSpellOrAbilityManaChosen(
@@ -2041,6 +2150,28 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleLegacyWordChoice(GameData gameData, Player player, String chosenWord,
+                                        ChoiceContext.LegacyWordChoice ctx) {
+        String normalizedWord = LegacyWordSupport.normalize(chosenWord);
+        boolean validChoice = ctx.options().stream()
+                .anyMatch(option -> LegacyWordSupport.normalize(option).equals(normalizedWord));
+        if (!validChoice) {
+            throw new IllegalArgumentException("Invalid Legacy keyword or ability word choice: " + chosenWord);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.legacyChosenWordsByCardId.put(ctx.sourceCard().getId(), normalizedWord);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses " + normalizedWord + " for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), normalizedWord,
+                ctx.sourceCard().getName());
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            mulliganService.continueStartGame(gameData);
+        }
+    }
+
     private void handleLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,
                                            ChoiceContext.LandwalkGrantChoice ctx) {
         gameData.interaction.clearAwaitingInput();
@@ -2477,6 +2608,42 @@ public class ChoiceHandlerService {
         if (remainingSelections > 0 && !remainingTypes.isEmpty()) {
             playerInputService.beginRemoveChosenCountersChoice(gameData, ctx.controllerId(), ctx.targetId(),
                     ctx.sourceCardName(), remainingSelections, remainingTypes);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRemoveUpToCountersFromAllPermanentsChoice(GameData gameData, String choice,
+            ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice ctx) {
+        if (!ctx.permanentOptions().containsKey(choice)
+                && !ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE.equals(choice)) {
+            throw new IllegalArgumentException("Invalid permanent choice: " + choice);
+        }
+
+        if (ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE.equals(choice)) {
+            gameData.interaction.clearAwaitingInput();
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        UUID permanentId = ctx.permanentOptions().get(choice);
+        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (permanent == null || permanent.getCounterCount(ctx.counterType()) <= 0) {
+            throw new IllegalArgumentException("Permanent no longer has the chosen counter");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, ctx.counterType(), 1);
+        ctx.resolvingEntry().setEventValue(ctx.resolvingEntry().getEventValue() + 1);
+
+        int remaining = ctx.remaining() - 1;
+        Map<String, UUID> permanentOptions = removeUpToCountersFromAllPermanentsEffectHandler
+                .permanentOptions(gameData, ctx.counterType());
+        if (remaining > 0 && !permanentOptions.isEmpty()) {
+            removeUpToCountersFromAllPermanentsEffectHandler.beginChoice(
+                    gameData, ctx.resolvingEntry(), ctx.counterType(), remaining, permanentOptions);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
@@ -3846,6 +4013,22 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleSpellLandOrNonlandChoice(GameData gameData, Player player, String choice,
+                                                 List<String> options) {
+        if (!options.contains(choice)) {
+            throw new IllegalArgumentException("Invalid land or nonland choice: " + choice);
+        }
+
+        gameData.chosenSpellLandOrNonland = choice.equals("LAND");
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + choice.toLowerCase() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(), choice.toLowerCase());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleTurnaboutChoice(GameData gameData, Player player, String choice) {
         CardType chosenType;
         boolean tap;
@@ -4006,14 +4189,19 @@ public class ChoiceHandlerService {
             ChoiceContext.CounterDistributionAssignment next =
                     new ChoiceContext.CounterDistributionAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
-                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex);
+                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
+                            ctx.allowsPartialDistribution());
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
-        if (assigned != ctx.total()) {
-            throw new IllegalStateException("Counter assignments must total " + ctx.total());
+        if (ctx.allowsPartialDistribution()
+                ? assigned <= 0 || assigned > ctx.total()
+                : assigned != ctx.total()) {
+            throw new IllegalStateException(ctx.allowsPartialDistribution()
+                    ? "Counter assignments must not exceed " + ctx.total()
+                    : "Counter assignments must total " + ctx.total());
         }
 
         gameData.interaction.clearAwaitingInput();

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -197,7 +198,7 @@ public class ValidTargetService {
         TargetFilter modeFilter = chosenMode != null && chosenMode.targetFilter() != null ? chosenMode.targetFilter()
                 : modalTargetFilters.size() == 1 ? modalTargetFilters.getFirst() : null;
         List<TargetFilter> targetFilters = modalTargetFilters.isEmpty()
-                ? card.getMultiTargetFilters() : modalTargetFilters;
+                ? card.getMultiTargetFilters(Boolean.TRUE.equals(kicked)) : modalTargetFilters;
         Set<TargetType> allowedTargets;
         if (kicked != null || modeSelection != null) {
             spellEffects = EffectResolution.resolveEffects(spellEffects, kicked, modeSelection);
@@ -226,7 +227,7 @@ public class ValidTargetService {
 
         if (allowedTargets.equals(Set.of(TargetType.SPELL_ON_STACK))) {
             TargetFilter filter = positionIndex < targetFilters.size() ? targetFilters.get(positionIndex)
-                    : modeFilter != null ? modeFilter : card.getTargetFilter();
+                    : modeFilter != null ? modeFilter : card.getTargetFilter(Boolean.TRUE.equals(kicked));
             List<UUID> stackIds = gameData.stack.stream().map(com.github.laxika.magicalvibes.model.StackEntry::getTargetableId)
                     .filter(id -> !excludeIds.contains(id))
                     .filter(id -> targetLegalityService.checkSpellTargetOnStack(gameData, id, filter,
@@ -381,7 +382,7 @@ public class ValidTargetService {
                 positionAllowsPlayers = modalEffect != null && xValue != null
                         ? positionFilter instanceof PlayerPredicateTargetFilter
                         || positionFilter instanceof AnyTargetPredicateTargetFilter
-                        : card.doesPositionAllowPlayerTargets(positionIndex);
+                        : card.doesPositionAllowPlayerTargets(positionIndex, Boolean.TRUE.equals(kicked));
             }
 
             if (positionAllowsPlayers && !gameQueryService.isPeaceTalksActive(gameData)) {
@@ -389,13 +390,27 @@ public class ValidTargetService {
                     if (excludeIds.contains(playerId)) continue;
                     TargetFilter playerFilter = isMultiTarget && positionIndex < targetFilters.size()
                             ? targetFilters.get(positionIndex)
-                            : modeFilter != null ? modeFilter : card.getTargetFilter();
+                            : modeFilter != null ? modeFilter : card.getTargetFilter(Boolean.TRUE.equals(kicked));
                     if (isValidPlayerTarget(gameData, playerFilter,
                             playerId, controllerId, null, card)) {
                         validPlayerIds.add(playerId);
                     }
                 }
             }
+        }
+
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+            List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+            validPermanentIds.removeIf(id -> {
+                List<UUID> trial = new ArrayList<>(already);
+                trial.add(id);
+                return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+            });
+            validPlayerIds.removeIf(id -> {
+                List<UUID> trial = new ArrayList<>(already);
+                trial.add(id);
+                return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+            });
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
@@ -505,7 +520,7 @@ public class ValidTargetService {
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
         int announced = announcedXValue != null ? announcedXValue : 0;
-        return card.getEffects(EffectSlot.SPELL).stream()
+        int effectiveXValue = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::cast)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect::castTimeXValue)
@@ -514,6 +529,15 @@ public class ValidTargetService {
                 .map(amount -> amountEvaluationService.evaluate(gameData, amount,
                         AmountContext.forCasting(controllerId, announced, card)))
                 .orElse(announced);
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CastTimeXValueModifierEffect modifier
+                        && modifier.appliesTo(card, controllerId, controllerId)) {
+                    effectiveXValue = modifier.modifyCastTimeXValue(effectiveXValue);
+                }
+            }
+        }
+        return effectiveXValue;
     }
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
@@ -780,6 +804,19 @@ public class ValidTargetService {
                     return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
                 });
             }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+                List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+                });
+                validPlayerIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+                });
+            }
             if (isOnePerControllerConstraint(ability.getMultiTargetConstraint())
                     && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
                 Set<UUID> selectedControllers = alreadySelectedIds.stream()
@@ -789,6 +826,9 @@ public class ValidTargetService {
                 validPermanentIds.removeIf(id ->
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
+
+            enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
+                    validPermanentIds, validPlayerIds);
 
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
@@ -922,6 +962,9 @@ public class ValidTargetService {
             }
         }
 
+        enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
+                validPermanentIds, validPlayerIds);
+
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, minTargets, maxTargets, prompt);
     }
@@ -955,25 +998,31 @@ public class ValidTargetService {
     private void enforceFlagbearerTargetChoice(GameData gameData, UUID controllerId,
                                                 List<UUID> alreadySelectedIds,
                                                 List<UUID> validPermanentIds, List<UUID> validPlayerIds) {
-        if (!gameQueryService.hasFlagbearerControlledByOpponent(gameData, controllerId)) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)) {
             return;
         }
         if (alreadySelectedIds != null && alreadySelectedIds.stream()
-                .map(id -> gameQueryService.findPermanentById(gameData, id))
-                .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
+                .anyMatch(id -> isFlagbearerTarget(gameData, id))) {
             return;
         }
-        List<UUID> flagbearerIds = validPermanentIds.stream()
-                .filter(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent != null && gameQueryService.isFlagbearer(gameData, permanent);
-                })
+        List<UUID> flagbearerPermanentIds = validPermanentIds.stream()
+                .filter(id -> isFlagbearerTarget(gameData, id))
                 .toList();
-        if (flagbearerIds.isEmpty()) {
+        List<UUID> flagbearerPlayerIds = validPlayerIds.stream()
+                .filter(id -> isFlagbearerTarget(gameData, id))
+                .toList();
+        if (flagbearerPermanentIds.isEmpty() && flagbearerPlayerIds.isEmpty()) {
             return;
         }
-        validPermanentIds.retainAll(flagbearerIds);
-        validPlayerIds.clear();
+        validPermanentIds.retainAll(flagbearerPermanentIds);
+        validPlayerIds.retainAll(flagbearerPlayerIds);
+    }
+
+    private boolean isFlagbearerTarget(GameData gameData, UUID targetId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+        return permanent != null
+                ? gameQueryService.isFlagbearer(gameData, permanent)
+                : gameQueryService.isFlagbearer(gameData, targetId);
     }
 
     private List<UUID> computeValidExiledTargetsForAbility(GameData gameData, ActivatedAbility ability,
@@ -1061,7 +1110,8 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(), kicked,
+        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(
+                        Boolean.TRUE.equals(kicked)), kicked,
                         teamworkCostPaid),
                 perm, spellCard.getId(), castingPlayerId, xValue)) {
             return false;
@@ -1132,7 +1182,7 @@ public class ValidTargetService {
         // target" (CR 115.4: a creature, player, planeswalker or battle — battles are not modelled
         // yet) is one such declaration, evaluated layer-aware through the shared predicate
         // hierarchy (CR 613.1d).
-        if (card.getTargetFilter() == null && positionFilter == null) {
+        if (card.getTargetFilter(Boolean.TRUE.equals(kicked)) == null && positionFilter == null) {
             PermanentPredicate declared =
                     EffectResolution.declaredPermanentRestriction(spellEffects).orElse(null);
             if (declared != null) {
@@ -1283,6 +1333,15 @@ public class ValidTargetService {
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                 || targetFilter instanceof OwnedPermanentPredicateTargetFilter
                 || targetFilter instanceof PermanentPredicateTargetFilter;
+    }
+
+    /** Uses the same targeting restrictions for a triggered ability's optional target choice. */
+    public boolean isValidTriggeredAbilityPermanentTarget(GameData gameData, Card sourceCard,
+                                                            List<CardEffect> effects, TargetFilter filter,
+                                                            Permanent target, UUID controllerId) {
+        ActivatedAbility targeting = new ActivatedAbility(false, null, effects, "", filter);
+        return isValidAbilityPermanentTarget(gameData, sourceCard, targeting, target, controllerId,
+                false, -1, filter);
     }
 
     public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,
@@ -1464,12 +1523,13 @@ public class ValidTargetService {
             if (!isMultiTarget) {
                 anyPositionAllowsPlayers = true;
             } else {
-                anyPositionAllowsPlayers = card.doesPositionAllowPlayerTargets(0);
+                anyPositionAllowsPlayers = card.doesPositionAllowPlayerTargets(0, Boolean.TRUE.equals(kicked));
             }
 
             if (anyPositionAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
-                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId, null, card)) {
+                    if (isValidPlayerTarget(gameData, card.getTargetFilter(Boolean.TRUE.equals(kicked)),
+                            playerId, controllerId, null, card)) {
                         return true;
                     }
                 }
@@ -1478,7 +1538,7 @@ public class ValidTargetService {
 
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
             if (gameData.stack.stream().anyMatch(entry -> targetLegalityService.checkSpellTargetOnStack(
-                    gameData, entry.getTargetableId(), card.getTargetFilter(), controllerId,
+                    gameData, entry.getTargetableId(), card.getTargetFilter(Boolean.TRUE.equals(kicked)), controllerId,
                     null, maxXValue, kicked).isEmpty())) return true;
         }
 
@@ -1973,6 +2033,10 @@ public class ValidTargetService {
      * Returns true if the permanent is blocked from being targeted by the given controller.
      */
     private boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
+        if (gameQueryService.cantBeAffectedByOwnEffects(gameData, perm, controllerId)) {
+            return true;
+        }
+
         // Shroud (Autumn Willow can hand out a per-player exemption for the turn)
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)
                 && !perm.ignoresShroudFor(controllerId)) {

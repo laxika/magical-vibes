@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +40,8 @@ public class DoublePlusOneCountersOnEnchantedCreatureEffectHandler implements No
         int current = enchantedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (current > 0) {
             permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, entry, enchantedCreature, CounterType.PLUS_ONE_PLUS_ONE, current);
+                    gameData, entry, enchantedCreature, CounterType.PLUS_ONE_PLUS_ONE,
+                    current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
         }
     }
 

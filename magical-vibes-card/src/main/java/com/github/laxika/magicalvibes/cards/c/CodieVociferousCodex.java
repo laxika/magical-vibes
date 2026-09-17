@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "253")
+@CardRegistration(set = "SPG", collectorNumber = "157")
 public class CodieVociferousCodex extends Card {
 
     public CodieVociferousCodex() {

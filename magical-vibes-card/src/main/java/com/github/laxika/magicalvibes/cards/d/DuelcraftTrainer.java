@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "16")
+@CardRegistration(set = "DBL", collectorNumber = "16")
 public class DuelcraftTrainer extends Card {
 
     public DuelcraftTrainer() {

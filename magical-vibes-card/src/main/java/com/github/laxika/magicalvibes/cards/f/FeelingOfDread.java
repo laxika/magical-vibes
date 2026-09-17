@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "14")
+@CardRegistration(set = "SIS", collectorNumber = "7")
 public class FeelingOfDread extends Card {
 
     public FeelingOfDread() {

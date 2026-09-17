@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "ULG", collectorNumber = "129")
 @CardRegistration(set = "V10", collectorNumber = "8")
 @CardRegistration(set = "VMA", collectorNumber = "276")
+@CardRegistration(set = "AA3", collectorNumber = "22")
 public class MemoryJar extends Card {
 
     public MemoryJar() {

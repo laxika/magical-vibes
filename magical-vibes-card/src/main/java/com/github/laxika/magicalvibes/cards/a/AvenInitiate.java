@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "AKH", collectorNumber = "43")
 @CardRegistration(set = "AKR", collectorNumber = "50")
+@CardRegistration(set = "2X2", collectorNumber = "39")
 public class AvenInitiate extends Card {
 
     public AvenInitiate() {

@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "OTP", collectorNumber = "4")
+@CardRegistration(set = "OTP", collectorNumber = "66")
+@CardRegistration(set = "MAR", collectorNumber = "2")
+@CardRegistration(set = "OMB", collectorNumber = "2")
 @CardRegistration(set = "DMU", collectorNumber = "24")
 public class LeylineBinding extends Card {
 

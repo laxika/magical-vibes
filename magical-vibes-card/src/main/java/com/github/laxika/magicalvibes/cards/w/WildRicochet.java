@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "196")
 @CardRegistration(set = "M14", collectorNumber = "162")
+@CardRegistration(set = "CMD", collectorNumber = "139")
 public class WildRicochet extends Card {
 
     public WildRicochet() {

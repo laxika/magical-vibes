@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "224")
+@CardRegistration(set = "2XM", collectorNumber = "312")
 public class BuriedRuin extends Card {
 
     public BuriedRuin() {

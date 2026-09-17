@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONS", collectorNumber = "46")
+@CardRegistration(set = "CMD", collectorNumber = "22")
 public class Oblation extends Card {
 
     public Oblation() {

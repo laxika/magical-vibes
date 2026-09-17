@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "182")
+@CardRegistration(set = "PIO", collectorNumber = "199")
 public class VoyagingSatyr extends Card {
 
     public VoyagingSatyr() {

@@ -11,6 +11,10 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "240")
 @CardRegistration(set = "AKR", collectorNumber = "285")
+@CardRegistration(set = "EOS", collectorNumber = "5")
+@CardRegistration(set = "EOS", collectorNumber = "50")
+@CardRegistration(set = "EOS", collectorNumber = "95")
+@CardRegistration(set = "EOS", collectorNumber = "140")
 public class CascadingCataracts extends Card {
 
     public CascadingCataracts() {

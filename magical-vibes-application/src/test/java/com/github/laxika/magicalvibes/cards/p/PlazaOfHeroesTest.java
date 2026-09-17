@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.d.DanithaCapashenParagon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,99 +14,120 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlazaOfHeroes.class, DanithaCapashenParagon.class, GrizzlyBears.class})
+@CardUsed({PlazaOfHeroes.class, GrizzlyBears.class})
 class PlazaOfHeroesTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("The first ability adds colorless mana")
-    void addsColorlessMana() {
-        harness.addToBattlefield(player1, new PlazaOfHeroes());
+    private ManaPool pool() {
+        return gd.playerManaPools.get(player1.getId());
+    }
 
-        harness.activateAbility(player1, 0, null, null);
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(findPermanent(player1, "Plaza of Heroes").isTapped()).isTrue();
+    private GrizzlyBears legendaryBears() {
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        return bears;
     }
 
     @Test
-    @DisplayName("The second ability adds a chosen colored legendary-only mana")
-    void addsChosenLegendaryOnlyMana() {
+    @DisplayName("First ability adds colorless mana")
+    void tapsForColorlessMana() {
+        Permanent plaza = harness.addToBattlefieldAndReturn(player1, new PlazaOfHeroes());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(plaza.isTapped()).isTrue();
+        assertThat(pool().get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Second ability adds chosen colored mana restricted to legendary spells")
+    void addsLegendarySpellOnlyMana() {
         harness.addToBattlefield(player1, new PlazaOfHeroes());
 
         harness.activateAbility(player1, 0, 1, null, null);
-
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "RED");
 
-        assertThat(gd.playerManaPools.get(player1.getId()).getLegendarySpellOnlyMana(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
-    }
+        harness.handleListChoice(player1, "GREEN");
 
-    @Test
-    @DisplayName("Legendary-only colored mana pays for a legendary spell")
-    void paysForLegendarySpell() {
-        harness.addToBattlefield(player1, new PlazaOfHeroes());
-        harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "WHITE");
+        assertThat(pool().get(ManaColor.GREEN)).isZero();
+        assertThat(pool().getLegendarySpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(legendaryBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new DanithaCapashenParagon()));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Danitha Capashen, Paragon")).isNotNull();
-        assertThat(gd.playerManaPools.get(player1.getId()).getLegendarySpellOnlyMana(ManaColor.WHITE)).isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+        assertThat(pool().getLegendarySpellOnlyMana(ManaColor.GREEN)).isZero();
     }
 
     @Test
-    @DisplayName("Legendary-only colored mana cannot pay for a nonlegendary spell")
-    void cannotPayForNonlegendarySpell() {
+    @DisplayName("Second ability's mana cannot pay for a nonlegendary spell")
+    void legendarySpellOnlyManaCannotPayNonlegendarySpell() {
         harness.addToBattlefield(player1, new PlazaOfHeroes());
+
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerManaPools.get(player1.getId()).getLegendarySpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(pool().getLegendarySpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("The third ability protects a legendary creature and exiles the land")
+    @DisplayName("Third ability adds mana among colors of legendary permanents")
+    void addsManaAmongLegendaryPermanentColors() {
+        Permanent plaza = harness.addToBattlefieldAndReturn(player1, new PlazaOfHeroes());
+        harness.addToBattlefield(player1, legendaryBears());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(plaza.isTapped()).isTrue();
+        assertThat(pool().get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fourth ability exiles Plaza and protects a legendary creature until end of turn")
     void protectsLegendaryCreature() {
-        harness.addToBattlefield(player1, new PlazaOfHeroes());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new DanithaCapashenParagon());
+        Permanent plaza = harness.addToBattlefieldAndReturn(player1, new PlazaOfHeroes());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, legendaryBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 3, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Plaza of Heroes")).isEmpty();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(plaza.getCard().getId()));
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
-    @DisplayName("The third ability only targets legendary creatures")
-    void rejectsNonlegendaryCreatureTarget() {
-        harness.addToBattlefield(player1, new PlazaOfHeroes());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+    @DisplayName("Fourth ability cannot target a nonlegendary creature")
+    void cannotTargetNonlegendaryCreature() {
+        Permanent plaza = harness.addToBattlefieldAndReturn(player1, new PlazaOfHeroes());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("legendary creature");
+        assertThat(plaza.isTapped()).isFalse();
+        assertThat(pool().get(ManaColor.COLORLESS)).isEqualTo(3);
     }
 }

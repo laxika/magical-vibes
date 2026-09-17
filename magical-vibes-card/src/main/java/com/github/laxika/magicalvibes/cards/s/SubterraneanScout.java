@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "164")
+@CardRegistration(set = "DMR", collectorNumber = "143")
 public class SubterraneanScout extends Card {
 
     public SubterraneanScout() {

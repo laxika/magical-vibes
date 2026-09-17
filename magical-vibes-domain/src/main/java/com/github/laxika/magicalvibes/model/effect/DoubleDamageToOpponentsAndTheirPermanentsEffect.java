@@ -15,7 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link PreventHalfDamageToControllerAndTheirPermanentsEffect}.
  */
 public record DoubleDamageToOpponentsAndTheirPermanentsEffect()
-        implements OpponentRecipientDamageMultiplyingEffect {
+        implements OpponentRecipientDamageMultiplyingEffect, DoublingEffect {
 
     @Override
     public int damageMultiplier() {

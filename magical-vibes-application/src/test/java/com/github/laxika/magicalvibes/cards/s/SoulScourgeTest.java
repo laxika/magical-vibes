@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({SoulScourge.class, Murder.class})
+@CardUsed({SoulScourge.class, FieryTemper.class})
 class SoulScourgeTest extends BaseCardTest {
 
     @Test
@@ -20,7 +20,7 @@ class SoulScourgeTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
 
-        destroySoulScourge();
+        removeSoulScourge();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -36,7 +36,7 @@ class SoulScourgeTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
-        destroySoulScourge();
+        removeSoulScourge();
         harness.passBothPriorities();
         harness.assertLife(player2, 23);
 
@@ -57,14 +57,14 @@ class SoulScourgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
     }
 
-    private void destroySoulScourge() {
+    private void removeSoulScourge() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Soul Scourge"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Soul Scourge"));
     }
 }

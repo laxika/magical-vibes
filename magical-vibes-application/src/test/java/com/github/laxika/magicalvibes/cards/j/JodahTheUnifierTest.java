@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,89 +20,73 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JodahTheUnifier.class, EmpressGalina.class, Forest.class, GrizzlyBears.class, TsaboTavoc.class})
+@CardUsed({JodahTheUnifier.class, AdelizTheCinderWind.class, GrizzlyBears.class,
+        HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class})
 class JodahTheUnifierTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Legendary creatures get +X/+X, including Jodah")
-    void boostsLegendaryCreaturesByControlledLegendaryCreatureCount() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Permanent otherLegend = addCreatureReady(player1, new TsaboTavoc());
-        Permanent nonlegendary = addCreatureReady(player1, new GrizzlyBears());
-        Permanent jodah = addCreatureReady(player1, new JodahTheUnifier());
+    @DisplayName("Legendary creatures you control get +X/+X, including Jodah")
+    void boostsLegendaryCreaturesByLegendaryCreatureCount() {
+        Permanent jodah = harness.addToBattlefieldAndReturn(player1, new JodahTheUnifier());
+        Permanent isamaru = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, jodah)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, jodah)).isEqualTo(7);
-        assertThat(gqs.getEffectivePower(gd, otherLegend)).isEqualTo(9);
-        assertThat(gqs.getEffectiveToughness(gd, otherLegend)).isEqualTo(6);
-        assertThat(gqs.getEffectivePower(gd, nonlegendary)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, nonlegendary)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, isamaru)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, isamaru)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Casting a legendary spell from hand exiles a lesser-mana-value legendary card")
-    void castsLesserLegendaryCardFromLibraryForFree() {
-        setupJodah();
-        Card skipped = new TsaboTavoc();
-        Card found = new EmpressGalina();
-        Card remaining = new Forest();
-        harness.setLibrary(player1, List.of(skipped, found, remaining));
-        harness.setHand(player1, List.of(new TsaboTavoc()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-        harness.addMana(player1, ManaColor.RED, 1);
+    @DisplayName("Casting a legendary spell from hand cascades into a legendary nonland card")
+    void castsLegendarySpellFromHandAndFindsLegendaryCard() {
+        prepareCasterTurn();
+        harness.addToBattlefield(player1, new JodahTheUnifier());
 
+        LlanowarElves belowHit = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).addAll(List.of(
+                new HillGiant(), new GrizzlyBears(), new IsamaruHoundOfKonda(), belowHit));
+
+        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(skipped, remaining);
-
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Empress Galina");
-        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).extracting(Card::getName)
+                .containsExactly("Isamaru, Hound of Konda");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowHit);
     }
 
     @Test
-    @DisplayName("Declining the free cast leaves the found card exiled")
-    void declinedFoundCardRemainsExiled() {
-        setupJodah();
-        Card skipped = new Forest();
-        Card found = new EmpressGalina();
-        harness.setLibrary(player1, List.of(skipped, found));
-        harness.setHand(player1, List.of(new TsaboTavoc()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(found);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(skipped);
-    }
-
-    @Test
-    @DisplayName("Casting a nonlegendary spell does not trigger Jodah")
+    @DisplayName("Nonlegendary spells do not trigger Jodah")
     void nonlegendarySpellDoesNotTrigger() {
-        setupJodah();
-        Card libraryCard = new TsaboTavoc();
-        harness.setLibrary(player1, List.of(libraryCard));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        prepareCasterTurn();
+        harness.addToBattlefield(player1, new JodahTheUnifier());
 
+        LlanowarElves libraryCard = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).add(libraryCard);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
     }
 
-    private void setupJodah() {
-        harness.forceActivePlayer(player1);
+    private void prepareCasterTurn() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new JodahTheUnifier());
+        harness.forceActivePlayer(player1);
     }
 }

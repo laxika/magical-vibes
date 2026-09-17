@@ -709,6 +709,7 @@ public class DraftService {
     }
 
     private void initializePlayerForDraftGame(GameData gameData, UUID playerId, List<Card> deck) {
+        gameData.startingDeckSizes.put(playerId, deck.size());
         gameData.playerDecks.put(playerId, deck);
         gameData.mulliganCounts.put(playerId, 0);
         gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());

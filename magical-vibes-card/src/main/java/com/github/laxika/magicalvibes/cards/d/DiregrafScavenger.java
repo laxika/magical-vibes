@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "105")
+@CardRegistration(set = "DBL", collectorNumber = "372")
 public class DiregrafScavenger extends Card {
 
     public DiregrafScavenger() {

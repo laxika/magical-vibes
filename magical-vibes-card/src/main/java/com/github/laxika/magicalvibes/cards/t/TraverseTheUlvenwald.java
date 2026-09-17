@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "221")
 @CardRegistration(set = "INR", collectorNumber = "422")
 @CardRegistration(set = "SOI", collectorNumber = "234")
+@CardRegistration(set = "SIR", collectorNumber = "220")
 public class TraverseTheUlvenwald extends Card {
 
     public TraverseTheUlvenwald() {

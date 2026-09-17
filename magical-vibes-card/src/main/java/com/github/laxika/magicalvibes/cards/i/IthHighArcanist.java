@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "241")
+@CardRegistration(set = "TSR", collectorNumber = "255")
 public class IthHighArcanist extends Card {
 
     public IthHighArcanist() {

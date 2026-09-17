@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "182")
+@CardRegistration(set = "RVR", collectorNumber = "142")
 public class FungalRebirth extends Card {
 
     public FungalRebirth() {

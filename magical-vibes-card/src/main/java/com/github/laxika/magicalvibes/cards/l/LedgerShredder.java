@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "46")
+@CardRegistration(set = "SPG", collectorNumber = "55")
 public class LedgerShredder extends Card {
 
     public LedgerShredder() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "147")
+@CardRegistration(set = "RVR", collectorNumber = "167")
+@CardRegistration(set = "PA1", collectorNumber = "8")
 public class BorborygmosEnraged extends Card {
 
     public BorborygmosEnraged() {

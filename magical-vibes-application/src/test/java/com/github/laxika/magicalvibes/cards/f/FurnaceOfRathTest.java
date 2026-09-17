@@ -463,10 +463,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void addReadyInvoker(Player player) {
-        FlamewaveInvoker card = new FlamewaveInvoker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        addCreatureReady(player, new FlamewaveInvoker());
     }
 }
 

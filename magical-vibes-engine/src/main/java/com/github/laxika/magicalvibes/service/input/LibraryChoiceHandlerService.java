@@ -143,11 +143,11 @@ public class LibraryChoiceHandlerService {
         PendingInteraction.LibrarySearch activeSearch =
                 gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         LibrarySearchParams librarySearch = activeSearch != null ? activeSearch.params() : null;
-        if (librarySearch == null || !player.getId().equals(librarySearch.playerId())) {
+        if (librarySearch == null || !player.getId().equals(activeSearch.decidingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        UUID playerId = player.getId();
+        UUID playerId = librarySearch.playerId();
         List<Card> searchCards = librarySearch.cards();
 
         boolean reveals = librarySearch.reveals();
@@ -221,6 +221,7 @@ public class LibraryChoiceHandlerService {
                 && librarySearch.allowCastFromLibraryWhileSearching()
                 && (targetPlayerId == null || targetPlayerId.equals(playerId))
                 && sourceCards == null
+                && librarySearch.decisionPlayerId() == null
                 && librarySearchSupport.isLibrarySearchCastableCard(searchCards.get(cardIndex))) {
             handleLibrarySearchCast(gameData, player, activeSearch, searchCards.get(cardIndex));
             return;
@@ -242,7 +243,7 @@ public class LibraryChoiceHandlerService {
             sourceZone = sourceCards;
         } else {
             sourceZone = librarySearch.sourceSideboard()
-                    ? gameData.playerSideboards.getOrDefault(deckOwnerId, List.of())
+                    ? com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, deckOwnerId)
                     : deck;
         }
 
@@ -488,7 +489,7 @@ public class LibraryChoiceHandlerService {
             if (destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM
                     && chosenCard != null && remainingCount > 1 && !sourceCards.isEmpty()) {
                 String prompt = "Exile another card face down. Put the rest on the bottom of that library in a random order.";
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(sourceCards))
                                 .canFailToFind(false)
                                 .targetPlayerId(deckOwnerId)
@@ -518,7 +519,7 @@ public class LibraryChoiceHandlerService {
             // left until the controller declines, which then falls through to the reorder-to-top
             // disposal below.
             if (librarySearch.repeatUntilDecline() && chosenCard != null && !sourceCards.isEmpty()) {
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         librarySearch.withCards(new ArrayList<>(sourceCards)),
                         librarySearch.prompt(),
                         true));
@@ -528,7 +529,7 @@ public class LibraryChoiceHandlerService {
             if (destination == LibrarySearchDestination.TOP_OF_LIBRARY
                     && chosenCard != null && remainingCount > 1 && !sourceCards.isEmpty()) {
                 String prompt = "You may put another card on top of your library. The rest go into your graveyard.";
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(sourceCards))
                                 .canFailToFind(true)
                                 .remainingCount(remainingCount - 1)
@@ -741,6 +742,12 @@ public class LibraryChoiceHandlerService {
 
         Card chosenCard = searchCards.get(cardIndex);
 
+        if (librarySearch.decisionPlayerId() != null
+                && !librarySearch.decisionPlayerId().equals(playerId)) {
+            handleOppositionAgentChoice(gameData, player, activeSearch, chosenCard, sourceZone, deck, deckOwnerId);
+            return;
+        }
+
         if (battlefieldIfManaValueAtMost != null) {
             destination = chosenCard.getManaValue() <= battlefieldIfManaValueAtMost
                     ? LibrarySearchDestination.BATTLEFIELD
@@ -848,7 +855,7 @@ public class LibraryChoiceHandlerService {
                             card, filterPredicate, null, gameData, deckOwnerId))
                     .toList();
             if (!remainingMatches.isEmpty()) {
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
                                 .remainingCount(remainingMatches.size())
                                 .canFailToFind(true)
@@ -880,7 +887,7 @@ public class LibraryChoiceHandlerService {
                     : deck.stream().filter(card -> predicateEvaluationService.matchesCardPredicate(
                             card, filterPredicate, null, gameData, deckOwnerId)).toList();
             if (!remainingMatches.isEmpty()) {
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
                                 .remainingCount(remainingMatches.size())
                                 .canFailToFind(true)
@@ -916,7 +923,7 @@ public class LibraryChoiceHandlerService {
                     .toList();
             if (remainingCount > 1 && !remainingMatches.isEmpty()) {
                 int newRemaining = remainingCount - 1;
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
                                 .remainingCount(newRemaining)
                                 .reveals(true)
@@ -951,7 +958,7 @@ public class LibraryChoiceHandlerService {
                     .toList();
             if (remainingCount > 1 && !remainingCreatures.isEmpty()) {
                 int newRemaining = remainingCount - 1;
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(remainingCreatures))
                                 .remainingCount(newRemaining)
                                 .reveals(true)
@@ -1121,7 +1128,7 @@ public class LibraryChoiceHandlerService {
                 String exilePrompt = targetPlayerId != null
                         ? "Search " + gameData.playerIdToName.get(targetPlayerId) + "'s library for a card to exile (" + newRemaining + " remaining)."
                         : "Search your library for a card to exile (" + newRemaining + " remaining).";
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, newSearchCards)
                                 .targetPlayerId(targetPlayerId)
                                 .remainingCount(newRemaining)
@@ -1181,7 +1188,7 @@ public class LibraryChoiceHandlerService {
             // shuffles the pile ("shuffle that pile") and then the library ("then shuffle your library").
             if (remainingCount > 1 && !deck.isEmpty()) {
                 int newRemaining = remainingCount - 1;
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(deck))
                                 .remainingCount(newRemaining)
                                 .canFailToFind(true)
@@ -1229,7 +1236,7 @@ public class LibraryChoiceHandlerService {
                         .toList();
             }
             if (remainingCount > 1 && !remainingMatches.isEmpty()) {
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
                                 .remainingCount(remainingCount - 1)
                                 .canFailToFind(true)
@@ -1498,6 +1505,10 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (reveals) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " reveals ", chosenCard, "."));
+            }
             String prompt;
             if (targetPlayerId != null) {
                 String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -1510,10 +1521,11 @@ public class LibraryChoiceHandlerService {
                 prompt = "Search your library for a matching card" + distinct + " to put " + destinationDesc + " (" + newRemaining + " remaining).";
             }
 
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+            beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                     LibrarySearchParams.builder(playerId, new ArrayList<>(newSearchCards))
                     .targetPlayerId(targetPlayerId)
                     .remainingCount(newRemaining)
+                    .reveals(reveals)
                     .canFailToFind(toGraveyard || canFailToFind)
                     .destination(destination)
                     .filterCardTypes(filterCardTypes)
@@ -1659,6 +1671,103 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    private void handleOppositionAgentChoice(GameData gameData, Player player,
+                                             PendingInteraction.LibrarySearch activeSearch,
+                                             Card chosenCard, List<Card> sourceZone, List<Card> deck,
+                                             UUID deckOwnerId) {
+        LibrarySearchParams librarySearch = activeSearch.params();
+        boolean removed = sourceZone.removeIf(card -> card.getId().equals(chosenCard.getId()));
+        if (!removed) {
+            throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        UUID agentControllerId = activeSearch.decidingPlayerId();
+        exileService.exileCard(gameData, deckOwnerId, chosenCard);
+        gameData.exilePlayPermissions.put(chosenCard.getId(), agentControllerId);
+        gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", chosenCard, " and may play it for as long as it remains exiled."));
+
+        List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
+        if (librarySearch.requireDifferentNames()) {
+            excludedCardNames.add(chosenCard.getName());
+        }
+
+        if (librarySearch.remainingCount() > 1) {
+            List<Card> remainingMatches = findOppositionAgentSearchMatches(
+                    gameData, deck, librarySearch, deckOwnerId, excludedCardNames);
+            if (!remainingMatches.isEmpty()) {
+                int newRemaining = librarySearch.remainingCount() - 1;
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
+                        librarySearch.withCards(new ArrayList<>(remainingMatches))
+                                .withRemainingCount(newRemaining)
+                                .withExcludedCardNames(excludedCardNames),
+                        activeSearch.messagePrompt(), activeSearch.messageCanFailToFind()));
+                return;
+            }
+        }
+
+        if (librarySearch.shuffleAfterSelection()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+        }
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + "'s library is shuffled after Opposition Agent's replacement."));
+        insertSelectedCardFollowUp(gameData, librarySearch.followUp(), chosenCard, librarySearch.playerId());
+
+        LibrarySearchFollowUp followUp = librarySearch.followUp();
+        UUID playerId = librarySearch.playerId();
+        if (startPendingBasicLandToHandSearch(gameData, playerId, followUp)) return;
+        if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
+        if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
+        if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+        if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
+        if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
+        finishSearchAndResume(gameData);
+    }
+
+    private List<Card> findOppositionAgentSearchMatches(GameData gameData, List<Card> deck,
+                                                         LibrarySearchParams librarySearch,
+                                                         UUID deckOwnerId, List<String> excludedCardNames) {
+        List<Card> matches;
+        if (librarySearch.filterCardName() != null) {
+            matches = deck.stream().filter(c -> librarySearch.filterCardName().equals(c.getName())).toList();
+        } else if (librarySearch.filterPredicate() != null) {
+            matches = deck.stream().filter(c -> predicateEvaluationService.matchesCardPredicate(
+                    c, librarySearch.filterPredicate(), null, gameData, deckOwnerId)).toList();
+        } else if (librarySearch.filterCardTypes() != null) {
+            matches = deck.stream().filter(c -> com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.matchesCardTypes(
+                    c, librarySearch.filterCardTypes())).toList();
+        } else {
+            matches = new ArrayList<>(deck);
+        }
+
+        if (librarySearch.manaValueBoundValue() != null) {
+            int bound = librarySearch.manaValueBoundValue();
+            boolean exact = librarySearch.manaValueExact();
+            matches = matches.stream()
+                    .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
+                    .toList();
+        }
+        if (librarySearch.totalManaValueBound() != null) {
+            List<Card> accumulatedCards = librarySearch.accumulatedCards() == null
+                    ? List.of() : librarySearch.accumulatedCards();
+            int selectedManaValue = accumulatedCards.stream()
+                    .mapToInt(Card::getManaValue).sum();
+            int remainingManaValue = librarySearch.totalManaValueBound() - selectedManaValue;
+            matches = matches.stream().filter(c -> c.getManaValue() <= remainingManaValue).toList();
+        }
+        if (librarySearch.requireDifferentNames() && !excludedCardNames.isEmpty()) {
+            Set<String> excluded = Set.copyOf(excludedCardNames);
+            matches = matches.stream().filter(c -> !excluded.contains(c.getName())).toList();
+        }
+        return matches;
+    }
+
     private void insertSelectedCardFollowUp(GameData gameData, LibrarySearchFollowUp followUp,
             Card chosenCard, UUID playerId) {
         LibrarySearchFollowUp.SelectedCardFollowUp selectedCardFollowUp = followUp.selectedCardFollowUp();
@@ -1692,7 +1801,7 @@ public class LibraryChoiceHandlerService {
     private void handleLibrarySearchCast(GameData gameData, Player player,
                                          PendingInteraction.LibrarySearch activeSearch, Card card) {
         LibrarySearchParams librarySearch = activeSearch.params();
-        spellCastingService.castCardFromLibraryWhileSearching(gameData, player, card);
+        spellCastingService.castCardFromLibraryWhileSearching(gameData, player, librarySearch.playerId(), card);
         gameData.interaction.clearAwaitingInput();
 
         List<Card> remainingCards = librarySearch.cards().stream()
@@ -1709,9 +1818,19 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+        beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                 librarySearch.withCards(new ArrayList<>(remainingCards)),
                 activeSearch.messagePrompt(), activeSearch.messageCanFailToFind()));
+    }
+
+    private void beginLibrarySearch(GameData gameData, PendingInteraction.LibrarySearch interaction) {
+        LibrarySearchParams controlledParams = librarySearchSupport.applyOppositionAgentControl(
+                gameData, interaction.params());
+        if (controlledParams == null) {
+            controlledParams = interaction.params();
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                controlledParams, interaction.messagePrompt(), interaction.messageCanFailToFind()));
     }
 
     /**
@@ -2114,7 +2233,7 @@ public class LibraryChoiceHandlerService {
                 .followUp(remaining)
                 .build();
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+        beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
     }
 
@@ -2189,7 +2308,7 @@ public class LibraryChoiceHandlerService {
                 .placeBattlefieldCardsSimultaneously(spec.destination() == LibrarySearchDestination.BATTLEFIELD)
                 .followUp(nextFollowUp)
                 .build();
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+        beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
     }
 
@@ -2239,7 +2358,7 @@ public class LibraryChoiceHandlerService {
                 .followUp(followUp.clearCardToGraveyard())
                 .build();
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, pick.canFailToFind()));
+        beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, pick.canFailToFind()));
         return true;
     }
 
@@ -2289,7 +2408,7 @@ public class LibraryChoiceHandlerService {
                     .followUp(followUp.withRemainingEachPlayerBasicLandSearches(remaining))
                     .build();
 
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+            beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
 
             String logMsg = playerName + " searches their library.";
             gameLogService.append(gameData, GameLog.text(logMsg));
@@ -3702,7 +3821,7 @@ public class LibraryChoiceHandlerService {
     private void beginPutOneIntoHandChoice(GameData gameData, List<Card> searchCards,
                                             List<Card> sourceCards, UUID playerId) {
         String prompt = "Choose one of these cards to put into your hand.";
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+        beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(playerId, new ArrayList<>(searchCards))
                         .reveals(true)
                         .canFailToFind(false)

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "139")
 @CardRegistration(set = "GK2", collectorNumber = "85")
+@CardRegistration(set = "RVR", collectorNumber = "160")
 public class WastelandViper extends Card {
 
     public WastelandViper() {

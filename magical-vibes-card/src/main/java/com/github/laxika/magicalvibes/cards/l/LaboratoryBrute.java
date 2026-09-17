@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "EMN", collectorNumber = "67")
+@CardRegistration(set = "SIR", collectorNumber = "79")
 public class LaboratoryBrute extends Card {
 
     public LaboratoryBrute() {

@@ -11,26 +11,31 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "211")
+@CardRegistration(set = "MUL", collectorNumber = "55")
+@CardRegistration(set = "MUL", collectorNumber = "120")
+@CardRegistration(set = "MUL", collectorNumber = "185")
 public class RadhaCoalitionWarlord extends Card {
 
     public RadhaCoalitionWarlord() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )),
-                "Target must be another creature you control"
-        )).addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        PermanentPredicate anotherCreatureYouControl = new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentControlledBySourceControllerPredicate(),
+                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+        ));
+
+        // Domain — Whenever Radha becomes tapped, another target creature you control gets +X/+X
+        // until end of turn, where X is the number of basic land types among lands you control.
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(),
                         new BoostTargetCreatureEffect(
                                 new BasicLandTypesAmongControlledLands(),
-                                new BasicLandTypesAmongControlledLands())));
+                                new BasicLandTypesAmongControlledLands(),
+                                anotherCreatureYouControl)));
     }
 }

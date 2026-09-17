@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "306")
+@CardRegistration(set = "DMR", collectorNumber = "218")
 public class CrypticGateway extends Card {
 
     public CrypticGateway() {

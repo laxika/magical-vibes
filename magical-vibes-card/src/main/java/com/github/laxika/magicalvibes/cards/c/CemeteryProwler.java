@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImpri
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "191")
+@CardRegistration(set = "DBL", collectorNumber = "458")
 public class CemeteryProwler extends Card {
 
     public CemeteryProwler() {

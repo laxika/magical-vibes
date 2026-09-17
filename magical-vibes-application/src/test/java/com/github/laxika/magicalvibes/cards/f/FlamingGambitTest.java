@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlamingGambit.class, ElspethKnightErrant.class, HillGiant.class})
+@CardUsed({FlamingGambit.class, ElspethKnightErrant.class, CylianElf.class})
 class FlamingGambitTest extends BaseCardTest {
 
     @Test
     @DisplayName("The targeted player may redirect the damage to a creature they control")
     void targetedPlayerMayRedirectDamageToCreature() {
-        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new CylianElf());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new CylianElf());
         harness.setHand(player1, List.of(new FlamingGambit()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -49,7 +49,7 @@ class FlamingGambitTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the redirection deals the damage to the targeted player")
     void decliningRedirectDealsDamageToPlayer() {
-        harness.addToBattlefield(player2, new HillGiant());
+        harness.addToBattlefield(player2, new CylianElf());
         harness.setHand(player1, List.of(new FlamingGambit()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -66,7 +66,7 @@ class FlamingGambitTest extends BaseCardTest {
     @DisplayName("A planeswalker's controller makes the redirection choice")
     void planeswalkerControllerMayRedirectDamage() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
         planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         int loyaltyBefore = planeswalker.getCounterCount(CounterType.LOYALTY);
         harness.setHand(player1, List.of(new FlamingGambit()));
@@ -100,6 +100,58 @@ class FlamingGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flaming Gambit may target its caster as a player")
+    void mayTargetItsController() {
+        harness.setHand(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Redirection offers only creatures controlled by the targeted player")
+    void redirectionOffersOnlyCreaturesControlledByTargetPlayer() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setHand(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(creature.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A creature leaving before resolution removes the redirection choice")
+    void creatureLeavingBeforeResolutionRemovesRedirectionChoice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
+        harness.setHand(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, 1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Flashback deals damage and exiles Flaming Gambit")
     void flashbackDealsDamageAndExilesCard() {
         harness.setGraveyard(player1, List.of(new FlamingGambit()));
@@ -118,7 +170,7 @@ class FlamingGambitTest extends BaseCardTest {
     @Test
     @DisplayName("Flaming Gambit cannot target a creature")
     void cannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
         harness.setHand(player1, List.of(new FlamingGambit()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

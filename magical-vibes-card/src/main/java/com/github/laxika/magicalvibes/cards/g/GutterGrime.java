@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutSlimeCounterAndCreateOozeTokenEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "186")
+@CardRegistration(set = "SIS", collectorNumber = "51")
 public class GutterGrime extends Card {
 
     public GutterGrime() {

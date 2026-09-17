@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "228")
+@CardRegistration(set = "DBL", collectorNumber = "495")
 public class WolfStrike extends Card {
 
     public WolfStrike() {

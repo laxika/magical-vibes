@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "9")
+@CardRegistration(set = "DBL", collectorNumber = "9")
 public class Candletrap extends Card {
 
     public Candletrap() {

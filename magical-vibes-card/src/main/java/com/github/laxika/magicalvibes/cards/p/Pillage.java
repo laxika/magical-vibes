@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "ME2", collectorNumber = "146")
 @CardRegistration(set = "PD2", collectorNumber = "24")
 @CardRegistration(set = "A25", collectorNumber = "144")
+@CardRegistration(set = "MH1", collectorNumber = "139")
 public class Pillage extends Card {
 
     public Pillage() {

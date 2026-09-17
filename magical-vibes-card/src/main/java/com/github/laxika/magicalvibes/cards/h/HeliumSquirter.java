@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "26")
 @CardRegistration(set = "MM2", collectorNumber = "47")
+@CardRegistration(set = "RVR", collectorNumber = "45")
 public class HeliumSquirter extends Card {
 
     public HeliumSquirter() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "32")
+@CardRegistration(set = "CMD", collectorNumber = "61")
 public class Skyscribing extends Card {
 
     public Skyscribing() {

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "130")
+@CardRegistration(set = "2XM", collectorNumber = "234")
+@CardRegistration(set = "AA3", collectorNumber = "20")
 public class Batterskull extends Card {
 
     public Batterskull() {

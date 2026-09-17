@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "204")
+@CardRegistration(set = "DBL", collectorNumber = "204")
 public class TovolarsHuntmaster extends Card {
 
     public TovolarsHuntmaster() {

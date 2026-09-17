@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveya
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 @CardRegistration(set = "MID", collectorNumber = "205")
+@CardRegistration(set = "DBL", collectorNumber = "205")
 public class TurnTheEarth extends Card {
 
     public TurnTheEarth() {

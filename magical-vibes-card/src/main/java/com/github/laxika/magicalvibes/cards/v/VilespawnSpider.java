@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "251")
 @CardRegistration(set = "INR", collectorNumber = "436")
 @CardRegistration(set = "VOW", collectorNumber = "250")
+@CardRegistration(set = "DBL", collectorNumber = "517")
 public class VilespawnSpider extends Card {
 
     public VilespawnSpider() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "109")
+@CardRegistration(set = "2XM", collectorNumber = "218")
 public class SenTriplets extends Card {
 
     public SenTriplets() {

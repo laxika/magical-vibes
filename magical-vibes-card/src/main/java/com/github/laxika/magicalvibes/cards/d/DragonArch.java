@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "135")
+@CardRegistration(set = "2X2", collectorNumber = "305")
 public class DragonArch extends Card {
 
     public DragonArch() {

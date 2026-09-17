@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "133")
 @CardRegistration(set = "IMA", collectorNumber = "99")
+@CardRegistration(set = "HA6", collectorNumber = "4")
 public class NightOfSoulsBetrayal extends Card {
 
     public NightOfSoulsBetrayal() {

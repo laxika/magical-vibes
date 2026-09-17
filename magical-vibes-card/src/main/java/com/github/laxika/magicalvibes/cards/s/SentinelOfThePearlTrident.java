@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "65")
+@CardRegistration(set = "2XM", collectorNumber = "67")
 public class SentinelOfThePearlTrident extends Card {
 
     public SentinelOfThePearlTrident() {

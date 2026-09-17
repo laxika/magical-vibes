@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "150")
+@CardRegistration(set = "DBL", collectorNumber = "150")
 public class MountedDreadknight extends Card {
 
     public MountedDreadknight() {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChargingSlateback.class, GrizzlyBears.class})
+@CardUsed(ChargingSlateback.class)
 class ChargingSlatebackTest extends BaseCardTest {
 
     @Test
@@ -39,6 +38,26 @@ class ChargingSlatebackTest extends BaseCardTest {
     }
 
     @Test
+    void turningFaceUpRequiresRedMana() {
+        harness.setHand(player1, List.of(new ChargingSlateback()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent slateback = findPermanent(player1, "Charging Slateback");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        int slatebackIndex = gd.playerBattlefields.get(player1.getId()).indexOf(slateback);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, slatebackIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(slateback.isFaceDown()).isTrue();
+    }
+
+    @Test
     void faceDownCreatureCanBlock() {
         harness.setHand(player1, List.of(new ChargingSlateback()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -48,7 +67,7 @@ class ChargingSlatebackTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new ChargingSlateback());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player2);
@@ -60,7 +79,7 @@ class ChargingSlatebackTest extends BaseCardTest {
     @Test
     void faceUpCreatureCannotBlock() {
         Permanent slateback = addCreatureReady(player1, new ChargingSlateback());
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new ChargingSlateback());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player2);

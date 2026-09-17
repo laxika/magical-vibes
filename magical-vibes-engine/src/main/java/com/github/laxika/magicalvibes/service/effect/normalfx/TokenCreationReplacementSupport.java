@@ -8,13 +8,21 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddSoldierTokenToCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Map;
@@ -100,6 +108,62 @@ public final class TokenCreationReplacementSupport {
         return CreateTokenEffect.ofMapToken(1).withTapped(tapped || tappedAndAttacking);
     }
 
+    static int additionalMutagenTokenCount(GameData gameData, UUID controllerId, int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        return countActiveStaticEffects(gameData, controllerId, AddMutagenTokenToTokenCreationEffect.class);
+    }
+
+    static CreateTokenEffect additionalMutagenToken(CreateTokenEffect original) {
+        CreateTokenEffect mutagen = mutagenToken();
+        return new CreateTokenEffect(
+                CardType.ARTIFACT,
+                1,
+                mutagen.tokenName(),
+                0,
+                0,
+                mutagen.color(),
+                mutagen.colors(),
+                mutagen.subtypes(),
+                mutagen.keywords(),
+                mutagen.additionalTypes(),
+                false,
+                original.tapped() || original.tappedAndAttacking(),
+                mutagen.tokenEffects(),
+                mutagen.tokenAbilities(),
+                original.exileAtEndOfCombat(),
+                original.exileAtEndStep(),
+                false,
+                original.initialPlusOnePlusOneCounters(),
+                original.grantedKeywordsUntilEndOfTurn(),
+                mutagen.supertypes());
+    }
+
+    static CreateTokenEffect additionalMutagenToken(boolean tapped, boolean tappedAndAttacking) {
+        return mutagenToken().withTapped(tapped || tappedAndAttacking);
+    }
+
+    private static CreateTokenEffect mutagenToken() {
+        return CreateTokenEffect.ofArtifactToken(
+                1,
+                "Mutagen",
+                List.of(),
+                List.of(new ActivatedAbility(
+                        true,
+                        "{1}",
+                        List.of(
+                                new SacrificeSelfCost(),
+                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        "{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. "
+                                + "Activate only as a sorcery.",
+                        TargetFilters.creature(),
+                        null,
+                        null,
+                        ActivationTimingRestriction.SORCERY_SPEED
+                )));
+    }
+
     /** Returns the Frog token blueprint when Quina's token-creation replacement is active. */
     public static CreateTokenEffect additionalFrogTokenIfApplicable(GameData gameData,
                                                                       UUID controllerId,
@@ -171,6 +235,42 @@ public final class TokenCreationReplacementSupport {
                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), tappedAndAttacking, tapped,
                 Map.of(), List.of(), exileAtEndOfCombat, exileAtEndStep, false,
                 initialCounters, grantedKeywords, Set.of());
+    }
+
+    /** Returns the number of Treasure tokens added by active Bilbo replacements. */
+    static int additionalTreasureTokenCount(GameData gameData, UUID controllerId,
+                                             CreateTokenEffect original, int amount) {
+        if (amount <= 0 || original.subtypes() == null || !original.subtypes().contains(CardSubtype.FOOD)) {
+            return 0;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int bilboCount = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || permanent.isStaticEffectSuppressed(AddTreasureToFoodTokenCreationEffect.class)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AddTreasureToFoodTokenCreationEffect) {
+                    bilboCount++;
+                }
+            }
+        }
+        return amount * bilboCount;
+    }
+
+    /** Returns Bilbo's Treasure token while preserving event-level token riders. */
+    static CreateTokenEffect additionalTreasureToken(CreateTokenEffect original) {
+        CreateTokenEffect treasure = CreateTokenEffect.ofTreasureToken(1);
+        return new CreateTokenEffect(
+                CardType.ARTIFACT, 1, treasure.tokenName(), 0, 0, treasure.color(), treasure.colors(),
+                treasure.subtypes(), treasure.keywords(), treasure.additionalTypes(), false,
+                original.tapped() || original.tappedAndAttacking(), Map.of(), treasure.tokenAbilities(),
+                original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
+                original.initialPlusOnePlusOneCounters(), Set.of());
     }
 
     /** Returns Jinnie Fay's replacement token while preserving event-level token riders. */
@@ -253,6 +353,29 @@ public final class TokenCreationReplacementSupport {
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AddMapTokenToArtifactTokenCreationEffect) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private static int countActiveStaticEffects(GameData gameData, UUID controllerId,
+                                                Class<? extends CardEffect> effectType) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown()
+                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || permanent.isStaticEffectSuppressed(effectType)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effectType.isInstance(effect)
+                        && !permanent.isStaticEffectSuppressed(effect.getClass())) {
                     count++;
                 }
             }

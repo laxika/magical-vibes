@@ -25,8 +25,7 @@ class SpectralLynxTest extends BaseCardTest {
         addCreatureReady(player1, new SpectralLynx());
         addCreatureReady(player2, new UrborgElf());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

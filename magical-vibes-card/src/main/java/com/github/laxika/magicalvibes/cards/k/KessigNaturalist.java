@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "231")
+@CardRegistration(set = "DBL", collectorNumber = "231")
 public class KessigNaturalist extends Card {
 
     public KessigNaturalist() {

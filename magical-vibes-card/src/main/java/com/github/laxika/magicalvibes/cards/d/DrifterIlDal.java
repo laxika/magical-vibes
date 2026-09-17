@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "59")
+@CardRegistration(set = "TSR", collectorNumber = "65")
 public class DrifterIlDal extends Card {
 
     public DrifterIlDal() {

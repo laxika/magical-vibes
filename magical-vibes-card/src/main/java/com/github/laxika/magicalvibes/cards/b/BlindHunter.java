@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GPT", collectorNumber = "102")
+@CardRegistration(set = "RVR", collectorNumber = "166")
 public class BlindHunter extends Card {
 
     public BlindHunter() {

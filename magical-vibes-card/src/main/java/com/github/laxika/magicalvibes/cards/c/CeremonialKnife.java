@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "254")
+@CardRegistration(set = "DBL", collectorNumber = "521")
 public class CeremonialKnife extends Card {
 
     public CeremonialKnife() {

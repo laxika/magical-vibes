@@ -84,13 +84,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class AbilityActivationServiceTest {
@@ -275,6 +273,7 @@ class AbilityActivationServiceTest {
         void tappingLandAwardsMana() {
             Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
             Permanent perm = addReadyPermanent(player1Id, island);
+            when(gameQueryService.isLand(gameData, perm)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
@@ -302,6 +301,7 @@ class AbilityActivationServiceTest {
             land.addEffect(EffectSlot.ON_TAP,
                     new ModeledManaEffect(ManaColor.RED, new Fixed(2)));
             Permanent perm = addReadyPermanent(player1Id, land);
+            when(gameQueryService.isLand(gameData, perm)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);

@@ -17,8 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingMan
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -85,9 +87,9 @@ public class LandManaTypeSupport {
         for (CardSubtype subtype : basicLandTypes) {
             types.add(EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype));
         }
-        addManaTypesFromEffects(printedTapEffects, land, types);
+        addManaTypesFromEffects(gameData, printedTapEffects, land, types);
         for (ActivatedAbility ability : abilities) {
-            addManaTypesFromEffects(ability.getEffects(), land, types);
+            addManaTypesFromEffects(gameData, ability.getEffects(), land, types);
         }
         return types;
     }
@@ -96,12 +98,19 @@ public class LandManaTypeSupport {
         return effect instanceof ManaProducingEffect;
     }
 
-    private void addManaTypesFromEffects(List<CardEffect> effects, Permanent source, Set<ManaColor> types) {
+    private void addManaTypesFromEffects(GameData gameData, List<CardEffect> effects,
+                                         Permanent source, Set<ManaColor> types) {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect mana) {
                 addIfNonNull(types, mana.color());
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                types.addAll(ManaColor.COLORS);
+            } else if (effect instanceof AwardAnyColorManaEffect mana) {
+                if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                        || mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
+                    types.addAll(ManaProductionSupport.commanderColorIdentity(gameData,
+                            gameQueryService.findPermanentController(gameData, source.getId())));
+                } else {
+                    types.addAll(ManaColor.COLORS);
+                }
             } else if (effect instanceof AwardManaOfColorsEffect mana) {
                 types.addAll(mana.colors());
             } else if (effect instanceof AwardChosenColorManaEffect) {

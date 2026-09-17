@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,10 +16,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Insubordination.class, FreshVolunteers.class, Forest.class})
 class InsubordinationTest extends BaseCardTest {
 
     private Permanent attachToOpponentCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new FreshVolunteers());
 
         harness.setHand(player1, List.of(new Insubordination()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -33,7 +35,8 @@ class InsubordinationTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.clearPriorityPassed();
+        harness.passUntil(player, TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
@@ -56,10 +59,22 @@ class InsubordinationTest extends BaseCardTest {
     @DisplayName("Does not deal damage if the enchanted creature attacked this turn")
     void doesNotDamageWhenEnchantedCreatureAttacked() {
         Permanent creature = attachToOpponentCreature();
-        creature.setAttackedThisTurn(true);
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(creature)));
+        resolveCombat(player2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         runEndStep(player2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Triggers only during the enchanted creature controller's end step")
+    void doesNotTriggerOnAurasControllerEndStep() {
+        attachToOpponentCreature();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        runEndStep(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }

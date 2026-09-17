@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "210")
+@CardRegistration(set = "STA", collectorNumber = "46")
 @CardRegistration(set = "M21", collectorNumber = "165")
 @CardRegistration(set = "ONE", collectorNumber = "151")
 @CardRegistration(set = "ELD", collectorNumber = "146")
 @CardRegistration(set = "THB", collectorNumber = "159")
 @CardRegistration(set = "DMU", collectorNumber = "148")
+@CardRegistration(set = "MAR", collectorNumber = "28")
+@CardRegistration(set = "OMB", collectorNumber = "28")
 public class ThrillOfPossibility extends Card {
 
     public ThrillOfPossibility() {

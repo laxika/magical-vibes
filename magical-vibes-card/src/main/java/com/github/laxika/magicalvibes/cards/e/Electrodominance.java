@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastSpellFromHandWithManaValueAtMostXEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "99")
+@CardRegistration(set = "OTP", collectorNumber = "23")
 public class Electrodominance extends Card {
 
     public Electrodominance() {

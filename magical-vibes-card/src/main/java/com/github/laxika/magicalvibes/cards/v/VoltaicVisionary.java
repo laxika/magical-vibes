@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTri
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "183")
+@CardRegistration(set = "DBL", collectorNumber = "450")
 public class VoltaicVisionary extends Card {
 
     public VoltaicVisionary() {

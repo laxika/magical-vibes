@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "89")
+@CardRegistration(set = "SLZ", collectorNumber = "37")
+@CardRegistration(set = "SLZ", collectorNumber = "158")
+@CardRegistration(set = "SLZ", collectorNumber = "279")
 public class CutDown extends Card {
 
     public CutDown() {

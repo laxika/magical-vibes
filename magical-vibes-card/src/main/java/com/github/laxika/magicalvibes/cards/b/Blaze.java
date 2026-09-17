@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "175")
 @CardRegistration(set = "6ED", collectorNumber = "168")
 @CardRegistration(set = "HOP", collectorNumber = "47")
+@CardRegistration(set = "GN3", collectorNumber = "69")
 public class Blaze extends Card {
 
     public Blaze() {

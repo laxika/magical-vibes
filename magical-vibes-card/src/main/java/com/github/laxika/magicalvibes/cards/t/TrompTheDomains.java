@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "TSP", collectorNumber = "230")
 @CardRegistration(set = "MMA", collectorNumber = "171")
+@CardRegistration(set = "TSR", collectorNumber = "242")
 public class TrompTheDomains extends Card {
 
     public TrompTheDomains() {
