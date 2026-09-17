@@ -31,6 +31,7 @@ class NekusarTheMindrazerTest extends BaseCardTest {
         advanceToDraw(player2);
         resolveAllTriggers();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
