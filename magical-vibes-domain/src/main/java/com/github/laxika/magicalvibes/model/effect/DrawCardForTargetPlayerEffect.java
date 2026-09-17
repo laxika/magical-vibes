@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Draws cards for the player stored in the stack entry's targetId field
- * (a targeted player, or the active player whose draw/upkeep step triggered the ability).
+ * (a targeted player, the active player whose draw/upkeep step triggered the ability, or the
+ * damaged player when an {@link EventValue}-based instance is used by a combat-damage trigger).
  *
  * @param amount                 number of cards to draw
  * @param requireSourceUntapped  if true, the source permanent (via sourcePermanentId)
@@ -19,7 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,
                                             boolean targetsPlayer, int targetGroup,
                                             boolean opponentDrawStepOnly)
-        implements CardEffect, OpponentDrawStepOnlyEffect {
+        implements CardEffect, OpponentDrawStepOnlyEffect, CombatDamageTriggerContextEffect {
 
     public DrawCardForTargetPlayerEffect(int amount) {
         this(new Fixed(amount), false, false, -1, false);
@@ -52,5 +54,10 @@ public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requir
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return !targetsPlayer && amount instanceof EventValue ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

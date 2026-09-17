@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
 
 @CardRegistration(set = "IMA", collectorNumber = "159")
+@CardRegistration(set = "C13", collectorNumber = "140")
 public class CurseOfPredation extends Card {
 
     public CurseOfPredation() {

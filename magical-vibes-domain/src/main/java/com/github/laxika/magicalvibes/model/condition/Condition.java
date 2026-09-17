@@ -38,6 +38,7 @@ public sealed interface Condition permits
         AnyPlayerDiscardedCardThisTurn,
         AnyOf,
         AttachedPermanentControllerControlsNoOther,
+        AttacksEnchantedPlayer,
         AttackedTargetMatches,
         AttackedTargetIsOpponent,
         TargetPermanentAttackedTargetMatches,

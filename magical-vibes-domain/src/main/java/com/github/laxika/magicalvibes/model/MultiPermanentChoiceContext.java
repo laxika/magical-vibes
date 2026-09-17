@@ -1050,6 +1050,17 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each player chooses a nonland permanent they control to receive a counter. */
+    record EachPlayerChoosesNonlandPermanentAndPutCounterChoice(
+            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
+            CounterType counterType, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesNonlandPermanentAndPutCounterChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
     /** Will of the Council: the current player voted for a nonland permanent. */
     record WillOfTheCouncilChoice(UUID effectControllerId,
                                   java.util.List<UUID> remainingPlayerIds,

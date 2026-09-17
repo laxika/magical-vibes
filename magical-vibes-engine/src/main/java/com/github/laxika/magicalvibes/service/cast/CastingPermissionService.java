@@ -1213,6 +1213,9 @@ public class CastingPermissionService {
             case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
             case DECLARE_BLOCKERS ->
                     gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
+            case OPPONENTS_DECLARE_BLOCKERS ->
+                    !playerId.equals(gameData.activePlayerId)
+                            && gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
             case OPPONENTS_TURN_BEFORE_ATTACKERS ->
                     !playerId.equals(gameData.activePlayerId)
                             && gameData.currentStep.isBeforeAttackersDeclared();

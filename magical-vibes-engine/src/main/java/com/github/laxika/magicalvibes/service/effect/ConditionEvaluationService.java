@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThis
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
@@ -923,6 +924,7 @@ public class ConditionEvaluationService {
             case AttackedTargetIsOpponent ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
+            case AttacksEnchantedPlayer ignored -> attacksEnchantedPlayer(gameData, ctx);
             case TargetPermanentAttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 Permanent attackedTarget = target == null || target.getAttackTarget() == null
@@ -3089,6 +3091,26 @@ public class ConditionEvaluationService {
                 .filter(attacker -> controllerId.equals(attacker.getAttackTarget())
                         || controlledPlaneswalkerIds.contains(attacker.getAttackTarget()))
                 .count();
+    }
+
+    private boolean attacksEnchantedPlayer(GameData gameData, ConditionContext ctx) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        UUID attackingPlayerId = ctx.targetId();
+        if (source == null || source.getAttachedTo() == null
+                || attackingPlayerId == null
+                || !gameData.playerIds.contains(attackingPlayerId)
+                || !gameData.playerIds.contains(source.getAttachedTo())) {
+            return false;
+        }
+
+        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
+        if (attackers == null) return false;
+
+        UUID enchantedPlayerId = source.getAttachedTo();
+        return attackers.stream()
+                .filter(Permanent::isAttacking)
+                .filter(attacker -> isCreatureForCondition(gameData, attacker))
+                .anyMatch(attacker -> enchantedPlayerId.equals(attacker.getAttackTarget()));
     }
 
     private boolean opponentAttacksPlaneswalker(GameData gameData, ConditionContext ctx) {

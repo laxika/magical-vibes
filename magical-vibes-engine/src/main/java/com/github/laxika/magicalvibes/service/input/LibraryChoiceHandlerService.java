@@ -729,7 +729,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-            if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+            if (startNextToHandPick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
             if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
@@ -1659,7 +1659,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+        if (startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         if (followUp.grimReminderSearch() != null && gameData.pendingEffectResolutionEntry != null) {
@@ -1669,6 +1669,13 @@ public class LibraryChoiceHandlerService {
                             chosenCard.getName(), followUp.grimReminderSearch().lifeLoss())));
         }
         finishSearchAndResume(gameData);
+    }
+
+    private boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+        // Basic-land queues have their own end-of-queue shuffle; the generic descriptor helper
+        // treats an absent empty descriptor queue as an exhausted queue and would shuffle here.
+        return followUp.basicLandSearchQueue() == null
+                && librarySearchSupport.startNextToHandPick(gameData, playerId, followUp);
     }
 
     private void handleOppositionAgentChoice(GameData gameData, Player player,
@@ -1724,7 +1731,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+        if (startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);

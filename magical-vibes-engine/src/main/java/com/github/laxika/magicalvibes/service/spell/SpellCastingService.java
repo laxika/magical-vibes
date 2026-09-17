@@ -10110,6 +10110,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int commanderCounterGrantingBefore = commanderCounterGrantingManaAvailable(gameData, playerId);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
         boolean previousClassLevelManaPermission = pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery();
         if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
@@ -10138,6 +10139,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyCommanderCounterGrantingMana(gameData, playerId, card, commanderCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
@@ -10179,6 +10181,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int commanderCounterGrantingBefore = commanderCounterGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         null, false, 0, 0, 0, "", "", sourceZone, anyManaType, false);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
@@ -10197,6 +10200,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyCommanderCounterGrantingMana(gameData, playerId, card, commanderCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
@@ -10282,6 +10286,11 @@ public class SpellCastingService {
     private int additionalCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getAdditionalCounterGrantingManaTotal() : 0;
+    }
+
+    private int commanderCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return pool != null ? pool.getCommanderCounterGrantingManaTotal() : 0;
     }
 
     private int riotGrantingManaAvailable(GameData gameData, UUID playerId) {
@@ -11772,6 +11781,22 @@ public class SpellCastingService {
                 - additionalCounterGrantingManaAvailable(gameData, playerId);
         if (spent > 0) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), spent, Integer::sum);
+        }
+    }
+
+    /** Opal Palace: mana spent to cast a commander grants counters based on its command-zone cast count. */
+    private void applyCommanderCounterGrantingMana(GameData gameData, UUID playerId, Card card,
+                                                   int commanderCounterGrantingBefore) {
+        if (!playerId.equals(gameData.commandCastPlayerId)
+                || !card.getId().equals(gameData.commandCastCardId)) {
+            return;
+        }
+        int spent = commanderCounterGrantingBefore
+                - commanderCounterGrantingManaAvailable(gameData, playerId);
+        if (spent > 0) {
+            int previousCommandZoneCasts = gameData.commanderTaxByCardId.getOrDefault(card.getId(), 0) / 2;
+            gameData.spellAdditionalEnterCounters.merge(
+                    card.getId(), spent * (previousCommandZoneCasts + 1), Integer::sum);
         }
     }
 

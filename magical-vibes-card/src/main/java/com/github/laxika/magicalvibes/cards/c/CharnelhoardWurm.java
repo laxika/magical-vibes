@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "100")
+@CardRegistration(set = "C13", collectorNumber = "180")
 public class CharnelhoardWurm extends Card {
 
     public CharnelhoardWurm() {

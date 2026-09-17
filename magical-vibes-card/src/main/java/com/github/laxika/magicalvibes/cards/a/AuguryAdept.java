@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "137")
+@CardRegistration(set = "C13", collectorNumber = "227")
 public class AuguryAdept extends Card {
 
     public AuguryAdept() {

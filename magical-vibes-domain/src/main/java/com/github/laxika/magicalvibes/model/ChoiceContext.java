@@ -90,6 +90,8 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record CommanderCounterManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+
     record SingleColorSubtypeSpellOrAbilityManaChoice(UUID playerId, int amount,
                                                        CardSubtype subtype, boolean fromCreature,
                                                        UUID sourcePermanentId, UUID recipientPlayerId,

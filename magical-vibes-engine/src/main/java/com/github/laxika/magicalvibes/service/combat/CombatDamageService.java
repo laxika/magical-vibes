@@ -2149,6 +2149,15 @@ public class CombatDamageService {
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
                     }
+                    if (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
+                        continue;
+                    }
                     if (firedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                         UUID graveyardOwnerId = firedEffect.targetSpec().graveyardScope().orElse(null)
                                 == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
