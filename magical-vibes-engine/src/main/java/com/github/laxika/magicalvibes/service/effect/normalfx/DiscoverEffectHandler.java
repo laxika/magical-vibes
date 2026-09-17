@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 public class DiscoverEffectHandler implements NormalEffectHandlerBean {
 
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
@@ -41,8 +43,13 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DiscoverEffect discover = (DiscoverEffect) effect;
         UUID controllerId = entry.getControllerId();
+        var source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int discoverValue = Math.max(0, amountEvaluationService.evaluate(gameData,
-                discover.discoverValue(), AmountContext.forStackEntry(entry, null)));
+                discover.discoverValue(), AmountContext.forStackEntry(entry, source)));
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             entry.setEventValue(discoverValue);

@@ -78,6 +78,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
+            if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library but it is empty. Library is shuffled."));
             return;

@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "214")
+@CardRegistration(set = "DBL", collectorNumber = "214")
 public class CorpseCobble extends Card {
 
     public CorpseCobble() {

@@ -164,6 +164,13 @@ public final class AnyColorManaChoiceSupport {
                 && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withArtifactSource(true);
         }
+        if (sourcePermanentId != null) {
+            if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+                choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
+            } else if (choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+                choiceContext = subtypeChoice.withSourcePermanentId(sourcePermanentId);
+            }
+        }
         if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);

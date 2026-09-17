@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "20")
+@CardRegistration(set = "DBL", collectorNumber = "20")
 public class GavonyDawnguard extends Card {
 
     public GavonyDawnguard() {

@@ -67,6 +67,11 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped));
     }
 
+    public void beginCommandZoneCardChoice(GameData gameData, UUID playerId, List<Card> cards, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.CommandZoneCardChoice(
+                playerId, cards.stream().map(Card::getId).toList(), prompt));
+    }
+
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
         beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
@@ -1057,6 +1062,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
 
+    public void beginPregameLegacyWordChoice(GameData gameData, UUID playerId, Card sourceCard,
+                                              List<String> options) {
+        ChoiceContext.LegacyWordChoice choiceContext = new ChoiceContext.LegacyWordChoice(sourceCard, options);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a keyword or ability word for Legacy."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a Legacy keyword or ability word", gameData.id, playerName);
+    }
+
     public void beginBasicLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1522,6 +1538,21 @@ public class PlayerInputService {
                 playerId, null, null, context, context.options(),
                 sourceCardName + " — Choose up to " + remainingSelections + " counters to remove."));
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
+    }
+
+    public void beginRemoveUpToCountersFromAllPermanentsChoice(
+            GameData gameData, StackEntry resolvingEntry, CounterType counterType, int remaining,
+            Map<String, UUID> permanentOptions) {
+        ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice context =
+                new ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice(
+                        resolvingEntry, counterType, remaining, permanentOptions);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                resolvingEntry.getControllerId(), null, null, context, context.options(),
+                resolvingEntry.getCard().getName() + " - Choose a permanent from which to remove a "
+                        + counterType.name().toLowerCase().replace('_', ' ') + " counter (up to "
+                        + remaining + ")."));
+        log.info("Game {} - Awaiting {} to choose a permanent from which to remove a {} counter",
+                gameData.id, resolvingEntry.getControllerId(), counterType);
     }
 
     public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceTargetedCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostPerTargetEffect;
@@ -154,6 +155,9 @@ class CastingCostServiceTest {
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
+                .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
+                        .toStaticBonus(0, 0, false));
     }
 
     /**
@@ -1650,6 +1654,38 @@ class CastingCostServiceTest {
 
         assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, null, null, targetIds)).isEqualTo(2);
         assertThat(svc.getTargetingSpellCostModifier(gd, player1Id, null, null, targetIds)).isZero();
+    }
+
+    @Test
+    @DisplayName("Targeted cost reduction applies once to targeted spells")
+    void targetingSpellCostModifierIncludesTargetedReduction() {
+        Card highTroller = new Card();
+        highTroller.addEffect(EffectSlot.STATIC, new ReduceTargetedCostEffect(2));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(highTroller));
+        List<UUID> targetIds = List.of(UUID.randomUUID(), UUID.randomUUID());
+
+        assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, null, null, targetIds)).isEqualTo(-2);
+        assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, null, null, List.of())).isZero();
+    }
+
+    @Test
+    @DisplayName("Targeted cost reduction applies to targeted activated abilities")
+    void activationCostModifierIncludesTargetedReduction() {
+        Card highTroller = new Card();
+        highTroller.addEffect(EffectSlot.STATIC, new ReduceTargetedCostEffect(2));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(highTroller));
+
+        Permanent source = new Permanent(new Card());
+        ActivatedAbility ability = new ActivatedAbility(false, "{2}", List.of(), "Targeted ability");
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        assertThat(svc.getActivatedAbilityActivationCostReduction(
+                gd, source, ability, player2Id, List.of())).isEqualTo(2);
+        assertThat(svc.getActivatedAbilityActivationCostReduction(
+                gd, source, ability, null, List.of())).isZero();
     }
 
     @Test

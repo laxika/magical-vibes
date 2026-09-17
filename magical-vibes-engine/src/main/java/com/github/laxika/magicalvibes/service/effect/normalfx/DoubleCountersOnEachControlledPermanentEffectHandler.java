@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnEachControlle
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,7 +61,8 @@ public class DoubleCountersOnEachControlledPermanentEffectHandler implements Nor
                     continue;
                 }
                 if (permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, entry, permanent, counterType, current) > 0) {
+                        gameData, entry, permanent, counterType,
+                        current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current) > 0) {
                     doubledAny = true;
                 }
             }

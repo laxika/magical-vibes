@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandT
 
 @CardRegistration(set = "USG", collectorNumber = "96")
 @CardRegistration(set = "SPG", collectorNumber = "21")
+@CardRegistration(set = "MAR", collectorNumber = "60")
 public class ShowAndTell extends Card {
 
     public ShowAndTell() {

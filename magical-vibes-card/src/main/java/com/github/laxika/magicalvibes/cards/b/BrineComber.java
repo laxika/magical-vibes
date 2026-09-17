@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "233")
+@CardRegistration(set = "DBL", collectorNumber = "500")
 public class BrineComber extends Card {
 
     public BrineComber() {

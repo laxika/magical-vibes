@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "198")
+@CardRegistration(set = "DBL", collectorNumber = "198")
 public class ShadowbeastSighting extends Card {
 
     public ShadowbeastSighting() {

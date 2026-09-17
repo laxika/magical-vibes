@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.q.QuickSliver;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,13 +13,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BroodSliver.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({BroodSliver.class, QuickSliver.class, FugitiveWizard.class})
 class BroodSliverTest extends BaseCardTest {
 
     @Test
     void combatDamageOffersToCreateAColorlessSliverToken() {
         addCreatureReady(player1, new BroodSliver());
-        Permanent attacker = addCreatureReady(player1, new MetallicSliver());
+        Permanent attacker = addCreatureReady(player1, new QuickSliver());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -40,7 +41,7 @@ class BroodSliverTest extends BaseCardTest {
     @Test
     void decliningTheAbilityCreatesNoToken() {
         addCreatureReady(player1, new BroodSliver());
-        Permanent attacker = addCreatureReady(player1, new MetallicSliver());
+        Permanent attacker = addCreatureReady(player1, new QuickSliver());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -54,7 +55,7 @@ class BroodSliverTest extends BaseCardTest {
     @Test
     void nonSliverCombatDamageDoesNotTrigger() {
         addCreatureReady(player1, new BroodSliver());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -67,9 +68,9 @@ class BroodSliverTest extends BaseCardTest {
     @Test
     void blockedSliverDoesNotTrigger() {
         addCreatureReady(player1, new BroodSliver());
-        Permanent attacker = addCreatureReady(player1, new MetallicSliver());
+        Permanent attacker = addCreatureReady(player1, new QuickSliver());
         attacker.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new MetallicSliver());
+        Permanent blocker = addCreatureReady(player2, new QuickSliver());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1);
 
@@ -82,7 +83,7 @@ class BroodSliverTest extends BaseCardTest {
     @Test
     void controllerOfTheSliverThatDealtDamageChoosesAndGetsTheToken() {
         addCreatureReady(player1, new BroodSliver());
-        Permanent attacker = addCreatureReady(player2, new MetallicSliver());
+        Permanent attacker = addCreatureReady(player2, new QuickSliver());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
 
@@ -98,6 +99,59 @@ class BroodSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Sliver").getCard().isToken()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Sliver");
+    }
+
+    @Test
+    void eachSliverThatDealsCombatDamageCreatesItsOwnMayAbility() {
+        addCreatureReady(player1, new BroodSliver());
+        Permanent firstAttacker = addCreatureReady(player1, new QuickSliver());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new QuickSliver());
+        secondAttacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Sliver")).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    void doesNotTriggerWhenBroodSliverHasLostAllAbilities() {
+        addCreatureReady(player1, new BroodSliver());
+        Permanent attacker = addCreatureReady(player2, new QuickSliver());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        harness.addToBattlefield(player2, new Humility());
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Sliver");
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    void doesNotTriggerWhenAnOpponentIsDamagedAndBroodSliverHasLostAllAbilities() {
+        addCreatureReady(player1, new BroodSliver());
+        Permanent attacker = addCreatureReady(player1, new QuickSliver());
+        attacker.setAttacking(true);
+        harness.addToBattlefield(player2, new Humility());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Sliver");
     }
 }

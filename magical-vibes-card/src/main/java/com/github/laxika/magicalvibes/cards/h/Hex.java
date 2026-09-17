@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "89")
+@CardRegistration(set = "MAR", collectorNumber = "17")
+@CardRegistration(set = "OMB", collectorNumber = "17")
 public class Hex extends Card {
 
     public Hex() {

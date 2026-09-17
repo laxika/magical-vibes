@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "108")
+@CardRegistration(set = "SOA", collectorNumber = "32")
 public class SheoldredsEdict extends Card {
 
     public SheoldredsEdict() {

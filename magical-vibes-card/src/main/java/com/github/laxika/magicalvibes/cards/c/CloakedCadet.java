@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "192")
+@CardRegistration(set = "DBL", collectorNumber = "459")
 public class CloakedCadet extends Card {
 
     public CloakedCadet() {

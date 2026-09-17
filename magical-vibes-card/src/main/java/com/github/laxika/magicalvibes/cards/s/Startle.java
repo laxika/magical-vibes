@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "78")
+@CardRegistration(set = "DBL", collectorNumber = "78")
 public class Startle extends Card {
 
     public Startle() {

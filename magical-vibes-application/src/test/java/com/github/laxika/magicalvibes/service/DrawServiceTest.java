@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -74,6 +75,22 @@ class DrawServiceTest {
         assertThat(gd.playersAttemptedDrawFromEmptyLibrary).contains(player1Id);
         verify(gameOutcomeService, never()).resolveLoss(any(), any(), any());
         verify(gameOutcomeService, never()).declareWinner(any(), any());
+    }
+
+    @Test
+    void drawFromBottomReplacementUsesTheControllerBottomOfLibrary() {
+        Card lantern = createCard("Lantern of Undersight", CardType.ARTIFACT);
+        lantern.addEffect(EffectSlot.STATIC, new DrawFromBottomOfLibraryEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(lantern));
+        Card top = createCard("Top", CardType.CREATURE);
+        Card bottom = createCard("Bottom", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(top, bottom)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+
+        sut.resolveDrawCard(gd, player1Id);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(bottom);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(top);
     }
 
     @Test

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "228")
+@CardRegistration(set = "PZA", collectorNumber = "18")
 public class SwordOfSinewAndSteel extends Card {
 
     public SwordOfSinewAndSteel() {

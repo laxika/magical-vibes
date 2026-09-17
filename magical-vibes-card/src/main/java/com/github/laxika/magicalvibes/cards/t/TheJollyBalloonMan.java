@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "219")
+@CardRegistration(set = "SLZ", collectorNumber = "91")
+@CardRegistration(set = "SLZ", collectorNumber = "212")
+@CardRegistration(set = "SLZ", collectorNumber = "333")
 public class TheJollyBalloonMan extends Card {
 
     public TheJollyBalloonMan() {

@@ -32,7 +32,7 @@ class HiddenHideoutTest extends BaseCardTest {
 
     @Test
     void producesManaInCommandersColorIdentity() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
         Permanent hideout = harness.addToBattlefieldAndReturn(player1, new HiddenHideout());
 
         harness.activateAbility(player1, 0, 0, null, null);

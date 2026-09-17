@@ -547,6 +547,20 @@ public class GraveyardService {
             return false;
         }
 
+        // Yawgmoth's Testament — the controller's cards go to the bottom of their owner's
+        // library instead of their graveyards for the rest of the turn.
+        if (!card.isToken()
+                && gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
+                .contains(ownerId)) {
+            gameData.playerDecks.get(ownerId).add(card);
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " is put on the bottom of its owner's library instead of being put into a graveyard."));
+            log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard (turn effect)",
+                    gameData.id, card.getName());
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+            return false;
+        }
+
         // Per-card "if that spell would be put into a graveyard, exile it instead" replacement
         // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
         if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
@@ -594,6 +608,9 @@ public class GraveyardService {
                         opponentExileReplacement.sourcePermanentId());
             } else {
                 exileService.exileCard(gameData, ownerId, card);
+            }
+            if (opponentExileReplacement.effect().addVoidCounter()) {
+                gameData.exiledCardsWithVoidCounters.add(card.getId());
             }
             
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
@@ -651,7 +668,7 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-            if (sourceZone == Zone.LIBRARY && !suppressLibraryMillTriggers) {
+            if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
             }
         }
@@ -1199,6 +1216,9 @@ public class GraveyardService {
             return;
         }
 
+        if (!sourcePermanentId.equals(damagedCreature.getId())) {
+            gameData.sourcesThatDealtDamageToCreaturesThisTurn.add(sourcePermanentId);
+        }
         gameData.creatureCardsDamagedThisTurnBySourcePermanent
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());

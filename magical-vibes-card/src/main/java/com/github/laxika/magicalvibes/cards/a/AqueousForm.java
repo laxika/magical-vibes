@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "39")
+@CardRegistration(set = "PIO", collectorNumber = "45")
 public class AqueousForm extends Card {
 
     public AqueousForm() {

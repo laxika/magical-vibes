@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MuscleBurst;
+import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DiligentFarmhand.class, Forest.class, Island.class, MuscleBurst.class})
+@CardUsed({DiligentFarmhand.class, Forest.class, Island.class, MuscleBurst.class, YixlidJailer.class})
 class DiligentFarmhandTest extends BaseCardTest {
 
     @Test
@@ -81,6 +82,39 @@ class DiligentFarmhandTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Muscle Burst counts Farmhands and Muscle Bursts in both graveyards")
+    void countsFarmhandsInBothGraveyards() {
+        harness.setGraveyard(player1, List.of(new DiligentFarmhand(), new MuscleBurst()));
+        harness.setGraveyard(player2, List.of(new DiligentFarmhand(), new DiligentFarmhand(), new MuscleBurst()));
+        var target = harness.addToBattlefieldAndReturn(player1, new DiligentFarmhand());
+        harness.setHand(player1, List.of(new MuscleBurst(), new DiligentFarmhand()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(8);
+        assertThat(target.getToughnessModifier()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Yixlid Jailer stops Farmhand counting as Muscle Burst but not actual Muscle Bursts")
+    void graveyardAbilityLossStopsCountingAsMuscleBurst() {
+        harness.setGraveyard(player1, List.of(new DiligentFarmhand(), new MuscleBurst()));
+        harness.setGraveyard(player2, List.of(new DiligentFarmhand()));
+        harness.addToBattlefield(player2, new YixlidJailer());
+        var target = harness.addToBattlefieldAndReturn(player1, new DiligentFarmhand());
+        harness.setHand(player1, List.of(new MuscleBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 

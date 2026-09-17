@@ -436,6 +436,7 @@ public class TargetPolarityClassifier {
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("FlipUntilLoseOrStopEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("WhammyBurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             // Divine Deflection prevents damage to its controller, but the target is who the
             // prevented damage is then dealt to.
@@ -465,6 +466,7 @@ public class TargetPolarityClassifier {
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),
+            entry("GainControlOfTargetUntilRansomEffect", TargetPolarity.HARMFUL),
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
@@ -526,6 +528,9 @@ public class TargetPolarityClassifier {
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
+            entry("ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantFlyingToTargetCreatureOrPlayerEffect", TargetPolarity.BENEFICIAL),
+            entry("MakeTargetCreatureCommanderEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             // Chandra's Ignition: the target is a creature you control and is only the damage

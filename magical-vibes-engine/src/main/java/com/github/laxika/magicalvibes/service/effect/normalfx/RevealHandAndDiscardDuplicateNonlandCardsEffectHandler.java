@@ -2,6 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -32,6 +37,8 @@ import org.springframework.stereotype.Component;
 public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
+    private final GameQueryService gameQueryService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
@@ -51,6 +58,11 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
             return;
         }
 
+        gameData.discardCausedByOpponent = !targetPlayerId.equals(entry.getControllerId());
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, targetPlayerId)) {
+            return;
+        }
+
         Set<String> duplicateNames = new HashSet<>();
         Set<String> seenNames = new HashSet<>();
         for (Card card : hand) {
@@ -65,8 +77,13 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
                 toDiscard.add(card);
             }
         }
+        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
         for (Card card : toDiscard) {
             discardCard(gameData, targetPlayerId, card, entry.getCard());
+        }
+        triggerCollectionService.finishDiscardEvent(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
     }
 
@@ -75,15 +92,22 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
         if (hand == null || !hand.remove(card)) {
             return;
         }
-        gameData.discardCausedByOpponent = true;
-        graveyardService.discardCard(gameData, playerId, card);
+        boolean entersBattlefield = gameData.discardCausedByOpponent
+                && card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
+        if (entersBattlefield) {
+            battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                    gameData, playerId, new Permanent(card));
+        } else {
+            graveyardService.discardCard(gameData, playerId, card);
+        }
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        if (entersBattlefield && card.hasType(CardType.CREATURE)) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
         }
     }
 }

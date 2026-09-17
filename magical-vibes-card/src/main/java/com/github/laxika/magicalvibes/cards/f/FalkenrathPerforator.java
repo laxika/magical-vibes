@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "136")
+@CardRegistration(set = "DBL", collectorNumber = "136")
 public class FalkenrathPerforator extends Card {
 
     public FalkenrathPerforator() {

@@ -7,5 +7,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * applied in {@code GameQueryService.getControllerDamageMultiplier} for both combat and noncombat
  * damage. Multiple instances stack multiplicatively. Used by Insult (Insult // Injury).
  */
-public record DoubleControllerDamageThisTurnEffect() implements CardEffect {
+public record DoubleControllerDamageThisTurnEffect() implements CardEffect, DoublingEffect {
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "75")
+@CardRegistration(set = "PIO", collectorNumber = "73")
 public class SightBeyondSight extends Card {
 
     public SightBeyondSight() {

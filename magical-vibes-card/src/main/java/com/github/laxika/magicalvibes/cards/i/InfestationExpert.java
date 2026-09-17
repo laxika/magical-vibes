@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "206")
+@CardRegistration(set = "DBL", collectorNumber = "473")
 public class InfestationExpert extends Card {
 
     private static final CreateTokenEffect CREATE_INSECT = new CreateTokenEffect(

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.Censor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Hundroog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StoicChampion.class, Censor.class, GrizzlyBears.class})
+@CardUsed({StoicChampion.class, Hundroog.class})
 class StoicChampionTest extends BaseCardTest {
 
     @Test
@@ -53,9 +52,9 @@ class StoicChampionTest extends BaseCardTest {
     @DisplayName("Multiple cycles stack and the boost wears off at end of turn")
     void cyclesStackUntilEndOfTurn() {
         harness.addToBattlefield(player1, new StoicChampion());
-        harness.setHand(player1, List.of(new Censor(), new Censor()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new Hundroog(), new Hundroog()));
+        harness.setLibrary(player1, List.of(new Hundroog(), new Hundroog()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
@@ -76,8 +75,8 @@ class StoicChampionTest extends BaseCardTest {
     }
 
     private void setUpCycling(Player player) {
-        harness.setHand(player, List.of(new Censor()));
-        harness.setLibrary(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.BLUE, 1);
+        harness.setHand(player, List.of(new Hundroog()));
+        harness.setLibrary(player, List.of(new Hundroog()));
+        harness.addMana(player, ManaColor.COLORLESS, 3);
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThan
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "99")
+@CardRegistration(set = "DBL", collectorNumber = "366")
 public class CatapultFodder extends Card {
 
     public CatapultFodder() {

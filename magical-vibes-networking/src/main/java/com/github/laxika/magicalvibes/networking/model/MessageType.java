@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.networking.model;
 
 public enum MessageType {
+    ACTIVE_GAME_CHANGED,
     ROLL_PLANAR_DIE,
     ACTIVATE_PLANAR_ABILITY,
     LOGIN,
@@ -77,6 +78,10 @@ public enum MessageType {
     LEAVE_DRAFT,
     LOBBY_GAMES_RESPONSE,
     GAME_REMOVED,
+    LOAD_DECK,
+    LOAD_DECK_RESPONSE,
+    VALIDATE_DECK,
+    VALIDATE_DECK_RESPONSE,
     SAVE_DECK,
     SAVE_DECK_RESPONSE,
     INTERACTION_PROMPT,

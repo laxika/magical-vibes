@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "193")
+@CardRegistration(set = "PIO", collectorNumber = "224")
 public class FleecemaneLion extends Card {
 
     public FleecemaneLion() {

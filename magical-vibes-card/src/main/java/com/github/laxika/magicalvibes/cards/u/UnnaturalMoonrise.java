@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "247")
+@CardRegistration(set = "DBL", collectorNumber = "247")
 public class UnnaturalMoonrise extends Card {
 
     public UnnaturalMoonrise() {

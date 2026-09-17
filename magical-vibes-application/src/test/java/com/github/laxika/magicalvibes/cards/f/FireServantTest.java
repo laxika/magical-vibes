@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FireServant.class, Blaze.class, FlamewaveInvoker.class, FurnaceOfRath.class,
+        GrizzlyBears.class, SerraAngel.class, Shock.class})
 class FireServantTest extends BaseCardTest {
 
     // ===== Doubles red instant damage =====
@@ -78,9 +81,7 @@ class FireServantTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new FireServant()); // 4/3
 
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -99,7 +100,7 @@ class FireServantTest extends BaseCardTest {
     @DisplayName("Does not double activated ability damage")
     void doesNotDoubleActivatedAbilityDamage() {
         harness.addToBattlefield(player1, new FireServant());
-        Permanent invoker = addReadyInvoker(player1);
+        addReadyInvoker(player1);
         harness.addMana(player1, ManaColor.RED, 8);
         harness.setLife(player2, 20);
 
@@ -198,10 +199,6 @@ class FireServantTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyInvoker(Player player) {
-        FlamewaveInvoker card = new FlamewaveInvoker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new FlamewaveInvoker());
     }
 }

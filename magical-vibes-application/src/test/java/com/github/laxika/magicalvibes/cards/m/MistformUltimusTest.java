@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MistformUltimus.class, ElvishChampion.class})
@@ -31,8 +33,27 @@ class MistformUltimusTest extends BaseCardTest {
     @DisplayName("Mistform Ultimus is every creature type while it is in hand")
     void isEveryCreatureTypeOutsideBattlefield() {
         MistformUltimus mistform = new MistformUltimus();
-        harness.setHand(player1, java.util.List.of(mistform));
+        harness.setHand(player1, List.of(mistform));
 
         assertThat(gqs.cardHasSubtype(mistform, CardSubtype.ELF, gd, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mistform Ultimus is every creature type in every non-battlefield zone")
+    void isEveryCreatureTypeInEveryNonBattlefieldZone() {
+        MistformUltimus handMistform = new MistformUltimus();
+        MistformUltimus graveyardMistform = new MistformUltimus();
+        MistformUltimus libraryMistform = new MistformUltimus();
+        MistformUltimus exileMistform = new MistformUltimus();
+
+        harness.setHand(player1, List.of(handMistform));
+        harness.setGraveyard(player1, List.of(graveyardMistform));
+        harness.setLibrary(player1, List.of(libraryMistform));
+        harness.setExile(player1, List.of(exileMistform));
+
+        assertThat(gqs.cardHasSubtype(handMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasSubtype(graveyardMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasSubtype(libraryMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasSubtype(exileMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
     }
 }

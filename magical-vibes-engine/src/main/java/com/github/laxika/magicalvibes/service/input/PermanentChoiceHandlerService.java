@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromC
 import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchangeEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,6 +65,7 @@ public class PermanentChoiceHandlerService {
     private final RemoveCounterFromChosenOwnPermanentEffectHandler removeCounterFromChosenOwnPermanentEffectHandler;
     private final ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
+    private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -284,6 +286,11 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleChampionedTrigger(gameData, permanentId, championedTrigger);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
             spellHandler.handleSpellRetarget(gameData, permanentId, retarget);
+        } else if (context instanceof PermanentChoiceContext.RedHerringExchange exchange) {
+            redHerringExchangeEffectHandler.completeChoice(gameData, permanentId, exchange);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.PsychicBattleRetarget retarget) {
             spellHandler.handlePsychicBattleRetarget(gameData, permanentId, retarget);
         } else if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {

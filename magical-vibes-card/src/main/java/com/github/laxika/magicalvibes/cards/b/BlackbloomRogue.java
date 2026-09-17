@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "91")
+@CardRegistration(set = "PIO", collectorNumber = "85")
 public class BlackbloomRogue extends Card {
 
     public BlackbloomRogue() {

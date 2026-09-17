@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "231")
+@CardRegistration(set = "MB1", collectorNumber = "231")
 public class StoicBuilder extends Card {
 
     public StoicBuilder() {

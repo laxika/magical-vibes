@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -22,8 +22,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
-import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,7 +51,6 @@ public class MulliganService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
-    private final GameOutcomeService gameOutcomeService;
 
     public void keepHand(GameData gameData, Player player) {
         ensureNoPendingMulliganAction(gameData);
@@ -178,16 +175,7 @@ public class MulliganService {
         int drawn = 0;
         while (drawn < cardsToDraw) {
             if (deck.isEmpty()) {
-                if (gameOutcomeService.resolveLoss(gameData, player.getId(), LossReason.EMPTY_LIBRARY)
-                        == LossOutcome.LOSES) {
-                    UUID winnerId = gameData.orderedPlayerIds.stream()
-                            .filter(id -> !id.equals(player.getId()))
-                            .findFirst()
-                            .orElse(null);
-                    gameLogService.append(gameData, GameLog.text(
-                            player.getUsername() + " attempted to draw from an empty library and loses the game."));
-                    gameOutcomeService.declareWinner(gameData, winnerId);
-                }
+                gameData.playersAttemptedDrawFromEmptyLibrary.add(player.getId());
                 break;
             }
             hand.add(deck.removeFirst());
@@ -240,8 +228,10 @@ public class MulliganService {
         hand.clear();
         Collections.shuffle(deck, random);
 
-        List<Card> newHand = new ArrayList<>(deck.subList(0, 7));
-        deck.subList(0, 7).clear();
+        int count = Math.min(7, deck.size());
+        if (count < 7) gameData.playersAttemptedDrawFromEmptyLibrary.add(player.getId());
+        List<Card> newHand = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
         gameData.playerHands.put(player.getId(), newHand);
 
         int newMulliganCount = currentMulliganCount + 1;
@@ -300,10 +290,10 @@ public class MulliganService {
             for (Card card : hand) {
                 for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect pregame
+                            && may.wrapped() instanceof PregameChoiceEffect pregame
                             && (!pregame.onlyForNonStartingPlayer()
                             || !playerId.equals(gameData.startingPlayerId))) {
-                        // Leyline is a pregame action (CR 103.6), not a triggered ability —
+                        // These are pregame actions, not triggered abilities —
                         // bypasses the stack, so add directly to pendingMayAbilities.
                         gameData.pendingMayAbilities.add(new PendingMayAbility(
                                 card, playerId,
@@ -385,6 +375,8 @@ public class MulliganService {
         List<Card> handAtTurnStart = gameData.playerHands.get(gameData.activePlayerId);
         gameData.handSizeAtTurnStart.put(gameData.activePlayerId,
                 handAtTurnStart == null ? 0 : handAtTurnStart.size());
+        gameData.turnUntapStepSkipped = false;
+        gameData.captureTurnStartSnapshot();
 
         String logEntry1 = "Mulligan phase complete!";
         String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";

@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "168")
 @CardRegistration(set = "VOW", collectorNumber = "176")
+@CardRegistration(set = "DBL", collectorNumber = "443")
 public class RuneboundWolf extends Card {
 
     public RuneboundWolf() {

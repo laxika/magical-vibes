@@ -348,6 +348,17 @@ public class TriggerTargetCollector {
                         continue;
                     }
 
+                    if (targetValidationService != null
+                            && targetValidationService.checkEffectTargets(
+                                    effects,
+                                    new TargetValidationContext(gameData, p.getId(), Zone.BATTLEFIELD,
+                                            sourceCard, xValue == null ? 0 : xValue, controllerId,
+                                            sourcePermanentSnapshot,
+                                            sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
+                                            null)).isPresent()) {
+                        continue;
+                    }
+
                     if (targetLegalityService.checkTriggeredPermanentTargetableReason(
                             gameData, p, sourceCard, controllerId).isPresent()) {
                         continue;

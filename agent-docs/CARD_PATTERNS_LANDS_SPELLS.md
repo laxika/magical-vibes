@@ -1,4 +1,5 @@
 # Card Patterns: Lands & Spells
+- Final Act (`f/FinalAct.java`): for a choose-one-or-more global modal spell, use typed `DestroyAllPermanentsEffect` modes, `ExileGraveyardCardsEffect(ALL_PLAYERS)`, and `EachOpponentLosesAllCountersEffect()`.
 - Cosmic Rebirth (`c/CosmicRebirth.java`): target a permanent card in your graveyard; gate `ReturnCardFromGraveyardEffect` battlefield/hand branches with `TargetGraveyardCardManaValueAtMost(3)` and `TargetGraveyardCardManaValueAtLeast(4)`, then add `GainLifeEffect(3)`.
 - Targeted low-mana permanent reanimate + optional graveyard-cast self-copy + flashback | `s/SevinnesReclamation.java` | `target(new GraveyardCardPredicateTargetFilter(CardAllOfPredicate(CardIsPermanentPredicate, CardMaxManaValuePredicate(3)), CONTROLLERS_GRAVEYARD))` + targeted `ReturnCardFromGraveyardEffect` to `BATTLEFIELD` + `ConditionalEffect(new CastFromZone(GRAVEYARD), MayEffect(new CopyThisSpellForControllerEffect(), prompt))` + `FlashbackCast("{4}{W}")` |
 

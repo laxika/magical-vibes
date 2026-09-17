@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SNC", collectorNumber = "213")
+@CardRegistration(set = "SLZ", collectorNumber = "93")
+@CardRegistration(set = "SLZ", collectorNumber = "214")
+@CardRegistration(set = "SLZ", collectorNumber = "335")
 public class RaffineSchemingSeer extends Card {
 
     public RaffineSchemingSeer() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "192")
+@CardRegistration(set = "FCA", collectorNumber = "55")
 public class KinnanBonderProdigy extends Card {
 
     public KinnanBonderProdigy() {

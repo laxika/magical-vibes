@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "76")
+@CardRegistration(set = "DBL", collectorNumber = "76")
 public class SludgeMonster extends Card {
 
     public SludgeMonster() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "201")
+@CardRegistration(set = "DBL", collectorNumber = "201")
 public class TappingAtTheWindow extends Card {
 
     public TappingAtTheWindow() {

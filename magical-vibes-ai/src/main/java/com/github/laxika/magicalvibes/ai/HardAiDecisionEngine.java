@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -1486,6 +1487,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     gameData, aiPlayer.getId(), MCTS_BUDGET, spellRootActions);
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
+                if (pc.commandCardId() != null) return tryCastCommander(gameData);
                 SpellCastingPlan plan = buildSpellCastingPlan(gameData, pc.handIndex(), pc.targetId(), false);
                 if (plan == null) return false;
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", plan.card().getName(),
@@ -3333,9 +3335,21 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> topOrder = new ArrayList<>();
         List<Integer> bottomOrder = new ArrayList<>();
+        Integer scrycastIndex = null;
+        if (!scryContext.toGraveyard()) {
+            for (int i = 0; i < cards.size(); i++) {
+                if (cards.get(i).getCastingOption(ScrycastCast.class).isPresent()) {
+                    scrycastIndex = i;
+                    break;
+                }
+            }
+        }
 
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.get(i);
+            if (Integer.valueOf(i).equals(scrycastIndex)) {
+                continue;
+            }
             if (card.hasType(CardType.LAND)) {
                 if (needsLand) {
                     topOrder.add(i);
@@ -3353,8 +3367,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Scry {} — keeping {} on top (needsLand={}), {} on bottom in game {}",
                 cards.size(), topOrder.size(), needsLand, bottomOrder.size(), gameId);
+        Integer finalScrycastIndex = scrycastIndex;
         send(() -> gameActions.answerInteraction(
-                new InteractionAnswer.ScryOrder(topOrder, bottomOrder)));
+                new InteractionAnswer.ScryOrder(topOrder, bottomOrder, finalScrycastIndex)));
     }
 
     /**

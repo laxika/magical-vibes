@@ -87,6 +87,9 @@ public enum SpellCastTimingRestriction {
      */
     OPPONENTS_TURN,
 
+    /** "Cast this spell only during an opponent's combat phase." */
+    OPPONENTS_COMBAT,
+
     /**
      * "Cast this spell only during an opponent's turn after their upkeep step." Reset. Legal in
      * any step after the active opponent's upkeep.

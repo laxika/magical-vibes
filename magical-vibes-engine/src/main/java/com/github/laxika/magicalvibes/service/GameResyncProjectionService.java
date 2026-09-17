@@ -25,15 +25,32 @@ public class GameResyncProjectionService {
     private final GameMutationCoordinator mutationCoordinator;
 
     public JoinGame currentState(GameData gameData, UUID playerId) {
+        gameData.session.lock.lock();
+        try { return activeCurrentState(gameData.session.active(), playerId); }
+        finally { gameData.session.lock.unlock(); }
+    }
+
+    private JoinGame activeCurrentState(GameData gameData, UUID playerId) {
         return mutationCoordinator.observe(
                 gameData, () -> projectionFactory.getJoinGame(gameData, playerId));
     }
 
     public void sendCurrentState(GameData gameData, UUID playerId, MessageType messageType) {
+        gameData.session.lock.lock();
+        try { sendActiveCurrentState(gameData.session.active(), playerId, messageType); }
+        finally { gameData.session.lock.unlock(); }
+    }
+
+    private void sendActiveCurrentState(GameData gameData, UUID playerId, MessageType messageType) {
         mutationCoordinator.observe(
                 gameData,
                 () -> projectionFactory.getJoinGame(gameData, playerId),
-                current -> transport.sendToPlayer(
-                        playerId, new JoinGameMessage(messageType, current)));
+                current -> {
+                    transport.sendToPlayer(playerId, new JoinGameMessage(messageType, current));
+                    if (gameData.session.context().activationEpoch() > 0) {
+                        transport.sendToPlayer(playerId, new com.github.laxika.magicalvibes.networking.message.ActiveGameChangedMessage(
+                                gameData.session.context(), gameData.session.depth(), current));
+                    }
+                });
     }
 }

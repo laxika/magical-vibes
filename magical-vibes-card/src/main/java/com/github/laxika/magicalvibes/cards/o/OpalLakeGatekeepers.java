@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DGM", collectorNumber = "16")
+@CardRegistration(set = "PIO", collectorNumber = "68")
 public class OpalLakeGatekeepers extends Card {
 
     public OpalLakeGatekeepers() {

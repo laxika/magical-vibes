@@ -41,7 +41,7 @@ class LeonardoTheBalanceTest extends BaseCardTest {
 
         castRaiseTheAlarm(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gqs.getEffectivePower(gd, leonardo)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
     }

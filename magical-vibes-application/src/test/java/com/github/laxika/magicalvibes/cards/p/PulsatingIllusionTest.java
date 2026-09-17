@@ -53,7 +53,7 @@ class PulsatingIllusionTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
         harness.clearPriorityPassed();
 
         harness.activateAbility(player1, 0, null, null);

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "107")
+@CardRegistration(set = "DBL", collectorNumber = "374")
 public class DreadFugue extends Card {
 
     public DreadFugue() {

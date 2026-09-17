@@ -30,7 +30,7 @@ class PathOfAncestryTest extends BaseCardTest {
     @Test
     @DisplayName("Produces mana from the commander's color identity")
     void producesCommandIdentityMana() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
         Permanent path = harness.enterBattlefieldAndReturn(player1, new PathOfAncestry());
         path.untap();
 
@@ -48,7 +48,7 @@ class PathOfAncestryTest extends BaseCardTest {
     @Test
     @DisplayName("Scries when its mana casts a creature sharing a type with the commander")
     void scriesOnMatchingCreatureSpell() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
         Permanent path = harness.enterBattlefieldAndReturn(player1, new PathOfAncestry());
         path.untap();
         harness.activateAbility(player1, 0, 0, null, null);
@@ -70,7 +70,7 @@ class PathOfAncestryTest extends BaseCardTest {
     @Test
     @DisplayName("Does not scry for a creature with no shared type")
     void doesNotScryOnNonmatchingCreatureSpell() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player1.getId(), List.of(new EdgarMarkov()));
         Permanent path = harness.enterBattlefieldAndReturn(player1, new PathOfAncestry());
         path.untap();
         harness.setHand(player1, List.of(new GrizzlyBears()));

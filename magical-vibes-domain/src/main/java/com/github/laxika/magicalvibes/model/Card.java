@@ -6,7 +6,13 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
@@ -28,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -114,9 +122,10 @@ public class Card {
     private boolean frozen;
     /**
      * The player who owns this card — the player whose deck it started the game in. Stamped once
-     * at game setup ({@code GameSetupService}) and preserved across zone changes. Cards created by
-     * the engine (tokens, copies) leave this {@code null}. Distinct from control: used to evaluate
-     * "a spell you don't own" (e.g. Nita, Forum Conciliator).
+     * at game setup ({@code GameSetupService}) and preserved across zone changes. Engine-created
+     * cards normally leave this {@code null}; token cards created for a player's library are owned
+     * by that player. Distinct from control: used to evaluate "a spell you don't own" (e.g. Nita,
+     * Forum Conciliator).
      */
     private UUID ownerId;
     private String name;
@@ -158,6 +167,11 @@ public class Card {
     private String collectorNumber;
 
     private boolean token;
+    /**
+     * A token that is also a card, such as a Time Walk token card. Unlike ordinary tokens, these
+     * remain in zones other than the battlefield.
+     */
+    private boolean tokenCard;
     /** "This spell can't be copied." Honored by the copy effect handlers. */
     private boolean cantBeCopied;
     /**
@@ -218,6 +232,8 @@ public class Card {
     private Integer selectedRoomDoor;
     /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
     private String morphCost;
+    /** Whether the morph ability casts this card as a spell from the battlefield. */
+    private boolean spellmorph;
     /** Optional dynamic generic reduction applied to the morph/disguise face-up cost. */
     private DynamicAmount morphCostReduction;
     /** Optional card-reveal component of a morph face-up cost. */
@@ -348,6 +364,7 @@ public class Card {
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
+        this.tokenCard = source.tokenCard;
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
         this.requiresCreatureMana = source.requiresCreatureMana;
@@ -371,6 +388,7 @@ public class Card {
         this.roomDoorManaCosts = List.copyOf(source.roomDoorManaCosts);
         this.selectedRoomDoor = source.selectedRoomDoor;
         this.morphCost = source.morphCost;
+        this.spellmorph = source.spellmorph;
         this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
@@ -438,6 +456,7 @@ public class Card {
         this.xValueCap = face.xValueCap;
         this.minimumXValue = face.minimumXValue;
         this.token = face.token;
+        this.tokenCard = face.tokenCard;
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
         this.requiresCreatureMana = face.requiresCreatureMana;
@@ -460,6 +479,7 @@ public class Card {
         this.roomDoorManaCosts = List.copyOf(face.roomDoorManaCosts);
         this.selectedRoomDoor = face.selectedRoomDoor;
         this.morphCost = face.morphCost;
+        this.spellmorph = face.spellmorph;
         this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
         this.morphAdditionalCost = face.morphAdditionalCost;
@@ -507,6 +527,7 @@ public class Card {
     public void setType(CardType type) { assertMutable(); this.type = type; }
     public void setColor(CardColor color) { assertMutable(); this.color = color; }
     public void setColors(List<CardColor> colors) { assertMutable(); this.colors = colors; }
+    public void setColorIdentity(List<CardColor> colorIdentity) { assertMutable(); this.colorIdentity = colorIdentity; }
     public void setAdditionalTypes(Set<CardType> additionalTypes) { assertMutable(); this.additionalTypes = additionalTypes; }
     public void setSupertypes(Set<CardSupertype> supertypes) { assertMutable(); this.supertypes = supertypes; }
     public void setSubtypes(List<CardSubtype> subtypes) { assertMutable(); this.subtypes = subtypes; }
@@ -548,6 +569,7 @@ public class Card {
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
+    public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
@@ -571,6 +593,77 @@ public class Card {
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
     public void setModalDoubleFaced(boolean modalDoubleFaced) { assertMutable(); this.modalDoubleFaced = modalDoubleFaced; }
+
+    /** Replaces this unfrozen runtime copy with Bombardment's Missile characteristics. */
+    public void becomeMissile() {
+        assertMutable();
+        setName("Missile");
+        setType(CardType.SORCERY);
+        setManaCost("{R}");
+        setColor(CardColor.RED);
+        setColors(List.of(CardColor.RED));
+        setColorIdentity(List.of(CardColor.RED));
+        setAdditionalTypes(Set.of());
+        setSupertypes(Set.of());
+        setSubtypes(List.of());
+        setCardText("Missile deals 2 damage to any target.");
+        setPower(null);
+        setToughness(null);
+        setLoyalty(null);
+        setDefense(null);
+        setKeywords(Set.of());
+        setXColorRestrictions((Set<ManaColor>) null);
+        setXValueCap(null);
+        setMinimumXValue(0);
+        setCantBeCopied(false);
+        setSacrificeAtEndStep(false);
+        setRequiresCreatureMana(false);
+        setRequiresBasicLandMana(false);
+        setEnchantPlayer(false);
+        setAdditionalCostPerExtraTarget(0);
+        setAdditionalManaCostPerExtraTarget(null);
+        setAdditionalLifeCostPerTarget(0);
+        setAllowSharedTargets(false);
+        setAttackTriggerTargetChosenByDefendingPlayer(false);
+        setMultiTargetConstraint(null);
+        setCastTimeTargetFilter(null);
+        setSpellCastTimingRestriction(null);
+        setCastCondition(null);
+        setFlashCastCondition(null);
+        setAttachRestriction(null);
+        setWatermark(null);
+        setBackFaceCard(null);
+        setModalDoubleFaced(false);
+        castingOptions.clear();
+        roomDoorManaCosts = List.of();
+        selectedRoomDoor = null;
+        morphCost = null;
+        spellmorph = false;
+        morphCostReduction = null;
+        morphRevealCost = null;
+        morphAdditionalCost = null;
+        morphSacrificeCost = null;
+        morphDiscardCost = null;
+        morphLifeCost = null;
+        spellTargets.clear();
+        effectTargetIndexMap.clear();
+        effectRegistrations.clear();
+        effectCache.clear();
+        sagaChapterTargetFilters.clear();
+        sagaChapterTargetGroups.clear();
+        activatedAbilities.clear();
+        graveyardActivatedAbilities.clear();
+        handActivatedAbilities.clear();
+        stackActivatedAbilities.clear();
+        target(new AnyTargetPredicateTargetFilter(
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new PermanentIsBattlePredicate())),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be any target")).addEffect(EffectSlot.SPELL,
+                new DealDamageToAnyTargetEffect(2));
+    }
 
     // ── Target-first builder API ──────────────────────────────────────
 
@@ -705,6 +798,10 @@ public class Card {
                 if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);
                 if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
                 if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
+            }
+            case RollDiceEffect e -> {
+                if (e.oddResult() != null) registerEffectTargetIndex(e.oddResult(), targetIndex);
+                if (e.evenResult() != null) registerEffectTargetIndex(e.evenResult(), targetIndex);
             }
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
@@ -1126,6 +1223,7 @@ public class Card {
     public void addMorph(String morphCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
@@ -1139,6 +1237,7 @@ public class Card {
     public void addMorph(String morphCost, DynamicAmount morphCostReduction) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = morphCostReduction;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
@@ -1152,6 +1251,7 @@ public class Card {
     public void addMorph(String morphCost, CardPredicate revealPredicate, String revealLabel) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
@@ -1167,6 +1267,7 @@ public class Card {
     public void addMorph(String morphCost, ReturnPermanentsCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = additionalCost;
@@ -1180,6 +1281,7 @@ public class Card {
     public void addMorph(String morphCost, SacrificePermanentsCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
@@ -1193,6 +1295,7 @@ public class Card {
     public void addMorph(String morphCost, DiscardCardTypeCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
@@ -1206,6 +1309,7 @@ public class Card {
     public void addMorph(String morphCost, LifeCastingCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
@@ -1219,8 +1323,23 @@ public class Card {
     public void addMorphWithRevealCost(CardPredicate revealPredicate, String revealLabel) {
         assertMutable();
         this.morphCost = "{0}";
+        this.spellmorph = false;
         this.morphCostReduction = null;
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds spellmorph and its standard face-down alternate casting cost. */
+    public void addSpellmorph(String spellmorphCost) {
+        assertMutable();
+        this.morphCost = spellmorphCost;
+        this.spellmorph = true;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
         this.morphAdditionalCost = null;
         this.morphSacrificeCost = null;
         this.morphDiscardCost = null;

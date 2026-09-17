@@ -1,34 +1,38 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SeedbornMuse.class, Forest.class, GrizzlyBears.class, Humility.class})
 class SeedbornMuseTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Seedborn Muse untaps all your permanents during opponent's untap step")
     void untapsAllYourPermanentsOnOpponentsUntapStep() {
-        Permanent muse = addReadySeedbornMuse(player1);
+        Permanent muse = addCreatureReady(player1, new SeedbornMuse());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         muse.tap();
         bears.tap();
+        forest.tap();
         assertThat(muse.isTapped()).isTrue();
         assertThat(bears.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
 
-        advanceToNextTurn(player1); // next active is player2
+        harness.performUntapStep(player2);
 
         assertThat(muse.isTapped()).isFalse();
         assertThat(bears.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
     }
 
     @Test
@@ -38,7 +42,7 @@ class SeedbornMuseTest extends BaseCardTest {
         bears.tap();
         assertThat(bears.isTapped()).isTrue();
 
-        advanceToNextTurn(player1); // next active is player2
+        harness.performUntapStep(player2);
 
         assertThat(bears.isTapped()).isTrue();
     }
@@ -46,7 +50,7 @@ class SeedbornMuseTest extends BaseCardTest {
     @Test
     @DisplayName("Seedborn Muse only untaps permanents its controller controls")
     void onlyControllerPermanentsUntap() {
-        Permanent p1Muse = addReadySeedbornMuse(player1);
+        Permanent p1Muse = addCreatureReady(player1, new SeedbornMuse());
         Permanent p1Bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent p2Bears = addCreatureReady(player2, new GrizzlyBears());
 
@@ -54,26 +58,25 @@ class SeedbornMuseTest extends BaseCardTest {
         p1Bears.tap();
         p2Bears.tap();
 
-        advanceToNextTurn(player1); // player2 untap step
+        harness.performUntapStep(player1); // player1's own untap step
 
         assertThat(p1Muse.isTapped()).isFalse();
         assertThat(p1Bears.isTapped()).isFalse();
-        assertThat(p2Bears.isTapped()).isFalse(); // active player's normal untap
+        assertThat(p2Bears.isTapped()).isTrue();
     }
 
-    private Permanent addReadySeedbornMuse(Player player) {
-        Permanent perm = new Permanent(new SeedbornMuse());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("Seedborn Muse does not untap permanents after losing all abilities")
+    void doesNotUntapPermanentsWhenItHasLostAllAbilities() {
+        Permanent muse = addCreatureReady(player1, new SeedbornMuse());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Humility());
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        bears.tap();
+        assertThat(gqs.hasLostAllAbilities(gd, muse)).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isTrue();
     }
 }

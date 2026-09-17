@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "256")
+@CardRegistration(set = "DBL", collectorNumber = "523")
 public class ForebodingStatue extends Card {
 
     public ForebodingStatue() {
