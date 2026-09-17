@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "36")
+@CardRegistration(set = "CMD", collectorNumber = "67")
 public class VisionSkeins extends Card {
 
     public VisionSkeins() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "21")
+@CardRegistration(set = "CMD", collectorNumber = "20")
 public class MonkRealist extends Card {
 
     public MonkRealist() {

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "DDL", collectorNumber = "71")
 @CardRegistration(set = "PC2", collectorNumber = "121")
 @CardRegistration(set = "PCA", collectorNumber = "121")
+@CardRegistration(set = "CMD", collectorNumber = "280")
 public class KazanduRefuge extends Card {
 
     public KazanduRefuge() {

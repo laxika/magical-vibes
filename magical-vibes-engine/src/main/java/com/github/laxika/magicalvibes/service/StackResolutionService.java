@@ -1200,6 +1200,8 @@ public class StackResolutionService {
                 return;
             }
 
+            checkSagaFinalChapterResolution(gameData, entry);
+
             if (gameData.restartTurnRequested) {
                 gameData.restartTurnRequested = false;
                 if (isNonCopySpell(entry)) {
@@ -1249,7 +1251,28 @@ public class StackResolutionService {
 
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
+        checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
+    }
+
+    private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        if (card == null || !card.isSaga() || entry.getDescription() == null) return;
+
+        String finalChapter = switch (card.getSagaFinalChapter()) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            default -> null;
+        };
+        if (finalChapter == null
+                || !entry.getDescription().equals(card.getName() + "'s chapter " + finalChapter + " ability")) {
+            return;
+        }
+        triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
+                gameData, entry.getControllerId());
     }
 
     /**

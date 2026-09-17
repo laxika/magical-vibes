@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.w.WirewoodGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkirkVolcanist.class, Mountain.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SkirkVolcanist.class, Mountain.class, Forest.class, GrizzlyBears.class, WirewoodGuardian.class})
 class SkirkVolcanistTest extends BaseCardTest {
 
     @Test
@@ -41,15 +42,78 @@ class SkirkVolcanistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, firstTarget.getId());
         harness.handlePermanentChosen(player1, secondTarget.getId());
         harness.handlePermanentChosen(player1, thirdTarget.getId());
-        harness.passBothPriorities();
 
+        PendingInteraction.XValueChoice firstDamageChoice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(firstDamageChoice).isNotNull();
+        assertThat(firstDamageChoice.minValue()).isEqualTo(1);
+        assertThat(firstDamageChoice.maxValue()).isEqualTo(1);
         harness.handleXValueChosen(player1, 1);
         harness.handleXValueChosen(player1, 1);
         harness.handleXValueChosen(player1, 1);
+        harness.passBothPriorities();
 
         assertThat(firstTarget.getMarkedDamage()).isEqualTo(1);
         assertThat(secondTarget.getMarkedDamage()).isEqualTo(1);
         assertThat(thirdTarget.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void turningFaceUpWithOneTargetDealsAllThreeDamageToIt() {
+        Permanent mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent mountain2 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WirewoodGuardian());
+        Permanent volcanist = castFaceDown();
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(volcanist),
+                List.of(mountain1.getId(), mountain2.getId()));
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        PendingInteraction.XValueChoice damageChoice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(damageChoice).isNotNull();
+        assertThat(damageChoice.minValue()).isEqualTo(3);
+        assertThat(damageChoice.maxValue()).isEqualTo(3);
+        harness.handleXValueChosen(player1, 3);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void turningFaceUpWithTwoTargetsAllowsChoosingTwoAndOneDamage() {
+        Permanent mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent mountain2 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent volcanist = castFaceDown();
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(volcanist),
+                List.of(mountain1.getId(), mountain2.getId()));
+
+        harness.handlePermanentChosen(player1, firstTarget.getId());
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        PendingInteraction.XValueChoice firstDamageChoice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(firstDamageChoice).isNotNull();
+        assertThat(firstDamageChoice.minValue()).isEqualTo(1);
+        assertThat(firstDamageChoice.maxValue()).isEqualTo(2);
+        harness.handleXValueChosen(player1, 2);
+
+        PendingInteraction.XValueChoice secondDamageChoice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(secondDamageChoice).isNotNull();
+        assertThat(secondDamageChoice.minValue()).isEqualTo(1);
+        assertThat(secondDamageChoice.maxValue()).isEqualTo(1);
+        harness.handleXValueChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.getMarkedDamage()).isEqualTo(2);
+        assertThat(secondTarget.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

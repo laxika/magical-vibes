@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
@@ -175,6 +176,42 @@ public final class TokenCreationReplacementSupport {
                 original.tappedAndAttacking(), original.tapped(), Map.of(), List.of(),
                 original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
                 original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
+    }
+
+    /** Returns the number of Treasure tokens added by active Bilbo replacements. */
+    static int additionalTreasureTokenCount(GameData gameData, UUID controllerId,
+                                             CreateTokenEffect original, int amount) {
+        if (amount <= 0 || original.subtypes() == null || !original.subtypes().contains(CardSubtype.FOOD)) {
+            return 0;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int bilboCount = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || permanent.isStaticEffectSuppressed(AddTreasureToFoodTokenCreationEffect.class)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AddTreasureToFoodTokenCreationEffect) {
+                    bilboCount++;
+                }
+            }
+        }
+        return amount * bilboCount;
+    }
+
+    /** Returns Bilbo's Treasure token while preserving event-level token riders. */
+    static CreateTokenEffect additionalTreasureToken(CreateTokenEffect original) {
+        CreateTokenEffect treasure = CreateTokenEffect.ofTreasureToken(1);
+        return new CreateTokenEffect(
+                CardType.ARTIFACT, 1, treasure.tokenName(), 0, 0, treasure.color(), treasure.colors(),
+                treasure.subtypes(), treasure.keywords(), treasure.additionalTypes(), false,
+                original.tapped() || original.tappedAndAttacking(), Map.of(), treasure.tokenAbilities(),
+                original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
+                original.initialPlusOnePlusOneCounters(), Set.of());
     }
 
     /** Returns Jinnie Fay's replacement token while preserving event-level token riders. */

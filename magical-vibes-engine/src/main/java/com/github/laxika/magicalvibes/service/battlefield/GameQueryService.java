@@ -635,6 +635,9 @@ public class GameQueryService {
      * a global removal.
      */
     public boolean hasEffectiveSupertype(GameData gameData, Permanent permanent, CardSupertype supertype) {
+        if (supertype == CardSupertype.LEGENDARY && isRingBearer(gameData, permanent)) {
+            return true;
+        }
         if (permanent.getPersistentGrantedSupertypes().contains(supertype)) {
             long changeTimestamp = permanent.getPersistentSupertypeChangeTimestamps()
                     .getOrDefault(supertype, Long.MAX_VALUE);
@@ -667,6 +670,17 @@ public class GameQueryService {
             return true;
         }
         return !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
+    }
+
+    /** Returns whether the permanent is currently designated as its controller's Ring-bearer. */
+    public boolean isRingBearer(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        return controllerId != null
+                && gameData.ringLevels.getOrDefault(controllerId, 0) > 0
+                && permanent.getId().equals(gameData.ringBearerIds.get(controllerId));
     }
 
     /** Returns whether a permanent has a subtype after continuous effects are applied. */
@@ -3007,8 +3021,11 @@ public class GameQueryService {
                 .anyMatch(CantBecomeUntappedEffect.class::isInstance);
     }
 
-    /** Returns whether the permanent cannot be sacrificed during its controller's end step. */
+    /** Returns whether the permanent currently cannot be sacrificed. */
     public boolean cantBeSacrificed(GameData gameData, Permanent permanent) {
+        if (isRingBearer(gameData, permanent)) {
+            return true;
+        }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (gameData.currentStep != TurnStep.END_STEP
                 || controllerId == null

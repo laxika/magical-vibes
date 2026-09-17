@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
 import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -624,6 +625,18 @@ public class LibrarySearchSupport {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
+                        if (pid.equals(searchingPlayerId)) {
+                            continue;
+                        }
+                        String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                        String sourceName = perm.getCard().getName();
+                        gameLogService.append(gameData, GameLog.text(
+                                playerName + "'s library search is prevented by " + sourceName + "."));
+                        log.info("Game {} - {} search prevented by {}",
+                                gameData.id, playerName, sourceName);
+                        return false;
+                    }
                     if (effect instanceof OpponentsCantSearchLibrariesEffect) {
                         if (causingControllerId == null
                                 || !libraryOwnerId.equals(causingControllerId)

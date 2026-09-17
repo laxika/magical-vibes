@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "32")
+@CardRegistration(set = "CMD", collectorNumber = "41")
 public class ChromeshellCrab extends Card {
 
     public ChromeshellCrab() {

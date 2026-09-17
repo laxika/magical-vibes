@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "138")
+@CardRegistration(set = "HOC", collectorNumber = "138")
 public class TrollNegotiations extends Card {
 
     public TrollNegotiations() {

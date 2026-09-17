@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -1824,6 +1825,11 @@ public class DrawService {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                 if (effect == null) continue;
 
+                if (effect instanceof ExceptFirstDrawStepTriggerEffect
+                        && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
+                    continue;
+                }
+
                 if (effect instanceof FirstDrawRevealTriggerEffect firstDraw) {
                     if (drawn == null
                             || (firstDraw.onlyOnControllerTurn()
@@ -2035,6 +2041,10 @@ public class DrawService {
 
                 for (CardEffect authoredEffect : drawEffects) {
                     CardEffect effect = authoredEffect;
+                    if (effect instanceof ExceptFirstDrawStepTriggerEffect
+                            && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
+                        continue;
+                    }
                     if (effect instanceof DrawRevealTriggerEffect drawReveal) {
                         if (drawn == null) {
                             continue;
@@ -2060,6 +2070,15 @@ public class DrawService {
                     for (int copy = 0; copy < triggerCopies; copy++) {
                         if (effect instanceof MayEffect may) {
                             gameData.queueMayAbility(perm.getCard(), playerId, may, drawingPlayerId, perm.getId());
+                        } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                            gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
+                                    perm.getCard(),
+                                    playerId,
+                                    new ArrayList<>(List.of(effect)),
+                                    perm.getId()
+                            ));
+
                         } else {
                             gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,

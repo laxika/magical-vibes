@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "126")
+@CardRegistration(set = "HOC", collectorNumber = "126")
 public class GiganticBigBear extends Card {
 
     public GiganticBigBear() {

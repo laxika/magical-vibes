@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShorelineRanger.class, Island.class, Forest.class})
 class ShorelineRangerTest extends BaseCardTest {
@@ -56,5 +57,18 @@ class ShorelineRangerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Shoreline Ranger");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Islandcycling requires two generic mana")
+    void islandcyclingRequiresTwoGenericMana() {
+        ShorelineRanger ranger = new ShorelineRanger();
+        harness.setHand(player1, List.of(ranger));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ranger);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

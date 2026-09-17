@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "162")
+@CardRegistration(set = "CMD", collectorNumber = "133")
 public class RapaciousOne extends Card {
 
     private static final CreateTokenEffect SPAWN_TOKEN = new CreateTokenEffect(
