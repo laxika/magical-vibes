@@ -53,6 +53,8 @@ public final class AiInteractionStrategies {
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new TargetedHandBattlefieldChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());
+        register(new CommanderReturnChoiceAiStrategy());
+        register(new CommanderReplacementChoiceAiStrategy());
         register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());
         register(new PutCardExiledWithSourceIntoGraveyardCostChoiceAiStrategy());
         register(new BrilliantUltimatumPileSeparationChoiceAiStrategy());

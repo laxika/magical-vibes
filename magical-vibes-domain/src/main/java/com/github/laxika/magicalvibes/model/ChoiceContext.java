@@ -1580,6 +1580,24 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record RemoveUpToCountersFromAllPermanentsChoice(StackEntry resolvingEntry, CounterType counterType,
+                                                     int remaining, Map<String, UUID> permanentOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveUpToCountersFromAllPermanentsChoice {
+            permanentOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(permanentOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
+        }
+    }
+
     record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                   List<CounterType> counterTypes) implements ChoiceContext {
 

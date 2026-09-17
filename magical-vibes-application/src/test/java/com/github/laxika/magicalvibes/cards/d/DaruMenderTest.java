@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DaruMender.class, GrizzlyBears.class, Shock.class})
+@CardUsed({DaruMender.class, GrizzlyBears.class, Plains.class, Shock.class})
 class DaruMenderTest extends BaseCardTest {
 
     @Test
@@ -40,6 +41,21 @@ class DaruMenderTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
     }
 
+    @Test
+    void turningFaceUpOnlyOffersCreatureTargets() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent mender = castFaceDown();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mender));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(mender.getId())
+                .doesNotContain(land.getId());
+        harness.handlePermanentChosen(player1, mender.getId());
+        harness.passBothPriorities();
+    }
+
     private Permanent castFaceDown() {
         DaruMender card = new DaruMender();
         harness.setHand(player1, List.of(card));
@@ -50,13 +66,6 @@ class DaruMenderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        return findPermanentForCard(card);
-    }
-
-    private Permanent findPermanentForCard(DaruMender card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Daru Mender");
     }
 }

@@ -36,7 +36,7 @@ public class SearchOutsideGameForCreatureToHandEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(controllerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId);
         List<Card> creatures = sideboard.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
                 .toList();

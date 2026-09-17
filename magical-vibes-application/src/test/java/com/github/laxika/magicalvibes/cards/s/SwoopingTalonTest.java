@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
+import com.github.laxika.magicalvibes.cards.f.FreneticRaptor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,16 +16,17 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwoopingTalon.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({SwoopingTalon.class, AvenEnvoy.class, FreneticRaptor.class})
 class SwoopingTalonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Provoke untaps the chosen creature and forces it to block")
     void provokeUntapsAndForcesBlock() {
         Permanent talon = addCreatureReady(player1, new SwoopingTalon());
-        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        Permanent blocker = addCreatureReady(player2, new AvenEnvoy());
         blocker.tap();
 
         declareAttackers(player1, List.of(0));
@@ -40,9 +41,7 @@ class SwoopingTalonTest extends BaseCardTest {
         assertThat(blocker.isTapped()).isFalse();
         assertThat(blocker.getMustBlockIds()).containsExactly(talon.getId());
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
@@ -74,7 +73,7 @@ class SwoopingTalonTest extends BaseCardTest {
     @DisplayName("Declining provoke leaves the chosen creature unchanged")
     void decliningProvokeDoesNothing() {
         addCreatureReady(player1, new SwoopingTalon());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AvenEnvoy());
         blocker.tap();
 
         declareAttackers(player1, List.of(0));
@@ -84,6 +83,48 @@ class SwoopingTalonTest extends BaseCardTest {
 
         assertThat(blocker.isTapped()).isTrue();
         assertThat(blocker.getMustBlockIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Provoke only offers a defending player's creature")
+    void provokeFiltersTargets() {
+        addCreatureReady(player1, new SwoopingTalon());
+        Permanent ownCreature = addCreatureReady(player1, new AvenEnvoy());
+        Permanent defendingCreature = addCreatureReady(player2, new AvenEnvoy());
+
+        declareAttackers(player1, List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(defendingCreature.getId())
+                .doesNotContain(ownCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Provoke has no target prompt when the defending player controls no creatures")
+    void provokeWithoutLegalTargetDoesNotPrompt() {
+        addCreatureReady(player1, new SwoopingTalon());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Provoke does not require a creature that cannot block to block")
+    void cannotBlockTargetSatisfiesIfAbleRequirement() {
+        Permanent talon = addCreatureReady(player1, new SwoopingTalon());
+        Permanent blocker = addCreatureReady(player2, new FreneticRaptor());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+        assertThat(blocker.getMustBlockIds()).containsExactly(talon.getId());
     }
 
 }

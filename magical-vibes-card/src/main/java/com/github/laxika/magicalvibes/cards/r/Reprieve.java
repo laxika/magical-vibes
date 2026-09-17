@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 
 @CardRegistration(set = "SOA", collectorNumber = "9")
+@CardRegistration(set = "OMB", collectorNumber = "5")
 public class Reprieve extends Card {
 
     public Reprieve() {

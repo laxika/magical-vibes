@@ -91,6 +91,17 @@ public class GameTimeoutService {
     }
 
     public void onPlayerDisconnect(UUID playerId) {
+        GameData frame = gameRegistry.getGameForPlayer(playerId);
+        if (frame == null) return;
+        frame.session.lock.lock();
+        try {
+            onPlayerDisconnectLocked(playerId);
+        } finally {
+            frame.session.lock.unlock();
+        }
+    }
+
+    private void onPlayerDisconnectLocked(UUID playerId) {
         GameData gameData = gameRegistry.getGameForPlayer(playerId);
         if (!isActiveGame(gameData)) {
             return;
@@ -120,17 +131,29 @@ public class GameTimeoutService {
             }
 
             if (anyOpponentConnected) {
-                armSingleGoneTimer(playerId, gameData.id);
+                armSingleGoneTimer(playerId, gameData.session.root().id);
             } else {
                 for (UUID p : gameData.playerIds) {
                     cancel(singleGoneTimers.remove(p));
                 }
-                armBothGoneTimer(gameData.id);
+                armBothGoneTimer(gameData.session.root().id);
             }
         }
     }
 
     public void onPlayerReconnect(UUID playerId) {
+        cancel(singleGoneTimers.remove(playerId));
+        GameData frame = gameRegistry.getGameForPlayer(playerId);
+        if (frame == null) return;
+        frame.session.lock.lock();
+        try {
+            onPlayerReconnectLocked(playerId);
+        } finally {
+            frame.session.lock.unlock();
+        }
+    }
+
+    private void onPlayerReconnectLocked(UUID playerId) {
         cancel(singleGoneTimers.remove(playerId));
 
         GameData gameData = gameRegistry.getGameForPlayer(playerId);
@@ -147,19 +170,19 @@ public class GameTimeoutService {
                 return;
             }
 
-            cancel(bothGoneTimers.remove(gameData.id));
+            cancel(bothGoneTimers.remove(gameData.session.root().id));
 
             for (UUID otherPlayerId : gameData.playerIds) {
                 if (otherPlayerId.equals(playerId)) continue;
                 if (!isPlayerConnected(otherPlayerId) && !singleGoneTimers.containsKey(otherPlayerId)) {
-                    armSingleGoneTimer(otherPlayerId, gameData.id);
+                    armSingleGoneTimer(otherPlayerId, gameData.session.root().id);
                 }
             }
         }
     }
 
     public void onGameFinished(GameData gameData) {
-        cancel(bothGoneTimers.remove(gameData.id));
+        cancel(bothGoneTimers.remove(gameData.session.root().id));
         for (UUID p : gameData.playerIds) {
             cancel(singleGoneTimers.remove(p));
         }
@@ -185,13 +208,28 @@ public class GameTimeoutService {
     }
 
     private void singleGoneTimerFired(UUID disconnectedPlayerId, UUID gameId) {
+        GameData frame = gameRegistry.getActive(gameId);
+        if (frame == null) return;
+        frame.session.lock.lock();
+        try {
+            singleGoneTimerFiredLocked(disconnectedPlayerId, gameId);
+        } finally {
+            frame.session.lock.unlock();
+        }
+    }
+
+    private void singleGoneTimerFiredLocked(UUID disconnectedPlayerId, UUID gameId) {
         singleGoneTimers.remove(disconnectedPlayerId);
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         if (!isActiveGame(gameData)) {
             return;
         }
         if (!mutationCoordinator.isInAction(gameData)) {
             mutationCoordinator.mutate(gameData, () -> singleGoneTimerFired(disconnectedPlayerId, gameId));
+            GameData resumed = gameRegistry.getActive(gameId);
+            if (resumed != null && resumed != gameData && !isPlayerConnected(disconnectedPlayerId)) {
+                armSingleGoneTimer(disconnectedPlayerId, gameId);
+            }
             return;
         }
         synchronized (gameData) {
@@ -218,8 +256,19 @@ public class GameTimeoutService {
     }
 
     private void bothGoneTimerFired(UUID gameId) {
+        GameData frame = gameRegistry.getActive(gameId);
+        if (frame == null) return;
+        frame.session.lock.lock();
+        try {
+            bothGoneTimerFiredLocked(gameId);
+        } finally {
+            frame.session.lock.unlock();
+        }
+    }
+
+    private void bothGoneTimerFiredLocked(UUID gameId) {
         bothGoneTimers.remove(gameId);
-        GameData gameData = gameRegistry.get(gameId);
+        GameData gameData = gameRegistry.getActive(gameId);
         if (!isActiveGame(gameData)) {
             return;
         }

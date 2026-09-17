@@ -303,11 +303,14 @@ public class EnterTriggerCollectorService {
                 filterContext)) {
             return false;
         }
-        if (conditional.wrapped() instanceof MayEffect may) {
+        if (conditional.wrapped() instanceof MayEffect may
+                && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
             return handleEnterMay(match, may, new TriggerContext.PermanentEnters(
                     pe.enteringCard(), pe.enteringControllerId(), null,
                     pe.perEffectTriggerCount(), pe.mayPayTargetCardId()));
         }
+        // Untargeted choices still need the entering permanent's identity at resolution.
         return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);
     }
 

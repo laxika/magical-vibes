@@ -343,6 +343,7 @@ public sealed interface Condition permits
         TargetPlayerHasMoreCardsInHandThanController,
         TargetPlayerHandEmpty,
         TargetPlayerControlsPermanent,
+        TargetPlayerIsActivePlayer,
         TargetSpellCanBeCountered,
         TargetSpellManaSpentLessThanManaValue,
         TargetSpellManaValueAtMostGreatestControlledPermanentManaValue,

@@ -186,6 +186,8 @@ public class StackResolutionService {
             gameData.currentlyResolvingControllerId = null;
         }
 
+        if (gameData.waitingForSubgame) return;
+
         // Resolution-time may choices are part of the resolving ability, so present them before
         // state-based actions can orphan an Aura that the choice may move.
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
@@ -526,6 +528,17 @@ public class StackResolutionService {
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
+        // Buyback on a creature (Innocuous Insect) returns it as it resolves,
+        // before it can enter the battlefield.
+        if (entry.isBuyback()) {
+            if (!entry.isCopy()) {
+                gameData.addCardToHand(entry.getOwnerId(), entry.getPhysicalCard());
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        " is returned to its owner's hand."));
+            }
+            return;
+        }
+
         Card card = entry.getCard();
         Card characteristics = disturbCharacteristics(entry, card);
         UUID controllerId = entry.getControllerId();
@@ -1604,7 +1617,7 @@ public class StackResolutionService {
             case LIBRARY -> removeCardFromList(gameData.playerDecks.get(ownerId), cardId);
             case GRAVEYARD -> removeCardFromList(gameData.playerGraveyards.get(ownerId), cardId);
             case EXILE -> gameData.removeFromExile(cardId);
-            case OUTSIDE_GAME -> removeCardFromList(gameData.playerSideboards.get(ownerId), cardId);
+            case OUTSIDE_GAME -> removeCardFromList(com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, ownerId), cardId);
             case COMMAND -> removeCardFromList(gameData.playerCommandZones.get(ownerId), cardId);
             default -> {
             }

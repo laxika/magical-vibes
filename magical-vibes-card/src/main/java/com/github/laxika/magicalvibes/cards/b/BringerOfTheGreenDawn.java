@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5DN", collectorNumber = "83")
+@CardRegistration(set = "AA4", collectorNumber = "21")
 public class BringerOfTheGreenDawn extends Card {
 
     public BringerOfTheGreenDawn() {

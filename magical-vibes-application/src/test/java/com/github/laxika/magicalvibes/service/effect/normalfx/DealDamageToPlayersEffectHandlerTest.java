@@ -195,6 +195,52 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Nested
+    @DisplayName("DEFENDING_PLAYER recipient")
+    class DefendingPlayer {
+
+        @Test
+        @DisplayName("Deals damage to the player attacked by the source")
+        void dealsDamageToDefendingPlayer() {
+            Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
+            StackEntry entry = createEntry(sourceCard, player1Id, null);
+            entry.setAttackedTargetId(player2Id);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(3,
+                    DamageRecipient.DEFENDING_PLAYER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Deals damage to a planeswalker's controller rather than the planeswalker")
+        void dealsDamageToAttackedPlaneswalkersController() {
+            Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
+            Permanent planeswalker = addPermanent(player2Id, createCard("Jace Beleren"));
+            StackEntry entry = createEntry(sourceCard, player1Id, null);
+            entry.setAttackedTargetId(planeswalker.getId());
+            when(gameQueryService.findPermanentController(gd, planeswalker.getId())).thenReturn(player2Id);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(3,
+                    DamageRecipient.DEFENDING_PLAYER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+        }
+    }
+
+    @Nested
     @DisplayName("TARGET_PERMANENT_CONTROLLER recipient")
     class TargetPermanentController {
 

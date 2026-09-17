@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "358")
 @CardRegistration(set = "4ED", collectorNumber = "308")
 @CardRegistration(set = "ATQ", collectorNumber = "46")
+@CardRegistration(set = "AA4", collectorNumber = "27")
 public class ColossusOfSardia extends Card {
 
     public ColossusOfSardia() {

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
+import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
@@ -2197,6 +2199,41 @@ public class DamagePreventionService {
 
         if (totalReduction <= 0) return damage;
         return (int) (damage - totalReduction);
+    }
+
+    /**
+     * Applies Comeuppance prevention to damage dealt to a player or one of their planeswalkers.
+     * Creature-source damage is queued back to that creature; other damage is queued back to the
+     * source's controller.
+     */
+    public int applyComeuppancePrevention(GameData gameData, UUID protectedPlayerId, int damage,
+                                          Card sourceCard, Permanent sourcePermanent,
+                                          UUID sourceControllerId, boolean combatDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
+                || damage <= 0 || protectedPlayerId == null || sourceControllerId == null
+                || sourceControllerId.equals(protectedPlayerId)
+                || gameData.comeuppanceDamagePreventionShields.isEmpty()) {
+            return damage;
+        }
+
+        boolean creatureSource = sourcePermanent != null
+                ? gameQueryService.isCreature(gameData, sourcePermanent)
+                : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
+        for (ComeuppanceDamagePreventionShield shield : gameData.comeuppanceDamagePreventionShields) {
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
+
+            if (creatureSource && sourcePermanent != null) {
+                gameData.pendingRedirectDamage.add(new DamageRedirectShield(
+                        protectedPlayerId, damage, null, shield.sourceCard(), sourcePermanent.getId()));
+            } else if (!creatureSource && gameData.playerIds.contains(sourceControllerId)) {
+                gameData.pendingRedirectDamage.add(new DamageRedirectShield(
+                        protectedPlayerId, damage, null, shield.sourceCard(), sourceControllerId));
+            }
+            gameLogService.append(gameData, GameLog.cardThen(shield.sourceCard(),
+                    " prevents " + damage + " damage to its controller or a planeswalker they control."));
+            return 0;
+        }
+        return damage;
     }
 
     /**

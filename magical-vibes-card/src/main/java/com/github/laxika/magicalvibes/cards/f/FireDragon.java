@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "125")
 @CardRegistration(set = "ME2", collectorNumber = "125")
+@CardRegistration(set = "AA4", collectorNumber = "18")
 public class FireDragon extends Card {
 
     public FireDragon() {

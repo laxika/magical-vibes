@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -63,10 +62,6 @@ public class ExchangeOutsideGameCardChoiceInteractionHandler
             throw new IllegalStateException("Chosen card is no longer available outside the game");
         }
 
-        List<Card> sideboard = gameData.playerSideboards.get(playerId);
-        sideboard.removeIf(card -> card.getId().equals(chosenCard.getId()));
-        gameData.outsideGamePlayPermissions.remove(chosenCard.getId());
-
         gameData.interaction.clearAwaitingInput();
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(playerId) + " reveals ", chosenCard,
@@ -74,7 +69,6 @@ public class ExchangeOutsideGameCardChoiceInteractionHandler
 
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
         if (hand.isEmpty()) {
-            gameData.playerSideboards.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(chosenCard);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -88,7 +82,7 @@ public class ExchangeOutsideGameCardChoiceInteractionHandler
 
     private Card findEligibleCard(GameData gameData, UUID playerId, UUID cardId,
                                   PendingInteraction.ExchangeOutsideGameCardChoice interaction) {
-        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+        for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)) {
             if (card.getId().equals(cardId)
                     && (interaction.filter() == null
                     || predicateEvaluationService.matchesCardPredicate(

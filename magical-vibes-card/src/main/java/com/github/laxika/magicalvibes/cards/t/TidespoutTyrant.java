@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "34")
 @CardRegistration(set = "RVR", collectorNumber = "63")
+@CardRegistration(set = "AA4", collectorNumber = "10")
 public class TidespoutTyrant extends Card {
 
     public TidespoutTyrant() {

@@ -364,6 +364,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 if (!gameData.stack.isEmpty()) {
                     stackResolutionService.resolveTopOfStack(gameData);
+                    if (gameData.waitingForSubgame) return;
                 } else {
                     turnProgressionService.advanceStep(gameData);
                 }
@@ -1756,6 +1757,22 @@ public class GameService {
                     targetIds != null ? targetIds : List.of(),
                     spliceHandCardIndices != null ? spliceHandCardIndices : List.of(),
                     splicePermanentIds != null ? splicePermanentIds : List.of());
+        }
+    }
+
+    public void castCommander(GameData gameData, Player player, UUID cardId, Runnable cast) {
+        if (runAsActionIfNeeded(gameData, () -> castCommander(gameData, player, cardId, cast))) return;
+        synchronized (gameData) {
+            Player actor = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, actor);
+            if (gameData.commandCastCardId != null) throw new IllegalStateException("Already casting a commander");
+            List<Card> zone = gameData.playerCommandZones.getOrDefault(actor.getId(), List.of());
+            if (zone.size() != 1 || !zone.getFirst().getId().equals(cardId) || !gameData.isCommander(cardId))
+                throw new IllegalArgumentException("Commander is not in your command zone");
+            gameData.commandCastPlayerId = actor.getId();
+            gameData.commandCastCardId = cardId;
+            try { cast.run(); }
+            finally { gameData.commandCastPlayerId = null; gameData.commandCastCardId = null; }
         }
     }
 

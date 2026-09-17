@@ -122,6 +122,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
@@ -855,6 +856,8 @@ public class ConditionEvaluationService {
                             > countCardsInHand(gameData, ctx.controllerId());
             case TargetPlayerControlsPermanent c ->
                     targetPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
+            case TargetPlayerIsActivePlayer ignored ->
+                    ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
             case TargetPlayerLostLifeThisTurn ignored ->
@@ -924,7 +927,8 @@ public class ConditionEvaluationService {
             case MinimumMatchingAttackers c ->
                     countMatchingAttackers(gameData, ctx, c.predicate()) >= c.minimum();
             case OpponentAttacksWithAtLeastCreatures c ->
-                    countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx) >= c.minimum();
+                    countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx, c.includePlaneswalkers())
+                            >= c.minimum();
             case OpponentAttacksPlaneswalker ignored ->
                     opponentAttacksPlaneswalker(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
@@ -3013,7 +3017,8 @@ public class ConditionEvaluationService {
     }
 
     private long countOpponentAttackersAtControllerOrPlaneswalkers(GameData gameData,
-                                                                    ConditionContext ctx) {
+                                                                    ConditionContext ctx,
+                                                                    boolean includePlaneswalkers) {
         UUID controllerId = ctx.controllerId();
         UUID attackingPlayerId = ctx.targetId();
         if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
@@ -3024,10 +3029,12 @@ public class ConditionEvaluationService {
         List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
         if (controlledPermanents == null || attackers == null) return 0;
 
-        Set<UUID> controlledPlaneswalkerIds = controlledPermanents.stream()
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId)
-                .collect(java.util.stream.Collectors.toSet());
+        Set<UUID> controlledPlaneswalkerIds = includePlaneswalkers
+                ? controlledPermanents.stream()
+                        .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                        .map(Permanent::getId)
+                        .collect(java.util.stream.Collectors.toSet())
+                : Set.of();
 
         return attackers.stream()
                 .filter(Permanent::isAttacking)

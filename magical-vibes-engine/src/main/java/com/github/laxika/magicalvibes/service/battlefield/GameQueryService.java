@@ -1295,6 +1295,7 @@ public class GameQueryService {
      * have already passed priority.
      */
     public UUID getPriorityPlayerId(GameData data) {
+        if (data.waitingForSubgame) return null;
         if (data.activePlayerId == null) {
             return null;
         }

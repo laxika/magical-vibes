@@ -25,6 +25,20 @@ public class Deck {
     @Column(name = "deck_json", nullable = false, columnDefinition = "TEXT")
     private String deckJson;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private com.github.laxika.magicalvibes.model.DeckFormat format = com.github.laxika.magicalvibes.model.DeckFormat.CASUAL;
+    @Column(name = "sideboard_json", columnDefinition = "TEXT")
+    private String sideboardJson = "[]";
+    @Column(name = "commander_json", columnDefinition = "TEXT")
+    private String commanderJson;
+    public com.github.laxika.magicalvibes.model.DeckFormat getFormat() { return format; }
+    public void setFormat(com.github.laxika.magicalvibes.model.DeckFormat value) { format = value; }
+    public String getSideboardJson() { return sideboardJson; }
+    public void setSideboardJson(String value) { sideboardJson = value; }
+    public String getCommanderJson() { return commanderJson; }
+    public void setCommanderJson(String value) { commanderJson = value; }
+
     public Deck() {
     }
 

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FlamewaveInvoker.class, FugitiveWizard.class, JaceBeleren.class})
 class FlamewaveInvokerTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -73,6 +75,20 @@ class FlamewaveInvokerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Can target a planeswalker with the ability")
+    void canTargetPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        addReadyInvoker(player1);
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     @Test
@@ -137,10 +153,10 @@ class FlamewaveInvokerTest extends BaseCardTest {
     void cannotTargetCreature() {
         addReadyInvoker(player1);
         harness.addMana(player1, ManaColor.RED, 8);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent creature = findPermanent(player2, "Fugitive Wizard");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player");
     }
@@ -148,11 +164,7 @@ class FlamewaveInvokerTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyInvoker(Player player) {
-        FlamewaveInvoker card = new FlamewaveInvoker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new FlamewaveInvoker());
     }
 }
 

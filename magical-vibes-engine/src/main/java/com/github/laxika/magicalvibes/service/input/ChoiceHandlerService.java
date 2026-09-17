@@ -130,6 +130,8 @@ public class ChoiceHandlerService {
     private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
+            removeUpToCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
@@ -708,6 +710,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveChosenCountersChoice ctx) {
             handleRemoveChosenCountersChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice ctx) {
+            handleRemoveUpToCountersFromAllPermanentsChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveOneCounterChoice ctx) {
@@ -2549,6 +2555,42 @@ public class ChoiceHandlerService {
         if (remainingSelections > 0 && !remainingTypes.isEmpty()) {
             playerInputService.beginRemoveChosenCountersChoice(gameData, ctx.controllerId(), ctx.targetId(),
                     ctx.sourceCardName(), remainingSelections, remainingTypes);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRemoveUpToCountersFromAllPermanentsChoice(GameData gameData, String choice,
+            ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice ctx) {
+        if (!ctx.permanentOptions().containsKey(choice)
+                && !ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE.equals(choice)) {
+            throw new IllegalArgumentException("Invalid permanent choice: " + choice);
+        }
+
+        if (ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE.equals(choice)) {
+            gameData.interaction.clearAwaitingInput();
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        UUID permanentId = ctx.permanentOptions().get(choice);
+        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (permanent == null || permanent.getCounterCount(ctx.counterType()) <= 0) {
+            throw new IllegalArgumentException("Permanent no longer has the chosen counter");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, ctx.counterType(), 1);
+        ctx.resolvingEntry().setEventValue(ctx.resolvingEntry().getEventValue() + 1);
+
+        int remaining = ctx.remaining() - 1;
+        Map<String, UUID> permanentOptions = removeUpToCountersFromAllPermanentsEffectHandler
+                .permanentOptions(gameData, ctx.counterType());
+        if (remaining > 0 && !permanentOptions.isEmpty()) {
+            removeUpToCountersFromAllPermanentsEffectHandler.beginChoice(
+                    gameData, ctx.resolvingEntry(), ctx.counterType(), remaining, permanentOptions);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }

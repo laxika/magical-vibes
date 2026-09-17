@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,12 +13,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WingbeatWarrior.class, GrizzlyBears.class})
+@CardUsed({WingbeatWarrior.class, FugitiveWizard.class})
 class WingbeatWarriorTest extends BaseCardTest {
 
     @Test
     void turningFaceUpGivesTargetCreatureFirstStrikeUntilEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
         Permanent warrior = castFaceDown();
 
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -27,13 +27,28 @@ class WingbeatWarriorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void turningFaceUpCanTargetTheWarriorItself() {
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent warrior = castFaceDown();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(warrior));
+        harness.handlePermanentChosen(player1, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private Permanent castFaceDown() {

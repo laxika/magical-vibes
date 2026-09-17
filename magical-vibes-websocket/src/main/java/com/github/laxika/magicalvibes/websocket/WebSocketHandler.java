@@ -91,6 +91,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
             JsonNode jsonNode = objectMapper.readTree(message.getPayload());
             MessageType type = MessageType.valueOf(jsonNode.get("type").asString());
 
+            JsonNode contextNode = jsonNode.get("gameContext");
+            com.github.laxika.magicalvibes.model.GameContext context = contextNode == null || contextNode.isNull()
+                    ? null : objectMapper.treeToValue(contextNode, com.github.laxika.magicalvibes.model.GameContext.class);
+            if (jsonNode instanceof tools.jackson.databind.node.ObjectNode object) object.remove("gameContext");
+            MessageHandler.GameRequest request = () -> {
             switch (type) {
                 case LOGIN -> messageHandler.handleLogin(connection, objectMapper.treeToValue(jsonNode, LoginRequest.class));
                 case REGISTER -> messageHandler.handleRegister(connection, objectMapper.treeToValue(jsonNode, RegisterRequest.class));
@@ -121,11 +126,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case VALID_TARGETS_REQUEST -> messageHandler.handleValidTargetsRequest(connection, objectMapper.treeToValue(jsonNode, ValidTargetsRequest.class));
                 case PAY_SEARCH_TAX -> messageHandler.handlePaySearchTax(connection, objectMapper.treeToValue(jsonNode, PaySearchTaxRequest.class));
                 case REVERT_MANA_ACTIVATIONS -> messageHandler.handleRevertManaActivations(connection, objectMapper.treeToValue(jsonNode, RevertManaActivationsRequest.class));
+                case LOAD_DECK -> messageHandler.handleLoadDeck(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.LoadDeckRequest.class));
+                case VALIDATE_DECK -> messageHandler.handleValidateDeck(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.ValidateDeckRequest.class));
                 case SAVE_DECK -> messageHandler.handleSaveDeck(connection, objectMapper.treeToValue(jsonNode, SaveDeckRequest.class));
                 case SURRENDER -> messageHandler.handleSurrender(connection);
                 case LEAVE_GAME -> messageHandler.handleLeaveGame(connection);
                 case LEAVE_DRAFT -> messageHandler.handleLeaveDraft(connection);
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
+            }
+            };
+            switch (type) {
+                case LOGIN, REGISTER, CREATE_GAME, JOIN_GAME, CREATE_DRAFT, DRAFT_PICK, SUBMIT_DECK,
+                     REQUEST_CARD_LIST, LOAD_DECK, VALIDATE_DECK, SAVE_DECK, LEAVE_DRAFT -> request.run();
+                default -> messageHandler.dispatchGameRequest(connection, context, request);
             }
         } catch (Exception e) {
             log.error("Error processing message", e);
