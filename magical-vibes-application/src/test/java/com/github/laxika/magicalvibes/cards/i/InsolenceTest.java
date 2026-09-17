@@ -53,8 +53,10 @@ class InsolenceTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.tapPermanent(player2, 0);
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -67,8 +69,10 @@ class InsolenceTest extends BaseCardTest {
         addCreatureReady(player2, new AmphibiousKavu());
         harness.setLife(player2, 20);
 
-        harness.tapPermanent(player2, 0);
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

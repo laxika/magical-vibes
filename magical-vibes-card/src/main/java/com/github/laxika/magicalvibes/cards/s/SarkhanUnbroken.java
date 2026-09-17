@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "230")
+@CardRegistration(set = "PIO", collectorNumber = "356")
 public class SarkhanUnbroken extends Card {
 
     public SarkhanUnbroken() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "25")
+@CardRegistration(set = "DBL", collectorNumber = "292")
 public class NebelgastBeguiler extends Card {
 
     public NebelgastBeguiler() {

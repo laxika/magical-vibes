@@ -18,7 +18,11 @@ import java.util.List;
 @CardRegistration(set = "GVL", collectorNumber = "19")
 @CardRegistration(set = "A25", collectorNumber = "173")
 @CardRegistration(set = "EMA", collectorNumber = "174")
+@CardRegistration(set = "GN3", collectorNumber = "99")
 @CardRegistration(set = "2XM", collectorNumber = "172")
+@CardRegistration(set = "SLZ", collectorNumber = "79")
+@CardRegistration(set = "SLZ", collectorNumber = "200")
+@CardRegistration(set = "SLZ", collectorNumber = "321")
 public class Invigorate extends Card {
 
     public Invigorate() {

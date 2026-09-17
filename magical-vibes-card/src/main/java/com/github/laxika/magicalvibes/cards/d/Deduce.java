@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "52")
 @CardRegistration(set = "MKM", collectorNumber = "293")
+@CardRegistration(set = "SOA", collectorNumber = "16")
 public class Deduce extends Card {
 
     public Deduce() {

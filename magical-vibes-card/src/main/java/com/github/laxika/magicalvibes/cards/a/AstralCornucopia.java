@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "157")
+@CardRegistration(set = "BRR", collectorNumber = "5")
 public class AstralCornucopia extends Card {
 
     public AstralCornucopia() {

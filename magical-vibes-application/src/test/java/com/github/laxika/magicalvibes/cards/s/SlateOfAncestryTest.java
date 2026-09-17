@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +14,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SlateOfAncestry.class, ElvishWarrior.class})
 class SlateOfAncestryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws a card for each creature you control and discards your hand as a cost")
     void drawsForEachCreatureAndDiscardsHand() {
         addReadySlate(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -44,8 +45,8 @@ class SlateOfAncestryTest extends BaseCardTest {
     void noCreaturesDrawsNothing() {
         addReadySlate(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -59,10 +60,10 @@ class SlateOfAncestryTest extends BaseCardTest {
     @DisplayName("Can activate with an empty hand")
     void activatesWithEmptyHand() {
         addReadySlate(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -73,10 +74,27 @@ class SlateOfAncestryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts only creatures controlled by the ability's controller")
+    void countsOnlyControlledCreatures() {
+        addReadySlate(player1);
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Cannot activate without paying the mana cost")
     void requiresManaCost() {
         addReadySlate(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ElvishWarrior()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -88,17 +106,15 @@ class SlateOfAncestryTest extends BaseCardTest {
         Permanent slate = addReadySlate(player1);
         slate.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ElvishWarrior()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadySlate(Player player) {
-        Card card = new SlateOfAncestry();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SlateOfAncestry());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

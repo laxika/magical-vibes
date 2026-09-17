@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "148")
+@CardRegistration(set = "RVR", collectorNumber = "209")
 public class Petrahydrox extends Card {
 
     public Petrahydrox() {

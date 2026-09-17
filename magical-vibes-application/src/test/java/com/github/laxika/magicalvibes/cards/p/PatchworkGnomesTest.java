@@ -99,11 +99,7 @@ class PatchworkGnomesTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new PatchworkGnomes());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         Permanent survivor = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -124,11 +120,7 @@ class PatchworkGnomesTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new PatchworkGnomes());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -180,5 +172,23 @@ class PatchworkGnomesTest extends BaseCardTest {
 
         assertThat(gnomes.isTapped()).isTrue();
         assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations create multiple regeneration shields")
+    void multipleActivationsCreateMultipleShields() {
+        Permanent gnomes = addCreatureReady(player1, new PatchworkGnomes());
+        harness.setHand(player1, List.of(new PatchworkGnomes(), new PatchworkGnomes()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gnomes.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 }

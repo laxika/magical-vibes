@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "MRD", collectorNumber = "106")
 @CardRegistration(set = "MMA", collectorNumber = "129")
 @CardRegistration(set = "DDU", collectorNumber = "48")
+@CardRegistration(set = "EA3", collectorNumber = "3")
 public class ShrapnelBlast extends Card {
 
     public ShrapnelBlast() {

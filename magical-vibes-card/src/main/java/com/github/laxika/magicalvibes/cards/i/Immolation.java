@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MID", collectorNumber = "144")
 @CardRegistration(set = "LEG", collectorNumber = "153")
 @CardRegistration(set = "ME3", collectorNumber = "103")
+@CardRegistration(set = "DBL", collectorNumber = "144")
 public class Immolation extends Card {
 
     public Immolation() {

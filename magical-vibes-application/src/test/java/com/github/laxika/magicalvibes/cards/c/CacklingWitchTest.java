@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CacklingWitch.class, Forest.class, FreshVolunteers.class})
 class CacklingWitchTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card gives a target creature +X/+0")
     void boostsTargetCreatureByPaidX() {
         readyCacklingWitch();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -39,7 +41,7 @@ class CacklingWitchTest extends BaseCardTest {
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         readyCacklingWitch();
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new FreshVolunteers());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -61,7 +63,7 @@ class CacklingWitchTest extends BaseCardTest {
     @DisplayName("X=0 still discards a card and gives no power boost")
     void zeroXStillDiscards() {
         readyCacklingWitch();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         int basePower = gqs.getEffectivePower(gd, target);
@@ -87,10 +89,38 @@ class CacklingWitchTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private void readyCacklingWitch() {
-        addCreatureReady(player1, new CacklingWitch());
+    @Test
+    @DisplayName("Cannot activate without a card to discard")
+    void cannotActivateWithoutCardToDiscard() {
+        readyCacklingWitch();
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("discard");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability while Cackling Witch is tapped")
+    void cannotActivateWhenTapped() {
+        Permanent witch = readyCacklingWitch();
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        witch.tap();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    private Permanent readyCacklingWitch() {
+        Permanent witch = addCreatureReady(player1, new CacklingWitch());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        return witch;
     }
 }

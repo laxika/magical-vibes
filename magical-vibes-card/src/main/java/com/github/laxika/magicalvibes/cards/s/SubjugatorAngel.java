@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "INR", collectorNumber = "350")
 @CardRegistration(set = "EMN", collectorNumber = "45")
 @CardRegistration(set = "GNT", collectorNumber = "17")
+@CardRegistration(set = "SIR", collectorNumber = "48")
 public class SubjugatorAngel extends Card {
 
     public SubjugatorAngel() {

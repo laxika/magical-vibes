@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "197")
+@CardRegistration(set = "DBL", collectorNumber = "197")
 public class SarythTheVipersFang extends Card {
 
     public SarythTheVipersFang() {

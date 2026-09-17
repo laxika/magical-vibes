@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "113")
+@CardRegistration(set = "PIO", collectorNumber = "148")
 public class OathOfChandra extends Card {
 
     public OathOfChandra() {

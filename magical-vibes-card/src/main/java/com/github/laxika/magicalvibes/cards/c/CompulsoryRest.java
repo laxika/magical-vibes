@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "9")
 @CardRegistration(set = "AKR", collectorNumber = "10")
+@CardRegistration(set = "PIO", collectorNumber = "10")
 public class CompulsoryRest extends Card {
 
     public CompulsoryRest() {

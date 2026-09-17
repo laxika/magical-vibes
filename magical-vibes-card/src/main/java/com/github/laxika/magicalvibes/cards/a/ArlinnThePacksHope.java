@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "211")
+@CardRegistration(set = "DBL", collectorNumber = "211")
 public class ArlinnThePacksHope extends Card {
 
     public ArlinnThePacksHope() {

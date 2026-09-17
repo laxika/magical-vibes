@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "80")
+@CardRegistration(set = "DBL", collectorNumber = "347")
 public class SteelcladSpirit extends Card {
 
     public SteelcladSpirit() {

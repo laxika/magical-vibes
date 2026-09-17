@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "148")
 @CardRegistration(set = "WOE", collectorNumber = "33")
+@CardRegistration(set = "FCA", collectorNumber = "26")
 public class StrokeOfMidnight extends Card {
 
     public StrokeOfMidnight() {

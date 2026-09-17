@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetCreaturePowerToughnessEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -41,8 +42,10 @@ public class DoubleTargetCreaturePowerToughnessEffectHandler implements NormalEf
 
         int currentPower = gameQueryService.getEffectivePower(gameData, target);
         int currentToughness = gameQueryService.getEffectiveToughness(gameData, target);
-        target.setPowerModifier(target.getPowerModifier() + currentPower);
-        target.setToughnessModifier(target.getToughnessModifier() + currentToughness);
+        target.setPowerModifier(target.getPowerModifier()
+                + MaroGoneNutsSupport.apply(gameData, effect, currentPower));
+        target.setToughnessModifier(target.getToughnessModifier()
+                + MaroGoneNutsSupport.apply(gameData, effect, currentToughness));
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())

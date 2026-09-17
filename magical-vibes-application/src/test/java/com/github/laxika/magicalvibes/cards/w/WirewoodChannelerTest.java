@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.d.DefiantElf;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,14 +13,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WirewoodChanneler.class, LlanowarElves.class, GrizzlyBears.class})
+@CardUsed({WirewoodChanneler.class, DefiantElf.class, FugitiveWizard.class})
 class WirewoodChannelerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating Wirewood Channeler prompts for a mana color")
     void activateAbilityPromptsManaColor() {
-        Permanent channeler = addReadyChanneler();
-        GameData gd = harness.getGameData();
+        Permanent channeler = addCreatureReady(player1, new WirewoodChanneler());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -31,12 +29,23 @@ class WirewoodChannelerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts Wirewood Channeler itself as an Elf")
+    void countsItselfAsAnElf() {
+        addCreatureReady(player1, new WirewoodChanneler());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Adds one mana of the chosen color for each Elf on the battlefield")
     void addsManaForEachElfOnTheBattlefield() {
-        addReadyChanneler();
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player2, new LlanowarElves());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new WirewoodChanneler());
+        harness.addToBattlefield(player1, new DefiantElf());
+        harness.addToBattlefield(player2, new DefiantElf());
+        harness.addToBattlefield(player1, new FugitiveWizard());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());
@@ -53,11 +62,5 @@ class WirewoodChannelerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
-    }
-
-    private Permanent addReadyChanneler() {
-        Permanent channeler = harness.addToBattlefieldAndReturn(player1, new WirewoodChanneler());
-        channeler.setSummoningSick(false);
-        return channeler;
     }
 }

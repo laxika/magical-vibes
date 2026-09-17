@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "115")
+@CardRegistration(set = "RVR", collectorNumber = "124")
+@CardRegistration(set = "OTP", collectorNumber = "26")
 public class SkewerTheCritics extends Card {
 
     public SkewerTheCritics() {

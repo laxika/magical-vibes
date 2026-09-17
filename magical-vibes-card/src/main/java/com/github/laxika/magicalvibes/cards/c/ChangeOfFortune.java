@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "150")
+@CardRegistration(set = "DBL", collectorNumber = "417")
 public class ChangeOfFortune extends Card {
 
     public ChangeOfFortune() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "95")
+@CardRegistration(set = "SPG", collectorNumber = "132")
 public class WanderwineProphets extends Card {
 
     public WanderwineProphets() {

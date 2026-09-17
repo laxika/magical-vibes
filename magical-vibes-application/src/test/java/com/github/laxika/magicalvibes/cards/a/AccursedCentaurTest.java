@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,11 +10,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AccursedCentaur.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({AccursedCentaur.class, ElvishWarrior.class, GlorySeeker.class})
 @DisplayName("Accursed Centaur")
 class AccursedCentaurTest extends BaseCardTest {
 
@@ -31,10 +28,22 @@ class AccursedCentaurTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its controller sacrifices their creature rather than an opponent's creature")
+    void sacrificesOnlyControllerCreature() {
+        harness.addToBattlefield(player2, new GlorySeeker());
+        castAccursedCentaur();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Accursed Centaur");
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+    }
+
+    @Test
     @DisplayName("Its controller chooses a creature when they control more than one")
     void choosesCreatureToSacrifice() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GiantSpider());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new GlorySeeker());
         castAccursedCentaur();
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -44,16 +53,14 @@ class AccursedCentaurTest extends BaseCardTest {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
 
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Elvish Warrior"));
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
         harness.assertOnBattlefield(player1, "Accursed Centaur");
-        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Glory Seeker");
     }
 
     private void castAccursedCentaur() {
-        harness.setHand(player1, List.of(new AccursedCentaur()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AccursedCentaur(), "{B}");
     }
 }

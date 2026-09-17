@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "209")
+@CardRegistration(set = "GN3", collectorNumber = "116")
 public class Greatsword extends Card {
 
     public Greatsword() {

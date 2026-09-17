@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEnchantedCreatureControllerLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,7 @@ public class DoubleEnchantedCreatureControllerLifeEffectHandler implements Norma
         if (playerId == null) return;
 
         int currentLife = gameData.getLife(playerId);
-        int newLife = currentLife * 2;
+        int newLife = currentLife * MaroGoneNutsSupport.apply(gameData, effect, 2);
         if (lifeSupport.applySetLifeTotal(gameData, playerId, newLife)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData,

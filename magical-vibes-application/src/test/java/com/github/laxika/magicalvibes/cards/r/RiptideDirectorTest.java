@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiptideDirector.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({RiptideDirector.class, FugitiveWizard.class, RidgetopRaptor.class})
 class RiptideDirectorTest extends BaseCardTest {
 
     @Test
@@ -23,9 +22,9 @@ class RiptideDirectorTest extends BaseCardTest {
         Permanent director = addCreatureReady(player1, new RiptideDirector());
         harness.addToBattlefield(player1, new FugitiveWizard());
         harness.addToBattlefield(player1, new FugitiveWizard());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RidgetopRaptor());
         harness.addToBattlefield(player2, new FugitiveWizard());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new RidgetopRaptor(), new RidgetopRaptor(), new RidgetopRaptor()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

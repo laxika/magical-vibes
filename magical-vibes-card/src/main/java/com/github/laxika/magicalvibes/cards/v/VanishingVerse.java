@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "STX", collectorNumber = "244")
+@CardRegistration(set = "OTP", collectorNumber = "57")
 public class VanishingVerse extends Card {
 
     public VanishingVerse() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ToggleDayNightEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "252")
+@CardRegistration(set = "DBL", collectorNumber = "252")
 public class TheCelestus extends Card {
 
     public TheCelestus() {

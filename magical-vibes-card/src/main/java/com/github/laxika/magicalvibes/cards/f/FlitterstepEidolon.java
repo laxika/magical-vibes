@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "40")
+@CardRegistration(set = "PIO", collectorNumber = "327")
 public class FlitterstepEidolon extends Card {
 
     public FlitterstepEidolon() {

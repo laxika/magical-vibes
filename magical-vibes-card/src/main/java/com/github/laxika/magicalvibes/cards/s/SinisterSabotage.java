@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "54")
+@CardRegistration(set = "RVR", collectorNumber = "61")
 public class SinisterSabotage extends Card {
 
     public SinisterSabotage() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "75")
+@CardRegistration(set = "DBL", collectorNumber = "75")
 public class SkaabWrangler extends Card {
 
     public SkaabWrangler() {

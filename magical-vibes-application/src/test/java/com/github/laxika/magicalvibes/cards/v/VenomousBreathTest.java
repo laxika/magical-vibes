@@ -96,6 +96,28 @@ class VenomousBreathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting after this turn's end of combat does not destroy creatures at a later end of combat")
+    void doesNotCarryDelayedDestructionIntoLaterTurn() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        advanceThroughEndOfCombat();
+
+        castVenomousBreath(player1, attacker);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(player2, List.of());
+        advanceThroughEndOfCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
     @DisplayName("A land can't be targeted")
     void cannotTargetNonCreature() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());

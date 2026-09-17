@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -52,8 +56,48 @@ class KamahlsSummonsTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Bear")).isEqualTo(2);
         assertThat(countPermanents(player2, "Bear")).isEqualTo(1);
+        Permanent bear = findPermanent(player1, "Bear");
+        assertThat(bear.getCard().isToken()).isTrue();
+        assertThat(bear.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(bear.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(bear.getCard().getSubtypes()).containsExactly(CardSubtype.BEAR);
+        assertThat(bear.getCard().getPower()).isEqualTo(2);
+        assertThat(bear.getCard().getToughness()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCreature, secondCreature, nonCreature);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCreature, opponentNonCreature);
+    }
+
+    @Test
+    @DisplayName("The active player chooses first when player two is active")
+    void activePlayerChoosesFirstWhenPlayerTwoIsActive() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        KamahlsSummons summons = new KamahlsSummons();
+        GrizzlyBears player1Creature = new GrizzlyBears();
+        GrizzlyBears player2Creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(player1Creature));
+        harness.setHand(player2, List.of(summons, player2Creature));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player2, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice firstChoice =
+                (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice) gd.interaction.activeInteraction();
+        assertThat(firstChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(firstChoice.validCardIds()).containsExactly(player2Creature.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(player2Creature.getId()));
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice secondChoice =
+                (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice) gd.interaction.activeInteraction();
+        assertThat(secondChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(secondChoice.validCardIds()).containsExactly(player1Creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(player1Creature.getId()));
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Bear")).isEqualTo(1);
     }
 
     @Test
@@ -74,5 +118,25 @@ class KamahlsSummonsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Bear")).isZero();
         assertThat(countPermanents(player2, "Bear")).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolves without a prompt when neither player has a creature card")
+    void resolvesWithoutPromptWhenNeitherPlayerHasCreatureCards() {
+        KamahlsSummons summons = new KamahlsSummons();
+        Mountain player1NonCreature = new Mountain();
+        Forest player2NonCreature = new Forest();
+        harness.setHand(player1, List.of(summons, player1NonCreature));
+        harness.setHand(player2, List.of(player2NonCreature));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Bear")).isZero();
+        assertThat(countPermanents(player2, "Bear")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1NonCreature);
+        harness.assertInGraveyard(player1, "Kamahl's Summons");
     }
 }

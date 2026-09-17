@@ -34,7 +34,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (FlipCoinWinEffect) effect;
 
-        UUID controllerId = entry.getControllerId();
+        UUID controllerId = e.flippingPlayerId() != null ? e.flippingPlayerId() : entry.getControllerId();
         String sourceName = entry.getCard().getName();
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
         boolean wonFlip = result.heads();

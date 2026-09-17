@@ -49,4 +49,6 @@ public class CloneOperationState {
     public CardPredicate copyCardFilter;
     public boolean graveyardCopyChoicePending;
     public boolean exileCopiedGraveyardCardAfterEntry;
+    public boolean exileTwoAndAddOtherPowerCounters;
+    public List<UUID> selectedGraveyardCopyCardIds = List.of();
 }

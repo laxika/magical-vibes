@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BreakingPoint;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,75 +16,107 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CabalTherapy.class, GrizzlyBears.class, Shock.class, Forest.class})
+@CardUsed({CabalTherapy.class, SuntailHawk.class, BreakingPoint.class, KrosanVerge.class})
 class CabalTherapyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chooses a nonland name and discards every matching card from the target's hand")
     void discardsEveryMatchingCard() {
-        Card firstBears = new GrizzlyBears();
-        Card secondBears = new GrizzlyBears();
-        Card shock = new Shock();
-        Card forest = new Forest();
-        castFromHand(new ArrayList<>(List.of(firstBears, secondBears, shock, forest)));
+        Card firstHawk = new SuntailHawk();
+        Card secondHawk = new SuntailHawk();
+        Card breakingPoint = new BreakingPoint();
+        Card land = new KrosanVerge();
+        castFromHand(new ArrayList<>(List.of(firstHawk, secondHawk, breakingPoint, land)));
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).contains("Grizzly Bears", "Shock").doesNotContain("Forest");
+        assertThat(choice.options()).contains("Suntail Hawk", "Breaking Point").doesNotContain("Krosan Verge");
 
-        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Suntail Hawk");
 
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(shock, forest);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(breakingPoint, land);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .containsExactlyInAnyOrder(firstBears, secondBears);
+                .containsExactlyInAnyOrder(firstHawk, secondHawk);
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canTargetItsController() {
+        CabalTherapy discardedTherapy = new CabalTherapy();
+        harness.setHand(player1, new ArrayList<>(List.of(new CabalTherapy(), discardedTherapy)));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleListChoice(player1, "Cabal Therapy");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedTherapy);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void rejectsPermanentTarget() {
+        harness.setHand(player1, List.of(new CabalTherapy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only target players");
     }
 
     @Test
     @DisplayName("Does not discard cards when the chosen name is absent from the target's hand")
     void absentNameDoesNothing() {
-        Card shock = new Shock();
-        Card forest = new Forest();
-        harness.setHand(player1, List.of(new CabalTherapy(), new GrizzlyBears()));
-        harness.setHand(player2, new ArrayList<>(List.of(shock, forest)));
+        Card breakingPoint = new BreakingPoint();
+        Card land = new KrosanVerge();
+        harness.setHand(player1, List.of(new CabalTherapy(), new SuntailHawk()));
+        harness.setHand(player2, new ArrayList<>(List.of(breakingPoint, land)));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Suntail Hawk");
 
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(shock, forest);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(breakingPoint, land);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Flashback sacrifices a creature and exiles Cabal Therapy after it resolves")
     void flashbackSacrificesCreatureAndExilesSpell() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new SuntailHawk());
         CabalTherapy therapy = new CabalTherapy();
         harness.setGraveyard(player1, List.of(therapy));
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new BreakingPoint()));
 
         harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), creature.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Shock");
+        harness.handleListChoice(player1, "Breaking Point");
 
         harness.assertNotInGraveyard(player1, "Cabal Therapy");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Cabal Therapy"));
     }
 
+    @Test
+    @DisplayName("Flashback requires a creature to sacrifice")
+    void flashbackRequiresCreatureToSacrifice() {
+        CabalTherapy therapy = new CabalTherapy();
+        harness.setGraveyard(player1, List.of(therapy));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(therapy);
+    }
+
     private void castFromHand(List<Card> targetHand) {
         harness.setHand(player1, List.of(new CabalTherapy()));
         harness.setHand(player2, targetHand);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }

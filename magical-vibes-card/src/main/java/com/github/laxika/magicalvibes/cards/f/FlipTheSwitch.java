@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "54")
+@CardRegistration(set = "DBL", collectorNumber = "54")
 public class FlipTheSwitch extends Card {
 
     public FlipTheSwitch() {

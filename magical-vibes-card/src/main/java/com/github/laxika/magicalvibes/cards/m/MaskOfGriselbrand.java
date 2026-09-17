@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDying
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "111")
+@CardRegistration(set = "DBL", collectorNumber = "111")
 public class MaskOfGriselbrand extends Card {
 
     public MaskOfGriselbrand() {

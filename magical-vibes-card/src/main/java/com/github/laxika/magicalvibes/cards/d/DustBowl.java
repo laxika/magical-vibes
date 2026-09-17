@@ -18,6 +18,11 @@ import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "316")
 @CardRegistration(set = "EXP", collectorNumber = "37")
+@CardRegistration(set = "OTP", collectorNumber = "65")
+@CardRegistration(set = "EOS", collectorNumber = "12")
+@CardRegistration(set = "EOS", collectorNumber = "57")
+@CardRegistration(set = "EOS", collectorNumber = "102")
+@CardRegistration(set = "EOS", collectorNumber = "147")
 public class DustBowl extends Card {
 
     public DustBowl() {

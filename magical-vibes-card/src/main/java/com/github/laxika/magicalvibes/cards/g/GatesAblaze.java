@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "102")
+@CardRegistration(set = "PIO", collectorNumber = "137")
 public class GatesAblaze extends Card {
 
     public GatesAblaze() {

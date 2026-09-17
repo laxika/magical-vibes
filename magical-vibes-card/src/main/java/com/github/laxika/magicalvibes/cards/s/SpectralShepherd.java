@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "41")
 @CardRegistration(set = "INR", collectorNumber = "349")
 @CardRegistration(set = "SOI", collectorNumber = "38")
+@CardRegistration(set = "SIR", collectorNumber = "45")
 public class SpectralShepherd extends Card {
 
     public SpectralShepherd() {

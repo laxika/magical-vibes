@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "74")
+@CardRegistration(set = "DBL", collectorNumber = "341")
 public class ScatteredThoughts extends Card {
 
     public ScatteredThoughts() {

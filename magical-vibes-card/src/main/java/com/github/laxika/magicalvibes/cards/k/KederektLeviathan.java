@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "48")
+@CardRegistration(set = "2X2", collectorNumber = "55")
 public class KederektLeviathan extends Card {
 
     public KederektLeviathan() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "178")
+@CardRegistration(set = "DBL", collectorNumber = "178")
 public class ContortionistTroupe extends Card {
 
     public ContortionistTroupe() {

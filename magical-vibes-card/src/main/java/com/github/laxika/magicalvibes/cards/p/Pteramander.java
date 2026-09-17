@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "47")
+@CardRegistration(set = "RVR", collectorNumber = "54")
 public class Pteramander extends Card {
 
     public Pteramander() {

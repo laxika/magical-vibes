@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "16")
+@CardRegistration(set = "DBL", collectorNumber = "283")
 public class GryffwingCavalry extends Card {
 
     public GryffwingCavalry() {

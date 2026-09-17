@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "120")
+@CardRegistration(set = "RVR", collectorNumber = "108")
 public class Dogpile extends Card {
 
     public Dogpile() {

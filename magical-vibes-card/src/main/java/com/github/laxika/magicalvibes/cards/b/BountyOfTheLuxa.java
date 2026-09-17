@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BountyOfTheLuxaEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "196")
+@CardRegistration(set = "2X2", collectorNumber = "187")
 public class BountyOfTheLuxa extends Card {
 
     public BountyOfTheLuxa() {

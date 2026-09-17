@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "160")
+@CardRegistration(set = "PIO", collectorNumber = "154")
 public class ScabClanBerserker extends Card {
 
     public ScabClanBerserker() {

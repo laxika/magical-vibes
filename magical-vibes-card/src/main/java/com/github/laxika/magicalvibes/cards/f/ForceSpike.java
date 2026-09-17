@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "LEG", collectorNumber = "58")
 @CardRegistration(set = "DDJ", collectorNumber = "14")
 @CardRegistration(set = "ME3", collectorNumber = "36")
+@CardRegistration(set = "AA3", collectorNumber = "5")
 public class ForceSpike extends Card {
 
     public ForceSpike() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "GTC", collectorNumber = "221")
+@CardRegistration(set = "RVR", collectorNumber = "200")
 public class MerfolkOfTheDepths extends Card {
 
     public MerfolkOfTheDepths() {

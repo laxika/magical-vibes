@@ -32,7 +32,7 @@ public class CastAnyNumberOfEldraziSpellsFromOutsideGameEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Card> sideboard = gameData.playerSideboards.get(controllerId);
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId);
         if (sideboard == null || sideboard.isEmpty()) {
             return;
         }

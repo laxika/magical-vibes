@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -20,7 +21,8 @@ public class DarkSupplicant extends Card {
                 List.of(
                         new SacrificeMultiplePermanentsCost(3,
                                 new PermanentHasSubtypePredicate(CardSubtype.CLERIC)),
-                        new SearchZonesForCardNamedToBattlefieldEffect("Scion of Darkness")
+                        new SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
+                                new CardNamedPredicate("Scion of Darkness"), true, false)
                 ),
                 "{T}, Sacrifice three Clerics: Search your graveyard, hand, and/or library for a card "
                         + "named Scion of Darkness and put it onto the battlefield. If you search your "

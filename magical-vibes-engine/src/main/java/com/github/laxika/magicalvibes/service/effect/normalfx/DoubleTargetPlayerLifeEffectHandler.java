@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ public class DoubleTargetPlayerLifeEffectHandler implements NormalEffectHandlerB
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID targetPlayerId = entry.getTargetId();
         int currentLife = gameData.getLife(targetPlayerId);
-        int newLife = currentLife * 2;
+        int newLife = currentLife * MaroGoneNutsSupport.apply(gameData, effect, 2);
 
         if (lifeSupport.applySetLifeTotal(gameData, targetPlayerId, newLife)) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);

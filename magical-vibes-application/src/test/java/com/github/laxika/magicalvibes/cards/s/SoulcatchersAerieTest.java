@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
+import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulcatchersAerie.class, SuntailHawk.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SoulcatchersAerie.class, SuntailHawk.class, CabalTrainee.class, LavaDart.class,
+        BattleScreech.class})
 class SoulcatchersAerieTest extends BaseCardTest {
 
     @Test
@@ -26,7 +28,7 @@ class SoulcatchersAerieTest extends BaseCardTest {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
         Permanent bird = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
 
-        killWithShock(player1, bird);
+        killWithLavaDart(player1, bird);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
     }
@@ -35,9 +37,9 @@ class SoulcatchersAerieTest extends BaseCardTest {
     @DisplayName("Does not trigger for a non-Bird creature")
     void doesNotTriggerForNonBird() {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonBird = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
 
-        killWithShock(player1, bears);
+        killWithLavaDart(player1, nonBird);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isZero();
     }
@@ -48,9 +50,37 @@ class SoulcatchersAerieTest extends BaseCardTest {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
         Permanent bird = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
 
-        killWithShock(player1, bird);
+        killWithLavaDart(player1, bird);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isZero();
+    }
+
+    @Test
+    @DisplayName("Triggers for a Bird owned by its controller even when an opponent controls it")
+    void triggersForOwnedBirdUnderOpposingControl() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        SuntailHawk birdCard = new SuntailHawk();
+        birdCard.setOwnerId(player1.getId());
+        Permanent bird = harness.addToBattlefieldAndReturn(player2, birdCard);
+
+        killWithLavaDart(player1, bird);
+
+        assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Does not trigger for an opponent-owned Bird under its controller's control")
+    void doesNotTriggerForOpponentOwnedBirdUnderOwnControl() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        SuntailHawk birdCard = new SuntailHawk();
+        birdCard.setOwnerId(player2.getId());
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, birdCard);
+
+        killWithLavaDart(player1, bird);
+
+        assertThat(aerie.getCounterCount(CounterType.FEATHER)).isZero();
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     @Test
@@ -64,14 +94,46 @@ class SoulcatchersAerieTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(3);
     }
 
-    private void killWithShock(Player caster, Permanent target) {
+    @Test
+    @DisplayName("Bird creatures controlled by either player get the counter-scaled boost")
+    void boostsBirdsRegardlessOfController() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        Permanent ownBird = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent opposingBird = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent nonBird = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
+        aerie.setCounterCount(CounterType.FEATHER, 2);
+
+        assertThat(gqs.getEffectivePower(gd, ownBird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBird)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingBird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBird)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonBird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonBird)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Bird token dying also puts a feather counter on the enchantment")
+    void putsFeatherCounterWhenBirdTokenDies() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        harness.setHand(player1, List.of(new BattleScreech()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        Permanent birdToken = findPermanents(player1, "Bird").getFirst();
+        killWithLavaDart(player1, birdToken);
+
+        assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+    }
+
+    private void killWithLavaDart(Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new Shock()));
+        harness.setHand(caster, List.of(new LavaDart()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
+        resolveAllTriggers();
     }
 }

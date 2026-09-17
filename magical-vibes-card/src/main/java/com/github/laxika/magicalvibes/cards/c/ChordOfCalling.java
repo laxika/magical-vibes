@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "M15", collectorNumber = "172")
 @CardRegistration(set = "RAV", collectorNumber = "156")
 @CardRegistration(set = "2XM", collectorNumber = "158")
+@CardRegistration(set = "EA3", collectorNumber = "6")
+@CardRegistration(set = "RVR", collectorNumber = "134")
 public class ChordOfCalling extends Card {
 
     public ChordOfCalling() {

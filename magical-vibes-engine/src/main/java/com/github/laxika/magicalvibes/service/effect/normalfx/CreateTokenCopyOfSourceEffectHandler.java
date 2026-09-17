@@ -148,6 +148,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     // Copy effects and activated abilities (copiable characteristics per CR 707.2)
                     for (EffectSlot slot : EffectSlot.values()) {
                         for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                            if (e.excludedEffectType() != null
+                                    && reg.effect().getClass() == e.excludedEffectType()) {
+                                continue;
+                            }
                             tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
                         }
                     }

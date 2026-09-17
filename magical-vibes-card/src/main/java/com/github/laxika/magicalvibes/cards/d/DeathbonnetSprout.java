@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "181")
+@CardRegistration(set = "DBL", collectorNumber = "181")
 public class DeathbonnetSprout extends Card {
 
     public DeathbonnetSprout() {

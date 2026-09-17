@@ -54,7 +54,9 @@ import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryReplacement;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
@@ -237,7 +239,7 @@ public class DrawService {
     }
 
     private boolean drawChoicePending(GameData gameData) {
-        return gameData.interaction.isAwaitingInput() || gameData.pendingMayAbilities.stream()
+        return !gameData.pendingCommanderZoneMoves.isEmpty() || gameData.interaction.isAwaitingInput() || gameData.pendingMayAbilities.stream()
                 .flatMap(pending -> pending.effects().stream()).anyMatch(CardEffect::pausesDrawInstruction);
     }
 
@@ -606,11 +608,14 @@ public class DrawService {
         boolean doubles = findDoubleDrawSourceCard(gameData, playerId) != null
                 || (!firstDrawStepDraw && findExceptFirstDoubleDrawSourceCard(gameData, playerId) != null);
         if (doubles) {
+            int drawCount = 2 * MaroGoneNutsSupport.doublingFactor(gameData);
             String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw two cards instead."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw "
+                    + drawCount + " cards instead."));
             log.info("Game {} - {}'s draw doubled", gameData.id, playerName);
-            performDrawCard(gameData, playerId);
-            performDrawCard(gameData, playerId);
+            for (int i = 0; i < drawCount; i++) {
+                performDrawCard(gameData, playerId);
+            }
             return;
         }
 
@@ -620,7 +625,12 @@ public class DrawService {
             return;
         }
 
-        performDrawCard(gameData, playerId);
+        Permanent drawFromBottomSource = findDrawFromBottomSource(gameData, playerId);
+        if (drawFromBottomSource != null) {
+            performDrawCardFromBottom(gameData, playerId);
+        } else {
+            performDrawCard(gameData, playerId);
+        }
     }
 
     private List<UUID> opponentsInApnapOrder(GameData gameData, UUID controllerId) {
@@ -877,6 +887,22 @@ public class DrawService {
         for (Permanent permanent : battlefield) {
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private Permanent findDrawFromBottomSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(DrawFromBottomOfLibraryReplacement.class::isInstance);
             if (hasEffect) {
                 return permanent;
             }
@@ -1493,7 +1519,7 @@ public class DrawService {
 
     /** Ring of Ma'rûf's replaced draw: choose a card from outside the game and put it into hand. */
     private void resolveNextDrawFromOutsideGame(GameData gameData, UUID playerId) {
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         if (sideboard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
@@ -1579,6 +1605,14 @@ public class DrawService {
     }
 
     void performDrawCard(GameData gameData, UUID playerId) {
+        performDrawCard(gameData, playerId, false);
+    }
+
+    private void performDrawCardFromBottom(GameData gameData, UUID playerId) {
+        performDrawCard(gameData, playerId, true);
+    }
+
+    private void performDrawCard(GameData gameData, UUID playerId, boolean fromBottom) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
@@ -1586,7 +1620,6 @@ public class DrawService {
         List<Card> deck = gameData.playerDecks.get(playerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
             gameLogService.append(gameData, GameLog.text(logEntry));
 
@@ -1608,6 +1641,7 @@ public class DrawService {
             }
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
+            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             if (!gameData.deferPlayerLossCheck
                     && gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
@@ -1619,7 +1653,7 @@ public class DrawService {
             return;
         }
 
-        Card drawn = deck.removeFirst();
+        Card drawn = fromBottom ? deck.removeLast() : deck.removeFirst();
         gameData.addCardToHand(playerId, drawn);
 
         // Track cards drawn this turn (for Molten Psyche, etc.)
@@ -2006,8 +2040,15 @@ public class DrawService {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId)
+                                        .withTargetId(drawingPlayerId))) {
+                            continue;
+                        }
+                    }
                     if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may);
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, drawingPlayerId, perm.getId());
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,

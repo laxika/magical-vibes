@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "158")
+@CardRegistration(set = "SIR", collectorNumber = "158")
 public class GatstafArsonists extends Card {
 
     public GatstafArsonists() {

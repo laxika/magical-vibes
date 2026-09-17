@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "110")
+@CardRegistration(set = "2X2", collectorNumber = "84")
 public class ObNixilisUnshackled extends Card {
 
     public ObNixilisUnshackled() {

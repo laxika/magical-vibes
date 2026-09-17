@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "169")
+@CardRegistration(set = "EA2", collectorNumber = "16")
 public class NyleasPresence extends Card {
 
     public NyleasPresence() {

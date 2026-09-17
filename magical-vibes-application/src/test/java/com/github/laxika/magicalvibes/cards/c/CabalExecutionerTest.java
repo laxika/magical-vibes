@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,16 +14,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CabalExecutioner.class, GrizzlyBears.class})
+@CardUsed({CabalExecutioner.class, ElvishWarrior.class, Forest.class})
 class CabalExecutionerTest extends BaseCardTest {
 
     @Test
     void damagedPlayerChoosesACreatureToSacrifice() {
         Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
         executioner.setAttacking(true);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent secondEnemyCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent enemyCreature = addCreatureReady(player2, new ElvishWarrior());
+        Permanent secondEnemyCreature = addCreatureReady(player2, new ElvishWarrior());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -36,7 +37,14 @@ class CabalExecutionerTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, enemyCreature.getId());
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .contains(secondEnemyCreature.getId())
+                .doesNotContain(enemyCreature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId)
+                .contains(ownCreature.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
@@ -45,7 +53,7 @@ class CabalExecutionerTest extends BaseCardTest {
     void blockedExecutionerDoesNotTrigger() {
         Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
         executioner.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -56,7 +64,35 @@ class CabalExecutionerTest extends BaseCardTest {
     }
 
     @Test
-    void noTriggerWhenDamagedPlayerControlsNoCreatures() {
+    void onlyCreaturesAreSacrificeChoices() {
+        Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
+        executioner.setAttacking(true);
+        Permanent enemyCreature = addCreatureReady(player2, new ElvishWarrior());
+        Permanent secondEnemyCreature = addCreatureReady(player2, new ElvishWarrior());
+        Permanent enemyLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds())
+                .containsExactlyInAnyOrder(enemyCreature.getId(), secondEnemyCreature.getId())
+                .doesNotContain(enemyLand.getId());
+
+        harness.handlePermanentChosen(player2, enemyCreature.getId());
+
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .contains(secondEnemyCreature.getId())
+                .doesNotContain(enemyCreature.getId());
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    void noSacrificeWhenDamagedPlayerControlsNoCreatures() {
         Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
         executioner.setAttacking(true);
 
@@ -85,5 +121,7 @@ class CabalExecutionerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(executioner.isFaceDown()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }

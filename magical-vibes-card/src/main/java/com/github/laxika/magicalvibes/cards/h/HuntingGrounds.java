@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "138")
+@CardRegistration(set = "DMR", collectorNumber = "191")
 public class HuntingGrounds extends Card {
 
     public HuntingGrounds() {

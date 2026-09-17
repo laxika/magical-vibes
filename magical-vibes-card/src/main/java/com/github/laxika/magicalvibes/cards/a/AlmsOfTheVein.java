@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "98")
+@CardRegistration(set = "SIR", collectorNumber = "98")
 public class AlmsOfTheVein extends Card {
 
     public AlmsOfTheVein() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "292")
+@CardRegistration(set = "DMR", collectorNumber = "207")
 public class StandDeliver extends Card {
 
     public StandDeliver() {

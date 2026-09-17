@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 
 @CardRegistration(set = "USG", collectorNumber = "250")
 @CardRegistration(set = "2XM", collectorNumber = "167")
+@CardRegistration(set = "DMR", collectorNumber = "159")
+@CardRegistration(set = "AA3", collectorNumber = "17")
 public class Exploration extends Card {
 
     public Exploration() {

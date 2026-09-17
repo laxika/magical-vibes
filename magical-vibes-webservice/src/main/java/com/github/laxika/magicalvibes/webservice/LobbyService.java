@@ -34,7 +34,11 @@ public class LobbyService {
 
     public GameResult createGame(String gameName, Player player, String deckId, boolean allRandom,
                                  String randomSetCode, boolean planechase) {
-        GameData gameData = gameSetupService.createGame(gameName, player, deckId, allRandom, randomSetCode, planechase);
+        return createGame(gameName, player, deckId, allRandom, randomSetCode, planechase, com.github.laxika.magicalvibes.model.DeckFormat.CASUAL);
+    }
+
+    public GameResult createGame(String gameName, Player player, String deckId, boolean allRandom, String randomSetCode, boolean planechase, com.github.laxika.magicalvibes.model.DeckFormat format) {
+        GameData gameData = gameSetupService.createGame(gameName, player, deckId, allRandom, randomSetCode, planechase, format);
         return new GameResult(gameResyncProjectionService.currentState(gameData, null), toLobbyGame(gameData));
     }
 
@@ -56,7 +60,7 @@ public class LobbyService {
                 data.createdByUsername,
                 data.playerIds.size(),
                 data.status,
-                data.allRandom, data.planechase != null
+                data.allRandom, data.planechase != null, data.format
         );
     }
 }

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MIR", collectorNumber = "67")
+@CardRegistration(set = "DMR", collectorNumber = "49")
 public class Floodgate extends Card {
 
     public Floodgate() {

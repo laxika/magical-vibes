@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "121")
+@CardRegistration(set = "2X2", collectorNumber = "87")
 public class SeekersSquire extends Card {
 
     public SeekersSquire() {

@@ -43,7 +43,15 @@ public sealed interface ChoiceContext {
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
-                                          int nextTargetIndex) implements ChoiceContext {
+                                          int nextTargetIndex, boolean allowsPartialDistribution) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, false);
+        }
 
         public CounterDistributionAssignment {
             effects = List.copyOf(effects);
@@ -724,6 +732,12 @@ public sealed interface ChoiceContext {
                               String firstChosenName) implements ChoiceContext {}
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
+
+    record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
+        public LegacyWordChoice {
+            options = List.copyOf(options);
+        }
+    }
 
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
@@ -1566,6 +1580,24 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record RemoveUpToCountersFromAllPermanentsChoice(StackEntry resolvingEntry, CounterType counterType,
+                                                     int remaining, Map<String, UUID> permanentOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveUpToCountersFromAllPermanentsChoice {
+            permanentOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(permanentOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
+        }
+    }
+
     record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                   List<CounterType> counterTypes) implements ChoiceContext {
 
@@ -1638,6 +1670,33 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(TIME, KNOWLEDGE);
 
         public PleaForPowerChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Expropriate: the current player voted for time or money. */
+    record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                             List<UUID> moneyVoterIds, int timeVotes, String sourceName)
+            implements ChoiceContext {
+        public static final String TIME = "Time";
+        public static final String MONEY = "Money";
+        public static final List<String> OPTIONS = List.of(TIME, MONEY);
+
+        public ExpropriateChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
+    /** Split Decision: the current player voted for denial or duplication. */
+    record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                             Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DENIAL = "Denial";
+        public static final String DUPLICATION = "Duplication";
+        public static final List<String> OPTIONS = List.of(DENIAL, DUPLICATION);
+
+        public VoteForDenialOrDuplicationChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             votes = Map.copyOf(votes);
         }

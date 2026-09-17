@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "41")
+@CardRegistration(set = "GN3", collectorNumber = "22")
 public class AnglerDrake extends Card {
 
     public AnglerDrake() {

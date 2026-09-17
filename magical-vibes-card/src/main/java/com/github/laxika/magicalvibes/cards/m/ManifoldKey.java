@@ -17,6 +17,9 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "230")
 @CardRegistration(set = "TSR", collectorNumber = "398")
+@CardRegistration(set = "SLZ", collectorNumber = "106")
+@CardRegistration(set = "SLZ", collectorNumber = "227")
+@CardRegistration(set = "SLZ", collectorNumber = "348")
 public class ManifoldKey extends Card {
 
     public ManifoldKey() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "246")
+@CardRegistration(set = "DBL", collectorNumber = "513")
 public class RunoStromkirk extends Card {
 
     public RunoStromkirk() {

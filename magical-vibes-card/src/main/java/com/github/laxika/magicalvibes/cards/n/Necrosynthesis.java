@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "115")
+@CardRegistration(set = "DBL", collectorNumber = "115")
 public class Necrosynthesis extends Card {
 
     public Necrosynthesis() {

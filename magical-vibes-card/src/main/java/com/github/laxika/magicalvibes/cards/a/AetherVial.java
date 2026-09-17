@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "MMA", collectorNumber = "197")
 @CardRegistration(set = "IMA", collectorNumber = "212")
 @CardRegistration(set = "MPS", collectorNumber = "6")
+@CardRegistration(set = "2X2", collectorNumber = "298")
 public class AetherVial extends Card {
 
     public AetherVial() {

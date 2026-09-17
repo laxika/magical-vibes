@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "56")
+@CardRegistration(set = "DBL", collectorNumber = "56")
 public class Geistwave extends Card {
 
     public Geistwave() {

@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SungrassEgg.class)
 class SungrassEggTest extends BaseCardTest {
 
     @Test
@@ -40,5 +42,18 @@ class SungrassEggTest extends BaseCardTest {
                 harness.activateAbility(player1, 0, null, null));
 
         harness.assertOnBattlefield(player1, "Sungrass Egg");
+    }
+
+    @Test
+    void activationRequiresAnUntappedSource() {
+        var egg = harness.addToBattlefieldAndReturn(player1, new SungrassEgg());
+        egg.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () ->
+                harness.activateAbility(player1, 0, null, null));
+
+        harness.assertOnBattlefield(player1, "Sungrass Egg");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 }

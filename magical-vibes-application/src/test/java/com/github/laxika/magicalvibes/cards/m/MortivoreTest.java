@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,38 +18,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Mortivore.class, GrizzlyBears.class, Plains.class, MindRot.class, GloriousAnthem.class})
 class MortivoreTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    @Test
-    @DisplayName("Mortivore has regeneration activated ability costing {B}")
-    void hasRegenerationAbility() {
-        Mortivore card = new Mortivore();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{B}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Mortivore puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Mortivore()));
+        Mortivore card = new Mortivore();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Mortivore");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
     }
 
     @Test
@@ -79,12 +64,10 @@ class MortivoreTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mortivore");
     }
 
-    // ===== Dynamic power/toughness =====
-
     @Test
     @DisplayName("Mortivore is 0/0 with no creature cards in any graveyard")
     void isZeroZeroWithEmptyGraveyards() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(0);
@@ -93,7 +76,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T equals number of creature cards in controller's graveyard")
     void ptEqualsCreatureCountInOwnGraveyard() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(3));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
@@ -103,7 +86,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T counts creature cards in ALL graveyards")
     void ptCountsAllGraveyards() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2));
         harness.setGraveyard(player2, createCreatureCards(3));
 
@@ -114,7 +97,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore only counts creature cards, not non-creature cards")
     void onlyCountsCreatureCards() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
 
         List<Card> graveyard = new ArrayList<>();
         graveyard.addAll(createCreatureCards(2));
@@ -129,7 +112,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T updates when creatures are added to graveyard")
     void ptUpdatesWhenCreaturesAddedToGraveyard() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(1));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
@@ -144,7 +127,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T decreases when creatures are removed from graveyard")
     void ptDecreasesWhenCreaturesRemovedFromGraveyard() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(5));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
@@ -159,7 +142,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T counts opponent's graveyard creatures too")
     void ptCountsOpponentsGraveyard() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player2, createCreatureCards(4));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
@@ -169,7 +152,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T works with large graveyard counts")
     void ptWorksWithLargeGraveyardCounts() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(15));
         harness.setGraveyard(player2, createCreatureCards(10));
 
@@ -177,16 +160,14 @@ class MortivoreTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(25);
     }
 
-    // ===== P/T interacts with other static effects =====
-
     @Test
     @DisplayName("Mortivore P/T stacks with other static bonuses")
     void ptStacksWithOtherStaticBonuses() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(3));
 
         // Add a Glorious Anthem for +1/+1 to own creatures
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.g.GloriousAnthem());
+        harness.addToBattlefield(player1, new GloriousAnthem());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
@@ -195,7 +176,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore P/T stacks with temporary power modifiers")
     void ptStacksWithTemporaryModifiers() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(3));
 
         perm.setPowerModifier(2);
@@ -205,12 +186,10 @@ class MortivoreTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);
     }
 
-    // ===== Regeneration ability =====
-
     @Test
     @DisplayName("Activating regeneration puts ability on stack with self as target")
     void activatingRegenPutsOnStack() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -219,14 +198,14 @@ class MortivoreTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Mortivore");
+        assertThat(entry.getCard()).isSameAs(perm.getCard());
         assertThat(entry.getTargetId()).isEqualTo(perm.getId());
     }
 
     @Test
     @DisplayName("Resolving regeneration ability grants a regeneration shield")
     void resolvingRegenGrantsShield() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -240,7 +219,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Can stack multiple regeneration shields")
     void canStackMultipleRegenShields() {
-        Permanent perm = addMortivoreReady(player1);
+        Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -252,23 +231,43 @@ class MortivoreTest extends BaseCardTest {
         assertThat(perm.getRegenerationShield()).isEqualTo(2);
     }
 
-    // ===== Regeneration saves from combat damage =====
+    @Test
+    @DisplayName("Can activate regeneration ability while Mortivore is tapped")
+    void canActivateRegenerationWhileTapped() {
+        Permanent perm = addCreatureReady(player1, new Mortivore());
+        perm.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate regeneration ability with only nonblack mana")
+    void cannotActivateRegenerationWithOnlyNonblackMana() {
+        addCreatureReady(player1, new Mortivore());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 
     @Test
     @DisplayName("Regeneration shield saves Mortivore from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        Permanent mortPerm = addMortivoreReady(player1);
+        Permanent mortPerm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2)); // Mortivore is 2/2
         mortPerm.setRegenerationShield(1);
         mortPerm.setBlocking(true);
         mortPerm.addBlockingTarget(0);
 
         // Grizzly Bears (2/2) deals 2 damage — lethal to 2-toughness Mortivore
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -288,17 +287,14 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore dies without regeneration shield when taking lethal combat damage")
     void diesWithoutRegenShield() {
-        Permanent mortPerm = addMortivoreReady(player1);
+        Permanent mortPerm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2)); // Mortivore is 2/2
         mortPerm.setBlocking(true);
         mortPerm.addBlockingTarget(0);
 
         // Grizzly Bears (2/2) deals 2 damage — lethal to 2-toughness Mortivore
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -314,8 +310,8 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Mortivore going to graveyard increases other Mortivore's P/T")
     void dyingMortivoreIncreasesOtherMortivorePT() {
-        Permanent mort1 = addMortivoreReady(player1);
-        Permanent mort2 = addMortivoreReady(player1);
+        Permanent mort1 = addCreatureReady(player1, new Mortivore());
+        Permanent mort2 = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(3)); // Both are 3/3
 
         assertThat(gqs.getEffectivePower(gd, mort1)).isEqualTo(3);
@@ -327,16 +323,6 @@ class MortivoreTest extends BaseCardTest {
         // mort1 should now be 4/4 (3 original creatures + Mortivore in graveyard)
         assertThat(gqs.getEffectivePower(gd, mort1)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, mort1)).isEqualTo(4);
-    }
-
-    // ===== Helper methods =====
-
-    private Permanent addMortivoreReady(Player player) {
-        Mortivore card = new Mortivore();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private List<Card> createCreatureCards(int count) {

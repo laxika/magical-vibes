@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DD2", collectorNumber = "43")
 @CardRegistration(set = "JVC", collectorNumber = "43")
 @CardRegistration(set = "IMA", collectorNumber = "129")
+@CardRegistration(set = "GN3", collectorNumber = "79")
 public class FurnaceWhelp extends Card {
 
     public FurnaceWhelp() {

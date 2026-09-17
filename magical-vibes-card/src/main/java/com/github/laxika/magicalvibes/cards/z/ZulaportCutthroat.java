@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "GNT", collectorNumber = "36")
 @CardRegistration(set = "A25", collectorNumber = "117")
 @CardRegistration(set = "TSR", collectorNumber = "337")
+@CardRegistration(set = "EA2", collectorNumber = "11")
+@CardRegistration(set = "PIO", collectorNumber = "121")
 public class ZulaportCutthroat extends Card {
 
     public ZulaportCutthroat() {

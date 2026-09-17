@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "126")
 @CardRegistration(set = "EMA", collectorNumber = "171")
+@CardRegistration(set = "SLC", collectorNumber = "70")
 public class HeritageDruid extends Card {
 
     public HeritageDruid() {

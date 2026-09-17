@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(RemoteFarm.class)
 class RemoteFarmTest extends BaseCardTest {
 
     @Test
@@ -30,7 +32,7 @@ class RemoteFarmTest extends BaseCardTest {
     void removesCounterAndAddsTwoWhiteMana() {
         Permanent farm = addFarm(2);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(whiteMana()).isEqualTo(2);
         assertThat(farm.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
@@ -42,7 +44,7 @@ class RemoteFarmTest extends BaseCardTest {
     void removesLastCounterAndSacrifices() {
         Permanent farm = addFarm(1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(whiteMana()).isEqualTo(2);
         assertThat(farm.getCounterCount(CounterType.DEPLETION)).isZero();
@@ -55,8 +57,20 @@ class RemoteFarmTest extends BaseCardTest {
     void cannotActivateWithoutDepletionCounter() {
         addFarm(0);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Remote Farm is tapped")
+    void cannotActivateWhenTapped() {
+        addFarm(2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     private Permanent addFarm(int counters) {

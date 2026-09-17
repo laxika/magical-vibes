@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsForEachCardTypeEffect;
 
 @CardRegistration(set = "ONE", collectorNumber = "196")
+@CardRegistration(set = "FCA", collectorNumber = "49")
 public class AtraxaGrandUnifier extends Card {
 
     public AtraxaGrandUnifier() {

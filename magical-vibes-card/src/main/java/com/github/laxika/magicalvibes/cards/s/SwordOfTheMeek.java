@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "165")
 @CardRegistration(set = "2XM", collectorNumber = "299")
+@CardRegistration(set = "BRR", collectorNumber = "59")
 public class SwordOfTheMeek extends Card {
 
     public SwordOfTheMeek() {

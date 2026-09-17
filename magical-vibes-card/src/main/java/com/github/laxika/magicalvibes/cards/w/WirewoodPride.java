@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONS", collectorNumber = "303")
+@CardRegistration(set = "GN3", collectorNumber = "112")
 public class WirewoodPride extends Card {
 
     public WirewoodPride() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "198")
+@CardRegistration(set = "PIO", collectorNumber = "201")
 public class WoodlandWanderer extends Card {
 
     public WoodlandWanderer() {

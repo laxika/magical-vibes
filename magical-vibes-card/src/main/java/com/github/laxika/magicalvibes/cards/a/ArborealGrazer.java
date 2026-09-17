@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "149")
+@CardRegistration(set = "RVR", collectorNumber = "131")
 public class ArborealGrazer extends Card {
 
     public ArborealGrazer() {

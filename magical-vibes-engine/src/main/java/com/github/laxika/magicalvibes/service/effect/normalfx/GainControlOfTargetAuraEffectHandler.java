@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AuraAttachmentService auraAttachmentService;
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
@@ -73,6 +75,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     } else if (!gameQueryService.isCreature(gameData, p)) {
                         return;
                     }
+                    if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), casterId, p)) return;
                     validTargetIds.add(p.getId());
                 });
 

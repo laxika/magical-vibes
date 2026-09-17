@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "177")
+@CardRegistration(set = "DBL", collectorNumber = "177")
 public class ConsumingBlob extends Card {
 
     public ConsumingBlob() {

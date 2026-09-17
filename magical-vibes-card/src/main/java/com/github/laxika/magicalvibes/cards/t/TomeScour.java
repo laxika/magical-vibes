@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 @CardRegistration(set = "M10", collectorNumber = "76")
 @CardRegistration(set = "M11", collectorNumber = "76")
 @CardRegistration(set = "M14", collectorNumber = "75")
+@CardRegistration(set = "PIO", collectorNumber = "367")
 public class TomeScour extends Card {
 
     public TomeScour() {

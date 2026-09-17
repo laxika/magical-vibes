@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TreespringLorian.class)
 class TreespringLorianTest extends BaseCardTest {
@@ -32,5 +33,25 @@ class TreespringLorianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(lorian.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void turningFaceUpRequiresGreenMana() {
+        harness.setHand(player1, List.of(new TreespringLorian()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent lorian = findPermanent(player1, "Treespring Lorian");
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        int lorianIndex = gd.playerBattlefields.get(player1.getId()).indexOf(lorian);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, lorianIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(lorian.isFaceDown()).isTrue();
     }
 }

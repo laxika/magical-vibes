@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "79")
 @CardRegistration(set = "DDQ", collectorNumber = "28")
+@CardRegistration(set = "SIR", collectorNumber = "86")
 public class PoreOverThePages extends Card {
 
     public PoreOverThePages() {

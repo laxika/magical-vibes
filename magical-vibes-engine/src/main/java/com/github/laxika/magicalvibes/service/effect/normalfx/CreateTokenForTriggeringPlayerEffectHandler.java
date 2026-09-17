@@ -55,5 +55,13 @@ public class CreateTokenForTriggeringPlayerEffectHandler implements NormalEffect
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, playerId, e.token(), amount, entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
+        if (e.token().tappedAndAttacking() && entry.getAttackedTargetId() != null) {
+            for (UUID createdId : createdIds) {
+                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
+                if (token != null) {
+                    token.setAttackTarget(entry.getAttackedTargetId());
+                }
+            }
+        }
     }
 }

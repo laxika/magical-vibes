@@ -22,7 +22,19 @@ public class PlayersCantCastNoncreatureSpellsThisTurnEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.playersCantCastNoncreatureSpellsThisTurn.addAll(gameData.orderedPlayerIds);
-        gameLogService.append(gameData, GameLog.text("Players can't cast noncreature spells this turn."));
+        PlayersCantCastNoncreatureSpellsThisTurnEffect restriction =
+                (PlayersCantCastNoncreatureSpellsThisTurnEffect) effect;
+        if (restriction.opponentsOnly()) {
+            gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                    .forEach(gameData.playersCantCastNoncreatureSpellsThisTurn::add);
+        } else {
+            gameData.playersCantCastNoncreatureSpellsThisTurn.addAll(gameData.orderedPlayerIds);
+        }
+        String logEntry = restriction.opponentsOnly()
+                ? gameData.playerIdToName.get(entry.getControllerId())
+                + "'s opponents can't cast noncreature spells this turn."
+                : "Players can't cast noncreature spells this turn.";
+        gameLogService.append(gameData, GameLog.text(logEntry));
     }
 }

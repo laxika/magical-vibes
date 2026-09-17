@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "233")
+@CardRegistration(set = "MB1", collectorNumber = "233")
 public class OracleOfNectars extends Card {
 
     public OracleOfNectars() {

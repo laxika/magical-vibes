@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "147")
+@CardRegistration(set = "PIO", collectorNumber = "192")
 public class SavagePunch extends Card {
 
     public SavagePunch() {

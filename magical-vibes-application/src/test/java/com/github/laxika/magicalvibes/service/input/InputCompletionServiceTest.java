@@ -47,6 +47,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class InputCompletionServiceTest {
 
     @Test
+    void doesNotResumeEffectsOrPriorityWhileASubgameIsPending() {
+        gameData.waitingForSubgame = true;
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+        verifyNoInteractions(playerInputService, turnProgressionService, effectResolutionService);
+    }
+
+    @Test
     void queuedManaChoiceIsPresentedBeforePriorityResumes() {
         InteractionHandlerRegistry registry = mock(InteractionHandlerRegistry.class);
         ReflectionTestUtils.setField(service, "interactionHandlerRegistry", registry);

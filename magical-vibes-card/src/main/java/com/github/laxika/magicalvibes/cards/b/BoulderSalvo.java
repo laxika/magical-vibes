@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "102")
+@CardRegistration(set = "PIO", collectorNumber = "125")
 public class BoulderSalvo extends Card {
 
     public BoulderSalvo() {

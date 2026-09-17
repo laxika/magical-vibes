@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "115")
+@CardRegistration(set = "PIO", collectorNumber = "297")
 public class PyromancersAssault extends Card {
 
     public PyromancersAssault() {

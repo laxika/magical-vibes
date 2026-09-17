@@ -14,6 +14,8 @@ import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "112")
 @CardRegistration(set = "DDR", collectorNumber = "57")
+@CardRegistration(set = "GN3", collectorNumber = "58")
+@CardRegistration(set = "PIO", collectorNumber = "103")
 public class PriestOfTheBloodRite extends Card {
 
     public PriestOfTheBloodRite() {

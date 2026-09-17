@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWaste.class, GrizzlyBears.class})
+@CardUsed({WordsOfWaste.class, WretchedAnurid.class})
 class WordsOfWasteTest extends BaseCardTest {
 
     @Test
@@ -22,8 +22,8 @@ class WordsOfWasteTest extends BaseCardTest {
     void replacesNextDrawWithOpponentDiscard() {
         harness.addToBattlefield(player1, new WordsOfWaste());
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WretchedAnurid(), new WretchedAnurid()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
         activateWordsOfWaste();
 
         draw(player1);
@@ -48,8 +48,8 @@ class WordsOfWasteTest extends BaseCardTest {
     void repeatedActivationsReplaceSuccessiveDraws() {
         harness.addToBattlefield(player1, new WordsOfWaste());
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WretchedAnurid(), new WretchedAnurid()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid(), new WretchedAnurid()));
 
         activateWordsOfWaste();
         activateWordsOfWaste();
@@ -68,8 +68,8 @@ class WordsOfWasteTest extends BaseCardTest {
     void laterDrawIsNormal() {
         harness.addToBattlefield(player1, new WordsOfWaste());
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WretchedAnurid()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid(), new WretchedAnurid()));
         activateWordsOfWaste();
 
         drawAndDiscard(player1, player2);
@@ -77,6 +77,91 @@ class WordsOfWasteTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The replacement applies only to its controller's draw")
+    void replacesOnlyControllerDraw() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        harness.setLibrary(player2, List.of(new WretchedAnurid()));
+        activateWordsOfWaste();
+
+        draw(player2);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        draw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The replacement prevents an empty-library draw from causing a loss")
+    void replacesEmptyLibraryDrawWithoutLoss() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new WretchedAnurid()));
+        harness.setLibrary(player1, List.of());
+        activateWordsOfWaste();
+
+        draw(player1);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The replacement still replaces the draw when an opponent has no cards")
+    void replacesDrawWhenOpponentHasNoCards() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        activateWordsOfWaste();
+
+        draw(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The replacement expires at cleanup")
+    void replacementExpiresAtCleanup() {
+        harness.addToBattlefield(player1, new WordsOfWaste());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        activateWordsOfWaste();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void activateWordsOfWaste() {

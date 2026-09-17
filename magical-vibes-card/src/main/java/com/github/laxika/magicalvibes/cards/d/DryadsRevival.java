@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "183")
+@CardRegistration(set = "DBL", collectorNumber = "183")
 public class DryadsRevival extends Card {
 
     public DryadsRevival() {

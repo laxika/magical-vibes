@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "80")
+@CardRegistration(set = "DBL", collectorNumber = "80")
 public class SuspiciousStowaway extends Card {
 
     public SuspiciousStowaway() {

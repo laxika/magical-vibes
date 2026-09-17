@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Chlorophant.class, Forest.class})
 class ChlorophantTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class ChlorophantTest extends BaseCardTest {
         Permanent chlorophant = addChlorophant();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -37,9 +39,9 @@ class ChlorophantTest extends BaseCardTest {
         Permanent chlorophant = addChlorophant();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -52,10 +54,26 @@ class ChlorophantTest extends BaseCardTest {
         Permanent chlorophant = addChlorophant();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Declining one upkeep counter trigger does not decline the other")
+    void decliningOneTriggerDoesNotDeclineTheOther() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent chlorophant = addChlorophant();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
         assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -66,7 +84,7 @@ class ChlorophantTest extends BaseCardTest {
     private List<Card> graveyardWithSevenCards() {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new Forest());
         }
         return cards;
     }

@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
@@ -307,7 +308,7 @@ public class CombatAttackService {
                                     boolean filterByAttackTarget) {
         int[] maximum = {Integer.MAX_VALUE};
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                 if (effect instanceof CombatCreatureLimitEffect limit
                         && (!filterByAttackTarget
                         || limit.appliesToAttackTarget(sourceControllerId, permanent.getId(), attackTargetId))) {
@@ -332,7 +333,7 @@ public class CombatAttackService {
 
     /**
      * Returns the subset of attackable indices whose creatures have at least one
-     * "attacks each combat if able" requirement. Returns empty if an attack tax is in effect.
+     * "attacks each combat if able" requirement that can be met without paying an attack tax.
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         return gameQueryService.withQueryScope(gameData,
@@ -341,10 +342,6 @@ public class CombatAttackService {
 
     private List<Integer> getMustAttackIndicesUnscoped(GameData gameData, UUID playerId,
                                                         List<Integer> attackableIndices) {
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
-        if (taxPerCreature > 0) {
-            return List.of();
-        }
         if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
@@ -360,7 +357,7 @@ public class CombatAttackService {
         for (int idx : attackableIndices) {
             Permanent p = battlefield.get(idx);
             if (restrictionValidAttackers.contains(idx)
-                    && attackLegalityService.getMustAttackRequirementCount(gameData, p) > 0) {
+                    && getMaximumUnpaidAttackRequirementCount(gameData, p) > 0) {
                 mustAttack.add(idx);
             }
         }
@@ -720,7 +717,8 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
-        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets);
+        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets,
+                gameQueryService);
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
@@ -2005,6 +2003,9 @@ public class CombatAttackService {
                         );
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                        anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setTriggeringPermanentControllerId(
+                                gameQueryService.findPermanentController(gameData, attacker.getId()));
                         gameData.stack.add(anyAttackTrigger);
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
@@ -2113,6 +2114,7 @@ public class CombatAttackService {
         processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
         processDelayedVehicleAttackTriggers(gameData, battlefield, attackerIndices);
+        processDelayedWatchedCreatureAttackTriggers(gameData, battlefield, attackerIndices);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
@@ -2213,6 +2215,41 @@ public class CombatAttackService {
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
                 log.info("Game {} - {} delayed attacker boost fires for {}",
                         gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
+
+    /** Fires delayed triggers for a watched creature attacking one of its registering player's opponents. */
+    private void processDelayedWatchedCreatureAttackTriggers(GameData gameData,
+                                                              List<Permanent> battlefield,
+                                                              List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedWatchedCreatureAttack.class)) {
+            return;
+        }
+        for (DelayedWatchedCreatureAttack watch
+                : gameData.getDelayedActions(DelayedWatchedCreatureAttack.class)) {
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                UUID attackedTargetId = attacker.getAttackTarget();
+                if (!watch.watchedPermanentId().equals(attacker.getId())
+                        || attackedTargetId == null
+                        || !gameData.playerIds.contains(attackedTargetId)
+                        || watch.controllerId().equals(attackedTargetId)) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watch.sourceCard(),
+                        watch.controllerId(),
+                        watch.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(watch.effects()),
+                        (UUID) null,
+                        attacker.getId());
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(watch.sourceCard()).text("'s ability triggers.").build());
             }
         }
     }
@@ -2399,10 +2436,6 @@ public class CombatAttackService {
                                                     List<Integer> attackableIndices,
                                                     Set<Integer> declaredAttackerIndices,
                                                     Map<Integer, UUID> attackTargets) {
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
-        if (taxPerCreature > 0) {
-            return;
-        }
         if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
         }
@@ -2413,13 +2446,13 @@ public class CombatAttackService {
                 gameData, playerId, attackableIndices);
         int maxRequirements = 0;
         for (int idx : restrictionValidGroupAttackers) {
-            maxRequirements += attackLegalityService.getMaximumMustAttackRequirementCount(
+            maxRequirements += getMaximumUnpaidAttackRequirementCount(
                     gameData, battlefield.get(idx));
         }
         for (int idx : attackableIndices) {
             if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
                 maxRequirements = Math.max(maxRequirements,
-                        attackLegalityService.getMaximumMustAttackRequirementCount(
+                        getMaximumUnpaidAttackRequirementCount(
                                 gameData, battlefield.get(idx)));
             }
         }
@@ -2444,13 +2477,23 @@ public class CombatAttackService {
             }
             for (int idx : restrictionValidAttackers) {
                 if (!declaredAttackerIndices.contains(idx)
-                        && attackLegalityService.getMaximumMustAttackRequirementCount(
+                        && getMaximumUnpaidAttackRequirementCount(
                         gameData, battlefield.get(idx)) > 0) {
                     throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
                 }
             }
             throw new IllegalStateException("Attack declaration satisfies too few attack requirements");
         }
+    }
+
+    private int getMaximumUnpaidAttackRequirementCount(GameData gameData, Permanent creature) {
+        UUID controllerId = gameData.findControllerOf(creature);
+        if (controllerId == null) return 0;
+        return attackLegalityService.getValidAttackTargetIds(gameData, controllerId).stream()
+                .filter(targetId -> attackLegalityService.canAttackDefender(gameData, creature, targetId))
+                .filter(targetId -> castingCostService.getAttackPaymentPerCreature(gameData, controllerId, targetId) == 0)
+                .mapToInt(targetId -> attackLegalityService.getMustAttackRequirementCount(gameData, creature, targetId))
+                .max().orElse(0);
     }
 
     /**

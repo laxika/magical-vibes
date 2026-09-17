@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "GTC", collectorNumber = "126")
 @CardRegistration(set = "GK2", collectorNumber = "113")
 @CardRegistration(set = "UMA", collectorNumber = "173")
+@CardRegistration(set = "PIO", collectorNumber = "382")
 public class MimingSlime extends Card {
 
     public MimingSlime() {

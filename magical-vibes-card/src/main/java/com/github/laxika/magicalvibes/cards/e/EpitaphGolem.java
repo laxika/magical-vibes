@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "262")
 @CardRegistration(set = "M21", collectorNumber = "230")
 @CardRegistration(set = "SOI", collectorNumber = "254")
+@CardRegistration(set = "SIR", collectorNumber = "249")
 public class EpitaphGolem extends Card {
 
     public EpitaphGolem() {
