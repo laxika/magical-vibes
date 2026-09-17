@@ -4253,6 +4253,11 @@ public class CombatDamageService {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
+        if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, target, null, source, true)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         if (gameQueryService.isDamagePreventable(gameData, true)
                 && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
                 && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(gameData, target, source, null)) {

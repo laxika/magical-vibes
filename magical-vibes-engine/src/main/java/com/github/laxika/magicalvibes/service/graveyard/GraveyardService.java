@@ -902,6 +902,15 @@ public class GraveyardService {
                 .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
             return true;
         }
+        if (allowShieldCounter && perm.getLandDestructionShield() > 0) {
+            perm.setLandDestructionShield(perm.getLandDestructionShield() - 1);
+            perm.healDamage();
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                    " removes all damage marked on it instead of being destroyed."));
+            log.info("Game {} - {} removes all damage instead of being destroyed", gameData.id,
+                    perm.getCard().getName());
+            return true;
+        }
         Permanent cracklingEmergence = findDestructionReplacementSource(
                 gameData, perm, DestructionReplacement.SACRIFICE_AURA_AND_GRANT_INDESTRUCTIBLE);
         if (cracklingEmergence != null && !gameQueryService.cantBeSacrificed(gameData, cracklingEmergence)) {

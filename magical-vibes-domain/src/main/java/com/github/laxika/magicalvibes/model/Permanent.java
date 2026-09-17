@@ -109,6 +109,9 @@ public class Permanent {
     /** Kill-Suit Cultist-style shield: destroy this creature instead of dealing the next damage to it.
      *  Reset at turn cleanup. */
     @Setter private int damageDestructionShield;
+    /** Pyramids-style shield: remove all damage instead of destroying this permanent the next time it
+     *  would be destroyed. Reset at turn cleanup. */
+    @Setter private int landDestructionShield;
     @Setter private int regenerationShield;
     /** How many of this permanent's {@link #regenerationShield}s carry Soldevi Sentry's rider — when
      *  such a shield is actually used, the controller's opponent may draw a card. Plain shields are
@@ -732,6 +735,7 @@ public class Permanent {
         this.damageToPlusOnePlusOneCounterPreventionShield = source.damageToPlusOnePlusOneCounterPreventionShield;
         this.allDamageToPlusOnePlusOneCounterPreventionShield = source.allDamageToPlusOnePlusOneCounterPreventionShield;
         this.damageDestructionShield = source.damageDestructionShield;
+        this.landDestructionShield = source.landDestructionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
         this.opponentDrawRegenerationShieldRecipients.addAll(
