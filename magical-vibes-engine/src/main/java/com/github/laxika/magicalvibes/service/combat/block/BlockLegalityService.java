@@ -179,7 +179,7 @@ public class BlockLegalityService {
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
             if (gameQueryService.isLand(gameData, defender)) {
-                defenderCardSubtypes.addAll(gameQueryService.effectiveBasicLandTypes(gameData, defender));
+                defenderCardSubtypes.addAll(gameQueryService.effectiveLandTypes(gameData, defender));
             } else {
                 defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
             }

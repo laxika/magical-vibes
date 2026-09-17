@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.Lunge;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DesertNomads.class, Desert.class, GrizzlyBears.class, Lunge.class})
+@CardUsed({DesertNomads.class, Desert.class, GrizzlyBears.class, Lunge.class, BloodMoon.class})
 class DesertNomadsTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,24 @@ class DesertNomadsTest extends BaseCardTest {
     @DisplayName("Desertwalk allows blocking when the defender controls no Desert")
     void desertwalkAllowsBlockingWithoutDesert() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DesertNomads());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Blood Moon removes Desertwalk's blocking restriction by making Desert a Mountain")
+    void desertwalkAllowsBlockingWhenDesertBecomesMountain() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Desert());
+        harness.addToBattlefield(player1, new BloodMoon());
         Permanent attacker = addCreatureReady(player1, new DesertNomads());
         attacker.setAttacking(true);
 
