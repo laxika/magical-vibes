@@ -2,18 +2,19 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JoinerAdept.class, Forest.class, GrizzlyBears.class})
 class JoinerAdeptTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Lands you control gain tap ability to add one mana of any color")
@@ -32,6 +33,17 @@ class JoinerAdeptTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "RED");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Nonland permanents do not gain Joiner Adept ability")
+    void nonLandsDoNotGainAbility() {
+        harness.addToBattlefield(player1, new JoinerAdept());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
     }
 
     @Test

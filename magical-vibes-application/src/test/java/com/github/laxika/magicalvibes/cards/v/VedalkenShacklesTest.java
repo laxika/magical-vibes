@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.a.Arachnoid;
+import com.github.laxika.magicalvibes.cards.a.AvariceTotem;
+import com.github.laxika.magicalvibes.cards.f.FangrenPathcutter;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.MasterThief;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VedalkenShackles.class, Arachnoid.class, FangrenPathcutter.class, Island.class, AvariceTotem.class})
 class VedalkenShacklesTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class VedalkenShacklesTest extends BaseCardTest {
     void gainsControlWithinIslandCount() {
         addIslands(player1, 2);
         Permanent shackles = addReadyShackles(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
@@ -40,7 +42,7 @@ class VedalkenShacklesTest extends BaseCardTest {
     void rejectsCreatureAboveIslandCount() {
         addIslands(player1, 2);
         Permanent shackles = addReadyShackles(player1);
-        Permanent target = addReadyCreature(player2, new HillGiant());
+        Permanent target = addCreatureReady(player2, new FangrenPathcutter());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -50,11 +52,44 @@ class VedalkenShacklesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not gain control if Vedalken Shackles untaps before the ability resolves")
+    void doesNotGainControlIfSourceUntapsBeforeResolution() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        shackles.untap();
+        harness.passBothPriorities();
+
+        assertThat(shackles.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Rechecks the Island count when the ability resolves")
+    void islandCountIsRecheckedAtResolution() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof Island);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
     @DisplayName("Losing Islands after resolution does not end control")
     void islandCountIsNotRecheckedAfterResolution() {
         addIslands(player1, 2);
         Permanent shackles = addReadyShackles(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
@@ -69,7 +104,7 @@ class VedalkenShacklesTest extends BaseCardTest {
     void untappingEndsControl() {
         addIslands(player1, 2);
         Permanent shackles = addReadyShackles(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
@@ -85,7 +120,7 @@ class VedalkenShacklesTest extends BaseCardTest {
     void sourceControllerChangeDoesNotEndControl() {
         addIslands(player1, 2);
         Permanent shackles = addReadyShackles(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
@@ -94,26 +129,40 @@ class VedalkenShacklesTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new MasterThief()));
-        harness.addMana(player2, ManaColor.BLUE, 4);
-        harness.castCreature(player2, 0, 0, shackles.getId());
+        harness.setHand(player2, List.of(new AvariceTotem()));
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        harness.castArtifact(player2, 0);
         harness.passBothPriorities();
+
+        Permanent totem = findPermanent(player2, "Avarice Totem");
+        harness.activateAbility(player2, battlefieldIndex(player2, totem), null, shackles.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(shackles);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
+    @Test
+    @DisplayName("Choosing not to untap Vedalken Shackles keeps control")
+    void choosingNotToUntapKeepsControl() {
+        addIslands(player1, 2);
+        Permanent shackles = addReadyShackles(player1);
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, shackles), null, target.getId());
+        harness.passBothPriorities();
+        advanceToNextTurnWithMayChoice(player2, false);
+
+        assertThat(shackles.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
     private Permanent addReadyShackles(Player player) {
         Permanent shackles = harness.addToBattlefieldAndReturn(player, new VedalkenShackles());
         shackles.setSummoningSick(false);
         return shackles;
-    }
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
     }
 
     private void addIslands(Player player, int count) {
@@ -128,13 +177,11 @@ class VedalkenShacklesTest extends BaseCardTest {
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

@@ -2,13 +2,16 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@CardUsed(DoublingCube.class)
 class DoublingCubeTest extends BaseCardTest {
 
     // ===== Mana ability resolves immediately (CR 605.1a, CR 605.3a) =====
@@ -47,6 +50,21 @@ class DoublingCubeTest extends BaseCardTest {
         // Total before: 5W + 2U + 1R = 8, cost is {3}, so 5 left, doubled = 10
         int totalMana = gd.playerManaPools.get(player1.getId()).getTotal();
         assertThat(totalMana).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Doubling Cube adds unrestricted mana for restricted mana that remains in the pool")
+    void addsUnrestrictedManaForRestrictedPoolMana() {
+        harness.addToBattlefield(player1, new DoublingCube());
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        pool.addArtifactOnlyMana(ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pool.getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(6);
     }
 
     @Test
