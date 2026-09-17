@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DruidsCall.class, HillGiant.class, LightningBolt.class, Shock.class, Swamp.class})
 class DruidsCallTest extends BaseCardTest {
 
     @Test
@@ -31,9 +34,7 @@ class DruidsCallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, giant.getId());
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         List<Permanent> squirrels = squirrelTokens(player2);
         assertThat(squirrels).hasSize(2);
@@ -59,9 +60,7 @@ class DruidsCallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, giant.getId());
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(squirrelTokens(player2)).hasSize(3);
         assertThat(squirrelTokens(player1)).isEmpty();
@@ -73,7 +72,7 @@ class DruidsCallTest extends BaseCardTest {
     @DisplayName("Druid's Call cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new HillGiant());
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.s.Swamp());
+        harness.addToBattlefield(player1, new Swamp());
         Permanent swamp = findPermanent(player1, "Swamp");
         harness.setHand(player1, List.of(new DruidsCall()));
         harness.addMana(player1, ManaColor.GREEN, 2);

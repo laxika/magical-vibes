@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BIG", collectorNumber = "6")
+@CardRegistration(set = "MAR", collectorNumber = "61")
 public class SimulacrumSynthesizer extends Card {
 
     public SimulacrumSynthesizer() {

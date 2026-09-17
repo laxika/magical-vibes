@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "159")
+@CardRegistration(set = "DBL", collectorNumber = "426")
 public class FrenziedDevils extends Card {
 
     public FrenziedDevils() {

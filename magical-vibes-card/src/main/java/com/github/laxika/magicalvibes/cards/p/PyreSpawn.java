@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "173")
+@CardRegistration(set = "DBL", collectorNumber = "440")
 public class PyreSpawn extends Card {
 
     public PyreSpawn() {

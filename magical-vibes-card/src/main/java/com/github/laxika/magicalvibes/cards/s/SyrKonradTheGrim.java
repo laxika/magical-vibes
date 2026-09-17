@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "107")
+@CardRegistration(set = "FCA", collectorNumber = "10")
 public class SyrKonradTheGrim extends Card {
 
     public SyrKonradTheGrim() {

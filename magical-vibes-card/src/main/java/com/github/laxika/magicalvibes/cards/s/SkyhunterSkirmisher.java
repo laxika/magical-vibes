@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "43")
 @CardRegistration(set = "5DN", collectorNumber = "16")
 @CardRegistration(set = "MM2", collectorNumber = "32")
+@CardRegistration(set = "MB1", collectorNumber = "232")
 public class SkyhunterSkirmisher extends Card {
 }

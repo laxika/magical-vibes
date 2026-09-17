@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "4")
+@CardRegistration(set = "MB2", collectorNumber = "4")
 public class ArchonOfEmeria extends Card {
 
     public ArchonOfEmeria() {

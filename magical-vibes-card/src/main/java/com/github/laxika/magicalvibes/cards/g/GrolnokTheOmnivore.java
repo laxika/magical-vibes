@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "VOW", collectorNumber = "238")
+@CardRegistration(set = "DBL", collectorNumber = "505")
 public class GrolnokTheOmnivore extends Card {
 
     public GrolnokTheOmnivore() {

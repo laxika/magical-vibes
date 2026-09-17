@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "140")
+@CardRegistration(set = "EOS", collectorNumber = "26")
+@CardRegistration(set = "EOS", collectorNumber = "71")
+@CardRegistration(set = "EOS", collectorNumber = "116")
+@CardRegistration(set = "EOS", collectorNumber = "161")
 public class MeteorCrater extends Card {
 
     public MeteorCrater() {

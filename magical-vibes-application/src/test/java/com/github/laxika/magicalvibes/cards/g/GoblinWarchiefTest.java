@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinWarchief.class, GoblinEliteInfantry.class, GrizzlyBears.class})
 class GoblinWarchiefTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -21,10 +23,7 @@ class GoblinWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Goblin Warchief puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new GoblinWarchief()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinWarchief(), "{1}{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -35,10 +34,7 @@ class GoblinWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Goblin Warchief onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new GoblinWarchief()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinWarchief(), "{1}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -48,12 +44,18 @@ class GoblinWarchiefTest extends BaseCardTest {
     // ===== Haste grant =====
 
     @Test
+    @DisplayName("Goblin Warchief itself has haste")
+    void grantsHasteToItself() {
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new GoblinWarchief());
+
+        assertThat(gqs.hasKeyword(gd, warchief, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Other own Goblin creatures have haste")
     void grantsHasteToOwnGoblins() {
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
         harness.addToBattlefield(player1, new GoblinWarchief());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
         // No power/toughness boost
@@ -64,10 +66,8 @@ class GoblinWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("Does not grant haste to non-Goblin creatures")
     void doesNotGrantHasteToNonGoblins() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GoblinWarchief());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
@@ -76,9 +76,7 @@ class GoblinWarchiefTest extends BaseCardTest {
     @DisplayName("Does not grant haste to opponent's Goblins")
     void doesNotGrantHasteToOpponentGoblins() {
         harness.addToBattlefield(player1, new GoblinWarchief());
-        harness.addToBattlefield(player2, new GoblinEliteInfantry());
-
-        Permanent opponentGoblin = findPermanent(player2, "Goblin Elite Infantry");
+        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
 
         assertThat(gqs.hasKeyword(gd, opponentGoblin, Keyword.HASTE)).isFalse();
     }
@@ -86,15 +84,12 @@ class GoblinWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("Haste is removed when Goblin Warchief leaves the battlefield")
     void hasteRemovedWhenWarchiefLeaves() {
-        harness.addToBattlefield(player1, new GoblinWarchief());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new GoblinWarchief());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Goblin Warchief"));
+        gd.playerBattlefields.get(player1.getId()).remove(warchief);
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isFalse();
     }

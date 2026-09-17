@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 
 @CardRegistration(set = "ANB", collectorNumber = "52")
+@CardRegistration(set = "MB2", collectorNumber = "1")
 public class MarduOutrider extends Card {
 
     public MarduOutrider() {

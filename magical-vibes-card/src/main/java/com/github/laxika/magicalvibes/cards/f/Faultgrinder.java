@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "163")
+@CardRegistration(set = "CMD", collectorNumber = "122")
 public class Faultgrinder extends Card {
 
     public Faultgrinder() {

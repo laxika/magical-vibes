@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "43")
+@CardRegistration(set = "AA4", collectorNumber = "12")
 public class BringerOfTheBlackDawn extends Card {
 
     public BringerOfTheBlackDawn() {

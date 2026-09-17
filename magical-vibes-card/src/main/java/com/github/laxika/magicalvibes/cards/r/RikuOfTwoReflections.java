@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "2XM", collectorNumber = "214")
+@CardRegistration(set = "CMD", collectorNumber = "220")
 public class RikuOfTwoReflections extends Card {
 
     public RikuOfTwoReflections() {

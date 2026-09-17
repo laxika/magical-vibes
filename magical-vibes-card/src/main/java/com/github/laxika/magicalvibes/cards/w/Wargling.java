@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "140")
+@CardRegistration(set = "HOC", collectorNumber = "140")
 public class Wargling extends Card {
 
     public Wargling() {

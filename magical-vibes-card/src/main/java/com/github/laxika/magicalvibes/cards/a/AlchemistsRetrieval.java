@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "47")
+@CardRegistration(set = "DBL", collectorNumber = "314")
 public class AlchemistsRetrieval extends Card {
 
     public AlchemistsRetrieval() {

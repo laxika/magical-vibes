@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,19 +22,18 @@ class AvenRedeemerTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents the next 2 damage to a target player")
     void preventsNextTwoDamageToPlayer() {
-        addRedeemerReady();
+        Permanent redeemer = addRedeemerReady();
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
+        assertThat(redeemer.isTapped()).isTrue();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -47,13 +47,45 @@ class AvenRedeemerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.assertOnBattlefield(player2, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Prevention applies only to the chosen target")
+    void preventsDamageOnlyToChosenTarget() {
+        addRedeemerReady();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevention shield expires at end of turn")
+    void preventionExpiresAtEndOfTurn() {
+        addRedeemerReady();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -66,7 +98,7 @@ class AvenRedeemerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void addRedeemerReady() {
-        addCreatureReady(player1, new AvenRedeemer());
+    private Permanent addRedeemerReady() {
+        return addCreatureReady(player1, new AvenRedeemer());
     }
 }

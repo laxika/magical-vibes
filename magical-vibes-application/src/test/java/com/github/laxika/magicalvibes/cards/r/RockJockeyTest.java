@@ -38,13 +38,11 @@ class RockJockeyTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents its controller from playing lands after being cast")
     void preventsLandPlayAfterBeingCast() {
-        harness.setHand(player1, List.of(new RockJockey(), new Mountain()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RockJockey(), "{2}{R}");
+        harness.setHand(player1, List.of(new Mountain()));
         harness.passBothPriorities();
 
         GameActionAvailabilityService availability = harness.getGameActionAvailabilityService();
@@ -57,13 +55,11 @@ class RockJockeyTest extends BaseCardTest {
     @Test
     @DisplayName("Its land-play restriction ends at the next turn")
     void landPlayRestrictionEndsAtNextTurn() {
-        harness.setHand(player1, List.of(new RockJockey(), new Mountain()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RockJockey(), "{2}{R}");
+        harness.setHand(player1, List.of(new Mountain()));
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.forceActivePlayer(player1);
@@ -72,5 +68,38 @@ class RockJockeyTest extends BaseCardTest {
 
         GameActionAvailabilityService availability = harness.getGameActionAvailabilityService();
         assertThat(availability.getPlayableCardIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("Doesn't restrict its opponent from playing lands")
+    void doesNotRestrictOpponentFromPlayingLands() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RockJockey(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Mountain()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        GameActionAvailabilityService availability = harness.getGameActionAvailabilityService();
+        assertThat(availability.getPlayableCardIndices(gd, player2.getId())).contains(0);
+        harness.playLand(player2, 0);
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Doesn't restrict land plays when it entered without being cast")
+    void doesNotRestrictLandPlayAfterEnteringWithoutBeingCast() {
+        harness.enterBattlefieldAndReturn(player1, new RockJockey());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        GameActionAvailabilityService availability = harness.getGameActionAvailabilityService();
+        assertThat(availability.getPlayableCardIndices(gd, player1.getId())).contains(0);
+        harness.playLand(player1, 0);
+        harness.assertOnBattlefield(player1, "Mountain");
     }
 }

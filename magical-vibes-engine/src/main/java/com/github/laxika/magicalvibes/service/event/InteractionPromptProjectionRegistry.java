@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -70,6 +72,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
         register(PendingInteraction.SpatialMergingCardOrder.class, this::projectSpatialMergingCardOrder);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
+        register(PendingInteraction.TargetPlayerHandOrderChoice.class,
+                this::projectTargetPlayerHandOrderChoice);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
@@ -167,6 +171,11 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
+        register(PendingInteraction.CommanderReplacementChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
+                "Put " + choice.move().card().getName() + " into the command zone instead of your " + choice.move().destination().name().toLowerCase() + "?", true, null));
+        register(PendingInteraction.CommanderReturnChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
+                "Return " + choice.card().getName() + " from " + choice.fromZone().name().toLowerCase() + " to the command zone?", true, null));
+        register(PendingInteraction.CommandZoneCardChoice.class, this::projectCommandZoneCardChoice);
         register(PendingInteraction.RemoveTimeCounterCostChoice.class,
                 this::projectRemoveTimeCounterCostChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
@@ -229,6 +238,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.ExchangeOutsideGameCardChoice.class,
+                this::projectExchangeOutsideGameCardChoice);
+        register(PendingInteraction.ExchangeOutsideGameHandChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
                 this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
@@ -315,8 +328,14 @@ public class InteractionPromptProjectionRegistry {
                             ? "Keep on top or put on the bottom of " + library + "."
                             : "Put cards on the top or bottom of " + library + ".";
         }
+        List<Integer> scrycastCardIndices = interaction.toGraveyard()
+                ? List.of()
+                : java.util.stream.IntStream.range(0, interaction.cards().size())
+                        .filter(i -> interaction.cards().get(i).getCastingOption(ScrycastCast.class).isPresent())
+                        .boxed()
+                        .toList();
         return InteractionPromptMessage.scryOrder(
-                cardViews(interaction.cards()), prompt, interaction.toGraveyard());
+                cardViews(interaction.cards()), prompt, interaction.toGraveyard(), scrycastCardIndices);
     }
 
     private InteractionPromptMessage projectHandTopBottomChoice(
@@ -338,6 +357,12 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectLibraryReorder(
             GameData gameData, PendingInteraction.LibraryReorder interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cards()), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectTargetPlayerHandOrderChoice(
+            GameData gameData, PendingInteraction.TargetPlayerHandOrderChoice interaction) {
         return InteractionPromptMessage.cardOrder(
                 cardViews(interaction.cards()), interaction.prompt());
     }
@@ -1027,8 +1052,11 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 interaction.maxCount() == 1
-                        ? "Choose an Aura to attach to " + interaction.sourceName() + "."
-                        : "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
+                        ? "Choose " + (interaction.includeEquipment() ? "an Aura or Equipment" : "an Aura")
+                        + " to attach to " + interaction.sourceName() + "."
+                        : "Choose any number of "
+                        + (interaction.includeEquipment() ? "Auras or Equipment" : "Auras")
+                        + " to attach to " + interaction.sourceName() + ".");
     }
 
     private InteractionPromptMessage projectReturnAurasFromGraveyardChoice(
@@ -1064,6 +1092,17 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose an exiled card named \"" + interaction.cardName()
                         + "\" to return to the battlefield.");
+    }
+
+    private InteractionPromptMessage projectCommandZoneCardChoice(
+            GameData gameData, PendingInteraction.CommandZoneCardChoice interaction) {
+        List<Card> commandZone = gameData.playerCommandZones
+                .getOrDefault(interaction.playerId(), List.of())
+                .stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(commandZone), 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectRemoveTimeCounterCostChoice(
@@ -1342,7 +1381,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.SearchOutsideGameOrExileCardChoice interaction) {
         List<CardView> cardViews = new ArrayList<>();
         addMatchingCardViews(cardViews,
-                gameData.playerSideboards.getOrDefault(interaction.playerId(), List.of()),
+                com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId()),
                 interaction.validCardIds());
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.stream()
@@ -1356,6 +1395,18 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may reveal a " + interaction.cardLabel()
                         + " from outside the game or choose one in face-up exile.");
+    }
+
+    private InteractionPromptMessage projectExchangeOutsideGameCardChoice(
+            GameData gameData, PendingInteraction.ExchangeOutsideGameCardChoice interaction) {
+        String cardDescription = CardPredicateUtils.describeFilter(interaction.filter());
+        if (!cardDescription.endsWith("card")) {
+            cardDescription += " card";
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
+                "You may reveal a " + cardDescription
+                        + " you own from outside the game to exchange with a card in your hand.");
     }
 
     private InteractionPromptMessage projectShuffleCardsFromOutsideGameChoice(

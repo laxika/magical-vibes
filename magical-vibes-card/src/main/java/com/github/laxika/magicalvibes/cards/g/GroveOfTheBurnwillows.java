@@ -16,6 +16,10 @@ import java.util.List;
 @CardRegistration(set = "V12", collectorNumber = "8")
 @CardRegistration(set = "IMA", collectorNumber = "238")
 @CardRegistration(set = "ZNE", collectorNumber = "25")
+@CardRegistration(set = "EOS", collectorNumber = "17")
+@CardRegistration(set = "EOS", collectorNumber = "62")
+@CardRegistration(set = "EOS", collectorNumber = "107")
+@CardRegistration(set = "EOS", collectorNumber = "152")
 public class GroveOfTheBurnwillows extends Card {
 
     public GroveOfTheBurnwillows() {

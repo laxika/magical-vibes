@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "252")
+@CardRegistration(set = "DBL", collectorNumber = "519")
 public class BloodServitor extends Card {
 
     public BloodServitor() {

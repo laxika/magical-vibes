@@ -4,5 +4,6 @@ package com.github.laxika.magicalvibes.model;
 public enum LibrarySearchPlayer {
     CONTROLLER,
     ACTIVE_PLAYER,
-    TRIGGERING_PERMANENT_CONTROLLER
+    TRIGGERING_PERMANENT_CONTROLLER,
+    TARGET_PLAYER
 }

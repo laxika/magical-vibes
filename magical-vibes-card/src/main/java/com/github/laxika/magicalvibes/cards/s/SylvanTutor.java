@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "188")
+@CardRegistration(set = "SPG", collectorNumber = "59")
 public class SylvanTutor extends Card {
 
     public SylvanTutor() {

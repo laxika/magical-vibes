@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "142")
 @CardRegistration(set = "DDG", collectorNumber = "66")
+@CardRegistration(set = "CMD", collectorNumber = "131")
 public class PunishingFire extends Card {
 
     public PunishingFire() {

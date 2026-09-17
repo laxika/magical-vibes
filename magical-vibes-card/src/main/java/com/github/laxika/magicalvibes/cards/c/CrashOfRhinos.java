@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "MIR", collectorNumber = "210")
 @CardRegistration(set = "BTD", collectorNumber = "51")
+@CardRegistration(set = "AA4", collectorNumber = "22")
 public class CrashOfRhinos extends Card {
 }

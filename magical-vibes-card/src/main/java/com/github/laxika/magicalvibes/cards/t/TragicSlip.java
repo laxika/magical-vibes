@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "INR", collectorNumber = "134")
 @CardRegistration(set = "INR", collectorNumber = "390")
 @CardRegistration(set = "SIS", collectorNumber = "35")
+@CardRegistration(set = "SPG", collectorNumber = "22")
+@CardRegistration(set = "SLZ", collectorNumber = "50")
+@CardRegistration(set = "SLZ", collectorNumber = "171")
+@CardRegistration(set = "SLZ", collectorNumber = "292")
 public class TragicSlip extends Card {
 
     public TragicSlip() {

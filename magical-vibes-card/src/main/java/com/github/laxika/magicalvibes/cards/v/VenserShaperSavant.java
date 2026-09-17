@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MM3", collectorNumber = "55")
 @CardRegistration(set = "2X2", collectorNumber = "66")
 @CardRegistration(set = "TSR", collectorNumber = "96")
+@CardRegistration(set = "FCA", collectorNumber = "6")
 public class VenserShaperSavant extends Card {
 
     public VenserShaperSavant() {

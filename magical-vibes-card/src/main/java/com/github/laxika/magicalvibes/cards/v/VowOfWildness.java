@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "E02", collectorNumber = "37")
 @CardRegistration(set = "GN3", collectorNumber = "111")
+@CardRegistration(set = "CMD", collectorNumber = "178")
 public class VowOfWildness extends Card {
 
     public VowOfWildness() {

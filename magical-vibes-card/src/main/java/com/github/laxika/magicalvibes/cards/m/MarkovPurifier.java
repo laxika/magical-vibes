@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "241")
+@CardRegistration(set = "DBL", collectorNumber = "508")
 public class MarkovPurifier extends Card {
 
     public MarkovPurifier() {

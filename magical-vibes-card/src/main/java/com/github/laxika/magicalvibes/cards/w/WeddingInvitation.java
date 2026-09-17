@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "260")
+@CardRegistration(set = "DBL", collectorNumber = "527")
 public class WeddingInvitation extends Card {
 
     public WeddingInvitation() {

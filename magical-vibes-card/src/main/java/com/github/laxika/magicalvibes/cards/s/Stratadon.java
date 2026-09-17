@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "PLS", collectorNumber = "135")
+@CardRegistration(set = "AA4", collectorNumber = "28")
 public class Stratadon extends Card {
 
     public Stratadon() {

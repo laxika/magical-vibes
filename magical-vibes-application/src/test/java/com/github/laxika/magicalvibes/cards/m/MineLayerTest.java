@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MineLayer.class, Mountain.class, Forest.class, GrizzlyBears.class, DoomBlade.class})
 class MineLayerTest extends BaseCardTest {
 
     @Test
@@ -51,10 +53,24 @@ class MineLayerTest extends BaseCardTest {
         land.setCounterCount(CounterType.MINE, 1);
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Tapping an allied land with a mine counter destroys it")
+    void tappingAlliedMinedLandDestroysIt() {
+        addReadyMineLayer();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.setCounterCount(CounterType.MINE, 1);
+
+        harness.tapPermanent(player1, 1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -64,7 +80,7 @@ class MineLayerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Mountain");
     }
@@ -85,7 +101,7 @@ class MineLayerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, mineLayer.getId());
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(ownLand.getCounterCount(CounterType.MINE)).isZero();
         assertThat(opposingLand.getCounterCount(CounterType.MINE)).isZero();
@@ -98,9 +114,4 @@ class MineLayerTest extends BaseCardTest {
         return mineLayer;
     }
 
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
-    }
 }

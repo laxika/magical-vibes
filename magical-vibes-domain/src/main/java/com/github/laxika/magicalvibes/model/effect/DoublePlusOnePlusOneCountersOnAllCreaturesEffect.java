@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /** Primal Vigor's global replacement for +1/+1 counters put on creatures. */
-public record DoublePlusOnePlusOneCountersOnAllCreaturesEffect() implements CounterReplacementEffect {
+public record DoublePlusOnePlusOneCountersOnAllCreaturesEffect() implements CounterReplacementEffect, DoublingEffect {
 
     @Override
     public int replace(CounterType counterType, int count) {

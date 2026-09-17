@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ZNE", collectorNumber = "19")
+@CardRegistration(set = "TMC", collectorNumber = "75")
 public class SpireGarden extends Card {
 
     public SpireGarden() {

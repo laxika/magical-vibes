@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "70")
+@CardRegistration(set = "DBL", collectorNumber = "70")
 public class PhantomCarriage extends Card {
 
     public PhantomCarriage() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOB", collectorNumber = "123")
+@CardRegistration(set = "HOC", collectorNumber = "123")
 public class DancingFromDarkToDawn extends Card {
 
     public DancingFromDarkToDawn() {

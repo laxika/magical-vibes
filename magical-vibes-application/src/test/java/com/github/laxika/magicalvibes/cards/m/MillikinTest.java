@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,15 +13,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Millikin.class)
 class MillikinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability taps, mills 1 card, and adds {C}")
     void activateAbilityMillsAndAddsColorless() {
-        harness.addToBattlefield(player1, new Millikin());
-        GameData gd = harness.getGameData();
-        Permanent millikin = gd.playerBattlefields.get(player1.getId()).getFirst();
-        millikin.setSummoningSick(false);
+        Permanent millikin = addCreatureReady(player1, new Millikin());
 
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
         int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
@@ -44,10 +42,7 @@ class MillikinTest extends BaseCardTest {
     @Test
     @DisplayName("The milled card goes to the graveyard")
     void milledCardGoesToGraveyard() {
-        harness.addToBattlefield(player1, new Millikin());
-        GameData gd = harness.getGameData();
-        Permanent millikin = gd.playerBattlefields.get(player1.getId()).getFirst();
-        millikin.setSummoningSick(false);
+        Permanent millikin = addCreatureReady(player1, new Millikin());
 
         Card topCard = gd.playerDecks.get(player1.getId()).getFirst();
 
@@ -70,10 +65,7 @@ class MillikinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new Millikin());
-        GameData gd = harness.getGameData();
-        Permanent millikin = gd.playerBattlefields.get(player1.getId()).getFirst();
-        millikin.setSummoningSick(false);
+        Permanent millikin = addCreatureReady(player1, new Millikin());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -85,11 +77,8 @@ class MillikinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with empty library")
     void cannotActivateWithEmptyLibrary() {
-        harness.addToBattlefield(player1, new Millikin());
-        GameData gd = harness.getGameData();
-        Permanent millikin = gd.playerBattlefields.get(player1.getId()).getFirst();
-        millikin.setSummoningSick(false);
-        gd.playerDecks.get(player1.getId()).clear();
+        addCreatureReady(player1, new Millikin());
+        harness.setLibrary(player1, List.of());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

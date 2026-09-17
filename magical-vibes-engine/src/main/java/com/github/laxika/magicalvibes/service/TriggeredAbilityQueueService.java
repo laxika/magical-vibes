@@ -1364,7 +1364,21 @@ public class TriggeredAbilityQueueService {
             }
 
             List<UUID> validPlayerTargets;
-            if (pending.playerTargetOnly()) {
+            if (pending.nonTargeting()) {
+                if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                    validPlayerTargets = gameData.orderedPlayerIds.stream()
+                            .filter(id -> targetLegalityService.matchesPlayerPredicate(
+                                    gameData, pending.controllerId(), id, anyFilter.playerPredicate()))
+                            .toList();
+                } else if (pending.targetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
+                    validPlayerTargets = gameData.orderedPlayerIds.stream()
+                            .filter(id -> targetLegalityService.matchesPlayerPredicate(
+                                    gameData, pending.controllerId(), id, playerFilter.predicate()))
+                            .toList();
+                } else {
+                    validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+                }
+            } else if (pending.playerTargetOnly()) {
                 // Player-only triggers (e.g. Abundant Maw "target opponent") honour PlayerPredicateTargetFilter.
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
                         gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
@@ -1946,6 +1960,10 @@ public class TriggeredAbilityQueueService {
                             ? Integer.MAX_VALUE : targetEffect.maxTargets();
                     minTargets = 0;
                     scope = targetEffect.source();
+                    break;
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    filter = effect.targetSpec().graveyardCardPredicate().orElse(null);
+                    scope = effect.targetSpec().graveyardScope().orElse(scope);
                     break;
                 }
             }

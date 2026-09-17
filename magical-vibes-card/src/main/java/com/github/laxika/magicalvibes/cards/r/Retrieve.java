@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "215")
+@CardRegistration(set = "DBL", collectorNumber = "482")
 public class Retrieve extends Card {
 
     public Retrieve() {

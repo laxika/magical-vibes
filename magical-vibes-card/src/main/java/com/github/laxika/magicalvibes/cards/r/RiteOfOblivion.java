@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "237")
+@CardRegistration(set = "DBL", collectorNumber = "237")
 public class RiteOfOblivion extends Card {
 
     public RiteOfOblivion() {

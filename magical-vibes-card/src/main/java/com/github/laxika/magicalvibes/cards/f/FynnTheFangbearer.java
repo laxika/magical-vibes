@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "MUL", collectorNumber = "26")
 @CardRegistration(set = "MUL", collectorNumber = "91")
 @CardRegistration(set = "MUL", collectorNumber = "156")
+@CardRegistration(set = "FCA", collectorNumber = "46")
 public class FynnTheFangbearer extends Card {
 
     public FynnTheFangbearer() {

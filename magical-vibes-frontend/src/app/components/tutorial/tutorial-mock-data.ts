@@ -325,7 +325,8 @@ export const TUTORIAL_MOCK_GAME: Game = {
   graveyards: [[], []],
   revealedLibraryTopCards: [[], []],
   dayNight: 'NEITHER',
-  mindControlledPlayerId: null
+  mindControlledPlayerId: null,
+  monarchPlayerId: null
 };
 
 /** Index of the first untapped Forest in myBattlefield (for the tap-land interactive step). */

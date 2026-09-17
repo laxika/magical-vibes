@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "ME1", collectorNumber = "74")
+@CardRegistration(set = "ARN", collectorNumber = "29")
 public class JuzMDjinn extends Card {
 
     public JuzMDjinn() {

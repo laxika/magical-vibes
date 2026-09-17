@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayin
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "272")
+@CardRegistration(set = "AA3", collectorNumber = "24")
 public class ShelldockIsle extends Card {
 
     public ShelldockIsle() {

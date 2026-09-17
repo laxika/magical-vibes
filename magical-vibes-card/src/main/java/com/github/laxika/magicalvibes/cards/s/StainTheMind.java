@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZon
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "117")
+@CardRegistration(set = "PIO", collectorNumber = "339")
 public class StainTheMind extends Card {
 
     public StainTheMind() {

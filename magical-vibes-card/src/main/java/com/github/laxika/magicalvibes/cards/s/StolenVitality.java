@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "161")
+@CardRegistration(set = "DBL", collectorNumber = "161")
 public class StolenVitality extends Card {
 
     public StolenVitality() {

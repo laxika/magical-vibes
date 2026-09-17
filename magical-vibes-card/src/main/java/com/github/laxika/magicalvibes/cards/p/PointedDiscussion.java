@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "126")
+@CardRegistration(set = "DBL", collectorNumber = "393")
 public class PointedDiscussion extends Card {
 
     public PointedDiscussion() {

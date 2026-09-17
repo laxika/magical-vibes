@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "152")
+@CardRegistration(set = "HOC", collectorNumber = "152")
 public class DInsCompany extends Card {
 
     public DInsCompany() {

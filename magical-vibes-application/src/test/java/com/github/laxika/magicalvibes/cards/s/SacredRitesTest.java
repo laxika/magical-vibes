@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeafDancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SacredRites.class, LeafDancer.class})
 class SacredRitesTest extends BaseCardTest {
 
     @Test
@@ -20,7 +22,7 @@ class SacredRitesTest extends BaseCardTest {
         Permanent first = addCreature(player1);
         Permanent second = addCreature(player1);
         Permanent opponentCreature = addCreature(player2);
-        harness.setHand(player1, List.of(new SacredRites(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SacredRites(), new LeafDancer(), new LeafDancer(), new LeafDancer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0);
@@ -40,7 +42,7 @@ class SacredRitesTest extends BaseCardTest {
     @DisplayName("Choosing zero cards leaves creatures unchanged")
     void canDiscardZeroCards() {
         Permanent creature = addCreature(player1);
-        harness.setHand(player1, List.of(new SacredRites(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SacredRites(), new LeafDancer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0);
@@ -56,7 +58,7 @@ class SacredRitesTest extends BaseCardTest {
     @DisplayName("The toughness boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent creature = addCreature(player1);
-        harness.setHand(player1, List.of(new SacredRites(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SacredRites(), new LeafDancer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0);
@@ -74,6 +76,6 @@ class SacredRitesTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new LeafDancer());
     }
 }

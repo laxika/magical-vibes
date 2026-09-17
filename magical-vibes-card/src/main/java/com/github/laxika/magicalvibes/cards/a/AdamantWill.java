@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "DOM", collectorNumber = "2")
 @CardRegistration(set = "VOW", collectorNumber = "1")
 @CardRegistration(set = "FDN", collectorNumber = "488")
+@CardRegistration(set = "DBL", collectorNumber = "268")
 public class AdamantWill extends Card {
 
     public AdamantWill() {

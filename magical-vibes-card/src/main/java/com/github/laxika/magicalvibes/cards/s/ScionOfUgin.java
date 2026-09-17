@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "DTK", collectorNumber = "1")
 @CardRegistration(set = "IMA", collectorNumber = "1")
+@CardRegistration(set = "PIO", collectorNumber = "2")
 public class ScionOfUgin extends Card {
 }

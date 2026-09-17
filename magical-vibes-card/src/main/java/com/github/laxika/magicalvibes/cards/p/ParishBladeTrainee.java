@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "29")
+@CardRegistration(set = "DBL", collectorNumber = "296")
 public class ParishBladeTrainee extends Card {
 
     public ParishBladeTrainee() {

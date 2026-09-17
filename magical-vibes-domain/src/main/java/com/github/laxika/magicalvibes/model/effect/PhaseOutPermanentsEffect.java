@@ -14,8 +14,25 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Mass sibling of {@link PhaseOutEffect}, which phases out one named permanent.
  *
  * @param filter which permanents phase out
- * @param controllerOnly true to consider only the source controller's battlefield
+ * @param scope which battlefield(s) to consider
  */
-public record PhaseOutPermanentsEffect(PermanentPredicate filter, boolean controllerOnly)
+public record PhaseOutPermanentsEffect(PermanentPredicate filter, PhaseOutScope scope)
         implements CardEffect {
+
+    /** Compatibility constructor for the original controller/all scopes. */
+    public PhaseOutPermanentsEffect(PermanentPredicate filter, boolean controllerOnly) {
+        this(filter, controllerOnly ? PhaseOutScope.CONTROLLER : PhaseOutScope.ALL);
+    }
+
+    /** "Each creature target player controls phases out." */
+    public static PhaseOutPermanentsEffect targetPlayer(PermanentPredicate filter) {
+        return new PhaseOutPermanentsEffect(filter, PhaseOutScope.TARGET_PLAYER);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return scope == PhaseOutScope.TARGET_PLAYER
+                ? TargetSpec.harmful(TargetPredicates.player())
+                : TargetSpec.NONE;
+    }
 }

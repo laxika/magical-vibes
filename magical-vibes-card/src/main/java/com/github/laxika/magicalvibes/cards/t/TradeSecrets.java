@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "118")
+@CardRegistration(set = "CMD", collectorNumber = "64")
 public class TradeSecrets extends Card {
 
     public TradeSecrets() {

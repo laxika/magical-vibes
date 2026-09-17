@@ -47,8 +47,8 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
@@ -125,8 +125,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
@@ -448,6 +450,26 @@ class PredicateEvaluationServiceTest {
                     .isTrue();
             assertThat(evaluator.matchesCardPredicate(equalToPower, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueLessThanSourceCountersPredicate is strict")
+        void cardManaValueLessThanSourceCountersPredicateIsStrict() {
+            Card sourceCard = createCreature("Underdark Beholder", 6, 6, CardColor.BLACK);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setCounterCount(CounterType.EYEBALL, 3);
+
+            Card belowCounters = createCreature("Below Counters", 2, 2, CardColor.BLUE);
+            belowCounters.setManaCost("{2}");
+            Card equalToCounters = createCreature("Equal to Counters", 3, 3, CardColor.BLUE);
+            equalToCounters.setManaCost("{3}");
+            CardManaValueLessThanSourceCountersPredicate predicate =
+                    new CardManaValueLessThanSourceCountersPredicate(CounterType.EYEBALL);
+
+            assertThat(evaluator.matchesCardPredicate(
+                    belowCounters, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(
+                    equalToCounters, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
         }
 
         @Test
@@ -1499,6 +1521,34 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentPowerToughnessTotalAtMostPredicate uses effective power and toughness")
+        void powerToughnessTotalAtMostPredicateUsesEffectiveStats() {
+            Permanent perm = addPermanent(player1Id, createCreature("Test Creature", 3, 2, CardColor.GREEN));
+            perm.setPowerModifier(1);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtMostPredicate(5))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtMostPredicate(6))).isTrue();
+        }
+
+        @Test
+        @DisplayName("Power and toughness total predicates use effective characteristics")
+        void powerToughnessTotalPredicatesUseEffectiveCharacteristics() {
+            Permanent perm = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtMostPredicate(4))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtLeastPredicate(4))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtMostPredicate(3))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentPowerToughnessTotalAtLeastPredicate(5))).isFalse();
         }
 
         @Test

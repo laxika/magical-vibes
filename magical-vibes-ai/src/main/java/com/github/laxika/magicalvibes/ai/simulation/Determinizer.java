@@ -27,6 +27,11 @@ public class Determinizer {
      */
     public GameData determinize(GameData gd, UUID aiPlayerId, Random rng) {
         GameData copy = gd.simulationCopy();
+        for (GameData frame : copy.session.frames()) randomizeFrame(frame, aiPlayerId, rng);
+        return copy;
+    }
+
+    private void randomizeFrame(GameData copy, UUID aiPlayerId, Random rng) {
 
         UUID opponentId = null;
         for (UUID id : copy.orderedPlayerIds) {
@@ -35,7 +40,7 @@ public class Determinizer {
                 break;
             }
         }
-        if (opponentId == null) return copy;
+        if (opponentId == null) return;
 
         // Collect all cards the AI cannot see
         List<Card> unknownPool = new ArrayList<>();
@@ -76,6 +81,6 @@ public class Determinizer {
             oppDeck.addAll(unknownPool);
         }
 
-        return copy;
+
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "119")
 @CardRegistration(set = "WOT", collectorNumber = "41")
+@CardRegistration(set = "PIO", collectorNumber = "131")
 public class DragonMantle extends Card {
 
     public DragonMantle() {

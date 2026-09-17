@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "263")
+@CardRegistration(set = "SPG", collectorNumber = "148")
+@CardRegistration(set = "C13", collectorNumber = "266")
 public class ThousandYearElixir extends Card {
 
     public ThousandYearElixir() {

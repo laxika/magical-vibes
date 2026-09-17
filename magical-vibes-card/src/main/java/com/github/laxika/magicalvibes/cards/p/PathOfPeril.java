@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "124")
+@CardRegistration(set = "DBL", collectorNumber = "391")
 public class PathOfPeril extends Card {
 
     public PathOfPeril() {

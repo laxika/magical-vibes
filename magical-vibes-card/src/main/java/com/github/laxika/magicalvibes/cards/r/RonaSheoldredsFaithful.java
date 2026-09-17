@@ -17,17 +17,16 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "58")
 @CardRegistration(set = "MUL", collectorNumber = "123")
 @CardRegistration(set = "MUL", collectorNumber = "188")
+@CardRegistration(set = "DMU", collectorNumber = "216")
 public class RonaSheoldredsFaithful extends Card {
 
     public RonaSheoldredsFaithful() {
-        CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
-                new CardTypePredicate(CardType.INSTANT),
-                new CardTypePredicate(CardType.SORCERY)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                instantOrSorcery,
+                new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT),
+                        new CardTypePredicate(CardType.SORCERY))),
                 List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT))));
-        addCastingOption(new GraveyardCast(List.of(
-                new DiscardCardCastingCost(),
-                new DiscardCardCastingCost())));
+
+        addCastingOption(new GraveyardCast(List.of(new DiscardCardCastingCost(null, null, 2))));
     }
 }

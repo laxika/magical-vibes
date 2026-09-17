@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawOnCreatureSpellCastThisTu
 
 @CardRegistration(set = "CHK", collectorNumber = "210")
 @CardRegistration(set = "SLC", collectorNumber = "2004")
+@CardRegistration(set = "SOA", collectorNumber = "53")
 public class GlimpseOfNature extends Card {
 
     public GlimpseOfNature() {

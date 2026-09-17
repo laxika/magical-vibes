@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "123")
 @CardRegistration(set = "DMR", collectorNumber = "217")
+@CardRegistration(set = "C13", collectorNumber = "240")
 public class Crawlspace extends Card {
 
     public Crawlspace() {

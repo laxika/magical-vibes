@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "226")
+@CardRegistration(set = "SLZ", collectorNumber = "107")
+@CardRegistration(set = "SLZ", collectorNumber = "228")
+@CardRegistration(set = "SLZ", collectorNumber = "349")
 public class MoxTantalite extends Card {
 
     public MoxTantalite() {

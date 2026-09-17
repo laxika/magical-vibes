@@ -68,6 +68,21 @@ class DecreeOfSilenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cycling with no spell to counter still draws")
+    void cyclingWithNoSpellToCounterStillDraws() {
+        harness.setHand(player1, List.of(new DecreeOfSilence()));
+        harness.setLibrary(player1, List.of(new SerraAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Decree of Silence");
+        harness.assertInHand(player1, "Serra Angel");
+    }
+
+    @Test
     @DisplayName("Cycling may counter a spell and still draws")
     void cyclingMayCounterSpellAndStillDraws() {
         Shock shock = new Shock();
@@ -90,6 +105,27 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player1, "Decree of Silence");
         harness.assertInHand(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Cycling's accepted counter prevents the target spell from resolving")
+    void cyclingCounterPreventsTargetSpellFromResolving() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(new DecreeOfSilence()));
+        harness.setLibrary(player1, List.of(new SerraAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.activateHandAbility(player1, 0, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
     }
 
     @Test

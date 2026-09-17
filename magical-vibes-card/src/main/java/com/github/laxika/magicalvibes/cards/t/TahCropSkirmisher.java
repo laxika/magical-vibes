@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "72")
+@CardRegistration(set = "PIO", collectorNumber = "76")
 public class TahCropSkirmisher extends Card {
 
     public TahCropSkirmisher() {

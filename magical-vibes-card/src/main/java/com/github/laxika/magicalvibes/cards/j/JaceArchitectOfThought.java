@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "44")
 @CardRegistration(set = "DDM", collectorNumber = "1")
+@CardRegistration(set = "PIO", collectorNumber = "329")
 public class JaceArchitectOfThought extends Card {
 
     public JaceArchitectOfThought() {

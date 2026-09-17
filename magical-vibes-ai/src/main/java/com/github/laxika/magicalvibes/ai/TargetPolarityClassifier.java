@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
@@ -299,6 +300,12 @@ public class TargetPolarityClassifier {
         }
 
         // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction.
+        if (effect instanceof PutCountersOnTargetPermanentThenReflexiveEffect counter) {
+            // The reflexive ability chooses its own target later; only the initial counters
+            // determine which permanent should be targeted now.
+            return classify(gameData, new PutCounterOnTargetPermanentEffect(
+                    counter.counterType(), counter.count()), aiPlayerId);
+        }
         if (effect instanceof PutCounterOnTargetPermanentEffect counter) {
             if (counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.HARMFUL;
@@ -431,11 +438,13 @@ public class TargetPolarityClassifier {
             entry("DealDamageEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToOtherCreaturesControlledByTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("DealDamageToTargetCreaturesThenCreateTokensEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetControllerIfTargetHasKeywordEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("FlipUntilLoseOrStopEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("WhammyBurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             // Divine Deflection prevents damage to its controller, but the target is who the
             // prevented damage is then dealt to.
@@ -465,6 +474,7 @@ public class TargetPolarityClassifier {
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),
+            entry("GainControlOfTargetUntilRansomEffect", TargetPolarity.HARMFUL),
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
@@ -526,6 +536,9 @@ public class TargetPolarityClassifier {
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
+            entry("ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantFlyingToTargetCreatureOrPlayerEffect", TargetPolarity.BENEFICIAL),
+            entry("MakeTargetCreatureCommanderEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             // Chandra's Ignition: the target is a creature you control and is only the damage

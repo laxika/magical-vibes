@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 
 @CardRegistration(set = "MMQ", collectorNumber = "116")
+@CardRegistration(set = "MB1", collectorNumber = "98")
 public class BlackMarket extends Card {
 
     public BlackMarket() {

@@ -24,9 +24,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MB2", collectorNumber = "13")
 @CardRegistration(set = "MUL", collectorNumber = "4")
 @CardRegistration(set = "MUL", collectorNumber = "69")
 @CardRegistration(set = "MUL", collectorNumber = "134")
+@CardRegistration(set = "FCA", collectorNumber = "23")
 public class KenrithTheReturnedKing extends Card {
 
     public KenrithTheReturnedKing() {

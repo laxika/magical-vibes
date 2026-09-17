@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "ZEN", collectorNumber = "169")
 @CardRegistration(set = "DDM", collectorNumber = "60")
+@CardRegistration(set = "C13", collectorNumber = "156")
 public class MoldShambler extends Card {
 
     public MoldShambler() {

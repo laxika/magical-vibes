@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrCreatureOnTop
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "72")
+@CardRegistration(set = "DBL", collectorNumber = "72")
 public class RevengeOfTheDrowned extends Card {
 
     public RevengeOfTheDrowned() {

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "225")
+@CardRegistration(set = "DBL", collectorNumber = "225")
 public class GhoulcallersHarvest extends Card {
 
     public GhoulcallersHarvest() {

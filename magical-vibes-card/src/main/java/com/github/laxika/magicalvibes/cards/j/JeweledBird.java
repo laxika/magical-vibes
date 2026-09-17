@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.JeweledBirdAnteEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "102")
+@CardRegistration(set = "ARN", collectorNumber = "66")
 public class JeweledBird extends Card {
 
     public JeweledBird() {

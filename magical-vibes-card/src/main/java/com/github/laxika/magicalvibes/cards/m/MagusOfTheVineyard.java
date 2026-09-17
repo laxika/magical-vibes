@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToActivePlayerEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "132")
+@CardRegistration(set = "CMD", collectorNumber = "166")
 public class MagusOfTheVineyard extends Card {
 
     public MagusOfTheVineyard() {

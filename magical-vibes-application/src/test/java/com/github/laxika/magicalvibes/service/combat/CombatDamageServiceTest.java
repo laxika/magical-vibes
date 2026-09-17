@@ -286,6 +286,9 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyChannelHarmPrevention(
                         eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyComeuppancePrevention(
+                        eq(gameData), any(), anyInt(), any(), any(), any(), anyBoolean()))
+                .thenAnswer(inv -> inv.getArgument(2));
         lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
                         eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
@@ -1157,6 +1160,23 @@ class CombatDamageServiceTest {
                     gameData, player2, 0, Map.of()))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Only the active player");
+        }
+
+        @Test
+        @DisplayName("Rejects negative assignments even when the total equals the creature's power")
+        void rejectsNegativeAssignmentWithCorrectTotal() {
+            Permanent blocker1 = setupPendingAssignment();
+            Permanent blocker2 = gameData.playerBattlefields.get(player2Id).get(1);
+            when(gameQueryService.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+            when(gameQueryService.getEffectiveCombatDamage(eq(gameData), any(Permanent.class)))
+                    .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getPower());
+            int power = gameData.playerBattlefields.get(player1Id).getFirst().getCard().getPower();
+
+            assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
+                    gameData, player1, 0, Map.of(blocker1.getId(), power + 1, blocker2.getId(), -1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("negative");
+            assertThat(gameData.combatDamagePlayerAssignments).isEmpty();
         }
 
         @Test

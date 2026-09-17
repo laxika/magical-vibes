@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "INR", collectorNumber = "32")
 @CardRegistration(set = "INR", collectorNumber = "450")
 @CardRegistration(set = "MID", collectorNumber = "27")
+@CardRegistration(set = "DBL", collectorNumber = "27")
 public class LunarchVeteran extends Card {
 
     public LunarchVeteran() {

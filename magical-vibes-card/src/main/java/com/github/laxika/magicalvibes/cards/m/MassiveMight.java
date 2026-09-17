@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "208")
+@CardRegistration(set = "DBL", collectorNumber = "475")
 public class MassiveMight extends Card {
 
     public MassiveMight() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "61")
+@CardRegistration(set = "CMD", collectorNumber = "91")
 public class NemesisTrap extends Card {
 
     public NemesisTrap() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "236")
+@CardRegistration(set = "PZA", collectorNumber = "17")
 public class Shadowspear extends Card {
 
     public Shadowspear() {

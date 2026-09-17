@@ -8,5 +8,5 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Used by Curse of Bloodletting. Multiple instances stack multiplicatively.
  */
-public record DoubleDamageToEnchantedPlayerEffect() implements CardEffect {
+public record DoubleDamageToEnchantedPlayerEffect() implements CardEffect, DoublingEffect {
 }

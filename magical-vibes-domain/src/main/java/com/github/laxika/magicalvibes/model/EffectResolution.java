@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -95,6 +96,46 @@ public final class EffectResolution {
             collectConditionalTargetingEffects(effect, expanded);
         }
         return List.copyOf(expanded);
+    }
+
+    /**
+     * Selects spell-effect branches whose condition depends only on whether the spell was cast for
+     * an alternate cost. This choice is made during casting, before targets are announced, so
+     * specialized target selectors (such as graveyard card choices) see only the branch that will
+     * resolve.
+     */
+    public static List<CardEffect> resolveAlternateCostEffects(List<CardEffect> rawEffects,
+                                                                 boolean alternateCost) {
+        List<CardEffect> resolved = new ArrayList<>(rawEffects.size());
+        for (CardEffect effect : rawEffects) {
+            if (effect instanceof ConditionalReplacementEffect replacement) {
+                Boolean conditionResult = alternateCostConditionResult(replacement.condition(), alternateCost);
+                if (conditionResult != null) {
+                    resolved.add(conditionResult ? replacement.upgradedEffect() : replacement.baseEffect());
+                    continue;
+                }
+            } else if (effect instanceof ConditionalEffect conditional) {
+                Boolean conditionResult = alternateCostConditionResult(conditional.condition(), alternateCost);
+                if (conditionResult != null) {
+                    if (conditionResult) {
+                        resolved.add(conditional.wrapped());
+                    }
+                    continue;
+                }
+            }
+            resolved.add(effect);
+        }
+        return resolved;
+    }
+
+    private static Boolean alternateCostConditionResult(Condition condition, boolean alternateCost) {
+        if (condition instanceof CastForAlternateCost) {
+            return alternateCost;
+        }
+        if (condition instanceof NotCondition not && not.inner() instanceof CastForAlternateCost) {
+            return !alternateCost;
+        }
+        return null;
     }
 
     private static void collectConditionalTargetingEffects(CardEffect effect, List<CardEffect> expanded) {
@@ -606,6 +647,14 @@ public final class EffectResolution {
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {
+        if (e == null) {
+            return;
+        }
+        if (e instanceof ConditionalReplacementEffect replacement) {
+            collectTargetTypes(replacement.baseEffect(), out);
+            collectTargetTypes(replacement.upgradedEffect(), out);
+            return;
+        }
         TargetSpec spec = e.targetSpec();
         if (spec.admits(TargetPredicate.Kind.PLAYER)) out.add(TargetType.PLAYER);
         if (spec.admits(TargetPredicate.Kind.PERMANENT)) out.add(TargetType.PERMANENT);

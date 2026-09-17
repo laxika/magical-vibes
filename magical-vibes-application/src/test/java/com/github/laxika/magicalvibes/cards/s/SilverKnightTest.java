@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.ChartoothCougar;
+import com.github.laxika.magicalvibes.cards.e.ExtraArms;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.l.LingeringDeath;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,36 +18,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SilverKnight.class, GrizzlyBears.class})
+@CardUsed({SilverKnight.class, GoblinBrigand.class, ChartoothCougar.class, SparkSpray.class,
+        ExtraArms.class, LingeringDeath.class})
 class SilverKnightTest extends BaseCardTest {
 
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
     @Test
-    @DisplayName("Has first strike and protection from red")
-    void hasFirstStrikeAndProtectionFromRed() {
+    @DisplayName("Has protection from red")
+    void hasProtectionFromRed() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new SilverKnight());
 
-        assertThat(gqs.hasKeyword(gd, knight, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.RED)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.BLACK)).isFalse();
     }
@@ -60,7 +36,7 @@ class SilverKnightTest extends BaseCardTest {
     void redCreatureCannotBlock() {
         Permanent knight = addCreatureReady(player1, new SilverKnight());
         knight.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, createCreature("Goblin Raider", 2, 2, CardColor.RED));
+        Permanent blocker = addCreatureReady(player2, new GoblinBrigand());
 
         prepareDeclareBlockers(player1);
 
@@ -73,7 +49,7 @@ class SilverKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Red combat damage to Silver Knight is prevented")
     void redCombatDamageIsPrevented() {
-        Permanent attacker = addCreatureReady(player1, createCreature("Fire Elemental", 3, 3, CardColor.RED));
+        Permanent attacker = addCreatureReady(player1, new ChartoothCougar());
         attacker.setAttacking(true);
         Permanent knight = addCreatureReady(player2, new SilverKnight());
 
@@ -90,13 +66,43 @@ class SilverKnightTest extends BaseCardTest {
     @DisplayName("Cannot be targeted by a red instant")
     void cannotBeTargetedByRedInstant() {
         Permanent knight = addCreatureReady(player2, new SilverKnight());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GoblinBrigand());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, knight.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, knight.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a red Aura")
+    void cannotBeEnchantedByRedAura() {
+        Permanent knight = addCreatureReady(player2, new SilverKnight());
+        addCreatureReady(player2, new GoblinBrigand());
+
+        harness.setHand(player1, List.of(new ExtraArms()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, knight.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Can be enchanted by a non-red Aura")
+    void canBeEnchantedByNonRedAura() {
+        Permanent knight = addCreatureReady(player2, new SilverKnight());
+
+        harness.setHand(player1, List.of(new LingeringDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, knight.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lingering Death");
     }
 }

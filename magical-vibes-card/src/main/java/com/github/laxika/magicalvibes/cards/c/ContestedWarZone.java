@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "144")
+@CardRegistration(set = "EOS", collectorNumber = "8")
+@CardRegistration(set = "EOS", collectorNumber = "53")
+@CardRegistration(set = "EOS", collectorNumber = "98")
+@CardRegistration(set = "EOS", collectorNumber = "143")
 public class ContestedWarZone extends Card {
 
     public ContestedWarZone() {

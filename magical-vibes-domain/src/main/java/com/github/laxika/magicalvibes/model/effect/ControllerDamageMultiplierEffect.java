@@ -16,4 +16,9 @@ public record ControllerDamageMultiplierEffect(
     public int damageMultiplier() {
         return multiplier;
     }
+
+    @Override
+    public boolean isDoublingEffect() {
+        return multiplier == 2;
+    }
 }

@@ -22,7 +22,7 @@ public class KederektParasite extends Card {
         addEffect(EffectSlot.ON_OPPONENT_DRAWS, new ConditionalEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.RED))),
                 new MayEffect(
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER),
                         "Have Kederekt Parasite deal 1 damage to that player?"
                 )));
     }

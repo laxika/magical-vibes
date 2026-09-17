@@ -364,6 +364,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 if (!gameData.stack.isEmpty()) {
                     stackResolutionService.resolveTopOfStack(gameData);
+                    if (gameData.waitingForSubgame) return;
                 } else {
                     turnProgressionService.advanceStep(gameData);
                 }
@@ -1339,6 +1340,25 @@ public class GameService {
         }
     }
 
+    /** Casts a face-down spellmorph card from the battlefield. */
+    public void playCardWithSpellmorph(GameData gameData, Player player, int permanentIndex,
+                                       Integer xValue, UUID targetId, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithSpellmorph(gameData, actionPlayer, permanentIndex, xValue,
+                        targetId, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            spellCastingService.playCardWithSpellmorph(gameData, player, battlefield.get(permanentIndex),
+                    xValue, targetId, targetIds != null ? targetIds : List.of());
+        }
+    }
+
     public void turnFaceUp(GameData gameData, Player player, int permanentIndex) {
         turnFaceUp(gameData, player, permanentIndex, null);
     }
@@ -1402,6 +1422,9 @@ public class GameService {
             String faceUpCost = manifestedOrCloaked ? permanent.getCard().getManaCost() : morphCost;
             if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
                 throw new IllegalStateException("Face-down permanent is not a creature card");
+            }
+            if (!manifestedOrCloaked && permanent.getCard().isSpellmorph()) {
+                throw new IllegalStateException("Spellmorph cards are cast from the battlefield instead");
             }
             if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()
@@ -1737,6 +1760,22 @@ public class GameService {
         }
     }
 
+    public void castCommander(GameData gameData, Player player, UUID cardId, Runnable cast) {
+        if (runAsActionIfNeeded(gameData, () -> castCommander(gameData, player, cardId, cast))) return;
+        synchronized (gameData) {
+            Player actor = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, actor);
+            if (gameData.commandCastCardId != null) throw new IllegalStateException("Already casting a commander");
+            List<Card> zone = gameData.playerCommandZones.getOrDefault(actor.getId(), List.of());
+            if (zone.size() != 1 || !zone.getFirst().getId().equals(cardId) || !gameData.isCommander(cardId))
+                throw new IllegalArgumentException("Commander is not in your command zone");
+            gameData.commandCastPlayerId = actor.getId();
+            gameData.commandCastCardId = cardId;
+            try { cast.run(); }
+            finally { gameData.commandCastPlayerId = null; gameData.commandCastCardId = null; }
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId, List.of());
     }
@@ -1935,6 +1974,18 @@ public class GameService {
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
+        }
+    }
+
+    public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateCommandZoneAbility(gameData, actionPlayer, cardId, abilityIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            abilityActivationService.activateCommandZoneAbility(gameData, player, cardId, abilityIndex);
         }
     }
 

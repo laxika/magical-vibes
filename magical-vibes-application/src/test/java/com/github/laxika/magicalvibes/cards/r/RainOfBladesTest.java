@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.s.SilverKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RainOfBlades.class, SilverKnight.class})
 class RainOfBladesTest extends BaseCardTest {
 
     @Test
@@ -27,6 +27,19 @@ class RainOfBladesTest extends BaseCardTest {
 
         assertThat(a1.getMarkedDamage()).isEqualTo(1);
         assertThat(a2.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damages every attacking creature regardless of its controller")
+    void damagesAttackingCreaturesOnBothBattlefields() {
+        harness.forceActivePlayer(player1);
+        Permanent player1Attacker = addAttacker(player1, player2, new SilverKnight());
+        Permanent player2Attacker = addAttacker(player2, player1, new SilverKnight());
+
+        castRainOfBlades();
+
+        assertThat(player1Attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(player2Attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -45,30 +58,22 @@ class RainOfBladesTest extends BaseCardTest {
     void doesNotDamageNonAttackers() {
         harness.forceActivePlayer(player1);
         addAttacker(player1, player2, makeCreature("Bear", 2, 2));
-        Permanent idle = new Permanent(makeCreature("Wall", 0, 4));
-        idle.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(idle);
+        Permanent idle = addCreatureReady(player1, makeCreature("Wall", 0, 4));
         castRainOfBlades();
 
         assertThat(idle.getMarkedDamage()).isZero();
     }
 
-    // ===== Helpers =====
-
     private void castRainOfBlades() {
-        harness.setHand(player2, List.of(new RainOfBlades()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new RainOfBlades(), "{W}");
         harness.passBothPriorities();
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(controller, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(perm);
         return perm;
     }
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "MID", collectorNumber = "175")
+@CardRegistration(set = "DBL", collectorNumber = "175")
 public class CandlelitCavalry extends Card {
 
     public CandlelitCavalry() {

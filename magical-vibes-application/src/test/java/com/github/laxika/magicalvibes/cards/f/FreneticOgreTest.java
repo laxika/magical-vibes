@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +13,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FreneticOgre.class, Forest.class})
 class FreneticOgreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability randomly discards a card and gives +3/+0")
     void discardsAndBoosts() {
-        harness.addToBattlefield(player1, new FreneticOgre());
-        Permanent ogre = findPermanent(player1, "Frenetic Ogre");
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new FreneticOgre());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -34,8 +35,7 @@ class FreneticOgreTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new FreneticOgre());
-        Permanent ogre = findPermanent(player1, "Frenetic Ogre");
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new FreneticOgre());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -47,6 +47,55 @@ class FreneticOgreTest extends BaseCardTest {
 
         assertThat(ogre.getPowerModifier()).isEqualTo(0);
         assertThat(ogre.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The mana and random-discard costs are paid before the boost resolves")
+    void paysCostsBeforeResolution() {
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new FreneticOgre());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(ogre.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(ogre.getPowerModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability requires red mana")
+    void cannotActivateWithoutRedMana() {
+        harness.addToBattlefield(player1, new FreneticOgre());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the source creature gets the temporary boost")
+    void boostsOnlySourceCreature() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new FreneticOgre());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new FreneticOgre());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(3);
+        assertThat(other.getPowerModifier()).isZero();
     }
 
     @Test

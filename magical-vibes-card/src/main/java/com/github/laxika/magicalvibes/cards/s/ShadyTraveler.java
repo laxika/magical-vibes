@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "120")
+@CardRegistration(set = "DBL", collectorNumber = "120")
 public class ShadyTraveler extends Card {
 
     public ShadyTraveler() {

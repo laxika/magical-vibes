@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "166")
+@CardRegistration(set = "DBL", collectorNumber = "433")
 public class LacerateFlesh extends Card {
 
     public LacerateFlesh() {
