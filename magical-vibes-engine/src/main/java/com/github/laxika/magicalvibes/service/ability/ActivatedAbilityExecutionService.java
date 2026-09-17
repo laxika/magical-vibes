@@ -1310,7 +1310,7 @@ public class ActivatedAbilityExecutionService {
                 for (ManaColor color : ManaColor.values()) {
                     int current = pool.get(color);
                     for (int i = 1; i < multiplier; i++) {
-                        pool.add(color);
+                        pool.add(color, current);
                     }
                 }
             } else if (effect instanceof RegisterNextRedInstantSorceryCopyEffect) {

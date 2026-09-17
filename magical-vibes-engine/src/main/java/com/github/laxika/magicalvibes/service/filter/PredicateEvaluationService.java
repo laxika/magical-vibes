@@ -2687,7 +2687,7 @@ public class PredicateEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(permanent)) {
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), playerId);
+                UUID ownerId = gameData.defaultControllerOf(permanent.getId());
                 return ownerId.equals(context.sourceControllerId());
             }
         }

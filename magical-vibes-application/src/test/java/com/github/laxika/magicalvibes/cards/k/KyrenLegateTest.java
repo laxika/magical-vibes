@@ -44,6 +44,7 @@ class KyrenLegateTest extends BaseCardTest {
 
         Permanent kyrenLegate = findPermanent(player1, "Kyren Legate");
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kyrenLegate)));
+        resolveCombat();
 
         harness.assertLife(player2, 19);
     }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -2728,6 +2729,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         } else if (auraCard.isAura()
                 && !auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, enchantTarget)) {
             throw new IllegalStateException("Aura cannot enchant that permanent");
+        } else if (auraCard.getSubtypes().contains(CardSubtype.EQUIPMENT)
+                && !equipSupport.canAttachEquipment(gameData, new Permanent(auraCard), enchantTarget)) {
+            throw new IllegalStateException("Equipment cannot attach to that permanent");
         }
 
         if (gameData.warpWorldOperation.sourceName != null) {

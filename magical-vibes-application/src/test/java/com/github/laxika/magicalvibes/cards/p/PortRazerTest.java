@@ -66,9 +66,9 @@ class PortRazerTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1,
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1,
                 List.of(gd.playerBattlefields.get(player1.getId()).indexOf(portRazer)),
-                Map.of(gd.playerBattlefields.get(player1.getId()).indexOf(portRazer), planeswalker.getId()));
+                Map.of(gd.playerBattlefields.get(player1.getId()).indexOf(portRazer), planeswalker.getId())));
 
         assertThat(portRazer.isAttacking()).isTrue();
         assertThat(portRazer.getAttackTarget()).isEqualTo(planeswalker.getId());

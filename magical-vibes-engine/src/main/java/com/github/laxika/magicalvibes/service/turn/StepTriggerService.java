@@ -4831,7 +4831,7 @@ public class StepTriggerService {
                         continue;
                     }
                     if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may);
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
                     } else if (effect instanceof DealDamageIfDidntCastSpellThisTurnEffect) {
                         // Intervening-if (CR 603.4): only trigger if the end-step player (the active
                         // player) didn't cast a spell this turn. Bake that player into targetId so the
