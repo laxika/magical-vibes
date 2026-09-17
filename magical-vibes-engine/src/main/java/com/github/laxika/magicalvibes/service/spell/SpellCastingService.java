@@ -3940,11 +3940,11 @@ public class SpellCastingService {
         }
 
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
+        if (kicked && targetId != null && !card.isAllowSharedTargets() && targetIds.contains(targetId)) {
+            throw new IllegalStateException("All targets must be different");
+        }
         if (kicked && targetId != null && card.getSpellTargets().size() > 1
                 && !multipleSpellTargets) {
-            if (!card.isAllowSharedTargets() && targetIds.contains(targetId)) {
-                throw new IllegalStateException("All targets must be different");
-            }
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
                     gameData, card, targetIds, playerId, effectiveXValue, true);
         } else if (card.getMaxTargets() > 0 && !multipleSpellTargets

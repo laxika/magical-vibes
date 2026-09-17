@@ -1053,7 +1053,7 @@ public class AmountEvaluationService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
-                    total += permanent.getCard().getManaValue();
+                    total += permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue();
                 }
             }
         }

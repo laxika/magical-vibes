@@ -1186,18 +1186,21 @@ public class LibraryChoiceHandlerService {
 
             // Repeat until the requested count is spent or the library runs out; only the final pick
             // shuffles the pile ("shuffle that pile") and then the library ("then shuffle your library").
-            if (remainingCount > 1 && !deck.isEmpty()) {
+            List<Card> remainingPileCards = searchCards.stream()
+                    .filter(card -> deck.contains(card))
+                    .toList();
+            if (remainingCount > 1 && !remainingPileCards.isEmpty()) {
                 int newRemaining = remainingCount - 1;
                 beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
-                        LibrarySearchParams.builder(playerId, new ArrayList<>(deck))
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingPileCards))
                                 .remainingCount(newRemaining)
-                                .canFailToFind(true)
+                                .canFailToFind(canFailToFind)
                                 .destination(LibrarySearchDestination.EXILE_FACE_DOWN_PILE)
                                 .sourcePermanentId(pileSourceId)
                                 .shuffleAfterSelection(shuffleAfterSelection)
                                 .build(),
                         "Search your library for a card to exile in the face-down pile ("
-                                + newRemaining + " remaining).", true));
+                                + newRemaining + " remaining).", canFailToFind));
                 return;
             }
 

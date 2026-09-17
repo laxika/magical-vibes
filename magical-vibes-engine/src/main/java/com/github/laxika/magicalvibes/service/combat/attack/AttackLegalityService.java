@@ -587,7 +587,10 @@ public class AttackLegalityService {
     public int getMustAttackRequirementCount(GameData gameData, Permanent creature) {
         int[] count = {0};
         UUID selfControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+        List<CardEffect> printedEffects = creature.isFaceDown()
+                || gameQueryService.hasLostPrintedAbilities(gameData, creature)
+                ? List.of() : creature.getCard().getEffects(EffectSlot.STATIC);
+        for (CardEffect effect : printedEffects) {
             if (effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null) {
                 count[0]++;
             } else if (effect instanceof ConditionalEffect conditional
