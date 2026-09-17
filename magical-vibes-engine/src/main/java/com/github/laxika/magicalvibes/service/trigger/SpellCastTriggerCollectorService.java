@@ -2530,10 +2530,18 @@ public class SpellCastTriggerCollectorService {
                     entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
                 }
             }
+            if (match.permanent() != null && containsChosenPlayerMill(resolved)) {
+                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            }
             preservePlanarSource(entry, match);
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean containsChosenPlayerMill(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect -> effect instanceof MillEffect mill
+                && mill.recipient() == MillRecipient.CHOSEN_PLAYER);
     }
 
     private boolean hasAtLeastTwoCardTypes(GameData gameData, Card card, UUID playerId) {

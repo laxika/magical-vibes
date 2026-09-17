@@ -109,6 +109,8 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentHasAdventurePredicate` | `()` | permanents whose cards have an Adventure, regardless of whether they were cast as an Adventure (Mysterious Pathlighter) |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
 
+| `PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate` | `()` | creatures attacking you directly or attacking a planeswalker you control; needs a `FilterContext` with source controller and game data (Soul Snare) |
+
 ### Subtype/supertype/color/keyword predicates
 
 `PermanentIsEquippedPredicate` matches permanents with at least one Equipment attached, regardless of who controls the Equipment. It needs game data and is used by Hexgold Hoverwings for "Creatures you control that are equipped get +1/+0."
@@ -272,6 +274,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
+| `StackEntryControlledByChosenPlayerPredicate` | `()` | spells controlled by the player remembered by the evaluating source permanent's as-enters choice; source-dependent and evaluated by `TargetLegalityService` |
 | `StackEntryIsCopyPredicate` | `()` | spells that were put onto the stack as copies rather than cast; used for "spell ... that wasn't cast" (Errant, Street Artist) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |
 | `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |

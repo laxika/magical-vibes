@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "56")
 @CardRegistration(set = "PLS", collectorNumber = "19")
 @CardRegistration(set = "DMR", collectorNumber = "34")
+@CardRegistration(set = "CMD", collectorNumber = "35")
 public class VoiceOfAll extends Card {
 
     public VoiceOfAll() {

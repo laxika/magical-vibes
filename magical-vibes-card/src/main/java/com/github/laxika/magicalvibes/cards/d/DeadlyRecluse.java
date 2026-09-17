@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M14", collectorNumber = "168")
 @CardRegistration(set = "DDL", collectorNumber = "45")
 @CardRegistration(set = "2X2", collectorNumber = "142")
+@CardRegistration(set = "CMD", collectorNumber = "149")
 public class DeadlyRecluse extends Card {
 }

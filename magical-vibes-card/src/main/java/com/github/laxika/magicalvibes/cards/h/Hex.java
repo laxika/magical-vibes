@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "89")
 @CardRegistration(set = "OMB", collectorNumber = "17")
+@CardRegistration(set = "CMD", collectorNumber = "87")
 public class Hex extends Card {
 
     public Hex() {

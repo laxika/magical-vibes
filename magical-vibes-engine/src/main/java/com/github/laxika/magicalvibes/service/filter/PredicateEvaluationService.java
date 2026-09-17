@@ -182,6 +182,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMos
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
@@ -274,6 +275,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
@@ -1167,6 +1169,8 @@ public class PredicateEvaluationService {
             case PermanentIsAttackingSourceControllerPredicate ignored ->
                     permanent.isAttacking() && sourceControllerId != null
                             && sourceControllerId.equals(permanent.getAttackTarget());
+            case PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate ignored ->
+                    isAttackingSourceControllerOrPlaneswalker(gameData, permanent, sourceControllerId);
             case PermanentIsBlockingPredicate ignored ->
                     permanent.isBlocking();
             case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
@@ -3386,6 +3390,24 @@ public class PredicateEvaluationService {
                 && gameData.declaredAttackerIdsThisCombat.contains(permanent.getId());
     }
 
+    private boolean isAttackingSourceControllerOrPlaneswalker(GameData gameData, Permanent attacker,
+                                                               UUID sourceControllerId) {
+        if (gameData == null || sourceControllerId == null || !attacker.isAttacking()) {
+            return false;
+        }
+        UUID attackTargetId = attacker.getAttackTarget();
+        if (sourceControllerId.equals(attackTargetId)) {
+            return true;
+        }
+        if (attackTargetId == null || gameData.playerIds.contains(attackTargetId)) {
+            return false;
+        }
+        Permanent attackTarget = gameQueryService.findPermanentById(gameData, attackTargetId);
+        return attackTarget != null
+                && sourceControllerId.equals(gameData.findControllerOf(attackTarget))
+                && gameQueryService.isPlaneswalker(gameData, attackTarget);
+    }
+
     private Permanent findPermanentByOriginalCardId(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -3529,6 +3551,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;
+            case StackEntryControlledByChosenPlayerPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;
             case StackEntryNotTargetedByNamedCreatureAbilityPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;

@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "61")
 @CardRegistration(set = "DDL", collectorNumber = "58")
+@CardRegistration(set = "CMD", collectorNumber = "232")
 public class ValleyRannet extends Card {
 
     public ValleyRannet() {

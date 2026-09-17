@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "1")
 @CardRegistration(set = "V13", collectorNumber = "11")
 @CardRegistration(set = "A25", collectorNumber = "3")
+@CardRegistration(set = "CMD", collectorNumber = "3")
 public class AkromasVengeance extends Card {
 
     public AkromasVengeance() {

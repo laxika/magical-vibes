@@ -2600,6 +2600,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         entering.getProtectionFromPlayerIdsPermanently().clear();
         entering.getProtectionFromPlayerIdsPermanently().add(chosenPlayerId);
+        entering.setRememberedTargetPlayerId(chosenPlayerId);
         gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
                 " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
         log.info("Game {} - {} chooses player {}", gameData.id,

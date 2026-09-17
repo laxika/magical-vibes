@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSourceAndBlockingCreatures
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "46")
+@CardRegistration(set = "CMD", collectorNumber = "48")
 public class Gomazoa extends Card {
 
     public Gomazoa() {

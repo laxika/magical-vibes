@@ -93,6 +93,7 @@ public sealed interface PermanentPredicate permits
         PermanentAttacksWhileSourceControllerHasMostLifePredicate,
         PermanentIsAttackingOpponentOfSourceControllerPredicate,
         PermanentIsAttackingSourceControllerPredicate,
+        PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate,
         PermanentIsAuraAttachedToCreaturePredicate,
         PermanentIsAuraAttachedToLandPredicate,
         PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate,

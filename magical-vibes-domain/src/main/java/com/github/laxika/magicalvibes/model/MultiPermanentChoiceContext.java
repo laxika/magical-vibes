@@ -473,6 +473,19 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each opponent chooses a creature before the chosen creatures are sacrificed together. */
+    record EachOpponentSacrificesCreatureCreateTokens(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            CreateTokenEffect tokenTemplate,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesCreatureCreateTokens {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** The controller and a target opponent each choose a creature before both are sacrificed. */
     record ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
             java.util.List<PendingForcedSacrifice> remainingChoosers,

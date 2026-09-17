@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "235")
 @CardRegistration(set = "2XM", collectorNumber = "204")
+@CardRegistration(set = "CMD", collectorNumber = "206")
 public class KaaliaOfTheVast extends Card {
 
     public KaaliaOfTheVast() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 
 @CardRegistration(set = "VMA", collectorNumber = "21")
+@CardRegistration(set = "CMD", collectorNumber = "12")
 public class CrescendoOfWar extends Card {
 
     public CrescendoOfWar() {

@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
@@ -4372,6 +4373,11 @@ public class TargetLegalityService {
                     .anyMatch(stackEntry.getCard().getColors()::contains);
             int spellManaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return sharesColor || spellManaValue == imprintedCard.getManaValue();
+        }
+        if (predicate instanceof StackEntryControlledByChosenPlayerPredicate) {
+            return source != null
+                    && source.getRememberedTargetPlayerId() != null
+                    && source.getRememberedTargetPlayerId().equals(stackEntry.getControllerId());
         }
         if (predicate instanceof StackEntryControlledByPredicate) {
             return stackEntry.getControllerId().equals(controllerId);

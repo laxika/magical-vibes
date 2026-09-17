@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "96")
+@CardRegistration(set = "CMD", collectorNumber = "192")
 public class DeathMutation extends Card {
 
     public DeathMutation() {
