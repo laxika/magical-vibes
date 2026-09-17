@@ -65,7 +65,8 @@ class SurveyorsScopeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard() instanceof SurveyorsScope)
-                .noneMatch(p -> p.getCard() instanceof Forest);
+                .filteredOn(p -> p.getCard() instanceof Forest)
+                .hasSize(1);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SurveyorsScope);
     }
 }
