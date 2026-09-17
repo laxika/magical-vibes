@@ -724,6 +724,8 @@ public class GameQueryService {
     }
 
     private boolean anyBattlefieldSpellsCantBeCountered(GameData gameData, Card card) {
+        StackEntry spell = findStackEntryByCardId(gameData, card.getId());
+        UUID controllerId = spell == null ? card.getOwnerId() : spell.getControllerId();
         return gameData.anyPermanentMatches(permanent ->
                 !permanent.isFaceDown()
                         && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
@@ -731,7 +733,8 @@ public class GameQueryService {
                         .filter(SpellsCantBeCounteredEffect.class::isInstance)
                         .map(SpellsCantBeCounteredEffect.class::cast)
                         .anyMatch(effect -> effect.predicate() == null
-                                || predicateEvaluationService.matchesCardPredicate(card, effect.predicate(), null)));
+                                || predicateEvaluationService.matchesCardPredicate(
+                                        card, effect.predicate(), null, gameData, controllerId)));
     }
 
     // --- Permanent / Card lookups ---
@@ -1295,6 +1298,7 @@ public class GameQueryService {
      * have already passed priority.
      */
     public UUID getPriorityPlayerId(GameData data) {
+        if (data.waitingForSubgame) return null;
         if (data.activePlayerId == null) {
             return null;
         }

@@ -1,0 +1,21 @@
+// Used only by run-subgame-tests.ps1; ordinary builds retain the complete test source set.
+gradle.beforeProject { project ->
+    if (project.name == 'magical-vibes-application') {
+        project.afterEvaluate {
+            project.tasks.named('compileTestJava') {
+                setSource(project.fileTree('src/test/java') {
+                    include '**/service/**'
+                    include '**/architecture/SimulationCopyCompletenessTest.java'
+                    include '**/cards/s/ShahrazadTest.java'
+                    include '**/cards/b/BurningWishTest.java'
+                    include '**/cards/k/KarnLiberatedTest.java'
+                    include '**/cards/f/FrayingOmnipotenceTest.java'
+                    include '**/cards/p/PoxTest.java'
+                    include '**/cards/d/DoOverTest.java'
+                    include '**/cards/w/WizenedArbiterTest.java'
+                    include '**/cards/s/SerumPowderTest.java'
+                })
+            }
+        }
+    }
+}

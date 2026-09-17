@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "190")
+@CardRegistration(set = "DBL", collectorNumber = "190")
 public class OutlandLiberator extends Card {
 
     public OutlandLiberator() {

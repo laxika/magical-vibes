@@ -30,7 +30,7 @@ class ScytheSpecterTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(14);
     }
 
     @Test
@@ -43,7 +43,7 @@ class ScytheSpecterTest extends BaseCardTest {
         resolveCombatAndTrigger();
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -55,11 +55,12 @@ class ScytheSpecterTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         harness.passBothPriorities();
     }
 }

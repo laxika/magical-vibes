@@ -242,7 +242,7 @@ public class LibraryChoiceHandlerService {
             sourceZone = sourceCards;
         } else {
             sourceZone = librarySearch.sourceSideboard()
-                    ? gameData.playerSideboards.getOrDefault(deckOwnerId, List.of())
+                    ? com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, deckOwnerId)
                     : deck;
         }
 

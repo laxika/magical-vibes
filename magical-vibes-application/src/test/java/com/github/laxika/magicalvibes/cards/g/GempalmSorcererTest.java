@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.m.MacetailHystrodon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GempalmSorcerer.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({GempalmSorcerer.class, FugitiveWizard.class, MacetailHystrodon.class})
 class GempalmSorcererTest extends BaseCardTest {
 
     @Test
@@ -22,9 +23,9 @@ class GempalmSorcererTest extends BaseCardTest {
     void cyclingGivesWizardsFlying() {
         Permanent ownWizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         Permanent opponentWizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
-        Permanent nonWizard = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonWizard = harness.addToBattlefieldAndReturn(player1, new MacetailHystrodon());
         harness.setHand(player1, List.of(new GempalmSorcerer()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new MacetailHystrodon()));
         addCyclingMana();
 
         harness.activateHandAbility(player1, 0, null);
@@ -35,7 +36,7 @@ class GempalmSorcererTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nonWizard, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Gempalm Sorcerer");
         harness.passBothPriorities();
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Macetail Hystrodon");
     }
 
     @Test
@@ -43,7 +44,7 @@ class GempalmSorcererTest extends BaseCardTest {
     void flyingWearsOffAtEndOfTurn() {
         Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         harness.setHand(player1, List.of(new GempalmSorcerer()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new MacetailHystrodon()));
         addCyclingMana();
 
         harness.activateHandAbility(player1, 0, null);
@@ -55,6 +56,22 @@ class GempalmSorcererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cycling only grants flying to Wizards on the battlefield as it resolves")
+    void cyclingDoesNotAffectWizardsEnteringLater() {
+        harness.setHand(player1, List.of(new GempalmSorcerer()));
+        harness.setLibrary(player1, List.of(new MacetailHystrodon()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent laterWizard = harness.enterBattlefieldAndReturn(player1, new FugitiveWizard());
+
+        assertThat(gqs.hasKeyword(gd, laterWizard, Keyword.FLYING)).isFalse();
     }
 
     private void addCyclingMana() {

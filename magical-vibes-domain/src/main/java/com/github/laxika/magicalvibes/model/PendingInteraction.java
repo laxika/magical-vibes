@@ -1390,11 +1390,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                 String cardName, ManaAbilityRevealContext manaAbilityContext,
                                                 ActivatedAbilityRevealContext activatedAbilityContext,
-                                                EachPlayerRevealContext eachPlayerRevealContext)
+                                                EachPlayerRevealContext eachPlayerRevealContext,
+                                                BattlefieldEntryRequest amplifyEntry)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, ManaAbilityRevealContext manaAbilityContext,
+                                                   ActivatedAbilityRevealContext activatedAbilityContext,
+                                                   EachPlayerRevealContext eachPlayerRevealContext) {
+            this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext,
+                    eachPlayerRevealContext, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,

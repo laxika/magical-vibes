@@ -1519,7 +1519,7 @@ public class DrawService {
 
     /** Ring of Ma'rûf's replaced draw: choose a card from outside the game and put it into hand. */
     private void resolveNextDrawFromOutsideGame(GameData gameData, UUID playerId) {
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         if (sideboard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
@@ -1620,7 +1620,6 @@ public class DrawService {
         List<Card> deck = gameData.playerDecks.get(playerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
             gameLogService.append(gameData, GameLog.text(logEntry));
 
@@ -1642,6 +1641,7 @@ public class DrawService {
             }
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
+            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             if (!gameData.deferPlayerLossCheck
                     && gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
@@ -2040,8 +2040,15 @@ public class DrawService {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId)
+                                        .withTargetId(drawingPlayerId))) {
+                            continue;
+                        }
+                    }
                     if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may);
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, drawingPlayerId, perm.getId());
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,

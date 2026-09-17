@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public enum CardSet {
+    SET_ARN("ARN"),
     SET_MOC("MOC"),
+    SET_MAR("MAR"),
     SET_MB2("MB2"),
     SET_MM2("MM2"),
     SET_MM3("MM3"),
@@ -101,6 +103,7 @@ public enum CardSet {
     SET_SIS("SIS"),
     SET_MID("MID"),
     SET_VOW("VOW"),
+    SET_DBL("DBL"),
     SET_DKA("DKA"),
     SET_AVR("AVR"),
     SET_ZEN("ZEN"),
@@ -164,6 +167,7 @@ public enum CardSet {
     SET_SLC("SLC"),
     SET_SLD("SLD"),
     SET_SLX("SLX"),
+    SET_SLZ("SLZ"),
     SET_SUM("SUM"),
     SET_S00("S00"),
     SET_S99("S99"),
@@ -224,6 +228,7 @@ public enum CardSet {
     SET_APC("APC"),
     SET_DKM("DKM"),
     SET_SPM("SPM"),
+    SET_SPE("SPE"),
     SET_SPG("SPG"),
     SET_LCI("LCI"),
     SET_BIG("BIG"),

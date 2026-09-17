@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "190")
+@CardRegistration(set = "DBL", collectorNumber = "457")
 public class CartographersSurvey extends Card {
 
     public CartographersSurvey() {

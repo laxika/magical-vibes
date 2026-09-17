@@ -1378,7 +1378,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.SearchOutsideGameOrExileCardChoice interaction) {
         List<CardView> cardViews = new ArrayList<>();
         addMatchingCardViews(cardViews,
-                gameData.playerSideboards.getOrDefault(interaction.playerId(), List.of()),
+                com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId()),
                 interaction.validCardIds());
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.stream()

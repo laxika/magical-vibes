@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,16 +13,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinAssassin.class, GrizzlyBears.class, HillGiant.class, RagingGoblin.class})
+@CardUsed({GoblinAssassin.class, FugitiveWizard.class, GoblinGrappler.class})
 class GoblinAssassinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Its entry makes each player flip and tails players sacrifice a creature")
     void eachPlayerFlipsAndTailsPlayersSacrifice() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new HillGiant());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GoblinGrappler());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new GoblinGrappler());
 
         harness.setHand(player1, List.of(new GoblinAssassin()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -35,10 +34,10 @@ class GoblinAssassinTest extends BaseCardTest {
 
         List<String> flipLogs = flipLogs();
         long tails = flipLogs.stream().filter(log -> log.contains(" loses the coin flip ")).count();
-        long sacrificedSupportingCreatures = countInGraveyard(player1, "Grizzly Bears")
-                + countInGraveyard(player1, "Hill Giant")
-                + countInGraveyard(player2, "Grizzly Bears")
-                + countInGraveyard(player2, "Hill Giant");
+        long sacrificedSupportingCreatures = countInGraveyard(player1, "Fugitive Wizard")
+                + countInGraveyard(player1, "Goblin Grappler")
+                + countInGraveyard(player2, "Fugitive Wizard")
+                + countInGraveyard(player2, "Goblin Grappler");
 
         assertThat(flipLogs).hasSize(2);
         assertThat(sacrificedSupportingCreatures).isEqualTo(tails);
@@ -48,13 +47,12 @@ class GoblinAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers for an opponent's Goblin but not for a non-Goblin creature")
     void triggersForGoblinEntriesOnly() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new HillGiant());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GoblinGrappler());
         harness.addToBattlefield(player1, new GoblinAssassin());
-        harness.setHand(player2, List.of(new RagingGoblin(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GoblinGrappler(), new FugitiveWizard()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player2);
 
         harness.castCreature(player2, 0);

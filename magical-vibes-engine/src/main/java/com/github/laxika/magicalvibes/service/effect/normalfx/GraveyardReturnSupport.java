@@ -99,6 +99,7 @@ public class GraveyardReturnSupport {
     private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
+    private final EquipSupport equipSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     /**
@@ -259,21 +260,25 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        // Aura attachment path
+        // Aura or Equipment attachment path
         if (effect.attachmentTarget() != null) {
+            Permanent equipment = targetCard.getSubtypes().contains(CardSubtype.EQUIPMENT)
+                    ? new Permanent(targetCard) : null;
             List<Permanent> controllerBf = gameData.playerBattlefields.get(controllerId);
             List<UUID> attachTargetIds = new ArrayList<>();
             if (controllerBf != null) {
                 for (Permanent p : controllerBf) {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.attachmentTarget())
-                            && auraAttachmentService.canEnchant(gameData, targetCard, controllerId, p)) {
+                            && (equipment != null
+                                    ? equipSupport.canAttachEquipment(gameData, equipment, p)
+                                    : auraAttachmentService.canEnchant(gameData, targetCard, controllerId, p))) {
                         attachTargetIds.add(p.getId());
                     }
                 }
             }
 
             if (attachTargetIds.isEmpty()) {
-                String fizzleLog = entry.getDescription() + " fizzles (no creatures to attach Aura to).";
+                String fizzleLog = entry.getDescription() + " fizzles (no legal creatures to attach to).";
                 gameLogService.append(gameData, GameLog.text(fizzleLog));
                 return;
             }

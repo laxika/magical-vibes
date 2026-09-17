@@ -4029,7 +4029,9 @@ public class CombatDamageService {
             }
         }
         state.combatDamageDealt.merge(atk, damage, Integer::sum);
-        state.combatDamageDealtToPlayer.merge(atk, damage, Integer::sum);
+        if (redirectTarget == null) {
+            state.combatDamageDealtToPlayer.merge(atk, damage, Integer::sum);
+        }
     }
 
     private Map<Integer, Integer> precomputeBlockerDamage(DamagePhaseSnapshot snap,

@@ -364,6 +364,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 if (!gameData.stack.isEmpty()) {
                     stackResolutionService.resolveTopOfStack(gameData);
+                    if (gameData.waitingForSubgame) return;
                 } else {
                     turnProgressionService.advanceStep(gameData);
                 }

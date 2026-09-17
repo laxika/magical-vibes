@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "77")
+@CardRegistration(set = "DBL", collectorNumber = "77")
 public class SpectralAdversary extends Card {
 
     public SpectralAdversary() {

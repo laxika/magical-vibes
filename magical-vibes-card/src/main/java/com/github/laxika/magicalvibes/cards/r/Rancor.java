@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "EMA", collectorNumber = "180")
 @CardRegistration(set = "E02", collectorNumber = "35")
 @CardRegistration(set = "2X2", collectorNumber = "156")
+@CardRegistration(set = "MAR", collectorNumber = "82")
 public class Rancor extends Card {
 
     public Rancor() {

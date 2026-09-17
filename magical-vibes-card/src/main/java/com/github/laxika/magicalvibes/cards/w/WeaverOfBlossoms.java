@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "226")
+@CardRegistration(set = "DBL", collectorNumber = "493")
 public class WeaverOfBlossoms extends Card {
 
     public WeaverOfBlossoms() {

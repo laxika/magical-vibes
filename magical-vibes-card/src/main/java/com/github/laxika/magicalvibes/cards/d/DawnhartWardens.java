@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "216")
+@CardRegistration(set = "DBL", collectorNumber = "216")
 public class DawnhartWardens extends Card {
 
     public DawnhartWardens() {

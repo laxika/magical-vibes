@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "127")
+@CardRegistration(set = "DBL", collectorNumber = "127")
 public class AbandonThePost extends Card {
 
     public AbandonThePost() {

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +9,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(DreambornMuse.class)
 class DreambornMuseTest extends BaseCardTest {
 
     // ===== Triggering =====
@@ -18,7 +18,7 @@ class DreambornMuseTest extends BaseCardTest {
     @DisplayName("Triggers during controller's upkeep and mills by hand size")
     void triggersDuringControllersUpkeep() {
         harness.addToBattlefield(player1, new DreambornMuse());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DreambornMuse(), new DreambornMuse(), new DreambornMuse()));
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
@@ -33,7 +33,7 @@ class DreambornMuseTest extends BaseCardTest {
     @DisplayName("Triggers during opponent's upkeep and mills opponent by their hand size")
     void triggersDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new DreambornMuse());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new DreambornMuse(), new DreambornMuse()));
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
         advanceToUpkeep(player2);
@@ -62,13 +62,9 @@ class DreambornMuseTest extends BaseCardTest {
     @DisplayName("Mills only as many cards as remain in library")
     void millsOnlyRemainingCards() {
         harness.addToBattlefield(player1, new DreambornMuse());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-
-        // Reduce deck to 2 cards
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 2) {
-            deck.removeFirst();
-        }
+        harness.setHand(player1, List.of(new DreambornMuse(), new DreambornMuse(), new DreambornMuse(),
+                new DreambornMuse(), new DreambornMuse()));
+        harness.setLibrary(player1, List.of(new DreambornMuse(), new DreambornMuse()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -81,8 +77,8 @@ class DreambornMuseTest extends BaseCardTest {
     @DisplayName("Does not mill controller when it is opponent's upkeep")
     void doesNotMillControllerDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new DreambornMuse());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DreambornMuse(), new DreambornMuse()));
+        harness.setHand(player2, List.of(new DreambornMuse()));
         int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToUpkeep(player2);
@@ -92,6 +88,22 @@ class DreambornMuseTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).size()).isEqualTo(p1DeckBefore);
         // Player2 milled 1 card (their hand size)
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Uses the active player's hand size when the trigger resolves")
+    void usesHandSizeAtResolution() {
+        harness.addToBattlefield(player1, new DreambornMuse());
+        harness.setHand(player1, List.of(new DreambornMuse(), new DreambornMuse(), new DreambornMuse()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new DreambornMuse()));
+        harness.passBothPriorities();
+
+        int deckSizeAfter = gd.playerDecks.get(player1.getId()).size();
+        assertThat(deckSizeBefore - deckSizeAfter).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 }
 

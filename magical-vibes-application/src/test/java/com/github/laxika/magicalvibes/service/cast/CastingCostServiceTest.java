@@ -155,6 +155,9 @@ class CastingCostServiceTest {
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
+                .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
+                        .toStaticBonus(0, 0, false));
     }
 
     /**

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.FarrelitePriest;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,14 +12,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinTurncoat.class, RagingGoblin.class, FarrelitePriest.class})
+@CardUsed({GoblinTurncoat.class, GoblinGoon.class, FugitiveWizard.class})
 class GoblinTurncoatTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another Goblin regenerates Goblin Turncoat")
     void sacrificesAnotherGoblinAndRegeneratesItself() {
         Permanent turncoat = harness.addToBattlefieldAndReturn(player1, new GoblinTurncoat());
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinGoon());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -47,8 +47,8 @@ class GoblinTurncoatTest extends BaseCardTest {
     @DisplayName("Sacrifice cost only accepts Goblins")
     void sacrificeCostOnlyAcceptsGoblins() {
         harness.addToBattlefield(player1, new GoblinTurncoat());
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
-        Permanent nonGoblin = harness.addToBattlefieldAndReturn(player1, new FarrelitePriest());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinGoon());
+        Permanent nonGoblin = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -58,5 +58,32 @@ class GoblinTurncoatTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, goblin.getId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonGoblin).doesNotContain(goblin);
+    }
+
+    @Test
+    @DisplayName("Regeneration shield saves Goblin Turncoat from lethal combat damage")
+    void regenerationShieldSavesFromLethalCombatDamage() {
+        Permanent turncoat = harness.addToBattlefieldAndReturn(player1, new GoblinTurncoat());
+        Permanent sacrificedGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinGoon());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificedGoblin.getId());
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new GoblinGoon());
+        addCreatureReady(player2, new FugitiveWizard());
+        attacker.setAttacking(true);
+        turncoat.setBlocking(true);
+        turncoat.addBlockingTarget(0);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(turncoat);
+        assertThat(turncoat.isTapped()).isTrue();
+        assertThat(turncoat.getRegenerationShield()).isZero();
+        harness.assertNotInGraveyard(player1, "Goblin Turncoat");
     }
 }

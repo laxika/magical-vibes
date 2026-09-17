@@ -519,6 +519,15 @@ public class PermanentRemovalService {
      * Like a bounce or library move, this is a non-dying departure.
      */
     public boolean removePermanentToStack(GameData gameData, Permanent target) {
+        return removePermanentWithoutDestination(gameData, target, Zone.STACK);
+    }
+
+    /** Removes a card for an outside-game transfer without inventing an intervening zone move. */
+    public boolean removePermanentToOutsideGame(GameData gameData, Permanent target) {
+        return removePermanentWithoutDestination(gameData, target, Zone.OUTSIDE_GAME);
+    }
+
+    private boolean removePermanentWithoutDestination(GameData gameData, Permanent target, Zone destination) {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
@@ -526,8 +535,8 @@ public class PermanentRemovalService {
             return false;
         }
         UUID controllerId = removed.get().controllerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.STACK);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, destination);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, destination);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "MID", collectorNumber = "191")
+@CardRegistration(set = "DBL", collectorNumber = "191")
 public class PathToTheFestival extends Card {
 
     public PathToTheFestival() {

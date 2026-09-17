@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "INR", collectorNumber = "141")
 @CardRegistration(set = "INR", collectorNumber = "394")
 @CardRegistration(set = "VOW", collectorNumber = "142")
+@CardRegistration(set = "DBL", collectorNumber = "409")
 public class AncestralAnger extends Card {
 
     public AncestralAnger() {

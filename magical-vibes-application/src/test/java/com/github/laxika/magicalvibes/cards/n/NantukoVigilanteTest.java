@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NantukoVigilante.class, FountainOfYouth.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({NantukoVigilante.class, FountainOfYouth.class, GloriousAnthem.class, GrizzlyBears.class,
+        Juggernaut.class})
 class NantukoVigilanteTest extends BaseCardTest {
 
     @Test
@@ -51,6 +53,21 @@ class NantukoVigilanteTest extends BaseCardTest {
         assertThat(vigilante.isFaceDown()).isFalse();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void turningFaceUpCanDestroyAnArtifactCreature() {
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new Juggernaut());
+        Permanent vigilante = castFaceDown();
+
+        turnFaceUp(vigilante);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(artifactCreature.getId());
+        harness.handlePermanentChosen(player1, artifactCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Juggernaut");
     }
 
     private Permanent castFaceDown() {

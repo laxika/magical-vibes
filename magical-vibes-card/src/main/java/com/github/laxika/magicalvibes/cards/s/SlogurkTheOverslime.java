@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "242")
+@CardRegistration(set = "DBL", collectorNumber = "242")
 public class SlogurkTheOverslime extends Card {
 
     public SlogurkTheOverslime() {

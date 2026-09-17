@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "156")
+@CardRegistration(set = "DBL", collectorNumber = "156")
 public class RazeTheEffigy extends Card {
 
     public RazeTheEffigy() {

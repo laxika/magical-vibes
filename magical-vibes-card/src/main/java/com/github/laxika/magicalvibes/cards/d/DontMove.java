@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MAR", collectorNumber = "43")
 @CardRegistration(set = "REX", collectorNumber = "1")
 @CardRegistration(set = "REX", collectorNumber = "27")
 public class DontMove extends Card {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "172")
+@CardRegistration(set = "DBL", collectorNumber = "439")
 public class OliviasAttendants extends Card {
 
     public OliviasAttendants() {

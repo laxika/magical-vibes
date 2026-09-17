@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "28")
+@CardRegistration(set = "DBL", collectorNumber = "295")
 public class PanickedBystander extends Card {
 
     public PanickedBystander() {

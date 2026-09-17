@@ -542,10 +542,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       List<UUID> chosenSoFar,
                                       ActivatedAbility ability,
                                       Permanent sourcePermanentSnapshot,
-                                      Card sourceCard) implements PermanentChoiceContext {
+                                      Card sourceCard,
+                                      Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {
 
         public ActivatedAbilityCostChoice {
             targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();
+            damageAssignments = damageAssignments != null ? Map.copyOf(damageAssignments) : Map.of();
+        }
+
+        public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
+                                          Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                          CardEffect costEffect, int remaining, List<UUID> chosenSoFar,
+                                          ActivatedAbility ability, Permanent sourcePermanentSnapshot,
+                                          Card sourceCard) {
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, targetIds,
+                    costEffect, remaining, chosenSoFar, ability, sourcePermanentSnapshot, sourceCard, Map.of());
         }
         /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
          *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */

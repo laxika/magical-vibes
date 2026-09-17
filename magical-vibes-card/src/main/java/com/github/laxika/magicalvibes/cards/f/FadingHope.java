@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "51")
+@CardRegistration(set = "DBL", collectorNumber = "51")
 public class FadingHope extends Card {
 
     public FadingHope() {

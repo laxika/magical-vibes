@@ -71,6 +71,40 @@ class GoblinClearcutterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot use an opponent's Forest to pay the sacrifice cost")
+    void requiresControllerControlledForest() {
+        Permanent clearcutter = addCreatureReady(player1, new GoblinClearcutter());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(clearcutter.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Lets its controller choose which Forest to sacrifice")
+    void choosesWhichForestToSacrifice() {
+        Permanent clearcutter = addCreatureReady(player1, new GoblinClearcutter());
+        Permanent forestToKeep = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent forestToSacrifice = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, forestToSacrifice.getId());
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(clearcutter.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forestToKeep);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forestToSacrifice);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forestToSacrifice.getCard());
+    }
+
+    @Test
     @DisplayName("Cannot be activated while the Clearcutter is tapped")
     void requiresUntappedClearcutter() {
         Permanent clearcutter = addCreatureReady(player1, new GoblinClearcutter());

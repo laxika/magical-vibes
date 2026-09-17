@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "101")
+@CardRegistration(set = "DBL", collectorNumber = "101")
 public class FoulPlay extends Card {
 
     public FoulPlay() {

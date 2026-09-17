@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndBoostSel
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "96")
+@CardRegistration(set = "DBL", collectorNumber = "363")
 public class BloodcrazedSocialite extends Card {
 
     public BloodcrazedSocialite() {
