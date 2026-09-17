@@ -221,6 +221,8 @@ public class GameData {
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastSnowManaSpentByColor = new ConcurrentHashMap<>();
     /** Amount of mana produced by Treasures spent to cast a spell, keyed by spell card instance id. */
     public final Map<UUID, Integer> spellCastTreasureManaSpent = new ConcurrentHashMap<>();
+    /** Amount of mana produced by artifact sources spent to cast a spell, keyed by spell card instance id. */
+    public final Map<UUID, Integer> spellCastArtifactManaSpent = new ConcurrentHashMap<>();
     /** Amount of mana produced by Cave sources spent to cast a spell, keyed by spell card instance id. */
     public final Map<UUID, Integer> spellCastCaveManaSpent = new ConcurrentHashMap<>();
     /** Producing permanents whose tagged mana was spent to cast each spell. */
@@ -247,6 +249,10 @@ public class GameData {
     public DayNight dayNight = DayNight.NEITHER;
     /** The player who currently is the monarch, or {@code null} when no player is monarch. */
     public UUID monarchPlayerId;
+    /** The Ring's current ability level for each player; presence means that player has The Ring emblem. */
+    public final Map<UUID, Integer> ringLevels = new ConcurrentHashMap<>();
+    /** The permanent currently designated as each player's Ring-bearer. */
+    public final Map<UUID, UUID> ringBearerIds = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
@@ -761,6 +767,8 @@ public class GameData {
     public final CreepingDreadState creepingDread = new CreepingDreadState();
     /** Progress state for Kroxa's opponent discard and nonland comparison. */
     public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
+    /** Progress state for Scythe Specter's opponent discard and mana-value comparison. */
+    public final ScytheSpecterState scytheSpecter = new ScytheSpecterState();
     /** Progress state for collecting one discarded card from every player before drawing. */
     public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
             eachPlayerDiscardsOneThenDrawsForEachCardType =
@@ -776,7 +784,7 @@ public class GameData {
             new EachOpponentDiscardsTwoUnlessNonlandState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
-    /** Progress state for Liege of the Hollows' "each player may pay any amount of mana" flow. */
+    /** Progress state for single-pass per-player mana-payment effects. */
     public final EachPlayerPayManaState eachPlayerPayMana = new EachPlayerPayManaState();
     /** Progress state for Goblin Game's hidden item-count choices. */
     public final GoblinGameState goblinGame = new GoblinGameState();
@@ -4046,6 +4054,20 @@ public class GameData {
         spellCastTreasureManaSpent.remove(spellCardId);
     }
 
+    public void addSpellCastArtifactManaSpent(UUID spellCardId, int amount) {
+        if (amount > 0) {
+            spellCastArtifactManaSpent.merge(spellCardId, amount, Integer::sum);
+        }
+    }
+
+    public int getSpellCastArtifactManaSpent(UUID spellCardId) {
+        return spellCastArtifactManaSpent.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastArtifactManaSpent(UUID spellCardId) {
+        spellCastArtifactManaSpent.remove(spellCardId);
+    }
+
     public void setSpellCastCaveManaSpent(UUID spellCardId, int caveManaSpent) {
         spellCastCaveManaSpent.put(spellCardId, caveManaSpent);
     }
@@ -5432,6 +5454,11 @@ public class GameData {
         copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;
         copy.kroxaDiscard.remaining.addAll(this.kroxaDiscard.remaining);
         copy.kroxaDiscard.discardedNonland.putAll(this.kroxaDiscard.discardedNonland);
+        copy.scytheSpecter.active = this.scytheSpecter.active;
+        copy.scytheSpecter.controllerId = this.scytheSpecter.controllerId;
+        copy.scytheSpecter.currentPlayerId = this.scytheSpecter.currentPlayerId;
+        copy.scytheSpecter.remaining.addAll(this.scytheSpecter.remaining);
+        copy.scytheSpecter.discardedManaValues.putAll(this.scytheSpecter.discardedManaValues);
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.active =
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.active;
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId =
@@ -5778,6 +5805,8 @@ public class GameData {
         copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
         copy.monarchPlayerId = this.monarchPlayerId;
+        copy.ringLevels.putAll(this.ringLevels);
+        copy.ringBearerIds.putAll(this.ringBearerIds);
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
@@ -6623,6 +6652,7 @@ public class GameData {
         this.spellCastSnowManaSpentByColor.forEach((k, v) ->
                 copy.spellCastSnowManaSpentByColor.put(k, new java.util.EnumMap<>(v)));
         copy.spellCastTreasureManaSpent.putAll(this.spellCastTreasureManaSpent);
+        copy.spellCastArtifactManaSpent.putAll(this.spellCastArtifactManaSpent);
         copy.spellCastCaveManaSpent.putAll(this.spellCastCaveManaSpent);
         copy.spellCastUsedTreasureMana.putAll(this.spellCastUsedTreasureMana);
         this.spellCastManaSourceIds.forEach((k, v) -> {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ZEN", collectorNumber = "157")
+@CardRegistration(set = "CMD", collectorNumber = "143")
 public class BalothWoodcrasher extends Card {
 
     public BalothWoodcrasher() {

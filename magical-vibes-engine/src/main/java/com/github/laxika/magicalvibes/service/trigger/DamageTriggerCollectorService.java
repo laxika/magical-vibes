@@ -2076,6 +2076,12 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_NONCOMBAT_DAMAGE_TO_SELF)
+    private boolean handleNoncombatDamageToSelfDefault(TriggerMatchContext match, CardEffect effect,
+                                                       TriggerContext ctx) {
+        return handleDealtDamageDefault(match, effect, ctx);
+    }
+
     private TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
         if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {

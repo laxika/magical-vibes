@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "AA4", collectorNumber = "20")
+@CardRegistration(set = "CMD", collectorNumber = "128")
 public class MagmaticForce extends Card {
 
     public MagmaticForce() {

@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "ANB", collectorNumber = "118")
+@CardRegistration(set = "TMC", collectorNumber = "63")
 @CardRegistration(set = "REX", collectorNumber = "26")
+@CardRegistration(set = "CMD", collectorNumber = "269")
 @CardRegistration(set = "SLZ", collectorNumber = "118")
 @CardRegistration(set = "SLZ", collectorNumber = "239")
 @CardRegistration(set = "SLZ", collectorNumber = "360")

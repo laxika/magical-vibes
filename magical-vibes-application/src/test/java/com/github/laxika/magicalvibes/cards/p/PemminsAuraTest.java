@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,10 +9,26 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-@CardUsed({PemminsAura.class, GrizzlyBears.class})
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({PemminsAura.class, GoblinBrigand.class})
 class PemminsAuraTest extends BaseCardTest {
+
+    @Test
+    void castsAndAttachesToTargetCreature() {
+        Permanent creature = addCreatureReady(player1, new GoblinBrigand());
+        harness.setHand(player1, List.of(new PemminsAura()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pemmin's Aura").getAttachedTo()).isEqualTo(creature.getId());
+    }
 
     @Test
     void untapsEnchantedCreature() {
@@ -45,6 +61,21 @@ class PemminsAuraTest extends BaseCardTest {
     }
 
     @Test
+    void shroudPreventsTargetingTheEnchantedCreature() {
+        Permanent creature = attachAuraToReadyCreature();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        activate(2);
+
+        harness.setHand(player1, List.of(new PemminsAura()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void choosesEitherPowerToughnessAdjustment() {
         Permanent creature = attachAuraToReadyCreature();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -68,6 +99,22 @@ class PemminsAuraTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
+    @Test
+    void powerToughnessAdjustmentExpiresAtEndOfTurn() {
+        Permanent creature = attachAuraToReadyCreature();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activate(3);
+        harness.handleListChoice(player1, "Enchanted creature gets +1/-1 until end of turn");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
     private void activate(int abilityIndex) {
         int auraIndex = gd.playerBattlefields.get(player1.getId()).size() - 1;
         harness.activateAbility(player1, auraIndex, abilityIndex, null, null);
@@ -75,10 +122,9 @@ class PemminsAuraTest extends BaseCardTest {
     }
 
     private Permanent attachAuraToReadyCreature() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new PemminsAura());
+        Permanent creature = addCreatureReady(player1, new GoblinBrigand());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PemminsAura());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return creature;
     }
 }

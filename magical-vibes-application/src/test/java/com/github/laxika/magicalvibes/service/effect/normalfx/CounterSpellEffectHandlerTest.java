@@ -128,6 +128,40 @@ class CounterSpellEffectHandlerTest {
 
     }
 
+    @Test
+    void libraryBottomCounterPutsSpellOnBottomOfOwnersLibrary() {
+        gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        Card existingTopCard = createCard("Existing top card");
+        gd.playerDecks.get(player1Id).add(existingTopCard);
+
+        Card spell = createCreatureCard("Spell");
+        StackEntry spellEntry = creatureSpellEntry(spell, player1Id);
+        gd.stack.add(spellEntry);
+        StackEntry counterEntry = counterSpellEntry(createInstantCard("Spell Crumple"), player2Id, spell.getId());
+
+        counterSpellHandler.resolve(gd, counterEntry,
+                new CounterSpellEffect(CounteredSpellDestination.LIBRARY_BOTTOM));
+
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(existingTopCard, spell);
+        verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
+    }
+
+    @Test
+    void libraryBottomCounterExilesFlashbackSpell() {
+        Card spell = createInstantCard("Flashback spell");
+        StackEntry target = instantSpellEntry(spell, player1Id, null);
+        target.setCastWithFlashback(true);
+        gd.stack.add(target);
+        StackEntry counter = counterSpellEntry(createInstantCard("Spell Crumple"), player2Id, spell.getId());
+
+        counterSpellHandler.resolve(gd, counter,
+                new CounterSpellEffect(CounteredSpellDestination.LIBRARY_BOTTOM));
+
+        verify(exileService).exileCard(gd, player1Id, spell);
+        assertThat(gd.stack).doesNotContain(target);
+    }
+
     // ===== Helper methods =====
 
         private Card createCard(String name) {

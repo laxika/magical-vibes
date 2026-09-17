@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.c.CoastWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -12,32 +12,50 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulCollector.class, CloudSprite.class, Shock.class})
+@CardUsed({SoulCollector.class, CoastWatcher.class, SparkSpray.class, ShorelineRanger.class})
 class SoulCollectorTest extends BaseCardTest {
 
     @Test
     void returnsCreatureItDamagedToTheBattlefieldUnderItsControl() {
-        destroyCloudSpriteInCombat();
+        destroyCoastWatcherInCombat();
 
-        harness.assertOnBattlefield(player1, "Cloud Sprite");
-        harness.assertNotInGraveyard(player2, "Cloud Sprite");
+        harness.assertOnBattlefield(player1, "Coast Watcher");
+        harness.assertNotInGraveyard(player2, "Coast Watcher");
     }
 
     @Test
     void doesNotReturnCreatureItDidNotDamage() {
         harness.addToBattlefield(player1, new SoulCollector());
-        harness.addToBattlefield(player2, new CloudSprite());
+        harness.addToBattlefield(player2, new CoastWatcher());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Cloud Sprite"));
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Coast Watcher"));
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Cloud Sprite");
-        harness.assertNotOnBattlefield(player1, "Cloud Sprite");
+        harness.assertInGraveyard(player2, "Coast Watcher");
+        harness.assertNotOnBattlefield(player1, "Coast Watcher");
+    }
+
+    @Test
+    void returnsCreatureDamagedEarlierInTheTurnWhenItDiesLater() {
+        Permanent soulCollector = addCreatureReady(player1, new SoulCollector());
+        Permanent shorelineRanger = addCreatureReady(player2, new ShorelineRanger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.setHand(player1, List.of(new SparkSpray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, shorelineRanger.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Soul Collector");
+        harness.assertOnBattlefield(player1, "Shoreline Ranger");
+        harness.assertNotInGraveyard(player2, "Shoreline Ranger");
+        assertThat(soulCollector.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
@@ -60,25 +78,13 @@ class SoulCollectorTest extends BaseCardTest {
         assertThat(soulCollector.isFaceDown()).isFalse();
     }
 
-    private void destroyCloudSpriteInCombat() {
-        harness.addToBattlefield(player1, new SoulCollector());
-        harness.addToBattlefield(player2, new CloudSprite());
+    private void destroyCoastWatcherInCombat() {
+        addCreatureReady(player1, new SoulCollector());
+        addCreatureReady(player2, new CoastWatcher());
 
-        Permanent soulCollector = gd.playerBattlefields.get(player1.getId()).getFirst();
-        soulCollector.setSummoningSick(false);
-        soulCollector.setAttacking(true);
-
-        Permanent cloudSprite = gd.playerBattlefields.get(player2.getId()).getFirst();
-        cloudSprite.setSummoningSick(false);
-        cloudSprite.setBlocking(true);
-        cloudSprite.addBlockingTarget(0);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
         harness.passBothPriorities();
     }
 }

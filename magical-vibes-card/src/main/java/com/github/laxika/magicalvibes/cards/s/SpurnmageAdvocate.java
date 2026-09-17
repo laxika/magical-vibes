@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "27")
+@CardRegistration(set = "CMD", collectorNumber = "33")
 public class SpurnmageAdvocate extends Card {
 
     public SpurnmageAdvocate() {

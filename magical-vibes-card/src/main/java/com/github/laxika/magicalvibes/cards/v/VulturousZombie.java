@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "238")
+@CardRegistration(set = "CMD", collectorNumber = "236")
 public class VulturousZombie extends Card {
 
     public VulturousZombie() {

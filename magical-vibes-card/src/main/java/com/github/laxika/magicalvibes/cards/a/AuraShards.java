@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "233")
+@CardRegistration(set = "CMD", collectorNumber = "182")
 public class AuraShards extends Card {
 
     public AuraShards() {

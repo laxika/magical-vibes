@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "244")
+@CardRegistration(set = "CMD", collectorNumber = "184")
 public class BasandraBattleSeraph extends Card {
 
     public BasandraBattleSeraph() {

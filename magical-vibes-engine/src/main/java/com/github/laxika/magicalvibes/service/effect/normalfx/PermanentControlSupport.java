@@ -117,10 +117,17 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)
                 : 0;
+        int additionalMutagenTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
+                : 0;
         CreateTokenEffect additionalFrog = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
+        int additionalTreasureTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalTreasureTokenCount(
+                        gameData, controllerId, token, totalAmount)
+                : 0;
         boolean addClueToken = applyAdditionalReplacements
                 && totalAmount > 0
                 && hasSolvedClueReplacement(gameData, controllerId);
@@ -131,16 +138,25 @@ public class PermanentControlSupport {
         List<Permanent> batch = new ArrayList<>();
         int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                totalAmount + additionalMapTokenCount + additionalFrogTokenCount);
+                totalAmount + additionalMapTokenCount + additionalFrogTokenCount + additionalMutagenTokenCount + additionalTreasureTokenCount);
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         for (int i = 0; i < totalAmount; i++) {
             tokenBlueprints.add(evaluatedToken);
+        }
+        CreateTokenEffect additionalTreasureToken = additionalTreasureTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalTreasureToken(token)
+                : null;
+        for (int i = 0; i < additionalTreasureTokenCount; i++) {
+            tokenBlueprints.add(additionalTreasureToken);
         }
         for (int i = 0; i < additionalMapTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));
         }
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
+        }
+        for (int i = 0; i < additionalMutagenTokenCount; i++) {
+            tokenBlueprints.add(TokenCreationReplacementSupport.additionalMutagenToken(token));
         }
 
         for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {

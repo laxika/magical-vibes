@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.s.SparkSpray;
+import com.github.laxika.magicalvibes.cards.t.TreetopScout;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,14 +13,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathsHeadBuzzard.class, Shock.class, GrizzlyBears.class})
+@CardUsed({DeathsHeadBuzzard.class, GoblinBrigand.class, SparkSpray.class, TreetopScout.class})
 class DeathsHeadBuzzardTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it dies, all creatures get -1/-1 until end of turn")
     void deathTriggerDebuffsAllCreatures() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
         Permanent buzzard = harness.addToBattlefieldAndReturn(player1, new DeathsHeadBuzzard());
 
         destroyBuzzard(buzzard);
@@ -31,10 +32,32 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The debuff destroys one-toughness creatures and does not affect later creatures")
+    void deathTriggerHandlesZeroToughnessAndLaterEntrants() {
+        Permanent sturdyCreature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        harness.addToBattlefieldAndReturn(player1, new TreetopScout());
+        harness.addToBattlefieldAndReturn(player2, new TreetopScout());
+        Permanent buzzard = harness.addToBattlefieldAndReturn(player1, new DeathsHeadBuzzard());
+
+        destroyBuzzard(buzzard);
+
+        assertThat(sturdyCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(sturdyCreature.getEffectiveToughness()).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Treetop Scout");
+        harness.assertNotOnBattlefield(player2, "Treetop Scout");
+        harness.assertInGraveyard(player1, "Treetop Scout");
+        harness.assertInGraveyard(player2, "Treetop Scout");
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("The death trigger's debuff expires at end of turn")
     void deathTriggerDebuffExpiresAtEndOfTurn() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
         Permanent buzzard = harness.addToBattlefieldAndReturn(player1, new DeathsHeadBuzzard());
 
         destroyBuzzard(buzzard);
@@ -53,10 +76,9 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, java.util.List.of(new Shock()));
+        harness.setHand(player1, java.util.List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, buzzard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, buzzard.getId());
         harness.passBothPriorities();
     }
 }

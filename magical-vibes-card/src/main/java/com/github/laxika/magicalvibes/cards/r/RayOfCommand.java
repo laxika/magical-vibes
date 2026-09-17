@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "BRB", collectorNumber = "56")
 @CardRegistration(set = "ME2", collectorNumber = "61")
 @CardRegistration(set = "DDM", collectorNumber = "29")
+@CardRegistration(set = "CMD", collectorNumber = "56")
 public class RayOfCommand extends Card {
 
     public RayOfCommand() {

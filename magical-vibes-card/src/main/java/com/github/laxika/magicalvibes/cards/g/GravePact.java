@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "WOT", collectorNumber = "29")
 @CardRegistration(set = "WOT", collectorNumber = "73")
 @CardRegistration(set = "WOT", collectorNumber = "93")
+@CardRegistration(set = "CMD", collectorNumber = "85")
 public class GravePact extends Card {
 
     public GravePact() {

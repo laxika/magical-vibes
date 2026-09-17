@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "DDI", collectorNumber = "28")
 @CardRegistration(set = "HOP", collectorNumber = "4")
 @CardRegistration(set = "MM2", collectorNumber = "29")
+@CardRegistration(set = "CMD", collectorNumber = "23")
 public class OblivionRing extends Card {
 
     public OblivionRing() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
 
 @CardRegistration(set = "LRW", collectorNumber = "2")
+@CardRegistration(set = "CMD", collectorNumber = "6")
 public class ArbiterOfKnollridge extends Card {
 
     public ArbiterOfKnollridge() {
