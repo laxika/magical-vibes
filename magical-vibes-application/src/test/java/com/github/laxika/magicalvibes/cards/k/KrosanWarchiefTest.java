@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrosanWarchief.class, GrizzlyBears.class})
+@CardUsed({KrosanWarchief.class, GoblinBrigand.class, Kurgadon.class})
 class KrosanWarchiefTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,8 @@ class KrosanWarchiefTest extends BaseCardTest {
     @Test
     void doesNotReduceNonBeastSpellCost() {
         harness.addToBattlefield(player1, new KrosanWarchief());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GoblinBrigand()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -51,10 +51,35 @@ class KrosanWarchiefTest extends BaseCardTest {
     }
 
     @Test
+    void multipleWarchiefsStackTheirCostReductions() {
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.setHand(player1, List.of(new Kurgadon()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     void regeneratesTargetBeast() {
         harness.addToBattlefield(player1, new KrosanWarchief());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KrosanWarchief());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void regeneratesOpponentsBeast() {
         harness.addToBattlefield(player1, new KrosanWarchief());
-        Permanent target = gd.playerBattlefields.get(player1.getId()).get(1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KrosanWarchief());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -67,8 +92,7 @@ class KrosanWarchiefTest extends BaseCardTest {
     @Test
     void cannotRegenerateNonBeast() {
         harness.addToBattlefield(player1, new KrosanWarchief());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

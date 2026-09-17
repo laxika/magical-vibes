@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.c.Carbonize;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.g.GoblinWarStrike;
+import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MischievousQuanar.class, LavaAxe.class, GrizzlyBears.class})
+@CardUsed({MischievousQuanar.class, Carbonize.class, GoblinBrigand.class,
+        GoblinWarStrike.class, ScornfulEgotist.class})
 class MischievousQuanarTest extends BaseCardTest {
 
     @Test
@@ -34,28 +37,71 @@ class MischievousQuanarTest extends BaseCardTest {
     @Test
     void turningFaceUpCopiesTargetInstantOrSorcerySpell() {
         Permanent quanar = castFaceDown();
-        LavaAxe lavaAxe = new LavaAxe();
-        castLavaAxe(lavaAxe);
+        Carbonize carbonize = new Carbonize();
+        castCarbonize(carbonize);
 
         turnFaceUp(quanar);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(lavaAxe.getId());
-        harness.handlePermanentChosen(player1, lavaAxe.getId());
+                .containsExactly(carbonize.getId());
+        harness.handlePermanentChosen(player1, carbonize.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
-        harness.assertInGraveyard(player2, "Lava Axe");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        harness.assertInGraveyard(player2, "Carbonize");
+    }
+
+    @Test
+    void turningFaceUpCopiesTargetSorcerySpell() {
+        Permanent quanar = castFaceDown();
+        addCreatureReady(player1, new GoblinBrigand());
+        addCreatureReady(player2, new GoblinBrigand());
+        GoblinWarStrike warStrike = new GoblinWarStrike();
+        castGoblinWarStrike(warStrike);
+
+        turnFaceUp(quanar);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(warStrike.getId());
+        harness.handlePermanentChosen(player1, warStrike.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player2, "Goblin War Strike");
+    }
+
+    @Test
+    void turningFaceUpMayRetargetCopiedSpell() {
+        Permanent quanar = castFaceDown();
+        Carbonize carbonize = new Carbonize();
+        castCarbonize(carbonize);
+
+        turnFaceUp(quanar);
+        harness.handlePermanentChosen(player1, carbonize.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(player1.getId(), player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
     void turningFaceUpCannotTargetCreatureSpell() {
         Permanent quanar = castFaceDown();
-        GrizzlyBears bears = new GrizzlyBears();
-        castGrizzlyBears(bears);
+        ScornfulEgotist egotist = new ScornfulEgotist();
+        castScornfulEgotist(egotist);
 
         turnFaceUp(quanar);
 
@@ -64,7 +110,7 @@ class MischievousQuanarTest extends BaseCardTest {
         assertThat(quanar.isFaceDown()).isFalse();
 
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Scornful Egotist");
     }
 
     private Permanent castFaceDown() {
@@ -77,20 +123,26 @@ class MischievousQuanarTest extends BaseCardTest {
         return findPermanent(player1, "Mischievous Quanar");
     }
 
-    private void castLavaAxe(LavaAxe lavaAxe) {
+    private void castCarbonize(Carbonize carbonize) {
         preparePlayerTwoMainPhase();
-        harness.setHand(player2, List.of(lavaAxe));
-        harness.addMana(player2, ManaColor.RED, 5);
+        harness.setHand(player2, List.of(carbonize));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+    }
+
+    private void castGoblinWarStrike(GoblinWarStrike warStrike) {
+        preparePlayerTwoMainPhase();
+        harness.setHand(player2, List.of(warStrike));
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.castSorcery(player2, 0, player1.getId());
         harness.passPriority(player2);
     }
 
-    private void castGrizzlyBears(GrizzlyBears bears) {
+    private void castScornfulEgotist(ScornfulEgotist egotist) {
         preparePlayerTwoMainPhase();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, egotist, "{7}{U}");
         harness.passPriority(player2);
     }
 

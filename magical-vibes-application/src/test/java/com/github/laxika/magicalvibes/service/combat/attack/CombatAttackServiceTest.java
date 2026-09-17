@@ -152,6 +152,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({Juggernaut.class, FormOfTheDragon.class})
         @DisplayName("A must-attack creature with no legal attack target is not offered")
         void mustAttackCreatureWithNoLegalTargetIsNotOffered() {
             addCreatureReady(player1, new Juggernaut());
@@ -572,6 +573,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindDrake.class, FormOfTheDragon.class})
         @DisplayName("A defender-scoped restriction excludes the barred creature from declaration choices")
         void defenderScopedRestrictionExcludesBarredCreature() {
             // Form of the Dragon: "Creatures without flying can't attack you."

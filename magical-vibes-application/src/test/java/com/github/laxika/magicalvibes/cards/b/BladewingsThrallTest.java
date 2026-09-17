@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DragonWhelp;
+import com.github.laxika.magicalvibes.cards.d.DragonTyrant;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BladewingsThrall.class, DragonWhelp.class})
+@CardUsed({BladewingsThrall.class, DragonTyrant.class})
 class BladewingsThrallTest extends BaseCardTest {
 
     @Test
@@ -20,7 +20,7 @@ class BladewingsThrallTest extends BaseCardTest {
         Permanent thrall = harness.addToBattlefieldAndReturn(player1, new BladewingsThrall());
         assertThat(gqs.hasKeyword(gd, thrall, Keyword.FLYING)).isFalse();
 
-        harness.addToBattlefield(player1, new DragonWhelp());
+        harness.addToBattlefield(player1, new DragonTyrant());
 
         assertThat(gqs.hasKeyword(gd, thrall, Keyword.FLYING)).isTrue();
     }
@@ -28,7 +28,20 @@ class BladewingsThrallTest extends BaseCardTest {
     @Test
     void opponentDragonDoesNotGrantFlying() {
         Permanent thrall = harness.addToBattlefieldAndReturn(player1, new BladewingsThrall());
-        harness.addToBattlefield(player2, new DragonWhelp());
+        harness.addToBattlefield(player2, new DragonTyrant());
+
+        assertThat(gqs.hasKeyword(gd, thrall, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void losesFlyingWhenYouNoLongerControlADragon() {
+        Permanent thrall = harness.addToBattlefieldAndReturn(player1, new BladewingsThrall());
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonTyrant());
+
+        assertThat(gqs.hasKeyword(gd, thrall, Keyword.FLYING)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dragon));
 
         assertThat(gqs.hasKeyword(gd, thrall, Keyword.FLYING)).isFalse();
     }
@@ -38,7 +51,7 @@ class BladewingsThrallTest extends BaseCardTest {
         BladewingsThrall thrall = new BladewingsThrall();
         harness.setGraveyard(player1, List.of(thrall));
 
-        harness.enterBattlefieldAndReturn(player2, new DragonWhelp());
+        harness.enterBattlefieldAndReturn(player2, new DragonTyrant());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -53,12 +66,24 @@ class BladewingsThrallTest extends BaseCardTest {
     void decliningReturnKeepsCardInGraveyard() {
         harness.setGraveyard(player1, List.of(new BladewingsThrall()));
 
-        harness.enterBattlefieldAndReturn(player2, new DragonWhelp());
+        harness.enterBattlefieldAndReturn(player2, new DragonTyrant());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
+        harness.assertInGraveyard(player1, "Bladewing's Thrall");
+        harness.assertNotOnBattlefield(player1, "Bladewing's Thrall");
+    }
+
+    @Test
+    void nonDragonEnteringDoesNotTriggerReturn() {
+        harness.setGraveyard(player1, List.of(new BladewingsThrall()));
+
+        harness.enterBattlefieldAndReturn(player2, new BladewingsThrall());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Bladewing's Thrall");
         harness.assertNotOnBattlefield(player1, "Bladewing's Thrall");
     }

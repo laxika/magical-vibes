@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Upwelling.class})
 class UpwellingTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Mana is preserved when step advances with Upwelling on battlefield")
@@ -25,6 +25,19 @@ class UpwellingTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mana is preserved when a phase ends with Upwelling on the battlefield")
+    void manaPreservedOnPhaseEnd() {
+        harness.addToBattlefield(player1, new Upwelling());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.getGameService().advanceStep(gd);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
     }
 
     @Test

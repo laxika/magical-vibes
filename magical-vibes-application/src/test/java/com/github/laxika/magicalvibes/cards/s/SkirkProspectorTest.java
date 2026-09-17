@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SkirkProspector.class, SiegeGangCommander.class, LlanowarElves.class})
 class SkirkProspectorTest extends BaseCardTest {
 
     // ===== Mana ability behavior =====
@@ -60,7 +63,7 @@ class SkirkProspectorTest extends BaseCardTest {
     void cannotSacrificeNonGoblin() {
         harness.addToBattlefield(player1, new SkirkProspector());
         // Add a non-Goblin creature (Siege-Gang Commander is a Goblin, so let's use Llanowar Elves)
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        harness.addToBattlefield(player1, new LlanowarElves());
 
         // With only one Goblin (Skirk itself), it should auto-sacrifice itself
         harness.activateAbility(player1, 0, null, null);
