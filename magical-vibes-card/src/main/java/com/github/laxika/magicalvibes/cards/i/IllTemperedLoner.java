@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "162")
+@CardRegistration(set = "DBL", collectorNumber = "429")
 public class IllTemperedLoner extends Card {
 
     public IllTemperedLoner() {

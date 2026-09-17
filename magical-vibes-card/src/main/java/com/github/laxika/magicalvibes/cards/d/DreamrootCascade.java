@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "SOS", collectorNumber = "302")
 @CardRegistration(set = "INR", collectorNumber = "277")
 @CardRegistration(set = "VOW", collectorNumber = "262")
+@CardRegistration(set = "DBL", collectorNumber = "529")
 public class DreamrootCascade extends Card {
 
     public DreamrootCascade() {

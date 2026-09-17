@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "9")
+@CardRegistration(set = "DBL", collectorNumber = "276")
 public class DistractingGeist extends Card {
 
     private static final PermanentAllOfPredicate DEFENDING_PLAYER_CREATURE =

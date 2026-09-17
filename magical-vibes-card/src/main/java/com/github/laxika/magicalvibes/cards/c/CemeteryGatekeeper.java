@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprint
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "148")
+@CardRegistration(set = "DBL", collectorNumber = "415")
 public class CemeteryGatekeeper extends Card {
 
     public CemeteryGatekeeper() {

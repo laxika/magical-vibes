@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "112")
 @CardRegistration(set = "PIO", collectorNumber = "93")
+@CardRegistration(set = "DBL", collectorNumber = "379")
 public class FellStinger extends Card {
 
     public FellStinger() {

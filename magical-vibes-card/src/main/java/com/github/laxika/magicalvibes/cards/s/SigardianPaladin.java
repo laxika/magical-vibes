@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "247")
+@CardRegistration(set = "DBL", collectorNumber = "514")
 public class SigardianPaladin extends Card {
 
     public SigardianPaladin() {

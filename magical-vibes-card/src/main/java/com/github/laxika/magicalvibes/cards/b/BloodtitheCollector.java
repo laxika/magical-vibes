@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "MID", collectorNumber = "90")
 @CardRegistration(set = "FDN", collectorNumber = "516")
+@CardRegistration(set = "DBL", collectorNumber = "90")
 public class BloodtitheCollector extends Card {
 
     public BloodtitheCollector() {

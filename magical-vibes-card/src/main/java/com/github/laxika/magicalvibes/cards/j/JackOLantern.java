@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "254")
+@CardRegistration(set = "DBL", collectorNumber = "254")
 public class JackOLantern extends Card {
 
     public JackOLantern() {

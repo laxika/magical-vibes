@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "68")
+@CardRegistration(set = "DBL", collectorNumber = "335")
 public class MirrorhallMimic extends Card {
 
     public MirrorhallMimic() {

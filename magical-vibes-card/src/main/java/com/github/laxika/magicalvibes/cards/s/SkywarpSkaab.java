@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "78")
+@CardRegistration(set = "DBL", collectorNumber = "345")
 public class SkywarpSkaab extends Card {
 
     public SkywarpSkaab() {

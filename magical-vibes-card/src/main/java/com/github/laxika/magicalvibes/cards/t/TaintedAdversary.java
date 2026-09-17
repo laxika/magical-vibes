@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "124")
+@CardRegistration(set = "DBL", collectorNumber = "124")
 public class TaintedAdversary extends Card {
 
     public TaintedAdversary() {

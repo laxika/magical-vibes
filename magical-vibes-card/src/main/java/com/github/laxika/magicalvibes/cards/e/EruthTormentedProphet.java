@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "237")
+@CardRegistration(set = "DBL", collectorNumber = "504")
 public class EruthTormentedProphet extends Card {
 
     public EruthTormentedProphet() {

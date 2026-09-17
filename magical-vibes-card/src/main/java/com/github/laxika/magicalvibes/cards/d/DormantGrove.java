@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "198")
+@CardRegistration(set = "DBL", collectorNumber = "465")
 public class DormantGrove extends Card {
 
     public DormantGrove() {

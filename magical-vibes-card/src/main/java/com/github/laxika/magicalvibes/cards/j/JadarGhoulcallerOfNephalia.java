@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "108")
+@CardRegistration(set = "DBL", collectorNumber = "108")
 public class JadarGhoulcallerOfNephalia extends Card {
 
     public JadarGhoulcallerOfNephalia() {

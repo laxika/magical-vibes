@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "92")
+@CardRegistration(set = "DBL", collectorNumber = "359")
 public class AimForTheHead extends Card {
 
     public AimForTheHead() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "221")
+@CardRegistration(set = "DBL", collectorNumber = "221")
 public class FaithfulMending extends Card {
 
     public FaithfulMending() {

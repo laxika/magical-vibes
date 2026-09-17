@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardE
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "7")
+@CardRegistration(set = "DBL", collectorNumber = "274")
 public class CircleOfConfinement extends Card {
 
     private static final PermanentPredicate TARGET_CREATURE = new PermanentAllOfPredicate(List.of(

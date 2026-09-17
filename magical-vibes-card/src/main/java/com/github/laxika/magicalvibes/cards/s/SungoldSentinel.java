@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "37")
+@CardRegistration(set = "DBL", collectorNumber = "37")
 public class SungoldSentinel extends Card {
 
     public SungoldSentinel() {

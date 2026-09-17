@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "217")
+@CardRegistration(set = "DBL", collectorNumber = "217")
 public class DennickPiousApprentice extends Card {
 
     public DennickPiousApprentice() {

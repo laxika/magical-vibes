@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "119")
+@CardRegistration(set = "DBL", collectorNumber = "119")
 public class RottenReunion extends Card {
 
     public RottenReunion() {

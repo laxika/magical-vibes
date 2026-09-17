@@ -13,6 +13,7 @@ import java.util.List;
  * Mysterious Tome — front face of Mysterious Tome // Chilling Chronicle.
  */
 @CardRegistration(set = "MID", collectorNumber = "63")
+@CardRegistration(set = "DBL", collectorNumber = "63")
 public class MysteriousTome extends Card {
 
     public MysteriousTome() {

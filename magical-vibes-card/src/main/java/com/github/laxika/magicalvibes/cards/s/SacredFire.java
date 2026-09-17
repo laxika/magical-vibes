@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "239")
+@CardRegistration(set = "DBL", collectorNumber = "239")
 public class SacredFire extends Card {
 
     public SacredFire() {

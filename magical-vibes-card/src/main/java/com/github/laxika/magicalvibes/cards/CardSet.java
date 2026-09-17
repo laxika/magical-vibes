@@ -101,6 +101,7 @@ public enum CardSet {
     SET_SIS("SIS"),
     SET_MID("MID"),
     SET_VOW("VOW"),
+    SET_DBL("DBL"),
     SET_DKA("DKA"),
     SET_AVR("AVR"),
     SET_ZEN("ZEN"),
