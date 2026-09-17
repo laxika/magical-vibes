@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "3")
+@CardRegistration(set = "C13", collectorNumber = "3")
 @CardRegistration(set = "M15", collectorNumber = "2")
 @CardRegistration(set = "M19", collectorNumber = "5")
 @CardRegistration(set = "FDN", collectorNumber = "135")

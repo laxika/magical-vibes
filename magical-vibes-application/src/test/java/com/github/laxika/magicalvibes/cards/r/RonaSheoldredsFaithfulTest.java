@@ -85,7 +85,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
                 List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must discard 2 cards");
+                .hasMessageContaining("Must discard exactly 2 cards");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rona);
     }
 }

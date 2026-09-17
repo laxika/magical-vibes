@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
@@ -93,8 +94,13 @@ public class TargetRedirectionSupport {
     private boolean isValidNewTargetForAbility(GameData gameData, StackEntry abilityEntry, UUID candidateTargetId) {
         List<CardEffect> effects = abilityEntry.getEffectsToResolve() == null
                 ? List.of() : abilityEntry.getEffectsToResolve();
+        TargetFilter targetFilter = abilityEntry.getTargetFilter();
+        if (targetFilter == null && abilityEntry.getTargetIds().size() == 1
+                && !abilityEntry.getTargetFilters().isEmpty()) {
+            targetFilter = abilityEntry.getTargetFilters().getFirst();
+        }
         ActivatedAbility syntheticAbility = new ActivatedAbility(
-                false, null, effects, "retarget", abilityEntry.getTargetFilter());
+                false, null, effects, "retarget", targetFilter);
         int sourcePermanentIndex = findPermanentIndex(gameData, abilityEntry.getSourcePermanentId());
         ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForAbility(
                 gameData, abilityEntry.getCard(), syntheticAbility,

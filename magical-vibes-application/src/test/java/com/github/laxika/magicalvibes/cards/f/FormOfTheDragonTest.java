@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.a.AvenFarseer;
+import com.github.laxika.magicalvibes.cards.t.TreetopScout;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FormOfTheDragon.class, TreetopScout.class, AvenFarseer.class})
 class FormOfTheDragonTest extends BaseCardTest {
 
-    private void beginAttack(Player attacker) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+    private void resolveEndStep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        harness.passBothPriorities();
     }
 
     // ===== Upkeep: 5 damage to any target =====
@@ -42,13 +45,13 @@ class FormOfTheDragonTest extends BaseCardTest {
     @DisplayName("Upkeep trigger can deal 5 damage to a creature, destroying it")
     void upkeepDealsFiveToCreature() {
         harness.addToBattlefield(player1, new FormOfTheDragon());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent scout = harness.addToBattlefieldAndReturn(player2, new TreetopScout());
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, scout.getId());
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gqs.findPermanentById(gd, bears.getId())).isNull();
+        assertThat(gqs.findPermanentById(gd, scout.getId())).isNull();
     }
 
     // ===== End step: your life total becomes 5 =====
@@ -59,11 +62,7 @@ class FormOfTheDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FormOfTheDragon());
         harness.setLife(player1, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP, trigger fires onto stack
-        harness.passBothPriorities(); // resolve trigger
+        resolveEndStep(player1);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
     }
@@ -74,11 +73,7 @@ class FormOfTheDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FormOfTheDragon());
         harness.setLife(player1, 2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP, trigger fires onto stack
-        harness.passBothPriorities(); // resolve trigger
+        resolveEndStep(player1);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
     }
@@ -90,11 +85,20 @@ class FormOfTheDragonTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 13);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP, trigger fires onto stack
-        harness.passBothPriorities(); // resolve trigger
+        resolveEndStep(player1);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("End step trigger fires during an opponent's end step")
+    void endStepFiresDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new FormOfTheDragon());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 13);
+
+        resolveEndStep(player2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
@@ -106,7 +110,7 @@ class FormOfTheDragonTest extends BaseCardTest {
     @DisplayName("Non-flying creature is not offered when the controller is protected")
     void nonFlyerCantAttackController() {
         harness.addToBattlefield(player2, new FormOfTheDragon());
-        addCreatureReady(player1, new GrizzlyBears()); // ground creature, index 0
+        addCreatureReady(player1, new TreetopScout()); // ground creature, index 0
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -121,12 +125,10 @@ class FormOfTheDragonTest extends BaseCardTest {
     @DisplayName("Flying creature can attack the controller")
     void flyerCanAttackController() {
         harness.addToBattlefield(player2, new FormOfTheDragon());
-        addCreatureReady(player1, new SuntailHawk()); // flyer, index 0
-
-        beginAttack(player1);
+        addCreatureReady(player1, new AvenFarseer()); // flyer, index 0
 
         // The call not throwing proves the flyer may attack the Form of the Dragon controller.
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
     }
 
     @Test
@@ -134,11 +136,9 @@ class FormOfTheDragonTest extends BaseCardTest {
     void restrictionOnlyProtectsController() {
         // Player1 controls Form of the Dragon and a ground creature; player2 has no restriction.
         harness.addToBattlefield(player1, new FormOfTheDragon()); // index 0
-        addCreatureReady(player1, new GrizzlyBears());            // index 1
-
-        beginAttack(player1);
+        addCreatureReady(player1, new TreetopScout());            // index 1
 
         // Attacking player2 (who does not control Form of the Dragon) succeeds.
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
     }
 }

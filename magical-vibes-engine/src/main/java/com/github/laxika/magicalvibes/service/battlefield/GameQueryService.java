@@ -158,6 +158,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZone
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
@@ -638,6 +639,9 @@ public class GameQueryService {
      * a global removal.
      */
     public boolean hasEffectiveSupertype(GameData gameData, Permanent permanent, CardSupertype supertype) {
+        if (supertype == CardSupertype.LEGENDARY && isRingBearer(gameData, permanent)) {
+            return true;
+        }
         if (permanent.getPersistentGrantedSupertypes().contains(supertype)) {
             long changeTimestamp = permanent.getPersistentSupertypeChangeTimestamps()
                     .getOrDefault(supertype, Long.MAX_VALUE);
@@ -661,7 +665,10 @@ public class GameQueryService {
                     && !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
         }
         if (!permanent.getCard().getSupertypes().contains(supertype)) {
-            if (gameData == null) {
+            // A departing permanent may still be queried while its attached Aura is being removed.
+            // It is absent from the layered board, so rebuilding its static bonus would recurse
+            // through the Aura's supertype filter without ever finding a layered state.
+            if (gameData == null || findPermanentById(gameData, permanent.getId()) == null) {
                 return false;
             }
             return computeStaticBonus(gameData, permanent).grantedSupertypes().contains(supertype);
@@ -670,6 +677,17 @@ public class GameQueryService {
             return true;
         }
         return !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
+    }
+
+    /** Returns whether the permanent is currently designated as its controller's Ring-bearer. */
+    public boolean isRingBearer(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        return controllerId != null
+                && gameData.ringLevels.getOrDefault(controllerId, 0) > 0
+                && permanent.getId().equals(gameData.ringBearerIds.get(controllerId));
     }
 
     /** Returns whether a permanent has a subtype after continuous effects are applied. */
@@ -1366,7 +1384,20 @@ public class GameQueryService {
      * restricted.
      */
     public boolean canPayLifeOrSacrificeCreaturesForCosts(GameData gameData) {
-        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+        return canPayLifeForCosts(gameData) && canSacrificeCreaturesForCosts(gameData);
+    }
+
+    /**
+     * Returns whether life may be paid as a spell or ability cost. Karn's Sylex does not prohibit
+     * life payments used to activate mana abilities, so that distinction is supplied by callers.
+     */
+    public boolean canPayLifeForCosts(GameData gameData) {
+        return canPayLifeForCosts(gameData, false);
+    }
+
+    public boolean canPayLifeForCosts(GameData gameData, boolean manaAbility) {
+        return (manaAbility || !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeEffect.class))
+                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
                 && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
     }
 
@@ -2451,6 +2482,21 @@ public class GameQueryService {
         return countCreaturesControlled(gameData, playerId) > countCreaturesControlled(gameData, comparedPlayerId);
     }
 
+    /** Returns whether {@code playerId} controls the most creatures, including ties for most. */
+    public boolean controlsMostCreaturesOrTied(GameData gameData, UUID playerId) {
+        if (playerId == null) return false;
+        int playerCreatureCount = countCreaturesControlled(gameData, playerId);
+        boolean foundPlayer = false;
+        for (UUID candidatePlayerId : gameData.orderedPlayerIds) {
+            if (candidatePlayerId.equals(playerId)) {
+                foundPlayer = true;
+            } else if (playerCreatureCount < countCreaturesControlled(gameData, candidatePlayerId)) {
+                return false;
+            }
+        }
+        return foundPlayer;
+    }
+
     /**
      * Returns {@code true} if any opponent of the given player controls a creature with flying
      * (Groundling Pouncer's activation restriction).
@@ -3010,8 +3056,11 @@ public class GameQueryService {
                 .anyMatch(CantBecomeUntappedEffect.class::isInstance);
     }
 
-    /** Returns whether the permanent cannot be sacrificed during its controller's end step. */
+    /** Returns whether the permanent currently cannot be sacrificed. */
     public boolean cantBeSacrificed(GameData gameData, Permanent permanent) {
+        if (isRingBearer(gameData, permanent)) {
+            return true;
+        }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (gameData.currentStep != TurnStep.END_STEP
                 || controllerId == null

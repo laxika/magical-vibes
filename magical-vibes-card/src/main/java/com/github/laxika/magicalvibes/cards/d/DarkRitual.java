@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "A25", collectorNumber = "82")
 @CardRegistration(set = "MB1", collectorNumber = "82")
 @CardRegistration(set = "STA", collectorNumber = "26")
+@CardRegistration(set = "TMC", collectorNumber = "131")
 @CardRegistration(set = "FCA", collectorNumber = "8")
 @CardRegistration(set = "SLZ", collectorNumber = "38")
 @CardRegistration(set = "SLZ", collectorNumber = "159")

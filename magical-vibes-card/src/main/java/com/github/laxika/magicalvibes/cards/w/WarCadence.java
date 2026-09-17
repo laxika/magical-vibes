@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockThisTurn
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "224")
+@CardRegistration(set = "C13", collectorNumber = "128")
 public class WarCadence extends Card {
 
     public WarCadence() {

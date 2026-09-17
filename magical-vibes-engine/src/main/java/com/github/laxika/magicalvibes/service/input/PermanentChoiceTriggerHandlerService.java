@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -74,6 +75,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
+    private final MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler blackGateHandler;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
@@ -1013,6 +1015,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
             entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             if (att.triggeringPermanentId() != null) {
                 Permanent triggeringCreature = gameQueryService.findPermanentById(
@@ -1088,6 +1091,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttackedTargetId(att.attackedTargetId());
         }
         entry.setTriggeringPermanentId(att.triggeringPermanentId());
+        entry.setActivePlayerId(gameData.activePlayerId);
         pushTriggeredEntry(gameData, entry);
         if (att.triggeringPermanentId() != null) {
             Permanent triggeringCreature = gameQueryService.findPermanentById(
@@ -1463,6 +1467,12 @@ public class PermanentChoiceTriggerHandlerService {
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                     EffectDuration.PERMANENT, null, context.sourceCard().getName());
         }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleBlackGateMostLifeChoice(GameData gameData, UUID playerId,
+                                               PermanentChoiceContext.BlackGateMostLifeChoice context) {
+        blackGateHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

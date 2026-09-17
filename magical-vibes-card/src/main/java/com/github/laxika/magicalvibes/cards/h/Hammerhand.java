@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "147")
 @CardRegistration(set = "IMA", collectorNumber = "132")
+@CardRegistration(set = "DMU", collectorNumber = "129")
 public class Hammerhand extends Card {
 
     public Hammerhand() {

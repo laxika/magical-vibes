@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "246")
 @CardRegistration(set = "PIO", collectorNumber = "274")
 @CardRegistration(set = "RVR", collectorNumber = "286")
+@CardRegistration(set = "C13", collectorNumber = "321")
 public class SelesnyaGuildgate extends Card {
 
     public SelesnyaGuildgate() {

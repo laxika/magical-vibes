@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "175")
+@CardRegistration(set = "C13", collectorNumber = "195")
 public class JundCharm extends Card {
 
     public JundCharm() {

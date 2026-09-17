@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "127")
+@CardRegistration(set = "C13", collectorNumber = "185")
 public class DeepfireElemental extends Card {
 
     public DeepfireElemental() {

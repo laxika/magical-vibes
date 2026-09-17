@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "17")
+@CardRegistration(set = "C13", collectorNumber = "19")
 public class RazorHippogriff extends Card {
 
     public RazorHippogriff() {

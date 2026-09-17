@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "183")
+@CardRegistration(set = "CMD", collectorNumber = "127")
 public class LashOut extends Card {
 
     public LashOut() {

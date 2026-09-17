@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "502")
+@CardRegistration(set = "DMU", collectorNumber = "28")
 public class PrayerOfBinding extends Card {
 
     public PrayerOfBinding() {

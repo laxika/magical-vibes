@@ -564,6 +564,7 @@ public class BlockLegalityService {
                     if (effect instanceof BlockabilityRestrictionEffect restriction
                             && (restriction.unblockableIfDefenderControls() != null
                             || restriction.defenderControlsCreaturesSharingTypeMinimum() != null
+                            || restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
                             || restriction.blockableOnlyBy() != null
                             || restriction.cantBeBlockedByCreaturesMatching() != null
                             || restriction.requiresAllDefendingCreaturesToBlock())) {
@@ -590,6 +591,11 @@ public class BlockLegalityService {
                     && !gameQueryService.controlsCreaturesSharingCreatureType(
                     gameData, defenderControllerId(context),
                     restriction.defenderControlsCreaturesSharingTypeMinimum())) {
+                unblockable = true;
+                unblockableForOtherReason = true;
+            }
+            if (restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
+                    && gameQueryService.controlsMostCreaturesOrTied(gameData, defenderControllerId(context))) {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }

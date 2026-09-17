@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceToTarget
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "2")
+@CardRegistration(set = "CMD", collectorNumber = "9")
 public class BatheInLight extends Card {
 
     public BatheInLight() {

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AshnodsCylix;
-import com.github.laxika.magicalvibes.cards.b.BenthicExplorers;
-import com.github.laxika.magicalvibes.cards.z.ZombieGoliath;
+import com.github.laxika.magicalvibes.cards.a.ArkOfBlight;
+import com.github.laxika.magicalvibes.cards.e.ElvishAberration;
+import com.github.laxika.magicalvibes.cards.t.TwistedAbomination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClutchOfUndeath.class, ZombieGoliath.class, BenthicExplorers.class, AshnodsCylix.class})
+@CardUsed({ClutchOfUndeath.class, TwistedAbomination.class, ElvishAberration.class, ArkOfBlight.class})
 class ClutchOfUndeathTest extends BaseCardTest {
 
     private Permanent attach(Permanent creature) {
@@ -27,7 +27,7 @@ class ClutchOfUndeathTest extends BaseCardTest {
     @Test
     @DisplayName("Zombie enchanted creature gets +3/+3")
     void zombieCreatureGetsBoost() {
-        Permanent zombie = addCreatureReady(player1, new ZombieGoliath());
+        Permanent zombie = addCreatureReady(player1, new TwistedAbomination());
         int basePower = gqs.getEffectivePower(gd, zombie);
         int baseToughness = gqs.getEffectiveToughness(gd, zombie);
 
@@ -40,7 +40,7 @@ class ClutchOfUndeathTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Zombie enchanted creature gets -3/-3 instead")
     void nonZombieCreatureGetsPenalty() {
-        Permanent nonZombie = addCreatureReady(player1, new BenthicExplorers());
+        Permanent nonZombie = addCreatureReady(player1, new ElvishAberration());
         int basePower = gqs.getEffectivePower(gd, nonZombie);
         int baseToughness = gqs.getEffectiveToughness(gd, nonZombie);
 
@@ -53,7 +53,7 @@ class ClutchOfUndeathTest extends BaseCardTest {
     @Test
     @DisplayName("Modification wears off when Clutch of Undeath leaves the battlefield")
     void modificationRemovedWhenAuraLeaves() {
-        Permanent zombie = addCreatureReady(player1, new ZombieGoliath());
+        Permanent zombie = addCreatureReady(player1, new TwistedAbomination());
         int basePower = gqs.getEffectivePower(gd, zombie);
 
         Permanent clutch = attach(zombie);
@@ -67,7 +67,7 @@ class ClutchOfUndeathTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Clutch of Undeath attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent creature = addCreatureReady(player2, new BenthicExplorers());
+        Permanent creature = addCreatureReady(player2, new ElvishAberration());
 
         harness.setHand(player1, List.of(new ClutchOfUndeath()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -85,7 +85,7 @@ class ClutchOfUndeathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AshnodsCylix());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ArkOfBlight());
         harness.setHand(player1, List.of(new ClutchOfUndeath()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 

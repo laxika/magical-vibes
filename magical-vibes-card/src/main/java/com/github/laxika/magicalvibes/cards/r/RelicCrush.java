@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "179")
+@CardRegistration(set = "CMD", collectorNumber = "168")
 public class RelicCrush extends Card {
 
     public RelicCrush() {

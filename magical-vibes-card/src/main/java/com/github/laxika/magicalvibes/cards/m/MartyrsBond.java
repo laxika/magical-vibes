@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSo
 
 @CardRegistration(set = "MB1", collectorNumber = "174")
 @CardRegistration(set = "SS2", collectorNumber = "2")
+@CardRegistration(set = "CMD", collectorNumber = "19")
 public class MartyrsBond extends Card {
 
     public MartyrsBond() {
