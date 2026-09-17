@@ -1504,6 +1504,10 @@ public class StepTriggerService {
                 }
 
                 if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,

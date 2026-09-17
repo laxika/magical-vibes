@@ -398,6 +398,12 @@ public class CombatDamageService {
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
+        state.combatDamageDealtToPlayer.forEach((source, damage) -> {
+            if (damage > 0 && gameData.isCommander(source.getOriginalCard().getId())) {
+                gameData.commanderDamageReceived.computeIfAbsent(defenderId, id -> new java.util.HashMap<>())
+                        .merge(source.getOriginalCard().getId(), damage, Integer::sum);
+            }
+        });
 
         // Process lifelink before removing dead creatures
         processLifelink(gameData, state.combatDamageDealt);
@@ -3396,6 +3402,18 @@ public class CombatDamageService {
         }
         }
 
+        // Aggregate prevention/replacement above must also update the per-source ledger.
+        // Life floors and effects that stop life totals changing do not reduce damage dealt.
+        int recordedDamage = state.combatDamageDealtToPlayer.values().stream().mapToInt(Integer::intValue).sum();
+        int removedDamage = Math.max(0, recordedDamage - state.damageToDefendingPlayer - state.poisonDamageToDefendingPlayer);
+        for (var source : state.combatDamageDealtToPlayer.entrySet()) {
+            if (removedDamage == 0) break;
+            int removed = Math.min(source.getValue(), removedDamage);
+            source.setValue(source.getValue() - removed);
+            state.combatDamageDealt.computeIfPresent(source.getKey(), (ignored, amount) -> Math.max(0, amount - removed));
+            removedDamage -= removed;
+        }
+
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
             int damageDealt = state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer;
@@ -3715,6 +3733,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyChannelHarmPreventionToPermanent(
                     gameData, pw, sourceControllerId, damage);
             damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage, true);
+            damage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, pwControllerId, damage, atk.getCard(), atk,
+                    sourceControllerId, true);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(
                     gameData, pwControllerId, damage, true);
@@ -3986,6 +4007,9 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
+                damage = damagePreventionService.applyComeuppancePrevention(
+                        gameData, defenderId, damage, atk.getCard(), atk,
+                        sourceControllerId, true);
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
                 damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(

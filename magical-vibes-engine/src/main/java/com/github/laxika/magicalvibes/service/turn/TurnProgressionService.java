@@ -619,8 +619,7 @@ public class TurnProgressionService {
             damageCantBePrevented = Boolean.TRUE.equals(gameData.extraTurnDamageCantBePrevented.pollFirst());
             extraTurnSequence = gameData.extraTurnSequences.isEmpty()
                     ? null : gameData.extraTurnSequences.pollFirst();
-            if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
-                    .stream().anyMatch(ExtraTurnSkipReplacementEffect.class::isInstance))) {
+            if (hasApplicableExtraTurnSkipReplacement(gameData, nextActive)) {
                 Long skippedExtraTurnSequence = extraTurnSequence;
                 if (skippedExtraTurnSequence != null) {
                     gameData.drainDelayedActions(LoseGameAtEndStep.class,
@@ -1079,6 +1078,20 @@ public class TurnProgressionService {
         completeTurnAdvance(gameData);
     }
 
+    private boolean hasApplicableExtraTurnSkipReplacement(GameData gameData, UUID extraTurnPlayerId) {
+        for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
+            UUID sourceControllerId = battlefieldEntry.getKey();
+            for (Permanent permanent : battlefieldEntry.getValue()) {
+                boolean applies = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(ExtraTurnSkipReplacementEffect.class::isInstance)
+                        .map(ExtraTurnSkipReplacementEffect.class::cast)
+                        .anyMatch(effect -> effect.appliesToExtraTurn(sourceControllerId, extraTurnPlayerId));
+                if (applies) return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Resumes the paused untap step after the active player answers a Storage Matrix type choice.
      * Only permanents matching {@code restrictPredicate} untap; the rest of the untap-step
@@ -1235,6 +1248,7 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
+        if (gameData.waitingForSubgame) return;
         // Process pending may abilities before auto-passing (e.g. attack-triggered "you may" effects)
         // Only when the stack is empty — otherwise stack items (e.g. Time Stop) must resolve first
         if (gameData.stack.isEmpty() && !gameData.pendingMayAbilities.isEmpty()

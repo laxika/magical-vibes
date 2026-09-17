@@ -59,6 +59,7 @@ public class PlanechaseService {
         state.controllerId = game.startingPlayerId;
         if (!state.faceUp.isEmpty()) return;
         if (state.deck.stream().noneMatch(card -> card.hasType(CardType.PLANE))) {
+            if (game.session.depth() > 0) return;
             throw new IllegalStateException("A planar deck must contain a plane");
         }
         while (state.deck.getFirst().hasType(CardType.PHENOMENON)) {

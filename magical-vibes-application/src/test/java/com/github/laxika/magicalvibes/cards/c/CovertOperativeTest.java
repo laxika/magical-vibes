@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,20 +11,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CovertOperative.class, GrizzlyBears.class})
+@CardUsed({CovertOperative.class, AvenEnvoy.class})
 class CovertOperativeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Covert Operative cannot be blocked")
     void cannotBeBlocked() {
-        addCreatureReady(player2, new GrizzlyBears());
-        Permanent operative = addCreatureReady(player1, new CovertOperative());
-        operative.setAttacking(true);
+        addCreatureReady(player2, new AvenEnvoy());
+        addCreatureReady(player1, new CovertOperative());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

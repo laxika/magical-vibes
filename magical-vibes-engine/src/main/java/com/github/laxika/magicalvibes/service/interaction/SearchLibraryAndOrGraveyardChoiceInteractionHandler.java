@@ -74,7 +74,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                     : fromHand
                     ? gameData.playerHands.getOrDefault(playerId, List.of())
                     : fromOutsideGame
-                    ? gameData.playerSideboards.getOrDefault(playerId, List.of())
+                    ? com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)
                     : gameData.playerGraveyards.getOrDefault(playerId, List.of());
             boolean removed = zone.removeIf(card -> card.getId().equals(chosen.getId()));
             if (!removed) {

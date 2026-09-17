@@ -443,6 +443,12 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
+        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
+            rawDamage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, targetControllerId, rawDamage, sourceCardForBonus,
+                    sourcePermanentForBonus, sourceControllerId, false);
+            processPendingRedirectDamage(gameData);
+        }
         if (!targetDamageUnpreventable
                 && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(
                 gameData, target, effectiveDamageSource,
@@ -1063,6 +1069,13 @@ public class DamageSupport {
                         gameData, targetPermanent, loyaltyDamage);
                 loyaltyDamage = damagePreventionService.applyControllerAndPermanentsNoncombatDamagePrevention(
                         gameData, targetPermanent, loyaltyDamage);
+                loyaltyDamage = damagePreventionService.applyComeuppancePrevention(
+                        gameData, pwControllerId, loyaltyDamage, source, sourcePermanent,
+                        sourceControllerId, false);
+                processPendingRedirectDamage(gameData);
+                if (loyaltyDamage <= 0) {
+                    return 0;
+                }
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 int damageDealt = loyaltyDamage;
@@ -1438,6 +1451,9 @@ public class DamageSupport {
             processEyeForAnEyeReflections(gameData);
             rawDamage = damagePreventionService.applyChannelHarmPrevention(
                     gameData, playerId, sourceControllerId, rawDamage);
+            rawDamage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, playerId, rawDamage, source, sourcePermanent,
+                    sourceControllerId, false);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(

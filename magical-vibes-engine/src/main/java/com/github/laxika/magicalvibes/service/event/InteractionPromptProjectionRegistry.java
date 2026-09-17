@@ -171,6 +171,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
+        register(PendingInteraction.CommanderReplacementChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
+                "Put " + choice.move().card().getName() + " into the command zone instead of your " + choice.move().destination().name().toLowerCase() + "?", true, null));
+        register(PendingInteraction.CommanderReturnChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
+                "Return " + choice.card().getName() + " from " + choice.fromZone().name().toLowerCase() + " to the command zone?", true, null));
         register(PendingInteraction.CommandZoneCardChoice.class, this::projectCommandZoneCardChoice);
         register(PendingInteraction.RemoveTimeCounterCostChoice.class,
                 this::projectRemoveTimeCounterCostChoice);
@@ -1374,7 +1378,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.SearchOutsideGameOrExileCardChoice interaction) {
         List<CardView> cardViews = new ArrayList<>();
         addMatchingCardViews(cardViews,
-                gameData.playerSideboards.getOrDefault(interaction.playerId(), List.of()),
+                com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId()),
                 interaction.validCardIds());
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.stream()

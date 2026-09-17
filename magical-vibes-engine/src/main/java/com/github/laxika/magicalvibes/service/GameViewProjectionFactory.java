@@ -187,7 +187,7 @@ public class GameViewProjectionFactory {
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
                     potentialPayableAbilityIndices, speeds, gameData.dayNight,
                     gameData.planechase == null ? null : planarViews.create(gameData, playerId),
-                    gameData.monarchPlayerId
+                    gameData.monarchPlayerId, commanderView(gameData, playerId)
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -616,7 +616,7 @@ public class GameViewProjectionFactory {
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
         Set<UUID> alreadyIncluded = new HashSet<>();
         for (Card c : exiledCards) alreadyIncluded.add(c.getId());
-        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+        for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)) {
             if (gameData.outsideGamePlayPermissions.contains(card.getId())
                     && alreadyIncluded.add(card.getId())) {
                 exiledCards.add(card);
@@ -1066,8 +1066,24 @@ public class GameViewProjectionFactory {
                 getSpeeds(data),
                 data.dayNight,
                 data.planechase == null ? null : planarViews.create(data, playerId),
-                data.monarchPlayerId
+                data.monarchPlayerId, commanderView(data, playerId)
         );
+    }
+
+    private com.github.laxika.magicalvibes.networking.model.CommanderView commanderView(GameData game, UUID playerId) {
+        Map<UUID, List<CardView>> zones = new java.util.LinkedHashMap<>();
+        Map<UUID, List<UUID>> commanders = new java.util.LinkedHashMap<>();
+        game.playerCommandZones.forEach((id, cards) -> zones.put(id, cards.stream().map(cardViewFactory::create).toList()));
+        game.playerCommanders.forEach((id, cards) -> commanders.put(id, cards.stream().map(Card::getId).toList()));
+        Map<UUID, Map<UUID, Integer>> damage = new java.util.LinkedHashMap<>();
+        game.commanderDamageReceived.forEach((id, amounts) -> damage.put(id, Map.copyOf(amounts)));
+        UUID actingPlayerId = playerId != null && playerId.equals(game.mindControllerPlayerId)
+                ? game.mindControlledPlayerId : playerId;
+        boolean controlledViewer = playerId != null && playerId.equals(game.mindControlledPlayerId);
+        return new com.github.laxika.magicalvibes.networking.model.CommanderView(game.format, zones, commanders,
+                Map.copyOf(game.commanderTaxByCardId), damage,
+                actingPlayerId == null || controlledViewer ? List.of()
+                        : actionAvailabilityService.getPlayableCommanders(game, actingPlayerId).stream().map(Card::getId).toList());
     }
 
     int getSearchTaxCost(GameData gameData, UUID playerId) {

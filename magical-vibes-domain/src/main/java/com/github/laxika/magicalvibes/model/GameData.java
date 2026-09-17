@@ -50,6 +50,14 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 public class GameData {
 
+    public GameSession session = new GameSession(this);
+    public boolean subgameRequested;
+    public boolean waitingForSubgame;
+    public final List<PendingAncestorTransfer> pendingAncestorTransfers = new ArrayList<>();
+    // Physical cards also remain in the subgame while an interaction temporarily holds them.
+    public final Map<UUID, Card> subgameCards = new HashMap<>();
+    public final List<StackEntry> suspendedZoneTriggers = new ArrayList<>();
+
     public final UUID id;
     public final String gameName;
     public final UUID createdByUserId;
@@ -74,7 +82,7 @@ public class GameData {
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
     /** Cards owned by each player that began outside the game, such as a sideboard. */
     public final Map<UUID, List<Card>> playerSideboards = new ConcurrentHashMap<>();
-    public final Map<UUID, List<Card>> playerHands = new ConcurrentHashMap<>();
+    public final Map<UUID, List<Card>> playerHands = new CommanderHandMap();
     public final Map<UUID, Integer> mulliganCounts = new ConcurrentHashMap<>();
     public final Set<UUID> playerKeptHand = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerNeedsToBottom = new ConcurrentHashMap<>();
@@ -370,7 +378,18 @@ public class GameData {
      *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
     public int manaAbilityResolutionDepth;
     private int activeTriggeredAbilityCopies = 1;
-    public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
+    public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>() {
+        @Override public List<Card> put(UUID id, List<Card> cards) {
+            return super.put(id, new CommanderGraveyardList(cards));
+        }
+        @Override public List<Card> putIfAbsent(UUID id, List<Card> cards) {
+            return super.putIfAbsent(id, new CommanderGraveyardList(cards));
+        }
+        @Override public List<Card> computeIfAbsent(UUID id, Function<? super UUID, ? extends List<Card>> factory) {
+            return super.computeIfAbsent(id, key -> new CommanderGraveyardList(factory.apply(key)));
+        }
+        @Override public void putAll(Map<? extends UUID, ? extends List<Card>> values) { values.forEach(this::put); }
+    };
     /** Latest graveyard-entry identity for each card, used by effects that require continuous graveyard presence. */
     public final Map<UUID, Long> graveyardEntryVersions = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
@@ -1157,6 +1176,9 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Comeuppance: prevent opponent-source damage to a player and their planeswalkers this turn. */
+    public final List<ComeuppanceDamagePreventionShield> comeuppanceDamagePreventionShields =
+            Collections.synchronizedList(new ArrayList<>());
     public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
@@ -2563,7 +2585,9 @@ public class GameData {
 
     /** Captures the current turn state without exposing the snapshot to views or callers. */
     public void captureTurnStartSnapshot() {
-        turnStartSnapshot = simulationCopy();
+        GameData snapshot = simulationFrameCopy();
+        snapshot.turnStartSnapshot = null;
+        turnStartSnapshot = snapshot;
     }
 
     /**
@@ -2580,7 +2604,8 @@ public class GameData {
         if (snapshot == null) {
             return false;
         }
-        restoreMutableStateFrom(snapshot);
+        // Snapshots are shared read-only by simulations; restore from a fresh mutable copy.
+        restoreMutableStateFrom(snapshot.simulationFrameCopy());
         turnStartSnapshot = null;
         return true;
     }
@@ -2608,7 +2633,8 @@ public class GameData {
 
     private static boolean preservedDuringTurnRestart(String fieldName) {
         return switch (fieldName) {
-            case "turnStartSnapshot", "gameLog", "playersWhoLostGameThisMatch", "timestampCounter",
+            case "session", "subgameRequested", "waitingForSubgame", "pendingAncestorTransfers",
+                    "subgameCards", "suspendedZoneTriggers", "turnStartSnapshot", "gameLog", "playersWhoLostGameThisMatch", "timestampCounter",
                     "nextExtraTurnSequence", "graveyardEntryVersion",
                     "domainActionSequence", "domainEventSequence", "domainStateVersion",
                     "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
@@ -3101,6 +3127,13 @@ public class GameData {
      * (priority grant, auto-pass, {@code SpellCastingService.finishSpellCast}).
      */
     public void enqueueTrigger(StackEntry entry) {
+        if (waitingForSubgame && session.active() != this) {
+            suspendedZoneTriggers.add(entry);
+            for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
+                suspendedZoneTriggers.add(new StackEntry(entry));
+            }
+            return;
+        }
         if (manaAbilityResolutionDepth > 0) {
             pendingManaAbilityTriggers.add(entry);
             for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
@@ -4173,13 +4206,85 @@ public class GameData {
         manaSpentToCastSpellsThisTurn.clear();
     }
 
+    /** Scoped to one casting action; never changes the player's actual hand. */
+    public final Map<UUID, CommanderBounceContext> commanderBounceContexts = new ConcurrentHashMap<>();
+    public final List<CommanderZoneMove> pendingCommanderZoneMoves = new ArrayList<>();
+    public UUID completingCommanderZoneMove;
+    public boolean deferCommanderZoneMove(Card card, Zone destination, int index) {
+        if (!isCommander(card.getId()) || card.getId().equals(completingCommanderZoneMove)) return false;
+        UUID owner = playerCommanders.entrySet().stream().filter(entry -> entry.getValue().stream()
+                .anyMatch(commander -> commander.getId().equals(card.getId()))).map(Map.Entry::getKey).findFirst().orElse(card.getOwnerId());
+        if (pendingCommanderZoneMoves.stream().noneMatch(move -> move.card().getId().equals(card.getId())))
+            pendingCommanderZoneMoves.add(new CommanderZoneMove(owner, card, destination, index, false));
+        return true;
+    }
+    public boolean isPendingCommanderMove(UUID cardId) {
+        return pendingCommanderZoneMoves.stream().anyMatch(move -> move.card().getId().equals(cardId));
+    }
+    public final Set<UUID> commanderReturnCandidates = ConcurrentHashMap.newKeySet();
+    public void commanderEnteredReturnZone(Card card) {
+        if (isCommander(card.getId())) commanderReturnCandidates.add(card.getId());
+    }
+    private final class CommanderHandMap extends ConcurrentHashMap<UUID, List<Card>> {
+        private List<Card> wrap(List<Card> cards) {
+            return cards instanceof CommanderHandList ? cards : new CommanderHandList(cards);
+        }
+        @Override public List<Card> put(UUID key, List<Card> cards) { return super.put(key, wrap(cards)); }
+        @Override public List<Card> putIfAbsent(UUID key, List<Card> cards) { return super.putIfAbsent(key, wrap(cards)); }
+        @Override public List<Card> computeIfAbsent(UUID key, Function<? super UUID, ? extends List<Card>> factory) {
+            return super.computeIfAbsent(key, id -> wrap(factory.apply(id)));
+        }
+        @Override public void putAll(Map<? extends UUID, ? extends List<Card>> values) { values.forEach(this::put); }
+    }
+    private final class CommanderHandList extends ArrayList<Card> {
+        CommanderHandList(List<Card> cards) { super(cards); }
+        @Override public boolean add(Card card) {
+            return !deferCommanderZoneMove(card, Zone.HAND, -1) && super.add(card);
+        }
+        @Override public void add(int index, Card card) {
+            if (!deferCommanderZoneMove(card, Zone.HAND, -1)) super.add(index, card);
+        }
+        @Override public boolean addAll(Collection<? extends Card> cards) {
+            boolean changed = false;
+            for (Card card : List.copyOf(cards)) changed |= add(card);
+            return changed;
+        }
+        @Override public boolean addAll(int index, Collection<? extends Card> cards) {
+            int before = size();
+            for (Card card : List.copyOf(cards)) {
+                int oldSize = size(); add(index, card); if (size() > oldSize) index++;
+            }
+            return size() != before;
+        }
+    }
+    private final class CommanderGraveyardList extends ArrayList<Card> {
+        CommanderGraveyardList(List<Card> cards) { super(cards); }
+        @Override public boolean add(Card card) { commanderEnteredReturnZone(card); return super.add(card); }
+        @Override public void add(int index, Card card) { commanderEnteredReturnZone(card); super.add(index, card); }
+        @Override public boolean addAll(java.util.Collection<? extends Card> cards) { cards.forEach(GameData.this::commanderEnteredReturnZone); return super.addAll(cards); }
+        @Override public boolean addAll(int index, java.util.Collection<? extends Card> cards) { cards.forEach(GameData.this::commanderEnteredReturnZone); return super.addAll(index, cards); }
+    }
+    public final Map<UUID, UUID> pendingCommandCasts = new ConcurrentHashMap<>();
+    public UUID commandCastPlayerId;
+    public UUID commandCastCardId;
+    public List<Card> castingSourceCards(UUID playerId) {
+        return playerId.equals(commandCastPlayerId) ? playerCommandZones.get(playerId) : playerHands.get(playerId);
+    }
+    public Zone castingSourceZone(UUID playerId) { return playerId.equals(commandCastPlayerId) ? Zone.COMMAND : Zone.HAND; }
+    public DeckFormat format = DeckFormat.CASUAL;
+    public final Map<UUID, DeckDefinition> acceptedDecks = new ConcurrentHashMap<>();
+    public final Map<UUID, Map<UUID, Integer>> commanderDamageReceived = new ConcurrentHashMap<>();
+    public int startingLife() { return format.startingLife(); }
+    public boolean isCommander(UUID cardId) {
+        return playerCommanders.values().stream().flatMap(List::stream).anyMatch(card -> card.getId().equals(cardId));
+    }
     public static final int STARTING_LIFE_TOTAL = 20;
 
     /**
      * Returns the current life total for the given player, defaulting to 20 if not yet set.
      */
     public int getLife(UUID playerId) {
-        return playerLifeTotals.getOrDefault(playerId, STARTING_LIFE_TOTAL);
+        return playerLifeTotals.getOrDefault(playerId, startingLife());
     }
 
     /**
@@ -4225,6 +4330,7 @@ public class GameData {
      * Adds a card to the given player's hand.
      */
     public void addCardToHand(UUID playerId, Card card) {
+        if (deferCommanderZoneMove(card, Zone.HAND, -1)) return;
         cardsRevealedInHandUntilOwnerNextTurn.remove(card.getId());
         cardsCantBePlayedInHandUntilOwnerNextTurn.remove(card.getId());
         countersPreservedAcrossZoneChanges.remove(card.getId());
@@ -4287,26 +4393,33 @@ public class GameData {
 
         @Override
         public boolean add(Card card) {
+            if (deferCommanderZoneMove(card, Zone.LIBRARY, size())) return false;
             forgetPreservedCounters(card);
             return super.add(card);
         }
 
         @Override
         public void add(int index, Card card) {
+            if (deferCommanderZoneMove(card, Zone.LIBRARY, index)) return;
             forgetPreservedCounters(card);
             super.add(index, card);
         }
 
         @Override
         public boolean addAll(Collection<? extends Card> cards) {
-            cards.forEach(this::forgetPreservedCounters);
-            return super.addAll(cards);
+            boolean changed = false;
+            for (Card card : List.copyOf(cards)) changed |= add(card);
+            return changed;
         }
 
         @Override
         public boolean addAll(int index, Collection<? extends Card> cards) {
-            cards.forEach(this::forgetPreservedCounters);
-            return super.addAll(index, cards);
+            int before = size();
+            for (Card card : List.copyOf(cards)) {
+                int oldSize = size(); add(Math.min(index, size()), card);
+                if (size() > oldSize) index++;
+            }
+            return size() != before;
         }
 
         @Override
@@ -4555,6 +4668,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
+        commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
         notifyCardsExiled(card);
     }
@@ -4578,6 +4692,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
+        commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, false, turnNumber));
         notifyCardsExiled(card);
     }
@@ -4636,6 +4751,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
+        commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, exilerId, turnNumber));
         exiledCardsWithCollectionCounters.add(card.getId());
         notifyCardsExiled(card);
@@ -4646,6 +4762,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
+        commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, turnNumber));
         notifyCardsExiled(card);
     }
@@ -4656,6 +4773,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
+        commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, exilerId));
         notifyCardsExiled(card);
     }
@@ -4669,6 +4787,7 @@ public class GameData {
     public void addForetoldCardToExile(UUID playerId, Card card, ManaCost foretellCost) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(playerId, card)) return;
+        commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, playerId, null, true, playerId, turnNumber));
         foretoldCardIds.add(card.getId());
         if (foretellCost != null) {
@@ -5123,11 +5242,79 @@ public class GameData {
      * </ul>
      */
     public GameData simulationCopy() {
+        return session.simulationCopy(id);
+    }
+
+    private static CombatDamageState copyCombatDamageState(CombatDamageState source,
+            java.util.function.Function<Permanent, Permanent> permanentCopy) {
+        if (source == null) return null;
+        CombatDamageState copy = new CombatDamageState();
+        copy.sharedRedirectShields = new ArrayList<>(source.sharedRedirectShields);
+        copy.sourceDamageShields = new ArrayList<>(source.sourceDamageShields);
+        copy.damageToDefendingPlayer = source.damageToDefendingPlayer;
+        copy.poisonDamageToDefendingPlayer = source.poisonDamageToDefendingPlayer;
+        copy.unpreventableDamageToDefendingPlayer = source.unpreventableDamageToDefendingPlayer;
+        copy.damageRedirectedToGuard = source.damageRedirectedToGuard;
+        copy.infectDamageRedirectedToGuard = source.infectDamageRedirectedToGuard;
+        copy.deathtouchDamageRedirectedToGuard = source.deathtouchDamageRedirectedToGuard;
+        copy.deadAttackerIndices.addAll(source.deadAttackerIndices);
+        copy.deadDefenderIndices.addAll(source.deadDefenderIndices);
+        source.atkDamageTaken.forEach((key, value) -> copy.atkDamageTaken.put(key, value));
+        source.defDamageTaken.forEach((key, value) -> copy.defDamageTaken.put(key, value));
+        source.atkDamageTakenBySource.forEach((key, value) -> copy.atkDamageTakenBySource.put(key, new HashMap<>(value)));
+        source.defDamageTakenBySource.forEach((key, value) -> copy.defDamageTakenBySource.put(key, new HashMap<>(value)));
+        source.unpreventableAtkDamageTaken.forEach((key, value) -> copy.unpreventableAtkDamageTaken.put(key, value));
+        source.unpreventableDefDamageTaken.forEach((key, value) -> copy.unpreventableDefDamageTaken.put(key, value));
+        source.damageDealtToPermanentsBeforeStep.forEach((key, value) -> copy.damageDealtToPermanentsBeforeStep.put(key, value));
+        source.markedDamageBeforeStep.forEach((key, value) -> copy.markedDamageBeforeStep.put(key, value));
+        source.toughnessBeforeStep.forEach((key, value) -> copy.toughnessBeforeStep.put(key, value));
+        source.loyaltyBeforeStep.forEach((key, value) -> copy.loyaltyBeforeStep.put(key, value));
+        copy.deathtouchDamagedAttackerIndices.addAll(source.deathtouchDamagedAttackerIndices);
+        copy.deathtouchDamagedDefenderIndices.addAll(source.deathtouchDamagedDefenderIndices);
+        source.damageToPlaneswalkers.forEach((key, value) -> copy.damageToPlaneswalkers.put(key, value));
+        source.combatDamageDealt.forEach((key, value) -> copy.combatDamageDealt.put(permanentCopy.apply(key), value));
+        source.combatDamageDealtToPlayer.forEach((key, value) -> copy.combatDamageDealtToPlayer.put(permanentCopy.apply(key), value));
+        source.combatDamageDealtToPlaneswalker.forEach((key, value) -> copy.combatDamageDealtToPlaneswalker.put(permanentCopy.apply(key), value));
+        source.combatDamageAmountsToBattles.forEach((key, value) -> copy.combatDamageAmountsToBattles.put(permanentCopy.apply(key), new HashMap<>(value)));
+        source.combatDamageAmountsToPlaneswalkers.forEach((key, value) -> copy.combatDamageAmountsToPlaneswalkers.put(permanentCopy.apply(key), new HashMap<>(value)));
+        source.combatDamageRecipientControllers.forEach((key, value) -> copy.combatDamageRecipientControllers.put(permanentCopy.apply(key), new HashSet<>(value)));
+        source.combatDamageDealtToCreatures.forEach((key, value) -> copy.combatDamageDealtToCreatures.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        copy.combatDamageToBlockingCreatureSources.addAll(source.combatDamageToBlockingCreatureSources);
+        source.combatDamageDealerControllers.forEach((key, value) -> copy.combatDamageDealerControllers.put(permanentCopy.apply(key), value));
+        source.selfDealsCombatDamageEffects.forEach((key, value) -> copy.selfDealsCombatDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsCombatDamageToPlayerOrBattleEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrBattleEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsDamageEffects.forEach((key, value) -> copy.selfDealsDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.enchantedCreatureDealsDamageTriggers.forEach(value -> copy.enchantedCreatureDealsDamageTriggers.add(new StackEntry(value)));
+        source.allyCreatureDealsDamageToPlaneswalkerTriggers.forEach(value -> copy.allyCreatureDealsDamageToPlaneswalkerTriggers.add(new StackEntry(value)));
+        source.delayedCombatDamageDrawQualifications.forEach(value -> copy.delayedCombatDamageDrawQualifications.add(new CombatDamageState.DelayedCombatDamageDrawQualification(value.delayedAction(), Set.copyOf(value.sourceIds()))));
+        copy.delayedCombatDamageLookAtHandAndDrawQualifications.addAll(source.delayedCombatDamageLookAtHandAndDrawQualifications);
+        source.combatDamageAmountsToCreatures.forEach((key, value) -> copy.combatDamageAmountsToCreatures.put(permanentCopy.apply(key), new HashMap<>(value)));
+        source.combatDamageTargetControllers.forEach((key, value) -> copy.combatDamageTargetControllers.put(key, value));
+        source.pendingDralnuReplacementTargets.forEach((key, value) -> copy.pendingDralnuReplacementTargets.put(key, permanentCopy.apply(value)));
+        source.pendingDralnuReplacementDamage.forEach((key, value) -> copy.pendingDralnuReplacementDamage.put(key, value));
+        copy.defenderDamageAsInfect = source.defenderDamageAsInfect;
+        return copy;
+    }
+
+    GameData simulationFrameCopy() {
         GameData copy = new GameData(id, gameName, createdByUserId, createdByUsername);
+        copy.subgameRequested = subgameRequested;
+        copy.waitingForSubgame = waitingForSubgame;
+        copy.pendingAncestorTransfers.addAll(pendingAncestorTransfers);
+        copy.subgameCards.putAll(subgameCards);
+        suspendedZoneTriggers.forEach(entry -> copy.suspendedZoneTriggers.add(new StackEntry(entry)));
         copy.cardsExiledListener = this.cardsExiledListener;
 
         // --- Primitives, enums, UUIDs, Strings ---
         copy.status = this.status;
+        copy.turnStartSnapshot = this.turnStartSnapshot;
+        copy.playersWhoLostGameThisMatch.addAll(this.playersWhoLostGameThisMatch);
+        copy.completingCommanderZoneMove = this.completingCommanderZoneMove;
+        copy.commandCastPlayerId = this.commandCastPlayerId;
+        copy.commandCastCardId = this.commandCastCardId;
+        copy.pendingCombatDamageFirstStrikePhase = this.pendingCombatDamageFirstStrikePhase;
+        copy.pendingCombatDamageFirstestStrikePhase = this.pendingCombatDamageFirstestStrikePhase;
         copy.startingPlayerId = this.startingPlayerId;
         copy.currentStep = this.currentStep;
         copy.activePlayerId = this.activePlayerId;
@@ -5491,6 +5678,7 @@ public class GameData {
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
+        copy.comeuppanceDamagePreventionShields.addAll(this.comeuppanceDamagePreventionShields);
         copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
@@ -5791,6 +5979,14 @@ public class GameData {
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         this.playerCommanders.forEach((k, v) -> copy.playerCommanders.put(k, new ArrayList<>(v)));
         copy.commanderTaxByCardId.putAll(this.commanderTaxByCardId);
+        copy.commanderReturnCandidates.addAll(this.commanderReturnCandidates);
+        copy.pendingCommanderZoneMoves.addAll(this.pendingCommanderZoneMoves);
+        this.commanderBounceContexts.forEach((id, context) -> copy.commanderBounceContexts.put(id,
+                new CommanderBounceContext(new Permanent(context.permanent()), context.controllerId(), context.ownerId(), context.wasCreature())));
+        copy.pendingCommandCasts.putAll(this.pendingCommandCasts);
+        copy.format = this.format;
+        copy.acceptedDecks.putAll(this.acceptedDecks);
+        this.commanderDamageReceived.forEach((id, damage) -> copy.commanderDamageReceived.put(id, new java.util.HashMap<>(damage)));
         copy.exiledCards.addAll(this.exiledCards);
         copy.bombardmentOriginalCardsUntilEndOfTurn.putAll(this.bombardmentOriginalCardsUntilEndOfTurn);
         copy.hauntingCardToPermanentId.putAll(this.hauntingCardToPermanentId);
@@ -6530,6 +6726,16 @@ public class GameData {
         copy.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.addAll(
                 this.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn);
 
+        Map<UUID, Permanent> copiedCombatPermanents = new HashMap<>();
+        copy.playerBattlefields.values().forEach(permanents -> permanents.forEach(
+                permanent -> copiedCombatPermanents.put(permanent.getId(), permanent)));
+        copy.phasedOutPermanents.values().forEach(permanents -> permanents.forEach(
+                permanent -> copiedCombatPermanents.put(permanent.getId(), permanent)));
+        java.util.function.Function<Permanent, Permanent> copyCombatPermanent = permanent ->
+                permanent == null ? null : copiedCombatPermanents.computeIfAbsent(
+                        permanent.getId(), ignored -> new Permanent(permanent));
+        copy.pendingCombatDamageRedirectTarget = copyCombatPermanent.apply(this.pendingCombatDamageRedirectTarget);
+        copy.pendingCombatDamageState = copyCombatDamageState(this.pendingCombatDamageState, copyCombatPermanent);
         return copy;
     }
 

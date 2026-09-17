@@ -539,7 +539,7 @@ public class PredicateEvaluationService {
             case CardHasAdventurePredicate ignored ->
                     card.getCastingOption(AdventureCast.class).isPresent();
             case CardHasMorphAbilityPredicate ignored ->
-                    card.getMorphCost() != null;
+                    card.getMorphCost() != null && !card.getKeywords().contains(Keyword.DISGUISE);
             case CardHasDisturbPredicate ignored ->
                     card.getCastingOption(DisturbCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->
