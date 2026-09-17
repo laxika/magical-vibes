@@ -10,6 +10,8 @@
   enforced by `AttackLegalityService` using the source permanent's chosen direction. Impl
   `AttackOnlyNearestOpponentInDirectionEffect`
 
+- `LoseLifeEqualToLifeTotalAsEntersEffect()` - entry replacement that applies life loss equal to the controller's current life total through `LifeSupport`; zero and negative totals lose no life. Lich.
+- `SacrificePermanentsOrLoseGameEffect(DynamicAmount count, PermanentPredicate filter)` - controller sacrifices matching permanents through the existing forced-sacrifice choice flow; if fewer than required can be sacrificed, sacrifices what is possible and applies `ControllerLosesGameEffect`. Lich uses damage `EventValue` and a nontoken filter.
 - `EachTargetPlayerMaySearchLibraryForBasicLandToBattlefieldEffect()` — each targeted player may search their own library for a basic land card, put it onto the battlefield untapped, then shuffle; pair with `target(0, 99)` for "any number of target players." Turtle Tracks
 - `DrawAndLoseLifePerCounterOnSourceEffect()` — `ON_COMBAT_DAMAGE_TO_PLAYER`: the controller may draw cards equal to the total number of counters on the source, then loses that same amount of life. The counter amount is evaluated once and reused for both operations. Bebop, Skull & Crossbones
 - `SearchTargetLibraryEffect(..., LibrarySearchPlayer.TARGET_PLAYER)` — the targeted player searches their own library; with `HAND`, the selected card is revealed and put into that player's hand. Bebop, Skull & Crossbones
