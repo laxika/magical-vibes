@@ -37,6 +37,8 @@ class WizenedArbiterTest extends BaseCardTest {
         PendingInteraction.ExchangeOutsideGameHandChoice handChoice =
                 gd.interaction.activeInteraction(PendingInteraction.ExchangeOutsideGameHandChoice.class);
         assertThat(handChoice.validIndices()).containsExactly(0);
+        assertThat(gd.playerSideboards.get(player1.getId())).contains(outsideCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(outsideCard);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardIndexChosen(0));
 

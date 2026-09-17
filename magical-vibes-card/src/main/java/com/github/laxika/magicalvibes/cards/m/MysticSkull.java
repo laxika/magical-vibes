@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "256")
+@CardRegistration(set = "DBL", collectorNumber = "256")
 public class MysticSkull extends Card {
 
     public MysticSkull() {

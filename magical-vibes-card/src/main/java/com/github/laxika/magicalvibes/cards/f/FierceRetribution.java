@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "13")
 @CardRegistration(set = "OTP", collectorNumber = "2")
+@CardRegistration(set = "DBL", collectorNumber = "280")
 public class FierceRetribution extends Card {
 
     public FierceRetribution() {

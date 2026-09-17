@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "103")
+@CardRegistration(set = "DBL", collectorNumber = "103")
 public class GisaGloriousResurrector extends Card {
 
     public GisaGloriousResurrector() {

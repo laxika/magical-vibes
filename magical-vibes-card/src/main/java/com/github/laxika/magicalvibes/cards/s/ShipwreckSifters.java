@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "74")
+@CardRegistration(set = "DBL", collectorNumber = "74")
 public class ShipwreckSifters extends Card {
 
     public ShipwreckSifters() {

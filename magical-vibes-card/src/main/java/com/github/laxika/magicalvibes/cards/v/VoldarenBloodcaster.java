@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "138")
 @CardRegistration(set = "VOW", collectorNumber = "137")
+@CardRegistration(set = "DBL", collectorNumber = "404")
 public class VoldarenBloodcaster extends Card {
 
     private static final CreateTokenEffect CREATE_BLOOD = CreateTokenEffect.ofBloodToken(1);

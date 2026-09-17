@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesOfChosenManaValueParityEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "88")
+@CardRegistration(set = "MAR", collectorNumber = "65")
 public class ExtinctionEvent extends Card {
 
     public ExtinctionEvent() {

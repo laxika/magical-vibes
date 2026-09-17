@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "36")
+@CardRegistration(set = "DBL", collectorNumber = "303")
 public class SigardasSummons extends Card {
 
     public SigardasSummons() {

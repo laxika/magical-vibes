@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "258")
 @CardRegistration(set = "LCI", collectorNumber = "344")
+@CardRegistration(set = "MAR", collectorNumber = "99")
 public class RoamingThrone extends Card {
 
     public RoamingThrone() {

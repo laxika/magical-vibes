@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "130")
+@CardRegistration(set = "DBL", collectorNumber = "130")
 public class BrimstoneVandal extends Card {
 
     public BrimstoneVandal() {

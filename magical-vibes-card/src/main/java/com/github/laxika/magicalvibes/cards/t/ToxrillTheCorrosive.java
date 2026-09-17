@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "132")
+@CardRegistration(set = "DBL", collectorNumber = "399")
 public class ToxrillTheCorrosive extends Card {
 
     public ToxrillTheCorrosive() {

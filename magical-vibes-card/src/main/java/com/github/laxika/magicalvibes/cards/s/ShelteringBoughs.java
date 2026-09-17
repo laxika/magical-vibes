@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "218")
+@CardRegistration(set = "DBL", collectorNumber = "485")
 public class ShelteringBoughs extends Card {
 
     public ShelteringBoughs() {

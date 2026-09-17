@@ -155,6 +155,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
                         eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyComeuppancePrevention(
+                        eq(gd), any(), anyInt(), any(), any(), any(), anyBoolean()))
+                .thenAnswer(inv -> inv.getArgument(2));
         setUpHandler();
     }
 

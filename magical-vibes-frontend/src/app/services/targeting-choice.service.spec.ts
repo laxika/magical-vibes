@@ -403,3 +403,43 @@ describe('TargetingChoiceService planar abilities', () => {
       sourceId: 'plane', abilityIndex: 0, targetId: 'ability' });
   });
 });
+
+
+describe('Commander casting choices', () => {
+  function commanderService(overrides: Partial<Card> = {}) {
+    const card = { id: 'commander', name: 'Commander', type: 'CREATURE', manaCost: '{1}',
+      keywords: [], activatedAbilities: [], ...overrides } as unknown as Card;
+    const handCard = { id: 'hand', name: 'Hand spell', type: 'CREATURE', manaCost: '{1}', keywords: [], activatedAbilities: [] } as unknown as Card;
+    const game = { ...gameWithPriority(), hand: [handCard], commander: { format: 'COMMANDER',
+      commandZones: { [ME]: [card] }, commanders: { [ME]: [card.id!] }, tax: { [card.id!]: 2 },
+      damageReceived: {}, playableCardIds: [card.id!] } } as Game;
+    const sent: any[] = [];
+    const ws = { currentUser: { userId: ME }, send: (message: any) => sent.push(message) } as unknown as WebsocketService;
+    const service = new TargetingChoiceService(ws);
+    service.init(signal(game), () => [], () => [], () => 5, () => true);
+    return { card, service, sent };
+  }
+  it('casts by commander identity without using the first hand card', () => {
+    const { card, service, sent } = commanderService();
+    service.startCommanderPlay(card);
+    expect(sent[0]).toMatchObject({ type: MessageType.PLAY_CARD, commandCardId: 'commander' });
+  });
+  it('validates commander targets and clears the source on cancellation', () => {
+    const { card, service, sent } = commanderService({ needsTarget: true });
+    service.startCommanderPlay(card);
+    expect(sent[0]).toMatchObject({ type: MessageType.VALID_TARGETS_REQUEST, commandCardId: 'commander' });
+    service.cancelTargeting();
+    service.playCard(0, () => true);
+    expect(sent[sent.length - 1].type).toBe(MessageType.PLAY_CARD);
+    expect(sent[sent.length - 1].commandCardId).toBeUndefined();
+  });
+  it('offers kicker for the commander before sending the cast', () => {
+    const { card, service, sent } = commanderService({ kickerCost: '{2}' });
+    service.startCommanderPlay(card);
+    expect(service.choosingKicker).toBe(true);
+    expect(sent.length).toBe(0);
+    service.cancelKicker();
+    service.playCard(0, () => true);
+    expect(sent[0].commandCardId).toBeUndefined();
+  });
+});

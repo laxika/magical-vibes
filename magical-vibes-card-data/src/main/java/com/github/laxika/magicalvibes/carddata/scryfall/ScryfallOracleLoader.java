@@ -47,6 +47,7 @@ public class ScryfallOracleLoader implements OracleLoader {
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     private final SetJsonCache cache;
+    private final SetJsonCache legalityCache;
 
     @Autowired
     public ScryfallOracleLoader(@Value("${card-data.cache-dir:./card-data-cache}") String cacheDir) {
@@ -55,6 +56,29 @@ public class ScryfallOracleLoader implements OracleLoader {
 
     ScryfallOracleLoader(String cacheDir, SetJsonCache.Fetcher fetcher) {
         this.cache = new SetJsonCache(cacheDir, "scryfall-", "Scryfall", fetcher);
+        this.legalityCache = new SetJsonCache(cacheDir, "legality-scryfall-", "Scryfall", fetcher);
+    }
+
+
+    @Override
+    public com.github.laxika.magicalvibes.carddata.LegalitySnapshot loadLegalities(String setCode) {
+        String source = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
+        try {
+            Map<String, JsonNode> nodes = parseSetJson(legalityCache.getRefreshing(source, java.time.Duration.ofHours(24)));
+            Map<String, Map<String, String>> result = new HashMap<>();
+            nodes.forEach((number, node) -> {
+                Map<String, String> formats = new HashMap<>();
+                JsonNode legalities = node.get("legalities");
+                if (legalities != null) legalities.properties().forEach(entry ->
+                        formats.put(entry.getKey().toLowerCase(java.util.Locale.ROOT), entry.getValue().asText().toLowerCase(java.util.Locale.ROOT)));
+                result.put(number, formats);
+            });
+            return new com.github.laxika.magicalvibes.carddata.LegalitySnapshot(result, legalityCache.updatedAt(source));
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            LOG.warning("Could not refresh legalities for " + setCode + ": " + e.getMessage());
+            return com.github.laxika.magicalvibes.carddata.LegalitySnapshot.empty();
+        }
     }
 
     @Override

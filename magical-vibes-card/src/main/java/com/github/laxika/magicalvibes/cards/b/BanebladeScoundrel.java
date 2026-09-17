@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "85")
+@CardRegistration(set = "DBL", collectorNumber = "85")
 public class BanebladeScoundrel extends Card {
 
     public BanebladeScoundrel() {

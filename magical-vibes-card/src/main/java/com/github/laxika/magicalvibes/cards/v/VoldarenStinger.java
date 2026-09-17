@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "167")
+@CardRegistration(set = "DBL", collectorNumber = "167")
 public class VoldarenStinger extends Card {
 
     public VoldarenStinger() {

@@ -6,12 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -21,10 +18,8 @@ import java.util.List;
 public class KilnmouthDragon extends Card {
 
     public KilnmouthDragon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                new Scaled(new MatchingCardsInHand(CountScope.CONTROLLER,
-                        new CardSubtypePredicate(CardSubtype.DRAGON)), 3)));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
+                3, new CardSubtypePredicate(CardSubtype.DRAGON)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "234")
+@CardRegistration(set = "DBL", collectorNumber = "501")
 public class ChildOfThePack extends Card {
 
     public ChildOfThePack() {

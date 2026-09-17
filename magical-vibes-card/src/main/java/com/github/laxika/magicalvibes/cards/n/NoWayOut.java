@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "116")
+@CardRegistration(set = "DBL", collectorNumber = "116")
 public class NoWayOut extends Card {
 
     public NoWayOut() {

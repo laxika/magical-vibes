@@ -46,7 +46,7 @@ class InspirationalAntelopeTest extends BaseCardTest {
         putAntelopeOnBattlefieldAfterChoosing("FLYING");
 
         harness.setHand(player1, List.of(new SerraAngel()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
@@ -77,10 +77,10 @@ class InspirationalAntelopeTest extends BaseCardTest {
 
     private void putAntelopeOnBattlefieldAfterChoosing(String chosenWord) {
         InspirationalAntelope antelope = new InspirationalAntelope();
+        // BaseCardTest has already completed the opening-hand procedure. Its interactive
+        // choice is covered separately by openingHandChoiceStoresTheChosenKeyword.
+        gd.legacyChosenWordsByCardId.put(antelope.getId(), chosenWord);
         harness.setHand(player1, List.of(antelope));
-        harness.skipMulligan();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player1, chosenWord);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);

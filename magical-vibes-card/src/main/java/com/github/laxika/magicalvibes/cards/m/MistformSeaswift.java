@@ -11,6 +11,7 @@ import java.util.List;
 public class MistformSeaswift extends Card {
 
     public MistformSeaswift() {
+        addMorph("{1}{U}");
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

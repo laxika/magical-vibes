@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "2")
+@CardRegistration(set = "DBL", collectorNumber = "269")
 public class AngelicQuartermaster extends Card {
 
     public AngelicQuartermaster() {

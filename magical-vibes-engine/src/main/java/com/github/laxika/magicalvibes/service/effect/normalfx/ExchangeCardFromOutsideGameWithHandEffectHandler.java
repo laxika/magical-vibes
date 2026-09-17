@@ -42,7 +42,7 @@ public class ExchangeCardFromOutsideGameWithHandEffectHandler implements NormalE
             return;
         }
 
-        List<Card> matchingCards = gameData.playerSideboards.getOrDefault(controllerId, List.of()).stream()
+        List<Card> matchingCards = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId).stream()
                 .filter(card -> exchange.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(
                         card, exchange.filter(), null, gameData, controllerId))

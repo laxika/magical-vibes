@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTarge
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
@@ -1503,6 +1504,10 @@ public class StepTriggerService {
                 }
 
                 if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
@@ -3897,6 +3902,23 @@ public class StepTriggerService {
                         delayed.affectedPermanentId()));
             }
         }
+        for (var delayed : gameData.drainDelayedActions(DelayedStillExiledCardsEndStepTrigger.class)) {
+            boolean anyStillExiled = delayed.cardIds().stream()
+                    .anyMatch(cardId -> gameData.findExiledCard(cardId) != null);
+            if (!anyStillExiled) {
+                continue;
+            }
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(delayed.effect())),
+                    null,
+                    delayed.sourcePermanentId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
 
         if (gameData.hasDelayedAction(ReturnExiledCardAtNextEndStepUnlessPays.class)) {
@@ -4809,7 +4831,7 @@ public class StepTriggerService {
                         continue;
                     }
                     if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may);
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
                     } else if (effect instanceof DealDamageIfDidntCastSpellThisTurnEffect) {
                         // Intervening-if (CR 603.4): only trigger if the end-step player (the active
                         // player) didn't cast a spell this turn. Bake that player into targetId so the

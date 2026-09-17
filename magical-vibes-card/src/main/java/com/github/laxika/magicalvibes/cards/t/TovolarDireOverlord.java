@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "246")
+@CardRegistration(set = "DBL", collectorNumber = "246")
 public class TovolarDireOverlord extends Card {
 
     public TovolarDireOverlord() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeDayAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "152")
+@CardRegistration(set = "DBL", collectorNumber = "152")
 public class ObsessiveAstronomer extends Card {
 
     public ObsessiveAstronomer() {

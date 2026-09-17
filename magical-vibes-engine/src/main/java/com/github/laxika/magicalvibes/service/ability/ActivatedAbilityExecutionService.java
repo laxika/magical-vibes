@@ -207,6 +207,7 @@ public class ActivatedAbilityExecutionService {
                 Zone.STACK,
                 List.of(),
                 List.of());
+        abilityEntry.setActivePlayerId(gameData.activePlayerId);
         abilityEntry.setSourceStackCardId(sourceStackEntry.getCard().getId());
         abilityEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(abilityEntry);
@@ -714,7 +715,7 @@ public class ActivatedAbilityExecutionService {
         if (isManaAbility) {
             int stackBeforeCopyTriggers = gameData.stack.size();
             StackEntry abilitySnapshot = createImmediateAbilitySnapshot(
-                    permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
+                    gameData, permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                     targetZone, targetIds, damageAssignments);
             triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
                     gameData, playerId, abilitySnapshot, ability, permanent,
@@ -889,7 +890,7 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
-    private StackEntry createImmediateAbilitySnapshot(Permanent permanent, UUID playerId,
+    private StackEntry createImmediateAbilitySnapshot(GameData gameData, Permanent permanent, UUID playerId,
                                                        ActivatedAbility ability,
                                                        List<CardEffect> snapshotEffects,
                                                        int effectiveXValue, UUID effectiveTargetId,
@@ -920,6 +921,7 @@ public class ActivatedAbilityExecutionService {
                 targetCardIds,
                 permanentTargetIds
         );
+        snapshot.setActivePlayerId(gameData.activePlayerId);
         snapshot.setTargetFilter(ability.getTargetFilter());
         if (!ability.getMultiTargetFilters().isEmpty()) {
             snapshot.setTargetFilters(new ArrayList<>(ability.getMultiTargetFilters()));
@@ -1308,7 +1310,7 @@ public class ActivatedAbilityExecutionService {
                 for (ManaColor color : ManaColor.values()) {
                     int current = pool.get(color);
                     for (int i = 1; i < multiplier; i++) {
-                        pool.add(color);
+                        pool.add(color, current);
                     }
                 }
             } else if (effect instanceof RegisterNextRedInstantSorceryCopyEffect) {
@@ -2164,6 +2166,7 @@ public class ActivatedAbilityExecutionService {
                 effectiveTargetCardIds,
                 effectivePermanentTargetIds
         );
+        stackEntry.setActivePlayerId(gameData.activePlayerId);
         stackEntry.setTargetFilter(ability.getTargetFilter());
         if (!ability.getMultiTargetFilters().isEmpty()) {
             List<TargetFilter> targetFilters = new ArrayList<>(effectivePermanentTargetIds.size());

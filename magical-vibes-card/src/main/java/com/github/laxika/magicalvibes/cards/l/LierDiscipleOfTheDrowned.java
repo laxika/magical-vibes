@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "59")
+@CardRegistration(set = "DBL", collectorNumber = "59")
 public class LierDiscipleOfTheDrowned extends Card {
 
     public LierDiscipleOfTheDrowned() {

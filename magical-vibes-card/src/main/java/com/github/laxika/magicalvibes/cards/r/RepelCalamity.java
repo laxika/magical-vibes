@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "27")
+@CardRegistration(set = "SOA", collectorNumber = "8")
 public class RepelCalamity extends Card {
 
     public RepelCalamity() {

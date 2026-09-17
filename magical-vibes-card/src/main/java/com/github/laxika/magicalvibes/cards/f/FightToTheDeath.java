@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "97")
+@CardRegistration(set = "MAR", collectorNumber = "90")
 public class FightToTheDeath extends Card {
 
     public FightToTheDeath() {

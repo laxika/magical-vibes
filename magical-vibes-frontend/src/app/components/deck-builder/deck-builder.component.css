@@ -726,3 +726,9 @@ select:focus-visible {
     display: none;
   }
 }
+
+.format-panel { padding: 1rem; border-bottom: 1px solid #555; }
+.format-panel label { display: flex; gap: .5rem; align-items: center; }
+.validation-error { color: #f0b3a5; margin: .25rem 0; }
+.commander-preview { width: 180px; margin-bottom: .5rem; }
+.choose-commander { position: absolute; bottom: .25rem; left: .25rem; right: .25rem; z-index: 2; }

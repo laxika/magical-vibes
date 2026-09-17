@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "87")
+@CardRegistration(set = "DBL", collectorNumber = "354")
 public class WashAway extends Card {
 
     public WashAway() {

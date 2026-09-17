@@ -56,7 +56,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
-        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice,
+        PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.CommandZoneCardChoice, PendingInteraction.CommanderReturnChoice, PendingInteraction.CommanderReplacementChoice,
         PendingInteraction.LudevicCopyChoice,
          PendingInteraction.KohExiledCreatureChoice,
          PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
@@ -1390,11 +1390,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                 String cardName, ManaAbilityRevealContext manaAbilityContext,
                                                 ActivatedAbilityRevealContext activatedAbilityContext,
-                                                EachPlayerRevealContext eachPlayerRevealContext)
+                                                EachPlayerRevealContext eachPlayerRevealContext,
+                                                BattlefieldEntryRequest amplifyEntry)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, ManaAbilityRevealContext manaAbilityContext,
+                                                   ActivatedAbilityRevealContext activatedAbilityContext,
+                                                   EachPlayerRevealContext eachPlayerRevealContext) {
+            this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext,
+                    eachPlayerRevealContext, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -2096,6 +2105,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
+    }
+
+    record CommanderReplacementChoice(CommanderZoneMove move) implements PendingInteraction {
+        @Override public UUID decidingPlayerId() { return move.ownerId(); }
+        @Override public InteractionOptions legalOptions() { return new InteractionOptions.AcceptDecline(); }
+    }
+
+    record CommanderReturnChoice(UUID playerId, Card card, Zone fromZone) implements PendingInteraction {
+        @Override public UUID decidingPlayerId() { return playerId; }
+        @Override public InteractionOptions legalOptions() { return new InteractionOptions.AcceptDecline(); }
     }
 
     /** Chooses one of the controller's commanders to put into their hand. */
@@ -4377,7 +4396,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public UUID decidingPlayerId() {
-            return params.playerId();
+            return params.decisionPlayerId() != null ? params.decisionPlayerId() : params.playerId();
         }
 
         @Override

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "26")
+@CardRegistration(set = "DBL", collectorNumber = "293")
 public class NurturingPresence extends Card {
 
     public NurturingPresence() {

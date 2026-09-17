@@ -84,6 +84,8 @@ class CardImmutabilityArchTest {
             "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LudevicCopySupport", // decorates the fresh clone-copy card installed by PermanentCopierService
             "RegisterDelayedBeginningOfCombatTriggerEffectHandler", // assembles a fresh runtime copy for the delayed trigger
+            "RegisterDelayedEndStepTriggerEffectHandler", // assembles targeting on a fresh runtime copy for the delayed trigger
+            "ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler", // assembles and freezes fresh Time Walk token cards
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "171")
 @CardRegistration(set = "VOW", collectorNumber = "188")
+@CardRegistration(set = "DBL", collectorNumber = "171")
+@CardRegistration(set = "DBL", collectorNumber = "455")
 public class BrambleArmor extends Card {
 
     public BrambleArmor() {

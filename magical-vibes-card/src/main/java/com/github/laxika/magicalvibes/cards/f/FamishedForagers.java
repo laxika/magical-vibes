@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "138")
+@CardRegistration(set = "DBL", collectorNumber = "138")
 public class FamishedForagers extends Card {
 
     public FamishedForagers() {
