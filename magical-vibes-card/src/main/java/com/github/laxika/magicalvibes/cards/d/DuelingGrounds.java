@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "245")
+@CardRegistration(set = "SLZ", collectorNumber = "89")
+@CardRegistration(set = "SLZ", collectorNumber = "210")
+@CardRegistration(set = "SLZ", collectorNumber = "331")
 public class DuelingGrounds extends Card {
 
     public DuelingGrounds() {

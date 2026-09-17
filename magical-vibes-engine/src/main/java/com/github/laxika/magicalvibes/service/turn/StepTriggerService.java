@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTarge
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
@@ -3900,6 +3901,23 @@ public class StepTriggerService {
                         List.of(), 0, 0, List.of(), 0, List.of(), false, null,
                         delayed.affectedPermanentId()));
             }
+        }
+        for (var delayed : gameData.drainDelayedActions(DelayedStillExiledCardsEndStepTrigger.class)) {
+            boolean anyStillExiled = delayed.cardIds().stream()
+                    .anyMatch(cardId -> gameData.findExiledCard(cardId) != null);
+            if (!anyStillExiled) {
+                continue;
+            }
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(delayed.effect())),
+                    null,
+                    delayed.sourcePermanentId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
         }
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
 

@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "RQS", collectorNumber = "30")
 @CardRegistration(set = "SUM", collectorNumber = "142")
 @CardRegistration(set = "TSB", collectorNumber = "58")
+@CardRegistration(set = "SLZ", collectorNumber = "56")
+@CardRegistration(set = "SLZ", collectorNumber = "177")
+@CardRegistration(set = "SLZ", collectorNumber = "298")
 public class Disintegrate extends Card {
 
     public Disintegrate() {

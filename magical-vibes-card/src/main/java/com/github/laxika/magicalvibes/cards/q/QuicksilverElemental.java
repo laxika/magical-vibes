@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForAct
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "47")
+@CardRegistration(set = "SLZ", collectorNumber = "29")
+@CardRegistration(set = "SLZ", collectorNumber = "150")
+@CardRegistration(set = "SLZ", collectorNumber = "271")
 public class QuicksilverElemental extends Card {
 
     public QuicksilverElemental() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
+import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
@@ -3116,7 +3117,7 @@ public class PredicateEvaluationService {
         if (bonus != null) {
             if (!bonus.keywords().isEmpty()
                     || !bonus.grantedActivatedAbilities().isEmpty()
-                    || !bonus.grantedEffects().isEmpty()) {
+                    || hasGrantedAbility(bonus.grantedEffects())) {
                 return true;
             }
             if (bonus.losesAllAbilities()) {
@@ -3136,6 +3137,13 @@ public class PredicateEvaluationService {
                                                             CharacteristicState state,
                                                             FilterContext context) {
         if (state == null) {
+            // A last-known/off-battlefield permanent has no layered state. During a static
+            // evaluation, rebuilding its bonus here would re-enter the filter currently being
+            // evaluated. Printed and out-of-band abilities are the recursion-safe fallback.
+            if (GameQueryService.isStaticEvaluationActive()) {
+                return hasOutOfBandGrantedAbility(permanent)
+                        || hasAnyPrintedAbility(permanent.getCard());
+            }
             return hasAnyEffectiveAbility(context == null ? null : context.gameData(), permanent);
         }
 
@@ -3145,7 +3153,7 @@ public class PredicateEvaluationService {
         }
         if (!effectiveKeywords.isEmpty()
                 || !state.getGrantedActivatedAbilities().isEmpty()
-                || !state.getGrantedStaticEffects().isEmpty()) {
+                || hasGrantedAbility(state.getGrantedStaticEffects())) {
             return true;
         }
         if (state.isLosesAllAbilities()) {
@@ -3200,6 +3208,12 @@ public class PredicateEvaluationService {
         return java.util.Arrays.stream(EffectSlot.values())
                 .filter(slot -> slot != EffectSlot.SPELL)
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
+    }
+
+    /** Ruxa's combat-damage replacement is not an ability granted to the creature. */
+    private static boolean hasGrantedAbility(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect ->
+                !(effect instanceof AssignCombatDamageAsThoughUnblockedEffect));
     }
 
     private static boolean hasPrintedManaAbility(Card card) {
