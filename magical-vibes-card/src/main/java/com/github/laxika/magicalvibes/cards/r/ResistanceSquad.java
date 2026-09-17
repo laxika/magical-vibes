@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "32")
+@CardRegistration(set = "DBL", collectorNumber = "299")
 public class ResistanceSquad extends Card {
 
     public ResistanceSquad() {

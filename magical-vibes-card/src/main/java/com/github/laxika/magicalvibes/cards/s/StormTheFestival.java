@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "200")
+@CardRegistration(set = "DBL", collectorNumber = "200")
 public class StormTheFestival extends Card {
 
     public StormTheFestival() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeNightEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "163")
+@CardRegistration(set = "DBL", collectorNumber = "430")
 public class IntoTheNight extends Card {
 
     public IntoTheNight() {

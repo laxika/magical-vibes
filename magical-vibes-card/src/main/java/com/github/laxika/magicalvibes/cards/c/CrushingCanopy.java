@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "GRN", collectorNumber = "126")
 @CardRegistration(set = "VOW", collectorNumber = "194")
 @CardRegistration(set = "UMA", collectorNumber = "161")
+@CardRegistration(set = "DBL", collectorNumber = "461")
 public class CrushingCanopy extends Card {
 
     public CrushingCanopy() {

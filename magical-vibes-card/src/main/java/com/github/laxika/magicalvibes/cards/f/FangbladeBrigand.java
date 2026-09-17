@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "139")
+@CardRegistration(set = "DBL", collectorNumber = "139")
 public class FangbladeBrigand extends Card {
 
     public FangbladeBrigand() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "235")
+@CardRegistration(set = "DBL", collectorNumber = "502")
 public class DorotheaVengefulVictim extends Card {
 
     public DorotheaVengefulVictim() {

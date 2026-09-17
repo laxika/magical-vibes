@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "138")
+@CardRegistration(set = "DBL", collectorNumber = "405")
 public class WeddingSecurity extends Card {
 
     public WeddingSecurity() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "189")
+@CardRegistration(set = "DBL", collectorNumber = "189")
 public class MightOfTheOldWays extends Card {
 
     public MightOfTheOldWays() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "88")
+@CardRegistration(set = "DBL", collectorNumber = "355")
 public class WhisperingWizard extends Card {
 
     public WhisperingWizard() {

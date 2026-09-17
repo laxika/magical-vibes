@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsAn
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToControllerAndPermanentsEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "235")
+@CardRegistration(set = "DBL", collectorNumber = "235")
 public class RemKarolusStalwartSlayer extends Card {
 
     public RemKarolusStalwartSlayer() {

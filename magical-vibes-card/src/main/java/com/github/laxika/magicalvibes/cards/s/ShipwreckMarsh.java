@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "284")
 @CardRegistration(set = "MID", collectorNumber = "267")
+@CardRegistration(set = "DBL", collectorNumber = "267")
 public class ShipwreckMarsh extends Card {
 
     public ShipwreckMarsh() {

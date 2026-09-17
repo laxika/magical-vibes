@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "131")
 @CardRegistration(set = "MID", collectorNumber = "121")
+@CardRegistration(set = "DBL", collectorNumber = "121")
 public class SiegeZombie extends Card {
 
     public SiegeZombie() {

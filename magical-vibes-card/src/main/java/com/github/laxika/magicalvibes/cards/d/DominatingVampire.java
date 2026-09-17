@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostContr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "VOW", collectorNumber = "154")
+@CardRegistration(set = "DBL", collectorNumber = "421")
 public class DominatingVampire extends Card {
 
     public DominatingVampire() {

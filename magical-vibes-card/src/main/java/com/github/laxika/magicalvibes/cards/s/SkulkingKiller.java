@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "130")
+@CardRegistration(set = "DBL", collectorNumber = "397")
 public class SkulkingKiller extends Card {
 
     public SkulkingKiller() {

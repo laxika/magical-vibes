@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "259")
+@CardRegistration(set = "DBL", collectorNumber = "259")
 public class StuffedBear extends Card {
 
     public StuffedBear() {

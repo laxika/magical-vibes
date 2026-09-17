@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "141")
+@CardRegistration(set = "DBL", collectorNumber = "408")
 public class AlluringSuitor extends Card {
 
     public AlluringSuitor() {

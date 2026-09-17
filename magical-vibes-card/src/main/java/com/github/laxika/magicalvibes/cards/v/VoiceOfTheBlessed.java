@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "50")
 @CardRegistration(set = "VOW", collectorNumber = "44")
+@CardRegistration(set = "DBL", collectorNumber = "311")
 public class VoiceOfTheBlessed extends Card {
 
     public VoiceOfTheBlessed() {

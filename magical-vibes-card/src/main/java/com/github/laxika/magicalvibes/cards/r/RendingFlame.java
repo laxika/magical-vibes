@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "175")
+@CardRegistration(set = "DBL", collectorNumber = "442")
 public class RendingFlame extends Card {
 
     public RendingFlame() {

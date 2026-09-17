@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "VOW", collectorNumber = "85")
+@CardRegistration(set = "DBL", collectorNumber = "352")
 public class ThirstForDiscovery extends Card {
 
     public ThirstForDiscovery() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "244")
+@CardRegistration(set = "DBL", collectorNumber = "244")
 public class SunriseCavalier extends Card {
 
     public SunriseCavalier() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 @CardRegistration(set = "INR", collectorNumber = "58")
 @CardRegistration(set = "INR", collectorNumber = "456")
 @CardRegistration(set = "MID", collectorNumber = "45")
+@CardRegistration(set = "DBL", collectorNumber = "45")
 public class CovetousCastaway extends Card {
 
     public CovetousCastaway() {

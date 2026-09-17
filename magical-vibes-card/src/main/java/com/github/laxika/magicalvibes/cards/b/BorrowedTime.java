@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "6")
+@CardRegistration(set = "DBL", collectorNumber = "6")
 public class BorrowedTime extends Card {
 
     public BorrowedTime() {

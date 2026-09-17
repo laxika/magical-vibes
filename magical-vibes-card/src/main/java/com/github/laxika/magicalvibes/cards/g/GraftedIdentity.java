@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "57")
+@CardRegistration(set = "DBL", collectorNumber = "57")
 public class GraftedIdentity extends Card {
 
     public GraftedIdentity() {

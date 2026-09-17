@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "84")
+@CardRegistration(set = "DBL", collectorNumber = "84")
 public class ArrogantOutlaw extends Card {
 
     public ArrogantOutlaw() {

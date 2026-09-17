@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "106")
+@CardRegistration(set = "DBL", collectorNumber = "106")
 public class HobblingZombie extends Card {
 
     public HobblingZombie() {

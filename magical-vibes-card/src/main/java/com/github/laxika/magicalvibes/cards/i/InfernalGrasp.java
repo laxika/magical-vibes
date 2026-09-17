@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "INR", collectorNumber = "385")
 @CardRegistration(set = "MID", collectorNumber = "107")
 @CardRegistration(set = "MAR", collectorNumber = "18")
+@CardRegistration(set = "DBL", collectorNumber = "107")
 @CardRegistration(set = "OMB", collectorNumber = "18")
 public class InfernalGrasp extends Card {
 

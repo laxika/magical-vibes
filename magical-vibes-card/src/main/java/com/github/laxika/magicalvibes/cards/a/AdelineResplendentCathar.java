@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "1")
 @CardRegistration(set = "FCA", collectorNumber = "1")
+@CardRegistration(set = "DBL", collectorNumber = "1")
 public class AdelineResplendentCathar extends Card {
 
     public AdelineResplendentCathar() {
