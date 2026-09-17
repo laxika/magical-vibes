@@ -166,6 +166,7 @@ public enum CardSet {
     SET_SLC("SLC"),
     SET_SLD("SLD"),
     SET_SLX("SLX"),
+    SET_SLZ("SLZ"),
     SET_SUM("SUM"),
     SET_S00("S00"),
     SET_S99("S99"),

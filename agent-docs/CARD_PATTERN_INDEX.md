@@ -29,6 +29,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
+| exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
 | double any effect that doubles, quadruple | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |

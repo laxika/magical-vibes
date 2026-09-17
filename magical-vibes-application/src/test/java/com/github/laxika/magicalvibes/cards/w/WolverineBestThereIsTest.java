@@ -27,6 +27,7 @@ class WolverineBestThereIsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
@@ -43,9 +44,10 @@ class WolverineBestThereIsTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -56,11 +58,13 @@ class WolverineBestThereIsTest extends BaseCardTest {
         Permanent wolverine = addCreatureReady(player1, new WolverineBestThereIs());
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
