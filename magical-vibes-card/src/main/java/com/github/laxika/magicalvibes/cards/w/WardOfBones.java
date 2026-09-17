@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "174")
+@CardRegistration(set = "SLZ", collectorNumber = "117")
+@CardRegistration(set = "SLZ", collectorNumber = "238")
+@CardRegistration(set = "SLZ", collectorNumber = "359")
 public class WardOfBones extends Card {
 
     public WardOfBones() {

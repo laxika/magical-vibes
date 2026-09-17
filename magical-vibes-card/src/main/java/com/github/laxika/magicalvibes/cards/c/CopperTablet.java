@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "ME1", collectorNumber = "154")
+@CardRegistration(set = "SLZ", collectorNumber = "101")
+@CardRegistration(set = "SLZ", collectorNumber = "222")
+@CardRegistration(set = "SLZ", collectorNumber = "343")
 public class CopperTablet extends Card {
 
     public CopperTablet() {
