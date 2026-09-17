@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
@@ -372,10 +373,13 @@ public class StateBasedActionService {
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        List<CardEffect> grantedCreatureDeathEffects = new ArrayList<>(
+                                entry.permanent().getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
+                        grantedCreatureDeathEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                                gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES));
                         gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
                                 entry.permanent().getId(),
-                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
+                                List.copyOf(grantedCreatureDeathEffects));
                     }
                 }
             }

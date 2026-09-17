@@ -10,6 +10,7 @@ Non-Human creature-type-count anthem: `d/DiligentZookeeper.java` uses `BoostNonH
 | Aura that forces creatures to attack its enchanted creature's controller | `p/PublicEnemy.java` | target(`TargetFilters.creature()`) + STATIC `CreaturesMustAttackEnchantedCreatureControllerEffect()` + ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD `DrawCardEffect()` — the static requirement follows the Aura's current attachment and applies only when a matching creature can attack that player |
 
 All paths relative to `cards/`.
+| Squad plus attack-triggered tokens | `e/EndlessFootAssault.java` | SPELL `RepeatableAdditionalManaCost` + ON_ENTER_BATTLEFIELD `CreateTokenCopyOfSourceEffect(RepeatedAdditionalCostCount)` + ON_ALLY_CREATURES_ATTACK `CreateTokensAttackingEachOpponentEffect` |
 | Nonland-permanent cost lock | `y/YasharnImplacableEarth.java` | STATIC `PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect` — no player may pay life or sacrifice a nonland permanent to cast a spell or activate an ability; lands remain legal sacrifices |
 
 | Aura lets enchanted creature block landwalk creatures | `s/StreetSavvy.java` | `target(TargetFilters.creature())` + STATIC `StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE)` + STATIC `CanBlockCreaturesWithLandwalkEffect` |
@@ -279,6 +280,7 @@ All paths relative to `cards/`.
 | Toughness as combat damage (Aura, always) | `g/GauntletsOfLight.java` | STATIC AssignCombatDamageWithToughnessEffect(ENCHANTED_CREATURE, true) â€” enchanted creature assigns combat damage equal to toughness even when its power is greater |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Double damage (creatures you control) | `g/GratuitousViolence.java` | STATIC DoubleDamageFromCreaturesEffect |
+| Double damage (creatures you control with counters) | `r/RaphaelTheMuscle.java` | STATIC DoubleDamageFromCreaturesEffect(PermanentHasCountersPredicate(ANY)) |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |
 | Double damage (sources of chosen creature type) | `c/CollectiveInferno.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC DoubleDamageFromChosenSubtypeEffect — doubles damage from your sources carrying the chosen subtype |

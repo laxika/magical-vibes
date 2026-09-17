@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "ANB", collectorNumber = "118")
+@CardRegistration(set = "TMC", collectorNumber = "63")
 public class CommandTower extends Card {
 
     public CommandTower() {

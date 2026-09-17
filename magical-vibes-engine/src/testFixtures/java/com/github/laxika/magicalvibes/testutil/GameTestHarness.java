@@ -805,6 +805,13 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of(), false, null);
     }
 
+    public void castEnchantmentWithRepeatedCosts(Player player, int cardIndex,
+                                                   List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, repeatedAdditionalCosts, false);
+    }
+
     public void castArtifact(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);

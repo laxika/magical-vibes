@@ -2223,6 +2223,10 @@ public class TargetLegalityService {
             validateAtMostTwoCreaturesAndTwoLands(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+            validateAtMostTwoCreaturesAndTwoPlayers(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND) {
             validateAtMostOneArtifactOneCreatureAndOneLand(gameData, targetIds);
             return;
@@ -2292,6 +2296,7 @@ public class TargetLegalityService {
                          CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT,
                          ATTACHED_TO_FIRST_TARGET, BLOCKED_BY_FIRST_TARGET,
                          AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                         AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
@@ -2442,6 +2447,34 @@ public class TargetLegalityService {
             return false;
         }
         return duals <= (2 - pureCreatures) + (2 - pureLands);
+    }
+
+    private void validateAtMostTwoCreaturesAndTwoPlayers(GameData gameData, List<UUID> targetIds) {
+        if (!fitsAtMostTwoCreaturesAndTwoPlayers(gameData, targetIds)) {
+            throw new IllegalStateException(
+                    "Must target at most two creatures and at most two players");
+        }
+    }
+
+    public boolean fitsAtMostTwoCreaturesAndTwoPlayers(GameData gameData, List<UUID> targetIds) {
+        if (targetIds == null || targetIds.size() > 4) {
+            return false;
+        }
+
+        int creatureCount = 0;
+        int playerCount = 0;
+        for (UUID targetId : targetIds) {
+            if (gameData.playerIds.contains(targetId)) {
+                playerCount++;
+                continue;
+            }
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                return false;
+            }
+            creatureCount++;
+        }
+        return creatureCount <= 2 && playerCount <= 2;
     }
 
     private void validateAtMostOneArtifactOneCreatureAndOneLand(GameData gameData, List<UUID> targetIds) {

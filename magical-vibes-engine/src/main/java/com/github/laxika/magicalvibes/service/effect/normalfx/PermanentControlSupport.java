@@ -117,6 +117,9 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)
                 : 0;
+        int additionalMutagenTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
+                : 0;
         CreateTokenEffect additionalFrog = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                         gameData, controllerId, token)
@@ -131,7 +134,7 @@ public class PermanentControlSupport {
         List<Permanent> batch = new ArrayList<>();
         int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                totalAmount + additionalMapTokenCount + additionalFrogTokenCount);
+                totalAmount + additionalMapTokenCount + additionalFrogTokenCount + additionalMutagenTokenCount);
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         for (int i = 0; i < totalAmount; i++) {
             tokenBlueprints.add(evaluatedToken);
@@ -141,6 +144,9 @@ public class PermanentControlSupport {
         }
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
+        }
+        for (int i = 0; i < additionalMutagenTokenCount; i++) {
+            tokenBlueprints.add(TokenCreationReplacementSupport.additionalMutagenToken(token));
         }
 
         for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {

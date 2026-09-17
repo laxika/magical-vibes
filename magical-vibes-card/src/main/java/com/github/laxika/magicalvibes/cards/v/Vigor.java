@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "240")
 @CardRegistration(set = "DPA", collectorNumber = "88")
+@CardRegistration(set = "TMC", collectorNumber = "53")
 public class Vigor extends Card {
 
     public Vigor() {

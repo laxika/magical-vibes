@@ -389,6 +389,20 @@ public class ValidTargetService {
             }
         }
 
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+            List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+            validPermanentIds.removeIf(id -> {
+                List<UUID> trial = new ArrayList<>(already);
+                trial.add(id);
+                return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+            });
+            validPlayerIds.removeIf(id -> {
+                List<UUID> trial = new ArrayList<>(already);
+                trial.add(id);
+                return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+            });
+        }
+
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
             // A graveyard target group declares its own scope + card filter, so per-position
             // enumeration honours the group being filled (Spelltwine: own graveyard, then an
@@ -778,6 +792,19 @@ public class ValidTargetService {
                     List<UUID> trial = new ArrayList<>(already);
                     trial.add(id);
                     return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
+                });
+            }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+                List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+                });
+                validPlayerIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
                 });
             }
             if (isOnePerControllerConstraint(ability.getMultiTargetConstraint())

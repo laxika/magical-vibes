@@ -263,7 +263,10 @@ public class TriggerTargetCollector {
                         .orElse(null);
                 if (effectPredicate != null) {
                     effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, xValue,
-                            sourcePermanentSnapshot).withDefendingPlayerId(defendingPlayerId);
+                            sourcePermanentSnapshot)
+                            .withSourcePermanentId(sourcePermanentSnapshot == null
+                                    ? null : sourcePermanentSnapshot.getId())
+                            .withDefendingPlayerId(defendingPlayerId);
                 }
             }
 

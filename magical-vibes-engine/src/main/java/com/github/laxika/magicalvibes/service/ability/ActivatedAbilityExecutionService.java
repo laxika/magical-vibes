@@ -1062,6 +1062,13 @@ public class ActivatedAbilityExecutionService {
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
+        boolean nonTreasureArtifactSource = gameQueryService.isArtifact(gameData, permanent)
+                && !GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE);
+        ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        Map<ManaColor, Integer> artifactManaBefore = nonTreasureArtifactSource
+                ? regularManaTotals(manaPool) : null;
+        Map<ManaColor, Integer> artifactSourceTagsBefore = nonTreasureArtifactSource
+                ? manaPool.getArtifactSourceManaTotals() : null;
 
         // Mana-production replacement effects are applied to the tapped permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
@@ -1077,7 +1084,8 @@ public class ActivatedAbilityExecutionService {
         if (chosenLandManaReplacement) {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
-                            .withCaveSource(caveSource);
+                            .withCaveSource(caveSource)
+                            .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null, choiceContext, colors,
@@ -1161,7 +1169,8 @@ public class ActivatedAbilityExecutionService {
                                     .text(" (Reality Twist).").build());
                         } else {
                             ChoiceContext.ManaColorChoice choiceContext =
-                                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
+                                            .withArtifactSource(nonTreasureArtifactSource);
                             List<String> colors = twistedColors.stream().map(Enum::name).toList();
                             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                                     playerId, null, null, choiceContext, colors,
@@ -1176,7 +1185,8 @@ public class ActivatedAbilityExecutionService {
                     if (totalMana > 0) {
                         twistReplacement = true;
                         ChoiceContext.ManaColorChoice choiceContext =
-                                new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                                new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
+                                        .withArtifactSource(nonTreasureArtifactSource);
                         List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
                         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                                 playerId, null, null, choiceContext, colors,
@@ -1369,7 +1379,8 @@ public class ActivatedAbilityExecutionService {
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
-                            .withCaveSource(caveSource);
+                            .withCaveSource(caveSource)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     if (ofColors.grantsRiot()) {
                         choiceContext = choiceContext.withRiot();
                     }
@@ -1410,7 +1421,8 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
-                            playerId, isCreatureSource, manaMultiplier);
+                            playerId, isCreatureSource, manaMultiplier)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()
@@ -1467,7 +1479,8 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
-                            playerId, isCreatureSource, manaMultiplier);
+                            playerId, isCreatureSource, manaMultiplier)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()
@@ -1494,7 +1507,8 @@ public class ActivatedAbilityExecutionService {
                 } else if (availableTypes.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, 1,
-                                    List.copyOf(availableTypes));
+                                    List.copyOf(availableTypes))
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
@@ -1515,7 +1529,8 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
                 } else if (availableTypes.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
@@ -1716,6 +1731,9 @@ public class ActivatedAbilityExecutionService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
+        if (nonTreasureArtifactSource) {
+            recordArtifactManaProduced(manaPool, artifactManaBefore, artifactSourceTagsBefore);
+        }
         stateBasedActionService.performStateBasedActions(gameData);
         // CR 605.3b: Do NOT clear priorityPassedBy here — mana abilities don't affect priority.
         // Priority clearing is handled by the caller when deferred triggers are pushed onto the stack.
@@ -1729,6 +1747,28 @@ public class ActivatedAbilityExecutionService {
             playerInputService.processNextMayAbility(gameData);
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private void recordArtifactManaProduced(ManaPool manaPool,
+                                             Map<ManaColor, Integer> manaBefore,
+                                             Map<ManaColor, Integer> artifactSourceTagsBefore) {
+        Map<ManaColor, Integer> manaAfter = regularManaTotals(manaPool);
+        Map<ManaColor, Integer> artifactSourceTagsAfter = manaPool.getArtifactSourceManaTotals();
+        for (ManaColor color : ManaColor.values()) {
+            int produced = Math.max(0, manaAfter.getOrDefault(color, 0)
+                    - manaBefore.getOrDefault(color, 0));
+            int alreadyTagged = Math.max(0, artifactSourceTagsAfter.getOrDefault(color, 0)
+                    - artifactSourceTagsBefore.getOrDefault(color, 0));
+            manaPool.addArtifactSourceManaTag(color, Math.max(0, produced - alreadyTagged));
+        }
+    }
+
+    private Map<ManaColor, Integer> regularManaTotals(ManaPool manaPool) {
+        Map<ManaColor, Integer> totals = new HashMap<>();
+        for (ManaColor color : ManaColor.values()) {
+            totals.put(color, manaPool.get(color));
+        }
+        return totals;
     }
 
     /**

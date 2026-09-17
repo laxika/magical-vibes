@@ -9924,6 +9924,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
+        int artifactSourceManaBefore = pool.getArtifactSourceManaTotal();
         var caveManaBefore = pool.getCaveManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
@@ -9950,6 +9951,8 @@ public class SpellCastingService {
         recordTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordCaveManaSpent(gameData, card, caveManaBefore, pool.getCaveManaTotals());
         recordSpellCastTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
+        recordSpellCastArtifactManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal(),
+                artifactSourceManaBefore, pool.getArtifactSourceManaTotal());
         recordSpellCastManaSources(gameData, card, spellCastManaSourcesBefore,
                 pool.getSpellCastTriggerManaTotals());
         applyUncounterableGrantingMana(gameData, playerId, card);
@@ -9990,6 +9993,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
+        int artifactSourceManaBefore = pool.getArtifactSourceManaTotal();
         var caveManaBefore = pool.getCaveManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
@@ -10006,6 +10010,8 @@ public class SpellCastingService {
         recordTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordCaveManaSpent(gameData, card, caveManaBefore, pool.getCaveManaTotals());
         recordSpellCastTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
+        recordSpellCastArtifactManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal(),
+                artifactSourceManaBefore, pool.getArtifactSourceManaTotal());
         recordSpellCastManaSources(gameData, card, spellCastManaSourcesBefore,
                 pool.getSpellCastTriggerManaTotals());
         applyUncounterableGrantingMana(gameData, playerId, card);
@@ -10021,6 +10027,14 @@ public class SpellCastingService {
         if (treasureManaAfter < treasureManaBefore) {
             gameData.markSpellCastUsedTreasureMana(card.getId());
         }
+    }
+
+    private void recordSpellCastArtifactManaSpent(GameData gameData, Card card,
+                                                  int treasureManaBefore, int treasureManaAfter,
+                                                  int artifactSourceManaBefore, int artifactSourceManaAfter) {
+        int treasureSpent = Math.max(0, treasureManaBefore - treasureManaAfter);
+        int artifactSourceSpent = Math.max(0, artifactSourceManaBefore - artifactSourceManaAfter);
+        gameData.addSpellCastArtifactManaSpent(card.getId(), treasureSpent + artifactSourceSpent);
     }
 
     private void recordSnowManaSpent(GameData gameData, Card card,

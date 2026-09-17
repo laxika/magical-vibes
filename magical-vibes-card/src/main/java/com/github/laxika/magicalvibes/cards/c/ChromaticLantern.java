@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "MPS", collectorNumber = "8")
 @CardRegistration(set = "BRR", collectorNumber = "10")
 @CardRegistration(set = "RVR", collectorNumber = "253")
+@CardRegistration(set = "TMC", collectorNumber = "58")
 public class ChromaticLantern extends Card {
 
     public ChromaticLantern() {

@@ -44,6 +44,8 @@ public enum MultiTargetConstraint {
      * Dual-typed permanents (creature lands) may be assigned to either quota.
      */
     AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+    /** At most two chosen targets may be creatures and at most two may be players. */
+    AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS,
     /** At most one chosen target may be assigned to each of the artifact, creature, and land slots. */
     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
     /** At most one chosen target may be assigned to each of the artifact, creature, enchantment, and planeswalker slots. */

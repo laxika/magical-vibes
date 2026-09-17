@@ -205,6 +205,8 @@ public class GameData {
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastSnowManaSpentByColor = new ConcurrentHashMap<>();
     /** Amount of mana produced by Treasures spent to cast a spell, keyed by spell card instance id. */
     public final Map<UUID, Integer> spellCastTreasureManaSpent = new ConcurrentHashMap<>();
+    /** Amount of mana produced by artifact sources spent to cast a spell, keyed by spell card instance id. */
+    public final Map<UUID, Integer> spellCastArtifactManaSpent = new ConcurrentHashMap<>();
     /** Amount of mana produced by Cave sources spent to cast a spell, keyed by spell card instance id. */
     public final Map<UUID, Integer> spellCastCaveManaSpent = new ConcurrentHashMap<>();
     /** Producing permanents whose tagged mana was spent to cast each spell. */
@@ -3802,6 +3804,20 @@ public class GameData {
         spellCastTreasureManaSpent.remove(spellCardId);
     }
 
+    public void addSpellCastArtifactManaSpent(UUID spellCardId, int amount) {
+        if (amount > 0) {
+            spellCastArtifactManaSpent.merge(spellCardId, amount, Integer::sum);
+        }
+    }
+
+    public int getSpellCastArtifactManaSpent(UUID spellCardId) {
+        return spellCastArtifactManaSpent.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastArtifactManaSpent(UUID spellCardId) {
+        spellCastArtifactManaSpent.remove(spellCardId);
+    }
+
     public void setSpellCastCaveManaSpent(UUID spellCardId, int caveManaSpent) {
         spellCastCaveManaSpent.put(spellCardId, caveManaSpent);
     }
@@ -5991,6 +6007,7 @@ public class GameData {
         this.spellCastSnowManaSpentByColor.forEach((k, v) ->
                 copy.spellCastSnowManaSpentByColor.put(k, new java.util.EnumMap<>(v)));
         copy.spellCastTreasureManaSpent.putAll(this.spellCastTreasureManaSpent);
+        copy.spellCastArtifactManaSpent.putAll(this.spellCastArtifactManaSpent);
         copy.spellCastCaveManaSpent.putAll(this.spellCastCaveManaSpent);
         copy.spellCastUsedTreasureMana.putAll(this.spellCastUsedTreasureMana);
         this.spellCastManaSourceIds.forEach((k, v) -> {
