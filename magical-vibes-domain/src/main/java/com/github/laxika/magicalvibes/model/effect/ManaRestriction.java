@@ -313,13 +313,13 @@ public sealed interface ManaRestriction {
     }
 
     /**
-     * Colorless mana spendable only to cast legendary spells â€” any spell with the legendary supertype
-     * (Untaidake, the Cloud Keeper). Spell-only: it cannot pay activation costs.
+     * Mana spendable only to cast legendary spells â€” any spell with the legendary supertype
+     * (Untaidake, the Cloud Keeper; Plaza of Heroes). Spell-only: it cannot pay activation costs.
      */
     record LegendarySpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addLegendarySpellOnlyColorless(amount);
+            pool.addLegendarySpellOnlyMana(color, amount);
         }
 
         @Override
@@ -480,6 +480,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "kicked spells only";
+        }
+    }
+
+    /** Mana spendable only to cast an instant or sorcery spell or a kicked spell. */
+    record KickedOrInstantSorceryCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addKickedOrInstantSorceryOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "instant or sorcery spells or kicked spells only";
         }
     }
 

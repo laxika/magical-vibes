@@ -45,6 +45,7 @@ public enum Keyword {
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    ENLIST,
     DETHRONE,
     LIVING_WEAPON,
     DEATHTOUCH,

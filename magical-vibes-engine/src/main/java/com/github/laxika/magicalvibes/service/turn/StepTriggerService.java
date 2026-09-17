@@ -5242,7 +5242,14 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                         continue;
                     }
-                    if (effect instanceof ChooseOneEffect chooseOneEffect) {
+                    if (effect instanceof ChooseModeNotYetChosenEffect chooseModeNotYetChosenEffect) {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), activePlayerId,
+                                new ChooseOneEffect(chooseModeNotYetChosenEffect.options()), perm.getId(), false, true));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} controller end-step trigger queued for consumed mode selection",
+                                gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ChooseOneEffect chooseOneEffect) {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                 perm.getCard(), activePlayerId, chooseOneEffect, perm.getId()));
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

@@ -804,6 +804,10 @@ public sealed interface TriggerContext {
     record Crime(UUID committingPlayerId) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
-    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
-            implements TriggerContext {}
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
+                                              boolean enlistment) implements TriggerContext {
+        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility) {
+            this(attackingCreature, triggeredAbility, false);
+        }
+    }
 }

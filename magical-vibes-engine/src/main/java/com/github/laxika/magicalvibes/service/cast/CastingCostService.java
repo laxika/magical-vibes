@@ -1696,7 +1696,7 @@ public class CastingCostService {
 
         var lifeCost = altCast.getCost(LifeCastingCost.class);
         if (lifeCost.isPresent()
-                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && (!gameQueryService.canPayLifeForCosts(gameData)
                 || !gameQueryService.canPlayerLifeChange(gameData, playerId)
                 || gameData.getLife(playerId) < lifeCost.get().amount())) {
             return false;
@@ -2190,7 +2190,7 @@ public class CastingCostService {
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
-                || (gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || (gameQueryService.canPayLifeForCosts(gameData)
                 && gameData.getLife(playerId) >= lifeCost.get().amount());
     }
 
@@ -2311,8 +2311,17 @@ public class CastingCostService {
         if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) {
             return false;
         }
-        var discardCost = graveyardCast.getCost(DiscardCardCastingCost.class);
-        return discardCost.isEmpty() || !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty();
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        for (DiscardCardCastingCost discardCost : graveyardCast.getCosts(DiscardCardCastingCost.class)) {
+            long matchingCount = hand.stream()
+                    .filter(card -> discardCost.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(card, discardCost.predicate(), card.getId()))
+                    .count();
+            if (matchingCount < discardCost.count()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean canPayGraveyardCastAdditionalCosts(GameData gameData, UUID playerId, Card card) {
@@ -2324,7 +2333,16 @@ public class CastingCostService {
         for (CastingCost cost : graveyardCast.get().additionalCosts()) {
             if (cost instanceof LifeCastingCost lifeCost) {
                 if (gameData.getLife(playerId) < lifeCost.amount()
-                        || !gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+                        || !gameQueryService.canPayLifeForCosts(gameData)) {
+                    return false;
+                }
+            } else if (cost instanceof DiscardCardCastingCost discardCost) {
+                long matchingCount = gameData.playerHands.getOrDefault(playerId, List.of()).stream()
+                        .filter(handCard -> discardCost.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(
+                                handCard, discardCost.predicate(), handCard.getId()))
+                        .count();
+                if (matchingCount < discardCost.count()) {
                     return false;
                 }
             } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {

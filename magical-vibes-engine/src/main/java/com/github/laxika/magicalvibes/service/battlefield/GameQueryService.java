@@ -149,6 +149,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZone
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
@@ -1227,7 +1228,20 @@ public class GameQueryService {
      * restricted.
      */
     public boolean canPayLifeOrSacrificeCreaturesForCosts(GameData gameData) {
-        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+        return canPayLifeForCosts(gameData) && canSacrificeCreaturesForCosts(gameData);
+    }
+
+    /**
+     * Returns whether life may be paid as a spell or ability cost. Karn's Sylex does not prohibit
+     * life payments used to activate mana abilities, so that distinction is supplied by callers.
+     */
+    public boolean canPayLifeForCosts(GameData gameData) {
+        return canPayLifeForCosts(gameData, false);
+    }
+
+    public boolean canPayLifeForCosts(GameData gameData, boolean manaAbility) {
+        return (manaAbility || !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeEffect.class))
+                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
                 && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
     }
 

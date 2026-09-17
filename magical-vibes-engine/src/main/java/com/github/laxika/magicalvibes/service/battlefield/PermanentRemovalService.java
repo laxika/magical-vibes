@@ -1631,7 +1631,7 @@ public class PermanentRemovalService {
                         may, null, opponentExileReplacement.sourcePermanentId());
             } else if (whenExiledEffect != null) {
                 resolveMandatoryOpponentExileRider(gameData, opponentExileReplacement, whenExiledEffect,
-                        !exiledCreatureCards.isEmpty());
+                        wasCreature && exiledFromBattlefield > 0);
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(
@@ -1816,7 +1816,9 @@ public class PermanentRemovalService {
     }
 
     private boolean selfGraveyardTriggerSuppressed(GameData gameData, Permanent target) {
-        if (target.getCard().getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).isEmpty()) {
+        if (target.getCard().getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).isEmpty()
+                && target.getPersistentTriggeredEffects(
+                        EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).isEmpty()) {
             return false;
         }
         if (target.isLosesAllAbilitiesUntilEndOfTurn()) {

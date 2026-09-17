@@ -1929,6 +1929,10 @@ public class TriggeredAbilityQueueService {
                     minTargets = 0;
                     scope = targetEffect.source();
                     break;
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    filter = effect.targetSpec().graveyardCardPredicate().orElse(null);
+                    scope = effect.targetSpec().graveyardScope().orElse(scope);
+                    break;
                 }
             }
 

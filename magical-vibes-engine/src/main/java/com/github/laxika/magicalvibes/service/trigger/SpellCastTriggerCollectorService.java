@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
@@ -74,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAllCardsWithCastSpellM
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsWithCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayCastWithoutPayingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstNoncreatureSpellCastTriggerEffect;
@@ -160,6 +163,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -169,6 +174,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.JodahTheUnifierTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -1241,22 +1247,32 @@ public class SpellCastTriggerCollectorService {
     @CollectsTrigger(value = CreateTokenCopyOfTargetedSpellPermanentEffect.class,
             slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCreateTokenCopyOfTargetedSpellPermanent(TriggerMatchContext match,
-            CreateTokenCopyOfTargetedSpellPermanentEffect ignored, TriggerContext ctx) {
+            CreateTokenCopyOfTargetedSpellPermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!sc.spellCard().hasType(CardType.INSTANT) && !sc.spellCard().hasType(CardType.SORCERY)) {
+        if (trigger.instantOrSorceryOnly()
+                && !sc.spellCard().hasType(CardType.INSTANT)
+                && !sc.spellCard().hasType(CardType.SORCERY)) {
             return false;
         }
         StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
         if (spellEntry == null) {
             return false;
         }
-        boolean targetsOtherControlledPermanent = spellEntry.getDeclaredTargetIds().stream()
-                .filter(targetId -> !targetId.equals(match.permanent().getId()))
-                .map(targetId -> gameQueryService.findPermanentById(match.gameData(), targetId))
-                .filter(java.util.Objects::nonNull)
-                .anyMatch(target -> match.controllerId().equals(match.gameData().findControllerOf(target)));
-        if (!targetsOtherControlledPermanent) {
+        if (trigger.triggerCondition() != null
+                && !targetLegalityService.matchesStackEntryPredicate(
+                        match.gameData(), spellEntry, trigger.triggerCondition(),
+                        match.controllerId(), match.permanent())) {
             return false;
+        }
+        if (trigger.triggerCondition() == null) {
+            boolean targetsOtherControlledPermanent = spellEntry.getDeclaredTargetIds().stream()
+                    .filter(targetId -> !targetId.equals(match.permanent().getId()))
+                    .map(targetId -> gameQueryService.findPermanentById(match.gameData(), targetId))
+                    .filter(java.util.Objects::nonNull)
+                    .anyMatch(target -> match.controllerId().equals(match.gameData().findControllerOf(target)));
+            if (!targetsOtherControlledPermanent) {
+                return false;
+            }
         }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -1264,7 +1280,7 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new CreateTokenCopyOfTargetedSpellPermanentEffect(
-                        new StackEntry(spellEntry)))),
+                        new StackEntry(spellEntry), trigger.copyEffect()))),
                 null,
                 match.permanent().getId()));
         return true;
@@ -1506,6 +1522,44 @@ public class SpellCastTriggerCollectorService {
 
         log.info("Game {} - Sunbird's Invocation trigger queued (mana value {})",
                 match.gameData().id, manaValue);
+        return true;
+    }
+
+    @CollectsTrigger(value = JodahTheUnifierTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleJodahTheUnifierCast(TriggerMatchContext match,
+            JodahTheUnifierTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.castFromHand()) {
+            return false;
+        }
+
+        CardPredicate legendarySpell = new CardSupertypePredicate(CardSupertype.LEGENDARY);
+        if (!predicateEvaluationService.matchesCardPredicate(
+                sc.spellCard(), legendarySpell, null, match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+
+        int maxManaValue = spellManaValue(match.gameData(), sc.spellCard()) - 1;
+        CardPredicate libraryFilter = new CardAllOfPredicate(List.of(
+                new CardSupertypePredicate(CardSupertype.LEGENDARY),
+                new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                new CardMaxManaValuePredicate(maxManaValue)));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new ExileUntilCardPredicateMayCastWithoutPayingManaEffect(libraryFilter))),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+
+        log.info("Game {} - Jodah's legendary-spell trigger queued (mana value {})",
+                match.gameData().id, spellManaValue(match.gameData(), sc.spellCard()));
         return true;
     }
 
@@ -2604,6 +2658,11 @@ public class SpellCastTriggerCollectorService {
 
     private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
                                                UUID castingPlayerId) {
+        if (effect instanceof CopyTriggeringSpellEffect copy
+                && copy.spellSnapshot() == null) {
+            return new CopyTriggeringSpellEffect(
+                    copy.tokenCopy(), copy.retargetToSource(), new StackEntry(spellSnapshot));
+        }
         if (effect instanceof GrantProtectionFromTriggeringSpellColorsEffect) {
             return new GrantProtectionFromTriggeringSpellColorsEffect(
                     Set.copyOf(spellSnapshot.getCard().getColors()));

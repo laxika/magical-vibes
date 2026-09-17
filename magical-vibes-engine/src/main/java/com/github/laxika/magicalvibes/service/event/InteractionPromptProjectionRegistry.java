@@ -1027,8 +1027,11 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 interaction.maxCount() == 1
-                        ? "Choose an Aura to attach to " + interaction.sourceName() + "."
-                        : "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
+                        ? "Choose " + (interaction.includeEquipment() ? "an Aura or Equipment" : "an Aura")
+                        + " to attach to " + interaction.sourceName() + "."
+                        : "Choose any number of "
+                        + (interaction.includeEquipment() ? "Auras or Equipment" : "Auras")
+                        + " to attach to " + interaction.sourceName() + ".");
     }
 
     private InteractionPromptMessage projectReturnAurasFromGraveyardChoice(

@@ -171,6 +171,10 @@ class AbilityActivationServiceTest {
         // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
                 .thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData)).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData, false)).thenReturn(true);
+        lenient().when(gameQueryService.canPayLifeForCosts(gameData, true)).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(true);
     }
 
     @Test

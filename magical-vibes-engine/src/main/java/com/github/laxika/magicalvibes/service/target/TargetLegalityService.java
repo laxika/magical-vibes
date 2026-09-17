@@ -1829,7 +1829,9 @@ public class TargetLegalityService {
         }
         validateMultiTargetCount(targetIds, minTargets, maxTargets, targetGroups, card.isAllowSharedTargets(),
                 card.getMultiTargetConstraint()
-                        == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
+                        == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER
+                        || card.getMultiTargetConstraint()
+                        == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                 targetGroupSizes);
 
         if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_COLOR) {
@@ -2230,6 +2232,10 @@ public class TargetLegalityService {
             validateAtMostOneArtifactCreatureEnchantmentAndPlaneswalker(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND) {
+            validateAtMostOneArtifactCreatureEnchantmentPlaneswalkerAndLand(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             validateAtMostOnePerController(gameData, targetIds);
@@ -2293,6 +2299,7 @@ public class TargetLegalityService {
                          AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
+                         AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
                          AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
                          DIFFERENT_MANA_VALUES -> {
@@ -2529,6 +2536,56 @@ public class TargetLegalityService {
             int categoryBit = 1 << category;
             if (matches[category] && (usedCategories & categoryBit) == 0
                     && canAssignArtifactCreatureEnchantmentAndPlaneswalkerTargets(
+                    gameData, targets, targetIndex + 1, usedCategories | categoryBit)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void validateAtMostOneArtifactCreatureEnchantmentPlaneswalkerAndLand(
+            GameData gameData, List<UUID> targetIds) {
+        if (!fitsAtMostOneArtifactCreatureEnchantmentPlaneswalkerAndLand(gameData, targetIds)) {
+            throw new IllegalStateException(
+                    "Must target at most one artifact, at most one creature, at most one enchantment, "
+                            + "at most one planeswalker, and at most one land");
+        }
+    }
+
+    public boolean fitsAtMostOneArtifactCreatureEnchantmentPlaneswalkerAndLand(
+            GameData gameData, List<UUID> targetIds) {
+        if (targetIds == null || targetIds.size() > 5) {
+            return false;
+        }
+        List<Permanent> targets = new ArrayList<>(targetIds.size());
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                return false;
+            }
+            targets.add(target);
+        }
+        return canAssignArtifactCreatureEnchantmentPlaneswalkerAndLandTargets(
+                gameData, targets, 0, 0);
+    }
+
+    private boolean canAssignArtifactCreatureEnchantmentPlaneswalkerAndLandTargets(
+            GameData gameData, List<Permanent> targets, int targetIndex, int usedCategories) {
+        if (targetIndex == targets.size()) {
+            return true;
+        }
+        Permanent target = targets.get(targetIndex);
+        boolean[] matches = {
+                gameQueryService.isArtifact(gameData, target),
+                gameQueryService.isCreature(gameData, target),
+                gameQueryService.isEnchantment(gameData, target),
+                gameQueryService.isPlaneswalker(gameData, target),
+                gameQueryService.isLand(gameData, target)
+        };
+        for (int category = 0; category < matches.length; category++) {
+            int categoryBit = 1 << category;
+            if (matches[category] && (usedCategories & categoryBit) == 0
+                    && canAssignArtifactCreatureEnchantmentPlaneswalkerAndLandTargets(
                     gameData, targets, targetIndex + 1, usedCategories | categoryBit)) {
                 return true;
             }

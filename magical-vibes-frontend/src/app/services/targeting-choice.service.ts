@@ -139,6 +139,8 @@ export class TargetingChoiceService {
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
     this.pendingGraveyardCastDiscardHandIndex = null;
+    this.pendingGraveyardCastDiscardHandIndices = [];
+    this.graveyardCastDiscardCount = 0;
     this.selectingGraveyardCastExile = false;
     this.graveyardCastExileCardIndex = -1;
     this.graveyardCastExileCardName = '';
@@ -378,6 +380,8 @@ export class TargetingChoiceService {
   graveyardCastDiscardCardIndex = -1;
   graveyardCastDiscardCardName = '';
   private pendingGraveyardCastDiscardHandIndex: number | null = null;
+  private pendingGraveyardCastDiscardHandIndices: number[] = [];
+  graveyardCastDiscardCount = 0;
   selectingGraveyardCastExile = false;
   graveyardCastExileCardIndex = -1;
   graveyardCastExileCardName = '';
@@ -1238,6 +1242,7 @@ export class TargetingChoiceService {
       this.selectingGraveyardCastDiscard = true;
       this.graveyardCastDiscardCardIndex = graveyardIndex;
       this.graveyardCastDiscardCardName = card.name;
+      this.graveyardCastDiscardCount = card.graveyardCastDiscardCount ?? 1;
       return;
     }
     if (card.hasHarmonize) {
@@ -1283,6 +1288,7 @@ export class TargetingChoiceService {
       this.selectingGraveyardCastDiscard = true;
       this.graveyardCastDiscardCardIndex = graveyardIndex;
       this.graveyardCastDiscardCardName = card.name;
+      this.graveyardCastDiscardCount = card.graveyardCastDiscardCount ?? 1;
     } else if (card.hasHarmonize) {
       this.startHarmonizeSelection(graveyardIndex, card);
     } else if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
@@ -1310,10 +1316,25 @@ export class TargetingChoiceService {
     const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
     const card = playerIndex >= 0 ? game?.graveyards[playerIndex]?.[graveyardIndex] : undefined;
     if (!card) return;
-    this.pendingGraveyardCastDiscardHandIndex = handIndex;
+    if (this.pendingGraveyardCastDiscardHandIndex === handIndex
+      || this.pendingGraveyardCastDiscardHandIndices.includes(handIndex)) return;
+    const selectedIndices = [
+      ...(this.pendingGraveyardCastDiscardHandIndex == null
+        ? [] : [this.pendingGraveyardCastDiscardHandIndex]),
+      ...this.pendingGraveyardCastDiscardHandIndices,
+      handIndex
+    ];
+    if (selectedIndices.length < this.graveyardCastDiscardCount) {
+      this.pendingGraveyardCastDiscardHandIndex = selectedIndices[0];
+      this.pendingGraveyardCastDiscardHandIndices = selectedIndices.slice(1);
+      return;
+    }
+    this.pendingGraveyardCastDiscardHandIndex = selectedIndices[0];
+    this.pendingGraveyardCastDiscardHandIndices = selectedIndices.slice(1);
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
+    this.graveyardCastDiscardCount = 0;
     if (card.hasHarmonize) {
       this.startHarmonizeSelection(graveyardIndex, card);
     } else if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
@@ -1328,6 +1349,8 @@ export class TargetingChoiceService {
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
     this.pendingGraveyardCastDiscardHandIndex = null;
+    this.pendingGraveyardCastDiscardHandIndices = [];
+    this.graveyardCastDiscardCount = 0;
     this.pendingFlashback = false;
   }
 
@@ -1578,6 +1601,10 @@ export class TargetingChoiceService {
     if (this.pendingGraveyardCastDiscardHandIndex != null) {
       msg.discardHandCardIndex = this.pendingGraveyardCastDiscardHandIndex;
       this.pendingGraveyardCastDiscardHandIndex = null;
+    }
+    if (this.pendingGraveyardCastDiscardHandIndices.length > 0) {
+      msg.discardHandCardIndices = this.pendingGraveyardCastDiscardHandIndices;
+      this.pendingGraveyardCastDiscardHandIndices = [];
     }
     if (this.pendingGraveyardCastExileIndices.length > 0) {
       msg.exileGraveyardCardIndices = this.pendingGraveyardCastExileIndices;
@@ -2277,6 +2304,9 @@ export class TargetingChoiceService {
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
+    this.pendingGraveyardCastDiscardHandIndex = null;
+    this.pendingGraveyardCastDiscardHandIndices = [];
+    this.graveyardCastDiscardCount = 0;
     this.selectingGraveyardCastExile = false;
     this.graveyardCastExileCardIndex = -1;
     this.graveyardCastExileCardName = '';

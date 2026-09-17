@@ -3730,7 +3730,7 @@ public abstract class AiDecisionEngine {
                         gameQueryService.getEffectivePower(gameData, permanent)
                                 + gameQueryService.getEffectiveToughness(gameData, permanent)))
                 .toList();
-        boolean sacrificeAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        boolean sacrificeAllowed = gameQueryService.canSacrificeCreaturesForCosts(gameData);
         int effectiveXValue = xValue != null ? xValue : 0;
         for (int count = 0; count <= creatures.size(); count++) {
             int reduction = count * reductionEffect.reductionPerCreature();

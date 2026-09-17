@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatur
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrWarpedCardCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -541,7 +543,38 @@ public class AdditionalSpellCostService {
                 && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.REPLICATE)) {
             effects.add(new RepeatableAdditionalManaCost(List.of(card.getManaCost())));
         }
+        addPayLifeToReduceColoredCastCost(gameData, playerId, card, effects);
         return extractAndRemove(effects);
+    }
+
+    private void addPayLifeToReduceColoredCastCost(GameData gameData, UUID playerId, Card card,
+                                                   List<CardEffect> effects) {
+        for (var entry : gameData.playerBattlefields.entrySet()) {
+            UUID sourceControllerId = entry.getKey();
+            for (Permanent permanent : entry.getValue()) {
+                if (!gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, PayLifeToReduceColoredCastCostEffect.class)) {
+                    continue;
+                }
+                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(PayLifeToReduceColoredCastCostEffect.class::isInstance)
+                        .map(PayLifeToReduceColoredCastCostEffect.class::cast)
+                        .filter(effect -> appliesToCaster(effect.scope(), sourceControllerId, playerId))
+                        .filter(effect -> predicateEvaluationService.matchesCardPredicate(
+                                card, effect.spellFilter(), permanent.getCard().getId(), gameData, playerId))
+                        .forEach(effect -> effects.add(new PayLifeOrPayManaCost(
+                                effect.lifeAmount(), effect.reductionManaCost())));
+            }
+        }
+    }
+
+    private boolean appliesToCaster(CostModificationScope scope,
+                                    UUID sourceControllerId, UUID casterId) {
+        return switch (scope) {
+            case SELF -> sourceControllerId.equals(casterId);
+            case OPPONENT -> !sourceControllerId.equals(casterId);
+            case ALL -> true;
+        };
     }
 
     /** Returns whether an active Chorus of the Conclave-style effect applies to this spell. */
@@ -611,7 +644,7 @@ public class AdditionalSpellCostService {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
         // Battlefield static effects may prohibit life payments or particular permanent sacrifices.
-        boolean lifeAndSacAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        boolean lifePaymentAllowed = gameQueryService.canPayLifeForCosts(gameData);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             switch (effect) {
                 case SacrificeCreatureCost ignored -> {
@@ -623,7 +656,7 @@ public class AdditionalSpellCostService {
                             && gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
-                    boolean canPayLife = lifeAndSacAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
+                    boolean canPayLife = lifePaymentAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
                     if (!hasCreature && !hasDiscard && !canPayLife) return false;
                 }
                 // Casualty is optional, so it never makes a spell uncastable by itself.
@@ -679,7 +712,7 @@ public class AdditionalSpellCostService {
                 case DiscardCardOrPayLifeCost cost -> {
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
-                    boolean canPayLife = lifeAndSacAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
+                    boolean canPayLife = lifePaymentAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
                     if (!hasDiscard && !canPayLife) {
                         return false;
                     }
@@ -823,13 +856,13 @@ public class AdditionalSpellCostService {
                 case ChooseCreatureTypeCost ignored -> { }
                 // A fixed life payment is only legal while the life total covers it (CR 119.4).
                 case PayLifeCost cost -> {
-                    if (!lifeAndSacAllowed) return false;
+                    if (!lifePaymentAllowed) return false;
                     int life = gameData.getLife(playerId);
                     if (life < cost.effectiveAmount(life)) return false;
                 }
                 case PayLifeOrSacrificePermanentCost cost -> {
                     int life = gameData.getLife(playerId);
-                    boolean canPayLife = lifeAndSacAllowed && life >= cost.lifeAmount();
+                    boolean canPayLife = lifePaymentAllowed && life >= cost.lifeAmount();
                     boolean canSacrifice = battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                                     gameData, p, cost.filter()))
@@ -838,7 +871,7 @@ public class AdditionalSpellCostService {
                 }
                 case PayLifeOrPayManaCost cost -> {
                     int life = gameData.getLife(playerId);
-                    boolean canPayLife = lifeAndSacAllowed && life >= cost.lifeAmount();
+                    boolean canPayLife = lifePaymentAllowed && life >= cost.lifeAmount();
                     boolean canPayMana = canAffordManaOption(gameData, playerId, card, cost.manaCost());
                     if (!canPayLife && !canPayMana) return false;
                 }
@@ -1550,7 +1583,7 @@ public class AdditionalSpellCostService {
      * Angel of Jubilation: a life payment can't be used as a cost of casting a spell.
      */
     private void validateCanPayLifeForCost(GameData gameData, Card card) {
-        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+        if (!gameQueryService.canPayLifeForCosts(gameData)) {
             throw new IllegalStateException("Players can't pay life to cast " + card.getName());
         }
     }
@@ -1838,8 +1871,27 @@ public class AdditionalSpellCostService {
         if (pool == null) {
             return false;
         }
-        String base = card.getManaCost() != null ? card.getManaCost() : "";
-        return new ManaCost(base + optionManaCost).canPay(pool);
+        ManaCost baseCost = new ManaCost(card.getManaCost() != null ? card.getManaCost() : "");
+        for (var entry : gameData.playerBattlefields.entrySet()) {
+            UUID sourceControllerId = entry.getKey();
+            for (Permanent permanent : entry.getValue()) {
+                if (!gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, PayLifeToReduceColoredCastCostEffect.class)) {
+                    continue;
+                }
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof PayLifeToReduceColoredCastCostEffect payLifeEffect)
+                            || !appliesToCaster(payLifeEffect.scope(), sourceControllerId, playerId)
+                            || !predicateEvaluationService.matchesCardPredicate(
+                                    card, payLifeEffect.spellFilter(), permanent.getCard().getId(),
+                                    gameData, playerId)) {
+                        continue;
+                    }
+                    baseCost = baseCost.reducedByColoredOnly(new ManaCost(payLifeEffect.reductionManaCost()));
+                }
+            }
+        }
+        return baseCost.increasedBy(new ManaCost(optionManaCost)).canPay(pool);
     }
 
     /**

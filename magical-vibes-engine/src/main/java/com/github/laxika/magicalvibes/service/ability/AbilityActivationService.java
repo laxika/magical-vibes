@@ -294,6 +294,7 @@ public class AbilityActivationService {
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
+        payAdditionalTapAbilityCosts(gameData, playerId, permanent);
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
@@ -549,6 +550,42 @@ public class AbilityActivationService {
         }
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private void payAdditionalTapAbilityCosts(GameData gameData, UUID playerId, Permanent permanent) {
+        List<CostEffect> additionalCosts = castingCostService.getActivatedAbilityAdditionalCosts(gameData, permanent);
+        if (additionalCosts.isEmpty()) {
+            return;
+        }
+
+        List<PayLifeCost> lifeCosts = new ArrayList<>();
+        for (CostEffect additionalCost : additionalCosts) {
+            if (!(additionalCost instanceof PayLifeCost payLifeCost)) {
+                throw new IllegalStateException("Unsupported additional cost for a direct tap ability");
+            }
+            lifeCosts.add(payLifeCost);
+        }
+
+        if (!gameQueryService.canPayLifeForCosts(gameData, true)
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            throw new IllegalStateException("Players can't pay life to activate abilities");
+        }
+
+        int life = gameData.getLife(playerId);
+        List<Integer> amounts = new ArrayList<>(lifeCosts.size());
+        for (PayLifeCost lifeCost : lifeCosts) {
+            int amount = lifeCost.effectiveAmount(life, sourceCounterCount(permanent, lifeCost));
+            if (life < amount) {
+                throw new IllegalStateException("Not enough life to pay (need " + amount + ", have " + life + ")");
+            }
+            amounts.add(amount);
+            life -= amount;
+        }
+        for (int amount : amounts) {
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
     }
 
     private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
@@ -2067,7 +2104,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (payLifeCost != null) {
-            if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+            if (!gameQueryService.canPayLifeForCosts(gameData, isManaAbility(ability, abilityEffects))
                     || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
@@ -5803,11 +5840,15 @@ public class AbilityActivationService {
             }
         }
 
-        // Angel of Jubilation: life payments and creature sacrifices can't be used as ability costs
-        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+        // Angel of Jubilation and Karn's Sylex: life payments and creature sacrifices can't be
+        // used as the applicable ability costs.
+        boolean manaAbility = isManaAbility(ability, abilityEffects);
+        if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
+                || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                if (effect instanceof PayLifeCost || effect instanceof PayLifeForEachCardInHandCost
-                        || effect instanceof PayXLifeCost) {
+                if ((effect instanceof PayLifeCost || effect instanceof PayLifeForEachCardInHandCost
+                        || effect instanceof PayXLifeCost)
+                        && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
                 }
                 if (effect instanceof SacrificeCreatureCost

@@ -179,6 +179,7 @@ public class LibraryChoiceHandlerService {
         List<Card> accumulatedCards = librarySearch.accumulatedCards() != null
                 ? new ArrayList<>(librarySearch.accumulatedCards()) : new ArrayList<>();
         boolean requireDifferentNames = librarySearch.requireDifferentNames();
+        boolean requireDifferentPowers = librarySearch.requireDifferentPowers();
         Integer manaValueBoundValue = librarySearch.manaValueBoundValue();
         boolean manaValueExact = librarySearch.manaValueExact();
         Integer totalManaValueBound = librarySearch.totalManaValueBound();
@@ -637,7 +638,8 @@ public class LibraryChoiceHandlerService {
             }
             // Gifts Ungiven stopped short of four cards: the pool found so far still goes to the
             // opponent for the two-card disposal choice.
-            if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
+            if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                    || destination == LibrarySearchDestination.THREATS_UNDETECTED_POOL) {
                 gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + " stops searching. Library is shuffled."));
                 finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
@@ -896,9 +898,10 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
-            // Gifts Ungiven: the revealed card leaves the library but enters no zone — it waits in
-            // the pool until the opponent has chosen which two cards go to the graveyard.
+        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                || destination == LibrarySearchDestination.THREATS_UNDETECTED_POOL) {
+            // Gifts-style searches hold revealed cards outside every zone until the opponent has
+            // chosen the cards for the effect's configured destination.
             accumulatedCards.add(chosenCard);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " reveals ", chosenCard, "."));
@@ -906,6 +909,8 @@ public class LibraryChoiceHandlerService {
             java.util.Set<String> excluded = java.util.Set.copyOf(excludedCardNames);
             List<Card> remainingMatches = deck.stream()
                     .filter(c -> !excluded.contains(c.getName()))
+                    .filter(c -> !requireDifferentPowers || accumulatedCards.stream()
+                            .noneMatch(selected -> java.util.Objects.equals(selected.getPower(), c.getPower())))
                     .filter(c -> filterPredicate == null || predicateEvaluationService.matchesCardPredicate(
                             c, filterPredicate, null, gameData, deckOwnerId))
                     .toList();
@@ -916,13 +921,15 @@ public class LibraryChoiceHandlerService {
                                 .remainingCount(newRemaining)
                                 .reveals(true)
                                 .canFailToFind(true)
-                                .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                                .destination(destination)
                                 .filterPredicate(filterPredicate)
-                                .requireDifferentNames(true)
+                                .requireDifferentNames(requireDifferentNames)
+                                .requireDifferentPowers(requireDifferentPowers)
                                 .accumulatedCards(accumulatedCards)
                                 .excludedCardNames(excludedCardNames)
                                 .build(),
-                        "Search your library for a card with a different name to reveal ("
+                        "Search your library for a card with a different "
+                                + (requireDifferentPowers ? "power" : "name") + " to reveal ("
                                 + newRemaining + " remaining).", true));
                 return;
             }
@@ -1458,6 +1465,12 @@ public class LibraryChoiceHandlerService {
                         .filter(c -> !excluded.contains(c.getName()))
                         .toList();
             }
+            if (requireDifferentPowers && !accumulatedCards.isEmpty()) {
+                newSearchCards = newSearchCards.stream()
+                        .filter(c -> accumulatedCards.stream()
+                                .noneMatch(selected -> java.util.Objects.equals(selected.getPower(), c.getPower())))
+                        .toList();
+            }
 
             if (newSearchCards.isEmpty()) {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
@@ -1510,6 +1523,7 @@ public class LibraryChoiceHandlerService {
                     .battlefieldControllerId(battlefieldControllerId)
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
+                    .requireDifferentPowers(requireDifferentPowers)
                     .manaValueBound(manaValueBoundValue, manaValueExact)
                     .totalManaValueBound(totalManaValueBound)
                     .excludedCardNames(excludedCardNames)
@@ -1585,6 +1599,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case GIFTS_UNGIVEN_POOL -> throw new IllegalStateException("GIFTS_UNGIVEN_POOL should be handled earlier");
+                case THREATS_UNDETECTED_POOL -> throw new IllegalStateException("THREATS_UNDETECTED_POOL should be handled earlier");
                 case SIGNAL_THE_CLANS_POOL -> throw new IllegalStateException("SIGNAL_THE_CLANS_POOL should be handled earlier");
             };
             GameLogEntry logEntry;

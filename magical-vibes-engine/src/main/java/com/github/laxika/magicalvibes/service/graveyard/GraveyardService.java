@@ -838,7 +838,13 @@ public class GraveyardService {
     private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card,
                                                                  UUID battlefieldPermanentId,
                                                                  Permanent battlefieldSnapshot) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
+        List<CardEffect> effects = new ArrayList<>(
+                card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD));
+        if (battlefieldSnapshot != null) {
+            effects.addAll(battlefieldSnapshot.getPersistentTriggeredEffects(
+                    EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD));
+        }
+        for (CardEffect effect : effects) {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {

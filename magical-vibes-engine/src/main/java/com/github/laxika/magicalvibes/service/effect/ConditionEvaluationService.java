@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermanent;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
@@ -207,6 +208,7 @@ import com.github.laxika.magicalvibes.model.condition.FaceDownCreatureEnteredThi
 import com.github.laxika.magicalvibes.model.condition.FaceDownPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
@@ -246,6 +248,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.NonSubtypeCreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NonZombieCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
@@ -263,6 +266,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentC
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentPermanentDealtExcessDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtCombatDamageByLegendaryCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
@@ -468,6 +472,8 @@ public class ConditionEvaluationService {
             case ControllerDiscardedCardThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.cardsDiscardedThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
+            case AnyPlayerDiscardedCardThisTurn ignored ->
+                    gameData.cardsDiscardedThisTurn.values().stream().anyMatch(count -> count > 0);
             case SourceEnteredThisTurn ignored ->
                     sourceEnteredThisTurn(gameData, ctx);
             case SourceEnteredBattlefieldThisTurn ignored -> {
@@ -511,6 +517,12 @@ public class ConditionEvaluationService {
                             > gameData.creatureSubtypeDeathCountThisTurn.values().stream()
                             .mapToInt(subtypeCounts -> subtypeCounts.getOrDefault(CardSubtype.ZOMBIE, 0))
                             .sum();
+            case NonSubtypeCreatureDiedUnderYourControlThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0)
+                            > gameData.creatureSubtypeDeathCountThisTurn
+                                    .getOrDefault(ctx.controllerId(), Map.of())
+                                    .getOrDefault(c.excludedSubtype(), 0);
             case ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
             case EnchantmentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
@@ -958,6 +970,8 @@ public class ConditionEvaluationService {
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case OpponentPermanentDealtExcessDamageThisTurn ignored ->
+                    gameData.wasOpponentPermanentDealtExcessDamageThisTurn(ctx.controllerId());
             case OpponentDealtCombatDamageByLegendaryCreatureThisTurn ignored ->
                     opponentWasDealtCombatDamageByLegendaryCreatureThisTurn(gameData, ctx.controllerId());
             case OpponentDrewAtLeastCardsThisTurn c ->
@@ -1105,6 +1119,8 @@ public class ConditionEvaluationService {
                             gameData, ctx, new PermanentIsLandPredicate()));
             case OpponentCastSpellThisTurn c ->
                     opponentCastMatchingSpellThisTurn(gameData, ctx, c.filter());
+            case OpponentCastTwoOrMoreSpellsThisTurn ignored ->
+                    opponentCastTwoOrMoreSpellsThisTurn(gameData, ctx);
             case OpponentCastThreeOrMoreSpellsThisTurn ignored ->
                     opponentCastThreeOrMoreSpellsThisTurn(gameData, ctx);
             case OpponentPermanentEnteredThisTurn c ->
@@ -2363,6 +2379,13 @@ public class ConditionEvaluationService {
         return gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(ctx.controllerId()))
                 .anyMatch(playerId -> gameData.getSpellsCastThisTurnCount(playerId) >= 3);
+    }
+
+    private boolean opponentCastTwoOrMoreSpellsThisTurn(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null) return false;
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(ctx.controllerId()))
+                .anyMatch(playerId -> gameData.getSpellsCastThisTurnCount(playerId) >= 2);
     }
 
     private boolean opponentPutThreeOrMoreCardsIntoGraveyardThisTurn(GameData gameData, ConditionContext ctx) {

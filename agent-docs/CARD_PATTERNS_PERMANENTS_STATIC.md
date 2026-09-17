@@ -11,6 +11,7 @@ Non-Human creature-type-count anthem: `d/DiligentZookeeper.java` uses `BoostNonH
 
 All paths relative to `cards/`.
 | Nonland-permanent cost lock | `y/YasharnImplacableEarth.java` | STATIC `PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect` — no player may pay life or sacrifice a nonland permanent to cast a spell or activate an ability; lands remain legal sacrifices |
+| Life-payment cost lock with mana-ability exception | `k/KarnsSylex.java` | STATIC `PlayersCantPayLifeEffect` — no player may pay life to cast a spell or activate a non-mana ability; life payments in mana abilities remain legal |
 
 | Aura lets enchanted creature block landwalk creatures | `s/StreetSavvy.java` | `target(TargetFilters.creature())` + STATIC `StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE)` + STATIC `CanBlockCreaturesWithLandwalkEffect` |
 
@@ -92,6 +93,7 @@ All paths relative to `cards/`.
 | Global must-block requirement + attacking-player block control | `i/InvasionPlans.java` | STATIC AllCreaturesMustBlockEachCombatEffect + AttackingPlayerChoosesBlockersEffect — every creature able to block must block, and the active player declares those blocks |
 | Other subtype creatures you control must attack + combat token + scaling attack boost | `g/GoblinRabblemaster.java` | STATIC MatchingCreaturesMustAttackEffect(PermanentAllOfPredicate(IsCreature, HasSubtype(GOBLIN), PermanentControlledBySourceControllerPredicate, Not(PermanentIsSourceCardPredicate))) + BEGINNING_OF_COMBAT_TRIGGERED CreateTokenEffect(1/1 red Goblin, HASTE) + ON_ATTACK BoostSelfEffect(PermanentCount(AllOf(IsAttacking, HasSubtype(GOBLIN)), ANY_PLAYER, excludeSource=true), Fixed(0)) |
 | Subtype-wide must attack + upkeep token | `g/GoblinAssault.java` | EACH_UPKEEP_TRIGGERED CreateTokenEffect(1/1 red Goblin, HASTE) + STATIC MatchingCreaturesMustAttackEffect(PermanentHasSubtypePredicate(GOBLIN)) — all Goblins (any controller) attack each combat if able |
+| Dragon ward lord + excess-damage end-step token | `r/RithLiberatedPrimeval.java` | STATIC `GrantTriggeredAbilityEffect(ON_BECOMES_TARGET_OF_OPPONENT_SPELL, CounterUnlessPaysEffect(2), OWN_CREATURES, PermanentHasSubtypePredicate(DRAGON))` + CONTROLLER_END_STEP_TRIGGERED `ConditionalEffect(OpponentPermanentDealtExcessDamageThisTurn, CreateTokenEffect(4/4 red Dragon, FLYING))` |
 | Evasion (blocked only by) | `e/ElvenRiders.java` | STATIC CanBeBlockedOnlyByFilterEffect |
 | Evasion (lesser power can't block) | `s/ShrillHowler.java` | STATIC CantBeBlockedByCreaturesWithLessPowerEffect â€” creatures with power < this creature's power can't block it |
 | Block limit | `s/StalkingTiger.java` | STATIC CanBeBlockedByAtMostNCreaturesEffect |

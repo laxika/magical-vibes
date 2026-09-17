@@ -155,6 +155,7 @@ on what the mana may pay for.
 | Pump attacking + keyword | `r/RallyTheForces.java` | BoostAllCreaturesEffect(filter) + GrantKeywordEffect(ALL_CREATURES, filter) with PermanentIsAttackingPredicate |
 | Targeted destroy | `t/Terror.java` | DestroyTargetPermanentEffect + target filter |
 | Targeted destroy (power filter) | `s/SmiteTheMonstrous.java` | DestroyTargetPermanentEffect + PermanentPowerAtLeastPredicate(4) creature filter |
+| Targeted destroy (total power and toughness filter) | `c/CutDown.java` | DestroyTargetPermanentEffect + PermanentPowerToughnessTotalAtMostPredicate(5) creature filter |
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |
 | Put on top of library | `b/BanishmentDecree.java` | PutTargetOnTopOfLibraryEffect + PermanentAnyOfPredicate filter (artifact/creature/enchantment) |
 | Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificeAttackingCreaturesEffect(1, 2) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |
@@ -197,6 +198,7 @@ on what the mana may pay for.
 | Counter (filtered) + token | `g/GeistSnatch.java` | CounterSpellEffect + CreateTokenEffect.blueSpirit(1) + creature-spell filter via target() chain |
 | Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |
 | Counter (filtered) + life loss | `p/PsychicBarrier.java` | TargetSpellControllerLosesLifeEffect(1) + CounterSpellEffect + creature-spell filter. Life loss placed before counter so target is still on stack |
+| Counter + opponent-spell cost reduction | `e/ErtaisScorn.java` | STATIC ConditionalEffect(OpponentCastTwoOrMoreSpellsThisTurn, ReduceOwnCastCostEffect(Fixed(1))) + SPELL CounterSpellEffect |
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |
 | Counter-unless-damage | `m/MoltenInfluence.java` | `CounterUnlessTakesDamageEffect(4)` with an instant-or-sorcery `StackEntryPredicateTargetFilter`; the target controller chooses damage or counter |
 | Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + STATIC ConditionalEffect(Metalcraft(), ReduceOwnCastCostEffect(Fixed(1))) — costs {1} less with 3+ artifacts |

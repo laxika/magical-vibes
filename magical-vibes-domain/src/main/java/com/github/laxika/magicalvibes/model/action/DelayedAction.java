@@ -57,6 +57,7 @@ public sealed interface DelayedAction permits
         DelayedExileCreatedPermanentsAtEndStep,
         DelayedNontokenAttackTokenCreation,
         DelayedAttackTokenCreation,
+        DelayedAttackDamage,
         DelayedAttackUntap,
         DelayedLoseLifeAndReturnFromGraveyard,
         DelayedGraveyardToHandReturn,

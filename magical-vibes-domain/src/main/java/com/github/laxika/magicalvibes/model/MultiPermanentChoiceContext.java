@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -333,6 +335,12 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Phase out up to N matching permanents controlled by the resolving player. */
+    record PhaseOutUpToNControlledPermanents(
+            com.github.laxika.magicalvibes.model.effect.PhaseOutUpToNControlledPermanentsEffect effect)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Resolve one choice in a repeated immediate controller-creature flicker. */
     record FlickerAnyNumber(StackEntry resolvingEntry,
                             com.github.laxika.magicalvibes.model.effect.FlickerEffect effect,
@@ -620,6 +628,22 @@ public sealed interface MultiPermanentChoiceContext {
     record TapCreaturesBoostSelf(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
 
+    /** Enlist support selection during attacker declaration, before attack triggers are stacked. */
+    record Enlistment(UUID playerId, List<Integer> attackerIndices, Map<Integer, UUID> resolvedTargets,
+                      List<Permanent> declaredAttackers, List<UUID> remainingAttackerIds,
+                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers)
+            implements MultiPermanentChoiceContext {
+
+        public Enlistment {
+            attackerIndices = List.copyOf(attackerIndices);
+            resolvedTargets = Map.copyOf(resolvedTargets);
+            declaredAttackers = List.copyOf(declaredAttackers);
+            remainingAttackerIds = List.copyOf(remainingAttackerIds);
+            usedSupporterIds = Set.copyOf(usedSupporterIds);
+            boostPowers = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(boostPowers));
+        }
+    }
+
     /** Tap exactly N other creatures, or decline, then make the source unblockable. */
     record TapOtherCreaturesForUnblockable(UUID sourcePermanentId, int requiredCount)
             implements MultiPermanentChoiceContext {
@@ -664,6 +688,13 @@ public sealed interface MultiPermanentChoiceContext {
     /** Tap any number of creatures, then queue the target-dependent reflexive ability. */
     record TapCreaturesThenQueueReflexiveAbility(StackEntry resolvingEntry,
                                                  CardEffect reflexiveEffect)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Tap any number of matching permanents, then queue the target-dependent reflexive ability. */
+    record TapPermanentsThenQueueReflexiveAbility(StackEntry resolvingEntry,
+                                                  PermanentPredicate filter,
+                                                  CardEffect reflexiveEffect)
             implements MultiPermanentChoiceContext {
     }
 

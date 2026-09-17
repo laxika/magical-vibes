@@ -24,7 +24,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | land, basic, pain, check, fast, manland | CARD_PATTERNS_LANDS_SPELLS.md |
 | burn, damage, shock, bolt, X burn | CARD_PATTERNS_LANDS_SPELLS.md |
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
-| destroy, terror, wrath, board wipe | CARD_PATTERNS_LANDS_SPELLS.md |
+| destroy, terror, wrath, board wipe, total power and toughness target restriction | CARD_PATTERNS_LANDS_SPELLS.md |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
