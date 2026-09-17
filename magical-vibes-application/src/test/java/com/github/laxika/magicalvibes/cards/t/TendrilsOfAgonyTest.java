@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TendrilsOfAgony.class, GrizzlyBears.class})
+@CardUsed({TendrilsOfAgony.class, ScornfulEgotist.class})
 class TendrilsOfAgonyTest extends BaseCardTest {
 
     @Test
@@ -25,8 +24,7 @@ class TendrilsOfAgonyTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castTendrilsOfAgony(player2.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -45,15 +43,49 @@ class TendrilsOfAgonyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Storm copy resolves Tendrils of Agony's life loss and life gain")
+    void stormCopyResolvesLifeDrain() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        gd.recordSpellCast(player2.getId(), new TendrilsOfAgony());
+
+        castTendrilsOfAgony(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("A Storm copy may be retargeted to another player")
+    void stormCopyMayBeRetargeted() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        gd.recordSpellCast(player2.getId(), new TendrilsOfAgony());
+
+        castTendrilsOfAgony(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
+    }
+
+    @Test
     @DisplayName("Tendrils of Agony cannot target a permanent")
     void cannotTargetPermanent() {
-        var bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        var creature = harness.addToBattlefieldAndReturn(player2, new ScornfulEgotist());
 
         harness.setHand(player1, List.of(new TendrilsOfAgony()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

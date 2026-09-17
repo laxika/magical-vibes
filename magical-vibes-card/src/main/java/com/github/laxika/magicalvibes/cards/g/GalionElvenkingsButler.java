@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "125")
+@CardRegistration(set = "HOC", collectorNumber = "125")
 public class GalionElvenkingsButler extends Card {
 
     public GalionElvenkingsButler() {

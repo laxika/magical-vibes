@@ -198,7 +198,7 @@ public class ValidTargetService {
         TargetFilter modeFilter = chosenMode != null && chosenMode.targetFilter() != null ? chosenMode.targetFilter()
                 : modalTargetFilters.size() == 1 ? modalTargetFilters.getFirst() : null;
         List<TargetFilter> targetFilters = modalTargetFilters.isEmpty()
-                ? card.getMultiTargetFilters() : modalTargetFilters;
+                ? card.getMultiTargetFilters(Boolean.TRUE.equals(kicked)) : modalTargetFilters;
         Set<TargetType> allowedTargets;
         if (kicked != null || modeSelection != null) {
             spellEffects = EffectResolution.resolveEffects(spellEffects, kicked, modeSelection);
@@ -227,7 +227,7 @@ public class ValidTargetService {
 
         if (allowedTargets.equals(Set.of(TargetType.SPELL_ON_STACK))) {
             TargetFilter filter = positionIndex < targetFilters.size() ? targetFilters.get(positionIndex)
-                    : modeFilter != null ? modeFilter : card.getTargetFilter();
+                    : modeFilter != null ? modeFilter : card.getTargetFilter(Boolean.TRUE.equals(kicked));
             List<UUID> stackIds = gameData.stack.stream().map(com.github.laxika.magicalvibes.model.StackEntry::getTargetableId)
                     .filter(id -> !excludeIds.contains(id))
                     .filter(id -> targetLegalityService.checkSpellTargetOnStack(gameData, id, filter,
@@ -372,7 +372,7 @@ public class ValidTargetService {
                 positionAllowsPlayers = modalEffect != null && xValue != null
                         ? positionFilter instanceof PlayerPredicateTargetFilter
                         || positionFilter instanceof AnyTargetPredicateTargetFilter
-                        : card.doesPositionAllowPlayerTargets(positionIndex);
+                        : card.doesPositionAllowPlayerTargets(positionIndex, Boolean.TRUE.equals(kicked));
             }
 
             if (positionAllowsPlayers && !gameQueryService.isPeaceTalksActive(gameData)) {
@@ -380,7 +380,7 @@ public class ValidTargetService {
                     if (excludeIds.contains(playerId)) continue;
                     TargetFilter playerFilter = isMultiTarget && positionIndex < targetFilters.size()
                             ? targetFilters.get(positionIndex)
-                            : modeFilter != null ? modeFilter : card.getTargetFilter();
+                            : modeFilter != null ? modeFilter : card.getTargetFilter(Boolean.TRUE.equals(kicked));
                     if (isValidPlayerTarget(gameData, playerFilter,
                             playerId, controllerId, null, card)) {
                         validPlayerIds.add(playerId);
@@ -1073,7 +1073,8 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(), kicked,
+        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(
+                        Boolean.TRUE.equals(kicked)), kicked,
                         teamworkCostPaid),
                 perm, spellCard.getId(), castingPlayerId, xValue)) {
             return false;
@@ -1144,7 +1145,7 @@ public class ValidTargetService {
         // target" (CR 115.4: a creature, player, planeswalker or battle — battles are not modelled
         // yet) is one such declaration, evaluated layer-aware through the shared predicate
         // hierarchy (CR 613.1d).
-        if (card.getTargetFilter() == null && positionFilter == null) {
+        if (card.getTargetFilter(Boolean.TRUE.equals(kicked)) == null && positionFilter == null) {
             PermanentPredicate declared =
                     EffectResolution.declaredPermanentRestriction(spellEffects).orElse(null);
             if (declared != null) {
@@ -1485,12 +1486,13 @@ public class ValidTargetService {
             if (!isMultiTarget) {
                 anyPositionAllowsPlayers = true;
             } else {
-                anyPositionAllowsPlayers = card.doesPositionAllowPlayerTargets(0);
+                anyPositionAllowsPlayers = card.doesPositionAllowPlayerTargets(0, Boolean.TRUE.equals(kicked));
             }
 
             if (anyPositionAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
-                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId, null, card)) {
+                    if (isValidPlayerTarget(gameData, card.getTargetFilter(Boolean.TRUE.equals(kicked)),
+                            playerId, controllerId, null, card)) {
                         return true;
                     }
                 }
@@ -1499,7 +1501,7 @@ public class ValidTargetService {
 
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
             if (gameData.stack.stream().anyMatch(entry -> targetLegalityService.checkSpellTargetOnStack(
-                    gameData, entry.getTargetableId(), card.getTargetFilter(), controllerId,
+                    gameData, entry.getTargetableId(), card.getTargetFilter(Boolean.TRUE.equals(kicked)), controllerId,
                     null, maxXValue, kicked).isEmpty())) return true;
         }
 

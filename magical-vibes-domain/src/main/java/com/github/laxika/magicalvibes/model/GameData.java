@@ -247,6 +247,10 @@ public class GameData {
     public DayNight dayNight = DayNight.NEITHER;
     /** The player who currently is the monarch, or {@code null} when no player is monarch. */
     public UUID monarchPlayerId;
+    /** The Ring's current ability level for each player; presence means that player has The Ring emblem. */
+    public final Map<UUID, Integer> ringLevels = new ConcurrentHashMap<>();
+    /** The permanent currently designated as each player's Ring-bearer. */
+    public final Map<UUID, UUID> ringBearerIds = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
@@ -5785,6 +5789,8 @@ public class GameData {
         copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
         copy.monarchPlayerId = this.monarchPlayerId;
+        copy.ringLevels.putAll(this.ringLevels);
+        copy.ringBearerIds.putAll(this.ringBearerIds);
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);

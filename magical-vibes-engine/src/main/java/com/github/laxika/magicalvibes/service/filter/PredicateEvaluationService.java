@@ -128,6 +128,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceContro
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtNoncombatDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisCombatPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
@@ -152,6 +153,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
@@ -2155,6 +2157,13 @@ public class PredicateEvaluationService {
                             && gameData.combatDamageToPlayersThisCombat
                             .containsKey(permanent.getId())
                             && !gameData.combatDamageToPlayersThisCombat.get(permanent.getId()).isEmpty();
+            case PermanentDealtCombatDamageToSourceControllerThisTurnPredicate ignored -> {
+                if (sourceControllerId == null || gameData == null) {
+                    yield false;
+                }
+                Set<UUID> combatVictims = gameData.combatDamageToPlayersThisTurn.get(permanent.getId());
+                yield combatVictims != null && combatVictims.contains(sourceControllerId);
+            }
             case PermanentDealtDamageToSourceControllerThisTurnPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {
                     yield false;
@@ -2206,6 +2215,27 @@ public class PredicateEvaluationService {
             }
             case PermanentHasLeastPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasLeastPowerAmongAllCreatures(gameData, permanent);
+            case PermanentHasLeastPowerAmongControllerCreaturesPredicate ignored -> {
+                if (gameData == null || !gameQueryService.isCreature(gameData, permanent)) {
+                    yield false;
+                }
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (controllerId == null) {
+                    controllerId = sourceControllerId;
+                }
+                List<Permanent> controllerBattlefield = controllerId == null
+                        ? null
+                        : gameData.playerBattlefields.get(controllerId);
+                if (controllerBattlefield == null) {
+                    yield false;
+                }
+                int minPower = Math.min(gameQueryService.getEffectivePower(gameData, permanent),
+                        controllerBattlefield.stream()
+                                .filter(p -> gameQueryService.isCreature(gameData, p))
+                                .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
+                                .min().orElse(0));
+                yield gameQueryService.getEffectivePower(gameData, permanent) == minPower;
+            }
             case PermanentHasGreatestPowerAmongControlledCreaturesPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) yield false;
                 List<Permanent> controllerBf = gameData.playerBattlefields.get(sourceControllerId);
@@ -2442,6 +2472,14 @@ public class PredicateEvaluationService {
                 yield gameData != null
                         && !gameData.combatDamageToPlayersThisCombat
                         .getOrDefault(permanent.getId(), java.util.Set.of()).isEmpty();
+            }
+            case PermanentDealtCombatDamageToSourceControllerThisTurnPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                yield gameData != null && sourceControllerId != null
+                        && gameData.combatDamageToPlayersThisTurn
+                        .getOrDefault(permanent.getId(), java.util.Set.of())
+                        .contains(sourceControllerId);
             }
             case PermanentHasSameNameAsSourcePredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();

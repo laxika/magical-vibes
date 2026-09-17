@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.a.AvenLiberator;
+import com.github.laxika.magicalvibes.cards.r.RiptideSurvivor;
+import com.github.laxika.magicalvibes.cards.s.SparkSpray;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,40 +19,45 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZealousInquisitor.class, AvenLiberator.class, RiptideSurvivor.class, SparkSpray.class})
 class ZealousInquisitorTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activating the ability registers an amount-limited, any-source redirect shield protecting itself")
-    void activationCreatesShield() {
-        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
-        Permanent destination = addReadyStats(player2, 3, 3);
+    @DisplayName("Each activation redirects one damage to its own chosen creature")
+    void multipleActivationsRedirectToEachChosenCreature() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent firstDestination = addCreatureReady(player2, new AvenLiberator());
+        Permanent secondDestination = addCreatureReady(player2, new AvenLiberator());
 
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, firstDestination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, secondDestination.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        var shield = gd.creatureDamageRedirectShields.getFirst();
-        assertThat(shield.protectedPermanentId()).isEqualTo(inquisitor.getId());
-        assertThat(shield.damageSourceId()).isNull();
-        assertThat(shield.remainingAmount()).isEqualTo(1);
-        assertThat(shield.redirectTargetId()).isEqualTo(destination.getId());
+        harness.setHand(player2, List.of(new SparkSpray(), new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isZero();
+        assertThat(firstDestination.getMarkedDamage()).isEqualTo(1);
+        assertThat(secondDestination.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Noncombat damage to Zealous Inquisitor is redirected to the target creature")
-    void redirectsNoncombatDamage() {
-        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
-        Permanent destination = addReadyStats(player2, 3, 3);
+    @DisplayName("Noncombat damage from a spell is redirected to the target creature")
+    void redirectsNoncombatDamageFromSpell() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
         harness.passBothPriorities();
 
-        // Pyromancer pings the Inquisitor for 1 — that 1 damage is dealt to the destination instead
-        harness.activateAbility(player1, indexOf(player1, pyromancer), null, inquisitor.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
 
         assertThat(inquisitor.getMarkedDamage()).isEqualTo(0);
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
@@ -59,22 +66,18 @@ class ZealousInquisitorTest extends BaseCardTest {
     @Test
     @DisplayName("Only the next 1 damage is redirected; the rest still lands on the Inquisitor")
     void redirectsOnlyOneDamage() {
-        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
-        Permanent destination = addReadyStats(player1, 3, 3);
-        Permanent attacker = addReadyStats(player2, 2, 2);
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player1, new AvenLiberator());
+        Permanent attacker = addCreatureReady(player2, new RiptideSurvivor());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
         harness.passBothPriorities();
 
-        // player2 attacks with a 2/2; the Inquisitor blocks and takes 2 combat damage
-        harness.forceActivePlayer(player2);
-        attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, inquisitor), 0)));
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, inquisitor), indexOf(player2, attacker))));
+        resolveCombat(player2);
 
         // 1 of the 2 combat damage is redirected to the destination; 1 remains on the Inquisitor
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
@@ -84,68 +87,108 @@ class ZealousInquisitorTest extends BaseCardTest {
     @Test
     @DisplayName("The redirect shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
-        Permanent destination = addReadyStats(player2, 3, 3);
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
         harness.passBothPriorities();
-
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
+        assertThat(destination.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("No shield is installed when the protected creature leaves before the ability resolves")
     void noShieldWhenInquisitorLeavesBeforeResolution() {
-        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
-        Permanent destination = addReadyStats(player2, 3, 3);
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
 
         gd.playerBattlefields.get(player1.getId()).remove(inquisitor);
+        Permanent replacement = addCreatureReady(player1, new ZealousInquisitor());
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, replacement.getId());
+
+        assertThat(replacement.getMarkedDamage()).isEqualTo(1);
+        assertThat(destination.getMarkedDamage()).isZero();
     }
 
     @Test
-    @DisplayName("A creature with protection from white can't be chosen as the redirect destination")
+    @DisplayName("A creature with protection from white cannot be chosen as the redirect destination")
     void cannotTargetCreatureWithProtectionFromWhite() {
-        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
-        Permanent knight = addReadyPermanent(player2, new BlackKnight());
+        Permanent protectedCreature = addCreatureReady(player2, new AvenLiberator());
+        harness.setHand(player2, List.of(new AvenLiberator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent faceDownLiberator = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(Permanent::isFaceDown)
+                .findFirst()
+                .orElseThrow();
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player2, indexOf(player2, faceDownLiberator));
+        harness.handlePermanentChosen(player2, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "WHITE");
+
+        assertThat(gqs.hasProtectionFrom(gd, protectedCreature, CardColor.WHITE)).isTrue();
+
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        // The destination is the object that ends up taking the damage, so protection from the
-        // ability's (white) source stops it being targeted — CR 702.16b.
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, indexOf(player1, inquisitor), null, knight.getId()))
+                harness.activateAbility(player1, indexOf(player1, inquisitor), null, protectedCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
     }
 
-    private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Only a creature can be chosen as the redirect destination")
+    void cannotTargetPlayer() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, indexOf(player1, inquisitor), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyStats(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("No redirect occurs when the target creature leaves before the ability resolves")
+    void noRedirectWhenDestinationLeavesBeforeResolution() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player2, new AvenLiberator());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(destination);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
     }
 
     private int indexOf(Player player, Permanent perm) {
