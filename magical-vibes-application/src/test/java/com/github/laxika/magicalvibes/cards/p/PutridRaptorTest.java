@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.z.ZombieGoliath;
+import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
+import com.github.laxika.magicalvibes.cards.z.ZombieCutthroat;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +13,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PutridRaptor.class, ZombieGoliath.class, Forest.class})
+@CardUsed({PutridRaptor.class, ScornfulEgotist.class, ZombieCutthroat.class})
 class PutridRaptorTest extends BaseCardTest {
 
     @Test
     void turnsFaceUpByDiscardingAZombie() {
-        Forest forest = new Forest();
-        ZombieGoliath zombie = new ZombieGoliath();
-        harness.setHand(player1, List.of(new PutridRaptor(), forest, zombie));
+        ScornfulEgotist nonZombie = new ScornfulEgotist();
+        ZombieCutthroat zombie = new ZombieCutthroat();
+        harness.setHand(player1, List.of(new PutridRaptor(), nonZombie, zombie));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -34,14 +34,14 @@ class PutridRaptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(raptor.isFaceDown()).isFalse();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonZombie);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(zombie);
     }
 
     @Test
     void cannotTurnFaceUpByDiscardingANonZombie() {
-        Forest forest = new Forest();
-        harness.setHand(player1, List.of(new PutridRaptor(), forest));
+        ScornfulEgotist nonZombie = new ScornfulEgotist();
+        harness.setHand(player1, List.of(new PutridRaptor(), nonZombie));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -56,7 +56,7 @@ class PutridRaptorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(raptor.isFaceDown()).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonZombie);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

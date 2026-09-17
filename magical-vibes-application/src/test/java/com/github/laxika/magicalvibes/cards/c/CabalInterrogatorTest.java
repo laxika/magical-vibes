@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CabalInterrogator.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CabalInterrogator.class, CabalConditioning.class})
 class CabalInterrogatorTest extends BaseCardTest {
 
     private PendingInteraction.RevealCardsDiscardChoice activeChoice() {
@@ -34,7 +32,7 @@ class CabalInterrogatorTest extends BaseCardTest {
     @Test
     @DisplayName("Reveals X cards and discards the controller's choice")
     void revealsXCardsAndDiscardsChosenCard() {
-        harness.setHand(player2, List.of(new GrizzlyBears(), new HillGiant(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new CabalInterrogator(), new CabalConditioning(), new CabalInterrogator()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
         Permanent interrogator = readyInterrogator();
@@ -53,15 +51,66 @@ class CabalInterrogatorTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(interrogator.isTapped()).isTrue();
-        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Cabal Conditioning");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("When X exceeds the hand size, the whole hand is revealed and one card is discarded")
+    void revealsEntireSmallerHand() {
+        harness.setHand(player2, List.of(new CabalConditioning()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent interrogator = readyInterrogator();
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealCardsDiscardChoice choice = activeChoice();
+        assertThat(choice).isNotNull();
+        assertThat(choice.revealStage()).isFalse();
+        assertThat(choice.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(choice.remainingCount()).isEqualTo(1);
+        assertThat(choice.validIndices()).containsExactly(0);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(interrogator.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Cabal Conditioning");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canTargetController() {
+        harness.setHand(player1, List.of(new CabalConditioning()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent interrogator = readyInterrogator();
+
+        harness.activateAbility(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealCardsDiscardChoice choice = activeChoice();
+        assertThat(choice).isNotNull();
+        assertThat(choice.revealStage()).isFalse();
+        assertThat(choice.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(choice.remainingCount()).isEqualTo(1);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(interrogator.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Cabal Conditioning");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("X equal to zero reveals and discards nothing")
     void zeroXDoesNothing() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new CabalConditioning()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         readyInterrogator();
 
@@ -77,7 +126,7 @@ class CabalInterrogatorTest extends BaseCardTest {
     @DisplayName("Can target only a player and only during a main phase of its controller's turn")
     void enforcesTargetAndTimingRestrictions() {
         Permanent interrogator = addCreatureReady(player1, new CabalInterrogator());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new CabalInterrogator());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
