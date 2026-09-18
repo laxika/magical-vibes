@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DrownedCatacomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoddenVerdure.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SoddenVerdure.class, Forest.class, GrizzlyBears.class, Island.class, DrownedCatacomb.class})
 class SoddenVerdureTest extends BaseCardTest {
 
     @Test
@@ -90,6 +91,44 @@ class SoddenVerdureTest extends BaseCardTest {
     }
 
     private Permanent findVerdure(Player player) {
+        return findPermanent(player, "Sodden Verdure");
+    }
+
+    @Test
+    void nonbasicLandsDoNotCount() {
+        harness.addToBattlefield(player1, new DrownedCatacomb());
+        harness.addToBattlefield(player1, new DrownedCatacomb());
+
+        playSoddenVerdure();
+
+        assertThat(findSoddenVerdure(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsBasicLandsDoNotCount() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        playSoddenVerdure();
+
+        assertThat(findSoddenVerdure(player1).isTapped()).isTrue();
+    }
+
+    private void playSoddenVerdure() {
+        harness.setHand(player1, List.of(new SoddenVerdure()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+    }
+
+    private Permanent addReadySoddenVerdure(Player player) {
+        Permanent permanent = new Permanent(new SoddenVerdure());
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
+    }
+
+    private Permanent findSoddenVerdure(Player player) {
         return findPermanent(player, "Sodden Verdure");
     }
 }

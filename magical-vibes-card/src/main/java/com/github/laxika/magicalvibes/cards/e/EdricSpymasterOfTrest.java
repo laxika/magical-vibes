@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEf
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "251")
+@CardRegistration(set = "CMD", collectorNumber = "196")
 public class EdricSpymasterOfTrest extends Card {
 
     public EdricSpymasterOfTrest() {

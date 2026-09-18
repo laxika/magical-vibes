@@ -1712,18 +1712,34 @@ public class PermanentCounterSupport {
             if (effectsToResolve.isEmpty()) {
                 continue;
             }
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s triggered ability",
-                    effectsToResolve,
-                    null,
-                    source.getId()
-            );
-            triggerEntry.setEventValue(count);
-            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
-            gameData.stack.add(triggerEntry);
+            boolean targetsPermanent = effectsToResolve.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            boolean targetsPlayer = effectsToResolve.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (targetsPermanent || targetsPlayer) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        card,
+                        controllerId,
+                        effectsToResolve,
+                        targetsPlayer && !targetsPermanent,
+                        targetFilterForCounterTrigger(card, effectsToResolve),
+                        count,
+                        source.getId(),
+                        new Permanent(source)));
+            } else {
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s triggered ability",
+                        effectsToResolve,
+                        null,
+                        source.getId()
+                );
+                triggerEntry.setEventValue(count);
+                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+                gameData.stack.add(triggerEntry);
+            }
             if (markImmediately) {
                 gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
             }
@@ -1731,6 +1747,21 @@ public class PermanentCounterSupport {
             log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
                     card.getName());
         }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        }
+    }
+
+    private TargetFilter targetFilterForCounterTrigger(Card card, List<CardEffect> effects) {
+        int targetGroupIndex = effects.stream()
+                .mapToInt(card::getEffectTargetIndex)
+                .filter(index -> index >= 0 && index < card.getSpellTargets().size())
+                .findFirst()
+                .orElse(-1);
+        return targetGroupIndex >= 0
+                ? card.getSpellTargets().get(targetGroupIndex).getFilter()
+                : card.getTargetFilter();
     }
 
     private UUID placingPlayerId(GameData gameData, StackEntry entry, Permanent target) {

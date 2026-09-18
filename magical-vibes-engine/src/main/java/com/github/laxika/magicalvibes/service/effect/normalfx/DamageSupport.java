@@ -432,6 +432,18 @@ public class DamageSupport {
             return 0;
         }
         if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromDesertsToSelfPrevented(
+                gameData, target, entry, damageSource, false)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, target, entry, damageSource, false)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
                 && gameQueryService.isDamageFromControlledSourceToControlledCreaturePrevented(
                 gameData, target, sourceControllerId)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
@@ -510,6 +522,10 @@ public class DamageSupport {
             triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                     gameData, effectiveDamageSource, target, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, sourceControllerId,
+                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
+                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
+            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
                     gameData, target, damage, sourceControllerId,
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
@@ -752,6 +768,9 @@ public class DamageSupport {
             triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                     gameData, sourcePermanent, target, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
+                    entry.getSourcePermanentId());
+            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
                     gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
                     entry.getSourcePermanentId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(

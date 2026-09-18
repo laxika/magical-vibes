@@ -862,7 +862,13 @@ public class GraveyardService {
     private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card,
                                                                  UUID battlefieldPermanentId,
                                                                  Permanent battlefieldSnapshot) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
+        List<CardEffect> effects = new ArrayList<>(
+                card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD));
+        if (battlefieldSnapshot != null) {
+            effects.addAll(battlefieldSnapshot.getPersistentTriggeredEffects(
+                    EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD));
+        }
+        for (CardEffect effect : effects) {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -900,6 +906,15 @@ public class GraveyardService {
                                           boolean allowShieldCounter) {
         if (pendingRegenerationChoices(gameData).stream()
                 .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
+            return true;
+        }
+        if (allowShieldCounter && perm.getLandDestructionShield() > 0) {
+            perm.setLandDestructionShield(perm.getLandDestructionShield() - 1);
+            perm.healDamage();
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                    " removes all damage marked on it instead of being destroyed."));
+            log.info("Game {} - {} removes all damage instead of being destroyed", gameData.id,
+                    perm.getCard().getName());
             return true;
         }
         Permanent cracklingEmergence = findDestructionReplacementSource(
@@ -1216,6 +1231,9 @@ public class GraveyardService {
             return;
         }
 
+        if (!sourcePermanentId.equals(damagedCreature.getId())) {
+            gameData.sourcesThatDealtDamageToCreaturesThisTurn.add(sourcePermanentId);
+        }
         gameData.creatureCardsDamagedThisTurnBySourcePermanent
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());

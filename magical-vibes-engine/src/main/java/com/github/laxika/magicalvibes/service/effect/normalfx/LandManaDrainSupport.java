@@ -175,8 +175,8 @@ public class LandManaDrainSupport {
         if (amount <= 0 || availableColors.isEmpty()) {
             return;
         }
-        ChoiceContext context = effect.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER
-                ? new ChoiceContext.CommanderCastManaColorChoice(playerId, amount, availableColors, recipientPlayerId)
+        ChoiceContext context = effect.grantsCommanderCounter()
+                ? new ChoiceContext.CommanderCounterManaColorChoice(playerId, amount, recipientPlayerId)
                 : new ChoiceContext.ChosenPlayerManaColorChoice(playerId, playerId, recipientPlayerId, false, amount);
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 playerId, null, null, context,
@@ -196,13 +196,13 @@ public class LandManaDrainSupport {
     private static boolean ordinaryPoolAnyColor(AwardAnyColorManaEffect effect) {
         return effect.restriction() == ManaSpendRestriction.NONE
                 || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                || effect.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER;
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY;
     }
 
     private static java.util.List<ManaColor> availableColors(GameData gameData, UUID playerId,
                                                               AwardAnyColorManaEffect effect) {
         if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                || effect.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER) {
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
             return ManaProductionSupport.commanderColorIdentity(gameData, playerId);
         }
         return ManaColor.COLORS;

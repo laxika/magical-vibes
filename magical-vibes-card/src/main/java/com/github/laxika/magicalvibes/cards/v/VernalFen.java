@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECC", collectorNumber = "63")
+@CardRegistration(set = "TMC", collectorNumber = "81")
 public class VernalFen extends Card {
 
     public VernalFen() {
@@ -26,6 +27,7 @@ public class VernalFen extends Card {
                 ))),
                 new EntersTappedEffect()));
 
+        // {T}: Add {B} or {G}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }

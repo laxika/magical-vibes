@@ -4,13 +4,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TimelessLotus.class)
+@CardUsed({TimelessLotus.class})
 class TimelessLotusTest extends BaseCardTest {
 
     @Test
@@ -37,4 +36,5 @@ class TimelessLotusTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(lotus.isTapped()).isTrue();
     }
+
 }

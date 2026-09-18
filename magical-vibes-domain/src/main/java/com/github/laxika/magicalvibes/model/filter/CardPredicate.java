@@ -29,6 +29,7 @@ public sealed interface CardPredicate permits
         CardHasManaAbilityPredicate,
         CardHasNonManaActivatedAbilityPredicate,
         CardHasSourceChosenColorPredicate,
+        CardHasSourceChosenNamePredicate,
         CardHasSourceChosenCardTypePredicate,
         CardHasExactlyTwoColorsPredicate,
         CardHasExactlyNColorsPredicate,

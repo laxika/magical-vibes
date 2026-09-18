@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToB
 @CardRegistration(set = "MMA", collectorNumber = "151")
 @CardRegistration(set = "UMA", collectorNumber = "171")
 @CardRegistration(set = "ECC", collectorNumber = "113")
+@CardRegistration(set = "CMD", collectorNumber = "163")
 public class KodamasReach extends Card {
 
     public KodamasReach() {

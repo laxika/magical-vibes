@@ -354,7 +354,12 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> validIndices = new ArrayList<>();
             if (hand != null) {
                 for (int i = 0; i < hand.size(); i++) {
-                    validIndices.add(i);
+                    Card card = hand.get(i);
+                    if (effect.discardPredicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            card, effect.discardPredicate(), ability.sourceCard().getId(), gameData, controllerId)) {
+                        validIndices.add(i);
+                    }
                 }
             }
 

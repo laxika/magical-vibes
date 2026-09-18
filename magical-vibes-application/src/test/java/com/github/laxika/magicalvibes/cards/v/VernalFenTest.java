@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,5 +84,37 @@ class VernalFenTest extends BaseCardTest {
 
     private Permanent findVernalFen(Player player) {
         return findPermanent(player, "Vernal Fen");
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands do not satisfy the basic-land check")
+    void nonbasicLandsDoNotSatisfyCheck() {
+        harness.addToBattlefield(player1, new VernalFen());
+        harness.addToBattlefield(player1, new VernalFen());
+
+        playLand();
+
+        assertThat(findFen().isTapped()).isTrue();
+    }
+
+    private void playLand() {
+        harness.setHand(player1, List.of(new VernalFen()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+    }
+
+    private Permanent addReadyFen() {
+        Permanent fen = new Permanent(new VernalFen());
+        fen.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(fen);
+        return fen;
+    }
+
+    private Permanent findFen() {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof VernalFen)
+                .reduce((first, second) -> second)
+                .orElseThrow();
     }
 }

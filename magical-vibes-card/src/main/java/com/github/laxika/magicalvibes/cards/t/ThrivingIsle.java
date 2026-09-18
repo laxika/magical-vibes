@@ -14,14 +14,18 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "ECC", collectorNumber = "173")
+@CardRegistration(set = "TMC", collectorNumber = "78")
 public class ThrivingIsle extends Card {
 
     public ThrivingIsle() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect(
-                CardColor.WHITE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ChooseColorOnEnterEffect(CardColor.WHITE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
 
+        // {T}: Add {U}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
+
+        // {T}: Add one mana of the chosen color.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

@@ -297,6 +297,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.PathOfAncestryManaColorChoice ctx) {
+            handlePathOfAncestryManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.ChosenPlayerManaColorChoice ctx) {
             handleChosenPlayerManaColorChosen(gameData, player, colorName, colorChoice, ctx);
             return;
@@ -307,12 +312,13 @@ public class ChoiceHandlerService {
             return;
         }
 
-        if (colorChoice.context() instanceof ChoiceContext.CommanderCastManaColorChoice ctx) {
-            handleCommanderCastManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+
+        // Mana color choice (Chromatic Star, etc.)
+        if (colorChoice.context() instanceof ChoiceContext.CommanderCounterManaColorChoice ctx) {
+            handleCommanderCounterManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
         }
 
-        // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
@@ -1225,6 +1231,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromArtifactSource()) {
+                manaPool.addArtifactSourceManaTag(manaColor, 1);
+            }
             if (ctx.fromTreasureSource()) {
                 manaPool.addTreasureMana(manaColor, 1);
             }
@@ -1253,6 +1262,7 @@ public class ChoiceHandlerService {
                         .withCaveSource(ctx.fromCaveSource())
                         .withBasicLandSource(ctx.fromBasicLandSource());
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
+                nextCtx = nextCtx.withArtifactSource(ctx.fromArtifactSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -1302,6 +1312,9 @@ public class ChoiceHandlerService {
                 if (ctx.fromSnowSource()) {
                     manaPool.addSnowManaTag(manaColor, 1);
                 }
+                if (ctx.fromArtifactSource()) {
+                    manaPool.addArtifactSourceManaTag(manaColor, 1);
+                }
                 if (ctx.fromCaveSource()) {
                     manaPool.addCaveManaTag(manaColor, 1);
                 }
@@ -1340,6 +1353,7 @@ public class ChoiceHandlerService {
                 }
                 List<String> colors = nextColors.stream().map(Enum::name).toList();
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
+                nextCtx = nextCtx.withArtifactSource(ctx.fromArtifactSource());
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -1397,6 +1411,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsAdditionalPlusOneCounter()) {
             manaPool.add(manaColor, amount);
             manaPool.addAdditionalCounterGrantingMana(manaColor, amount);
+            if (ctx.fromArtifactSource()) {
+                manaPool.addArtifactSourceManaTag(manaColor, amount);
+            }
             if (ctx.fromBasicLandSource()) {
                 manaPool.addBasicLandManaTag(manaColor, amount);
             }
@@ -1447,6 +1464,9 @@ public class ChoiceHandlerService {
             tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, amount);
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
+            }
+            if (ctx.fromArtifactSource()) {
+                manaPool.addArtifactSourceManaTag(manaColor, amount);
             }
             if (ctx.fromTreasureSource()) {
                 manaPool.addTreasureMana(manaColor, amount);
@@ -1499,10 +1519,37 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleCommanderCastManaColorChosen(GameData gameData, Player player, String colorName,
-                                                    ChoiceContext.CommanderCastManaColorChoice ctx,
-                                                    List<String> options) {
-        if (!options.contains(colorName) || !ctx.fixedColorOptions().contains(ManaColor.valueOf(colorName))) {
+    private void handleCommanderCounterManaColorChosen(GameData gameData, Player player, String colorName,
+                                                       ChoiceContext.CommanderCounterManaColorChoice ctx,
+                                                       List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid commander color choice: " + colorName);
+        }
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        UUID recipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        ManaPool manaPool = gameData.playerManaPools.get(recipientId);
+        manaPool.add(manaColor, ctx.amount());
+        manaPool.addCommanderCounterGrantingMana(manaColor, ctx.amount());
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana (commander counter-granting mana)."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePathOfAncestryManaColorChosen(GameData gameData, Player player, String colorName,
+                                                     List<String> options,
+                                                     ChoiceContext.PathOfAncestryManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }
 
@@ -1510,21 +1557,26 @@ public class ChoiceHandlerService {
                 gameData, ctx.playerId(), ManaColor.valueOf(colorName));
         gameData.interaction.clearAwaitingInput();
 
-        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
-        gameData.pendingRevertableManaActivation = null;
-        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
-        ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
-        manaPool.add(manaColor, ctx.amount());
-        manaPool.addCommanderCastCounterGrantingMana(manaColor, ctx.amount());
-        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
-            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, 1);
+        if (ctx.sourcePermanentId() != null) {
+            manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
         }
 
-        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
-                + colorName.toLowerCase() + " mana (commander cast counter-granting mana)."));
-        log.info("Game {} - {} adds {} {} commander-cast counter-granting mana", gameData.id,
-                player.getUsername(), ctx.amount(), colorName.toLowerCase());
+        int remaining = ctx.amount() - 1;
+        if (remaining > 0) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null,
+                    new ChoiceContext.PathOfAncestryManaColorChoice(
+                            ctx.playerId(), ctx.sourcePermanentId(), remaining),
+                    options, "Choose a color in your commander's color identity."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        resolveProducedManaTriggers(gameData, manaColor);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds one "
+                + colorName.toLowerCase() + " mana."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

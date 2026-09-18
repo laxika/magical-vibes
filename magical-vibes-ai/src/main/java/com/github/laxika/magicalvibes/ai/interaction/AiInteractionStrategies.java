@@ -127,6 +127,8 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OblivionSowerLandChoice.class, 0));
         register(new ETBExiledCardTargetChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommandZoneCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ExchangeOutsideGameCardChoice.class, 0));
     }
 
     private AiInteractionStrategies() {

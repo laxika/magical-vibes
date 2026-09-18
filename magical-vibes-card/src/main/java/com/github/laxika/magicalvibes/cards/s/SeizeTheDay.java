@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ODY", collectorNumber = "220")
 @CardRegistration(set = "UMA", collectorNumber = "147")
+@CardRegistration(set = "MAR", collectorNumber = "73")
 public class SeizeTheDay extends Card {
 
     public SeizeTheDay() {

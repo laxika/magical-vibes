@@ -7,20 +7,19 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(OpalPalace.class)
+@CardUsed({OpalPalace.class})
 class OpalPalaceTest extends BaseCardTest {
 
     @Test
@@ -91,5 +90,73 @@ class OpalPalaceTest extends BaseCardTest {
     private void castCommander(Card commander) {
         gs.castCommander(gd, player1, commander.getId(),
                 () -> gs.playCard(gd, player1, 0, null, null, null));
+    }
+
+    @Test
+    void tapsForColorlessMana() {
+        harness.addToBattlefield(player1, new OpalPalace());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void producesManaInTheCommandersColorIdentity() {
+        Card commanderAlternative = commanderAlternative();
+        harness.addToBattlefield(player1, new OpalPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("WHITE", "BLUE", "RED");
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCommanderCounterGrantingManaTotal()).isEqualTo(1);
+        assertThat(commanderAlternative.getColorIdentity()).containsExactly(
+                CardColor.WHITE, CardColor.BLUE, CardColor.RED);
+    }
+
+    @Test
+    void commanderEntersWithCountersEqualToItsCommandZoneCastCount() {
+        Card commanderAlternative = commanderAlternative();
+        Permanent opal = harness.addToBattlefieldAndReturn(player1, new OpalPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        gs.castCommander(gd, player1, commanderAlternative.getId(),
+                () -> gs.playCard(gd, player1, 0, null, null, null));
+        harness.passBothPriorities();
+
+        Permanent entered = findPermanent(player1, commanderAlternative.getName());
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.commanderTaxByCardId.get(commanderAlternative.getId())).isEqualTo(2);
+        assertThat(opal.isTapped()).isTrue();
+    }
+
+    private Card commanderAlternative() {
+        Card commanderAlternative = new Card();
+        commanderAlternative.setName("Test Commander");
+        commanderAlternative.setType(CardType.CREATURE);
+        commanderAlternative.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        commanderAlternative.setManaCost("{1}");
+        commanderAlternative.setColors(List.of(CardColor.WHITE, CardColor.BLUE, CardColor.RED));
+        commanderAlternative.setColorIdentity(List.of(CardColor.WHITE, CardColor.BLUE, CardColor.RED));
+        commanderAlternative.setPower(2);
+        commanderAlternative.setToughness(2);
+        commanderAlternative.setOwnerId(player1.getId());
+        commanderAlternative.freeze();
+
+        gd.format = DeckFormat.COMMANDER;
+        gd.makeCommander(player1.getId(), commanderAlternative);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(commanderAlternative)));
+        gd.currentStep = com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN;
+        gd.activePlayerId = player1.getId();
+        gd.priorityPassedBy.clear();
+        return commanderAlternative;
     }
 }

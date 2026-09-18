@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOn
 import java.util.Set;
 
 @CardRegistration(set = "2X2", collectorNumber = "254")
+@CardRegistration(set = "CMD", collectorNumber = "210")
 public class TheMimeoplasm extends Card {
 
     public TheMimeoplasm() {

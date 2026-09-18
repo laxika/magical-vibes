@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "102")
+@CardRegistration(set = "CMD", collectorNumber = "194")
 public class DominusOfFealty extends Card {
 
     public DominusOfFealty() {

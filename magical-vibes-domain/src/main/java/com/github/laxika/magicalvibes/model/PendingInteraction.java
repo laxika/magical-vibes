@@ -1931,18 +1931,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /**
      * "Attach to this creature any number of Auras on the battlefield and put onto the battlefield
      * attached to it any number of Aura cards from your graveyard and/or hand" (Bruna, Light of
-     * Alabaster). {@code validCardIds} are <em>card</em> ids in begin-time order (battlefield
-     * Auras, then graveyard, then hand), so an Aura already on the battlefield is identified by
-     * {@code permanent.getCard().getId()} and the answer handler re-scans all three zones to map
-     * an id back to the object to move. Every offered Aura could already legally enchant
-     * {@code hostPermanentId} at begin time; the selection is entirely optional.
+     * Alabaster). The same interaction also supports Danitha's single Aura-or-Equipment choice.
+     * {@code validCardIds} are <em>card</em> ids in begin-time zone order, so a battlefield
+     * attachment is identified by {@code permanent.getCard().getId()} and the answer handler
+     * re-scans the zones to map an id back to the object to move. Every offered attachment could
+     * already legally attach to {@code hostPermanentId} at begin time; the selection is optional.
      */
     record AttachAurasChoice(UUID playerId, java.util.List<UUID> validCardIds, UUID hostPermanentId,
-                             String sourceName, int maxCount) implements PendingInteraction {
+                             String sourceName, int maxCount, boolean includeEquipment)
+            implements PendingInteraction {
 
         public AttachAurasChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                  UUID hostPermanentId, String sourceName) {
-            this(playerId, validCardIds, hostPermanentId, sourceName, validCardIds.size());
+            this(playerId, validCardIds, hostPermanentId, sourceName, validCardIds.size(), false);
+        }
+
+        public AttachAurasChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                 UUID hostPermanentId, String sourceName, int maxCount) {
+            this(playerId, validCardIds, hostPermanentId, sourceName, maxCount, false);
         }
 
         public AttachAurasChoice {

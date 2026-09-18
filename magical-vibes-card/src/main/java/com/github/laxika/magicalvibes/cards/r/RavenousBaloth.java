@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "278")
 @CardRegistration(set = "DDD", collectorNumber = "8")
 @CardRegistration(set = "GVL", collectorNumber = "8")
+@CardRegistration(set = "C13", collectorNumber = "165")
 public class RavenousBaloth extends Card {
 
     public RavenousBaloth() {

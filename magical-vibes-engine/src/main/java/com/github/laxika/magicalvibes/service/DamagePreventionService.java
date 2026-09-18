@@ -486,6 +486,10 @@ public class DamagePreventionService {
             }
             if (gameQueryService.isCreatureSourceDamageToSelfPrevented(
                     gameData, permanent, null, damageSource, isCombatDamage)) return 0;
+            if (gameQueryService.isDamageFromDesertsToSelfPrevented(
+                    gameData, permanent, null, damageSource, isCombatDamage)) return 0;
+            if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                    gameData, permanent, null, damageSource, isCombatDamage)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."

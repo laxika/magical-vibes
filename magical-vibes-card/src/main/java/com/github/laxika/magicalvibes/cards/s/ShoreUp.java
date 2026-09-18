@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BLB", collectorNumber = "69")
+@CardRegistration(set = "DMU", collectorNumber = "64")
 public class ShoreUp extends Card {
 
     public ShoreUp() {

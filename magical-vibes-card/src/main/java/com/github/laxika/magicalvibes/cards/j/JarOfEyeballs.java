@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "152")
+@CardRegistration(set = "C13", collectorNumber = "244")
 public class JarOfEyeballs extends Card {
 
     public JarOfEyeballs() {

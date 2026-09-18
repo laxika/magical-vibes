@@ -1143,6 +1143,25 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainSequence(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                    sourceCard, match.controllerId(), List.of(effect), match.permanent().getId()));
+        } else {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard, match.controllerId(), sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)), null, match.permanent().getId());
+            entry.setEventValue(((TriggerContext.LifeGain) ctx).lifeGainedAmount());
+            match.gameData().enqueueTrigger(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
+    }
+
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleConditionalOnControllerLifeGain(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {

@@ -46,6 +46,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }
+        if (predicate instanceof CardHasSourceChosenNamePredicate) {
+            return "card with the chosen name";
+        }
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
         }

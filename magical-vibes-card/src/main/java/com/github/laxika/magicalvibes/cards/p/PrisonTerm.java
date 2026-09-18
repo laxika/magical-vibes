@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "18")
 @CardRegistration(set = "HOP", collectorNumber = "6")
+@CardRegistration(set = "CMD", collectorNumber = "27")
 public class PrisonTerm extends Card {
 
     public PrisonTerm() {

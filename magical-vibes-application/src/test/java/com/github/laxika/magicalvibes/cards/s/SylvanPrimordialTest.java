@@ -59,15 +59,12 @@ class SylvanPrimordialTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         prepareCast();
 
-        harness.castCreature(player1, 0, List.of());
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("each opponent if able");
+
+        harness.castCreature(player1, 0, List.of(plains.getId()));
         harness.passBothPriorities();
-
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).containsExactly(plains.getId());
-        assertThat(choice.validPlayerIds()).doesNotContain(player1.getId());
-
-        harness.handlePermanentChosen(player1, plains.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))

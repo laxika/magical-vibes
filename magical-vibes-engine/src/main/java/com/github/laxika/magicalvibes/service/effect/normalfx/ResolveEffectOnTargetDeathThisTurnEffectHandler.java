@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardFromTargetOwnerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,12 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
                 ownerId = gameQueryService.findPermanentController(gameData, target.getId());
             }
             delayedEffect = returnEffect.bindOwner(ownerId);
+        } else if (delayedEffect instanceof ReturnTriggeringCardToOwnerHandEffect) {
+            UUID ownerId = target.getCard().getOwnerId();
+            if (ownerId == null) {
+                ownerId = gameQueryService.findPermanentController(gameData, target.getId());
+            }
+            delayedEffect = new ReturnTriggeringCardToOwnerHandEffect(target.getCard().getId(), ownerId);
         }
 
         gameData.permanentTriggeringEffectOnDeathThisTurn

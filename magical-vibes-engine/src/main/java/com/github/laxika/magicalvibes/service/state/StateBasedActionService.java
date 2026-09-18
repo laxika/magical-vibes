@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
@@ -94,8 +95,26 @@ public class StateBasedActionService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService turnFaceUpCopyService;
+
     public void performStateBasedActions(GameData gameData) {
         if (gameData.waitingForSubgame) return;
+        // Damage and tapping can turn a masked creature face up in the domain model. Collect
+        // its turn-up triggers before lethal damage can remove it from the battlefield.
+        List<Permanent> automaticallyTurnedFaceUp = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.isPendingAutomaticTurnFaceUp()) {
+                gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
+                automaticallyTurnedFaceUp.add(permanent);
+            }
+        });
+        for (Permanent permanent : automaticallyTurnedFaceUp) {
+            permanent.setPendingAutomaticTurnFaceUp(false);
+            turnFaceUpCopyService.turnFaceUpWithoutCost(gameData, permanent);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (graveyardService.hasPendingRegenerationChoice(gameData)) {
             graveyardService.processPendingRegenerationChoice(gameData);
@@ -236,6 +255,7 @@ public class StateBasedActionService {
             gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
+
             gameData.exiledCardsWithCroakCounters.remove(cardId);
             gameData.exiledCardsWithVoidCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
@@ -400,10 +420,13 @@ public class StateBasedActionService {
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        List<CardEffect> grantedCreatureDeathEffects = new ArrayList<>(
+                                entry.permanent().getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
+                        grantedCreatureDeathEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                                gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES));
                         gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
                                 entry.permanent().getId(),
-                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
+                                List.copyOf(grantedCreatureDeathEffects));
                     }
                 }
             }

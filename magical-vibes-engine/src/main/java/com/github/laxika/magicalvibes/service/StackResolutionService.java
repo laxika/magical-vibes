@@ -346,6 +346,8 @@ public class StackResolutionService {
         perm.setGrantedDevour(entry.getGrantedDevour());
         entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
                 effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
+        entry.getPersistentTriggeredEffectsOnEntry().forEach((slot, effects) ->
+                effects.forEach(effect -> perm.addPersistentTriggeredEffect(slot, effect)));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
         if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()
@@ -1200,6 +1202,8 @@ public class StackResolutionService {
                 return;
             }
 
+            checkSagaFinalChapterResolution(gameData, entry);
+
             if (gameData.restartTurnRequested) {
                 gameData.restartTurnRequested = false;
                 if (isNonCopySpell(entry)) {
@@ -1234,6 +1238,7 @@ public class StackResolutionService {
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
@@ -1248,7 +1253,28 @@ public class StackResolutionService {
 
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
+        checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
+    }
+
+    private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        if (card == null || !card.isSaga() || entry.getDescription() == null) return;
+
+        String finalChapter = switch (card.getSagaFinalChapter()) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            default -> null;
+        };
+        if (finalChapter == null
+                || !entry.getDescription().equals(card.getName() + "'s chapter " + finalChapter + " ability")) {
+            return;
+        }
+        triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
+                gameData, entry.getControllerId());
     }
 
     /**

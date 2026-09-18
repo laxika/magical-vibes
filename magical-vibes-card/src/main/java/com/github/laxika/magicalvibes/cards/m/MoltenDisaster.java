@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "102")
 @CardRegistration(set = "MMA", collectorNumber = "123")
+@CardRegistration(set = "C13", collectorNumber = "117")
 public class MoltenDisaster extends Card {
 
     public MoltenDisaster() {

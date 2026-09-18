@@ -105,7 +105,7 @@ public class LandManaTypeSupport {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardAnyColorManaEffect mana) {
                 if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                        || mana.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER) {
+                        || mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
                     types.addAll(ManaProductionSupport.commanderColorIdentity(gameData,
                             gameQueryService.findPermanentController(gameData, source.getId())));
                 } else {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndCreateTokenCopiesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "MAR", collectorNumber = "21")
 @CardRegistration(set = "OMB", collectorNumber = "21")
 public class SawInHalf extends Card {
 

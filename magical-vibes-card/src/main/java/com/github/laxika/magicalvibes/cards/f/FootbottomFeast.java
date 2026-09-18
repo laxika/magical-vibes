@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "115")
+@CardRegistration(set = "CMD", collectorNumber = "84")
 public class FootbottomFeast extends Card {
 
     public FootbottomFeast() {

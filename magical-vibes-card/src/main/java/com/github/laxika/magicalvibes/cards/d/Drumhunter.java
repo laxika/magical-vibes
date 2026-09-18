@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "129")
+@CardRegistration(set = "C13", collectorNumber = "142")
 public class Drumhunter extends Card {
 
     public Drumhunter() {

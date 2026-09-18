@@ -41,12 +41,32 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       boolean grantsAdditionalPlusOneCounter,
                                       Set<CardSubtype> spellOnlySubtypes,
                                       boolean differentColors,
-                                      List<ManaColor> allowedColors) implements ManaProducingEffect {
+                                      List<ManaColor> allowedColors,
+                                      boolean grantsCommanderCounter) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect {
         spellOnlySubtypes = spellOnlySubtypes == null ? Set.of() : Set.copyOf(spellOnlySubtypes);
         allowedColors = allowedColors == null || allowedColors.isEmpty()
                 ? ManaColor.COLORS : List.copyOf(allowedColors);
+    }
+
+    /** Compatibility constructor for unrestricted mana riders that predate the commander rider. */
+    public AwardAnyColorManaEffect(DynamicAmount amount,
+                                   ManaSpendRestriction restriction,
+                                   CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                   boolean targetsPlayer,
+                                   boolean manaRecipientIsTargetPlayer,
+                                   boolean markSourceAsHavingAddedManaThisTurn,
+                                   boolean anyColorCombination,
+                                   boolean grantsAdditionalPlusOneCounter,
+                                   Set<CardSubtype> spellOnlySubtypes,
+                                   boolean differentColors,
+                                   List<ManaColor> allowedColors) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
+                targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, allowedColors, false);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount,
@@ -63,7 +83,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
                 targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
-                differentColors, ManaColor.COLORS);
+                differentColors, ManaColor.COLORS, false);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount,
@@ -111,10 +131,10 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 false, false, false, false, false, true, Set.of(), false);
     }
 
-    /** "Add mana of any color in your commander's color identity. If spent to cast your commander,
-     * it enters with counters equal to the number of times it has been cast from the command zone." */
-    public static AwardAnyColorManaEffect forCommanderCastCounter(int amount) {
-        return new AwardAnyColorManaEffect(amount, ManaSpendRestriction.COMMANDER_CAST_COUNTER);
+    /** "Add mana in the commander's color identity. If spent to cast the commander, it enters with additional counters." */
+    public static AwardAnyColorManaEffect forCommanderCounter(int amount) {
+        return new AwardAnyColorManaEffect(new Fixed(amount), ManaSpendRestriction.COMMANDER_COLOR_IDENTITY, null,
+                false, false, false, false, false, false, Set.of(), false, ManaColor.COLORS, true);
     }
 
     /** "Add one mana of any color. This creature becomes that color until end of turn." */
@@ -228,7 +248,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  MANA_VALUE_AT_LEAST_FOUR,
                  CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS,
-                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY, COMMANDER_CAST_COUNTER -> 0;
+                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY,
+                 COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY -> 0;
         };
     }
 }

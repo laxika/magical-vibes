@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDN", collectorNumber = "22")
 @CardRegistration(set = "MM3", collectorNumber = "60")
 @CardRegistration(set = "GNT", collectorNumber = "27")
+@CardRegistration(set = "DMU", collectorNumber = "83")
 public class BoneSplinters extends Card {
 
     public BoneSplinters() {

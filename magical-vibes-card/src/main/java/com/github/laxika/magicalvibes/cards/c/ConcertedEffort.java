@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @CardRegistration(set = "RAV", collectorNumber = "8")
+@CardRegistration(set = "MAR", collectorNumber = "42")
 public class ConcertedEffort extends Card {
 
     private static final List<Keyword> SHARED_KEYWORDS = List.of(

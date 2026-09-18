@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ME3", collectorNumber = "45")
+@CardRegistration(set = "ARN", collectorNumber = "18")
 public class OldManOfTheSea extends Card {
 
     public OldManOfTheSea() {

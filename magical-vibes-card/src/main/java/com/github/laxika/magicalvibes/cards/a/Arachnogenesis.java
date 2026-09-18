@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceCon
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "MAR", collectorNumber = "31")
 @CardRegistration(set = "OMB", collectorNumber = "31")
 public class Arachnogenesis extends Card {
 

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "314")
+@CardRegistration(set = "C13", collectorNumber = "282")
 public class ContestedCliffs extends Card {
 
     public ContestedCliffs() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -201,6 +202,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
@@ -869,6 +871,18 @@ public class PermanentChoiceBattlefieldHandlerService {
         eachOpponentChoosesCreatureYouGainControlEffectHandler.completeChoice(gameData, permanentId, context);
 
         // More opponents may still need to choose — leave the parked resolution until all are done.
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleOrderOfSuccessionChoice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OrderOfSuccession context) {
+        orderOfSuccessionEffectHandler.completeChoice(gameData, permanentId, context);
+
+        // More players may still need to choose — leave the parked resolution until all are done.
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
@@ -2643,6 +2657,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         entering.getProtectionFromPlayerIdsPermanently().clear();
         entering.getProtectionFromPlayerIdsPermanently().add(chosenPlayerId);
+        entering.setRememberedTargetPlayerId(chosenPlayerId);
         gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
                 " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
         log.info("Game {} - {} chooses player {}", gameData.id,
@@ -2771,6 +2786,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         } else if (auraCard.isAura()
                 && !auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, enchantTarget)) {
             throw new IllegalStateException("Aura cannot enchant that permanent");
+        } else if (auraCard.getSubtypes().contains(CardSubtype.EQUIPMENT)
+                && !equipSupport.canAttachEquipment(gameData, new Permanent(auraCard), enchantTarget)) {
+            throw new IllegalStateException("Equipment cannot attach to that permanent");
         }
 
         if (gameData.warpWorldOperation.sourceName != null) {

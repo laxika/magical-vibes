@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "145")
+@CardRegistration(set = "DMU", collectorNumber = "29")
 public class ResoluteReinforcements extends Card {
 
     public ResoluteReinforcements() {

@@ -103,6 +103,7 @@ class CostEffectClassificationTest {
             "TapTwoCreaturesSharingTypeCost",
             "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
+            "UnattachEquipmentFromSourceCost",
             "UntapMultiplePermanentsCost");
 
     /**

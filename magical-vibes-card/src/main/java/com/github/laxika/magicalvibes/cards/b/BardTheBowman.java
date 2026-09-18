@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOB", collectorNumber = "145")
+@CardRegistration(set = "HOC", collectorNumber = "145")
 public class BardTheBowman extends Card {
 
     public BardTheBowman() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "ECC", collectorNumber = "143")
+@CardRegistration(set = "DMU", collectorNumber = "239")
 public class TimelessLotus extends Card {
 
     public TimelessLotus() {

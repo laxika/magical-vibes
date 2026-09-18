@@ -19,8 +19,8 @@ public enum ManaSpendRestriction {
     /** Choose a color in the activating player's commander's color identity (Command Tower). */
     COMMANDER_COLOR_IDENTITY,
 
-    /** Choose a color in the commander's color identity; if spent on that commander, it grants its command-zone cast-count counters. */
-    COMMANDER_CAST_COUNTER,
+    /** Choose a color in the commander's color identity and scry when spent on a matching creature spell (Path of Ancestry). */
+    COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY,
 
     /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
     SPELL_ONLY,

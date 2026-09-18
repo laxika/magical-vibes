@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "58")
 @CardRegistration(set = "TPR", collectorNumber = "45")
+@CardRegistration(set = "C13", collectorNumber = "39")
 public class Dismiss extends Card {
 
     public Dismiss() {

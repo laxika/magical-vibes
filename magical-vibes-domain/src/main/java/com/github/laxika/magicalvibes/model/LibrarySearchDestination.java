@@ -75,6 +75,9 @@ public enum LibrarySearchDestination {
      *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a
      *  {@link PendingPileSeparation} with {@link CardPileDisposition#GIFTS_UNGIVEN}. */
     GIFTS_UNGIVEN_POOL,
+    /** Threats Undetected — the revealed cards are held out until an opponent chooses two to
+     * shuffle back into the controller's library and the rest go to hand. */
+    THREATS_UNDETECTED_POOL,
     /** Signal the Clans — the revealed creature cards are held out of every zone in
      *  {@link LibrarySearchParams#accumulatedCards()} until the search ends. If exactly three cards
      *  with different names were revealed, one of them is chosen at random and put into the

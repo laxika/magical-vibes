@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "SCG", collectorNumber = "128")
+@CardRegistration(set = "C13", collectorNumber = "173")
 public class SproutingVines extends Card {
 
     public SproutingVines() {

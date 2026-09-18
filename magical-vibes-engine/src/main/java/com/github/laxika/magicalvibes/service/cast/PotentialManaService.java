@@ -557,7 +557,7 @@ public class PotentialManaService {
                 }
             } else if (effect instanceof AwardAnyColorManaEffect anyColor
                     && (anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                    || anyColor.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER)) {
+                    || anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY)) {
                 int amount = estimateManaAmount(anyColor.amount(), permanent, gameData);
                 if (amount > 0) {
                     for (ManaColor color : ManaProductionSupport.commanderColorIdentity(gameData, playerId)) {
