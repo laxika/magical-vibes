@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KiteShield;
+import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
+import com.github.laxika.magicalvibes.cards.n.NemesisMask;
 import com.github.laxika.magicalvibes.cards.s.ShieldOfKaldra;
 import com.github.laxika.magicalvibes.cards.s.SwordOfKaldra;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,18 +12,21 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HelmOfKaldra.class, ShieldOfKaldra.class, SwordOfKaldra.class,
+        NemesisMask.class, MyrMoonvessel.class})
 class HelmOfKaldraTest extends BaseCardTest {
 
     @Test
     @DisplayName("Equipped creature has first strike, trample, and haste")
     void equippedCreatureHasKeywords() {
         Permanent helm = addHelmReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new MyrMoonvessel());
         helm.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
@@ -50,7 +53,7 @@ class HelmOfKaldraTest extends BaseCardTest {
         Permanent helm = addHelmReady(player1);
         Permanent sword = addEquipmentReady(player1, new SwordOfKaldra());
         Permanent shield = addEquipmentReady(player1, new ShieldOfKaldra());
-        Permanent unrelatedEquipment = addEquipmentReady(player1, new KiteShield());
+        Permanent unrelatedEquipment = addEquipmentReady(player1, new NemesisMask());
         Permanent opponentSword = addEquipmentReady(player2, new SwordOfKaldra());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -75,7 +78,7 @@ class HelmOfKaldraTest extends BaseCardTest {
     @DisplayName("Equip {2} attaches Helm of Kaldra to a creature you control")
     void equipAttachesToCreature() {
         Permanent helm = addHelmReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new MyrMoonvessel());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
@@ -89,9 +92,8 @@ class HelmOfKaldraTest extends BaseCardTest {
     }
 
     private Permanent addEquipmentReady(Player player, Card card) {
-        Permanent equipment = new Permanent(card);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player, card);
         equipment.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(equipment);
         return equipment;
     }
 }
