@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "123")
 @CardRegistration(set = "S99", collectorNumber = "94")
+@CardRegistration(set = "ME4", collectorNumber = "112")
 public class Devastation extends Card {
 
     public Devastation() {

@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "59")
 @CardRegistration(set = "PC2", collectorNumber = "19")
+@CardRegistration(set = "IMA", collectorNumber = "59")
+@CardRegistration(set = "PCA", collectorNumber = "19")
+@CardRegistration(set = "PIO", collectorNumber = "58")
 public class IllusoryAngel extends Card {
 
     public IllusoryAngel() {

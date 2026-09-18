@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PC2", collectorNumber = "99")
+@CardRegistration(set = "PCA", collectorNumber = "99")
 public class KrondTheDawnClad extends Card {
 
     public KrondTheDawnClad() {

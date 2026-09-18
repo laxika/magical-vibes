@@ -69,6 +69,9 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         if (interaction.anyManaType()) {
             gameData.exilePlayAnyManaType.add(chosenId);
         }
+        if (interaction.withoutPayingManaCost()) {
+            gameData.exilePlayWithoutPayingManaCost.add(chosenId);
+        }
         gameLogService.append(gameData, GameLog.cardThen(chosen.card(), durationDescription));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

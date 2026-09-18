@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "84")
 @CardRegistration(set = "VMA", collectorNumber = "224")
+@CardRegistration(set = "UMA", collectorNumber = "177")
 public class PenumbraWurm extends Card {
 
     public PenumbraWurm() {

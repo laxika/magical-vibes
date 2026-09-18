@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "170")
+@CardRegistration(set = "IMA", collectorNumber = "162")
+@CardRegistration(set = "2XM", collectorNumber = "166")
 public class Enlarge extends Card {
 
     public Enlarge() {

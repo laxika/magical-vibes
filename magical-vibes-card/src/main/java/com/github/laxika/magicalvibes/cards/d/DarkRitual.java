@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "DKM", collectorNumber = "4")
 @CardRegistration(set = "CST", collectorNumber = "24")
 @CardRegistration(set = "3ED", collectorNumber = "99")
+@CardRegistration(set = "2ED", collectorNumber = "99")
 @CardRegistration(set = "DDE", collectorNumber = "18")
 @CardRegistration(set = "DDC", collectorNumber = "45")
 @CardRegistration(set = "HOP", collectorNumber = "24")
@@ -29,6 +30,15 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "DVD", collectorNumber = "45")
 @CardRegistration(set = "V13", collectorNumber = "1")
 @CardRegistration(set = "MP2", collectorNumber = "21")
+@CardRegistration(set = "A25", collectorNumber = "82")
+@CardRegistration(set = "MB1", collectorNumber = "82")
+@CardRegistration(set = "STA", collectorNumber = "26")
+@CardRegistration(set = "TMC", collectorNumber = "131")
+@CardRegistration(set = "FCA", collectorNumber = "8")
+@CardRegistration(set = "SLZ", collectorNumber = "38")
+@CardRegistration(set = "SLZ", collectorNumber = "159")
+@CardRegistration(set = "SLZ", collectorNumber = "280")
+@CardRegistration(set = "ME4", collectorNumber = "74")
 public class DarkRitual extends Card {
 
     public DarkRitual() {

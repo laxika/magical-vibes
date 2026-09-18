@@ -14,6 +14,10 @@ import java.util.List;
 @CardRegistration(set = "NEM", collectorNumber = "143")
 @CardRegistration(set = "DD2", collectorNumber = "29")
 @CardRegistration(set = "JVC", collectorNumber = "29")
+@CardRegistration(set = "EOS", collectorNumber = "43")
+@CardRegistration(set = "EOS", collectorNumber = "88")
+@CardRegistration(set = "EOS", collectorNumber = "133")
+@CardRegistration(set = "EOS", collectorNumber = "178")
 public class TerrainGenerator extends Card {
 
     public TerrainGenerator() {

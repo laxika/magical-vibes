@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
  * +1/+1 counter on it".
  */
 @CardRegistration(set = "RTR", collectorNumber = "89")
+@CardRegistration(set = "RVR", collectorNumber = "101")
 public class BloodfrayGiant extends Card {
 
     public BloodfrayGiant() {

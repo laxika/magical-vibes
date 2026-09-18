@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "236")
+@CardRegistration(set = "DBL", collectorNumber = "236")
 public class RiteOfHarmony extends Card {
 
     public RiteOfHarmony() {

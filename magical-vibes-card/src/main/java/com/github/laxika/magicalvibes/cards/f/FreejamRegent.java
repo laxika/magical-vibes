@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "81")
+@CardRegistration(set = "KLR", collectorNumber = "124")
 public class FreejamRegent extends Card {
 
     public FreejamRegent() {

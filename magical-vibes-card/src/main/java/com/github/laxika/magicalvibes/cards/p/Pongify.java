@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "44")
+@CardRegistration(set = "2XM", collectorNumber = "62")
+@CardRegistration(set = "TSR", collectorNumber = "79")
+@CardRegistration(set = "SOA", collectorNumber = "20")
 public class Pongify extends Card {
 
     public Pongify() {

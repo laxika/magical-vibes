@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "78")
+@CardRegistration(set = "2X2", collectorNumber = "91")
+@CardRegistration(set = "ECC", collectorNumber = "86")
 public class Skinrender extends Card {
 
     public Skinrender() {

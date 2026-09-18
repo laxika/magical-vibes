@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Chastise;
 import com.github.laxika.magicalvibes.cards.l.LightningSurge;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TreacherousWerewolf.class, LightningSurge.class, MentalNote.class})
+@CardUsed({Chastise.class, LightningSurge.class, MentalNote.class, TreacherousWerewolf.class})
 class TreacherousWerewolfTest extends BaseCardTest {
 
     @Test
@@ -41,9 +42,103 @@ class TreacherousWerewolfTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's graveyard does not enable threshold")
+    void opponentsGraveyardDoesNotEnableThreshold() {
+        fillGraveyard(player2, 7);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, werewolf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Threshold boost updates when the controller's graveyard changes")
+    void thresholdBoostUpdatesWithGraveyardChanges() {
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, werewolf)).isEqualTo(2);
+
+        fillGraveyard(player1, 7);
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, werewolf)).isEqualTo(4);
+
+        fillGraveyard(player1, 6);
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, werewolf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Threshold death ability makes its controller lose 4 life")
+    void thresholdDeathAbilityLosesLife() {
+        fillGraveyard(player1, 7);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+        killWithChastise(werewolf);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Threshold death ability uses the graveyard count when the creature dies")
+    void thresholdDeathAbilityUsesCurrentThreshold() {
+        fillGraveyard(player1, 6);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+        fillGraveyard(player1, 7);
+
+        killWithChastise(werewolf);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Threshold death ability is lost when the graveyard drops below seven")
+    void thresholdDeathAbilityTurnsOffBelowThreshold() {
+        fillGraveyard(player1, 7);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+        fillGraveyard(player1, 6);
+
+        killWithChastise(werewolf);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Threshold death ability is absent below seven graveyard cards")
+    void thresholdDeathAbilityIsAbsentBelowThreshold() {
+        fillGraveyard(player1, 6);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+        killWithChastise(werewolf);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void killWithChastise(Permanent target) {
+        target.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Chastise()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+    }
+
+    private void fillGraveyard(Player player, int count) {
+        List<Card> cards = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            cards.add(new Chastise());
+        }
+        harness.setGraveyard(player, cards);
+    }
+
+    @Test
     @DisplayName("Opponent's graveyard does not count for threshold")
     void opponentGraveyardDoesNotCount() {
-        fillGraveyard(player2, 7);
+        fillGraveyardForJudReview(player2, 7);
         Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
 
         assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(2);
@@ -53,7 +148,7 @@ class TreacherousWerewolfTest extends BaseCardTest {
     @Test
     @DisplayName("Threshold boost and death ability turn off when the graveyard drops below seven cards")
     void thresholdEffectsTurnOffWhenGraveyardShrinks() {
-        fillGraveyard(player1, 7);
+        fillGraveyardForJudReview(player1, 7);
         Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
 
         assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(4);
@@ -64,35 +159,13 @@ class TreacherousWerewolfTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, werewolf)).isEqualTo(2);
 
-        killWithLightningSurge(werewolf);
+        killWithLightningSurgeForJudReview(werewolf);
 
         harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
     }
 
-    @Test
-    @DisplayName("Threshold death ability makes its controller lose 4 life")
-    void thresholdDeathAbilityLosesLife() {
-        fillGraveyard(player1, 7);
-        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
-        killWithLightningSurge(werewolf);
-        harness.passBothPriorities();
-
-        harness.assertLife(player1, 16);
-    }
-
-    @Test
-    @DisplayName("Threshold death ability is absent below seven graveyard cards")
-    void thresholdDeathAbilityIsAbsentBelowThreshold() {
-        fillGraveyard(player1, 6);
-        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
-        killWithLightningSurge(werewolf);
-
-        harness.assertLife(player1, 20);
-        assertThat(gd.stack).isEmpty();
-    }
-
-    private void killWithLightningSurge(Permanent target) {
+    private void killWithLightningSurgeForJudReview(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -102,7 +175,7 @@ class TreacherousWerewolfTest extends BaseCardTest {
         harness.castAndResolveSorcery(player2, 0, 0, target.getId());
     }
 
-    private void fillGraveyard(Player player, int count) {
+    private void fillGraveyardForJudReview(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             cards.add(new MentalNote());

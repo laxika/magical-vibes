@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "204")
+@CardRegistration(set = "MUL", collectorNumber = "59")
+@CardRegistration(set = "MUL", collectorNumber = "124")
+@CardRegistration(set = "MUL", collectorNumber = "189")
 public class ShannaSisaysLegacy extends Card {
 
     public ShannaSisaysLegacy() {

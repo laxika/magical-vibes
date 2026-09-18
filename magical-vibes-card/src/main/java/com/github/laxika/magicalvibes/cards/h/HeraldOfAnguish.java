@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "64")
+@CardRegistration(set = "KLR", collectorNumber = "94")
 public class HeraldOfAnguish extends Card {
 
     public HeraldOfAnguish() {

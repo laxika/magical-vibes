@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "82")
+@CardRegistration(set = "GK1", collectorNumber = "51")
 public class Darkblast extends Card {
 
     public Darkblast() {

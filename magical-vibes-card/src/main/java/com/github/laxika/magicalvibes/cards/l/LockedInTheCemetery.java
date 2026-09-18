@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "60")
+@CardRegistration(set = "DBL", collectorNumber = "60")
 public class LockedInTheCemetery extends Card {
 
     public LockedInTheCemetery() {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "109")
+@CardRegistration(set = "RVR", collectorNumber = "116")
 public class LegionWarboss extends Card {
 
     public LegionWarboss() {

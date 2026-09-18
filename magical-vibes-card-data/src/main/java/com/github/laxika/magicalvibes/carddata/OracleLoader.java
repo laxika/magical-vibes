@@ -17,6 +17,7 @@ import java.util.Set;
  * registries.
  */
 public interface OracleLoader {
+    default LegalitySnapshot loadLegalities(String setCode) { return LegalitySnapshot.empty(); }
 
     /**
      * @param setCode                     the set to read, e.g. {@code "ISD"}

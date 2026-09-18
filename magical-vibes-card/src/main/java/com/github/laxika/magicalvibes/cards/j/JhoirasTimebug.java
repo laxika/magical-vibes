@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AdjustChosenCounterOnTargetEf
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "257")
+@CardRegistration(set = "TSR", collectorNumber = "269")
 public class JhoirasTimebug extends Card {
 
     public JhoirasTimebug() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "83")
+@CardRegistration(set = "STA", collectorNumber = "24")
 public class AgonizingRemorse extends Card {
 
     public AgonizingRemorse() {

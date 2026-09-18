@@ -82,6 +82,11 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, true);
+            case EACH_OTHER_PLAYER -> {
+                UUID owner = entry.getCard().getOwnerId() != null
+                        ? entry.getCard().getOwnerId() : controllerId;
+                eachPlayerLosesLife(gameData, e, entry, owner, amount, sourceName, false);
+            }
         }
     }
 
@@ -139,14 +144,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void loseTargetPermanentControllerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
-        // targetId is the targeted permanent; the controller of that permanent loses life. Runs
-        // before any accompanying destroy effect so the permanent is still on the battlefield.
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
             return;
         }
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
+            controllerId = entry.getTriggeringPermanentControllerId();
+        }
+        if (controllerId != null) {
+            lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
+        }
     }
 
     private boolean controlsMatching(GameData gameData, UUID playerId, PermanentPredicate predicate) {
@@ -168,7 +176,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
         int totalLifeLost = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (opponentsOnly && playerId.equals(controllerId)) {
+            if (playerId.equals(controllerId) && (opponentsOnly || e.recipient() == LoseLifeRecipient.EACH_OTHER_PLAYER)) {
                 continue;
             }
             // "each opponent who doesn't control an Elf" — players controlling a matching

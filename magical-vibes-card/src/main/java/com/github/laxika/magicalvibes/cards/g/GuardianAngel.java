@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "21")
 @CardRegistration(set = "3ED", collectorNumber = "21")
+@CardRegistration(set = "2ED", collectorNumber = "22")
 public class GuardianAngel extends Card {
 
     public GuardianAngel() {

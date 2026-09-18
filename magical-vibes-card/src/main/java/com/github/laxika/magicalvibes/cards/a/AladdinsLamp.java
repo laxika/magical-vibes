@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "291")
 @CardRegistration(set = "SUM", collectorNumber = "231")
 @CardRegistration(set = "3ED", collectorNumber = "231")
+@CardRegistration(set = "ARN", collectorNumber = "56")
 public class AladdinsLamp extends Card {
 
     public AladdinsLamp() {

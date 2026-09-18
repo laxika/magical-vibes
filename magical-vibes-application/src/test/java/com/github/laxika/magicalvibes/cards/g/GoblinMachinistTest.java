@@ -63,6 +63,38 @@ class GoblinMachinistTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library does not boost or create a reorder prompt")
+    void emptyLibraryDoesNotBoost() {
+        Permanent machinist = addCreatureReady(player1, new GoblinMachinist());
+        harness.setLibrary(player1, List.of());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, machinist)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, machinist)).isEqualTo(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Boosts by the full mana value of the revealed nonland card")
+    void boostsByFullManaValue() {
+        Permanent machinist = addCreatureReady(player1, new GoblinMachinist());
+        GoblinMachinist revealedMachinist = new GoblinMachinist();
+        harness.setLibrary(player1, List.of(revealedMachinist));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, machinist)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, machinist)).isEqualTo(5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealedMachinist);
+    }
+
+    @Test
     @DisplayName("The power boost expires at end of turn")
     void boostExpiresAtEndOfTurn() {
         Permanent machinist = addCreatureReady(player1, new GoblinMachinist());

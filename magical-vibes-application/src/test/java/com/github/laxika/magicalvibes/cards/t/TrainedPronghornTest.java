@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
-import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,15 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TrainedPronghorn.class, GiantWarthog.class, EmberShot.class})
+@CardUsed({BorderPatrol.class, EmberShot.class, TrainedPronghorn.class})
 class TrainedPronghornTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card prevents all combat damage dealt to Trained Pronghorn this turn")
     void discardPreventsAllDamageToSelfThisTurn() {
         Permanent pronghorn = addCreatureReady(player1, new TrainedPronghorn());
-        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
-        harness.setHand(player1, List.of(new GiantWarthog()));
+        Permanent blocker = addCreatureReady(player2, new BorderPatrol());
+        harness.setHand(player1, List.of(new BorderPatrol()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -33,23 +33,21 @@ class TrainedPronghornTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(pronghorn);
         assertThat(pronghorn.getMarkedDamage()).isZero();
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Giant Warthog");
+        harness.assertInGraveyard(player1, "Border Patrol");
     }
 
     @Test
     @DisplayName("Discarding a card prevents noncombat damage dealt to Trained Pronghorn this turn")
     void discardPreventsNoncombatDamageToSelfThisTurn() {
         Permanent pronghorn = addCreatureReady(player1, new TrainedPronghorn());
-        harness.setHand(player1, List.of(new GiantWarthog(), new EmberShot()));
-        harness.setLibrary(player1, List.of(new GiantWarthog()));
+        harness.setHand(player1, List.of(new BorderPatrol()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -58,12 +56,39 @@ class TrainedPronghornTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.addMana(player1, ManaColor.RED, 7);
-        harness.castInstant(player1, 0, pronghorn.getId());
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, pronghorn.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pronghorn);
+        assertThat(pronghorn.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Ember Shot");
+    }
+
+    @Test
+    @DisplayName("Damage prevention expires at the end of the turn")
+    void damagePreventionExpiresAtEndOfTurn() {
+        Permanent pronghorn = addCreatureReady(player1, new TrainedPronghorn());
+        harness.setHand(player1, List.of(new BorderPatrol()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(pronghorn.getMarkedDamage()).isZero();
-        harness.assertInGraveyard(player1, "Giant Warthog");
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, pronghorn.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(pronghorn);
     }
 
     @Test

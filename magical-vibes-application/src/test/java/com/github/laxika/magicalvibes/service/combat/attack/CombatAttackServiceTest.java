@@ -152,6 +152,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({Juggernaut.class, FormOfTheDragon.class})
         @DisplayName("A must-attack creature with no legal attack target is not offered")
         void mustAttackCreatureWithNoLegalTargetIsNotOffered() {
             addCreatureReady(player1, new Juggernaut());
@@ -254,6 +255,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({BerserkersOfBloodRidge.class, WindbornMuse.class})
         @DisplayName("CR 508.1d: an attack tax suspends every requirement, since the cost is optional")
         void anAttackTaxSuspendsEveryRequirement() {
             addCreatureReady(player1, new BerserkersOfBloodRidge());
@@ -356,6 +358,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindbornMuse.class, TroveOfTemptation.class})
         @DisplayName("The declaration reports the attack tax and the forced-attack demand")
         void openedDeclarationCarriesTheTaxAndTheDemand() {
             addCreatureReady(player1, new GrizzlyBears());
@@ -469,8 +472,20 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(Okk.class)
+        void greaterPowerRestrictionEndsWithPrintedAbilities() {
+            Permanent okk = addCreatureReady(player1, new Okk());
+            okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+            enterDeclareAttackers();
+
+            declare(List.of(index(okk)));
+
+            assertThat(okk.isAttacking()).isTrue();
+        }
+
+        @Test
+        @CardUsed({Okk.class, HillGiant.class, CrawWurm.class})
         @DisplayName("CR 508.1a: Okk needs a strictly greater-power attacker beside it")
-        @CardUsed({CrawWurm.class, HillGiant.class, Okk.class})
         void greaterPowerRestrictionNeedsABiggerAttacker() {
             // Okk is 4/4; Hill Giant (3/3) is not enough, Craw Wurm (6/4) is.
             Permanent okk = addCreatureReady(player1, new Okk());
@@ -560,6 +575,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({GrizzlyBears.class, WindDrake.class, FormOfTheDragon.class})
         @DisplayName("A defender-scoped restriction excludes the barred creature from declaration choices")
         void defenderScopedRestrictionExcludesBarredCreature() {
             // Form of the Dragon: "Creatures without flying can't attack you."
@@ -583,6 +599,7 @@ class CombatAttackServiceTest extends BaseCardTest {
     class AttackTax {
 
         @Test
+        @CardUsed({GrizzlyBears.class, HillGiant.class, WindbornMuse.class})
         @DisplayName("The tax is summed across the whole declaration and must be payable as one total")
         void taxIsSummedAcrossTheWholeDeclaration() {
             // Windborn Muse: creatures can't attack you unless their controller pays {2} for each.

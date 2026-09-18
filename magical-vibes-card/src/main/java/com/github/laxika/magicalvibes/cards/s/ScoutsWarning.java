@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeThisTurnEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "16")
+@CardRegistration(set = "TLE", collectorNumber = "6")
 public class ScoutsWarning extends Card {
 
     public ScoutsWarning() {

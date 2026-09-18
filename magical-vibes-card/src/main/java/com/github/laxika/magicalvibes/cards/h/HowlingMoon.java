@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "204")
+@CardRegistration(set = "DBL", collectorNumber = "471")
 public class HowlingMoon extends Card {
 
     public HowlingMoon() {

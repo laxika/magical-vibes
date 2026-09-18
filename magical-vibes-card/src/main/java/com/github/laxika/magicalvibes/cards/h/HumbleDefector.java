@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "104")
+@CardRegistration(set = "A25", collectorNumber = "135")
+@CardRegistration(set = "PIO", collectorNumber = "141")
+@CardRegistration(set = "TLE", collectorNumber = "30")
 public class HumbleDefector extends Card {
 
     public HumbleDefector() {

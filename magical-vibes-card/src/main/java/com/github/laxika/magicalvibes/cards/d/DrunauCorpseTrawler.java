@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "63")
 @CardRegistration(set = "SOI", collectorNumber = "57")
+@CardRegistration(set = "SIR", collectorNumber = "64")
 public class DrunauCorpseTrawler extends Card {
 
     public DrunauCorpseTrawler() {

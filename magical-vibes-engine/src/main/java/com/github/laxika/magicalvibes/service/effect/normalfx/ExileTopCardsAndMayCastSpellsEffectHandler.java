@@ -31,6 +31,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -61,6 +62,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 : Math.max(0, amountEvaluationService.evaluate(gameData, e.manaValueLimit(),
                         AmountContext.forStackEntry(entry, null)));
         List<UUID> castableSpellIds = new ArrayList<>();
+        List<UUID> exiledCardIds = new ArrayList<>();
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
             List<Card> deck = gameData.playerDecks.get(playerId);
@@ -72,6 +74,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 } else {
                     gameData.addToExile(playerId, card);
                 }
+                exiledCardIds.add(card.getId());
                 gameLogService.append(gameData, GameLog.builder()
                         .text(playerName + " exiles ")
                         .card(card)
@@ -84,7 +87,14 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             }
         }
 
+        if (e.putUncastCardsOnBottomRandom()) {
+            exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, exiledCardIds);
+        }
+
         if (castableSpellIds.isEmpty()) {
+            if (e.putUncastCardsOnBottomRandom()) {
+                exileFreeCastQueueSupport.putRemainderIntoLibraryBottom(gameData);
+            }
             log.info("Game {} - {} found no spells among the exiled cards", gameData.id, entry.getCard().getName());
             return;
         }
@@ -96,7 +106,9 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
-                        controllerId, castableSpellIds, maxCastCount));
+                        controllerId, castableSpellIds, maxCastCount,
+                        "You may cast up to " + maxCastCount
+                                + " of these spells without paying their mana costs."));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, entry.getCard().getName(), castableSpellIds.size());
     }
@@ -109,6 +121,9 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                     && gameData.orderedPlayerIds.contains(entry.getTargetId())
                     ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
+            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
+                    .filter(id -> !id.equals(controllerId))
+                    .toList();
         };
     }
 

@@ -66,6 +66,15 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 && !e.simultaneousChoices();
 
         switch (e.recipient()) {
+            case TRIGGERING_PERMANENT_CONTROLLER -> {
+                UUID playerId = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+                if (playerId == null) {
+                    playerId = entry.getTriggeringPermanentControllerId();
+                }
+                if (playerId != null) {
+                    resolveSinglePlayer(gameData, entry, e, playerId, creatureSingleSac);
+                }
+            }
             case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
             case TARGET_PLAYER -> {
                 UUID targetPlayerId = entry.getTargetId();
@@ -210,8 +219,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         if (matching.size() <= count) {
             // Sacrifice all matching — no choice needed
-            for (Permanent perm : matching) {
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+            if (e.simultaneousChoices()) {
+                destructionSupport.performSimultaneousSacrifice(gameData,
+                        matching.stream().map(Permanent::getId).toList());
+            } else {
+                for (Permanent perm : matching) {
+                    destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                }
             }
             if (e.recordSacrificedCount()) {
                 entry.setEventValue(matching.size());

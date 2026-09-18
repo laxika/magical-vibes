@@ -20,13 +20,14 @@ class UrborgElfTest extends BaseCardTest {
     @Test
     @DisplayName("Activating Urborg Elf prompts for black, green, or blue mana")
     void activatingPromptsColorChoice() {
-        addReadyElf();
+        Permanent elf = addCreatureReady(player1, new UrborgElf());
 
         harness.activateAbility(player1, 0, null, null);
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactlyInAnyOrder("BLACK", "GREEN", "BLUE");
+        assertThat(elf.isTapped()).isTrue();
     }
 
     @Test
@@ -37,13 +38,14 @@ class UrborgElfTest extends BaseCardTest {
             player1 = harness.getPlayer1();
             harness.skipMulligan();
             gd = harness.getGameData();
-            addReadyElf();
+            Permanent elf = addCreatureReady(player1, new UrborgElf());
 
             harness.activateAbility(player1, 0, null, null);
             harness.handleListChoice(player1, color);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.valueOf(color))).isEqualTo(1);
             assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(elf.isTapped()).isTrue();
         }
     }
 
@@ -57,10 +59,14 @@ class UrborgElfTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
     }
 
-    private Permanent addReadyElf() {
-        Permanent elf = new Permanent(new UrborgElf());
-        elf.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(elf);
-        return elf;
+    @Test
+    @DisplayName("Urborg Elf cannot activate while it is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent elf = addCreatureReady(player1, new UrborgElf());
+        elf.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 }

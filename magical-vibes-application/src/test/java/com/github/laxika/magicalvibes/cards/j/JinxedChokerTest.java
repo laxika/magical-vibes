@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(JinxedChoker.class)
 class JinxedChokerTest extends BaseCardTest {
 
     @Test
@@ -49,6 +51,18 @@ class JinxedChokerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At the controller's upkeep, no charge counters means no damage")
+    void upkeepWithNoChargeCountersDealsNoDamage() {
+        harness.addToBattlefield(player2, new JinxedChoker());
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("The activated ability can add or remove a charge counter")
     void activatedAbilityAddsOrRemovesCounter() {
         Permanent choker = harness.addToBattlefieldAndReturn(player1, new JinxedChoker());
@@ -63,6 +77,19 @@ class JinxedChokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Remove a charge counter from Jinxed Choker");
+        assertThat(choker.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing to remove a charge counter with none present does nothing")
+    void removingCounterWithNonePresentIsNoOp() {
+        Permanent choker = harness.addToBattlefieldAndReturn(player1, new JinxedChoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Remove a charge counter from Jinxed Choker");
+
         assertThat(choker.getCounterCount(CounterType.CHARGE)).isZero();
     }
 }

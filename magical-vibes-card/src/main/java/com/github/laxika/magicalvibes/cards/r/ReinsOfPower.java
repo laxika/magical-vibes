@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "41")
+@CardRegistration(set = "CMD", collectorNumber = "57")
+@CardRegistration(set = "C15", collectorNumber = "103")
 public class ReinsOfPower extends Card {
 
     public ReinsOfPower() {

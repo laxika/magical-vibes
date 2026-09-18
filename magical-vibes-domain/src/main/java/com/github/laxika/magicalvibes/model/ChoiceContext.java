@@ -28,6 +28,10 @@ public sealed interface ChoiceContext {
 
     record CappedCounterAmountChoice(UUID sourcePermanentId) implements ChoiceContext {}
 
+    /** Mana choice for Path of Ancestry, retaining the producing permanent for its cast trigger. */
+    record PathOfAncestryManaColorChoice(UUID playerId, UUID sourcePermanentId, int amount)
+            implements ChoiceContext {}
+
     record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                          UUID sourcePermanentId, String chapterName, CounterType counterType,
                                          List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
@@ -43,7 +47,15 @@ public sealed interface ChoiceContext {
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
-                                          int nextTargetIndex) implements ChoiceContext {
+                                          int nextTargetIndex, boolean allowsPartialDistribution) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, false);
+        }
 
         public CounterDistributionAssignment {
             effects = List.copyOf(effects);
@@ -75,6 +87,15 @@ public sealed interface ChoiceContext {
         public static ManaColorSpellChoice anyColorCombination(UUID playerId, int amount,
                                                                 Set<CardSubtype> subtypes) {
             return new ManaColorSpellChoice(playerId, amount, subtypes, true);
+        }
+    }
+
+    record CommanderCounterManaColorChoice(UUID playerId, int amount, UUID recipientPlayerId) implements ChoiceContext {
+        public CommanderCounterManaColorChoice(UUID playerId, int amount) {
+            this(playerId, amount, null);
+        }
+        public CommanderCounterManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new CommanderCounterManaColorChoice(playerId, amount, recipientPlayerId);
         }
     }
 
@@ -132,6 +153,8 @@ public sealed interface ChoiceContext {
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record NonHumanCreatureCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount)
+            implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -205,7 +228,8 @@ public sealed interface ChoiceContext {
                            boolean differentColors,
                            boolean planeswalkerSpellOnly,
                            boolean fromBasicLandSource,
-                           boolean creatureSpellManaValueAtLeastFourOrXOnly, boolean fromTreasureSource) implements ChoiceContext {
+                           boolean creatureSpellManaValueAtLeastFourOrXOnly, boolean fromTreasureSource,
+                           boolean fromArtifactSource) implements ChoiceContext {
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                            boolean creatureSourceSpellOrAbility,
@@ -226,7 +250,7 @@ public sealed interface ChoiceContext {
                            boolean planeswalkerSpellOnly,
                            boolean fromBasicLandSource,
                            boolean creatureSpellManaValueAtLeastFourOrXOnly) {
-            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot, restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly, fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, false);
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot, restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly, fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, false, false);
         }
 
 
@@ -250,7 +274,7 @@ public sealed interface ChoiceContext {
                     sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly,
                     recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell, differentColors,
-                    planeswalkerSpellOnly, false, false, false);
+                    planeswalkerSpellOnly, false, false, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount,
@@ -319,7 +343,7 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withTreasureSource(boolean fromTreasureSource) {
@@ -331,7 +355,19 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
+        }
+
+        public ManaColorChoice withArtifactSource(boolean fromArtifactSource) {
+            return new ManaColorChoice(playerId, fromCreature, amount, restrictedToCreatureSubtype,
+                    flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype,
+                    creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly,
+                    artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour,
+                    creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes,
+                    abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
+                    fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
+                    differentColors, planeswalkerSpellOnly, fromBasicLandSource,
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withCaveSource(boolean fromCaveSource) {
@@ -343,7 +379,7 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -439,7 +475,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withAdditionalPlusOneCounter() {
@@ -450,7 +486,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, true,
                     fromSnowSource, fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withRiot() {
@@ -461,7 +497,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, true,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
@@ -473,7 +509,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withPlaneswalkerSpellOnly() {
@@ -484,7 +520,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, true, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice withBasicLandSource(boolean fromBasicLandSource) {
@@ -495,7 +531,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
@@ -659,7 +695,7 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(
                     playerId, false, amount, null, false, false, false, false, null,
                     false, false, false, false, false, null, null, false, null, false,
-                    false, false, false, null, false, false, false, true, false);
+                    false, false, false, null, false, false, false, true, false, false);
         }
     }
 
@@ -724,6 +760,12 @@ public sealed interface ChoiceContext {
                               String firstChosenName) implements ChoiceContext {}
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
+
+    record LegacyWordChoice(Card sourceCard, List<String> options) implements ChoiceContext {
+        public LegacyWordChoice {
+            options = List.copyOf(options);
+        }
+    }
 
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
@@ -868,6 +910,9 @@ public sealed interface ChoiceContext {
 
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
+
+    /** Choosing land or nonland at resolution for a spell with no permanent to store it on. */
+    record SpellLandOrNonlandChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing a color at resolution for a spell with no permanent to store it on. */
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
@@ -1563,6 +1608,45 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record RemoveUpToCountersFromAllPermanentsChoice(StackEntry resolvingEntry, CounterType counterType,
+                                                     int remaining, Map<String, UUID> permanentOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveUpToCountersFromAllPermanentsChoice {
+            permanentOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(permanentOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
+        }
+    }
+
+    record CounterSelection(UUID permanentId, CounterType counterType) {
+    }
+
+    record RemoveAnyNumberOfCountersFromAllPermanentsChoice(
+            StackEntry resolvingEntry, Map<String, CounterSelection> counterOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveAnyNumberOfCountersFromAllPermanentsChoice {
+            counterOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(counterOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(counterOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
+        }
+    }
+
     record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                   List<CounterType> counterTypes) implements ChoiceContext {
 
@@ -1635,6 +1719,33 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(TIME, KNOWLEDGE);
 
         public PleaForPowerChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Expropriate: the current player voted for time or money. */
+    record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                             List<UUID> moneyVoterIds, int timeVotes, String sourceName)
+            implements ChoiceContext {
+        public static final String TIME = "Time";
+        public static final String MONEY = "Money";
+        public static final List<String> OPTIONS = List.of(TIME, MONEY);
+
+        public ExpropriateChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            moneyVoterIds = List.copyOf(moneyVoterIds);
+        }
+    }
+
+    /** Split Decision: the current player voted for denial or duplication. */
+    record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                             Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DENIAL = "Denial";
+        public static final String DUPLICATION = "Duplication";
+        public static final List<String> OPTIONS = List.of(DENIAL, DUPLICATION);
+
+        public VoteForDenialOrDuplicationChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             votes = Map.copyOf(votes);
         }

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.e.ErhnamDjinn;
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
+import com.github.laxika.magicalvibes.cards.e.ErhnamDjinn;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,15 +12,36 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({
-        AncestorsChosen.class,
-        AvenWarcraft.class,
-        BenevolentBodyguard.class,
-        Cagemail.class,
-        ErhnamDjinn.class,
-        SuntailHawk.class
-})
+@CardUsed({AncestorsChosen.class, AvenWarcraft.class, BenevolentBodyguard.class, Cagemail.class, ErhnamDjinn.class, SuntailHawk.class})
 class AncestorsChosenTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("ETB gains 1 life for each card in its controller's graveyard")
+    void gainsLifeForEachCardInControllerGraveyard() {
+        harness.setGraveyard(player1, List.of(
+                new AncestorsChosen(), new AncestorsChosen(), new AncestorsChosen()));
+        harness.setGraveyard(player2, List.of(new AncestorsChosen(), new AncestorsChosen()));
+        harness.setLife(player1, 10);
+
+        harness.castFromHand(player1, new AncestorsChosen(), "{5}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB gains no life with an empty controller graveyard")
+    void gainsNoLifeWithEmptyControllerGraveyard() {
+        harness.setGraveyard(player1, List.of());
+
+        harness.castFromHand(player1, new AncestorsChosen(), "{5}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
 
     @Test
     @DisplayName("ETB gains one life for each card in its controller's graveyard")
@@ -30,7 +51,7 @@ class AncestorsChosenTest extends BaseCardTest {
                 new BenevolentBodyguard(), new Cagemail(), new SuntailHawk()));
         harness.setGraveyard(player2, List.of(new BenevolentBodyguard(), new Cagemail()));
 
-        castAncestorsChosen();
+        castAncestorsChosenForJudReview();
 
         harness.assertLife(player1, 13);
         harness.assertLife(player2, 20);
@@ -43,7 +64,7 @@ class AncestorsChosenTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.setGraveyard(player2, List.of(new BenevolentBodyguard(), new Cagemail()));
 
-        castAncestorsChosen();
+        castAncestorsChosenForJudReview();
 
         harness.assertLife(player1, 10);
     }
@@ -80,7 +101,7 @@ class AncestorsChosenTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Erhnam Djinn");
     }
 
-    private void castAncestorsChosen() {
+    private void castAncestorsChosenForJudReview() {
         harness.castFromHand(player1, new AncestorsChosen(), "{5}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "PC2", collectorNumber = "91")
+@CardRegistration(set = "PCA", collectorNumber = "91")
+@CardRegistration(set = "C15", collectorNumber = "217")
 public class EtheriumHornSorcerer extends Card {
 
     public EtheriumHornSorcerer() {

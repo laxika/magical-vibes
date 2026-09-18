@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReverseTurnOrderEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "8")
+@CardRegistration(set = "OPCA", collectorNumber = "8")
 public class TimeDistortion extends Card {
 
     public TimeDistortion() {

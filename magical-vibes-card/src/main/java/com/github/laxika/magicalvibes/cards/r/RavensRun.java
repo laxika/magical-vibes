@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "31")
+@CardRegistration(set = "OPCA", collectorNumber = "66")
 public class RavensRun extends Card {
 
     public RavensRun() {

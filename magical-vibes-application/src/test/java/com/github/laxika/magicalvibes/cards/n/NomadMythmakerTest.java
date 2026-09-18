@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
+import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -25,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NomadMythmaker.class, HolyStrength.class, Pacifism.class, GrizzlyBears.class})
+@CardUsed({EvilPresence.class, GrizzlyBears.class, HolyStrength.class, NomadMythmaker.class, Pacifism.class})
 class NomadMythmakerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -33,21 +32,30 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Nomad Mythmaker puts it on the stack")
     void castingPutsItOnStack() {
-        harness.castFromHand(player1, new NomadMythmaker(), "{2}{W}");
+        NomadMythmaker card = new NomadMythmaker();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nomad Mythmaker");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
     }
 
     @Test
     @DisplayName("Resolving Nomad Mythmaker puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.castFromHand(player1, new NomadMythmaker(), "{2}{W}");
+        NomadMythmaker card = new NomadMythmaker();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Nomad Mythmaker");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == card);
     }
 
     // ===== Activate ability =====
@@ -55,7 +63,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability targeting Aura in graveyard puts ability on stack")
     void activatingAbilityPutsOnStack() {
-        addMythmakerReady(player1);
+        Permanent mythmakerPerm = addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player2, holyStrength);
         addCreatureReady(player1, new GrizzlyBears());
@@ -67,7 +75,7 @@ class NomadMythmakerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Nomad Mythmaker");
+        assertThat(entry.getCard()).isSameAs(mythmakerPerm.getCard());
         assertThat(entry.getTargetId()).isEqualTo(holyStrength.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
@@ -120,11 +128,10 @@ class NomadMythmakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(creature.getId());
-        assertThat(gd.interaction.pendingAuraCard()).isNotNull();
-        assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Holy Strength");
+        assertThat(gd.interaction.pendingAuraCard()).isSameAs(holyStrength);
 
         // Aura removed from graveyard
-        harness.assertNotInGraveyard(player2, "Holy Strength");
+        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(card -> card == holyStrength);
     }
 
     @Test
@@ -149,7 +156,7 @@ class NomadMythmakerTest extends BaseCardTest {
         // Aura should be on the battlefield attached to the creature
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         Permanent auraPerm = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Holy Strength"))
+                .filter(p -> p.getCard() == holyStrength)
                 .findFirst()
                 .orElse(null);
         assertThat(auraPerm).isNotNull();
@@ -170,7 +177,7 @@ class NomadMythmakerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
 
         GameData gd = harness.getGameData();
-        // Holy Strength gives +1/+2, Grizzly Bears is 2/2 → should be 3/4
+        // Holy Strength gives +1/+2, Grizzly Bears is 2/2 Ă˘â€ â€™ should be 3/4
         // Static bonuses are computed on-the-fly by GameService, not stored on Permanent
         assertThat(harness.getGameQueryService().getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, creature)).isEqualTo(4);
@@ -193,45 +200,29 @@ class NomadMythmakerTest extends BaseCardTest {
         // Pacifism should be on player1's battlefield (under their control)
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield)
-                .anyMatch(p -> p.getCard().getName().equals("Pacifism") && p.getAttachedTo().equals(creature.getId()));
+                .anyMatch(p -> p.getCard() == pacifism && p.getAttachedTo().equals(creature.getId()));
         // Removed from player2's graveyard
-        harness.assertNotInGraveyard(player2, "Pacifism");
+        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(card -> card == pacifism);
     }
 
     @Test
     @DisplayName("Multiple creatures available gives choice among all of them")
     void multipleCreaturesGivesChoice() {
-        Permanent mythmaker = addMythmakerReady(player1);
+        Permanent mythmakerPerm = addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
         Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
         Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        // Both creatures should be valid choices (Mythmaker is also a creature, so 3 total)
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(mythmaker.getId(), creature1.getId(), creature2.getId());
-    }
-
-    @Test
-    @DisplayName("Attachment choice excludes creatures controlled by the opponent")
-    void attachmentChoiceExcludesOpponentsCreatures() {
-        addMythmakerReady(player1);
-        Card holyStrength = new HolyStrength();
-        addToGraveyard(player1, holyStrength);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
+        // The source is also a creature; the opponent's creature must not be a legal choice.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(ownCreature.getId())
+                .containsExactlyInAnyOrder(mythmakerPerm.getId(), creature1.getId(), creature2.getId())
                 .doesNotContain(opponentCreature.getId());
     }
 
@@ -265,7 +256,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        // Only creature is the Mythmaker itself — remove it before resolution
+        // Only creature is the Mythmaker itself Ă˘â‚¬â€ť remove it before resolution
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -279,6 +270,25 @@ class NomadMythmakerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(holyStrength);
+    }
+
+    @Test
+    @CardUsed(EvilPresence.class)
+    @DisplayName("Aura remains in graveyard when it cannot enchant a creature")
+    void auraWithIncompatibleEnchantRestrictionRemainsInGraveyard() {
+        addMythmakerReady(player1);
+        Card evilPresence = new EvilPresence();
+        addToGraveyard(player1, evilPresence);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, evilPresence.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(evilPresence);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == evilPresence);
     }
 
     // ===== Validation errors =====
@@ -401,15 +411,36 @@ class NomadMythmakerTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addMythmakerReady(Player player) {
+        return addCreatureReady(player, new NomadMythmaker());
+    }
+
+    private void addToGraveyard(Player player, Card card) {
+        harness.getGameData().playerGraveyards.get(player.getId()).add(card);
+    }
+
+    @Test
+    @DisplayName("Attachment choice excludes creatures controlled by the opponent")
+    void attachmentChoiceExcludesOpponentsCreatures() {
+        addMythmakerReadyForJudReview(player1);
+        Card holyStrength = new HolyStrength();
+        addToGraveyard(player1, holyStrength);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(ownCreature.getId())
+                .doesNotContain(opponentCreature.getId());
+    }
+
+    private Permanent addMythmakerReadyForJudReview(Player player) {
         NomadMythmaker card = new NomadMythmaker();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
-    private void addToGraveyard(Player player, Card card) {
-        harness.getGameData().playerGraveyards.get(player.getId()).add(card);
-    }
 }
-

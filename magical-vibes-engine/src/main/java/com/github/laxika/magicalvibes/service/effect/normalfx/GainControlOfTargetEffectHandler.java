@@ -55,10 +55,11 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) continue;
 
-            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+            boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                     e, e.duration().toEffectDuration(), null, entry.getCard().getName());
 
-            if (e.grantedSubtype() != null && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
+            if (controlApplied && e.grantedSubtype() != null
+                    && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
                 target.getGrantedSubtypes().add(e.grantedSubtype());
                 
                 gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());
@@ -76,12 +77,12 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) continue;
 
-            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+            boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                     e, e.duration().toEffectDuration(), null, entry.getCard().getName());
 
             // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
             // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
-            if (e.tapWhenControlLost()) {
+            if (controlApplied && e.tapWhenControlLost()) {
                 gameData.registerControlLossTapTrigger(
                         target.getId(), entry.getControllerId(), entry.getCard());
             }
@@ -125,12 +126,12 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) continue;
 
-            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+            boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                     e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
 
             // Merieke Ri Berit: "destroy that creature" fires after the control effect has already been
             // expired (source left or untapped), so the stolen permanent is remembered on the source.
-            if (e.linkStolenPermanentToSource()) {
+            if (controlApplied && e.linkStolenPermanentToSource()) {
                 source.setChosenPermanentId(target.getId());
             }
         }

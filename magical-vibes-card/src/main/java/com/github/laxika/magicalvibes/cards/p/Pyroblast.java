@@ -19,6 +19,11 @@ import java.util.Set;
 @CardRegistration(set = "5ED", collectorNumber = "262")
 @CardRegistration(set = "ICE", collectorNumber = "213")
 @CardRegistration(set = "ME1", collectorNumber = "107")
+@CardRegistration(set = "EMA", collectorNumber = "142")
+@CardRegistration(set = "SS3", collectorNumber = "5")
+@CardRegistration(set = "SLZ", collectorNumber = "66")
+@CardRegistration(set = "SLZ", collectorNumber = "187")
+@CardRegistration(set = "SLZ", collectorNumber = "308")
 public class Pyroblast extends Card {
 
     public Pyroblast() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "6")
+@CardRegistration(set = "C13", collectorNumber = "189")
 public class FiligreeAngel extends Card {
 
     public FiligreeAngel() {

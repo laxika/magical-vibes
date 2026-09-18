@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "134")
+@CardRegistration(set = "GK2", collectorNumber = "28")
+@CardRegistration(set = "RVR", collectorNumber = "233")
 public class TeysaOrzhovScion extends Card {
 
     public TeysaOrzhovScion() {

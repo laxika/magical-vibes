@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "24")
+@CardRegistration(set = "MB1", collectorNumber = "247")
 public class SteadfastSentinel extends Card {
 
     public SteadfastSentinel() {

@@ -91,10 +91,7 @@ class DegavolverTest extends BaseCardTest {
     }
 
     private Permanent castDegavolver() {
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.setHand(player1, List.of(new Degavolver()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Degavolver(), "{1}{W}");
         harness.passBothPriorities();
         return findDegavolver();
     }

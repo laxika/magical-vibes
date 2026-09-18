@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "84")
+@CardRegistration(set = "DBL", collectorNumber = "351")
 public class SyphonEssence extends Card {
 
     public SyphonEssence() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "142")
+@CardRegistration(set = "KLR", collectorNumber = "152")
 public class ArborbackStomper extends Card {
 
     public ArborbackStomper() {

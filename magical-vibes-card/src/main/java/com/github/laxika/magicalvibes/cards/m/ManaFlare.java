@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 @CardRegistration(set = "SUM", collectorNumber = "164")
 @CardRegistration(set = "ME1", collectorNumber = "103")
 @CardRegistration(set = "3ED", collectorNumber = "164")
+@CardRegistration(set = "WOT", collectorNumber = "46")
+@CardRegistration(set = "2ED", collectorNumber = "163")
 public class ManaFlare extends Card {
 
     public ManaFlare() {

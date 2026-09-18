@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "SOI", collectorNumber = "81")
+@CardRegistration(set = "SIR", collectorNumber = "87")
 public class Rattlechains extends Card {
 
     public Rattlechains() {

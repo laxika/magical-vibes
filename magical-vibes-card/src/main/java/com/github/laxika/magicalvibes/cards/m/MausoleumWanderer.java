@@ -21,6 +21,8 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "305")
 @CardRegistration(set = "INR", collectorNumber = "360")
 @CardRegistration(set = "EMN", collectorNumber = "69")
+@CardRegistration(set = "EA1", collectorNumber = "4")
+@CardRegistration(set = "SIR", collectorNumber = "81")
 public class MausoleumWanderer extends Card {
 
     public MausoleumWanderer() {

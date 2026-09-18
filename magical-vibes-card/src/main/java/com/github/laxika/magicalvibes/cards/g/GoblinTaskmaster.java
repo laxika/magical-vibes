@@ -21,6 +21,7 @@ public class GoblinTaskmaster extends Card {
     ));
 
     public GoblinTaskmaster() {
+        addMorph("{R}");
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",

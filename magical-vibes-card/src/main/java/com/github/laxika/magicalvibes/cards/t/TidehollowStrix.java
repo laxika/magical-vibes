@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ALA", collectorNumber = "203")
+@CardRegistration(set = "C13", collectorNumber = "222")
 public class TidehollowStrix extends Card {
 
     public TidehollowStrix() {

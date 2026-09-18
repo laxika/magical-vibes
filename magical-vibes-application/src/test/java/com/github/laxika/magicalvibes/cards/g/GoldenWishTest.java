@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.e.EpicStruggle;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,15 +17,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoldenWish.class, Spellbook.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({EpicStruggle.class, GoldenWish.class, Spellbook.class, SuntailHawk.class})
 class GoldenWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers artifact and enchantment cards from outside the game")
     void offersArtifactAndEnchantmentCards() {
         Card artifact = new Spellbook();
-        Card enchantment = new GloriousAnthem();
-        Card creature = new GrizzlyBears();
+        Card enchantment = new EpicStruggle();
+        Card creature = new SuntailHawk();
         setSideboard(artifact, enchantment, creature);
 
         GoldenWish wish = castGoldenWish();
@@ -56,7 +60,7 @@ class GoldenWishTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prompt when outside-the-game cards do not match")
     void noMatchingCardNoPrompt() {
-        Card creature = new GrizzlyBears();
+        Card creature = new SuntailHawk();
         setSideboard(creature);
 
         GoldenWish wish = castGoldenWish();
@@ -66,9 +70,28 @@ class GoldenWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Does not search an opponent's outside-the-game cards")
+    void doesNotSearchOpponentsSideboard() {
+        Card ownCreature = new SuntailHawk();
+        Card opponentArtifact = new Spellbook();
+        setSideboard(ownCreature);
+        setSideboard(player2, opponentArtifact);
+
+        GoldenWish wish = castGoldenWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentArtifact);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
     private GoldenWish castGoldenWish() {
         GoldenWish wish = new GoldenWish();
-        harness.castFromHand(player1, wish, "{3}{W}{W}");
+        harness.setHand(player1, List.of(wish));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
         return wish;
     }
@@ -85,5 +108,9 @@ class GoldenWishTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
         harness.handleCardChosen(player1, index);
+    }
+
+    private void setSideboard(Player player, Card... cards) {
+        gd.playerSideboards.put(player.getId(), new ArrayList<>(List.of(cards)));
     }
 }

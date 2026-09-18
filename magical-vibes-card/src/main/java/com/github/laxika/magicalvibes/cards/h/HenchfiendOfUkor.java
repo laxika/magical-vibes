@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "117")
+@CardRegistration(set = "TSR", collectorNumber = "170")
 public class HenchfiendOfUkor extends Card {
 
     public HenchfiendOfUkor() {

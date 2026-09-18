@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "DD1", collectorNumber = "24")
 @CardRegistration(set = "DDF", collectorNumber = "67")
 @CardRegistration(set = "EVG", collectorNumber = "24")
+@CardRegistration(set = "IMA", collectorNumber = "222")
 public class MoongloveExtract extends Card {
 
     public MoongloveExtract() {

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KrosanCloudscraper;
+import com.github.laxika.magicalvibes.cards.a.AvenFarseer;
+import com.github.laxika.magicalvibes.cards.e.ElvishAberration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,38 +14,38 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonScales.class, GrizzlyBears.class, KrosanCloudscraper.class})
+@CardUsed({DragonScales.class, AvenFarseer.class, ElvishAberration.class})
 class DragonScalesTest extends BaseCardTest {
 
     @Test
     void resolvingAuraBoostsEnchantedCreatureAndGrantsVigilance() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AvenFarseer());
         harness.setHand(player1, List.of(new DragonScales()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         Permanent aura = findPermanent(player1, "Dragon Scales");
-        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
-    void highManaValueCreatureEnteringUnderAnyPlayersControlTriggersReturn() {
+    void sixManaValueCreatureEnteringUnderAnyPlayersControlTriggersReturn() {
         DragonScales scales = new DragonScales();
         harness.setGraveyard(player1, List.of(scales));
-        Permanent creature = harness.enterBattlefieldAndReturn(player2, new KrosanCloudscraper());
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new ElvishAberration());
 
         resolveMayAbility(true);
 
         Permanent returnedScales = findPermanent(player1, "Dragon Scales");
         assertThat(returnedScales.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(14);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(15);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
         harness.assertNotInGraveyard(player1, "Dragon Scales");
     }
@@ -53,7 +53,7 @@ class DragonScalesTest extends BaseCardTest {
     @Test
     void smallerCreatureDoesNotTriggerReturn() {
         harness.setGraveyard(player1, List.of(new DragonScales()));
-        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new AvenFarseer());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Dragon Scales");
@@ -62,10 +62,27 @@ class DragonScalesTest extends BaseCardTest {
     @Test
     void decliningReturnKeepsAuraInGraveyard() {
         harness.setGraveyard(player1, List.of(new DragonScales()));
-        harness.enterBattlefieldAndReturn(player1, new KrosanCloudscraper());
+        harness.enterBattlefieldAndReturn(player1, new ElvishAberration());
 
         resolveMayAbility(false);
 
+        harness.assertInGraveyard(player1, "Dragon Scales");
+        harness.assertNotOnBattlefield(player1, "Dragon Scales");
+    }
+
+    @Test
+    void acceptedReturnEntersUnattachedWhenEnteringCreatureLeavesBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new DragonScales()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new ElvishAberration());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("Dragon Scales returns to the battlefield unattached.")).isTrue();
         harness.assertInGraveyard(player1, "Dragon Scales");
         harness.assertNotOnBattlefield(player1, "Dragon Scales");
     }

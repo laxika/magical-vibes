@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "91")
+@CardRegistration(set = "E02", collectorNumber = "17")
 public class CoatWithVenom extends Card {
 
     public CoatWithVenom() {

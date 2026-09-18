@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "252")
 @CardRegistration(set = "RIX", collectorNumber = "178")
+@CardRegistration(set = "2XM", collectorNumber = "257")
 public class GleamingBarrier extends Card {
 
     public GleamingBarrier() {

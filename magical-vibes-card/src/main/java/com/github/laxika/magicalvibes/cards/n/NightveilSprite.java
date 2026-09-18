@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "48")
+@CardRegistration(set = "RVR", collectorNumber = "52")
 public class NightveilSprite extends Card {
 
     public NightveilSprite() {

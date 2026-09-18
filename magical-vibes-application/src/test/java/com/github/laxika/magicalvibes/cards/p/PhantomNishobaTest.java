@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.ArcaneTeachings;
+import com.github.laxika.magicalvibes.cards.c.Cagemail;
+import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.s.Swelter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +23,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhantomNishoba.class, EmberShot.class, FlaringPain.class, SuntailHawk.class})
+@CardUsed({ArcaneTeachings.class, Cagemail.class, DwarvenDriller.class, EmberShot.class, FlaringPain.class, LavaDart.class, PhantomNishoba.class, SuntailHawk.class, Swelter.class})
 class PhantomNishobaTest extends BaseCardTest {
 
     @Test
@@ -34,27 +39,119 @@ class PhantomNishobaTest extends BaseCardTest {
     @Test
     @DisplayName("Damage to it is prevented and removes one counter per damage event")
     void damageIsPreventedAndRemovesOneCounterPerDamageEvent() {
-        harness.addToBattlefield(player2, new PhantomNishoba());
-        Permanent nishoba = findPermanent(player2, "Phantom Nishoba");
-        nishoba.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 7);
+        Permanent nishoba = harness.enterBattlefieldAndReturn(player2, new PhantomNishoba());
+        Permanent otherTarget = addCreatureReady(player2, new DwarvenDriller());
 
-        dealEmberShot(nishoba);
+        harness.setHand(player1, List.of(new Swelter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, List.of(nishoba.getId(), otherTarget.getId()));
 
+        assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(nishoba.getMarkedDamage()).isZero();
+        assertThat(findPermanent(player2, "Phantom Nishoba")).isSameAs(nishoba);
+    }
+
+    @Test
+    @DisplayName("Gains life equal to damage dealt in combat")
+    void gainsLifeEqualToDamageDealt() {
+        Permanent nishoba = addAttacker(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(27);
+        assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Still prevents damage when it has no +1/+1 counters")
+    void preventsDamageWithoutCounters() {
+        Permanent nishoba = harness.enterBattlefieldAndReturn(player2, new PhantomNishoba());
+
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, nishoba.getId());
+        harness.passBothPriorities();
+
+        nishoba.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, nishoba.getId());
+
+        assertThat(findPermanent(player2, "Phantom Nishoba")).isSameAs(nishoba);
+        assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(nishoba.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removes one counter even when damage cannot be prevented")
+    void removesOneCounterWhenDamageCannotBePrevented() {
+        Permanent nishoba = harness.enterBattlefieldAndReturn(player2, new PhantomNishoba());
+
+        harness.setHand(player1, List.of(new FlaringPain()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, nishoba.getId());
+
+        assertThat(findPermanent(player2, "Phantom Nishoba")).isSameAs(nishoba);
+        assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(nishoba.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removes only one counter for damage from multiple simultaneous sources")
+    void removesOneCounterForMultipleSimultaneousSources() {
+        Permanent nishoba = harness.enterBattlefieldAndReturn(player1, new PhantomNishoba());
+        nishoba.setSummoningSick(false);
+        Permanent blocker1 = harness.enterBattlefieldAndReturn(player2, new DwarvenDriller());
+        Permanent blocker2 = harness.enterBattlefieldAndReturn(player2, new DwarvenDriller());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker1.getId(), 2,
+                blocker2.getId(), 5));
+
+        assertThat(findPermanent(player1, "Phantom Nishoba")).isSameAs(nishoba);
         assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(nishoba.getMarkedDamage()).isZero();
     }
 
     @Test
-    @DisplayName("Damage is still prevented when it has no +1/+1 counters")
-    void preventsDamageWithoutCounters() {
-        Permanent nishoba = addCreatureReady(player2, new PhantomNishoba());
-        nishoba.setToughnessModifier(1);
+    @DisplayName("Noncombat damage also grants that much life")
+    void noncombatDamageAlsoGrantsThatMuchLife() {
+        Permanent nishoba = harness.enterBattlefieldAndReturn(player1, new PhantomNishoba());
+        nishoba.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
 
-        dealEmberShot(nishoba);
+        harness.setHand(player1, List.of(new ArcaneTeachings()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, nishoba.getId());
+        harness.passBothPriorities();
 
-        assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(nishoba.getMarkedDamage()).isZero();
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nishoba);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player player) {
+        Permanent nishoba = harness.enterBattlefieldAndReturn(player, new PhantomNishoba());
+        nishoba.setSummoningSick(false);
+        nishoba.setAttacking(true);
+        return nishoba;
     }
 
     @Test
@@ -65,7 +162,7 @@ class PhantomNishobaTest extends BaseCardTest {
 
         harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
         harness.passBothPriorities();
-        dealEmberShot(nishoba);
+        dealEmberShotForJudReview(nishoba);
 
         assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(nishoba.getMarkedDamage()).isEqualTo(3);
@@ -98,34 +195,11 @@ class PhantomNishobaTest extends BaseCardTest {
         assertThat(nishoba.getMarkedDamage()).isZero();
     }
 
-    @Test
-    @DisplayName("Gains life equal to damage dealt in combat")
-    void gainsLifeEqualToDamageDealt() {
-        Permanent nishoba = addAttacker(player1);
-        harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
-
-        resolveCombat();
-        harness.passBothPriorities();
-
-        harness.assertLife(player2, 13);
-        harness.assertLife(player1, 27);
-        assertThat(nishoba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
-    }
-
-    private void dealEmberShot(Permanent target) {
+    private void dealEmberShotForJudReview(Permanent target) {
         harness.setHand(player1, List.of(new EmberShot()));
         harness.setLibrary(player1, List.of(new PhantomNishoba()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.castAndResolveInstant(player1, 0, target.getId());
     }
-
-    private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent nishoba = addCreatureReady(player, new PhantomNishoba());
-        nishoba.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 7);
-        nishoba.setAttacking(true);
-        return nishoba;
-    }
-
 }

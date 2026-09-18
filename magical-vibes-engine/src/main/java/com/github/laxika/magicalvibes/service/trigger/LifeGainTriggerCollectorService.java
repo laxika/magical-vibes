@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -24,6 +25,17 @@ import java.util.List;
 public class LifeGainTriggerCollectorService {
 
     private final GameLogService gameLogService;
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                null, match.permanent().getId());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on life gain and queues a may ability",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainMayPay(TriggerMatchContext match,
@@ -64,6 +76,19 @@ public class LifeGainTriggerCollectorService {
     private boolean handleLifeGainSequence(TriggerMatchContext match,
                                             SequenceEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(effect),
+                    match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} sequence trigger needs a target",
+                    match.gameData().id, sourceCard.getName());
+            return true;
+        }
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,

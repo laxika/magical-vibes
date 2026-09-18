@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInstea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "132")
+@CardRegistration(set = "DBL", collectorNumber = "132")
 public class BurnTheAccursed extends Card {
 
     public BurnTheAccursed() {

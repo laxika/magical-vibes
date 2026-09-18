@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "174")
 @CardRegistration(set = "ORI", collectorNumber = "177")
+@CardRegistration(set = "MB1", collectorNumber = "177")
 public class GaeasRevenge extends Card {
 
     public GaeasRevenge() {

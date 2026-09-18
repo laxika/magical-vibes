@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.r.RavensCrime;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircularLogic.class, FuneralCharm.class, GrizzlyBears.class, LavaAxe.class, LightningBolt.class, RavensCrime.class, Shock.class})
+@CardUsed({CircularLogic.class, FuneralCharm.class, GrizzlyBears.class, LavaAxe.class, Shock.class})
 class CircularLogicTest extends BaseCardTest {
 
     @Test
@@ -66,9 +64,33 @@ class CircularLogicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts only the Circular Logic controller's graveyard")
+    void ignoresTargetControllersGraveyard() {
+        harness.setGraveyard(player1, List.of(new Shock(), new LavaAxe()));
+        harness.setGraveyard(player2, List.of());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new CircularLogic()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Declining madness puts Circular Logic into the graveyard")
     void decliningMadnessGoesToGraveyard() {
-        CircularLogic logic = discardViaRavensCrime();
+        CircularLogic logic = discardViaFuneralCharm();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -83,9 +105,9 @@ class CircularLogicTest extends BaseCardTest {
     void acceptingMadnessCountersTargetSpell() {
         harness.setGraveyard(player1, List.of(new LavaAxe()));
         CircularLogic logic = new CircularLogic();
-        LightningBolt bolt = new LightningBolt();
+        Shock shock = new Shock();
         harness.setHand(player1, List.of(logic, new FuneralCharm()));
-        harness.setHand(player2, List.of(bolt));
+        harness.setHand(player2, List.of(shock));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.RED, 1);
@@ -99,23 +121,23 @@ class CircularLogicTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bolt.getId());
+        harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Circular Logic");
-        harness.assertInGraveyard(player2, "Lightning Bolt");
+        harness.assertInGraveyard(player2, "Shock");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
-    private CircularLogic discardViaRavensCrime() {
+    private CircularLogic discardViaFuneralCharm() {
         CircularLogic logic = new CircularLogic();
         harness.setHand(player1, List.of(logic));
-        harness.setHand(player2, List.of(new RavensCrime()));
+        harness.setHand(player2, List.of(new FuneralCharm()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
+        harness.castInstant(player2, 0, 0, player1.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         return logic;

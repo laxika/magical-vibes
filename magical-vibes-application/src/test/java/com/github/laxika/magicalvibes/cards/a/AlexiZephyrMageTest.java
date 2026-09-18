@@ -11,12 +11,60 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlexiZephyrMage.class, HazyHomunculus.class, PygmyRazorback.class, ChimericIdol.class})
 class AlexiZephyrMageTest extends BaseCardTest {
+
+    @Test
+    void returnsMoreThanOneHundredTargets() {
+        addReadyMage();
+        List<UUID> targets = IntStream.range(0, 101)
+                .mapToObj(i -> addCreatureReady(player2, new PygmyRazorback()).getId())
+                .toList();
+        harness.setHand(player1, List.of(new PygmyRazorback(), new PygmyRazorback()));
+        harness.addMana(player1, ManaColor.BLUE, 102);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 101, targets);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Pygmy Razorback")).hasSize(101);
+    }
+
+    @Test
+    void singleTargetActivationStillRequiresExactlyXTargets() {
+        addReadyMage();
+        Permanent target = addCreatureReady(player2, new PygmyRazorback());
+        harness.setHand(player1, List.of(new PygmyRazorback(), new PygmyRazorback()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void singleTargetActivationWorksWhenXIsOne() {
+        addReadyMage();
+        Permanent target = addCreatureReady(player2, new PygmyRazorback());
+        harness.setHand(player1, List.of(new PygmyRazorback(), new PygmyRazorback()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Pygmy Razorback");
+        harness.assertInHand(player2, "Pygmy Razorback");
+    }
 
     @Test
     void returnsXTargetCreaturesAndDiscardsTwoCards() {

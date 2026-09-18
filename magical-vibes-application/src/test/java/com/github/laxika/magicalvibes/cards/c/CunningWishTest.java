@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.cards.e.Envelop;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,14 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CunningWish.class, Envelop.class, SuntailHawk.class})
+@CardUsed({AvenFogbringer.class, CunningWish.class, Envelop.class})
 class CunningWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers instant cards from outside the game and exiles Cunning Wish")
     void offersInstantCardsFromOutsideTheGame() {
         Card instant = new Envelop();
-        Card creature = new SuntailHawk();
+        Card creature = new AvenFogbringer();
         setSideboard(instant, creature);
 
         CunningWish wish = castCunningWish();
@@ -56,7 +58,7 @@ class CunningWishTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prompt when outside-the-game cards do not include an instant")
     void noMatchingCardNoPrompt() {
-        Card creature = new SuntailHawk();
+        Card creature = new AvenFogbringer();
         setSideboard(creature);
 
         CunningWish wish = castCunningWish();
@@ -66,15 +68,35 @@ class CunningWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Does not search an opponent's outside-the-game cards")
+    void ignoresOpponentsOutsideTheGameCards() {
+        Card instant = new Envelop();
+        setSideboard(player2, instant);
+
+        CunningWish wish = castCunningWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(instant);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
     private CunningWish castCunningWish() {
         CunningWish wish = new CunningWish();
-        harness.castFromHand(player1, wish, "{2}{U}");
+        harness.setHand(player1, List.of(wish));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
         return wish;
     }
 
     private void setSideboard(Card... cards) {
-        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(cards)));
+        setSideboard(player1, cards);
+    }
+
+    private void setSideboard(Player player, Card... cards) {
+        gd.playerSideboards.put(player.getId(), new ArrayList<>(List.of(cards)));
     }
 
     private PendingInteraction.LibrarySearch pendingSearch() {

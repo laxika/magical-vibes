@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "125")
+@CardRegistration(set = "A25", collectorNumber = "184")
+@CardRegistration(set = "C13", collectorNumber = "161")
 public class PresenceOfGond extends Card {
 
     public PresenceOfGond() {

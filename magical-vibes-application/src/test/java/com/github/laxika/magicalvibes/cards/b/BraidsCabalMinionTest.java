@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.CharmedPendant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.g.GroundSeal;
+import com.github.laxika.magicalvibes.cards.w.Werebear;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BraidsCabalMinion.class, CharmedPendant.class, Forest.class, GroundSeal.class, Werebear.class})
 class BraidsCabalMinionTest extends BaseCardTest {
 
     @Test
     @DisplayName("At each player's upkeep that player sacrifices an artifact, creature, or land")
     void activePlayerChoosesEligiblePermanentToSacrifice() {
         harness.addToBattlefield(player1, new BraidsCabalMinion());
-        Permanent artifact = addPermanent(player2, "Test Artifact", CardType.ARTIFACT);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CharmedPendant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Werebear());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         advanceToUpkeep(player2);
@@ -40,8 +41,8 @@ class BraidsCabalMinionTest extends BaseCardTest {
     @DisplayName("A non-artifact, noncreature, nonland permanent is not eligible")
     void nonEligiblePermanentIsNotSacrificed() {
         harness.addToBattlefield(player1, new BraidsCabalMinion());
-        Permanent enchantment = addPermanent(player2, "Test Enchantment", CardType.ENCHANTMENT);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GroundSeal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Werebear());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -56,7 +57,7 @@ class BraidsCabalMinionTest extends BaseCardTest {
     @DisplayName("The controller also sacrifices a permanent during their own upkeep")
     void controllerIsAlsoAffected() {
         Permanent braids = harness.addToBattlefieldAndReturn(player1, new BraidsCabalMinion());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Werebear());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -68,13 +69,17 @@ class BraidsCabalMinionTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(creature.getId()));
     }
 
-    private Permanent addPermanent(Player player, String name, CardType type) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(type);
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Does nothing when the active player controls no artifact, creature, or land")
+    void noEligiblePermanentDoesNotPromptOrSacrifice() {
+        harness.addToBattlefield(player1, new BraidsCabalMinion());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GroundSeal());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(enchantment.getId()));
     }
 }

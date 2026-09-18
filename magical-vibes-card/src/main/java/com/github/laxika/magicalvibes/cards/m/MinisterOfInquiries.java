@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "57")
+@CardRegistration(set = "KLR", collectorNumber = "58")
 public class MinisterOfInquiries extends Card {
 
     public MinisterOfInquiries() {

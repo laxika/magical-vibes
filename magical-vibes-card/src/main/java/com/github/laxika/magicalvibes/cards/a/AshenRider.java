@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "187")
+@CardRegistration(set = "2X2", collectorNumber = "173")
+@CardRegistration(set = "PIO", collectorNumber = "203")
 public class AshenRider extends Card {
 
     public AshenRider() {

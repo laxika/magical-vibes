@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "189")
+@CardRegistration(set = "CMD", collectorNumber = "125")
 public class GoblinCadets extends Card {
 
     public GoblinCadets() {

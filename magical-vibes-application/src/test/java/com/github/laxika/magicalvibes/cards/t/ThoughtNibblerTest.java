@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThoughtNibbler.class, Forest.class, Mountain.class, Plains.class})
 class ThoughtNibblerTest extends BaseCardTest {
 
     @Test
@@ -23,12 +23,12 @@ class ThoughtNibblerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThoughtNibbler());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new Forest(), new Mountain(), new Plains(),
-                new GrizzlyBears(), new Forest()
-        )));
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Mountain(), new Plains(),
+                new Forest(), new Forest()
+        ));
 
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
@@ -41,12 +41,12 @@ class ThoughtNibblerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThoughtNibbler());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+        harness.setHand(player2, List.of(
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
-        )));
+        ));
 
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.CLEANUP);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
                 .isEqualTo(1);
@@ -59,14 +59,30 @@ class ThoughtNibblerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain(), new Plains(), new Plains()
-        )));
+        ));
 
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
                 .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Controller does not discard when hand is at the reduced maximum")
+    void controllerDoesNotDiscardAtReducedMaximum() {
+        harness.addToBattlefield(player1, new ThoughtNibbler());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Mountain(), new Plains(), new Forest()
+        ));
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
     }
 }

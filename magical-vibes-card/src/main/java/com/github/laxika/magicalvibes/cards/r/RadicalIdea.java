@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "52")
+@CardRegistration(set = "RVR", collectorNumber = "58")
 public class RadicalIdea extends Card {
 
     public RadicalIdea() {

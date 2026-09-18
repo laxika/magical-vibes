@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "90")
+@CardRegistration(set = "HA4", collectorNumber = "10")
 public class FaithOfTheDevoted extends Card {
 
     public FaithOfTheDevoted() {

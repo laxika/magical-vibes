@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "174")
+@CardRegistration(set = "DBL", collectorNumber = "441")
 public class RecklessImpulse extends Card {
 
     public RecklessImpulse() {

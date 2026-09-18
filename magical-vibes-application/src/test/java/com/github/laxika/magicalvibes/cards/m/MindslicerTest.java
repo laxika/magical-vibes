@@ -1,29 +1,26 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mindslicer.class, DuskImp.class})
 class MindslicerTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Mindslicer dies, its death trigger goes on the stack")
     void deathTriggerGoesOnStack() {
-        harness.addToBattlefield(player1, new Mindslicer());
-
         setupCombatWhereMindslicerDies();
-        harness.passBothPriorities(); // Combat damage — Mindslicer dies
+        resolveCombat();
 
         harness.assertInGraveyard(player1, "Mindslicer");
         assertThat(gd.stack).hasSize(1);
@@ -34,56 +31,45 @@ class MindslicerTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the death trigger makes each player discard their entire hand")
     void eachPlayerDiscardsEntireHand() {
-        harness.addToBattlefield(player1, new Mindslicer());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, List.of(new DuskImp(), new DuskImp()));
+        harness.setHand(player2, List.of(new DuskImp(), new DuskImp(), new DuskImp()));
 
         setupCombatWhereMindslicerDies();
-        harness.passBothPriorities(); // Combat damage — Mindslicer dies
+        resolveCombat();
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears")).hasSize(2);
+                .filteredOn(c -> c.getName().equals("Dusk Imp")).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears")).hasSize(3);
+                .filteredOn(c -> c.getName().equals("Dusk Imp")).hasSize(3);
     }
 
     @Test
     @DisplayName("Death trigger empties a non-empty hand while logging the empty one")
     void handlesEmptyHand() {
-        harness.addToBattlefield(player1, new Mindslicer());
-        harness.setHand(player1, new ArrayList<>());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new DuskImp()));
 
         setupCombatWhereMindslicerDies();
-        harness.passBothPriorities(); // Combat damage — Mindslicer dies
+        resolveCombat();
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Dusk Imp");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
-    // ===== Helpers =====
-
     private void setupCombatWhereMindslicerDies() {
-        Permanent mindslicerPerm = findPermanent(player1, "Mindslicer");
-        mindslicerPerm.setSummoningSick(false);
+        Permanent mindslicerPerm = addCreatureReady(player1, new Mindslicer());
         mindslicerPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
+        DuskImp bigBear = new DuskImp();
         bigBear.setPower(5);
         bigBear.setToughness(5);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, bigBear);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "183")
+@CardRegistration(set = "MM3", collectorNumber = "175")
 public class NivMizzetDracogenius extends Card {
 
     public NivMizzetDracogenius() {

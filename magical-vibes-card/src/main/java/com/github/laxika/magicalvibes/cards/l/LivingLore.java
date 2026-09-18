@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "61")
+@CardRegistration(set = "UMA", collectorNumber = "62")
 public class LivingLore extends Card {
 
     public LivingLore() {

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "GTC", collectorNumber = "197")
 @CardRegistration(set = "GRN", collectorNumber = "198")
 @CardRegistration(set = "RAV", collectorNumber = "232")
+@CardRegistration(set = "MM3", collectorNumber = "184")
+@CardRegistration(set = "RVR", collectorNumber = "225")
 public class SkyknightLegionnaire extends Card {
 
     public SkyknightLegionnaire() {

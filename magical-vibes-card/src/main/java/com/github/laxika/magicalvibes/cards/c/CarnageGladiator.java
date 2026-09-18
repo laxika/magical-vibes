@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "61")
+@CardRegistration(set = "MM3", collectorNumber = "155")
 public class CarnageGladiator extends Card {
 
     public CarnageGladiator() {

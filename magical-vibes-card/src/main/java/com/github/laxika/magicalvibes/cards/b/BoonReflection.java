@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "5")
+@CardRegistration(set = "2XM", collectorNumber = "10")
 public class BoonReflection extends Card {
 
     public BoonReflection() {

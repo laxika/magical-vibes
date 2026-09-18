@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "68")
+@CardRegistration(set = "DBL", collectorNumber = "68")
 public class OverwhelmedArchivist extends Card {
 
     public OverwhelmedArchivist() {

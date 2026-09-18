@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.c.CentaurRootcaster;
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantWarthog.class, CentaurRootcaster.class})
+@CardUsed({AvenFogbringer.class, GiantWarthog.class})
 class GiantWarthogTest extends BaseCardTest {
 
     @Test
@@ -21,12 +21,11 @@ class GiantWarthogTest extends BaseCardTest {
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         Permanent giantWarthog = addCreatureReady(player1, new GiantWarthog());
-        Permanent blocker = addCreatureReady(player2, new CentaurRootcaster());
+        Permanent blocker = addCreatureReady(player2, new AvenFogbringer());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 2,

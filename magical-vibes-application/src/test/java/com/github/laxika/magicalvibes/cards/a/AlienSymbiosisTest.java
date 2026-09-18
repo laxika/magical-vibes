@@ -68,7 +68,7 @@ class AlienSymbiosisTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must discard a card");
+                .hasMessageContaining("Must discard exactly 1");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
     }
 

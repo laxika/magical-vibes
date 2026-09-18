@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpel
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "4")
+@CardRegistration(set = "CMD", collectorNumber = "5")
 public class AngelicArbiter extends Card {
 
     public AngelicArbiter() {

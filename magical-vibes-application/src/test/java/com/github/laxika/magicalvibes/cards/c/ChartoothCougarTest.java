@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChartoothCougar.class, Mountain.class, Forest.class})
+@CardUsed({ChartoothCougar.class, Mountain.class})
 class ChartoothCougarTest extends BaseCardTest {
 
     @Test
@@ -54,19 +52,40 @@ class ChartoothCougarTest extends BaseCardTest {
     void mountaincyclingSearchesForMountain() {
         harness.setHand(player1, List.of(new ChartoothCougar()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.setLibrary(player1, List.of(new Mountain(), new Forest(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Mountain(), new ChartoothCougar(), new Mountain()));
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Chartooth Cougar");
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
+        assertThat(search.params().shuffleAfterSelection()).isTrue();
+        assertThat(search.params().cards())
                 .allMatch(card -> card instanceof Mountain)
                 .hasSize(2);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Mountaincycling can fail to find a Mountain")
+    void mountaincyclingCanFailToFindMountain() {
+        ChartoothCougar nonMountain = new ChartoothCougar();
+        harness.setHand(player1, List.of(new ChartoothCougar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(nonMountain));
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chartooth Cougar");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMountain);
     }
 }

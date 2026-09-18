@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatMan
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "63")
+@CardRegistration(set = "SIR", collectorNumber = "71")
 public class ForgottenCreation extends Card {
 
     public ForgottenCreation() {

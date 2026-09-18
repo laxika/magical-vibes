@@ -14,6 +14,7 @@ public enum CardSubtype {
     ISLAND("Island"),
     PLAINS("Plains"),
     SWAMP("Swamp"),
+    CLOUD("Cloud"),
     DESERT("Desert"),
     CAVE("Cave"),
     LAIR("Lair"),
@@ -35,6 +36,7 @@ public enum CardSubtype {
     ARTIFICER("Artificer"),
     ADVISOR("Advisor"),
     ASSASSIN("Assassin"),
+    ASSASSIN_OR_FREERUNNING("Assassin or Freerunning"),
     WALL("Wall"),
     BARD("Bard"),
     BARBARIAN("Barbarian"),
@@ -65,10 +67,15 @@ public enum CardSubtype {
     HERO("Hero"),
     CLERIC("Cleric"),
     HALFLING("Halfling"),
+    HALF("Half"),
     CLOWN("Clown"),
     BIRD("Bird"),
+    BISON("Bison"),
     CAT("Cat"),
     CAMARID("Camarid"),
+    HOMARID("Homarid"),
+    CEPHALID("Cephalid"),
+    NAUTILID("Nautilid"),
     CENTAUR("Centaur"),
     SOLDIER("Soldier"),
     SERVO("Servo"),
@@ -109,6 +116,7 @@ public enum CardSubtype {
     FROG("Frog"),
     FUNGUS("Fungus"),
     OTTER("Otter"),
+    SEAL("Seal"),
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
     SQUID("Squid"),
@@ -185,6 +193,7 @@ public enum CardSubtype {
     WURM("Wurm"),
     WEIRD("Weird"),
     WORM("Worm"),
+    WHALE("Whale"),
     SATYR("Satyr"),
     JUGGERNAUT("Juggernaut"),
     THOPTER("Thopter"),
@@ -293,6 +302,7 @@ public enum CardSubtype {
     GATE("Gate"),
     SOLTARI("Soltari"),
     ZUBERA("Zubera"),
+    YANGGU("Yanggu"),
     YANLING("Yanling"),
     MITE("Mite"),
     OMEN("Omen"),
@@ -311,12 +321,12 @@ public enum CardSubtype {
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);
 
     private static final List<CardSubtype> LAND_TYPES = List.of(
-            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
+            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, CLOUD, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
             URZAS, MINE, POWER_PLANT, TOWER);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
-            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANLING);
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANGGU, YANLING);
 
     public static List<CardSubtype> basicLandTypes() {
         return BASIC_LAND_TYPES;

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,16 +13,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpurredWolverine.class, SpikedBaloth.class, AirElemental.class, Pacifism.class})
+@CardUsed({SpurredWolverine.class, BarkhideMauler.class, ScreechingBuzzard.class, Pacifism.class})
 class SpurredWolverineTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping two Beasts gives the target creature first strike until end of turn")
     void grantsFirstStrikeToTargetCreature() {
         Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
-        Permanent beast1 = addCreatureReady(player1, new SpikedBaloth());
-        Permanent beast2 = addCreatureReady(player1, new SpikedBaloth());
-        Permanent target = addCreatureReady(player2, new AirElemental());
+        Permanent beast1 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent beast2 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent target = addCreatureReady(player2, new ScreechingBuzzard());
 
         activateAbility(wolverine, beast1, beast2, target);
         harness.passBothPriorities();
@@ -36,9 +36,9 @@ class SpurredWolverineTest extends BaseCardTest {
     @DisplayName("Granted first strike wears off at end of turn")
     void firstStrikeWearsOffAtEndOfTurn() {
         Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
-        Permanent beast1 = addCreatureReady(player1, new SpikedBaloth());
-        Permanent beast2 = addCreatureReady(player1, new SpikedBaloth());
-        Permanent target = addCreatureReady(player2, new AirElemental());
+        Permanent beast1 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent beast2 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent target = addCreatureReady(player2, new ScreechingBuzzard());
 
         activateAbility(wolverine, beast1, beast2, target);
         harness.passBothPriorities();
@@ -52,10 +52,25 @@ class SpurredWolverineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The source may be one of the two Beasts tapped for the cost")
+    void sourceMayPayTapCost() {
+        Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
+        Permanent beast = addCreatureReady(player1, new BarkhideMauler());
+        Permanent target = addCreatureReady(player2, new ScreechingBuzzard());
+
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(wolverine.isTapped()).isTrue();
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot activate without two untapped Beasts")
     void requiresTwoUntappedBeasts() {
         Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
-        Permanent nonBeast = addCreatureReady(player1, new AirElemental());
+        Permanent nonBeast = addCreatureReady(player1, new ScreechingBuzzard());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(wolverine), null, wolverine.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -63,11 +78,28 @@ class SpurredWolverineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only untapped Beasts controlled by the activator can pay the cost")
+    void requiresUntappedBeastsYouControl() {
+        Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
+        wolverine.tap();
+        Permanent untappedOwnBeast = addCreatureReady(player1, new BarkhideMauler());
+        Permanent tappedOwnBeast = addCreatureReady(player1, new BarkhideMauler());
+        tappedOwnBeast.tap();
+        Permanent opponentBeast = addCreatureReady(player2, new BarkhideMauler());
+        Permanent target = addCreatureReady(player2, new ScreechingBuzzard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(wolverine), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(untappedOwnBeast.isTapped()).isFalse();
+        assertThat(opponentBeast.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void requiresCreatureTarget() {
         Permanent wolverine = addCreatureReady(player1, new SpurredWolverine());
-        Permanent beast1 = addCreatureReady(player1, new SpikedBaloth());
-        Permanent beast2 = addCreatureReady(player1, new SpikedBaloth());
+        Permanent beast1 = addCreatureReady(player1, new BarkhideMauler());
+        Permanent beast2 = addCreatureReady(player1, new BarkhideMauler());
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
 

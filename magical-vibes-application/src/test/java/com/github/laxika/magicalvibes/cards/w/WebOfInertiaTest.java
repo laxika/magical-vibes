@@ -19,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WebOfInertia.class, SuntailHawk.class})
+@CardUsed({ChandraNalaar.class, SuntailHawk.class, WebOfInertia.class})
 class WebOfInertiaTest extends BaseCardTest {
 
     @Test
@@ -70,7 +70,7 @@ class WebOfInertiaTest extends BaseCardTest {
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+        assertThatThrownBy(this::declareAttackers)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -85,7 +85,7 @@ class WebOfInertiaTest extends BaseCardTest {
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+        assertThatThrownBy(this::declareAttackers)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -98,7 +98,7 @@ class WebOfInertiaTest extends BaseCardTest {
 
         resolveCombatTrigger(player2);
         harness.handleMayAbilityChosen(player2, false);
-        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+        assertThatThrownBy(this::declareAttackers)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
@@ -119,6 +119,17 @@ class WebOfInertiaTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
     }
 
+    private void resolveCombatTrigger(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+    }
+
+    private void declareAttackers() {
+        declareAttackers(player2, List.of(0));
+    }
+
     @Test
     @CardUsed(ChandraNalaar.class)
     @DisplayName("The restriction does not prevent attacks at the controller's planeswalker")
@@ -128,15 +139,15 @@ class WebOfInertiaTest extends BaseCardTest {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
 
-        resolveCombatTrigger(player2);
+        resolveCombatTriggerForJudReview(player2);
         harness.handleMayAbilityChosen(player2, false);
 
-        declareAttackerAtTarget(player2, attacker, planeswalker);
+        declareAttackerAtTargetForJudReview(player2, attacker, planeswalker);
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
-    private void resolveCombatTrigger(Player activePlayer) {
+    private void resolveCombatTriggerForJudReview(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -144,7 +155,7 @@ class WebOfInertiaTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void declareAttackerAtTarget(Player attacker, Permanent creature, Permanent target) {
+    private void declareAttackerAtTargetForJudReview(Player attacker, Permanent creature, Permanent target) {
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

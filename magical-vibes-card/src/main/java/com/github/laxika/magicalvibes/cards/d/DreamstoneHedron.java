@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "216")
+@CardRegistration(set = "CMD", collectorNumber = "247")
+@CardRegistration(set = "C15", collectorNumber = "252")
 public class DreamstoneHedron extends Card {
 
     public DreamstoneHedron() {

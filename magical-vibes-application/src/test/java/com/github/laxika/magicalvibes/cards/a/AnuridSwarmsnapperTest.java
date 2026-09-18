@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
+import com.github.laxika.magicalvibes.cards.b.Brawn;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,10 +15,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnuridSwarmsnapper.class, BattlewiseAven.class})
+@CardUsed({AnuridSwarmsnapper.class, BattlewiseAven.class, Brawn.class, SuntailHawk.class})
 class AnuridSwarmsnapperTest extends BaseCardTest {
 
     @Test
@@ -53,13 +55,33 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Anurid Swarmsnapper can block a creature with flying")
+    void canBlockFlyingCreature() {
+        Permanent swarmsnapper = addSwarmsnapper();
+        Permanent attacker = addCreatureReady(player1, new SuntailHawk());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, 0)));
+
+        assertThat(swarmsnapper.getBlockingTargets()).containsExactly(0);
+    }
+
+    @Test
     @DisplayName("Activating Anurid Swarmsnapper twice lets it block three creatures")
     void blocksThreeCreaturesAfterActivatingTwice() {
         Permanent swarmsnapper = addSwarmsnapper();
-        addAttackers(3);
+        int swarmsnapperIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, swarmsnapperIdx, null, null);
+        harness.activateAbility(player2, swarmsnapperIdx, null, null);
+        resolveAllTriggers();
 
-        activate(swarmsnapper);
-        activate(swarmsnapper);
+        addAttackers(3);
         prepareDeclareBlockers();
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
 
@@ -73,17 +95,14 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Reach lets Anurid Swarmsnapper block a creature with flying")
-    void blocksFlyingCreatureWithReach() {
+    @DisplayName("Activating Anurid Swarmsnapper requires one generic and one green mana")
+    void activationRequiresFullManaCost() {
         Permanent swarmsnapper = addSwarmsnapper();
-        addAttacker(new BattlewiseAven());
+        int swarmsnapperIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
-        prepareDeclareBlockers();
-        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, 0)));
-
-        assertThat(swarmsnapper.getBlockingTargets()).containsExactly(0);
+        assertThatThrownBy(() -> harness.activateAbility(player2, swarmsnapperIdx, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -120,11 +139,27 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            addAttacker(new BattlewiseAven());
+            Permanent attacker = addCreatureReady(player1, new Brawn());
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player2.getId());
         }
     }
 
-    private Permanent addAttacker(Card card) {
+    @Test
+    @DisplayName("Reach lets Anurid Swarmsnapper block a creature with flying")
+    void blocksFlyingCreatureWithReach() {
+        Permanent swarmsnapper = addSwarmsnapper();
+        addAttackerForJudReview(new BattlewiseAven());
+
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, 0)));
+
+        assertThat(swarmsnapper.getBlockingTargets()).containsExactly(0);
+    }
+
+    private Permanent addAttackerForJudReview(Card card) {
         Permanent attacker = addCreatureReady(player1, card);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());

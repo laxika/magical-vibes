@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleOtherOwnCreaturesPowerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,8 @@ public class DoubleOtherOwnCreaturesPowerEffectHandler implements NormalEffectHa
                 continue;
             }
             int currentPower = gameQueryService.getEffectivePower(gameData, permanent);
-            permanent.setPowerModifier(permanent.getPowerModifier() + currentPower);
+            permanent.setPowerModifier(permanent.getPowerModifier()
+                    + MaroGoneNutsSupport.apply(gameData, effect, currentPower));
             count++;
         }
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "BNG", collectorNumber = "140")
+@CardRegistration(set = "PIO", collectorNumber = "349")
 public class Skyreaping extends Card {
 
     public Skyreaping() {

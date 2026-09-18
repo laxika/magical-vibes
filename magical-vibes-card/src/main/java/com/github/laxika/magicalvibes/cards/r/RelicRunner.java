@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCast
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "62")
+@CardRegistration(set = "2XM", collectorNumber = "63")
 public class RelicRunner extends Card {
 
     public RelicRunner() {

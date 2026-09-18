@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "117")
 @CardRegistration(set = "PC2", collectorNumber = "53")
+@CardRegistration(set = "PCA", collectorNumber = "53")
 public class ThunderThrashElder extends Card {
 
     public ThunderThrashElder() {

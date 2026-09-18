@@ -17,8 +17,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BarbarianBullyTest extends BaseCardTest {
 
     @Test
+    void activationDiscardsOneCardAsCost() {
+        BarbarianBully discarded = new BarbarianBully();
+        activateWithHand(discarded);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+    }
+
+    @Test
     void allPlayersDeclineAndBullyGetsBoosted() {
-        Permanent bully = activateWithHand(new SuntailHawk());
+        Permanent bully = activateWithHand(new BarbarianBully());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -34,7 +46,7 @@ class BarbarianBullyTest extends BaseCardTest {
 
     @Test
     void firstPlayerToAcceptTakesDamageAndPreventsBoost() {
-        Permanent bully = activateWithHand(new SuntailHawk());
+        Permanent bully = activateWithHand(new BarbarianBully());
 
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, true);
@@ -48,43 +60,31 @@ class BarbarianBullyTest extends BaseCardTest {
 
     @Test
     void canActivateOnlyOnceEachTurn() {
-        activateWithHand(new SuntailHawk());
+        activateWithHand(new BarbarianBully());
 
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
-        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.setHand(player1, List.of(new BarbarianBully()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void activationDiscardsOneCardAtRandomAsCost() {
-        activateWithHand(new SuntailHawk());
+    void cannotActivateWithoutCardToDiscard() {
+        harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
+        harness.setHand(player1, List.of());
+        harness.forceActivePlayer(player1);
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Suntail Hawk");
-
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player2, false);
-    }
-
-    @Test
-    void activePlayerCanAcceptDamage() {
-        Permanent bully = activateWithHand(new SuntailHawk());
-
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(bully.getPowerModifier()).isZero();
-        assertThat(bully.getToughnessModifier()).isZero();
-        harness.assertLife(player1, 16);
-        harness.assertLife(player2, 20);
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cards to discard at random");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     void boostWearsOffAtEndOfTurn() {
-        Permanent bully = activateWithHand(new SuntailHawk());
+        Permanent bully = activateWithHand(new BarbarianBully());
 
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
@@ -100,16 +100,62 @@ class BarbarianBullyTest extends BaseCardTest {
     }
 
     @Test
-    void cannotActivateWithoutCardToDiscard() {
-        harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
-        harness.setHand(player1, List.of());
-        harness.forceActivePlayer(player1);
+    void canActivateAgainOnLaterTurn() {
+        Permanent bully = activateWithHand(new BarbarianBully());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BarbarianBully()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(bully.getPowerModifier()).isEqualTo(2);
+        assertThat(bully.getToughnessModifier()).isEqualTo(2);
     }
 
-    private Permanent activateWithHand(SuntailHawk cardInHand) {
+    private Permanent activateWithHand(BarbarianBully cardInHand) {
+        Permanent bully = harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
+        harness.setHand(player1, List.of(cardInHand));
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        return bully;
+    }
+
+    @Test
+    void activationDiscardsOneCardAtRandomAsCost() {
+        activateWithHandForJudReview(new SuntailHawk());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+    }
+
+    @Test
+    void activePlayerCanAcceptDamage() {
+        Permanent bully = activateWithHandForJudReview(new SuntailHawk());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bully.getPowerModifier()).isZero();
+        assertThat(bully.getToughnessModifier()).isZero();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private Permanent activateWithHandForJudReview(SuntailHawk cardInHand) {
         Permanent bully = harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
         harness.setHand(player1, List.of(cardInHand));
         harness.forceActivePlayer(player1);

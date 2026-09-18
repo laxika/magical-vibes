@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ONS", collectorNumber = "71")
+@CardRegistration(set = "E02", collectorNumber = "8")
+@CardRegistration(set = "C15", collectorNumber = "87")
 public class BlatantThievery extends Card {
 
     public BlatantThievery() {

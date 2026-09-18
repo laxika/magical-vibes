@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.Cloudpost;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TheMycosynthGardens;
+import com.github.laxika.magicalvibes.cards.t.TheSeedcore;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MonumentToPerfection.class, Cloudpost.class, Forest.class, Glimmerpost.class,
+        Island.class, Mountain.class, Plains.class, Swamp.class, TheMycosynthGardens.class,
+        TheSeedcore.class})
 class MonumentToPerfectionTest extends BaseCardTest {
 
     @Test
@@ -33,9 +37,9 @@ class MonumentToPerfectionTest extends BaseCardTest {
     void searchesForBasicSphereOrLocusLand() {
         harness.addToBattlefield(player1, new MonumentToPerfection());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        Card sphere = sphereLand("The Seedcore");
         Glimmerpost glimmerpost = new Glimmerpost();
-        harness.setLibrary(player1, List.of(new Forest(), glimmerpost, sphere, new Cloudpost(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), glimmerpost, new TheSeedcore(),
+                new Cloudpost(), new MonumentToPerfection()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -58,7 +62,7 @@ class MonumentToPerfectionTest extends BaseCardTest {
     void animationRequiresNineDistinctEligibleLandNames() {
         harness.addToBattlefield(player1, new MonumentToPerfection());
         addEligibleLands(new Forest(), new Island(), new Mountain(), new Plains(), new Swamp(),
-                new Cloudpost(), new Glimmerpost(), sphereLand("The Seedcore"), new Forest());
+                new Cloudpost(), new Glimmerpost(), new TheSeedcore(), new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -71,7 +75,7 @@ class MonumentToPerfectionTest extends BaseCardTest {
     void animationMakesMonumentA9By9IndestructibleToxicCreature() {
         Permanent monument = harness.addToBattlefieldAndReturn(player1, new MonumentToPerfection());
         addEligibleLands(new Forest(), new Island(), new Mountain(), new Plains(), new Swamp(),
-                new Cloudpost(), new Glimmerpost(), sphereLand("The Seedcore"), sphereLand("The Mycosynth Gardens"));
+                new Cloudpost(), new Glimmerpost(), new TheSeedcore(), new TheMycosynthGardens());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -101,13 +105,5 @@ class MonumentToPerfectionTest extends BaseCardTest {
         for (Card land : lands) {
             harness.addToBattlefield(player1, land);
         }
-    }
-
-    private Card sphereLand(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.LAND);
-        card.setSubtypes(List.of(CardSubtype.SPHERE));
-        return card;
     }
 }

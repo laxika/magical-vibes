@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,26 +17,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JeskaWarriorAdept.class, DwarvenDriller.class, SuntailHawk.class})
+@CardUsed({ChandraNalaar.class, DwarvenDriller.class, JeskaWarriorAdept.class, SuntailHawk.class})
 class JeskaWarriorAdeptTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tap ability deals 1 damage to target player")
     void deals1DamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent jeska = addReadyJeska(player1);
+        Permanent jeska = addCreatureReady(player1, new JeskaWarriorAdept());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(jeska.isTapped()).isTrue();
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
     @DisplayName("Tap ability deals 1 damage to target creature")
     void deals1DamageToCreature() {
-        addReadyJeska(player1);
+        addCreatureReady(player1, new JeskaWarriorAdept());
         harness.addToBattlefield(player2, new SuntailHawk());
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Suntail Hawk"));
@@ -46,7 +48,7 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
     @Test
     @DisplayName("One damage does not destroy a 2/2 creature")
     void oneDamageDoesNotDestroyTwoToughnessCreature() {
-        addReadyJeska(player1);
+        addCreatureReady(player1, new JeskaWarriorAdept());
         harness.addToBattlefield(player2, new DwarvenDriller());
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Dwarven Driller"));
@@ -56,18 +58,16 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("First strike lets Jeska survive combat with a 2/2 blocker")
-    void firstStrikeLetsJeskaSurviveCombat() {
-        Permanent jeska = addReadyJeska(player1);
-        harness.addToBattlefield(player2, new DwarvenDriller());
+    @DisplayName("Tap ability deals 1 damage to target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        addCreatureReady(player1, new JeskaWarriorAdept());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 3);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveCombat();
+        harness.activateAbility(player1, 0, null, chandra.getId());
+        harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jeska);
-        harness.assertInGraveyard(player2, "Dwarven Driller");
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test
@@ -83,7 +83,7 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the tap ability when Jeska is already tapped")
     void cannotActivateWhenTapped() {
-        Permanent jeska = addReadyJeska(player1);
+        Permanent jeska = addCreatureReady(player1, new JeskaWarriorAdept());
         jeska.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -91,7 +91,22 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    private Permanent addReadyJeska(Player player) {
+    @Test
+    @DisplayName("First strike lets Jeska survive combat with a 2/2 blocker")
+    void firstStrikeLetsJeskaSurviveCombat() {
+        Permanent jeska = addReadyJeskaForJudReview(player1);
+        harness.addToBattlefield(player2, new DwarvenDriller());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jeska);
+        harness.assertInGraveyard(player2, "Dwarven Driller");
+    }
+
+    private Permanent addReadyJeskaForJudReview(Player player) {
         return addCreatureReady(player, new JeskaWarriorAdept());
     }
 }

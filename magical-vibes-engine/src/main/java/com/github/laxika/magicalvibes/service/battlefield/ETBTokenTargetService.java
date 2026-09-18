@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AggregateManaValueTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
@@ -314,7 +314,8 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
                 continue;
             }
 
@@ -332,14 +333,20 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
                 continue;
             }
 
             TargetFilter groupFilter = group.getFilter();
-            boolean canTargetPlayer = groupEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                    || groupFilter instanceof PlayerPredicateTargetFilter;
+            boolean filterRestrictsTargetKind = groupFilter instanceof PlayerPredicateTargetFilter
+                    || groupFilter instanceof PermanentPredicateTargetFilter
+                    || groupFilter instanceof ControlledPermanentPredicateTargetFilter
+                    || groupFilter instanceof OwnedPermanentPredicateTargetFilter
+                    || groupFilter instanceof GraveyardCardPredicateTargetFilter;
+            boolean canTargetPlayer = groupFilter instanceof PlayerPredicateTargetFilter
+                    || (!filterRestrictsTargetKind && groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
             boolean canTargetPermanent = groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     || groupFilter instanceof PermanentPredicateTargetFilter
@@ -347,9 +354,9 @@ public class ETBTokenTargetService {
                     || groupFilter instanceof OwnedPermanentPredicateTargetFilter;
             boolean canTargetExiledCard = groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
-            boolean canTargetGraveyardCard = groupEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                    || groupFilter instanceof GraveyardCardPredicateTargetFilter;
+            boolean canTargetGraveyardCard = groupFilter instanceof GraveyardCardPredicateTargetFilter
+                    || (!filterRestrictsTargetKind && groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)));
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
@@ -483,7 +490,8 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
+                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
                 continue;
             }
 
@@ -693,24 +701,26 @@ public class ETBTokenTargetService {
             return;
         }
         Card card = pending.sourceCard();
-        DistributeCountersAmongTargetsEffect counterDistribution = pending.effects().stream()
-                .filter(DistributeCountersAmongTargetsEffect.class::isInstance)
-                .map(DistributeCountersAmongTargetsEffect.class::cast)
-                .filter(effect -> effect.mode() == DivisionMode.CHOSEN)
-                .findFirst()
-                .orElse(null);
+        DistributeCountersAmongTargetsEffect counterDistribution =
+                findChosenCounterDistribution(pending.effects());
         Map<UUID, Integer> counterAssignments = Map.of();
-        if (counterDistribution != null
-                && counterDistribution.total() instanceof Fixed fixed
-                && fixed.value() > 0
-                && !pending.chosenTargetsSoFar().isEmpty()) {
+        if (counterDistribution != null && !pending.chosenTargetsSoFar().isEmpty()) {
+            Permanent source = pending.sourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            int total = amountEvaluationService.evaluate(gameData, counterDistribution.total(),
+                    new AmountContext(pending.controllerId(), source, null, pending.xValue(),
+                            pending.eventValue(), false, null, pending.repeatedAdditionalCosts(), null));
             Map<UUID, Integer> presetAssignments = gameData.pendingETBDamageAssignments;
             boolean validPreset = presetAssignments != null
                     && !presetAssignments.isEmpty()
                     && pending.chosenTargetsSoFar().containsAll(presetAssignments.keySet())
                     && presetAssignments.values().stream().allMatch(amount -> amount != null && amount > 0)
-                    && presetAssignments.values().stream().mapToInt(Integer::intValue).sum() == fixed.value();
-            if (validPreset) {
+                    && (counterDistribution.allowsPartialDistribution()
+                    ? presetAssignments.values().stream().mapToInt(Integer::intValue).sum() <= total
+                    : presetAssignments.values().stream().mapToInt(Integer::intValue).sum() == total);
+            if (total <= 0) {
+                counterAssignments = Map.of();
+            } else if (validPreset) {
                 counterAssignments = Map.copyOf(presetAssignments);
                 gameData.pendingETBDamageAssignments = Map.of();
             } else {
@@ -720,7 +730,7 @@ public class ETBTokenTargetService {
                         new ChoiceContext.CounterDistributionAssignment(
                                 card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                                 counterDistribution.counterType(), pending.chosenTargetsSoFar(), Map.of(),
-                                fixed.value(), 0));
+                                total, 0, counterDistribution.allowsPartialDistribution()));
                 return;
             }
         }
@@ -748,6 +758,9 @@ public class ETBTokenTargetService {
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         etbEntry.setEventValue(pending.eventValue());
         etbEntry.setTriggeringCardId(pending.triggeringCardId());
+        if (pending.stateTriggerEffectIndex() >= 0) {
+            etbEntry.setStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
+        }
         if (pending.planarSource() != null) {
             etbEntry.setSourcePlanarObject(pending.planarSource().copy());
         }
@@ -770,6 +783,23 @@ public class ETBTokenTargetService {
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
         log.info("Game {} - {} multi-target ability pushed onto stack ({} targets)",
                 gameData.id, card.getName(), pending.chosenTargetsSoFar().size());
+    }
+
+    private DistributeCountersAmongTargetsEffect findChosenCounterDistribution(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof DistributeCountersAmongTargetsEffect distribution
+                    && distribution.mode() == DivisionMode.CHOSEN) {
+                return distribution;
+            }
+            if (effect instanceof ConditionalEffect conditional) {
+                DistributeCountersAmongTargetsEffect nested =
+                        findChosenCounterDistribution(List.of(conditional.wrapped()));
+                if (nested != null) {
+                    return nested;
+                }
+            }
+        }
+        return null;
     }
 
     /**

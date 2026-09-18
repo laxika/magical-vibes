@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "65")
+@CardRegistration(set = "DBL", collectorNumber = "332")
 public class JacobHaukenInspector extends Card {
 
     public JacobHaukenInspector() {

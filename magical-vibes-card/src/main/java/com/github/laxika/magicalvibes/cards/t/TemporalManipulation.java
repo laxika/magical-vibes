@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "54")
 @CardRegistration(set = "ME2", collectorNumber = "69")
+@CardRegistration(set = "UMA", collectorNumber = "77")
+@CardRegistration(set = "SPG", collectorNumber = "82")
 public class TemporalManipulation extends Card {
 
     public TemporalManipulation() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "94")
+@CardRegistration(set = "DBL", collectorNumber = "94")
 public class CurseOfLeeches extends Card {
 
     public CurseOfLeeches() {

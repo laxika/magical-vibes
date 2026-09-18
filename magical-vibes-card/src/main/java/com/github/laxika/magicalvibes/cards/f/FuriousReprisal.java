@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "115")
+@CardRegistration(set = "KLR", collectorNumber = "126")
 public class FuriousReprisal extends Card {
 
     public FuriousReprisal() {

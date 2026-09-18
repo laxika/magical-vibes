@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "MRD", collectorNumber = "282")
 @CardRegistration(set = "HOP", collectorNumber = "133")
+@CardRegistration(set = "DDU", collectorNumber = "67")
+@CardRegistration(set = "AA2", collectorNumber = "24")
 public class GreatFurnace extends Card {
 
     public GreatFurnace() {

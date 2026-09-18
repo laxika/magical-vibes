@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
  * (Artifacts, legendaries, and Sagas are historic.)
  */
 @CardRegistration(set = "DOM", collectorNumber = "220")
+@CardRegistration(set = "2XM", collectorNumber = "265")
 public class JhoirasFamiliar extends Card {
 
     public JhoirasFamiliar() {

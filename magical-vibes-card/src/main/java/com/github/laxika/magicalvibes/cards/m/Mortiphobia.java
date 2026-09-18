@@ -15,7 +15,7 @@ public class Mortiphobia extends Card {
     public Mortiphobia() {
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{1}{B}{B}",
+                "{1}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false)

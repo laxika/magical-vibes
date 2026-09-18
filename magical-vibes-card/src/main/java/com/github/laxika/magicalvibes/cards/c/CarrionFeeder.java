@@ -13,6 +13,9 @@ import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "59")
 @CardRegistration(set = "DDE", collectorNumber = "2")
+@CardRegistration(set = "EMA", collectorNumber = "84")
+@CardRegistration(set = "MB1", collectorNumber = "59")
+@CardRegistration(set = "MH1", collectorNumber = "81")
 public class CarrionFeeder extends Card {
 
     public CarrionFeeder() {

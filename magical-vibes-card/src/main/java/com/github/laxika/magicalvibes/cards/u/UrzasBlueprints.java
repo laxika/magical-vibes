@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "137")
+@CardRegistration(set = "DMR", collectorNumber = "238")
 public class UrzasBlueprints extends Card {
 
     public UrzasBlueprints() {

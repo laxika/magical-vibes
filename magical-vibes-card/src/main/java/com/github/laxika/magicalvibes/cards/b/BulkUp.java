@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "80")
+@CardRegistration(set = "SOA", collectorNumber = "40")
 public class BulkUp extends Card {
 
     public BulkUp() {

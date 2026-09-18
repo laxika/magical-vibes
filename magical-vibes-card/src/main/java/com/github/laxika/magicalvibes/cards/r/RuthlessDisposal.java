@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "103")
+@CardRegistration(set = "SIR", collectorNumber = "132")
 public class RuthlessDisposal extends Card {
 
     public RuthlessDisposal() {

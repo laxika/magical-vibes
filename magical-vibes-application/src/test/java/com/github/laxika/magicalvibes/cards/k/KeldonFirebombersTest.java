@@ -87,6 +87,27 @@ class KeldonFirebombersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Tajuru Preserver");
     }
 
+    @CardUsed(TajuruPreserver.class)
+    @Test
+    void sacrificeProtectionDoesNotPreventYourOwnAbility() {
+        addLands(player1, 4);
+        addLands(player2, 3);
+        harness.addToBattlefield(player1, new TajuruPreserver());
+        harness.forceActivePlayer(player1);
+
+        castKeldonFirebombers();
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, landIds(player1, 1));
+
+        assertThat(landCount(player1)).isEqualTo(3);
+        assertThat(landCount(player2)).isEqualTo(3);
+    }
+
     private void castKeldonFirebombers() {
         harness.castFromHand(player1, new KeldonFirebombers(), "{3}{R}{R}");
     }

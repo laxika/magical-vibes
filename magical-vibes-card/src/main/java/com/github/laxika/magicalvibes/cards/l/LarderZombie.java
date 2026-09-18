@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "58")
+@CardRegistration(set = "DBL", collectorNumber = "58")
 public class LarderZombie extends Card {
 
     public LarderZombie() {

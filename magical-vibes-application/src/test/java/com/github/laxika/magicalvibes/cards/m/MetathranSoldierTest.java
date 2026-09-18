@@ -19,9 +19,10 @@ class MetathranSoldierTest extends BaseCardTest {
     @DisplayName("Metathran Soldier can't be blocked")
     void cannotBeBlocked() {
         addCreatureReady(player2, new MetathranSoldier());
-        addCreatureReady(player1, new MetathranSoldier());
+        Permanent attacker = addCreatureReady(player1, new MetathranSoldier());
 
-        declareAttackers(List.of(0));
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))

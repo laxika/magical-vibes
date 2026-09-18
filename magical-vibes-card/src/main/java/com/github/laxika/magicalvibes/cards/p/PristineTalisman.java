@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "151")
+@CardRegistration(set = "IMA", collectorNumber = "225")
+@CardRegistration(set = "BRR", collectorNumber = "43")
+@CardRegistration(set = "C13", collectorNumber = "255")
 public class PristineTalisman extends Card {
 
     public PristineTalisman() {

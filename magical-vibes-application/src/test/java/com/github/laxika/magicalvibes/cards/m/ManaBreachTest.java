@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
+import com.github.laxika.magicalvibes.cards.c.CoatOfArms;
 import com.github.laxika.magicalvibes.cards.p.PygmyTroll;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ManaBreach.class, CityOfTraitors.class, PygmyTroll.class})
+@CardUsed({ManaBreach.class, CityOfTraitors.class, PygmyTroll.class, CoatOfArms.class})
 class ManaBreachTest extends BaseCardTest {
 
     @Test
@@ -33,6 +34,21 @@ class ManaBreachTest extends BaseCardTest {
                 .containsExactly(landId);
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
+    }
+
+    @Test
+    @DisplayName("Casting a noncreature spell also prompts the caster to return a land")
+    void noncreatureSpellAlsoTriggers() {
+        harness.addToBattlefield(player1, new ManaBreach());
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
+
+        harness.castFromHand(player1, new CoatOfArms(), "{5}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(landId);
     }
 
     @Test

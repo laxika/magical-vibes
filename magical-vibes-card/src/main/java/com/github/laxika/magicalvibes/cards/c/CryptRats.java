@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "125")
 @CardRegistration(set = "VIS", collectorNumber = "55")
 @CardRegistration(set = "PHUK", collectorNumber = "28")
+@CardRegistration(set = "MH1", collectorNumber = "84")
 public class CryptRats extends Card {
 
     public CryptRats() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,8 @@ class FlameblastDragonTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleXValueChosen(player1, 2));
 
         // Only the trigger damage has been dealt (combat damage awaits block declaration).
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

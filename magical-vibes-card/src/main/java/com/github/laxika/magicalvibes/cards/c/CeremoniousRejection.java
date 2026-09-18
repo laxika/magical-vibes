@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "40")
+@CardRegistration(set = "KLR", collectorNumber = "44")
 public class CeremoniousRejection extends Card {
 
     public CeremoniousRejection() {

@@ -44,9 +44,7 @@ class DokuchiShadowWalkerTest extends BaseCardTest {
     void ninjutsuRejectsBlockedAttacker() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new DokuchiShadowWalker()));

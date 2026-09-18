@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "40")
+@CardRegistration(set = "TSR", collectorNumber = "75")
 public class MagusOfTheFuture extends Card {
 
     public MagusOfTheFuture() {

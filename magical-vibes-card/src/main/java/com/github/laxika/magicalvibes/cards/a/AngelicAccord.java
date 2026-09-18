@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "3")
+@CardRegistration(set = "IMA", collectorNumber = "7")
 public class AngelicAccord extends Card {
 
     public AngelicAccord() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "288")
+@CardRegistration(set = "KLR", collectorNumber = "261")
 public class PendulumOfPatterns extends Card {
 
     public PendulumOfPatterns() {

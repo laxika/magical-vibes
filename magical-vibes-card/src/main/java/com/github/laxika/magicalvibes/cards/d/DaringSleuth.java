@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "54")
+@CardRegistration(set = "SIR", collectorNumber = "59")
 public class DaringSleuth extends Card {
 
     public DaringSleuth() {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "36")
+@CardRegistration(set = "GN2", collectorNumber = "12")
 public class SteppeGlider extends Card {
 
     public SteppeGlider() {

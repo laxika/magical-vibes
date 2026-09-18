@@ -6,18 +6,24 @@ import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GravePact;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DarksteelColossus.class, CruelEdict.class, Demolish.class, GravePact.class,
+        GrizzlyBears.class, Millstone.class, MindRot.class})
 class DarksteelColossusTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -108,6 +114,75 @@ class DarksteelColossusTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
+    // ===== Replacement effect: discarded =====
+
+    @Test
+    @DisplayName("When discarded, shuffled into its owner's library instead of going to the graveyard")
+    void replacementEffectOnDiscard() {
+        DarksteelColossus colossus = new DarksteelColossus();
+        harness.setHand(player2, List.of(colossus));
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertNotInGraveyard(player2, "Darksteel Colossus");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(deckSizeBefore + 1)
+                .contains(colossus);
+    }
+
+    // ===== Replacement effect: owner routing =====
+
+    @Test
+    @DisplayName("When controlled by another player, shuffled into its owner's library")
+    void replacementEffectUsesOwnersLibrary() {
+        DarksteelColossus colossus = new DarksteelColossus();
+        colossus.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, colossus);
+
+        int ownerDeckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        int controllerDeckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Darksteel Colossus");
+        harness.assertNotInGraveyard(player2, "Darksteel Colossus");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(ownerDeckSizeBefore + 1)
+                .contains(colossus);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSizeBefore);
+    }
+
+    // ===== Trample =====
+
+    @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void trampleDealsExcessCombatDamage() {
+        addCreatureReady(player1, new DarksteelColossus());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 9));
+
+        harness.assertOnBattlefield(player1, "Darksteel Colossus");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 11);
+    }
+
     // ===== Replacement effect suppresses death triggers (CR 614.6) =====
 
     @Test
@@ -118,8 +193,7 @@ class DarksteelColossusTest extends BaseCardTest {
         // Player 1 also has Darksteel Colossus
         harness.addToBattlefield(player1, new DarksteelColossus());
         // Player 2 has a creature that should NOT be forced to sacrifice
-        Permanent opponentCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Player 2 casts Cruel Edict targeting player 1 — forces sacrifice of Darksteel Colossus
         harness.setHand(player2, List.of(new CruelEdict()));
@@ -139,10 +213,8 @@ class DarksteelColossusTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyMillstone(Player player) {
-        Millstone card = new Millstone();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Millstone());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

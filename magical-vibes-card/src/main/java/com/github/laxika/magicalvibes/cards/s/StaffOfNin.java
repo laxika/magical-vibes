@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "217")
+@CardRegistration(set = "C15", collectorNumber = "270")
 public class StaffOfNin extends Card {
 
     public StaffOfNin() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "170")
+@CardRegistration(set = "KLR", collectorNumber = "260")
 public class PeacewalkerColossus extends Card {
 
     public PeacewalkerColossus() {

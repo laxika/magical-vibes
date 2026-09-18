@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "33")
+@CardRegistration(set = "GN3", collectorNumber = "26")
 public class DiluvianPrimordial extends Card {
 
     public DiluvianPrimordial() {

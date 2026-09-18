@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BattlefieldScrounger;
-import com.github.laxika.magicalvibes.cards.c.CommanderEesha;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.g.GoretuskFirebeast;
+import com.github.laxika.magicalvibes.cards.h.HarvesterDruid;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,58 +18,60 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SuturedGhoul.class, GoretuskFirebeast.class, CommanderEesha.class,
-        BattlefieldScrounger.class, MentalNote.class})
+@CardUsed({GiantWarthog.class, GoretuskFirebeast.class, HarvesterDruid.class, MentalNote.class, SuntailHawk.class, SuturedGhoul.class})
 class SuturedGhoulTest extends BaseCardTest {
 
     private void castGhoul() {
-        harness.castFromHand(player1, new SuturedGhoul(), "{4}{B}{B}{B}");
+        harness.setHand(player1, List.of(new SuturedGhoul()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Power and toughness equal the total power and toughness of the exiled creature cards")
     void powerToughnessSumExiledCards() {
-        GoretuskFirebeast firebeast = new GoretuskFirebeast(); // 2/2
-        CommanderEesha eesha = new CommanderEesha();           // 2/4
-        harness.setGraveyard(player1, List.of(firebeast, eesha));
+        SuntailHawk hawk = new SuntailHawk();
+        GiantWarthog warthog = new GiantWarthog();
+        harness.setGraveyard(player1, List.of(hawk, warthog));
 
         castGhoul();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of(firebeast.getId(), eesha.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(hawk.getId(), warthog.getId()));
 
         Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
-        assertThat(harness.getGameQueryService().getEffectivePower(gd, ghoul)).isEqualTo(4);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, ghoul)).isEqualTo(6);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, ghoul)).isEqualTo(6);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(c -> c.getId())
-                .contains(firebeast.getId(), eesha.getId());
+                .contains(hawk.getId(), warthog.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Only the chosen cards are exiled; unchosen creature cards stay in the graveyard")
     void unchosenCardsStayInGraveyard() {
-        GoretuskFirebeast firebeast = new GoretuskFirebeast(); // 2/2
-        BattlefieldScrounger scrounger = new BattlefieldScrounger(); // 3/3
-        harness.setGraveyard(player1, List.of(firebeast, scrounger));
+        SuntailHawk hawk = new SuntailHawk();
+        GiantWarthog warthog = new GiantWarthog();
+        harness.setGraveyard(player1, List.of(hawk, warthog));
 
         castGhoul();
-        harness.handleMultipleCardsChosen(player1, List.of(scrounger.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(warthog.getId()));
 
         Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
-        assertThat(harness.getGameQueryService().getEffectivePower(gd, ghoul)).isEqualTo(3);
-        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, ghoul)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, ghoul)).isEqualTo(5);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, ghoul)).isEqualTo(5);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(c -> c.getId())
-                .containsExactly(firebeast.getId());
+                .containsExactly(hawk.getId());
     }
 
     @Test
     @DisplayName("Exiling nothing leaves a 0/0 that dies to state-based actions")
     void exilingNothingDiesAsZeroZero() {
-        GoretuskFirebeast firebeast = new GoretuskFirebeast();
-        harness.setGraveyard(player1, List.of(firebeast));
+        SuntailHawk hawk = new SuntailHawk();
+        harness.setGraveyard(player1, List.of(hawk));
 
         castGhoul();
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -83,15 +86,63 @@ class SuturedGhoulTest extends BaseCardTest {
     @DisplayName("Noncreature cards in the graveyard can't be exiled")
     void noncreatureCardsAreNotOffered() {
         MentalNote mentalNote = new MentalNote();
-        GoretuskFirebeast firebeast = new GoretuskFirebeast();
-        harness.setGraveyard(player1, List.of(mentalNote, firebeast));
+        SuntailHawk hawk = new SuntailHawk();
+        harness.setGraveyard(player1, List.of(mentalNote, hawk));
 
         castGhoul();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(firebeast.getId());
+        assertThat(choice.validCardIds()).containsExactly(hawk.getId());
+    }
+
+    @Test
+    @DisplayName("The ghoul only considers creature cards in its controller's graveyard")
+    void onlyControllersGraveyardIsConsidered() {
+        GiantWarthog warthog = new GiantWarthog();
+        harness.setGraveyard(player2, List.of(warthog));
+
+        castGhoul();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Sutured Ghoul"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(c -> c.getId())
+                .containsExactly(warthog.getId());
+    }
+
+    @Test
+    @DisplayName("Trample deals excess combat damage after Sutured Ghoul enters with a power greater than the blocker")
+    void trampleDealsExcessCombatDamage() {
+        SuntailHawk hawk = new SuntailHawk();
+        GiantWarthog warthog = new GiantWarthog();
+        harness.setGraveyard(player1, List.of(hawk, warthog));
+
+        castGhoul();
+        harness.handleMultipleCardsChosen(player1, List.of(hawk.getId(), warthog.getId()));
+
+        Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
+        ghoul.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new HarvesterDruid());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 5
+        ));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
     }
 
     @Test
@@ -102,6 +153,8 @@ class SuturedGhoulTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Sutured Ghoul"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Sutured Ghoul"));
     }
 
     @Test
@@ -110,7 +163,7 @@ class SuturedGhoulTest extends BaseCardTest {
         GoretuskFirebeast firebeast = new GoretuskFirebeast();
         harness.setGraveyard(player2, List.of(firebeast));
 
-        castGhoul();
+        castGhoulForJudReview();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(firebeast);
@@ -119,38 +172,12 @@ class SuturedGhoulTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Trample assigns excess combat damage to the defending player")
-    void trampleDealsExcessCombatDamage() {
-        harness.setLife(player2, 20);
-        BattlefieldScrounger scrounger = new BattlefieldScrounger();
-        harness.setGraveyard(player1, List.of(scrounger));
-
-        castGhoul();
-        harness.handleMultipleCardsChosen(player1, List.of(scrounger.getId()));
-
-        Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
-        ghoul.setSummoningSick(false);
-        Permanent blocker = addCreatureReady(player2, new GoretuskFirebeast());
-
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                blocker.getId(), 2,
-                player2.getId(), 1));
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-    }
-
-    @Test
     @DisplayName("Creature cards exiled with the ghoul remain in exile when it leaves")
     void exiledCardsRemainWhenGhoulLeaves() {
         GoretuskFirebeast firebeast = new GoretuskFirebeast();
         harness.setGraveyard(player1, List.of(firebeast));
 
-        castGhoul();
+        castGhoulForJudReview();
         harness.handleMultipleCardsChosen(player1, List.of(firebeast.getId()));
 
         Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
@@ -159,5 +186,10 @@ class SuturedGhoulTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firebeast);
         assertThat(gd.getCardsExiledByPermanent(ghoul.getId())).containsExactly(firebeast);
+    }
+
+    private void castGhoulForJudReview() {
+        harness.castFromHand(player1, new SuturedGhoul(), "{4}{B}{B}{B}");
+        harness.passBothPriorities();
     }
 }

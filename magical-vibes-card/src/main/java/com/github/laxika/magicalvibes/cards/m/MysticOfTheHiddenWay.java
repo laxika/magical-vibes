@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "48")
+@CardRegistration(set = "A25", collectorNumber = "67")
 public class MysticOfTheHiddenWay extends Card {
 
     public MysticOfTheHiddenWay() {

@@ -14,6 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LiegeOfTheAxeTest extends BaseCardTest {
 
     @Test
+    void vigilanceKeepsItUntappedWhenAttacking() {
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheAxe());
+
+        declareAttackers(List.of(0));
+
+        assertThat(liege.isTapped()).isFalse();
+    }
+
+    @Test
     void turningFaceUpUntapsIt() {
         harness.setHand(player1, List.of(new LiegeOfTheAxe()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

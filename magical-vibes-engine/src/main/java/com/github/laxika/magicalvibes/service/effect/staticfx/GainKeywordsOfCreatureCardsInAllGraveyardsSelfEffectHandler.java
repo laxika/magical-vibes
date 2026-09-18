@@ -38,7 +38,8 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
             Keyword.FORESTWALK,
             Keyword.MOUNTAINWALK,
             Keyword.ISLANDWALK,
-            Keyword.SWAMPWALK
+            Keyword.SWAMPWALK,
+            Keyword.DESERTWALK
     );
 
     @Override

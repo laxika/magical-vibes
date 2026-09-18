@@ -143,7 +143,7 @@ class EtbTriggerServiceTest {
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
 
         verify(graveyardTargetingService).handleGraveyardCardsExileETBTargeting(
-                gameData, controllerId, creature, List.of(exile, lifeLoss), exile);
+                gameData, controllerId, creature, List.of(exile, lifeLoss), exile, 1);
         assertThat(gameData.stack).isEmpty();
     }
 

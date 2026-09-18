@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "133")
+@CardRegistration(set = "SIR", collectorNumber = "163")
 public class IncendiaryFlow extends Card {
 
     public IncendiaryFlow() {

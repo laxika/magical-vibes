@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "16")
 @CardRegistration(set = "M20", collectorNumber = "20")
+@CardRegistration(set = "A25", collectorNumber = "17")
+@CardRegistration(set = "DMU", collectorNumber = "18")
 public class GriffinProtector extends Card {
 
     public GriffinProtector() {

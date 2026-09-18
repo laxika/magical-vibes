@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "248")
+@CardRegistration(set = "RVR", collectorNumber = "188")
+@CardRegistration(set = "C13", collectorNumber = "229")
+@CardRegistration(set = "CMD", collectorNumber = "201")
 public class GolgariGuildmage extends Card {
 
     public GolgariGuildmage() {

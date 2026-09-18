@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "TSP", collectorNumber = "79")
+@CardRegistration(set = "TSR", collectorNumber = "88")
 public class SpellBurst extends Card {
 
     public SpellBurst() {

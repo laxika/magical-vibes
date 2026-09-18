@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AnuridBarkripper;
-import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
-import com.github.laxika.magicalvibes.cards.m.MirrorWall;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WallOfStone;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,27 +14,67 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ErhnamDjinn.class, AnuridBarkripper.class, MirrorWall.class, KrosanVerge.class})
+@CardUsed({AnuridBarkripper.class, ErhnamDjinn.class, Forest.class, GrizzlyBears.class, WallOfStone.class})
 class ErhnamDjinnTest extends BaseCardTest {
 
     @Test
     @DisplayName("Upkeep trigger targets a non-Wall creature an opponent controls")
     void upkeepTriggerTargetsNonWallOpponentCreature() {
-        Permanent source = addCreatureReady(player1, new ErhnamDjinn());
-        Permanent target = addCreatureReady(player2, new AnuridBarkripper());
-        Permanent wall = addCreatureReady(player2, new MirrorWall());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new KrosanVerge());
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
 
         advanceToUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(target.getId())
-                .doesNotContain(source.getId(), wall.getId(), land.getId());
+                .doesNotContain(wall.getId());
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger excludes your creatures and noncreature permanents")
+    void upkeepTriggerExcludesOwnCreaturesAndNoncreatures() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId())
+                .doesNotContain(wall.getId(), ownCreature.getId(), land.getId());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Forestwalk lasts through the controller's next upkeep")
+    void forestwalkLastsUntilNextUpkeep() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        grantForestwalk(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+
+        advanceToUpkeep(player2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    private void grantForestwalk(Permanent target) {
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
     }
 
     @Test
@@ -50,11 +91,5 @@ class ErhnamDjinnTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
-    }
-
-    private void grantForestwalk(Permanent target) {
-        advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
     }
 }

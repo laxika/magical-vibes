@@ -7,5 +7,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code GameQueryService.applyCombatDamageMultiplier} only when the damage recipient is a creature.
  * Multiple instances stack multiplicatively. Used by Blind Fury.
  */
-public record DoubleCombatDamageToCreaturesThisTurnEffect() implements CardEffect {
+public record DoubleCombatDamageToCreaturesThisTurnEffect() implements CardEffect, DoublingEffect {
 }

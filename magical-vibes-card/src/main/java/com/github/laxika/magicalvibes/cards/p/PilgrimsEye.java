@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "WWK", collectorNumber = "128")
 @CardRegistration(set = "DDI", collectorNumber = "47")
+@CardRegistration(set = "EMA", collectorNumber = "229")
+@CardRegistration(set = "GNT", collectorNumber = "55")
+@CardRegistration(set = "PIO", collectorNumber = "257")
+@CardRegistration(set = "C13", collectorNumber = "253")
 public class PilgrimsEye extends Card {
 
     public PilgrimsEye() {

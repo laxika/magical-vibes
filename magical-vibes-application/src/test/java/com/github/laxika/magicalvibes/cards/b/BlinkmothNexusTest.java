@@ -1,29 +1,28 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlinkmothNexus.class, CrazedGoblin.class})
 class BlinkmothNexusTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping Blinkmoth Nexus produces colorless mana")
     void tappingProducesColorlessMana() {
-        Permanent nexus = addNexusReady(player1);
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(nexus);
+        addCreatureReady(player1, new BlinkmothNexus());
 
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
@@ -31,25 +30,25 @@ class BlinkmothNexusTest extends BaseCardTest {
     @Test
     @DisplayName("{1} makes Blinkmoth Nexus a 1/1 artifact creature with flying")
     void animateMakesItACreature() {
-        Permanent nexus = addNexusReady(player1);
+        Permanent nexus = addCreatureReady(player1, new BlinkmothNexus());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, nexus)).isTrue();
-        assertThat(gqs.isArtifact(nexus)).isTrue();
+        assertThat(gqs.isArtifact(gd, nexus)).isTrue();
+        assertThat(gqs.isLand(gd, nexus)).isTrue();
         assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, nexus)).isEqualTo(1);
-        assertThat(nexus.getTransientSubtypes()).containsExactly(CardSubtype.BLINKMOTH);
-        assertThat(nexus.getGrantedKeywords()).containsExactly(Keyword.FLYING);
-        assertThat(nexus.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.hasEffectiveSubtype(gd, nexus, CardSubtype.BLINKMOTH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nexus, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("{1}, {T} gives a Blinkmoth creature +1/+1")
     void pumpBoostsBlinkmothCreature() {
-        Permanent nexus = addNexusReady(player1);
+        Permanent nexus = addCreatureReady(player1, new BlinkmothNexus());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -67,18 +66,29 @@ class BlinkmothNexusTest extends BaseCardTest {
     @Test
     @DisplayName("{1}, {T} cannot target a non-Blinkmoth creature")
     void pumpCannotTargetNonBlinkmothCreature() {
-        addNexusReady(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BlinkmothNexus());
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, goblin.getId()))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    @DisplayName("{1}, {T} cannot target an unanimated Blinkmoth Nexus")
+    void pumpCannotTargetUnanimatedBlinkmoth() {
+        addCreatureReady(player1, new BlinkmothNexus());
+        Permanent target = addCreatureReady(player1, new BlinkmothNexus());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(RuntimeException.class);
     }
 
     @Test
     @DisplayName("Blinkmoth Nexus stops being a creature at end of turn")
     void animationResetsAtEndOfTurn() {
-        Permanent nexus = addNexusReady(player1);
+        Permanent nexus = addCreatureReady(player1, new BlinkmothNexus());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -89,17 +99,10 @@ class BlinkmothNexusTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(nexus.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, nexus)).isFalse();
-        assertThat(gqs.isArtifact(nexus)).isFalse();
-        assertThat(nexus.getGrantedKeywords()).isEmpty();
-        assertThat(nexus.getTransientSubtypes()).isEmpty();
-    }
-
-    private Permanent addNexusReady(Player player) {
-        Permanent perm = new Permanent(new BlinkmothNexus());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gqs.isArtifact(gd, nexus)).isFalse();
+        assertThat(gqs.isLand(gd, nexus)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nexus, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, nexus, CardSubtype.BLINKMOTH)).isFalse();
     }
 }

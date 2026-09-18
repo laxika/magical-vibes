@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfTolvada;
-import com.github.laxika.magicalvibes.cards.t.TheBrokenSky;
 import com.github.laxika.magicalvibes.cards.w.WrennAndRealmbreaker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,20 +20,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BattlewiseAven.class, EmberShot.class, InvasionOfTolvada.class, ShieldmageAdvocate.class,
-        TheBrokenSky.class, WrennAndRealmbreaker.class})
+@CardUsed({BattlewiseAven.class, BorderPatrol.class, EmberShot.class, InvasionOfTolvada.class, ShieldmageAdvocate.class, WrennAndRealmbreaker.class})
 class ShieldmageAdvocateTest extends BaseCardTest {
 
     @Test
     void returnsOpponentsGraveyardCardAndPreventsAllDamageToPlayer() {
-        Permanent advocate = addCreatureReady(player1, new ShieldmageAdvocate());
-        Card returnedCard = new BattlewiseAven();
+        addCreatureReady(player1, new ShieldmageAdvocate());
+        Card returnedCard = new BorderPatrol();
         Permanent source = addReadyCreatureWithStats(player2, 5, 5);
         harness.setGraveyard(player2, List.of(returnedCard));
         harness.setLife(player1, 20);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(returnedCard.getId(), player1.getId()));
-        assertThat(advocate.isTapped()).isTrue();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
@@ -47,9 +45,9 @@ class ShieldmageAdvocateTest extends BaseCardTest {
 
     @Test
     void preventsAllDamageToTargetCreature() {
-        Permanent target = addCreatureReady(player1, new BattlewiseAven());
+        Permanent target = addReadyCreatureWithStats(player1, 2, 2);
         addCreatureReady(player1, new ShieldmageAdvocate());
-        Card returnedCard = new BattlewiseAven();
+        Card returnedCard = new BorderPatrol();
         Permanent source = addReadyCreatureWithStats(player2, 3, 3);
         harness.setGraveyard(player2, List.of(returnedCard));
 
@@ -67,11 +65,60 @@ class ShieldmageAdvocateTest extends BaseCardTest {
     }
 
     @Test
+    void preventsDamageFromChosenSourceOnly() {
+        addCreatureReady(player1, new ShieldmageAdvocate());
+        Permanent chosenSource = addReadyCreatureWithStats(player1, 3, 3);
+        Permanent otherSource = addReadyCreatureWithStats(player1, 2, 2);
+        Card returnedCard = new BorderPatrol();
+        harness.setGraveyard(player2, List.of(returnedCard));
+        harness.setLife(player2, 20);
+
+        harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(returnedCard.getId(), player2.getId()));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosenSource.getId());
+
+        chosenSource.setAttacking(true);
+        otherSource.setAttacking(true);
+        resolveCombat(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    private Permanent addReadyCreatureWithStats(Player player, int power, int toughness) {
+        BorderPatrol card = new BorderPatrol();
+        card.setPower(power);
+        card.setToughness(toughness);
+        return addCreatureReady(player, card);
+    }
+
+    @Test
+    void returnsOpponentsGraveyardCardAndPreventsAllDamageToPlayerJudReview() {
+        Permanent advocate = addCreatureReady(player1, new ShieldmageAdvocate());
+        Card returnedCard = new BattlewiseAven();
+        Permanent source = addReadyCreatureWithStatsForJudReview(player2, 5, 5);
+        harness.setGraveyard(player2, List.of(returnedCard));
+        harness.setLife(player1, 20);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(returnedCard.getId(), player1.getId()));
+        assertThat(advocate.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getId().equals(returnedCard.getId()));
+
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     void preventsDamageOnlyFromChosenSource() {
         addCreatureReady(player1, new ShieldmageAdvocate());
         Card returnedCard = new BattlewiseAven();
-        Permanent chosenSource = addReadyCreatureWithStats(player2, 3, 3);
-        Permanent otherSource = addReadyCreatureWithStats(player2, 2, 2);
+        Permanent chosenSource = addReadyCreatureWithStatsForJudReview(player2, 3, 3);
+        Permanent otherSource = addReadyCreatureWithStatsForJudReview(player2, 2, 2);
         harness.setGraveyard(player2, List.of(returnedCard));
         harness.setLife(player1, 20);
 
@@ -125,7 +172,7 @@ class ShieldmageAdvocateTest extends BaseCardTest {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new WrennAndRealmbreaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         Card returnedCard = new BattlewiseAven();
-        Permanent source = addReadyCreatureWithStats(player2, 3, 3);
+        Permanent source = addReadyCreatureWithStatsForJudReview(player2, 3, 3);
         harness.setGraveyard(player2, List.of(returnedCard));
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -147,7 +194,7 @@ class ShieldmageAdvocateTest extends BaseCardTest {
         battle.setProtectorPlayerId(player2.getId());
         battle.setCounterCount(CounterType.DEFENSE, 5);
         Card returnedCard = new BattlewiseAven();
-        Permanent source = addReadyCreatureWithStats(player2, 3, 3);
+        Permanent source = addReadyCreatureWithStatsForJudReview(player2, 3, 3);
         harness.setGraveyard(player2, List.of(returnedCard));
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -166,7 +213,7 @@ class ShieldmageAdvocateTest extends BaseCardTest {
     void preventionStillResolvesWhenGraveyardTargetLeavesBeforeResolution() {
         addCreatureReady(player1, new ShieldmageAdvocate());
         Card returnedCard = new BattlewiseAven();
-        Permanent source = addReadyCreatureWithStats(player2, 3, 3);
+        Permanent source = addReadyCreatureWithStatsForJudReview(player2, 3, 3);
         harness.setGraveyard(player2, List.of(returnedCard));
         harness.setLife(player1, 20);
 
@@ -184,7 +231,7 @@ class ShieldmageAdvocateTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    private Permanent addReadyCreatureWithStats(Player player, int power, int toughness) {
+    private Permanent addReadyCreatureWithStatsForJudReview(Player player, int power, int toughness) {
         BattlewiseAven card = new BattlewiseAven();
         card.setPower(power);
         card.setToughness(toughness);

@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.t.TrainedPronghorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,37 +18,40 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnquestionedAuthority.class, KrosanVerge.class, SuntailHawk.class, GiantWarthog.class})
+@CardUsed({GiantWarthog.class, KrosanVerge.class, SuntailHawk.class, TrainedPronghorn.class, UnquestionedAuthority.class})
 class UnquestionedAuthorityTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Unquestioned Authority attaches it and draws a card")
     void resolvingAttachesAndDraws() {
-        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TrainedPronghorn());
         harness.setHand(player1, List.of(new UnquestionedAuthority()));
-        harness.setLibrary(player1, List.of(new SuntailHawk()));
+        harness.setLibrary(player1, List.of(new TrainedPronghorn()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castEnchantment(player1, 0, hawk.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Unquestioned Authority")
-                        && hawk.getId().equals(permanent.getAttachedTo()));
-        harness.assertInHand(player1, "Suntail Hawk");
+                        && creature.getId().equals(permanent.getAttachedTo()));
+        harness.assertInHand(player1, "Trained Pronghorn");
     }
 
     @Test
     @DisplayName("Enchanted creature can't be blocked by a creature")
     void creaturesCannotBlockEnchantedCreature() {
-        Permanent attacker = addCreatureReady(player1, new GiantWarthog());
-        attacker.setAttacking(true);
-        enchant(attacker);
-        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
+        Permanent creature = addCreatureReady(player1, new TrainedPronghorn());
+        creature.setAttacking(true);
+        enchant(creature);
+        Permanent blocker = addCreatureReady(player2, new TrainedPronghorn());
 
-        prepareDeclareBlockers();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -57,33 +62,27 @@ class UnquestionedAuthorityTest extends BaseCardTest {
     @Test
     @DisplayName("Protection is lost when Unquestioned Authority leaves the battlefield")
     void protectionStopsWhenRemoved() {
-        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
-        Permanent aura = enchant(hawk);
-        Permanent attacker = addCreatureReady(player2, new GiantWarthog());
+        Permanent creature = addCreatureReady(player1, new TrainedPronghorn());
+        Permanent aura = enchant(creature);
+        Permanent attacker = addCreatureReady(player2, new TrainedPronghorn());
 
-        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, hawk, attacker)).isTrue();
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, creature, attacker)).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, hawk, attacker)).isFalse();
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, creature, attacker)).isFalse();
     }
 
     @Test
-    @DisplayName("Enchanted creature takes no combat damage from a creature")
-    void enchantedCreatureTakesNoCombatDamageFromCreature() {
-        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
-        hawk.setAttacking(true);
-        enchant(hawk);
+    @DisplayName("Protection applies to creature sources but not noncreature sources")
+    void protectionOnlyAppliesToCreatureSources() {
+        Permanent creature = addCreatureReady(player1, new TrainedPronghorn());
+        enchant(creature);
+        Permanent creatureSource = addCreatureReady(player2, new TrainedPronghorn());
+        Permanent noncreatureSource = harness.addToBattlefieldAndReturn(player2, new KrosanVerge());
 
-        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-
-        resolveCombat();
-
-        assertThat(hawk.getMarkedDamage()).isZero();
-        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, creature, creatureSource)).isTrue();
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, creature, noncreatureSource)).isFalse();
     }
 
     @Test
@@ -101,6 +100,30 @@ class UnquestionedAuthorityTest extends BaseCardTest {
     }
 
     private Permanent enchant(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnquestionedAuthority());
+        aura.setAttachedTo(creature.getId());
+        return aura;
+    }
+
+    @Test
+    @DisplayName("Enchanted creature takes no combat damage from a creature")
+    void enchantedCreatureTakesNoCombatDamageFromCreature() {
+        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        hawk.setAttacking(true);
+        enchantForJudReview(hawk);
+
+        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(hawk.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    private Permanent enchantForJudReview(Permanent creature) {
         Permanent aura = new Permanent(new UnquestionedAuthority());
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);

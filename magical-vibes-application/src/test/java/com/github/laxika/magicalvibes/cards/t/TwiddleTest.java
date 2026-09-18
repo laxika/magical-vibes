@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.c.Crusade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
@@ -17,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Twiddle.class, GrizzlyBears.class, Forest.class, HowlingMine.class, Crusade.class})
+@CardUsed({Twiddle.class, GrizzlyBears.class, Forest.class, HowlingMine.class, Telepathy.class})
 class TwiddleTest extends BaseCardTest {
 
     // ===== Tapping untapped permanents =====
@@ -123,6 +122,55 @@ class TwiddleTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Does not automatically untap a target tapped before resolution")
+    void doesNotAutomaticallyUntapTargetTappedBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can choose to untap a target tapped before resolution")
+    void canChooseToUntapTargetTappedBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not resolve its effect when the target leaves the battlefield")
+    void doesNotResolveWhenTargetLeavesBattlefield() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Twiddle");
+    }
+
     // ===== After resolution =====
 
     @Test
@@ -166,6 +214,6 @@ class TwiddleTest extends BaseCardTest {
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Crusade());
+        return harness.addToBattlefieldAndReturn(player, new Telepathy());
     }
 }

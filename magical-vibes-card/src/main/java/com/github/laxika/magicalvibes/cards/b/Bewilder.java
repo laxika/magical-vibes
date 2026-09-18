@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "49")
+@CardRegistration(set = "IMA", collectorNumber = "43")
+@CardRegistration(set = "TSR", collectorNumber = "53")
 public class Bewilder extends Card {
 
     public Bewilder() {

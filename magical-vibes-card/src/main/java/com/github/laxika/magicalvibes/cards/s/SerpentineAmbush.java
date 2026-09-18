@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeU
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "77")
+@CardRegistration(set = "DBL", collectorNumber = "344")
 public class SerpentineAmbush extends Card {
 
     public SerpentineAmbush() {

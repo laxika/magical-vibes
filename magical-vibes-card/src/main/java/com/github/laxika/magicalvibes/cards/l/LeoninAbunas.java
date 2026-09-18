@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "8")
+@CardRegistration(set = "2XM", collectorNumber = "21")
 public class LeoninAbunas extends Card {
 
     public LeoninAbunas() {

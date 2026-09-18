@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MercadianAtlas.class, Forest.class})
 class MercadianAtlasTest extends BaseCardTest {
 
     @Test
@@ -20,7 +21,7 @@ class MercadianAtlasTest extends BaseCardTest {
     void mayDrawWhenNoLandWasPlayed() {
         harness.addToBattlefield(player1, new MercadianAtlas());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
@@ -36,7 +37,7 @@ class MercadianAtlasTest extends BaseCardTest {
     void decliningDrawDoesNotDraw() {
         harness.addToBattlefield(player1, new MercadianAtlas());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
@@ -45,6 +46,23 @@ class MercadianAtlasTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Putting a land onto the battlefield without playing it does not prevent the draw")
+    void drawsWhenLandWasPutOntoBattlefield() {
+        harness.addToBattlefield(player1, new MercadianAtlas());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -75,7 +93,6 @@ class MercadianAtlasTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }

@@ -23,6 +23,8 @@ import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "176")
 @CardRegistration(set = "DDJ", collectorNumber = "52")
+@CardRegistration(set = "GK1", collectorNumber = "66")
+@CardRegistration(set = "C15", collectorNumber = "224")
 public class KorozdaGuildmage extends Card {
 
     public KorozdaGuildmage() {

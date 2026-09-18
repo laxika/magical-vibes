@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "90")
 @CardRegistration(set = "5ED", collectorNumber = "108")
+@CardRegistration(set = "2ED", collectorNumber = "70")
 @CardRegistration(set = "ITP", collectorNumber = "11")
 @CardRegistration(set = "SUM", collectorNumber = "71")
 @CardRegistration(set = "ME1", collectorNumber = "43")
 @CardRegistration(set = "3ED", collectorNumber = "71")
+@CardRegistration(set = "IMA", collectorNumber = "69")
+@CardRegistration(set = "EMA", collectorNumber = "65")
 public class PhantomMonster extends Card {
 }

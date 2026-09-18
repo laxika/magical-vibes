@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "132")
+@CardRegistration(set = "DDU", collectorNumber = "11")
 public class GladehartCavalry extends Card {
 
     private static final TriggeringPermanentConditionalEffect DEATH_TRIGGER =

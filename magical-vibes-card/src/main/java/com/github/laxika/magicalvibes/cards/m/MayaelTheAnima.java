@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "179")
+@CardRegistration(set = "C13", collectorNumber = "199")
 public class MayaelTheAnima extends Card {
 
     public MayaelTheAnima() {

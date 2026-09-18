@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "174")
+@CardRegistration(set = "ECC", collectorNumber = "110")
 public class GreenwardenOfMurasa extends Card {
 
     public GreenwardenOfMurasa() {

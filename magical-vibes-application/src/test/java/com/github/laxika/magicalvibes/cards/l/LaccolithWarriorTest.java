@@ -39,7 +39,6 @@ class LaccolithWarriorTest extends BaseCardTest {
                         gd.playerBattlefields.get(player2.getId()).indexOf(blocker), attackerIdx))
                 .toList();
         gs.declareBlockers(gd, player2, assignments);
-        harness.passBothPriorities();
     }
 
     @Test
@@ -52,6 +51,7 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -67,6 +67,7 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         resolveCombat();
@@ -84,6 +85,7 @@ class LaccolithWarriorTest extends BaseCardTest {
         declareBlock(attacker, blocker);
 
         harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         assertThat(blocker.getMarkedDamage()).isZero();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
@@ -97,6 +99,7 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
         attacker.setPowerModifier(-1);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -115,6 +118,7 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, firstBlocker.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -133,6 +137,10 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, blocker.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).singleElement().satisfies(trigger ->
+                assertThat(trigger.getTargetId()).isEqualTo(blocker.getId()));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -156,6 +164,7 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());

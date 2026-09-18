@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardAndPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredAbilityCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -440,6 +441,7 @@ public class EtbTriggerService {
 
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
                                                int extraEtbTriggers, boolean faceDown) {
+        triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
         if (!faceDown) {
@@ -580,6 +582,7 @@ public class EtbTriggerService {
         // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .filter(e -> !(e instanceof TargetedGraveyardAndPlayerEffect))
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))
                 .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
@@ -757,6 +760,10 @@ public class EtbTriggerService {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                 }
                 etbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                if (targetId != null && otherEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                        && gameQueryService.findStackEntryByCardId(gameData, targetId) != null) {
+                    etbEntry.setTargetZone(com.github.laxika.magicalvibes.model.Zone.STACK);
+                }
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
@@ -793,6 +800,7 @@ public class EtbTriggerService {
                         extraEtbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                     }
                     extraEtbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                    extraEtbEntry.setTargetZone(etbEntry.getTargetZone());
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
@@ -840,11 +848,13 @@ public class EtbTriggerService {
         // choose the graveyard target as the trigger goes on the stack.
         for (CardEffect effect : graveyardCardsExileEffects) {
             ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
+            int maximumTargets = maximumGraveyardCardExileTargets(card, exile, gameData, controllerId,
+                    xValue, repeatedAdditionalCosts);
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 List<CardEffect> effects = combinesGraveyardCardExileWithOtherEffects
                         ? mandatoryEffects : List.of(effect);
                 graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
-                        gameData, controllerId, card, effects, exile);
+                        gameData, controllerId, card, effects, exile, maximumTargets);
             }
         }
 
@@ -986,6 +996,23 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private int maximumGraveyardCardExileTargets(Card card, ExileGraveyardCardsEffect effect,
+                                                  GameData gameData, UUID controllerId, int xValue,
+                                                  List<String> repeatedAdditionalCosts) {
+        int maximumTargets = effect.count();
+        int targetIndex = card.getEffectTargetIndex(effect);
+        if (targetIndex < 0 || targetIndex >= card.getSpellTargets().size()) {
+            return maximumTargets;
+        }
+        SpellTarget target = card.getSpellTargets().get(targetIndex);
+        if (target.getDynamicMaxTargets() == null) {
+            return maximumTargets;
+        }
+        return Math.min(maximumTargets, Math.max(0, amountEvaluationService.evaluate(gameData,
+                target.getDynamicMaxTargets(), new AmountContext(controllerId, null, null, xValue, 0,
+                        false, null, repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card))));
     }
 
     private int minimumGraveyardTargets(Card card, CardEffect effect) {

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreakingPoint.class, DrudgeSkeletons.class, GrizzlyBears.class, Forest.class, DarksteelMyr.class})
+@CardUsed({BreakingPoint.class, DarksteelMyr.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class})
 class BreakingPointTest extends BaseCardTest {
 
     @Test
@@ -46,11 +46,11 @@ class BreakingPointTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining destroys only destructible creatures")
-    void decliningLeavesNoncreaturesAndIndestructibleCreatures() {
+    @DisplayName("All players declining destroys creatures but leaves noncreatures alone")
+    void destructionBranchOnlyDestroysCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new DarksteelMyr());
+        harness.addToBattlefield(player2, new Forest());
 
         castBreakingPoint();
         harness.handleMayAbilityChosen(player1, false);
@@ -59,8 +59,7 @@ class BreakingPointTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Forest");
-        harness.assertOnBattlefield(player2, "Darksteel Myr");
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -95,5 +94,23 @@ class BreakingPointTest extends BaseCardTest {
     private void castBreakingPoint() {
         harness.castFromHand(player1, new BreakingPoint(), "{1}{R}{R}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Declining destroys only destructible creatures")
+    void decliningLeavesNoncreaturesAndIndestructibleCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new DarksteelMyr());
+
+        castBreakingPoint();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "157")
+@CardRegistration(set = "GK2", collectorNumber = "63")
+@CardRegistration(set = "PIO", collectorNumber = "221")
+@CardRegistration(set = "RVR", collectorNumber = "180")
 public class Dreadbore extends Card {
 
     public Dreadbore() {

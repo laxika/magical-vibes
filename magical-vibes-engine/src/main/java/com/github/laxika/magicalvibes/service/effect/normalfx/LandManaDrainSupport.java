@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -90,7 +91,7 @@ public class LandManaDrainSupport {
                     if (e instanceof AwardManaEffect award) {
                         amount += amountEvaluationService.evaluate(gameData, award.amount(),
                                 AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
+                    } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
                         amount += evaluate(gameData, playerId, perm, anyColor) * multiplier;
                     }
                 }
@@ -103,7 +104,7 @@ public class LandManaDrainSupport {
                         if (e instanceof AwardManaEffect award) {
                             amount += amountEvaluationService.evaluate(gameData, award.amount(),
                                     AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                        } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
+                        } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
                             amount += evaluate(gameData, playerId, perm, anyColor) * multiplier;
                         }
                     }
@@ -133,9 +134,10 @@ public class LandManaDrainSupport {
                     int amount = amountEvaluationService.evaluate(gameData, award.amount(),
                             AmountContext.forManaAbility(perm, playerId)) * multiplier;
                     pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
-                    queueAnyColorChoice(gameData, playerId, manaRecipientId,
-                            evaluate(gameData, playerId, perm, anyColor) * multiplier);
+                } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
+                    queueAnyColorChoice(gameData, playerId, manaRecipientId, anyColor,
+                            evaluate(gameData, playerId, perm, anyColor) * multiplier,
+                            availableColors(gameData, playerId, anyColor));
                 }
             }
             return true;
@@ -156,9 +158,10 @@ public class LandManaDrainSupport {
                     int amount = amountEvaluationService.evaluate(gameData, award.amount(),
                             AmountContext.forManaAbility(perm, playerId)) * multiplier;
                     pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
-                    queueAnyColorChoice(gameData, playerId, manaRecipientId,
-                            evaluate(gameData, playerId, perm, anyColor) * multiplier);
+                } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
+                    queueAnyColorChoice(gameData, playerId, manaRecipientId, anyColor,
+                            evaluate(gameData, playerId, perm, anyColor) * multiplier,
+                            availableColors(gameData, playerId, anyColor));
                 }
             }
             return true;
@@ -166,12 +169,18 @@ public class LandManaDrainSupport {
         return false;
     }
 
-    private void queueAnyColorChoice(GameData gameData, UUID playerId, UUID recipientPlayerId, int amount) {
-        ChoiceContext.ChosenPlayerManaColorChoice context = new ChoiceContext.ChosenPlayerManaColorChoice(
-                playerId, playerId, recipientPlayerId, false, amount);
+    private void queueAnyColorChoice(GameData gameData, UUID playerId, UUID recipientPlayerId,
+                                     AwardAnyColorManaEffect effect, int amount,
+                                     java.util.List<ManaColor> availableColors) {
+        if (amount <= 0 || availableColors.isEmpty()) {
+            return;
+        }
+        ChoiceContext context = effect.grantsCommanderCounter()
+                ? new ChoiceContext.CommanderCounterManaColorChoice(playerId, amount, recipientPlayerId)
+                : new ChoiceContext.ChosenPlayerManaColorChoice(playerId, playerId, recipientPlayerId, false, amount);
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 playerId, null, null, context,
-                ManaColor.COLORS.stream().map(Enum::name).toList(),
+                availableColors.stream().map(Enum::name).toList(),
                 "Choose a color of mana to add.");
         if (gameData.interaction.isAwaitingInput()) {
             gameData.queueInteraction(choice);
@@ -181,11 +190,22 @@ public class LandManaDrainSupport {
     }
 
     /**
-     * Spend-restricted any-color mana is skipped because the chosen-mana interaction currently
-     * records ordinary mana and would otherwise lose the printed spending restriction.
+     * Commander-identity mana is ordinary pool mana, but its available choices are restricted to
+     * the activating player's commander color identity.
      */
-    private static boolean unrestricted(AwardAnyColorManaEffect effect) {
-        return effect.restriction() == ManaSpendRestriction.NONE;
+    private static boolean ordinaryPoolAnyColor(AwardAnyColorManaEffect effect) {
+        return effect.restriction() == ManaSpendRestriction.NONE
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY;
+    }
+
+    private static java.util.List<ManaColor> availableColors(GameData gameData, UUID playerId,
+                                                              AwardAnyColorManaEffect effect) {
+        if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
+            return ManaProductionSupport.commanderColorIdentity(gameData, playerId);
+        }
+        return ManaColor.COLORS;
     }
 
     private int evaluate(GameData gameData, UUID playerId, Permanent perm, AwardAnyColorManaEffect effect) {

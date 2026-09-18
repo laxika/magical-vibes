@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "213")
+@CardRegistration(set = "KLR", collectorNumber = "240")
 public class FireforgersPuzzleknot extends Card {
 
     public FireforgersPuzzleknot() {

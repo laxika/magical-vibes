@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "168")
+@CardRegistration(set = "DBL", collectorNumber = "435")
 public class LightningWolf extends Card {
 
     public LightningWolf() {

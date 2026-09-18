@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.e.ExoskeletalArmor;
+import com.github.laxika.magicalvibes.cards.a.ArcaneFlight;
 import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
-import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,40 +15,40 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VenomousVines.class, ExoskeletalArmor.class, SuntailHawk.class,
-        FaithsFetters.class, NantukoMonastery.class})
+@CardUsed({ArcaneFlight.class, FaithsFetters.class, Forest.class, GrizzlyBears.class, VenomousVines.class})
 class VenomousVinesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys an enchanted permanent")
     void destroysEnchantedPermanent() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
-        attachAura(creature, new ExoskeletalArmor());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attachAura(creature);
 
         castAt(creature);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
-        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Destroys an enchanted noncreature permanent")
     void destroysEnchantedNoncreaturePermanent() {
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new NantukoMonastery());
-        attachAura(land, new FaithsFetters());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FaithsFetters());
+        aura.setAttachedTo(land.getId());
 
         castAt(land);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Nantuko Monastery");
-        harness.assertInGraveyard(player2, "Nantuko Monastery");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
     @DisplayName("Cannot target an unenchanted permanent")
     void cannotTargetUnenchantedPermanent() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new VenomousVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -61,20 +60,20 @@ class VenomousVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target is no longer enchanted")
     void fizzlesIfTargetIsNoLongerEnchanted() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
-        Permanent aura = attachAura(creature, new ExoskeletalArmor());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = attachAura(creature);
 
         castAt(creature);
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Suntail Hawk");
-        harness.assertNotInGraveyard(player2, "Suntail Hawk");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
-    private Permanent attachAura(Permanent permanent, Card auraCard) {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, auraCard);
-        aura.setAttachedTo(permanent.getId());
+    private Permanent attachAura(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneFlight());
+        aura.setAttachedTo(creature.getId());
         return aura;
     }
 

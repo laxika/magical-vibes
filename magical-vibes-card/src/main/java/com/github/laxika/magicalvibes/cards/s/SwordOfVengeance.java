@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "216")
+@CardRegistration(set = "GN3", collectorNumber = "120")
+@CardRegistration(set = "C15", collectorNumber = "272")
 public class SwordOfVengeance extends Card {
 
     public SwordOfVengeance() {

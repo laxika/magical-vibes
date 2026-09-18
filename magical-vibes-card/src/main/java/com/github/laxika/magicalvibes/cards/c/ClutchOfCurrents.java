@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "72")
+@CardRegistration(set = "PIO", collectorNumber = "326")
 public class ClutchOfCurrents extends Card {
 
     @Override

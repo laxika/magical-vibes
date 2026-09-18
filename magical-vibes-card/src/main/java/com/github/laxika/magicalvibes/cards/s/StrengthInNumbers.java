@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "224")
+@CardRegistration(set = "MM3", collectorNumber = "138")
+@CardRegistration(set = "TSR", collectorNumber = "233")
 public class StrengthInNumbers extends Card {
 
     public StrengthInNumbers() {

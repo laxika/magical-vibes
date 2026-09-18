@@ -11,5 +11,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * on a loss — so the next damage event from that source, combat or noncombat, to any recipient,
  * consumes it.
  */
-public record FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffect() implements CardEffect {
+public record FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffect() implements CardEffect, DoublingEffect {
 }

@@ -90,6 +90,28 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class ValidTargetServiceTest {
 
+    @Test
+    void optionalTriggeredAbilityCannotTargetShroud() {
+        Card source = new Card();
+        Permanent target = new Permanent(new Card());
+        when(gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)).thenReturn(true);
+
+        assertThat(validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, source,
+                List.of(new DealDamageToTargetCreatureEffect(1)), null, target, player1Id)).isFalse();
+    }
+
+    @Test
+    void optionalTriggeredAbilityCannotTargetAnOpponentsHexproofPermanent() {
+        Card source = new Card();
+        Permanent target = new Permanent(new Card());
+        when(gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)).thenReturn(false);
+        when(gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)).thenReturn(true);
+        when(gameQueryService.findPermanentController(gameData, target.getId())).thenReturn(player2Id);
+
+        assertThat(validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, source,
+                List.of(new DealDamageToTargetCreatureEffect(1)), null, target, player1Id)).isFalse();
+    }
+
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private TargetValidationService targetValidationService;
@@ -1534,6 +1556,20 @@ class ValidTargetServiceTest {
                     gameData, sourceCard, ability, player1Id, 0, List.of());
 
             assertThat(response.maxTargets()).isZero();
+        }
+
+        @Test
+        void exactXTargetsReportsAnnouncedCountAboveOneHundred() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, "{X}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "X target creatures").withExactXTargets();
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of(), 101);
+
+            assertThat(response.minTargets()).isEqualTo(101);
+            assertThat(response.maxTargets()).isEqualTo(101);
         }
 
         @Test

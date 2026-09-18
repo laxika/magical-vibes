@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "82")
+@CardRegistration(set = "TSR", collectorNumber = "90")
 public class StormcloudDjinn extends Card {
 
     public StormcloudDjinn() {

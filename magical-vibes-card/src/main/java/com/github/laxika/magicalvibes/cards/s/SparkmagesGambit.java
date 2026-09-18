@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "117")
+@CardRegistration(set = "2X2", collectorNumber = "124")
 public class SparkmagesGambit extends Card {
 
     public SparkmagesGambit() {

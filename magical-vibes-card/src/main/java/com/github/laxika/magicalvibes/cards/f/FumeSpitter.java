@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "63")
 @CardRegistration(set = "TD2", collectorNumber = "49")
+@CardRegistration(set = "UMA", collectorNumber = "95")
 public class FumeSpitter extends Card {
 
     public FumeSpitter() {

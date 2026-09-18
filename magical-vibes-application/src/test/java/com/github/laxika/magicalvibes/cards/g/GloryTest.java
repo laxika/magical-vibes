@@ -17,16 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Glory.class, SuntailHawk.class, NantukoMonastery.class})
+@CardUsed({GiantWarthog.class, Glory.class, NantukoMonastery.class, SuntailHawk.class})
 class GloryTest extends BaseCardTest {
-
-    @Test
-    @DisplayName("Glory has flying")
-    void hasFlying() {
-        Permanent glory = addCreatureReady(player1, new Glory());
-
-        assertThat(gqs.hasKeyword(gd, glory, Keyword.FLYING)).isTrue();
-    }
 
     @Test
     @DisplayName("The ability can only be activated while Glory is in a graveyard")
@@ -39,10 +31,23 @@ class GloryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard ability requires its full mana cost")
+    void abilityRequiresFullManaCost() {
+        harness.setGraveyard(player1, List.of(new Glory()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Grants your creatures protection from the chosen color")
     void grantsOwnCreaturesProtectionFromChosenColor() {
-        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
-        Permanent opposingCreature = addCreatureReady(player2, new SuntailHawk());
+        Permanent ownCreature = addCreatureReady(player1, new GiantWarthog());
+        Permanent opposingCreature = addCreatureReady(player2, new GiantWarthog());
         harness.setGraveyard(player1, List.of(new Glory()));
         prepareAbilityMana();
 
@@ -53,6 +58,41 @@ class GloryTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.RED)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, opposingCreature, CardColor.RED)).isFalse();
         harness.assertInGraveyard(player1, "Glory");
+    }
+
+    @Test
+    @DisplayName("Protection granted by Glory expires at end of turn")
+    void protectionExpiresAtEndOfTurn() {
+        Permanent ownCreature = addCreatureReady(player1, new GiantWarthog());
+        harness.setGraveyard(player1, List.of(new Glory()));
+        prepareAbilityMana();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isFalse();
+    }
+
+    private void prepareAbilityMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    @DisplayName("Glory has flying")
+    void hasFlying() {
+        Permanent glory = addCreatureReady(player1, new Glory());
+
+        assertThat(gqs.hasKeyword(gd, glory, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -86,32 +126,5 @@ class GloryTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.GREEN)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Protection granted by Glory expires at end of turn")
-    void protectionExpiresAtEndOfTurn() {
-        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
-        harness.setGraveyard(player1, List.of(new Glory()));
-        prepareAbilityMana();
-
-        harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "BLUE");
-
-        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
-
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isFalse();
-    }
-
-    private void prepareAbilityMana() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 }

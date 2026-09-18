@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "171")
+@CardRegistration(set = "IMA", collectorNumber = "153")
 public class VentSentinel extends Card {
 
     public VentSentinel() {

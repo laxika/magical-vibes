@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class Skyshooter extends Card {
                 "{T}, Sacrifice Skyshooter: Destroy target attacking or blocking creature with flying.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsAttackingPredicate(),
                                         new PermanentIsBlockingPredicate()

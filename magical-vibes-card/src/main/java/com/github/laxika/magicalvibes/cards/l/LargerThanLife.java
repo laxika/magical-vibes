@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "KLD", collectorNumber = "160")
+@CardRegistration(set = "MB1", collectorNumber = "160")
 public class LargerThanLife extends Card {
 
     public LargerThanLife() {

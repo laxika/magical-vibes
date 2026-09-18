@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "86")
+@CardRegistration(set = "DBL", collectorNumber = "86")
 public class BatWhisperer extends Card {
 
     public BatWhisperer() {

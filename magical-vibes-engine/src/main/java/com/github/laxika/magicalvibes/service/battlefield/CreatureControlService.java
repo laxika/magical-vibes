@@ -36,6 +36,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 /**
  * CR 613.2/613.7 layer-2 control semantics. Every control-changing effect is a floating
@@ -92,9 +94,14 @@ public class CreatureControlService {
      * @param sourcePermanentId the source permanent for source/attachment-scoped durations, else {@code null}
      * @param sourceCardName    name of the card whose spell/ability created the effect
      */
-    public void applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
+    public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
                                    CardEffect wrappedEffect, EffectDuration duration,
                                    UUID sourcePermanentId, String sourceCardName) {
+        UUID currentControllerId = gameData.findControllerOf(target);
+        if (currentControllerId != null && !currentControllerId.equals(newControllerId)
+                && gameQueryService.cantBeControlledByOtherPlayers(gameData, target)) {
+            return false;
+        }
         FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), null, null, duration, 0));
@@ -103,6 +110,7 @@ public class CreatureControlService {
                     stamped.id(), newControllerId, gameData.turnNumber));
         }
         recomputeControl(gameData, target);
+        return true;
     }
 
     /**
@@ -125,10 +133,10 @@ public class CreatureControlService {
             if (permanent == null || newControllerId == null) {
                 continue;
             }
-            applyControlEffect(gameData, newControllerId, permanent,
+            boolean controlApplied = applyControlEffect(gameData, newControllerId, permanent,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
                     null, "Debt of Loyalty");
-            applied = true;
+            applied |= controlApplied;
         }
         return applied;
     }
@@ -188,6 +196,17 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
+        if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()
+                .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
+            for (var effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+                if (effect instanceof RegisterEchoAtNextUpkeepEffect echo) {
+                    gameData.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(),
+                            echo.manaCost(), echo.dynamicManaCost(), echo.handCardCost(),
+                            echo.cost(), echo.paidEffects(), permanent.getCard()));
+                }
+            }
+        }
 
         // Soulbond lasts only while you control both (CR 702.94) — control change breaks the pair.
         UUID partnerId = permanent.getPairedWithId();

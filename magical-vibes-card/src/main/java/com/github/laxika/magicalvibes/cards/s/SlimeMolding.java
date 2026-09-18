@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "135")
+@CardRegistration(set = "MM3", collectorNumber = "137")
 public class SlimeMolding extends Card {
 
     public SlimeMolding() {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,21 +14,36 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenFogbringer.class, RiftstonePortal.class, SuntailHawk.class})
+@CardUsed({AvenFogbringer.class, KrosanVerge.class, SuntailHawk.class})
 class AvenFogbringerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB returns the targeted land to its owner's hand")
     void etbReturnsTargetedLand() {
-        harness.addToBattlefield(player2, new RiftstonePortal());
-        UUID targetId = harness.getPermanentId(player2, "Riftstone Portal");
+        harness.addToBattlefield(player2, new KrosanVerge());
+        UUID targetId = harness.getPermanentId(player2, "Krosan Verge");
         castAvenFogbringer(targetId);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Riftstone Portal");
-        harness.assertInHand(player2, "Riftstone Portal");
+        harness.assertNotOnBattlefield(player2, "Krosan Verge");
+        harness.assertInHand(player2, "Krosan Verge");
+        harness.assertOnBattlefield(player1, "Aven Fogbringer");
+    }
+
+    @Test
+    @DisplayName("ETB can target a land its controller owns")
+    void etbReturnsOwnLand() {
+        harness.addToBattlefield(player1, new KrosanVerge());
+        UUID targetId = harness.getPermanentId(player1, "Krosan Verge");
+        castAvenFogbringer(targetId);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Krosan Verge");
+        harness.assertInHand(player1, "Krosan Verge");
         harness.assertOnBattlefield(player1, "Aven Fogbringer");
     }
 
@@ -44,6 +59,12 @@ class AvenFogbringerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    private void castAvenFogbringer(UUID targetId) {
+        harness.setHand(player1, List.of(new AvenFogbringer()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0, List.of(targetId));
+    }
+
     @Test
     @DisplayName("ETB has no effect when no land is available")
     void etbHasNoEffectWithoutLandTarget() {
@@ -54,11 +75,5 @@ class AvenFogbringerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Aven Fogbringer");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-    }
-
-    private void castAvenFogbringer(UUID targetId) {
-        harness.setHand(player1, List.of(new AvenFogbringer()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0, List.of(targetId));
     }
 }

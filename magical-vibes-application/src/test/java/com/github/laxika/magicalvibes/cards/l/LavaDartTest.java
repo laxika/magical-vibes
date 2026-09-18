@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LavaDart.class, Forest.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({LavaDart.class, DwarvenDriller.class, Mountain.class})
 class LavaDartTest extends BaseCardTest {
 
     @Test
@@ -26,7 +25,7 @@ class LavaDartTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -34,7 +33,7 @@ class LavaDartTest extends BaseCardTest {
     void dealsDamageToCreature() {
         harness.setHand(player1, List.of(new LavaDart()));
         harness.addMana(player1, ManaColor.RED, 1);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DwarvenDriller());
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
@@ -51,7 +50,7 @@ class LavaDartTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         harness.assertNotInGraveyard(player1, "Lava Dart");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Lava Dart"));
@@ -60,12 +59,26 @@ class LavaDartTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback requires sacrificing a Mountain")
     void flashbackRejectsNonMountainSacrifice() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent nonMountain = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
         harness.setGraveyard(player1, List.of(new LavaDart()));
 
-        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), forest.getId()))
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), nonMountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(nonMountain);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot sacrifice an opponent's Mountain")
+    void flashbackRejectsOpponentsMountain() {
+        Permanent opponentMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setGraveyard(player1, List.of(new LavaDart()));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(
+                player1, 0, player2.getId(), opponentMountain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentMountain);
+        harness.assertInGraveyard(player1, "Lava Dart");
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "120")
+@CardRegistration(set = "RVR", collectorNumber = "140")
 public class ForcedAdaptation extends Card {
 
     public ForcedAdaptation() {

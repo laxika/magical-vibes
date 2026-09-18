@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "185")
 @CardRegistration(set = "AKR", collectorNumber = "216")
+@CardRegistration(set = "UMA", collectorNumber = "181")
 public class ShedWeakness extends Card {
 
     public ShedWeakness() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "P02", collectorNumber = "51")
+@CardRegistration(set = "ME4", collectorNumber = "66")
 public class TalasResearcher extends Card {
 
     public TalasResearcher() {

@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "310")
 @CardRegistration(set = "5ED", collectorNumber = "359")
 @CardRegistration(set = "ATQ", collectorNumber = "47")
+@CardRegistration(set = "ME4", collectorNumber = "194")
 public class CoralHelm extends Card {
 
     public CoralHelm() {

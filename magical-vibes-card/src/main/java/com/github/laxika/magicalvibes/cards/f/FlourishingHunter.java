@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "199")
+@CardRegistration(set = "DBL", collectorNumber = "466")
 public class FlourishingHunter extends Card {
 
     public FlourishingHunter() {

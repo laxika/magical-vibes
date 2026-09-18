@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,13 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoMonastery.class, AvenFogbringer.class})
+@CardUsed({AvenFogbringer.class, NantukoMonastery.class})
 class NantukoMonasteryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping Nantuko Monastery produces one colorless mana")
     void tapForColorless() {
-        addCreatureReady(player1, new NantukoMonastery());
+        addMonasteryReady(player1);
 
         harness.tapPermanent(player1, 0);
 
@@ -36,8 +37,10 @@ class NantukoMonasteryTest extends BaseCardTest {
     @Test
     @DisplayName("The animation ability cannot be activated without threshold")
     void animationRequiresThreshold() {
-        addCreatureReady(player1, new NantukoMonastery());
-        harness.setGraveyard(player1, graveyardCards(6));
+        addMonasteryReady(player1);
+        harness.setGraveyard(player1, List.of(
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery(),
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -49,8 +52,79 @@ class NantukoMonasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Threshold animates Nantuko Monastery as a 4/4 green-white Insect Monk with first strike")
     void thresholdAnimatesMonastery() {
+        Permanent monastery = addMonasteryReady(player1);
+        setThresholdGraveyard(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monastery)).isTrue();
+        assertThat(gqs.isLand(gd, monastery)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, monastery)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, monastery)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, monastery))
+                .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, monastery))
+                .containsExactlyInAnyOrder(CardSubtype.INSECT, CardSubtype.MONK);
+        assertThat(gqs.hasKeyword(gd, monastery, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(monastery.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The animation ends at the end of the turn")
+    void animationEndsAtEndOfTurn() {
+        Permanent monastery = addMonasteryReady(player1);
+        setThresholdGraveyard(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, monastery)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monastery)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, monastery)).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, monastery)).isEmpty();
+        assertThat(gqs.hasKeyword(gd, monastery, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Threshold ignores cards in an opponent's graveyard")
+    void thresholdRequiresCardsInControllersGraveyard() {
+        addMonasteryReady(player1);
+        setThresholdGraveyard(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addMonasteryReady(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new NantukoMonastery());
+        permanent.setSummoningSick(false);
+        return permanent;
+    }
+
+    private void setThresholdGraveyard(Player player) {
+        harness.setGraveyard(player, List.of(
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery(),
+                new NantukoMonastery(), new NantukoMonastery(), new NantukoMonastery(),
+                new NantukoMonastery()));
+    }
+
+    @Test
+    @DisplayName("Threshold animates Nantuko Monastery as a 4/4 green-white Insect Monk with first strike")
+    void thresholdAnimatesMonasteryJudReview() {
         Permanent monastery = addCreatureReady(player1, new NantukoMonastery());
-        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setGraveyard(player1, graveyardCardsForJudReview(7));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -76,9 +150,9 @@ class NantukoMonasteryTest extends BaseCardTest {
 
     @Test
     @DisplayName("The animation ends at the end of the turn")
-    void animationEndsAtEndOfTurn() {
+    void animationEndsAtEndOfTurnJudReview() {
         Permanent monastery = addCreatureReady(player1, new NantukoMonastery());
-        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setGraveyard(player1, graveyardCardsForJudReview(7));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -101,7 +175,7 @@ class NantukoMonasteryTest extends BaseCardTest {
     @DisplayName("Threshold does not count cards in an opponent's graveyard")
     void thresholdRequiresControllerGraveyard() {
         addCreatureReady(player1, new NantukoMonastery());
-        harness.setGraveyard(player2, graveyardCards(7));
+        harness.setGraveyard(player2, graveyardCardsForJudReview(7));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -110,7 +184,7 @@ class NantukoMonasteryTest extends BaseCardTest {
                 .hasMessageContaining("cards in your graveyard");
     }
 
-    private List<Card> graveyardCards(int count) {
+    private List<Card> graveyardCardsForJudReview(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             cards.add(new AvenFogbringer());

@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "209")
+@CardRegistration(set = "2X2", collectorNumber = "188")
+@CardRegistration(set = "PIO", collectorNumber = "209")
+@CardRegistration(set = "SOA", collectorNumber = "61")
 public class BringToLight extends Card {
 
     public BringToLight() {

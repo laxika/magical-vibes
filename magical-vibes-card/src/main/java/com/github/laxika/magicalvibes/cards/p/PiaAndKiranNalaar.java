@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "157")
+@CardRegistration(set = "DDU", collectorNumber = "47")
+@CardRegistration(set = "PIO", collectorNumber = "151")
 public class PiaAndKiranNalaar extends Card {
 
     public PiaAndKiranNalaar() {

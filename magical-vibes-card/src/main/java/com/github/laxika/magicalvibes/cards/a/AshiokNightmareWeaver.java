@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "188")
+@CardRegistration(set = "PIO", collectorNumber = "352")
 public class AshiokNightmareWeaver extends Card {
 
     public AshiokNightmareWeaver() {

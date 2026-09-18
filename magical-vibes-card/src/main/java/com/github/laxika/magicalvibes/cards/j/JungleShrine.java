@@ -12,6 +12,10 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "226")
 @CardRegistration(set = "DDH", collectorNumber = "34")
+@CardRegistration(set = "E02", collectorNumber = "46")
+@CardRegistration(set = "MM3", collectorNumber = "238")
+@CardRegistration(set = "ECC", collectorNumber = "154")
+@CardRegistration(set = "C13", collectorNumber = "299")
 public class JungleShrine extends Card {
 
     public JungleShrine() {

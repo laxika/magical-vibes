@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "110")
+@CardRegistration(set = "TSR", collectorNumber = "116")
 public class Feebleness extends Card {
 
     public Feebleness() {

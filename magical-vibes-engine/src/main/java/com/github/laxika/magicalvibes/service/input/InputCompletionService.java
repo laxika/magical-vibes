@@ -15,6 +15,9 @@ import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
 /**
  * Shared completion logic for input handler services.
@@ -27,12 +30,16 @@ import org.springframework.beans.factory.ObjectProvider;
 @Service
 @RequiredArgsConstructor
 public class InputCompletionService {
+    @Autowired private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+
 
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
     private final EffectResolutionService effectResolutionService;
+    @Autowired
+    private InteractionHandlerRegistry interactionHandlerRegistry;
     @Autowired
     private ObjectProvider<StackResolutionService> stackResolutionService;
     @Autowired
@@ -41,6 +48,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private DrawService drawService;
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -65,16 +75,32 @@ public class InputCompletionService {
     }
 
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
+        if (gameData.waitingForSubgame) return;
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
+        var queuedManaChoice = gameData.pendingInteractions.stream()
+                .filter(pending -> pending instanceof PendingInteraction.ColorChoice choice
+                        && !(choice.context() instanceof ChoiceContext.RegenerationShieldChoice))
+                .findFirst().orElse(null);
+        if (queuedManaChoice != null) {
+            gameData.pendingInteractions.removeFirstOccurrence(queuedManaChoice);
+            interactionHandlerRegistry.begin(gameData, queuedManaChoice);
+            return;
+        }
         if (gameData.pendingInteractions.stream().anyMatch(pending ->
-                pending instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice choice
-                        && choice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice)) {
+                pending instanceof PendingInteraction.ColorChoice choice
+                        && choice.context() instanceof ChoiceContext.RegenerationShieldChoice)) {
             stateBasedActionService.performStateBasedActions(gameData);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
+        if (!gameData.pendingAuctionEntries.isEmpty()) {
+            permanentAuctionService.resumePendingEntries(gameData);
             if (gameData.interaction.isAwaitingInput()) return;
         }
         if (!gameData.pendingCardDraws.isEmpty()) {
             drawService.resumePendingCardDraws(gameData);
+            if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
             if (gameData.status == GameStatus.FINISHED) return;
             if (gameData.interaction.isAwaitingInput()) return;
         }
@@ -91,6 +117,7 @@ public class InputCompletionService {
                 effectResolutionService.resolveEffectsFrom(gameData,
                         gameData.pendingEffectResolutionEntry,
                         gameData.pendingEffectResolutionIndex);
+                if (gameData.waitingForSubgame) return;
             }
 
             if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
@@ -99,6 +126,15 @@ public class InputCompletionService {
                     playerInputService.processNextMayAbility(gameData);
                 }
                 return;
+            }
+
+            if (gameData.pendingEffectResolutionEntry == null && resumeWordOfCommandIfReady(gameData)) {
+                if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+                    if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+                        playerInputService.processNextMayAbility(gameData);
+                    }
+                    return;
+                }
             }
 
             if (gameData.status == GameStatus.FINISHED) {
@@ -116,6 +152,40 @@ public class InputCompletionService {
             turnProgressionService.resolveAutoPass(gameData);
             publishStateAfterInput(gameData);
         }
+    }
+
+    /** Resumes Word of Command after the selected card's action and any resulting spell resolve. */
+    private boolean resumeWordOfCommandIfReady(GameData gameData) {
+        StackEntry pendingEntry = gameData.wordOfCommandPendingResolutionEntry;
+        if (pendingEntry == null || gameData.wordOfCommandCastingCard) {
+            return false;
+        }
+        if (gameData.wordOfCommandAwaitingCardResolution
+                && gameData.stack.stream().anyMatch(entry -> entry.getCard() != null
+                && gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(entry.getCard().getId()))) {
+            return false;
+        }
+
+        gameData.wordOfCommandAwaitingCardResolution = false;
+        gameData.wordOfCommandPendingResolutionEntry = null;
+        gameData.wordOfCommandCardId = null;
+        if (gameData.wordOfCommandControllerPlayerId != null
+                && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
+            gameData.mindControllerPlayerId = null;
+            gameData.mindControlledPlayerId = null;
+            gameData.mindControlUntilEndOfCombat = false;
+        }
+        gameData.wordOfCommandControllerPlayerId = null;
+        gameData.wordOfCommandControlledPlayerId = null;
+        gameData.pendingEffectResolutionEntry = pendingEntry;
+        gameData.pendingEffectResolutionIndex = gameData.wordOfCommandPendingResolutionIndex;
+        gameData.wordOfCommandPendingResolutionIndex = 0;
+        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                gameData.pendingEffectResolutionIndex);
+        return true;
     }
 
     /**

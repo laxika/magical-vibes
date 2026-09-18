@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "34")
+@CardRegistration(set = "DBL", collectorNumber = "34")
 public class SigardianSavior extends Card {
 
     public SigardianSavior() {

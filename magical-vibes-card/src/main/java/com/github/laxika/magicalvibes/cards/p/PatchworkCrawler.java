@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExile
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "72")
+@CardRegistration(set = "DBL", collectorNumber = "339")
 public class PatchworkCrawler extends Card {
 
     public PatchworkCrawler() {

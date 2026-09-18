@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EpicStruggle.class, BorderPatrol.class})
+@CardUsed({EpicStruggle.class, GiantWarthog.class})
 class EpicStruggleTest extends BaseCardTest {
 
     @Test
@@ -18,6 +18,20 @@ class EpicStruggleTest extends BaseCardTest {
     void winsWithExactlyTwentyCreatures() {
         harness.addToBattlefield(player1, new EpicStruggle());
         addCreatures(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Wins the game at upkeep with more than 20 creatures")
+    void winsWithMoreThanTwentyCreatures() {
+        harness.addToBattlefield(player1, new EpicStruggle());
+        addCreatures(player1, 21);
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
@@ -40,6 +54,18 @@ class EpicStruggleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new EpicStruggle());
+        addCreatures(player1, 20);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
     @DisplayName("Creatures controlled by an opponent do not count")
     void opponentCreaturesDoNotCount() {
         harness.addToBattlefield(player1, new EpicStruggle());
@@ -53,20 +79,6 @@ class EpicStruggleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Wins the game at upkeep with more than 20 creatures")
-    void winsWithMoreThanTwentyCreatures() {
-        harness.addToBattlefield(player1, new EpicStruggle());
-        addCreatures(player1, 21);
-
-        advanceToUpkeep(player1);
-        assertThat(gd.stack).hasSize(1);
-
-        harness.passBothPriorities();
-
-        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-    }
-
-    @Test
     @DisplayName("Rechecks the creature count when the trigger resolves")
     void rechecksCreatureCountOnResolution() {
         harness.addToBattlefield(player1, new EpicStruggle());
@@ -75,7 +87,7 @@ class EpicStruggleTest extends BaseCardTest {
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Border Patrol"));
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Giant Warthog"));
 
         harness.passBothPriorities();
 
@@ -84,7 +96,7 @@ class EpicStruggleTest extends BaseCardTest {
 
     private void addCreatures(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            addCreatureReady(player, new BorderPatrol());
+            addCreatureReady(player, new GiantWarthog());
         }
     }
 }

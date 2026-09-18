@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "29")
+@CardRegistration(set = "2X2", collectorNumber = "19")
 public class MilitiaBugler extends Card {
 
     public MilitiaBugler() {

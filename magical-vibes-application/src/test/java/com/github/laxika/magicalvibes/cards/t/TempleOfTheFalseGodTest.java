@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.o.Omenspeaker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TempleOfTheFalseGod.class, Forest.class})
+@CardUsed({TempleOfTheFalseGod.class, Forest.class, Omenspeaker.class})
 class TempleOfTheFalseGodTest extends BaseCardTest {
 
     @Test
@@ -30,6 +31,17 @@ class TempleOfTheFalseGodTest extends BaseCardTest {
     void cannotActivateWithFewerThanFiveLands() {
         harness.addToBattlefield(player1, new TempleOfTheFalseGod());
         addForests(3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Temple of the False God does not count nonlands toward five lands")
+    void doesNotCountNonlandsTowardFiveLands() {
+        harness.addToBattlefield(player1, new TempleOfTheFalseGod());
+        addForests(3);
+        harness.addToBattlefield(player1, new Omenspeaker());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

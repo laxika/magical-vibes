@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BalthorTheDefiled;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,13 +13,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Guiltfeeder.class, GiantWarthog.class})
+@CardUsed({BalthorTheDefiled.class, GiantWarthog.class, Guiltfeeder.class})
 class GuiltfeederTest extends BaseCardTest {
 
     private Permanent addAttacker() {
         Permanent attacker = addCreatureReady(player1, new Guiltfeeder());
         attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
         return attacker;
     }
 
@@ -31,16 +31,49 @@ class GuiltfeederTest extends BaseCardTest {
     @Test
     @DisplayName("Unblocked Guiltfeeder makes the defending player lose life equal to their graveyard size")
     void unblockedLifeLossEqualsDefendingGraveyardSize() {
-        harness.setGraveyard(player1, List.of(new Guiltfeeder(), new Guiltfeeder()));
-        harness.setGraveyard(player2, List.of(new Guiltfeeder(), new Guiltfeeder(), new Guiltfeeder()));
+        harness.setGraveyard(player1, List.of(new BalthorTheDefiled(), new GiantWarthog()));
+        harness.setGraveyard(player2, List.of(
+                new BalthorTheDefiled(), new GiantWarthog(), new BalthorTheDefiled()));
         addAttacker();
 
         int startingLife = gd.getLife(player2.getId());
-        int controllerStartingLife = gd.getLife(player1.getId());
         declareBlockers(List.of());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 3);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerStartingLife);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Blocked Guiltfeeder does not trigger")
+    void blockedDoesNotTrigger() {
+        harness.setGraveyard(player2, List.of(new BalthorTheDefiled(), new GiantWarthog()));
+        Permanent attacker = addAttacker();
+        Permanent blocker = addCreatureReady(player2, new BalthorTheDefiled());
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int startingLife = gd.getLife(player2.getId());
+
+        declareBlockers(List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+    }
+
+    @Test
+    @DisplayName("Fear prevents a nonblack, nonartifact creature from blocking Guiltfeeder")
+    void fearPreventsNonblackNonartifactBlocker() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
+
+        prepareDeclareBlockers();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("fear");
     }
 
     @Test
@@ -48,7 +81,7 @@ class GuiltfeederTest extends BaseCardTest {
     void emptyDefendingGraveyardCausesNoLifeLoss() {
         harness.setGraveyard(player1, List.of(new Guiltfeeder()));
         harness.setGraveyard(player2, List.of());
-        addAttacker();
+        addAttackerForJudReview();
 
         int startingLife = gd.getLife(player2.getId());
         int controllerStartingLife = gd.getLife(player1.getId());
@@ -62,7 +95,7 @@ class GuiltfeederTest extends BaseCardTest {
     @DisplayName("The trigger counts the defending graveyard when it resolves")
     void countsDefendingGraveyardAtResolution() {
         harness.setGraveyard(player2, List.of(new Guiltfeeder()));
-        addAttacker();
+        addAttackerForJudReview();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
@@ -75,34 +108,10 @@ class GuiltfeederTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 4);
     }
 
-    @Test
-    @DisplayName("Fear prevents a nonblack nonartifact creature from blocking")
-    void fearPreventsNonblackNonartifactBlocker() {
-        Permanent attacker = addAttacker();
-        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
-
-        prepareDeclareBlockers();
-
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    @DisplayName("Blocked Guiltfeeder does not trigger")
-    void blockedDoesNotTrigger() {
-        harness.setGraveyard(player2, List.of(new Guiltfeeder(), new Guiltfeeder()));
-        Permanent attacker = addAttacker();
-        Permanent blocker = addCreatureReady(player2, new Guiltfeeder());
-
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int startingLife = gd.getLife(player2.getId());
-
-        declareBlockers(List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
-
-        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+    private Permanent addAttackerForJudReview() {
+        Permanent attacker = addCreatureReady(player1, new Guiltfeeder());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        return attacker;
     }
 }

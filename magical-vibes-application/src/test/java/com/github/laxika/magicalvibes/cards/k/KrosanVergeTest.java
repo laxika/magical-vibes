@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KrosanVerge.class, Forest.class, Plains.class, Island.class, KrosanWayfarer.class})
+@CardUsed({Forest.class, Island.class, KrosanVerge.class, KrosanWayfarer.class, Plains.class})
 class KrosanVergeTest extends BaseCardTest {
 
     @Test
@@ -49,9 +49,9 @@ class KrosanVergeTest extends BaseCardTest {
         Forest forest = new Forest();
         Plains plains = new Plains();
         Island island = new Island();
-        KrosanWayfarer wayfarer = new KrosanWayfarer();
+        KrosanVerge extraVerge = new KrosanVerge();
         addVergeAndMana();
-        harness.setLibrary(player1, List.of(forest, plains, island, wayfarer));
+        harness.setLibrary(player1, List.of(forest, plains, island, extraVerge));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -61,20 +61,20 @@ class KrosanVergeTest extends BaseCardTest {
         assertThat(forestSearch.params().cards()).containsExactly(forest);
         assertThat(forestSearch.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         PendingInteraction.LibrarySearch plainsSearch =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(plainsSearch.params().cards()).containsExactly(plains);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard() instanceof Forest || permanent.getCard() instanceof Plains)
                 .hasSize(2)
                 .allMatch(Permanent::isTapped);
         harness.assertInGraveyard(player1, "Krosan Verge");
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, wayfarer);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, extraVerge);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -92,12 +92,43 @@ class KrosanVergeTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(plains);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof Plains && permanent.isTapped());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Still fetches a Forest when no Plains is available")
+    void fetchesAvailableLandWhenPlainsIsMissing() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        KrosanVerge extraVerge = new KrosanVerge();
+        addVergeAndMana();
+        harness.setLibrary(player1, List.of(forest, island, extraVerge));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof Forest || permanent.getCard() instanceof Plains)
+                .hasSize(1)
+                .allMatch(Permanent::isTapped);
+        harness.assertInGraveyard(player1, "Krosan Verge");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, extraVerge);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void addVergeAndMana() {
+        harness.addToBattlefield(player1, new KrosanVerge());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     @Test
@@ -122,10 +153,5 @@ class KrosanVergeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Krosan Verge");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, wayfarer);
         assertThat(gd.interaction.activeInteraction()).isNull();
-    }
-
-    private void addVergeAndMana() {
-        harness.addToBattlefield(player1, new KrosanVerge());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 }

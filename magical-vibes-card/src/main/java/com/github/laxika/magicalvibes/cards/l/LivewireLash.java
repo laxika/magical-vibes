@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "172")
+@CardRegistration(set = "2X2", collectorNumber = "307")
 public class LivewireLash extends Card {
 
     public LivewireLash() {

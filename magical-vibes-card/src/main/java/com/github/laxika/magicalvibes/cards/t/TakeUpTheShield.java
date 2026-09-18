@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OTJ", collectorNumber = "34")
 @CardRegistration(set = "MSH", collectorNumber = "39")
+@CardRegistration(set = "DMU", collectorNumber = "35")
 public class TakeUpTheShield extends Card {
 
     public TakeUpTheShield() {

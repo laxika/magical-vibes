@@ -37,6 +37,7 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean {
         int rawResult = d20RollService.roll(gameData, entry.getControllerId());
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls a d20 for " + entry.getCard().getName() + ": " + rawResult + "."));
+        entry.setEventValue(rawResult);
         triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                 gameData, entry.getControllerId(), 1, rawResult);
         if (rawResult == 20) {

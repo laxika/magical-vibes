@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "194")
+@CardRegistration(set = "KLR", collectorNumber = "220")
 public class AnimationModule extends Card {
 
     public AnimationModule() {

@@ -24,6 +24,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "131")
 @CardRegistration(set = "DDL", collectorNumber = "23")
+@CardRegistration(set = "PIO", collectorNumber = "149")
 public class OrdealOfPurphoros extends Card {
 
     public OrdealOfPurphoros() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "143")
+@CardRegistration(set = "TSR", collectorNumber = "343")
+@CardRegistration(set = "PIO", collectorNumber = "133")
 public class ExquisiteFirecraft extends Card {
 
     public ExquisiteFirecraft() {

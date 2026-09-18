@@ -29,10 +29,14 @@ class RumblingRuinTest extends BaseCardTest {
 
         castRumblingRuin();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
-        assertThat(ownCreatureWithCounters.isCantBlockThisTurn()).isFalse();
-        assertThat(opposingSmallCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opposingLargeCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(bls.canBlockAttacker(gd, ownCreature, opposingSmallCreature,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, ownCreatureWithCounters, opposingSmallCreature,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, opposingSmallCreature, ownCreature,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, opposingLargeCreature, ownCreature,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     @Test

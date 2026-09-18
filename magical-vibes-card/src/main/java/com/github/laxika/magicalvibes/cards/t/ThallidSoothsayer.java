@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "107")
+@CardRegistration(set = "GNT", collectorNumber = "35")
 public class ThallidSoothsayer extends Card {
 
     public ThallidSoothsayer() {

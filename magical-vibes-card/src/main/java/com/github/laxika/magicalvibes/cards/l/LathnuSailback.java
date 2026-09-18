@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "AER", collectorNumber = "89")
+@CardRegistration(set = "KLR", collectorNumber = "135")
 public class LathnuSailback extends Card {
 
     public LathnuSailback() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.c.CanopyClaws;
+import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -20,36 +21,36 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FuneralPyre.class, CanopyClaws.class, SuntailHawk.class})
+@CardUsed({BattleScreech.class, BenevolentBodyguard.class, FuneralPyre.class, SuntailHawk.class})
 class FuneralPyreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles any target card and its owner creates a 1/1 white flying Spirit")
     void exilesAnyCardAndCreatesTokenForOwner() {
-        Card target = new CanopyClaws();
+        Card target = new BattleScreech();
+        target.setOwnerId(player2.getId());
         harness.setGraveyard(player2, List.of(target));
 
         castFuneralPyre(target);
 
-        harness.assertNotInGraveyard(player2, "Canopy Claws");
+        harness.assertNotInGraveyard(player2, "Battle Screech");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Canopy Claws"));
+                .anyMatch(card -> card.getName().equals("Battle Screech"));
         assertSpiritToken(player2);
         harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
     @Test
-    @DisplayName("Creates the Spirit for the exiled card's owner")
+    @DisplayName("Creates the token for the card owner even when the card is in another graveyard")
     void createsTokenForCardOwner() {
-        Card target = new SuntailHawk();
+        Card target = new BattleScreech();
         target.setOwnerId(player1.getId());
         harness.setGraveyard(player2, List.of(target));
 
         castFuneralPyre(target);
 
-        harness.assertNotInGraveyard(player2, "Suntail Hawk");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
+                .anyMatch(card -> card.getName().equals("Battle Screech"));
         assertSpiritToken(player1);
         harness.assertNotOnBattlefield(player2, "Spirit");
     }
@@ -57,7 +58,8 @@ class FuneralPyreTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target leaves the graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyard() {
-        Card target = new SuntailHawk();
+        Card target = new BattleScreech();
+        target.setOwnerId(player2.getId());
         harness.setGraveyard(player2, List.of(target));
         harness.setHand(player1, List.of(new FuneralPyre()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -68,6 +70,52 @@ class FuneralPyreTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertNotOnBattlefield(player1, "Spirit");
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent instead of a graveyard card")
+    void cannotTargetPermanent() {
+        Card permanent = new BenevolentBodyguard();
+        harness.addToBattlefield(player2, permanent);
+        harness.setHand(player1, List.of(new FuneralPyre()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castFuneralPyre(Card target) {
+        harness.setHand(player1, List.of(new FuneralPyre()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    private void assertSpiritToken(Player owner) {
+        assertThat(gd.playerBattlefields.get(owner.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Spirit")
+                        && permanent.getCard().isToken()
+                        && permanent.getCard().hasType(CardType.CREATURE)
+                        && permanent.getCard().getColor() == CardColor.WHITE
+                        && permanent.getCard().getPower() == 1
+                        && permanent.getCard().getToughness() == 1
+                        && permanent.getCard().getSubtypes().contains(CardSubtype.SPIRIT)
+                        && permanent.getCard().getKeywords().contains(Keyword.FLYING));
+    }
+
+    @Test
+    @DisplayName("Creates the Spirit for the exiled card's owner")
+    void createsTokenForCardOwnerJudReview() {
+        Card target = new SuntailHawk();
+        target.setOwnerId(player1.getId());
+        harness.setGraveyard(player2, List.of(target));
+
+        castFuneralPyre(target);
+
+        harness.assertNotInGraveyard(player2, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
+        assertSpiritToken(player1);
         harness.assertNotOnBattlefield(player2, "Spirit");
     }
 
@@ -88,35 +136,5 @@ class FuneralPyreTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getName().equals("Suntail Hawk"));
         harness.assertNotOnBattlefield(player2, "Spirit");
-    }
-
-    @Test
-    @DisplayName("Cannot target a permanent instead of a graveyard card")
-    void cannotTargetPermanent() {
-        Card target = new SuntailHawk();
-        harness.addToBattlefield(player2, target);
-        harness.setHand(player1, List.of(new FuneralPyre()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    private void castFuneralPyre(Card target) {
-        harness.setHand(player1, List.of(new FuneralPyre()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castAndResolveInstant(player1, 0, target.getId());
-    }
-
-    private void assertSpiritToken(Player owner) {
-        assertThat(gd.playerBattlefields.get(owner.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Spirit")
-                        && permanent.getCard().isToken()
-                        && permanent.getCard().hasType(CardType.CREATURE)
-                        && permanent.getCard().getColor() == CardColor.WHITE
-                        && permanent.getCard().getPower() == 1
-                        && permanent.getCard().getToughness() == 1
-                        && permanent.getCard().getSubtypes().contains(CardSubtype.SPIRIT)
-                        && permanent.getCard().getKeywords().contains(Keyword.FLYING));
     }
 }

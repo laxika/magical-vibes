@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOB", collectorNumber = "147")
+@CardRegistration(set = "HOC", collectorNumber = "147")
 public class BifurMelodicRider extends Card {
 
     public BifurMelodicRider() {

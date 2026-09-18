@@ -172,3 +172,7 @@ Architecture tests enforce all of the following:
   reconnect derivation, and subscriber failure isolation remain behaviorally tested.
 
 Any violation of these permanent zero-tolerance rules fails the build.
+
+## Subgame lifecycle
+
+`SubgameStarted`, `SubgameEnded`, and `ActiveGameChanged` distinguish frame transitions from terminal `GameEnded`. A child result never closes the root AI scheduler, reports a tournament result, or releases session membership. The active-frame projector sends a complete replacement board before other observations in its batch; suspended frames produce no live prompts. `GameContext` identifies session, active game, and activation epoch, allowing the command boundary to reject stale actions even after returning to the same parent game. Reconnect takes the session lock before observing the active frame.

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "26")
+@CardRegistration(set = "DBL", collectorNumber = "26")
 public class LoyalGryff extends Card {
 
     public LoyalGryff() {

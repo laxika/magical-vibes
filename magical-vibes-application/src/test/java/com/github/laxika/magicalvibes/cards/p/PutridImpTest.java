@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CabalSurgeon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,21 +18,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PutridImp.class, Forest.class, GrizzlyBears.class})
+@CardUsed({PutridImp.class, CabalSurgeon.class})
 class PutridImpTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card gives Putrid Imp flying until end of turn")
     void discardCardGrantsFlyingUntilEndOfTurn() {
         Permanent imp = addReadyImp(player1);
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new CabalSurgeon()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isTrue();
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Cabal Surgeon");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -53,7 +52,7 @@ class PutridImpTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(2);
 
-        beginBlockerDeclaration();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -68,7 +67,24 @@ class PutridImpTest extends BaseCardTest {
         Permanent attacker = addReadyCreature(player1);
         attacker.setAttacking(true);
 
-        beginBlockerDeclaration();
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("Threshold only counts cards in Putrid Imp's controller's graveyard")
+    void thresholdDoesNotCountOpponentsGraveyard() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setGraveyard(player2, List.of());
+        Permanent imp = addReadyImp(player2);
+        Permanent attacker = addReadyCreature(player1);
+        attacker.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(1);
+
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
@@ -89,20 +105,13 @@ class PutridImpTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
-    }
-
-    private void beginBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        return addCreatureReady(player, new CabalSurgeon());
     }
 
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Forest());
+            cards.add(new CabalSurgeon());
         }
         return cards;
     }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "58")
+@CardRegistration(set = "DBL", collectorNumber = "325")
 public class DreamshackleGeist extends Card {
 
     public DreamshackleGeist() {

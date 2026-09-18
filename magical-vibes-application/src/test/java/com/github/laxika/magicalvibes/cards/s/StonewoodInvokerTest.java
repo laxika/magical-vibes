@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +15,7 @@ class StonewoodInvokerTest extends BaseCardTest {
 
     @Test
     void resolvingAbilityBoostsSelf() {
-        Permanent invoker = addReadyInvoker(player1);
+        Permanent invoker = addCreatureReady(player1, new StonewoodInvoker());
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
@@ -28,7 +27,7 @@ class StonewoodInvokerTest extends BaseCardTest {
 
     @Test
     void repeatedActivationsStack() {
-        Permanent invoker = addReadyInvoker(player1);
+        Permanent invoker = addCreatureReady(player1, new StonewoodInvoker());
         addActivationMana(2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -42,7 +41,7 @@ class StonewoodInvokerTest extends BaseCardTest {
 
     @Test
     void abilityDoesNotRequireTapping() {
-        Permanent invoker = addReadyInvoker(player1);
+        Permanent invoker = addCreatureReady(player1, new StonewoodInvoker());
         invoker.tap();
         addActivationMana();
 
@@ -54,7 +53,7 @@ class StonewoodInvokerTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutEnoughMana() {
-        addReadyInvoker(player1);
+        addCreatureReady(player1, new StonewoodInvoker());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
@@ -64,8 +63,18 @@ class StonewoodInvokerTest extends BaseCardTest {
     }
 
     @Test
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new StonewoodInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     void boostWearsOffAtEndOfTurn() {
-        Permanent invoker = addReadyInvoker(player1);
+        Permanent invoker = addCreatureReady(player1, new StonewoodInvoker());
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
@@ -77,13 +86,6 @@ class StonewoodInvokerTest extends BaseCardTest {
 
         assertThat(invoker.getPowerModifier()).isEqualTo(0);
         assertThat(invoker.getToughnessModifier()).isEqualTo(0);
-    }
-
-    private Permanent addReadyInvoker(Player player) {
-        Permanent permanent = new Permanent(new StonewoodInvoker());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private void addActivationMana() {

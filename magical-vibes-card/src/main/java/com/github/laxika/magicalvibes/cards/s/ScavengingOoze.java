@@ -10,6 +10,8 @@ import java.util.List;
 @CardRegistration(set = "M14", collectorNumber = "195")
 @CardRegistration(set = "FDN", collectorNumber = "232")
 @CardRegistration(set = "M21", collectorNumber = "204")
+@CardRegistration(set = "MM3", collectorNumber = "134")
+@CardRegistration(set = "CMD", collectorNumber = "170")
 public class ScavengingOoze extends Card {
 
     public ScavengingOoze() {

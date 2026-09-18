@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +12,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnuridBarkripper.class, GiantWarthog.class})
+@CardUsed({AnuridBarkripper.class, AvenFogbringer.class})
 class AnuridBarkripperTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets +2/+2 with seven cards in controller's graveyard")
     void boostAtThreshold() {
         harness.setGraveyard(player1, graveyardCards(7));
-        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
+        harness.addToBattlefield(player1, new AnuridBarkripper());
+
+        Permanent barkripper = findBarkripper();
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(4);
@@ -30,7 +31,9 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Does not get the boost with fewer than seven cards in controller's graveyard")
     void noBoostBelowThreshold() {
         harness.setGraveyard(player1, graveyardCards(6));
-        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
+        harness.addToBattlefield(player1, new AnuridBarkripper());
+
+        Permanent barkripper = findBarkripper();
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(2);
@@ -40,7 +43,9 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Opponent's graveyard does not count")
     void opponentGraveyardDoesNotCount() {
         harness.setGraveyard(player2, graveyardCards(7));
-        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
+        harness.addToBattlefield(player1, new AnuridBarkripper());
+
+        Permanent barkripper = findBarkripper();
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(2);
@@ -50,7 +55,9 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Loses the boost when controller's graveyard drops below seven cards")
     void losesBoostWhenGraveyardShrinks() {
         harness.setGraveyard(player1, graveyardCards(7));
-        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
+        harness.addToBattlefield(player1, new AnuridBarkripper());
+
+        Permanent barkripper = findBarkripper();
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(4);
 
@@ -63,8 +70,12 @@ class AnuridBarkripperTest extends BaseCardTest {
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GiantWarthog());
+            cards.add(new AvenFogbringer());
         }
         return cards;
+    }
+
+    private Permanent findBarkripper() {
+        return findPermanent(player1, "Anurid Barkripper");
     }
 }

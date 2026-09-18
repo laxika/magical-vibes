@@ -44,7 +44,19 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                            Set<CardColor> requiredDamageColors,
                                            boolean combatOnly,
                                            boolean unblockedOnly,
-                                           boolean preventAllButOne) {
+                                           boolean preventAllButOne,
+                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter) {
+
+    public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
+                                        boolean coversControlledCreatures, boolean gainLifeOnlyFromBlackSource,
+                                        boolean exileFromLibrary, Card damageSourceControllerCard,
+                                        boolean preventHalfDamage, boolean drawCards, UUID sourceControllerId,
+                                        Set<CardColor> requiredDamageColors, boolean combatOnly,
+                                        boolean unblockedOnly, boolean preventAllButOne) {
+        this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
+                exileFromLibrary, damageSourceControllerCard, preventHalfDamage, drawCards,
+                sourceControllerId, requiredDamageColors, combatOnly, unblockedOnly, preventAllButOne, null);
+    }
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures,

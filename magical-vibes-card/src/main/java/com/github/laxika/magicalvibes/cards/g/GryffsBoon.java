@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "25")
 @CardRegistration(set = "INR", collectorNumber = "342")
 @CardRegistration(set = "SOI", collectorNumber = "20")
+@CardRegistration(set = "SIR", collectorNumber = "31")
 public class GryffsBoon extends Card {
 
     public GryffsBoon() {

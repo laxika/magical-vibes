@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "137")
+@CardRegistration(set = "2X2", collectorNumber = "112")
 public class HeroOfTheGames extends Card {
 
     public HeroOfTheGames() {

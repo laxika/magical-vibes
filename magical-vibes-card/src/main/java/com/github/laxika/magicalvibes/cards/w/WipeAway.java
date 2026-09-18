@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "94")
+@CardRegistration(set = "TSR", collectorNumber = "100")
 public class WipeAway extends Card {
 
     public WipeAway() {

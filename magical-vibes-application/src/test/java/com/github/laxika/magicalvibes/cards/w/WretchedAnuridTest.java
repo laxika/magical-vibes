@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,22 +11,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WretchedAnurid.class, GrizzlyBears.class})
+@CardUsed({WretchedAnurid.class, GlorySeeker.class})
 class WretchedAnuridTest extends BaseCardTest {
 
     @Test
     @DisplayName("Another creature entering under your control causes you to lose 1 life")
     void triggersForYourCreature() {
         harness.addToBattlefield(player1, new WretchedAnurid());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 19);
     }
@@ -36,8 +36,8 @@ class WretchedAnuridTest extends BaseCardTest {
     void triggersForOpponentsCreature() {
         harness.addToBattlefield(player1, new WretchedAnurid());
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new GlorySeeker()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
@@ -45,10 +45,28 @@ class WretchedAnuridTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each Wretched Anurid triggers when another creature enters")
+    void eachAnuridTriggersSeparately() {
+        harness.addToBattlefield(player1, new WretchedAnurid());
+        harness.addToBattlefield(player1, new WretchedAnurid());
+        harness.setHand(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
     }
 
     @Test

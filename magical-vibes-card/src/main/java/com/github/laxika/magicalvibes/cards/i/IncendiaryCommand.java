@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "179")
+@CardRegistration(set = "C13", collectorNumber = "113")
 public class IncendiaryCommand extends Card {
 
     public IncendiaryCommand() {

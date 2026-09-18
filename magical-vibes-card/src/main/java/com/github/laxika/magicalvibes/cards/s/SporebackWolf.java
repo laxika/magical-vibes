@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "223")
+@CardRegistration(set = "DBL", collectorNumber = "490")
 public class SporebackWolf extends Card {
 
     public SporebackWolf() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 
 @CardRegistration(set = "CHK", collectorNumber = "65")
+@CardRegistration(set = "2XM", collectorNumber = "54")
 public class Hinder extends Card {
 
     public Hinder() {

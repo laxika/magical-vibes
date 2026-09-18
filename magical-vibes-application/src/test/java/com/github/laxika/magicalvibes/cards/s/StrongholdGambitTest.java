@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         RathiFiend.class})
 class StrongholdGambitTest extends BaseCardTest {
 
-
     @Test
     void putsEachLowestManaValueCreatureOntoTheBattlefield() {
         harness.setHand(player1, List.of(new StrongholdGambit(), new GrizzlyBears()));
@@ -99,6 +98,8 @@ class StrongholdGambitTest extends BaseCardTest {
         choose(player2, 0);
 
         assertThat(countPermanents(player1, "Rathi Fiend")).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }

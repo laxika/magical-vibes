@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "CON", collectorNumber = "40")
 @CardRegistration(set = "MMA", collectorNumber = "71")
 @CardRegistration(set = "DDK", collectorNumber = "31")
+@CardRegistration(set = "MB1", collectorNumber = "126")
 public class AbsorbVis extends Card {
 
     public AbsorbVis() {

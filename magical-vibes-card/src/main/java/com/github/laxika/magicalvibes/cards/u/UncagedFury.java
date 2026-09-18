@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "INR", collectorNumber = "177")
 @CardRegistration(set = "M20", collectorNumber = "163")
 @CardRegistration(set = "SOI", collectorNumber = "188")
+@CardRegistration(set = "A25", collectorNumber = "155")
+@CardRegistration(set = "SIR", collectorNumber = "183")
 public class UncagedFury extends Card {
 
     public UncagedFury() {

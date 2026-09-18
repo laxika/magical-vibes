@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "62")
+@CardRegistration(set = "AA4", collectorNumber = "19")
 public class FurnaceDragon extends Card {
 
     public FurnaceDragon() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "197")
+@CardRegistration(set = "DDU", collectorNumber = "27")
+@CardRegistration(set = "RVR", collectorNumber = "162")
 public class YevaNaturesHerald extends Card {
 
     public YevaNaturesHerald() {

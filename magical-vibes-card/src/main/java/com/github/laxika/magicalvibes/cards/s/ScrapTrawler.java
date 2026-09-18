@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerC
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "175")
+@CardRegistration(set = "KLR", collectorNumber = "267")
+@CardRegistration(set = "BRR", collectorNumber = "49")
 public class ScrapTrawler extends Card {
 
     public ScrapTrawler() {

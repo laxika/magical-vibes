@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "161")
+@CardRegistration(set = "TLE", collectorNumber = "41")
 public class TheGreatHenge extends Card {
 
     public TheGreatHenge() {

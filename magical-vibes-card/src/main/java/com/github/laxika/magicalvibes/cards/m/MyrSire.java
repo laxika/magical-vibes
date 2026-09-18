@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "116")
 @CardRegistration(set = "TD2", collectorNumber = "50")
+@CardRegistration(set = "DDU", collectorNumber = "58")
 public class MyrSire extends Card {
 
     public MyrSire() {

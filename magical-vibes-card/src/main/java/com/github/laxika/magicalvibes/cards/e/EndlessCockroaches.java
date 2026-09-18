@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "92")
+@CardRegistration(set = "C13", collectorNumber = "75")
 public class EndlessCockroaches extends Card {
 
     public EndlessCockroaches() {

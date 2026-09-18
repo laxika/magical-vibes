@@ -51,6 +51,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class EffectResolutionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
@@ -322,8 +325,9 @@ public class EffectResolutionService {
                 entry.restoreTargetIdAfterEffectResolution(savedTargetId);
             }
 
+            if (commanderZoneMoves != null) commanderZoneMoves.beginPending(gameData);
             effects = entry.getEffectsToResolve();
-            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+            if (gameData.waitingForSubgame || gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.
                 // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.
                 boolean rerunCurrentEffect = gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
@@ -355,6 +359,7 @@ public class EffectResolutionService {
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }

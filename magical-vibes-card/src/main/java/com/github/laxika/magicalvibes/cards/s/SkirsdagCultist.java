@@ -10,6 +10,8 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "163")
 @CardRegistration(set = "DDK", collectorNumber = "53")
+@CardRegistration(set = "MM3", collectorNumber = "112")
+@CardRegistration(set = "SIS", collectorNumber = "44")
 public class SkirsdagCultist extends Card {
 
     public SkirsdagCultist() {

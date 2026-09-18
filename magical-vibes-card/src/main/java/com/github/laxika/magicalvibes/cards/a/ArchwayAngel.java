@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "3")
+@CardRegistration(set = "PIO", collectorNumber = "5")
 public class ArchwayAngel extends Card {
 
     public ArchwayAngel() {

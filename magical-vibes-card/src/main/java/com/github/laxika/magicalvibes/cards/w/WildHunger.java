@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DKA", collectorNumber = "132")
 @CardRegistration(set = "INR", collectorNumber = "225")
 @CardRegistration(set = "INR", collectorNumber = "424")
+@CardRegistration(set = "UMA", collectorNumber = "193")
 public class WildHunger extends Card {
 
     public WildHunger() {

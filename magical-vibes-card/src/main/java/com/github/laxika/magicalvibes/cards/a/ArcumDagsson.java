@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeTargetArtifactCreatu
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "27")
+@CardRegistration(set = "2XM", collectorNumber = "41")
 public class ArcumDagsson extends Card {
 
     public ArcumDagsson() {

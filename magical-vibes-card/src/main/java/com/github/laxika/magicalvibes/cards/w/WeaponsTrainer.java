@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "160")
+@CardRegistration(set = "2XM", collectorNumber = "228")
 public class WeaponsTrainer extends Card {
 
     public WeaponsTrainer() {

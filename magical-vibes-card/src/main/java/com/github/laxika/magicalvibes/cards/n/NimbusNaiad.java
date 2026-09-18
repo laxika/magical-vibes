@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "56")
+@CardRegistration(set = "PIO", collectorNumber = "67")
 public class NimbusNaiad extends Card {
 
     public NimbusNaiad() {

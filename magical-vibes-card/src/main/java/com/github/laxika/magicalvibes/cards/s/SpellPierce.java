@@ -15,7 +15,13 @@ import java.util.Set;
 @CardRegistration(set = "ZEN", collectorNumber = "67")
 @CardRegistration(set = "DFT", collectorNumber = "64")
 @CardRegistration(set = "NEO", collectorNumber = "80")
+@CardRegistration(set = "MM3", collectorNumber = "51")
 @CardRegistration(set = "MP2", collectorNumber = "17")
+@CardRegistration(set = "2X2", collectorNumber = "63")
+@CardRegistration(set = "SLZ", collectorNumber = "30")
+@CardRegistration(set = "SLZ", collectorNumber = "151")
+@CardRegistration(set = "SLZ", collectorNumber = "272")
+@CardRegistration(set = "SOA", collectorNumber = "23")
 public class SpellPierce extends Card {
 
     public SpellPierce() {

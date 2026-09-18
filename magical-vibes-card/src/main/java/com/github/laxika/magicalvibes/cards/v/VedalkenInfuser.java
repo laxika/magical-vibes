@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "MBS", collectorNumber = "37")
+@CardRegistration(set = "2XM", collectorNumber = "74")
 public class VedalkenInfuser extends Card {
 
     public VedalkenInfuser() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "VOW", collectorNumber = "115")
+@CardRegistration(set = "DBL", collectorNumber = "382")
 public class GrafReaver extends Card {
 
     public GrafReaver() {

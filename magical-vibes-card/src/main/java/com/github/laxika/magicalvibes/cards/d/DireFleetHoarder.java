@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "102")
+@CardRegistration(set = "2XM", collectorNumber = "84")
 public class DireFleetHoarder extends Card {
 
     public DireFleetHoarder() {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoretuskFirebeast.class, SuntailHawk.class})
+@CardUsed({GoretuskFirebeast.class})
 class GoretuskFirebeastTest extends BaseCardTest {
 
     @Test
@@ -26,7 +25,7 @@ class GoretuskFirebeastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB deals 4 damage to its controller")
+    @DisplayName("ETB damage can target its controller")
     void etbDealsDamageToController() {
         castAndResolve(player1.getId());
 
@@ -46,7 +45,7 @@ class GoretuskFirebeastTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target a creature")
     void etbCannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoretuskFirebeast());
         prepareCard();
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creature.getId()))

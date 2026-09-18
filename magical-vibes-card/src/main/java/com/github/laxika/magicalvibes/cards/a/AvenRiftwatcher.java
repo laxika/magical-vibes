@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "1")
+@CardRegistration(set = "EMA", collectorNumber = "1")
+@CardRegistration(set = "TSR", collectorNumber = "6")
 public class AvenRiftwatcher extends Card {
 
     public AvenRiftwatcher() {

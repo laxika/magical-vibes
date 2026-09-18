@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "8")
 @CardRegistration(set = "ALA", collectorNumber = "172")
+@CardRegistration(set = "2X2", collectorNumber = "225")
 public class HellkiteOverlord extends Card {
 
     public HellkiteOverlord() {

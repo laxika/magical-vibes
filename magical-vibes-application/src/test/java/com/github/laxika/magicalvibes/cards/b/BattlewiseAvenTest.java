@@ -38,31 +38,18 @@ class BattlewiseAvenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gains the threshold bonus when its controller's graveyard reaches seven cards")
-    void gainsThresholdBonusWhenGraveyardReachesThreshold() {
+    void gainsThresholdBonusWhenGraveyardReachesSeven() {
         harness.setGraveyard(player1, graveyardWithCards(6));
         harness.addToBattlefield(player1, new BattlewiseAven());
         Permanent aven = findAven();
 
-        assertThat(gqs.getEffectivePower(gd, aven)).isEqualTo(2);
+        assertStats(2, 2);
         assertThat(gqs.hasKeyword(gd, aven, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.setGraveyard(player1, graveyardWithCards(7));
 
         assertStats(3, 3);
         assertThat(gqs.hasKeyword(gd, aven, Keyword.FIRST_STRIKE)).isTrue();
-    }
-
-    @Test
-    @DisplayName("The threshold bonus affects only Battlewise Aven")
-    void thresholdBonusAffectsOnlyBattlewiseAven() {
-        harness.setGraveyard(player1, graveyardWithCards(7));
-        harness.addToBattlefield(player1, new BattlewiseAven());
-        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
-
-        assertStats(3, 3);
-        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(1);
-        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -93,7 +80,7 @@ class BattlewiseAvenTest extends BaseCardTest {
 
     private List<Card> graveyardWithCards(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(ignored -> (Card) new SuntailHawk())
+                .mapToObj(ignored -> (Card) new BattlewiseAven())
                 .toList();
     }
 
@@ -105,5 +92,40 @@ class BattlewiseAvenTest extends BaseCardTest {
         Permanent aven = findAven();
         assertThat(gqs.getEffectivePower(gd, aven)).isEqualTo(power);
         assertThat(gqs.getEffectiveToughness(gd, aven)).isEqualTo(toughness);
+    }
+
+    @Test
+    @DisplayName("Gains the threshold bonus when its controller's graveyard reaches seven cards")
+    void gainsThresholdBonusWhenGraveyardReachesThreshold() {
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(6));
+        harness.addToBattlefield(player1, new BattlewiseAven());
+        Permanent aven = findAven();
+
+        assertThat(gqs.getEffectivePower(gd, aven)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, aven, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(7));
+
+        assertStats(3, 3);
+        assertThat(gqs.hasKeyword(gd, aven, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The threshold bonus affects only Battlewise Aven")
+    void thresholdBonusAffectsOnlyBattlewiseAven() {
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(7));
+        harness.addToBattlefield(player1, new BattlewiseAven());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+
+        assertStats(3, 3);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    private List<Card> graveyardWithCardsForJudReview(int count) {
+        return java.util.stream.IntStream.range(0, count)
+                .mapToObj(ignored -> (Card) new SuntailHawk())
+                .toList();
     }
 }

@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
@@ -97,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
@@ -115,6 +117,7 @@ import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
@@ -180,6 +183,7 @@ public class ActivatedAbilityExecutionService {
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
     private final LandManaTypeSupport landManaTypeSupport;
+    private final ManaSourceColorSupport manaSourceColorSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
 
@@ -203,6 +207,7 @@ public class ActivatedAbilityExecutionService {
                 Zone.STACK,
                 List.of(),
                 List.of());
+        abilityEntry.setActivePlayerId(gameData.activePlayerId);
         abilityEntry.setSourceStackCardId(sourceStackEntry.getCard().getId());
         abilityEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(abilityEntry);
@@ -698,15 +703,29 @@ public class ActivatedAbilityExecutionService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability);
+        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability,
+                activatedPermanentControllerId);
         snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
-        // and its cost and effect don't move cards to or from a library.
+        // and its cost and effect don't move cards to or from a library, except for a
+        // controller-only MillEffect used as an inline reflexive mana-ability rider.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
 
         if (isManaAbility) {
+            int stackBeforeCopyTriggers = gameData.stack.size();
+            StackEntry abilitySnapshot = createImmediateAbilitySnapshot(
+                    gameData, permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
+                    targetZone, targetIds, damageAssignments);
+            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
+                    gameData, playerId, abilitySnapshot, ability, permanent,
+                    preCostActivationTriggers.effects());
+            if (gameData.stack.size() > stackBeforeCopyTriggers) {
+                gameData.pendingManaAbilityTriggers.addAll(
+                        gameData.stack.subList(stackBeforeCopyTriggers, gameData.stack.size()));
+                gameData.stack.subList(stackBeforeCopyTriggers, gameData.stack.size()).clear();
+            }
             // A "pure" mana activation (tap-only cost, only fixed-shape mana output) can be undone
             // by the MTGO-style cancel-casting UI: snapshot the pool around resolution so the exact
             // mana added (incl. Damping Sphere replacement) is recorded. AwardAnyColorManaEffect
@@ -769,7 +788,7 @@ public class ActivatedAbilityExecutionService {
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.
-            if (ability.isRequiresTap() && permanent.getCard().hasType(CardType.LAND)) {
+            if (ability.isRequiresTap() && gameQueryService.isLand(gameData, permanent)) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
                         manaTypesBefore, pool.getAllManaTotals());
@@ -841,6 +860,9 @@ public class ActivatedAbilityExecutionService {
         // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
+        triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
+                gameData, playerId, abilityEntry, ability, permanent,
+                preCostActivationTriggers.effects());
         triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
                 gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
@@ -869,6 +891,47 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
+    private StackEntry createImmediateAbilitySnapshot(GameData gameData, Permanent permanent, UUID playerId,
+                                                       ActivatedAbility ability,
+                                                       List<CardEffect> snapshotEffects,
+                                                       int effectiveXValue, UUID effectiveTargetId,
+                                                       Zone targetZone, List<UUID> targetIds,
+                                                       Map<UUID, Integer> damageAssignments) {
+        Zone effectiveTargetZone = targetZone;
+        if (ability.targetsSpellOnStack(targetZone)) {
+            effectiveTargetZone = Zone.STACK;
+        } else if (effectiveTargetZone == Zone.BATTLEFIELD) {
+            effectiveTargetZone = null;
+        }
+        List<UUID> effectiveTargetIds = targetIds != null ? targetIds : List.of();
+        List<UUID> targetCardIds = effectiveTargetZone == Zone.GRAVEYARD
+                ? effectiveTargetIds : List.of();
+        List<UUID> permanentTargetIds = effectiveTargetZone == Zone.GRAVEYARD
+                ? List.of() : effectiveTargetIds;
+        StackEntry snapshot = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                permanent.getCard(),
+                playerId,
+                permanent.getCard().getName() + "'s ability",
+                snapshotEffects,
+                effectiveXValue,
+                effectiveTargetId,
+                permanent.getId(),
+                damageAssignments != null ? damageAssignments : Map.of(),
+                effectiveTargetZone,
+                targetCardIds,
+                permanentTargetIds
+        );
+        snapshot.setActivePlayerId(gameData.activePlayerId);
+        snapshot.setTargetFilter(ability.getTargetFilter());
+        if (!ability.getMultiTargetFilters().isEmpty()) {
+            snapshot.setTargetFilters(new ArrayList<>(ability.getMultiTargetFilters()));
+        }
+        snapshot.setMultiTargetConstraint(ability.getMultiTargetConstraint());
+        snapshot.setSourcePermanentSnapshot(new Permanent(permanent));
+        return snapshot;
+    }
+
     private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
                                                           Map<ManaColor, Integer> after) {
         Set<ManaColor> produced = EnumSet.noneOf(ManaColor.class);
@@ -881,7 +944,8 @@ public class ActivatedAbilityExecutionService {
     }
 
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
-                                             Permanent permanent, ActivatedAbility ability) {
+                                             Permanent permanent, ActivatedAbility ability,
+                                             UUID activatedPermanentControllerId) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect printedEffect : abilityEffects) {
             CardEffect effect = TextChangeTransformer.transform(printedEffect,
@@ -909,6 +973,9 @@ public class ActivatedAbilityExecutionService {
                         destroy.counterType(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
+            } else if (effect instanceof SourcePermanentControllerLosesLifeEffect lifeLoss) {
+                snapshotEffects.add(new SourcePermanentControllerLosesLifeEffect(
+                        lifeLoss.amount(), activatedPermanentControllerId));
             } else if (effect instanceof MustBlockSourceEffect) {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
@@ -1001,6 +1068,13 @@ public class ActivatedAbilityExecutionService {
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
+        boolean nonTreasureArtifactSource = gameQueryService.isArtifact(gameData, permanent)
+                && !GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE);
+        ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        Map<ManaColor, Integer> artifactManaBefore = nonTreasureArtifactSource
+                ? regularManaTotals(manaPool) : null;
+        Map<ManaColor, Integer> artifactSourceTagsBefore = nonTreasureArtifactSource
+                ? manaPool.getArtifactSourceManaTotals() : null;
 
         // Mana-production replacement effects are applied to the tapped permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
@@ -1016,7 +1090,8 @@ public class ActivatedAbilityExecutionService {
         if (chosenLandManaReplacement) {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
-                            .withCaveSource(caveSource);
+                            .withCaveSource(caveSource)
+                            .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null, choiceContext, colors,
@@ -1100,7 +1175,8 @@ public class ActivatedAbilityExecutionService {
                                     .text(" (Reality Twist).").build());
                         } else {
                             ChoiceContext.ManaColorChoice choiceContext =
-                                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
+                                            .withArtifactSource(nonTreasureArtifactSource);
                             List<String> colors = twistedColors.stream().map(Enum::name).toList();
                             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                                     playerId, null, null, choiceContext, colors,
@@ -1115,7 +1191,8 @@ public class ActivatedAbilityExecutionService {
                     if (totalMana > 0) {
                         twistReplacement = true;
                         ChoiceContext.ManaColorChoice choiceContext =
-                                new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                                new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
+                                        .withArtifactSource(nonTreasureArtifactSource);
                         List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
                         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                                 playerId, null, null, choiceContext, colors,
@@ -1240,10 +1317,12 @@ public class ActivatedAbilityExecutionService {
                 log.info("Game {} - Awaiting {} to choose a player to receive mana", gameData.id, player.getUsername());
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
+                int multiplier = MaroGoneNutsSupport.apply(gameData, effect, 2);
+                var manaBeforeDoubling = pool.getAllManaTotals();
                 for (ManaColor color : ManaColor.values()) {
-                    int current = pool.get(color);
-                    for (int i = 0; i < current; i++) {
-                        pool.add(color);
+                    int current = manaBeforeDoubling.getOrDefault(color, 0);
+                    for (int i = 1; i < multiplier; i++) {
+                        pool.add(color, current);
                     }
                 }
             } else if (effect instanceof RegisterNextRedInstantSorceryCopyEffect) {
@@ -1294,6 +1373,9 @@ public class ActivatedAbilityExecutionService {
                             permanent, ofColors.colors().get(0));
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
+                    if (manaSourceColorSupport.canProduceMultipleColors(gameData, permanent)) {
+                        pool.addMulticoloredSourceManaTag(manaColor, picks);
+                    }
                     if (caveSource) {
                         pool.addCaveManaTag(manaColor, picks);
                     }
@@ -1308,7 +1390,9 @@ public class ActivatedAbilityExecutionService {
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
-                            .withCaveSource(caveSource);
+                            .withCaveSource(caveSource)
+                            .withArtifactSource(nonTreasureArtifactSource)
+                            .withSourcePermanentId(permanent.getId());
                     if (ofColors.grantsRiot()) {
                         choiceContext = choiceContext.withRiot();
                     }
@@ -1349,7 +1433,8 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
-                            playerId, isCreatureSource, manaMultiplier);
+                            playerId, isCreatureSource, manaMultiplier)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()
@@ -1396,6 +1481,9 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             permanent, ManaColor.valueOf(onlyColor.name()));
                     gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
+                    if (isCreatureSource) {
+                        gameData.playerManaPools.get(playerId).addCreatureMana(manaColor, manaMultiplier);
+                    }
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
                     }
@@ -1403,7 +1491,8 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
-                            playerId, isCreatureSource, manaMultiplier);
+                            playerId, isCreatureSource, manaMultiplier)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()
@@ -1430,7 +1519,8 @@ public class ActivatedAbilityExecutionService {
                 } else if (availableTypes.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, 1,
-                                    List.copyOf(availableTypes));
+                                    List.copyOf(availableTypes))
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
@@ -1451,7 +1541,8 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
                 } else if (availableTypes.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource)
+                            .withArtifactSource(nonTreasureArtifactSource);
                     List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
@@ -1583,7 +1674,9 @@ public class ActivatedAbilityExecutionService {
                         delayed.sourceMustRemainOnBattlefield(),
                         delayed.targetFilter(),
                         new Permanent(permanent),
-                        null));
+                        null,
+                        delayed.untilNextTurn(),
+                        gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
@@ -1652,6 +1745,9 @@ public class ActivatedAbilityExecutionService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
+        if (nonTreasureArtifactSource) {
+            recordArtifactManaProduced(manaPool, artifactManaBefore, artifactSourceTagsBefore);
+        }
         stateBasedActionService.performStateBasedActions(gameData);
         // CR 605.3b: Do NOT clear priorityPassedBy here — mana abilities don't affect priority.
         // Priority clearing is handled by the caller when deferred triggers are pushed onto the stack.
@@ -1665,6 +1761,28 @@ public class ActivatedAbilityExecutionService {
             playerInputService.processNextMayAbility(gameData);
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private void recordArtifactManaProduced(ManaPool manaPool,
+                                             Map<ManaColor, Integer> manaBefore,
+                                             Map<ManaColor, Integer> artifactSourceTagsBefore) {
+        Map<ManaColor, Integer> manaAfter = regularManaTotals(manaPool);
+        Map<ManaColor, Integer> artifactSourceTagsAfter = manaPool.getArtifactSourceManaTotals();
+        for (ManaColor color : ManaColor.values()) {
+            int produced = Math.max(0, manaAfter.getOrDefault(color, 0)
+                    - manaBefore.getOrDefault(color, 0));
+            int alreadyTagged = Math.max(0, artifactSourceTagsAfter.getOrDefault(color, 0)
+                    - artifactSourceTagsBefore.getOrDefault(color, 0));
+            manaPool.addArtifactSourceManaTag(color, Math.max(0, produced - alreadyTagged));
+        }
+    }
+
+    private Map<ManaColor, Integer> regularManaTotals(ManaPool manaPool) {
+        Map<ManaColor, Integer> totals = new HashMap<>();
+        for (ManaColor color : ManaColor.values()) {
+            totals.put(color, manaPool.get(color));
+        }
+        return totals;
     }
 
     /**
@@ -1857,7 +1975,8 @@ public class ActivatedAbilityExecutionService {
                     total += amount;
                 }
             } else if (effect instanceof DoubleManaPoolEffect) {
-                total += gameData.playerManaPools.get(playerId).getTotal();
+                total += gameData.playerManaPools.get(playerId).getTotal()
+                        * MaroGoneNutsSupport.apply(gameData, effect, 2);
             } else {
                 ManaAbilityEffectHandler handler = manaAbilityEffectHandlerRegistry.getHandler(effect);
                 if (handler != null) {
@@ -2091,6 +2210,7 @@ public class ActivatedAbilityExecutionService {
                 effectiveTargetCardIds,
                 effectivePermanentTargetIds
         );
+        stackEntry.setActivePlayerId(gameData.activePlayerId);
         stackEntry.setTargetFilter(ability.getTargetFilter());
         if (!ability.getMultiTargetFilters().isEmpty()) {
             List<TargetFilter> targetFilters = new ArrayList<>(effectivePermanentTargetIds.size());

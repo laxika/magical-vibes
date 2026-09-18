@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "VMA", collectorNumber = "252")
 @CardRegistration(set = "DDL", collectorNumber = "70")
 @CardRegistration(set = "PC2", collectorNumber = "92")
+@CardRegistration(set = "PCA", collectorNumber = "92")
+@CardRegistration(set = "C13", collectorNumber = "190")
 public class FiresOfYavimaya extends Card {
 
     public FiresOfYavimaya() {

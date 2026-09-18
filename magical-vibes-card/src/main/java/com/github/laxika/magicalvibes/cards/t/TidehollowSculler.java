@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "ALA", collectorNumber = "202")
 @CardRegistration(set = "MD1", collectorNumber = "2")
 @CardRegistration(set = "MMA", collectorNumber = "184")
+@CardRegistration(set = "TSR", collectorNumber = "388")
 public class TidehollowSculler extends Card {
 
     public TidehollowSculler() {

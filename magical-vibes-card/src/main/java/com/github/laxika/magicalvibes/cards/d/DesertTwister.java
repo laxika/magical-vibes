@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 @CardRegistration(set = "SUM", collectorNumber = "192")
 @CardRegistration(set = "VMA", collectorNumber = "203")
 @CardRegistration(set = "ME3", collectorNumber = "115")
+@CardRegistration(set = "C15", collectorNumber = "181")
+@CardRegistration(set = "ARN", collectorNumber = "46")
 public class DesertTwister extends Card {
 
     public DesertTwister() {

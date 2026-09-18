@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "53")
+@CardRegistration(set = "2XM", collectorNumber = "72")
+@CardRegistration(set = "C15", collectorNumber = "110")
 public class ThoughtReflection extends Card {
 
     public ThoughtReflection() {

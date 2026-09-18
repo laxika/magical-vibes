@@ -25,6 +25,15 @@ public class ReconnectionService {
     private final GameMessageTransport transport;
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
+        gameData.session.lock.lock();
+        try {
+            resendActiveInput(gameData.session.active(), playerId);
+        } finally {
+            gameData.session.lock.unlock();
+        }
+    }
+
+    private void resendActiveInput(GameData gameData, UUID playerId) {
         mutationCoordinator.observe(
                 gameData,
                 () -> currentReplay(gameData, playerId),

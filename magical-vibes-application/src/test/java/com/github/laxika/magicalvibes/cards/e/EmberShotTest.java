@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
-import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
+import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmberShot.class, GiantWarthog.class, RiftstonePortal.class})
+@CardUsed({EmberShot.class, GiantWarthog.class, NantukoMonastery.class})
 class EmberShotTest extends BaseCardTest {
 
     @Test
@@ -47,12 +47,12 @@ class EmberShotTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new RiftstonePortal());
+        harness.addToBattlefield(player2, new NantukoMonastery());
         harness.setHand(player1, List.of(new EmberShot()));
         harness.addMana(player1, ManaColor.RED, 7);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
-                harness.getPermanentId(player2, "Riftstone Portal")))
+                harness.getPermanentId(player2, "Nantuko Monastery")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature, planeswalker, battle, or player");
     }

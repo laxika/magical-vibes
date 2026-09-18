@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ATQ", collectorNumber = "22")
 @CardRegistration(set = "ME1", collectorNumber = "85")
+@CardRegistration(set = "ME4", collectorNumber = "108")
 public class ArtifactBlast extends Card {
 
     public ArtifactBlast() {

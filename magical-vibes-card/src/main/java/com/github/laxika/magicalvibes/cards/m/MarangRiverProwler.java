@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "40")
+@CardRegistration(set = "UMA", collectorNumber = "65")
 public class MarangRiverProwler extends Card {
 
     public MarangRiverProwler() {

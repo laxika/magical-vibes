@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXP", collectorNumber = "3")
+@CardRegistration(set = "EA3", collectorNumber = "22")
+@CardRegistration(set = "ECC", collectorNumber = "168")
+@CardRegistration(set = "TMC", collectorNumber = "73")
 public class SmolderingMarsh extends Card {
 
     public SmolderingMarsh() {

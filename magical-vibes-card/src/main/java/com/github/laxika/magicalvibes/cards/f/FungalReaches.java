@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "273")
+@CardRegistration(set = "TSR", collectorNumber = "279")
+@CardRegistration(set = "CMD", collectorNumber = "274")
 public class FungalReaches extends Card {
 
     public FungalReaches() {

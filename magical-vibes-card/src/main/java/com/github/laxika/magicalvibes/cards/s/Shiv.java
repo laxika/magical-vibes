@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OHOP", collectorNumber = "34")
+@CardRegistration(set = "OPCA", collectorNumber = "70")
 public class Shiv extends Card {
 
     public Shiv() {

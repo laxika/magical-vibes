@@ -15,6 +15,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "74")
+@CardRegistration(set = "EMA", collectorNumber = "181")
+@CardRegistration(set = "DDU", collectorNumber = "22")
+@CardRegistration(set = "SPG", collectorNumber = "141")
+@CardRegistration(set = "AA4", collectorNumber = "24")
 public class RegalForce extends Card {
 
     public RegalForce() {

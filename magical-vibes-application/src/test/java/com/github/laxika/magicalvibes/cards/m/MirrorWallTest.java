@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,13 +13,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MirrorWall.class, SuntailHawk.class})
+@CardUsed({MirrorWall.class})
 class MirrorWallTest extends BaseCardTest {
+
+    private Permanent addWallReady() {
+        return addCreatureReady(player1, new MirrorWall());
+    }
 
     @Test
     @DisplayName("Cannot attack without activating the ability")
     void cannotAttackWithDefender() {
-        addCreatureReady(player1, new MirrorWall());
+        addWallReady();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -30,29 +33,39 @@ class MirrorWallTest extends BaseCardTest {
     @Test
     @DisplayName("Ability lets the wall attack this turn")
     void abilityAllowsAttack() {
-        Permanent wall = addCreatureReady(player1, new MirrorWall());
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent wall = addWallReady();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(wall.isAttacking()).isTrue();
     }
 
     @Test
-    @DisplayName("Activation only lets the activated wall attack")
-    void abilityOnlyAffectsActivatedWall() {
-        addCreatureReady(player1, new MirrorWall());
-        addCreatureReady(player1, new MirrorWall());
+    @DisplayName("Activating the ability does not tap the wall")
+    void activationDoesNotTapWall() {
+        Permanent wall = addWallReady();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+        assertThat(wall.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability does not bypass summoning sickness")
+    void abilityDoesNotBypassSummoningSickness() {
+        harness.addToBattlefieldAndReturn(player1, new MirrorWall());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -60,7 +73,7 @@ class MirrorWallTest extends BaseCardTest {
     @Test
     @DisplayName("Attack permission wears off at end of turn")
     void wearsOffAtEndOfTurn() {
-        addCreatureReady(player1, new MirrorWall());
+        addWallReady();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -78,11 +91,26 @@ class MirrorWallTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without white mana")
     void cannotActivateWithoutMana() {
-        addCreatureReady(player1, new MirrorWall());
+        addWallReady();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Activation only lets the activated wall attack")
+    void abilityOnlyAffectsActivatedWall() {
+        addCreatureReady(player1, new MirrorWall());
+        addCreatureReady(player1, new MirrorWall());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

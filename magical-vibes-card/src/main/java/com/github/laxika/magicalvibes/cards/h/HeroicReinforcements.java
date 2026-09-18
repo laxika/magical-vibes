@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "217")
 @CardRegistration(set = "FDN", collectorNumber = "241")
+@CardRegistration(set = "2X2", collectorNumber = "226")
 public class HeroicReinforcements extends Card {
 
     public HeroicReinforcements() {

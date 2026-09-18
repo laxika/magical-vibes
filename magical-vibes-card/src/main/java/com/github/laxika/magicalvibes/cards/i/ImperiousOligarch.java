@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "184")
+@CardRegistration(set = "PIO", collectorNumber = "227")
 public class ImperiousOligarch extends Card {
 
     public ImperiousOligarch() {

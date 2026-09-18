@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EmergentUltimatumEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "185")
+@CardRegistration(set = "SPG", collectorNumber = "105")
 public class EmergentUltimatum extends Card {
 
     public EmergentUltimatum() {

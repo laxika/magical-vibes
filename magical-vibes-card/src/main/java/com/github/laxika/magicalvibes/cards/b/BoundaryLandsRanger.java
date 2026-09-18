@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "123")
+@CardRegistration(set = "PIO", collectorNumber = "126")
 public class BoundaryLandsRanger extends Card {
 
     public BoundaryLandsRanger() {

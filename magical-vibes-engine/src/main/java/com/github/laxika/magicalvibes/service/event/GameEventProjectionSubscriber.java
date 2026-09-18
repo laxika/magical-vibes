@@ -53,12 +53,26 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                     batch.causalActionId(), batch.gameId());
             return;
         }
+        boolean sessionEnded = batch.events().stream().anyMatch(event -> event.fact() instanceof GameEventFact.GameEnded);
+        if (!sessionEnded && gameData != null && (gameData.waitingForSubgame || gameData.session.active() != gameData)) return;
         if (Thread.holdsLock(gameData)) {
             throw new IllegalStateException("Game event projection must run outside the game monitor");
         }
 
         List<GameLogEntryView> newLogEntries = appendedLogEntries(gameData, batch);
         Set<UUID> logRecipients = new LinkedHashSet<>();
+        boolean switched = batch.events().stream().anyMatch(event -> event.fact() instanceof GameEventFact.ActiveGameChanged);
+        if (switched) {
+            for (UUID recipient : gameData.playerIds) {
+                if (!gameData.aiPlayerIds.contains(recipient)) {
+                    transport.sendToPlayer(recipient, new com.github.laxika.magicalvibes.networking.message.ActiveGameChangedMessage(
+                            gameData.session.context(), gameData.session.depth(),
+                            gameViewProjectionFactory.getJoinGame(gameData, recipient)));
+                    logRecipients.add(recipient);
+                }
+            }
+        }
+
 
         for (GameEventEnvelope envelope : batch.events()) {
             Set<UUID> recipients = recipients(gameData, envelope.audience());

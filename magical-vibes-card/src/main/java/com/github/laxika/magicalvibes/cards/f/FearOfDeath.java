@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "59")
+@CardRegistration(set = "DBL", collectorNumber = "326")
 public class FearOfDeath extends Card {
 
     public FearOfDeath() {

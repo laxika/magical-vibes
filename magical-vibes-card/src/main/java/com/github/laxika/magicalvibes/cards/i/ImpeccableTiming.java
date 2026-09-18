@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "AKH", collectorNumber = "18")
 @CardRegistration(set = "KLD", collectorNumber = "19")
 @CardRegistration(set = "AKR", collectorNumber = "24")
+@CardRegistration(set = "KLR", collectorNumber = "23")
 public class ImpeccableTiming extends Card {
 
     public ImpeccableTiming() {

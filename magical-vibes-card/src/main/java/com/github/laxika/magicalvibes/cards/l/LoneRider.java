@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "33")
+@CardRegistration(set = "SIR", collectorNumber = "36")
 public class LoneRider extends Card {
 
     public LoneRider() {

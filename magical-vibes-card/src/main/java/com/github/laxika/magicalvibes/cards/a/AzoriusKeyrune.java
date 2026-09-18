@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "225")
+@CardRegistration(set = "GK2", collectorNumber = "23")
+@CardRegistration(set = "C13", collectorNumber = "236")
 public class AzoriusKeyrune extends Card {
 
     public AzoriusKeyrune() {
