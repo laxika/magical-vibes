@@ -2909,7 +2909,9 @@ class PredicateEvaluationServiceTest {
         assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isTrue();
         assertThat(evaluator.matchesStaticFilter(creature, predicate, FilterContext.of(gd))).isTrue();
 
-        equipmentCard.setSupertypes(Set.of());
+        Card nonLegendaryEquipment = equipmentCard.createRuntimeCopy();
+        nonLegendaryEquipment.setSupertypes(Set.of());
+        equipment.setCard(nonLegendaryEquipment);
         assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isFalse();
     }
 }

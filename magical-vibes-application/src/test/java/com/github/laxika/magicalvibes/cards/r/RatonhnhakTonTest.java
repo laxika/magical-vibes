@@ -47,9 +47,11 @@ class RatonhnhakTonTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(axe));
 
         resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+        resolveAllTriggers();
 
         Permanent assassin = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()
