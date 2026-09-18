@@ -1803,6 +1803,7 @@ public class CombatAttackService {
                             perm.getId()
                     );
                     attackedTrigger.setNonTargeting(true);
+                    attackedTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.stack.add(attackedTrigger);
                     gameLogService.append(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
@@ -2405,19 +2406,36 @@ public class CombatAttackService {
         for (DelayedAttackTokenCreation action : gameData.getDelayedActions(DelayedAttackTokenCreation.class)) {
             if (!action.controllerId().equals(attackingPlayerId)) continue;
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    action.sourceCard(),
-                    action.controllerId(),
-                    action.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new CreateTokensAttackingEffect(
-                            action.amount(), action.tokenEffect(), action.sacrificeAtEndStep())));
-            entry.setNonTargeting(true);
-            gameData.stack.add(entry);
-            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} delayed attack token creation trigger fires",
-                    gameData.id, action.sourceCard().getName());
+            if (action.attackerPredicate() == null) {
+                addDelayedAttackTokenCreationTrigger(gameData, action);
+                continue;
+            }
+
+            for (int idx : attackerIndices) {
+                Permanent attacker = gameData.playerBattlefields.get(attackingPlayerId).get(idx);
+                if (!predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, action.attackerPredicate())) {
+                    continue;
+                }
+
+                addDelayedAttackTokenCreationTrigger(gameData, action);
+            }
         }
+    }
+
+    private void addDelayedAttackTokenCreationTrigger(GameData gameData, DelayedAttackTokenCreation action) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                action.sourceCard(),
+                action.controllerId(),
+                action.sourceCard().getName() + "'s delayed trigger",
+                List.of(new CreateTokensAttackingEffect(
+                        action.amount(), action.tokenEffect(), action.sacrificeAtEndStep())));
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+        gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
+        log.info("Game {} - {} delayed attack token creation trigger fires",
+                gameData.id, action.sourceCard().getName());
     }
 
     /**

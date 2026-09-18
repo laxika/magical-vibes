@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
@@ -2877,5 +2878,27 @@ class PredicateEvaluationServiceTest {
 
         assertThat(evaluator.matchesStaticFilter(matching, filter, context)).isTrue();
         assertThat(evaluator.matchesStaticFilter(other, filter, context)).isFalse();
+    }
+
+    @Test
+    void attachedPermanentPredicateMatchesLegendaryEquipment() {
+        Permanent creature = addPermanent(player1Id,
+                createCreature("Equipped Creature", 2, 2, CardColor.GREEN));
+        Card equipmentCard = createArtifact("Legendary Equipment");
+        equipmentCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        equipmentCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        Permanent equipment = addPermanent(player1Id, equipmentCard);
+        equipment.setAttachedTo(creature.getId());
+
+        PermanentHasAttachedPermanentPredicate predicate = new PermanentHasAttachedPermanentPredicate(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
+                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))));
+
+        assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isTrue();
+        assertThat(evaluator.matchesStaticFilter(creature, predicate, FilterContext.of(gd))).isTrue();
+
+        equipmentCard.setSupertypes(Set.of());
+        assertThat(evaluator.matchesPermanentPredicate(gd, creature, predicate)).isFalse();
     }
 }

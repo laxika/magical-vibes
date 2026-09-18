@@ -1409,11 +1409,31 @@ public class CastingPermissionService {
             return false;
         }
         boolean permission = libraryOwnerId.equals(playerId)
-                ? canPlayLandsFromTopOfLibrary(gameData, playerId)
+                ? gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                    || gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)
+                    || hasAnyLibraryTopPermission(gameData, playerId)
+                    || hasMatchingLandTopLibraryPermission(gameData, playerId, card)
                     || hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
                 : hasAnyLibraryTopPermission(gameData, playerId)
                     || hasLibraryTopPermission(gameData, playerId, libraryOwnerId);
         return permission && canPlayLandNow(gameData, playerId, card);
+    }
+
+    private boolean hasMatchingLandTopLibraryPermission(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, permanent, playerId, effect);
+                if (resolved instanceof PlayLandsFromTopOfLibraryEffect permission
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, permission.filter(), permanent.getOriginalCard().getId(), gameData, playerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

@@ -896,7 +896,8 @@ public class GameViewProjectionFactory {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId))
+            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandFromTopOfLibrary(
+                    gameData, playerId, topCard))
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {

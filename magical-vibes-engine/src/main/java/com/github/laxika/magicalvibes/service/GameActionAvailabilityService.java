@@ -663,6 +663,10 @@ public class GameActionAvailabilityService {
                 : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || card.hasKeyword(Keyword.FREERUNNING)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -872,6 +876,10 @@ public class GameActionAvailabilityService {
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = new HashSet<>(
                 gameQueryService.getCardSubtypes(card, gameData, playerId));
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || card.hasKeyword(Keyword.FREERUNNING)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);

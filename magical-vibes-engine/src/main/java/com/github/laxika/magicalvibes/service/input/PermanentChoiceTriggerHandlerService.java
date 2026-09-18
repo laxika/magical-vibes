@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -1181,6 +1183,42 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleCreateMemoryCounterTokenCopiesAttacking(
+            GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking context) {
+        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
+        chosenTargets.add(attackTargetId);
+
+        if (context.cardIndex() + 1 < context.sourceCards().size()) {
+            beginCreateMemoryCounterTokenCopiesAttackingTargetChoice(gameData,
+                    new PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking(
+                            context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
+                            context.sourceCards(), context.cardIndex() + 1, chosenTargets));
+            return;
+        }
+
+        Permanent source = context.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s ability",
+                List.of(new CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect()),
+                null,
+                context.sourcePermanentId());
+        tokenCopySupport.createTokenCopies(
+                gameData,
+                entry,
+                context.sourceCards(),
+                source,
+                context.controllerId(),
+                CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat(),
+                chosenTargets);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleRevealUntilCardPredicateAttackTarget(
             GameData gameData, UUID attackTargetId,
             PermanentChoiceContext.RevealUntilCardPredicateAttackTarget context) {
@@ -1228,6 +1266,23 @@ public class PermanentChoiceTriggerHandlerService {
         playerInputService.beginAnyTargetChoice(
                 gameData, context.controllerId(), planeswalkerIds, opponentIds,
                 "Choose the player or planeswalker for the token to attack.");
+    }
+
+    private void beginCreateMemoryCounterTokenCopiesAttackingTargetChoice(
+            GameData gameData, PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking context) {
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(context.controllerId()))
+                .toList();
+        List<UUID> planeswalkerIds = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), planeswalkerIds, opponentIds,
+                "Choose the player or planeswalker for the next token to attack.");
     }
 
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,

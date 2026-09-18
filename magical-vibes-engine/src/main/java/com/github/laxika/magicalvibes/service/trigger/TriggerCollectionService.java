@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
@@ -283,6 +284,30 @@ public class TriggerCollectionService {
         for (Permanent permanent : new ArrayList<>(battlefield)) {
             dispatchSlot(gameData, permanent, placingPlayerId,
                     EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, context);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            processNextSpellTargetTrigger(gameData);
+        }
+    }
+
+    /** Fires triggers for each lore counter placed on a Saga the player controls. */
+    public void checkYouPutLoreCounterOnSagaTriggers(GameData gameData, Permanent saga,
+                                                     UUID placingPlayerId) {
+        if (saga == null || placingPlayerId == null || !saga.getCard().isSaga()
+                || !placingPlayerId.equals(gameQueryService.findPermanentController(gameData, saga.getId()))) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.LoreCounterPlaced(saga, placingPlayerId);
+        for (Permanent permanent : new ArrayList<>(battlefield)) {
+            dispatchSlot(gameData, permanent, placingPlayerId,
+                    EffectSlot.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA, context);
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -632,7 +657,8 @@ public class TriggerCollectionService {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx);
         });
 
-        collectTemporaryControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
+        collectTemporaryControllerSpellCastTriggers(gameData, spellCard, castingPlayerId,
+                castZone, exiledSourcePermanentId);
 
         processDelayedControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
 
@@ -5883,6 +5909,23 @@ public class TriggerCollectionService {
         if (watcher.slot() == EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED) {
             entry.setTriggeringPermanentId(targetId);
         }
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+        log.info("Game {} - {} temporary global {} trigger fires",
+                gameData.id, watcher.sourceCard().getName(), watcher.slot().name());
+    }
+
+    private void enqueueTemporaryGlobalTrigger(GameData gameData,
+                                                TemporaryGlobalTriggeredAbility watcher,
+                                                List<CardEffect> effects, UUID targetPlayerId) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.sourceCard(),
+                watcher.controllerId(),
+                watcher.sourceCard().getName() + "'s ability",
+                new ArrayList<>(effects));
+        entry.setTargetId(targetPlayerId);
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
@@ -11554,10 +11597,19 @@ public class TriggerCollectionService {
     }
 
     private void collectTemporaryControllerSpellCastTriggers(GameData gameData, Card spellCard,
-                                                               UUID castingPlayerId) {
+                                                               UUID castingPlayerId, Zone castZone,
+                                                               UUID exiledSourcePermanentId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (watcher.slot() != EffectSlot.ON_CONTROLLER_CASTS_SPELL
                     || !watcher.controllerId().equals(castingPlayerId)) {
+                continue;
+            }
+
+            if (watcher.effect() instanceof TemporaryGlobalTriggerEffect trigger) {
+                if (trigger.matches(castZone, exiledSourcePermanentId)) {
+                    enqueueTemporaryGlobalTrigger(gameData, watcher, trigger.resolvedEffects(),
+                            trigger.targetPlayerId());
+                }
                 continue;
             }
 
@@ -12169,6 +12221,22 @@ public class TriggerCollectionService {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_PLAYS_LAND, ctx);
             }
         });
+        collectTemporaryControllerLandPlayTriggers(gameData, playingPlayerId, playZone, exiledSourcePermanentId);
+    }
+
+    private void collectTemporaryControllerLandPlayTriggers(GameData gameData, UUID playingPlayerId,
+                                                            Zone playZone, UUID exiledSourcePermanentId) {
+        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (watcher.slot() != EffectSlot.ON_CONTROLLER_PLAYS_LAND
+                    || !watcher.controllerId().equals(playingPlayerId)
+                    || !(watcher.effect() instanceof TemporaryGlobalTriggerEffect trigger)) {
+                continue;
+            }
+            if (trigger.matches(playZone, exiledSourcePermanentId)) {
+                enqueueTemporaryGlobalTrigger(gameData, watcher, trigger.resolvedEffects(),
+                        trigger.targetPlayerId());
+            }
+        }
     }
 
     /**

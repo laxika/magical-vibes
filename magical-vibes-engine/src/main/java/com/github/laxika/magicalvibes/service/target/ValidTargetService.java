@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -627,6 +628,17 @@ public class ValidTargetService {
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
+            if (positionFilter instanceof ExiledCardPredicateTargetFilter exiledFilter) {
+                List<UUID> validExiledCardIds = computeValidExiledTargetsForFilter(
+                        gameData, ability, sourceCard, controllerId, abilitySourcePermanentId,
+                        exiledFilter, excludeIds, effectiveTargetScalingValue);
+                return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
+                        validGraveyardCardIds, validExiledCardIds,
+                        ability.getEffectiveMinTargets(effectiveTargetScalingValue),
+                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        "Select targets for " + sourceCard.getName() + " ability");
+            }
+
             if (positionFilter instanceof PlayerPredicateTargetFilter) {
                 // Player-targeting position: add valid players
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
@@ -1021,6 +1033,26 @@ public class ValidTargetService {
             }
         }
         return List.copyOf(validIds);
+    }
+
+    private List<UUID> computeValidExiledTargetsForFilter(GameData gameData, ActivatedAbility ability,
+                                                           Card sourceCard, UUID controllerId,
+                                                           UUID sourcePermanentId,
+                                                           ExiledCardPredicateTargetFilter filter,
+                                                           Set<UUID> excludeIds, int xValue) {
+        List<UUID> validIds = computeValidExiledTargetsForAbility(
+                gameData, ability, sourceCard, controllerId, sourcePermanentId, excludeIds, xValue);
+        if (filter.predicate() == null) {
+            return validIds;
+        }
+        return validIds.stream()
+                .filter(id -> {
+                    var entry = gameData.findExiledCard(id);
+                    return entry != null && predicateEvaluationService.matchesCardPredicate(
+                            entry.card(), filter.predicate(), sourceCard.getId(), gameData,
+                            entry.ownerId(), sourcePermanentId, null, xValue);
+                })
+                .toList();
     }
 
     /**

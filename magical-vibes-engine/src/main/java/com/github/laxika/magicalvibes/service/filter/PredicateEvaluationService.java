@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
@@ -132,6 +133,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastAttachedAurasPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
@@ -925,6 +927,14 @@ public class PredicateEvaluationService {
             }
             case PermanentHasAdventurePredicate ignored ->
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
+            case PermanentHasAttachedPermanentPredicate p -> {
+                if (gameData == null || p.predicate() == null) {
+                    yield false;
+                }
+                yield gameData.anyPermanentMatches(attached -> attached.isAttached()
+                        && permanent.getId().equals(attached.getAttachedTo())
+                        && matchesPermanentPredicate(attached, p.predicate(), filterContext));
+            }
             case PermanentHasNonManaActivatedAbilityPredicate hasNonManaAbilityPredicate ->
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
             case PermanentHasTapActivatedAbilityPredicate ignored ->
@@ -2240,7 +2250,8 @@ public class PredicateEvaluationService {
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
         if (predicate instanceof PermanentOwnedBySourceControllerPredicate
                 || predicate instanceof PermanentSharesCreatureTypeWithEquippedCreaturePredicate
-                || predicate instanceof PermanentHasSupertypePredicate) {
+                || predicate instanceof PermanentHasSupertypePredicate
+                || predicate instanceof PermanentHasAttachedPermanentPredicate) {
             return true;
         }
         if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {
@@ -2395,6 +2406,13 @@ public class PredicateEvaluationService {
             case PermanentHasAtLeastAttachedAurasPredicate p -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && countAttachedAuras(gameData, permanent) >= p.minimum();
+            }
+            case PermanentHasAttachedPermanentPredicate p -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && p.predicate() != null
+                        && gameData.anyPermanentMatches(attached -> attached.isAttached()
+                        && permanent.getId().equals(attached.getAttachedTo())
+                        && matchesStaticFilter(attached, p.predicate(), context));
             }
             case PermanentAttachedToCreatureControlledBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -3644,6 +3662,8 @@ public class PredicateEvaluationService {
             case PlayerPredicateTargetFilter ignored -> false;
             // A graveyard-card group never matches a permanent target.
             case GraveyardCardPredicateTargetFilter ignored -> false;
+            // An exiled-card group never matches a permanent target.
+            case ExiledCardPredicateTargetFilter ignored -> false;
             // Stack-entry filters never restrict a permanent target.
             case StackEntryPredicateTargetFilter ignored -> true;
         };
@@ -3657,6 +3677,7 @@ public class PredicateEvaluationService {
             case AnyTargetPredicateTargetFilter f -> f.errorMessage();
             case PlayerPredicateTargetFilter f -> f.errorMessage();
             case GraveyardCardPredicateTargetFilter ignored -> "Target must be a card in a graveyard";
+            case ExiledCardPredicateTargetFilter f -> f.errorMessage();
             case StackEntryPredicateTargetFilter f -> f.errorMessage();
         };
     }

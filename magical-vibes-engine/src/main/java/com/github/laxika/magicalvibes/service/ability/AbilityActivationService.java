@@ -146,6 +146,7 @@ import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
@@ -7702,6 +7703,9 @@ public class AbilityActivationService {
         if (!gameQueryService.getEffectiveColors(gameData, permanent).isEmpty()) {
             subtypes.remove(CardSubtype.ELDRAZI);
         }
+        if (subtypes.contains(CardSubtype.ASSASSIN)) {
+            subtypes.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
         return subtypes;
     }
 
@@ -8952,7 +8956,8 @@ public class AbilityActivationService {
     /**
      * Returns true if an activated ability is a mana ability per CR 605.1a: no target, no spell
      * target, no loyalty cost, at least one mana-producing effect, and no cost or effect that moves
-     * a card to or from a library.
+     * a card to or from a library, except for a controller-only MillEffect used as an inline
+     * reflexive mana-ability rider.
      */
     public static boolean isManaAbility(ActivatedAbility ability) {
         return isManaAbility(ability, ability.getEffects());
@@ -8977,7 +8982,7 @@ public class AbilityActivationService {
         // Registering a delayed upkeep draw does not move a card during this ability's resolution.
         return (effect instanceof CardDrawingEffect
                 && !(effect instanceof RegisterDrawCardsAtNextUpkeepEffect))
-                || effect instanceof MillEffect
+                || (effect instanceof MillEffect mill && mill.recipient() != MillRecipient.CONTROLLER)
                 || effect instanceof DrawCardsCost
                 || effect instanceof ExileTopCardOfLibraryCost
                 || effect instanceof MillControllerCost

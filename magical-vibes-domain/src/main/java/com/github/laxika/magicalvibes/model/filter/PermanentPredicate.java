@@ -47,6 +47,7 @@ public sealed interface PermanentPredicate permits
         PermanentEnteredBattlefieldThisOrLastTurnPredicate,
         PermanentHasAnySubtypePredicate,
         PermanentHasAdventurePredicate,
+        PermanentHasAttachedPermanentPredicate,
         PermanentHasAtLeastAttachedAurasPredicate,
         PermanentHasAtLeastCountersPredicate,
         PermanentHasManaAbilityPredicate,

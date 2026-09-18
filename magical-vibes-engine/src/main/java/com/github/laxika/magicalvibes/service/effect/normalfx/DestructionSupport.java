@@ -138,6 +138,22 @@ public class DestructionSupport {
                                            List<UUID> protectedIds, String sourceName,
                                            PermanentPredicate destructionFilter, String choicePrompt,
                                            boolean requiresChoice) {
+        beginNextDestroyRestChoice(gameData, choosers, protectedIds, sourceName,
+                destructionFilter, choicePrompt, requiresChoice, requiresChoice ? 1 : 0);
+    }
+
+    public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName,
+                                           PermanentPredicate destructionFilter, String choicePrompt,
+                                           int requiredCount) {
+        beginNextDestroyRestChoice(gameData, choosers, protectedIds, sourceName,
+                destructionFilter, choicePrompt, requiredCount > 0, requiredCount);
+    }
+
+    private void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName,
+                                           PermanentPredicate destructionFilter, String choicePrompt,
+                                           boolean requiresChoice, int requiredCount) {
         if (choosers.isEmpty()) return;
         PendingForcedSacrifice next = choosers.getFirst();
         List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
@@ -145,7 +161,7 @@ public class DestructionSupport {
                 next.count(),
                 new MultiPermanentChoiceContext.DestroyRestChoice(
                         remainingChoosers, List.copyOf(protectedIds), sourceName,
-                        destructionFilter, choicePrompt, requiresChoice),
+                        destructionFilter, choicePrompt, requiresChoice, requiredCount),
                 choicePrompt + " The rest will be destroyed.");
     }
 
@@ -158,7 +174,7 @@ public class DestructionSupport {
         if (!context.remainingChoosers().isEmpty()) {
             // More players need to choose — prompt the next one
             beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName(),
-                    context.destructionFilter(), context.choicePrompt(), context.requiresChoice());
+                    context.destructionFilter(), context.choicePrompt(), context.requiredCount());
             return;
         }
 

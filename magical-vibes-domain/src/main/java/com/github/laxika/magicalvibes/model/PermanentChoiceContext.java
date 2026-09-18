@@ -884,10 +884,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Remembers the attack target for each copy entering tapped and attacking. */
     record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                      UUID targetPermanentId,
-                                      com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
-                                      int tokenCount, List<UUID> chosenAttackTargets)
+                                       UUID targetPermanentId,
+                                       com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                       int tokenCount, List<UUID> chosenAttackTargets)
             implements PermanentChoiceContext {}
+
+    /** Altaïr: remembers independent attack-target choices for copies of exiled creature cards. */
+    record CreateMemoryCounterTokenCopiesAttacking(UUID controllerId, Card sourceCard,
+                                                   UUID sourcePermanentId, List<Card> sourceCards,
+                                                   int cardIndex, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {}
+
     /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
     record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
                                                 List<Card> remainingRevealedCards)

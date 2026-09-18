@@ -3416,6 +3416,7 @@ public class StepTriggerService {
             gameLogService.append(gameData,
                     GameLog.cardThen(card, " gets a lore counter (" + newLoreCount + ")."));
             log.info("Game {} - {} gets lore counter {}", gameData.id, card.getName(), newLoreCount);
+            triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, activePlayerId);
 
             // Trigger the appropriate chapter ability
             EffectSlot chapterSlot = switch (newLoreCount) {

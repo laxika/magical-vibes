@@ -15,6 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToB
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -74,6 +79,37 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
         int toHandCount = 1 + (effect.extraCardCondition() != null && conditionEvaluationService.isMet(
                 gameData, effect.extraCardCondition(), ConditionContext.forStackEntry(entry)) ? 1 : 0);
         String cardDescription = describeCardType(effect);
+
+        if (effect.battlefieldCount() > 1) {
+            CardPredicate filter = effect.basicOnly()
+                    ? effect.subtype() == null
+                            ? CardPredicateUtils.basicLand()
+                            : new CardAllOfPredicate(List.of(
+                                    new CardSupertypePredicate(CardSupertype.BASIC),
+                                    new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.LAND),
+                                    new CardSubtypePredicate(effect.subtype())))
+                    : new CardAllOfPredicate(List.of(
+                            new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.LAND),
+                            new CardSubtypePredicate(effect.subtype())));
+            int searchCount = effect.battlefieldCount() + toHandCount;
+            librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
+                    LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                            .remainingCount(searchCount)
+                            .reveals(true)
+                            .canFailToFind(true)
+                            .filterPredicate(filter)
+                            .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                            .placeBattlefieldCardsSimultaneously(true)
+                            .shuffleAfterSelection(true)
+                            .finalCardToHand(true)
+                            .build(),
+                    "Search your library for up to " + searchCount + " " + cardDescription
+                            + " cards, putting the first " + effect.battlefieldCount()
+                            + " onto the battlefield tapped.", true);
+            log.info("Game {} - {} searches library for {} {} cards", gameData.id, playerName,
+                    matchingCards.size(), cardDescription);
+            return;
+        }
 
         // First pick: land to battlefield tapped (no shuffle yet); the follow-up
         // hand search rides the search interaction

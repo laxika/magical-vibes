@@ -424,6 +424,8 @@ public class Permanent {
     private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
     /** Whether this permanent has protection from creatures controlled by its opponents until end of turn. */
     @Setter private boolean protectionFromOpponentCreaturesUntilEndOfTurn;
+    /** Whether all protection abilities have been removed from this permanent until end of turn. */
+    @Setter private boolean protectionRemovedUntilEndOfTurn;
     /** Blocking restrictions granted until end of turn by one-shot effects (e.g. Dread Charge:
      *  "black creatures you control can't be blocked this turn except by black creatures").
      *  Each entry means this creature can be blocked only by blockers matching the restriction's
@@ -851,6 +853,7 @@ public class Permanent {
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
+        this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
@@ -1650,6 +1653,7 @@ public class Permanent {
         this.protectionFromColorlessUntilEndOfTurn = false;
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;
+        this.protectionRemovedUntilEndOfTurn = false;
         this.blockRestrictionsUntilEndOfTurn.clear();
         this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
         this.exileIfLeavesBattlefieldUntilEndOfTurn = false;

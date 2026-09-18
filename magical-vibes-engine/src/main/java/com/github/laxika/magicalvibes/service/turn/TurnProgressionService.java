@@ -857,6 +857,7 @@ public class TurnProgressionService {
         gameData.playersWhoAttackedPlayersThisTurn.clear();
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
+        gameData.crewedPermanentSubtypesThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageToken.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
@@ -886,6 +887,7 @@ public class TurnProgressionService {
         gameData.combatDamageSourcesWithLegendaryThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
+        gameData.combatDamageSourcesThatWereCommandersThisTurn.clear();
         gameData.combatBlockOpponentSubtypesThisTurn.clear();
         gameData.combatBlockOpponentColorsThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
