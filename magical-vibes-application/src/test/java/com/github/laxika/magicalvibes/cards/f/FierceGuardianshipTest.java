@@ -47,6 +47,8 @@ class FierceGuardianshipTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.setHand(player1, List.of(new FierceGuardianship()));
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
         harness.castInstant(player2, 0);
         harness.passPriority(player2);
         harness.castInstantWithAlternateCost(player1, 0, opt.getId(), List.of());

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LingeringMirage;
+import com.github.laxika.magicalvibes.cards.a.AquitectsWill;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -84,17 +84,16 @@ class WandOfTheElementsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({MarchOfTheMachines.class, AshayaSoulOfTheWild.class, LingeringMirage.class})
+    @CardUsed({MarchOfTheMachines.class, AshayaSoulOfTheWild.class, AquitectsWill.class})
     @DisplayName("The Wand itself may be sacrificed when it is an Island")
     void canSacrificeItselfWhenItIsAnIsland() {
         Permanent wand = addCreatureReady(player1, new WandOfTheElements());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
         harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
 
-        harness.setHand(player1, List.of(new LingeringMirage()));
+        harness.setHand(player1, List.of(new AquitectsWill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0, wand.getId());
+        harness.castSorcery(player1, 0, wand.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.effectiveBasicLandTypes(gd, wand)).contains(CardSubtype.ISLAND);

@@ -133,6 +133,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerOrControllerHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
@@ -793,6 +794,13 @@ public class ConditionEvaluationService {
                     anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
                     anOpponentHasMoreLifeThanController(gameData, ctx.controllerId());
+            case TargetPlayerOrControllerHasMoreLifeThanController ignored -> {
+                UUID targetPlayerId = ctx.targetId() == null ? null
+                        : gameData.playerIds.contains(ctx.targetId()) ? ctx.targetId()
+                        : gameQueryService.findPermanentController(gameData, ctx.targetId());
+                yield targetPlayerId != null && ctx.controllerId() != null
+                        && gameData.getLife(targetPlayerId) > gameData.getLife(ctx.controllerId());
+            }
             case ControllerLifeAtLeast c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) >= c.threshold();

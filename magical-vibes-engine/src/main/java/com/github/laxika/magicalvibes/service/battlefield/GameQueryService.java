@@ -5576,11 +5576,11 @@ public class GameQueryService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (!isLand(gameData, candidate)) {
-                    lowest = Math.min(lowest, candidate.getCard().getManaValue());
+                    lowest = Math.min(lowest, candidate.isFaceDown() ? 0 : candidate.getCard().getManaValue());
                 }
             }
         }
-        return permanent.getCard().getManaValue() == lowest;
+        return (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) == lowest;
     }
 
     /**

@@ -569,6 +569,34 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(triggerEntry.getEffectsToResolve()).singleElement()
                     .isEqualTo(new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE, 2));
         }
+        @Test
+        @DisplayName("snapshots every X symbol in the triggering spell mana value")
+        void snapshotsBothXSymbolsInTriggeringSpellManaValue() {
+            Permanent perm = createPermanent("Chalice of the Void");
+            perm.setCounterCount(CounterType.CHARGE, 4);
+            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
+            spellCard.setManaCost("{X}{X}");
+            StackEntry spellEntry = new StackEntry(
+                    StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2);
+            gd.stack.add(spellEntry);
+            var effect = new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            when(targetLegalityService.matchesStackEntryPredicate(
+                    eq(gd), eq(spellEntry), any(), eq(player1Id), eq(perm))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            StackEntry triggerEntry = gd.stack.getLast();
+            assertThat(triggerEntry.getTargetId()).isEqualTo(spellCard.getId());
+            assertThat(triggerEntry.getTargetZone()).isEqualTo(Zone.STACK);
+            assertThat(triggerEntry.getEffectsToResolve()).singleElement()
+                    .isEqualTo(new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE, 4));
+        }
     }
 
     @Nested

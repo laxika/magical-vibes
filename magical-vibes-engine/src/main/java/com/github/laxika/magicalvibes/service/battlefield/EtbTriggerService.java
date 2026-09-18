@@ -630,6 +630,9 @@ public class EtbTriggerService {
         boolean collectEvidenceCostPaid = sourceBattlefield != null
                 && !sourceBattlefield.isEmpty()
                 && sourceBattlefield.getLast().isCollectEvidenceCostPaid();
+        boolean waterbendCostPaid = sourceBattlefield != null
+                && !sourceBattlefield.isEmpty()
+                && sourceBattlefield.getLast().isWaterbendCostPaid();
         boolean revealCardFromHandCostPaid = sourceBattlefield != null
                 && !sourceBattlefield.isEmpty()
                 && sourceBattlefield.getLast().isRevealCardFromHandCostPaid();
@@ -774,6 +777,7 @@ public class EtbTriggerService {
                 }
                 etbEntry.setSpectacle(sourceWasCastForSpectacle);
                 etbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
+                etbEntry.setWaterbendCostPaid(waterbendCostPaid);
                 etbEntry.setRevealCardFromHandCostPaid(revealCardFromHandCostPaid);
                 etbEntry.setControlledDragonAsCast(controlledDragonAsCast);
                 gameData.stack.add(etbEntry);
@@ -810,6 +814,7 @@ public class EtbTriggerService {
                     }
                     extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
                     extraEtbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
+                    extraEtbEntry.setWaterbendCostPaid(waterbendCostPaid);
                     extraEtbEntry.setRevealCardFromHandCostPaid(revealCardFromHandCostPaid);
                     extraEtbEntry.setControlledDragonAsCast(controlledDragonAsCast);
                     gameData.stack.add(extraEtbEntry);

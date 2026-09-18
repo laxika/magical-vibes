@@ -381,6 +381,7 @@ public class StackResolutionService {
         perm.setCast(!entry.isCopy());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
+        perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());

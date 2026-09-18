@@ -209,6 +209,7 @@ public class BattlefieldPlacementService {
         UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
+        gameData.setImprintedCard(permanent.getOriginalCard(), null);
         Set<CardType> enterTappedTypes = request.enterTappedTypes();
         List<Permanent> simultaneouslyEntered = request.simultaneouslyEntered();
         int xValue = request.xValue();

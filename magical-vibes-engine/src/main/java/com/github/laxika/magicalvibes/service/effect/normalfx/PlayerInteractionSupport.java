@@ -1200,6 +1200,9 @@ public class PlayerInteractionSupport {
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
             int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
+            if (amount <= 0) {
+                continue;
+            }
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             if (gameData.discardCausedByOpponent
                     && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {

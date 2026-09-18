@@ -3130,6 +3130,13 @@ public class TriggerCollectionService {
                     || !isEquippedBy(gameData, watcher, sourcePermanentId)) {
                 return;
             }
+            if (damageToPlayers > 0) {
+                for (CardEffect effect : watcher.getCard().getEffects(
+                        EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)) {
+                    var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect, ctx);
+                }
+            }
             for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)) {
                 var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
                 registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
@@ -8981,26 +8988,23 @@ public class TriggerCollectionService {
     public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId,
                                                    UUID dyingCreatureControllerId, Card dyingCard,
                                                    int dyingCreaturePower) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
-        if (battlefield == null) return;
-
         var ctx = new TriggerContext.EquippedCreatureDeath(
                 dyingCreatureId, dyingCreatureControllerId, dyingCard, dyingCreaturePower);
 
-        for (Permanent perm : battlefield) {
-            if (!dyingCreatureId.equals(perm.getAttachedTo())) continue;
-            if (!perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) continue;
+        gameData.forEachPermanent((equipmentControllerId, perm) -> {
+            if (!dyingCreatureId.equals(perm.getAttachedTo())) return;
+            if (!perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES);
-            if (effects == null || effects.isEmpty()) continue;
+            if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, equipmentControllerId);
                 if (resolvedEffect == null) continue;
-                var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
+                var match = new TriggerMatchContext(gameData, perm, equipmentControllerId, resolvedEffect);
                 dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DIES, resolvedEffect, ctx);
             }
-        }
+        });
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,

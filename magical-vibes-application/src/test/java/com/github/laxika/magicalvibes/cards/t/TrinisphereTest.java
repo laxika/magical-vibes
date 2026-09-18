@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.f.FelhideBrawler;
 import com.github.laxika.magicalvibes.cards.r.Ragemonger;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +63,9 @@ class TrinisphereTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromHand(player1, new FelhideBrawler(), "{2}"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

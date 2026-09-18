@@ -2326,6 +2326,28 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        void sourceCounterPredicateCountsEveryXSymbol() {
+            Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 4);
+            Card spell = createCreature("Double X", CardColor.GREEN);
+            spell.setManaCost("{X}{X}");
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, spell, player2Id,
+                    "Double X", List.of(), 2);
+            var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate(
+                    com.github.laxika.magicalvibes.model.CounterType.CHARGE);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, predicate, player1Id, source)).isTrue();
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 2);
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, predicate, player1Id, source)).isFalse();
+            Card noCostSpell = createCreature("No mana cost", CardColor.GREEN);
+            noCostSpell.setManaCost(null);
+            StackEntry noCostEntry = new StackEntry(StackEntryType.CREATURE_SPELL, noCostSpell, player2Id,
+                    "No mana cost", List.of(), 0);
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 0);
+            assertThat(sut.matchesStackEntryPredicate(gd, noCostEntry, predicate, player1Id, source)).isTrue();
+        }
+
+        @Test
         @DisplayName("matches a spell whose mana value equals the source power")
         void matchesManaValueEqualToSourcePower() {
             Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));

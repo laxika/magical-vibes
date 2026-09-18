@@ -27,6 +27,7 @@ public sealed interface Condition permits
         AnOpponentHandEmpty,
         AnOpponentHasMoreCardsInHandThanController,
         AnOpponentHasMoreLifeThanController,
+        TargetPlayerOrControllerHasMoreLifeThanController,
         AnOpponentLifeAtMost,
         AnyGraveyardAtLeast,
         AnyLibraryAtMost,

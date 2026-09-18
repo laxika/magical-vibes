@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WurmskinForger.class, YotianSoldier.class, WeldingJar.class})
 class WurmskinForgerTest extends BaseCardTest {
@@ -24,6 +25,7 @@ class WurmskinForgerTest extends BaseCardTest {
 
         castWurmskinForger();
         harness.passBothPriorities();
+        chooseAssignments();
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -38,6 +40,7 @@ class WurmskinForgerTest extends BaseCardTest {
 
         castWurmskinForger();
         harness.passBothPriorities();
+        chooseAssignments();
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -57,6 +60,7 @@ class WurmskinForgerTest extends BaseCardTest {
 
         castWurmskinForger();
         harness.passBothPriorities();
+        chooseAssignments();
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -65,17 +69,14 @@ class WurmskinForgerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB ignores a noncreature assignment at resolution")
-    void ignoresNoncreatureAssignment() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
+    @DisplayName("ETB rejects a noncreature target")
+    void rejectsNoncreatureTarget() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 2, artifact.getId(), 1);
-
         castWurmskinForger();
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
-        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
         assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -88,6 +89,7 @@ class WurmskinForgerTest extends BaseCardTest {
 
         castWurmskinForger();
         harness.passBothPriorities();
+        chooseAssignments();
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(leaving.getId()));
         harness.passBothPriorities();
 
@@ -118,6 +120,16 @@ class WurmskinForgerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    private void chooseAssignments() {
+        var targets = java.util.List.copyOf(gd.pendingETBDamageAssignments.keySet());
+        for (var target : targets) {
+            harness.handlePermanentChosen(player1, target);
+        }
+        if (targets.size() < 3) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
     }
 
     private void castWurmskinForger() {

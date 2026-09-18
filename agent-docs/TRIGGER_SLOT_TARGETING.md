@@ -321,6 +321,7 @@ reuses `TriggerTargetCollector.Options.END_STEP`)),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
+`ON_ANY_PLAYER_SHUFFLES_LIBRARY`,
 `ON_OPPONENT_SEARCHES_LIBRARY` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
 `LibrarySearchSupport.sendLibrarySearchToPlayer` — the choke point every card-presenting search passes
 through — plus the empty-library / no-match early returns of `performLibrarySearch`, which are searches
@@ -738,3 +739,5 @@ current-combat relationship and the legality check must be repeated when the abi
 When a planar slot contains one standalone single-target effect bound to a later declared group,
 the planar trigger path uses that group's filter directly rather than walking unrelated groups
 belonging to the plane's other abilities.
+
+`ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, which also fires for damage to permanents.

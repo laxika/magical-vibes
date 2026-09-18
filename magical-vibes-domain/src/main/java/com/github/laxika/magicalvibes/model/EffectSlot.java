@@ -496,6 +496,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_EQUIPPED_CREATURE_DIES,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers on an Equipment whenever the creature it is attached to transforms, in either
      *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
      *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
@@ -526,6 +527,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     MULLIGAN_ACTION,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
+    ON_ANY_PLAYER_SHUFFLES_LIBRARY,
     /** Triggers whenever an opponent of this permanent's controller searches their own library
      *  ("Whenever an opponent searches their library"). Fired from the unified library-search choke
      *  point ({@code LibrarySearchSupport.performLibrarySearch}) by

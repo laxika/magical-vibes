@@ -12660,7 +12660,10 @@ public class SpellCastingService {
             UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
             List<UUID> tapPermanentIds) {
         List<UUID> selectedIds = selectedGraveyardCastSacrificeIds(
-                sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds);
+                sacrificePermanentId,
+                graveyardCast.getCost(RemoveCountersFromControlledCreaturesCastingCost.class).isPresent()
+                        ? List.of() : additionalCostSacrificePermanentIds,
+                tapPermanentIds);
         int requiredSacrificeCount = graveyardCast.additionalCosts().stream()
                 .filter(SacrificePermanentsCost.class::isInstance)
                 .mapToInt(cost -> ((SacrificePermanentsCost) cost).count())
@@ -12726,7 +12729,10 @@ public class SpellCastingService {
             UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
             List<UUID> tapPermanentIds) {
         List<UUID> sacrificePermanentIds = selectedGraveyardCastSacrificeIds(
-                sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds);
+                sacrificePermanentId,
+                graveyardCast.getCost(RemoveCountersFromControlledCreaturesCastingCost.class).isPresent()
+                        ? List.of() : additionalCostSacrificePermanentIds,
+                tapPermanentIds);
         int selectedIndex = 0;
         for (CastingCost cost : graveyardCast.additionalCosts()) {
             if (cost instanceof SacrificePermanentsCost sacrificeCost) {

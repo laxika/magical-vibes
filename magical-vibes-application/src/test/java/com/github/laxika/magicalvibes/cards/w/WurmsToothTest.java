@@ -152,7 +152,9 @@ class WurmsToothTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Myr Moonvessel");
+        harness.assertLife(player1, 20);
     }
 
     // ===== Multiple teeth =====

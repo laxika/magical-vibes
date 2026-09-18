@@ -2143,7 +2143,8 @@ public class CombatAttackService {
                 try {
                     boolean needsTarget = playerAttackEffects.stream()
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                                    || (perm.getCard().getDeclaredTargetFilter() != null
+                                    && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
                     if (needsTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), permController, playerAttackEffects, perm.getId(),

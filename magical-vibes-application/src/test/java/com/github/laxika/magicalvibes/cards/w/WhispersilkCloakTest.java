@@ -186,6 +186,7 @@ class WhispersilkCloakTest extends BaseCardTest {
                         gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
