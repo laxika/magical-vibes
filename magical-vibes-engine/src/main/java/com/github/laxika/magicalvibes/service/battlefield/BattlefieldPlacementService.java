@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -115,6 +119,12 @@ public class BattlefieldPlacementService {
     private final EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler noteControllerLifeTotalEffectHandler;
     private LandEquilibriumSupport landEquilibriumSupport;
+    private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @Autowired
+    void setInteractionHandlerRegistry(@Lazy com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry) {
+        this.interactionHandlerRegistry = registry;
+    }
 
     @Autowired
     public BattlefieldPlacementService(GameQueryService gameQueryService,
@@ -195,6 +205,7 @@ public class BattlefieldPlacementService {
     }
 
     public void place(GameData gameData, BattlefieldEntryRequest request) {
+        if (beginAmplifyChoice(gameData, request)) return;
         UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
@@ -204,6 +215,7 @@ public class BattlefieldPlacementService {
         boolean kicked = request.kicked();
         List<String> repeatedAdditionalCosts = request.repeatedAdditionalCosts();
         EnterBattlefieldOnDiscardEffect discardReplacement = request.discardReplacement();
+        gameData.restoreBombardmentCardForBattlefield(permanent);
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
@@ -369,6 +381,28 @@ public class BattlefieldPlacementService {
             permanent.setChosenNumber(ThreadLocalRandom.current().nextInt(
                     numberChoice.minNumber(), numberChoice.maxNumber() + 1));
         }
+    }
+
+    private boolean beginAmplifyChoice(GameData gameData, BattlefieldEntryRequest request) {
+        Permanent permanent = request.permanent();
+        if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || permanent.getAmplifyRevealedCards() != null) return false;
+        AmplifyEffect amplify = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(AmplifyEffect.class::isInstance).map(AmplifyEffect.class::cast)
+                .findFirst().orElse(null);
+        if (amplify == null) return false;
+        List<UUID> validIds = gameData.playerHands.getOrDefault(request.controllerId(), List.of()).stream()
+                .filter(card -> !card.getId().equals(permanent.getCard().getId()))
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, amplify.filter(), permanent.getCard().getId()))
+                .map(Card::getId).toList();
+        if (validIds.isEmpty()) {
+            permanent.setAmplifyRevealedCards(0);
+            return false;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
+                request.controllerId(), validIds, permanent.getCard().getName(), null, null, null, request));
+        return true;
     }
 
     private void applyMysticReflectionReplacement(GameData gameData, Permanent permanent,
@@ -1235,7 +1269,11 @@ public class BattlefieldPlacementService {
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
                 EnterWithCountersEffect enterWith;
-                if (effect instanceof EnterWithCountersEffect direct) {
+                if (effect instanceof AmplifyEffect amplify) {
+                    enterWith = new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                            new Fixed(amplify.countersPerCard() * (permanent.getAmplifyRevealedCards() == null
+                                    ? 0 : permanent.getAmplifyRevealedCards())));
+                } else if (effect instanceof EnterWithCountersEffect direct) {
                     enterWith = direct;
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {

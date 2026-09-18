@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * prevented (Impulsive Maneuvers). The trigger's non-targeting {@code targetId} carries the attacking
  * creature.
  */
-public record FlipCoinDoubleOrPreventNextCombatDamageFromAttackingCreatureEffect() implements CardEffect {
+public record FlipCoinDoubleOrPreventNextCombatDamageFromAttackingCreatureEffect() implements CardEffect, DoublingEffect {
 }

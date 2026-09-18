@@ -34,7 +34,7 @@ class SpiritualizeTest extends BaseCardTest {
         resolveCombat(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -75,7 +75,7 @@ class SpiritualizeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, 0, null, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);

@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -571,6 +572,59 @@ class EnterTriggerCollectorServiceTest {
                 .thenReturn(false);
 
         service.checkAllyNontokenCreatureEntersTriggers(gd, player1Id, entering);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ally-token card conditional triggers when a creature token enters")
+    void allyTokenCardConditionalTriggersForCreatureToken() {
+        Card source = new Card();
+        source.setName("Staff");
+        source.addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+                new TriggeringCardConditionalEffect(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new PutCountersOnSelfEffect(CounterType.STORY)));
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+        Card creatureToken = enteringCreature(1, 1);
+        creatureToken.setToken(true);
+        Permanent tokenPermanent = new Permanent(creatureToken);
+        gd.playerBattlefields.get(player1Id).add(tokenPermanent);
+        when(gameQueryService.findPermanentById(gd, tokenPermanent.getId())).thenReturn(tokenPermanent);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(creatureToken), any(), isNull(), eq(gd), eq(player1Id))).thenReturn(true);
+
+        service.checkAllyTokenEntersTriggers(gd, player1Id, List.of(tokenPermanent.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                .isInstanceOf(PutCountersOnSelfEffect.class);
+    }
+
+    @Test
+    @DisplayName("Ally-token card conditional skips a noncreature token")
+    void allyTokenCardConditionalSkipsNoncreatureToken() {
+        Card source = new Card();
+        source.setName("Staff");
+        source.addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+                new TriggeringCardConditionalEffect(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new PutCountersOnSelfEffect(CounterType.STORY)));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card artifactToken = new Card();
+        artifactToken.setName("Clue");
+        artifactToken.setType(CardType.ARTIFACT);
+        artifactToken.setToken(true);
+        Permanent tokenPermanent = new Permanent(artifactToken);
+        gd.playerBattlefields.get(player1Id).add(tokenPermanent);
+        when(gameQueryService.findPermanentById(gd, tokenPermanent.getId())).thenReturn(tokenPermanent);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(artifactToken), any(), isNull(), eq(gd), eq(player1Id))).thenReturn(false);
+
+        service.checkAllyTokenEntersTriggers(gd, player1Id, List.of(tokenPermanent.getId()));
 
         assertThat(gd.stack).isEmpty();
     }

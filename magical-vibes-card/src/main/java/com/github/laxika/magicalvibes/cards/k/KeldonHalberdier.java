@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "167")
+@CardRegistration(set = "MB1", collectorNumber = "135")
 @CardRegistration(set = "IMA", collectorNumber = "135")
 @CardRegistration(set = "TSR", collectorNumber = "173")
 public class KeldonHalberdier extends Card {

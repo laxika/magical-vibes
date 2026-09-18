@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "39")
+@CardRegistration(set = "C13", collectorNumber = "55")
 public class RavenFamiliar extends Card {
 
     public RavenFamiliar() {

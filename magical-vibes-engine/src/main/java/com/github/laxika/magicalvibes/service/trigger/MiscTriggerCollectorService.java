@@ -963,6 +963,33 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_GAINS_LIFE)
+    private boolean handleConditionalOnOpponentLifeGain(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                        .withTargetId(lifeGain.gainingPlayerId()))) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                lifeGain.gainingPlayerId(),
+                match.permanent().getId());
+        entry.setEventValue(lifeGain.lifeGainedAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent life gain", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
@@ -1113,6 +1140,25 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on life gain (keyword grant)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainSequence(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                    sourceCard, match.controllerId(), List.of(effect), match.permanent().getId()));
+        } else {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard, match.controllerId(), sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)), null, match.permanent().getId());
+            entry.setEventValue(((TriggerContext.LifeGain) ctx).lifeGainedAmount());
+            match.gameData().enqueueTrigger(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 

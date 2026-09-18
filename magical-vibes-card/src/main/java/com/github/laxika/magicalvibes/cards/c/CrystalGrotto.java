@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "254")
+@CardRegistration(set = "DMU", collectorNumber = "246")
 public class CrystalGrotto extends Card {
 
     public CrystalGrotto() {

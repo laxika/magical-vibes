@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "ME1", collectorNumber = "175")
+@CardRegistration(set = "ARN", collectorNumber = "73")
 public class DiamondValley extends Card {
 
     public DiamondValley() {

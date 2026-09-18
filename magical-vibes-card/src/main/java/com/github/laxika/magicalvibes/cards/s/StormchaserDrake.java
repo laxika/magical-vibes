@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "82")
+@CardRegistration(set = "DBL", collectorNumber = "349")
 public class StormchaserDrake extends Card {
 
     public StormchaserDrake() {

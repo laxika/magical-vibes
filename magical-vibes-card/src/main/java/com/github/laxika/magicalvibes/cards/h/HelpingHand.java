@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "17")
+@CardRegistration(set = "SOA", collectorNumber = "5")
 public class HelpingHand extends Card {
 
     public HelpingHand() {

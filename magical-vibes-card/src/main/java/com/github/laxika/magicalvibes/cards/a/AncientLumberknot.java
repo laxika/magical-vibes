@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "230")
+@CardRegistration(set = "DBL", collectorNumber = "497")
 public class AncientLumberknot extends Card {
 
     public AncientLumberknot() {

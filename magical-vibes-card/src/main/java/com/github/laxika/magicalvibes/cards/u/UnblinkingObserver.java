@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "82")
+@CardRegistration(set = "DBL", collectorNumber = "82")
 public class UnblinkingObserver extends Card {
 
     public UnblinkingObserver() {

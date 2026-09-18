@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStep
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "144")
+@CardRegistration(set = "HOC", collectorNumber = "144")
 public class BardKingOfDale extends Card {
 
     public BardKingOfDale() {

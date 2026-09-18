@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "212")
+@CardRegistration(set = "DBL", collectorNumber = "479")
 public class OakshadeStalker extends Card {
 
     public OakshadeStalker() {

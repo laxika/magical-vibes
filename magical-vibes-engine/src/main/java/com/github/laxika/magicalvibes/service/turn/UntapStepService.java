@@ -695,6 +695,9 @@ public class UntapStepService {
         List<CrossPlayerUntap> result = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
                 }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "64")
+@CardRegistration(set = "C13", collectorNumber = "43")
 public class EchoMage extends Card {
 
     public EchoMage() {

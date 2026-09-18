@@ -132,6 +132,20 @@ class CastingPermissionServiceTest {
     }
 
     @Test
+    void graveyardLandPermissionIsDisabledWhenSourceLosesAbilities() {
+        Card source = new Card();
+        source.addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect());
+        Permanent permanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(permanent);
+
+        assertThat(svc.canPlayLandsFromGraveyard(gd, player1Id)).isTrue();
+        when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
+
+        assertThat(svc.canPlayLandsFromGraveyard(gd, player1Id)).isFalse();
+        assertThat(svc.findGraveyardLandPermission(gd, player1Id)).isEmpty();
+    }
+
+    @Test
     @DisplayName("conditional graveyard-spell permission applies only when its condition is met")
     void conditionalGraveyardSpellPermission() {
         Card source = new Card();

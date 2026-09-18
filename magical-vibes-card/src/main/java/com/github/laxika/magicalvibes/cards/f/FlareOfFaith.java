@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "19")
+@CardRegistration(set = "DBL", collectorNumber = "19")
 public class FlareOfFaith extends Card {
 
     public FlareOfFaith() {

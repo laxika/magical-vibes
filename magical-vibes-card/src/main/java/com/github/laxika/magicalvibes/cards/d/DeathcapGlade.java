@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "SOS", collectorNumber = "301")
 @CardRegistration(set = "INR", collectorNumber = "275")
 @CardRegistration(set = "VOW", collectorNumber = "261")
+@CardRegistration(set = "DBL", collectorNumber = "528")
 public class DeathcapGlade extends Card {
 
     public DeathcapGlade() {

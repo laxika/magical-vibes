@@ -37,12 +37,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       boolean targetsPlayer,
                                       boolean manaRecipientIsTargetPlayer,
                                       boolean markSourceAsHavingAddedManaThisTurn,
-                                       boolean anyColorCombination,
-                                       boolean grantsAdditionalPlusOneCounter,
-                                       Set<CardSubtype> spellOnlySubtypes,
-                                       boolean differentColors,
-                                       List<ManaColor> allowedColors,
-                                       boolean grantsAdditionalPlusOneCounterToNonHuman) implements ManaProducingEffect {
+                                      boolean anyColorCombination,
+                                      boolean grantsAdditionalPlusOneCounter,
+                                      Set<CardSubtype> spellOnlySubtypes,
+                                      boolean differentColors,
+                                      List<ManaColor> allowedColors,
+                                      boolean grantsCommanderCounter,
+                                      boolean grantsAdditionalPlusOneCounterToNonHuman) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect {
         spellOnlySubtypes = spellOnlySubtypes == null ? Set.of() : Set.copyOf(spellOnlySubtypes);
@@ -50,6 +51,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 ? ManaColor.COLORS : List.copyOf(allowedColors);
     }
 
+    /** Compatibility constructor for unrestricted mana riders that predate the commander rider. */
     public AwardAnyColorManaEffect(DynamicAmount amount,
                                    ManaSpendRestriction restriction,
                                    CardSubtype subtype,
@@ -67,6 +69,26 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, allowedColors, false);
     }
+
+    public AwardAnyColorManaEffect(DynamicAmount amount,
+                                   ManaSpendRestriction restriction,
+                                   CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                   boolean targetsPlayer,
+                                   boolean manaRecipientIsTargetPlayer,
+                                   boolean markSourceAsHavingAddedManaThisTurn,
+                                   boolean anyColorCombination,
+                                   boolean grantsAdditionalPlusOneCounter,
+                                   Set<CardSubtype> spellOnlySubtypes,
+                                   boolean differentColors,
+                                   List<ManaColor> allowedColors,
+                                   boolean grantsCommanderCounter) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
+                targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, allowedColors, grantsCommanderCounter, false);
+    }
+
 
     public AwardAnyColorManaEffect(DynamicAmount amount,
                                    ManaSpendRestriction restriction,
@@ -133,6 +155,12 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     /** "Add mana of any color. If that mana is spent to cast a non-Human creature spell, that creature enters with an additional +1/+1 counter." */
     public static AwardAnyColorManaEffect forNonHumanCreatureCounter(int amount) {
         return new AwardAnyColorManaEffect(new Fixed(amount), ManaSpendRestriction.NONE, null,
+                false, false, false, false, false, false, Set.of(), false, ManaColor.COLORS, false, true);
+    }
+
+    /** "Add mana in the commander's color identity. If spent to cast the commander, it enters with additional counters." */
+    public static AwardAnyColorManaEffect forCommanderCounter(int amount) {
+        return new AwardAnyColorManaEffect(new Fixed(amount), ManaSpendRestriction.COMMANDER_COLOR_IDENTITY, null,
                 false, false, false, false, false, false, Set.of(), false, ManaColor.COLORS, true);
     }
 
@@ -247,7 +275,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  MANA_VALUE_AT_LEAST_FOUR,
                  CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS,
-                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY -> 0;
+                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY,
+                 COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY -> 0;
         };
     }
 }

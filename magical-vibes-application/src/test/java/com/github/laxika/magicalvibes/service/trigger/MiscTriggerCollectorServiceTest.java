@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -238,6 +239,31 @@ class MiscTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("targeted life-gain sequence queues target selection")
+    void targetedLifeGainSequenceQueuesTargetSelection() {
+        Card card = createCard("Spider-Man, Peter Parker");
+        var effect = SequenceEffect.of(
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+        card.target(TargetFilters.creatureYouControl())
+                .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);
+        Permanent perm = new Permanent(card);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+                effect,
+                new TriggerContext.LifeGain(player1Id, 3));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.sourcePermanentId()).isEqualTo(perm.getId());
     }
 
     @Test

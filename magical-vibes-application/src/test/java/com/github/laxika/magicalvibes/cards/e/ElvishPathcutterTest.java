@@ -93,8 +93,7 @@ class ElvishPathcutterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, elf.getId());
         harness.passBothPriorities();
 
-        declareAttackers(List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(elf);
@@ -116,8 +115,7 @@ class ElvishPathcutterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, elf.getId());
         harness.passBothPriorities();
 
-        declareAttackers(List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(elf);

@@ -180,6 +180,7 @@ public class GameSimulator {
      * Returns the list of legal actions for the given player in the current game state.
      */
     public List<SimulationAction> getLegalActions(GameData gd, UUID playerId) {
+        if (gd.session.active() != gd) return getLegalActions(gd.session.active(), playerId);
         List<SimulationAction> actions = new ArrayList<>();
 
         PendingInteraction awaitingInput = gd.interaction.activeInteraction();
@@ -345,6 +346,7 @@ public class GameSimulator {
      * After applying, auto-resolves any pending decisions for other players.
      */
     public void applyAction(GameData gd, UUID playerId, SimulationAction action) {
+        if (gd.session.active() != gd) { applyAction(gd.session.active(), playerId, action); return; }
         Player player = new Player(playerId, gd.playerIdToName.getOrDefault(playerId, "AI"));
 
         try {
@@ -385,6 +387,8 @@ public class GameSimulator {
      * Returns true if the game is over (finished or a player is at 0 or less life).
      */
     public boolean isTerminal(GameData gd) {
+        gd = gd.session.root();
+        if (gd.session.depth() > 0) return gd.status == GameStatus.FINISHED;
         if (gd.status == GameStatus.FINISHED) return true;
         for (UUID pid : gd.orderedPlayerIds) {
             if (gd.getLife(pid) <= 0) return true;
@@ -397,6 +401,7 @@ public class GameSimulator {
      * 1.0 = AI wins, 0.0 = opponent wins, 0.5 = even.
      */
     public double evaluate(GameData gd, UUID aiPlayerId) {
+        if (gd.session.active() != gd) return evaluate(gd.session.active(), aiPlayerId);
         double raw = boardEvaluator.evaluateMctsHorizon(gd, aiPlayerId);
         // Normalize using sigmoid-like function: map (-inf, inf) to (0, 1)
         return 1.0 / (1.0 + Math.exp(-raw / 50.0));
@@ -434,6 +439,14 @@ public class GameSimulator {
      */
     private void autoResolveDecisions(GameData gd, UUID mctsPlayerId, int maxIterations) {
         for (int i = 0; i < maxIterations; i++) {
+            gd = gd.session.active();
+            if (gd.status == GameStatus.MULLIGAN) {
+                for (UUID seat : List.copyOf(gd.orderedPlayerIds)) {
+                    if (!gd.playerKeptHand.contains(seat)) gameService.keepHand(gd, new Player(seat, gd.playerIdToName.get(seat)));
+                    if (gd.session.active() != gd) break;
+                }
+                continue;
+            }
             if (isTerminal(gd)) return;
 
             PendingInteraction awaiting = gd.interaction.activeInteraction();
@@ -484,8 +497,22 @@ public class GameSimulator {
      * with the X value computed per target.
      */
     private List<SimulationAction.PlayCard> enumerateCastableSpells(GameData gd, UUID playerId) {
+        List<SimulationAction.PlayCard> result = enumerateCastableSpellsFromSource(gd, playerId);
+        UUID previousPlayer = gd.commandCastPlayerId, previousCard = gd.commandCastCardId;
+        try {
+            for (Card commander : gd.playerCommandZones.getOrDefault(playerId, List.of())) {
+                if (!gd.isCommander(commander.getId()) || !gameQueryService.canCastSpellFromZone(
+                        gd, commander, com.github.laxika.magicalvibes.model.Zone.COMMAND, playerId)) continue;
+                gd.commandCastPlayerId = playerId; gd.commandCastCardId = commander.getId();
+                result.addAll(enumerateCastableSpellsFromSource(gd, playerId));
+            }
+        } finally { gd.commandCastPlayerId = previousPlayer; gd.commandCastCardId = previousCard; }
+        return result;
+    }
+
+    private List<SimulationAction.PlayCard> enumerateCastableSpellsFromSource(GameData gd, UUID playerId) {
         List<SimulationAction.PlayCard> castable = new ArrayList<>();
-        List<Card> hand = gd.playerHands.get(playerId);
+        List<Card> hand = gd.castingSourceCards(playerId);
         if (hand == null) return castable;
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
@@ -542,7 +569,7 @@ public class GameSimulator {
                         xValue = Math.min(xValue, getMaxXForDiscardCost(gd, playerId, card));
                         if (xValue <= 0) continue;
                     }
-                    castable.add(new SimulationAction.PlayCard(i, targetId, xValue));
+                    castable.add(new SimulationAction.PlayCard(i, targetId, xValue, gd.commandCastCardId));
                 }
                 continue;
             }
@@ -552,7 +579,7 @@ public class GameSimulator {
                 xValue = Math.min(xValue, getMaxXForDiscardCost(gd, playerId, card));
                 if (xValue <= 0) continue;
             }
-            castable.add(new SimulationAction.PlayCard(i, null, xValue));
+            castable.add(new SimulationAction.PlayCard(i, null, xValue, gd.commandCastCardId));
         }
         return castable;
     }
@@ -729,8 +756,13 @@ public class GameSimulator {
      * additional costs (sacrifice / graveyard exile) heuristically.
      */
     private void executePlayCard(GameData gd, Player player, SimulationAction.PlayCard pc) {
+        if (pc.commandCardId() != null) {
+            gameService.castCommander(gd, player, pc.commandCardId(), () -> executePlayCard(gd, player,
+                    new SimulationAction.PlayCard(0, pc.targetId(), pc.xValue())));
+            return;
+        }
         UUID playerId = player.getId();
-        Card card = gd.playerHands.get(playerId).get(pc.handIndex());
+        Card card = gd.castingSourceCards(playerId).get(pc.handIndex());
         BeholdSelection beholdSelection = computeBeholdSelection(gd, playerId, card);
         if (beholdSelection == null) {
             return;

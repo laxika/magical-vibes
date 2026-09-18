@@ -1950,7 +1950,7 @@ class SpellCastTriggerCollectorServiceTest {
             CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new GainControlOfTargetCreatureByCastSpellManaValueEffect(filter);
             Card spellCard = createCard("Test Spell");
-            spellCard.setManaCost("{1}{R}");
+            spellCard.setManaCost("{X}{1}{R}");
             gd.stack.add(new StackEntry(
                     StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2));
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);

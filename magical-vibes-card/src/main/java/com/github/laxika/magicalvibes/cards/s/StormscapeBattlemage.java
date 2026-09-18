@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "35")
+@CardRegistration(set = "C13", collectorNumber = "58")
 public class StormscapeBattlemage extends Card {
 
     public StormscapeBattlemage() {

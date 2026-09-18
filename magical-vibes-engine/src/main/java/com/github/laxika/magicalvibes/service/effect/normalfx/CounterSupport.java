@@ -215,6 +215,31 @@ public class CounterSupport {
                 source.getDescription(), target.getDescription());
     }
 
+    public void counterSpellAndPutOnBottomOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashback() || target.isCastWithEscape()
+                || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+            counterSpellAndExile(gameData, source, target);
+            return;
+        }
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        if (!target.isCopy()) {
+            // Guile replaces the whole "counter" event: exile and offer a free play.
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return;
+            }
+            gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+        }
+
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on the bottom of its owner's library."));
+        log.info("Game {} - {} countered {} onto the bottom of its owner's library", gameData.id,
+                source.getDescription(), target.getDescription());
+    }
+
     /**
      * Hinder: counters {@code target} and puts the countered card on top of its owner's library,
      * returning it so the caller can offer the top-or-bottom choice. Returns {@code null} when there
@@ -396,6 +421,7 @@ public class CounterSupport {
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
         if (target == null || isAbility(target)) return;
+        triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null
                 && target.getCard().hasType(CardType.CREATURE)

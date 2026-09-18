@@ -289,6 +289,9 @@ class SpellCastingServiceTest {
         lenient().when(castingPermissionService.canCastWithTiming(
                 any(GameData.class), any(UUID.class), any(Card.class),
                 anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(true);
+        lenient().when(castingPermissionService.canCastWithTiming(
+                any(GameData.class), any(UUID.class), any(Card.class),
+                anyBoolean(), anyBoolean(), anyBoolean(), anyInt())).thenReturn(true);
         lenient().when(castingPermissionService.flashTimingRequiresAlternateCast(
                 any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(false);
         lenient().when(castingPermissionService.isOpponentsManaValueSpellCastRestricted(

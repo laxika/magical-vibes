@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "303")
+@CardRegistration(set = "ARN", collectorNumber = "76")
 public class LibraryOfAlexandria extends Card {
 
     public LibraryOfAlexandria() {

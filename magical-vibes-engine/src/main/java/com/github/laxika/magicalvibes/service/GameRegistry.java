@@ -22,22 +22,39 @@ public class GameRegistry {
         return games.get(gameId);
     }
 
+    public GameData getActive(UUID gameId) {
+        GameData game = get(gameId);
+        if (game == null) return null;
+        game.session.lock.lock();
+        try { return game.session.active(); }
+        finally { game.session.lock.unlock(); }
+    }
+
     public GameData getGameForPlayer(UUID userId) {
         for (GameData g : games.values()) {
-            if (g.playerIds.contains(userId) && g.status != GameStatus.FINISHED) {
-                return g;
+            if (g.session.isRoot(g) && g.playerIds.contains(userId) && g.status != GameStatus.FINISHED) {
+                return getActive(g.id);
             }
         }
         return null;
     }
 
     public void remove(UUID gameId) {
-        games.remove(gameId);
+        GameData game = games.get(gameId);
+        if (game == null) return;
+        game.session.lock.lock();
+        try {
+            if (game.session.isRoot(game)) {
+                for (GameData frame : game.session.frames()) games.remove(frame.id);
+            } else games.remove(gameId);
+        } finally {
+            game.session.lock.unlock();
+        }
     }
 
     public Collection<GameData> getRunningGames() {
         return games.values().stream()
-                .filter(g -> g.status != GameStatus.FINISHED)
+                .filter(g -> g.session.isRoot(g) && g.status != GameStatus.FINISHED)
                 .toList();
     }
 }

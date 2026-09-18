@@ -76,6 +76,19 @@ public class LifeGainTriggerCollectorService {
     private boolean handleLifeGainSequence(TriggerMatchContext match,
                                             SequenceEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(effect),
+                    match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} sequence trigger needs a target",
+                    match.gameData().id, sourceCard.getName());
+            return true;
+        }
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,

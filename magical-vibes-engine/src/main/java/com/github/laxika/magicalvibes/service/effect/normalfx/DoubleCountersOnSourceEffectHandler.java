@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +36,8 @@ public class DoubleCountersOnSourceEffectHandler implements NormalEffectHandlerB
         int current = source.getCounterCount(doubleCounters.counterType());
         if (current > 0) {
             permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, entry, source, doubleCounters.counterType(), current);
+                    gameData, entry, source, doubleCounters.counterType(),
+                    current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
         }
     }
 }

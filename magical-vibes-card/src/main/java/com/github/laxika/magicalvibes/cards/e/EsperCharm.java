@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "167")
+@CardRegistration(set = "MB1", collectorNumber = "179")
 public class EsperCharm extends Card {
 
     public EsperCharm() {

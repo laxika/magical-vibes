@@ -9,6 +9,8 @@ import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "199")
 @CardRegistration(set = "VOW", collectorNumber = "219")
+@CardRegistration(set = "DBL", collectorNumber = "199")
+@CardRegistration(set = "DBL", collectorNumber = "486")
 public class SnarlingWolf extends Card {
 
     public SnarlingWolf() {

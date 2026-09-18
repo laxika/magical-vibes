@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "25")
+@CardRegistration(set = "MB1", collectorNumber = "194")
 public class PaladinOfTheBloodstained extends Card {
 
     public PaladinOfTheBloodstained() {

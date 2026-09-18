@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrawler;
+import com.github.laxika.magicalvibes.cards.s.SylvokExplorer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VulshokSorcerer.class, SylvokExplorer.class, GoblinBrawler.class})
 class VulshokSorcererTest extends BaseCardTest {
 
     @Test
@@ -31,53 +30,71 @@ class VulshokSorcererTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
-        Permanent sorcerer = addReadySorcerer(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent sorcerer = addCreatureReady(player1, new VulshokSorcerer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SylvokExplorer());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Sylvok Explorer");
+        harness.assertInGraveyard(player2, "Sylvok Explorer");
         assertThat(sorcerer.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
-        addReadySorcerer(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new VulshokSorcerer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinBrawler());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Goblin Brawler");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        addCreatureReady(player1, new VulshokSorcerer());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SylvokExplorer());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sylvok Explorer");
+        harness.assertInGraveyard(player1, "Sylvok Explorer");
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new VulshokSorcerer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinBrawler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent sorcerer = addReadySorcerer(player1);
+        Permanent sorcerer = addCreatureReady(player1, new VulshokSorcerer());
         sorcerer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
-    }
-
-    private Permanent addReadySorcerer(Player player) {
-        Permanent perm = new Permanent(new VulshokSorcerer());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

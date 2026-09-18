@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterLoseGameAtEndStepEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "140")
+@CardRegistration(set = "DBL", collectorNumber = "407")
 public class AlchemistsGambit extends Card {
 
     public AlchemistsGambit() {

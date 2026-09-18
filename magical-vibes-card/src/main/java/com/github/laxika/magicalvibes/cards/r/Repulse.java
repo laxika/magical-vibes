@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "JVC", collectorNumber = "25")
 @CardRegistration(set = "GN3", collectorNumber = "36")
 @CardRegistration(set = "OTP", collectorNumber = "13")
+@CardRegistration(set = "CMD", collectorNumber = "58")
 public class Repulse extends Card {
 
     public Repulse() {

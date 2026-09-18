@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "188")
 @CardRegistration(set = "OM1", collectorNumber = "188")
+@CardRegistration(set = "TMC", collectorNumber = "82")
 public class VibrantCityscape extends Card {
 
     public VibrantCityscape() {

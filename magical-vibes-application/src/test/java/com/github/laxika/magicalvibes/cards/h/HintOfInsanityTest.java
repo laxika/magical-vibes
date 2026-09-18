@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
 import com.github.laxika.magicalvibes.cards.r.RielleTheEverwise;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -95,7 +96,7 @@ class HintOfInsanityTest extends BaseCardTest {
     @CardUsed(TamiyoCollectorOfTales.class)
     @DisplayName("An opponent's discard-prevention effect stops the discard")
     void opponentDiscardPreventionStopsTheDiscard() {
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales()).setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player2, List.of(new DuskImp(), new DuskImp(), new Forest()));
         harness.setHand(player1, List.of(new HintOfInsanity()));
         harness.addMana(player1, ManaColor.BLACK, 1);

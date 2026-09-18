@@ -120,7 +120,6 @@ class MasterApothecaryTest extends BaseCardTest {
 
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(apothecary), null, target.getId());
-        harness.handlePermanentChosen(player1, apothecary.getId());
         harness.passBothPriorities();
 
         assertThat(apothecary.isTapped()).isTrue();

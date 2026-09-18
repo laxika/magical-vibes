@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "MB1", collectorNumber = "125")
 @CardRegistration(set = "MH1", collectorNumber = "125")
 public class GeomancersGambit extends Card {
 

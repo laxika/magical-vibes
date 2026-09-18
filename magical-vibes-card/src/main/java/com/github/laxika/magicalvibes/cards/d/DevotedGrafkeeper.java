@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "218")
+@CardRegistration(set = "DBL", collectorNumber = "218")
 public class DevotedGrafkeeper extends Card {
 
     public DevotedGrafkeeper() {

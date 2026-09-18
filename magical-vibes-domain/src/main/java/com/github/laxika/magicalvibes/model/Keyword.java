@@ -37,6 +37,7 @@ public enum Keyword {
     ISLANDWALK,
     SWAMPWALK,
     PLAINSWALK,
+    DESERTWALK,
     HEXPROOF,
     WARD,
     INFECT,
@@ -45,6 +46,8 @@ public enum Keyword {
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    ENLIST,
+    AGGRESSIVE,
     DETHRONE,
     LIVING_WEAPON,
     DEATHTOUCH,
@@ -132,6 +135,7 @@ public enum Keyword {
     ALLIANCE,
     RECRUIT,
     STORIED,
+    UNDERDOG,
     DISGUISE,
     STATION;
 
@@ -143,6 +147,7 @@ public enum Keyword {
             MOUNTAINWALK, CardSubtype.MOUNTAIN,
             ISLANDWALK, CardSubtype.ISLAND,
             SWAMPWALK, CardSubtype.SWAMP,
-            PLAINSWALK, CardSubtype.PLAINS
+            PLAINSWALK, CardSubtype.PLAINS,
+            DESERTWALK, CardSubtype.DESERT
     );
 }

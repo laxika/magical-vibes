@@ -193,12 +193,14 @@ public class LandManaDrainSupport {
      */
     private static boolean ordinaryPoolAnyColor(AwardAnyColorManaEffect effect) {
         return effect.restriction() == ManaSpendRestriction.NONE
-                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY;
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY;
     }
 
     private static java.util.List<ManaColor> availableColors(GameData gameData, UUID playerId,
                                                               AwardAnyColorManaEffect effect) {
-        if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY) {
+        if (effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
             return ManaProductionSupport.commanderColorIdentity(gameData, playerId);
         }
         return ManaColor.COLORS;

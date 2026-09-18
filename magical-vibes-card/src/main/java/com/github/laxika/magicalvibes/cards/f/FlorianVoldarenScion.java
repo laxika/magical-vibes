@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "223")
+@CardRegistration(set = "DBL", collectorNumber = "223")
 public class FlorianVoldarenScion extends Card {
 
     public FlorianVoldarenScion() {

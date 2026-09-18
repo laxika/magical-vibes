@@ -25,6 +25,7 @@ class ThrivingMoorTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactly("WHITE", "BLUE", "RED", "GREEN");
 
         harness.handleListChoice(player1, "BLUE");

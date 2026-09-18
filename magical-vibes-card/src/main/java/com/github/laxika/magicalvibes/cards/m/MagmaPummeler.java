@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "169")
+@CardRegistration(set = "DBL", collectorNumber = "436")
 public class MagmaPummeler extends Card {
 
     public MagmaPummeler() {

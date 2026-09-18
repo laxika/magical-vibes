@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "227")
+@CardRegistration(set = "DBL", collectorNumber = "494")
 public class WitchsWeb extends Card {
 
     public WitchsWeb() {

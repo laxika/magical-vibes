@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "136")
+@CardRegistration(set = "HOC", collectorNumber = "136")
 public class RadagastOfRhosgobel extends Card {
 
     public RadagastOfRhosgobel() {

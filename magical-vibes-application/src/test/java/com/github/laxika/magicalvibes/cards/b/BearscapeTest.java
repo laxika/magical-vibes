@@ -64,7 +64,7 @@ class BearscapeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Bearscape());
         harness.setGraveyard(player1, List.of(firstCard, secondCard, thirdCard));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleMultipleCardsChosen(player1, List.of(firstCard.getId(), thirdCard.getId()));

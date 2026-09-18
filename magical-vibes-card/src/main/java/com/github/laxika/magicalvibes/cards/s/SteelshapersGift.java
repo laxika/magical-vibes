@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "19")
 @CardRegistration(set = "TD2", collectorNumber = "24")
+@CardRegistration(set = "MAR", collectorNumber = "50")
 public class SteelshapersGift extends Card {
 
     public SteelshapersGift() {

@@ -163,6 +163,21 @@ class DiscardTriggerCollectorServiceTest {
         });
     }
 
+    @Test
+    @DisplayName("Optional cycling triggers request targets before they can resolve")
+    void optionalCyclingTriggerQueuesTargetChoiceBeforeResolution() {
+        Permanent source = createPermanent("Cycling observer");
+        var effect = new MayEffect(new BoostTargetCreatureEffect(1, 1), "Boost target creature?");
+        var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_ANY_PLAYER_CYCLES, effect, context);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isTrue();
+    }
+
     private static Card createCard(String name) {
         Card card = new Card();
         card.setName(name);
