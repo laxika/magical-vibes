@@ -35,7 +35,6 @@ public class RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffectHandl
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final LibraryShuffleHelper libraryShuffleHelper;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -77,7 +76,7 @@ public class RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffectHandl
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library — no matching card was found."));
             deck.addAll(revealedCards);
-            libraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 
@@ -133,7 +132,7 @@ public class RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffectHandl
         }
 
         if (deck != null) {
-            libraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
