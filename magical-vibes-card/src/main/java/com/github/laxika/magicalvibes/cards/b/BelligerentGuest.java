@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "144")
+@CardRegistration(set = "DBL", collectorNumber = "411")
 public class BelligerentGuest extends Card {
 
     public BelligerentGuest() {

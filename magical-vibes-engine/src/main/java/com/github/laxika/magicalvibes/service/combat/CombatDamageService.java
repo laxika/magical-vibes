@@ -611,9 +611,11 @@ public class CombatDamageService {
         processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
         // Process defender-side damage triggers (e.g. Dissipation Field, Living Artifact)
+        Set<String> firedBatchedTriggerKeys = new HashSet<>();
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
-                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId(), true);
+                triggerCollectionService.checkDamageDealtToControllerTriggers(
+                        gameData, defenderId, dmgEntry.getKey().getId(), true, firedBatchedTriggerKeys);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, defenderId, dmgEntry.getKey().getId(), dmgEntry.getValue());
                 // Combat damage to the defender always comes from the active player's attackers, so the
                 // source's controller is the active player (an opponent of the defender).
@@ -2150,6 +2152,19 @@ public class CombatDamageService {
                             : damageDealt;
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
+                    }
+                    // Player recipients on this trigger slot normally mean "that player":
+                    // bind the damaged player unless the card explicitly declares a target.
+                    if (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect)))) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
+                        continue;
                     }
                     if (firedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                         UUID graveyardOwnerId = firedEffect.targetSpec().graveyardScope().orElse(null)
@@ -3737,6 +3752,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyChannelHarmPreventionToPermanent(
                     gameData, pw, sourceControllerId, damage);
             damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage, true);
+            damage = damagePreventionService.applyComeuppancePrevention(
+                    gameData, pwControllerId, damage, atk.getCard(), atk,
+                    sourceControllerId, true);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(
                     gameData, pwControllerId, damage, true);
@@ -4008,6 +4026,9 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
+                damage = damagePreventionService.applyComeuppancePrevention(
+                        gameData, defenderId, damage, atk.getCard(), atk,
+                        sourceControllerId, true);
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
                 damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
@@ -4033,7 +4054,9 @@ public class CombatDamageService {
             }
         }
         state.combatDamageDealt.merge(atk, damage, Integer::sum);
-        state.combatDamageDealtToPlayer.merge(atk, damage, Integer::sum);
+        if (redirectTarget == null) {
+            state.combatDamageDealtToPlayer.merge(atk, damage, Integer::sum);
+        }
     }
 
     private Map<Integer, Integer> precomputeBlockerDamage(DamagePhaseSnapshot snap,
@@ -4252,6 +4275,11 @@ public class CombatDamageService {
             return;
         }
         if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source, true)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, target, null, source, true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

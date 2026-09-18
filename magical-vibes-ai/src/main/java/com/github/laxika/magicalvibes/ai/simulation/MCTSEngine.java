@@ -639,7 +639,7 @@ public class MCTSEngine {
             List<SimulationAction> actions = simulator.getLegalActions(simState, aiPlayerId);
             if (actions.isEmpty()) break;
 
-            SimulationAction action = selectRolloutAction(simState, actions, aiPlayerId, rolloutRng);
+            SimulationAction action = selectRolloutAction(simState.session.active(), actions, aiPlayerId, rolloutRng);
             try {
                 simulator.applyAction(simState, aiPlayerId, action);
             } catch (Exception e) {

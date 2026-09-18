@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "236")
+@CardRegistration(set = "DBL", collectorNumber = "503")
 public class EdgarCharmedGroom extends Card {
 
     public EdgarCharmedGroom() {

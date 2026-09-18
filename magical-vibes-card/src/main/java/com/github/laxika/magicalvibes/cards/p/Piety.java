@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 
 @CardRegistration(set = "4ED", collectorNumber = "41")
+@CardRegistration(set = "ARN", collectorNumber = "8")
 public class Piety extends Card {
 
     public Piety() {

@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffe
 @CardRegistration(set = "INR", collectorNumber = "359")
 @CardRegistration(set = "UMA", collectorNumber = "61")
 @CardRegistration(set = "FCA", collectorNumber = "30")
+@CardRegistration(set = "SLZ", collectorNumber = "21")
+@CardRegistration(set = "SLZ", collectorNumber = "142")
+@CardRegistration(set = "SLZ", collectorNumber = "263")
 public class LaboratoryManiac extends Card {
 
     public LaboratoryManiac() {

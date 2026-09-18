@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "JUD", collectorNumber = "72")
+@CardRegistration(set = "CMD", collectorNumber = "102")
 public class StitchTogether extends Card {
 
     public StitchTogether() {

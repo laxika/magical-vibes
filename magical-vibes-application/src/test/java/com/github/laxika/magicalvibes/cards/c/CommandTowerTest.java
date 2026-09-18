@@ -18,7 +18,7 @@ class CommandTowerTest extends BaseCardTest {
     @Test
     @DisplayName("Produces mana only from the commander's color identity")
     void producesManaInCommandersColorIdentity() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player1.getId(), java.util.List.of(new EdgarMarkov()));
         harness.addToBattlefield(player1, new CommandTower());
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -36,7 +36,7 @@ class CommandTowerTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects a color outside the commander's color identity")
     void rejectsColorOutsideCommandersIdentity() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player1.getId(), java.util.List.of(new EdgarMarkov()));
         harness.addToBattlefield(player1, new CommandTower());
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -50,7 +50,7 @@ class CommandTowerTest extends BaseCardTest {
     @Test
     @DisplayName("Other lands see only the commander's color identity")
     void otherLandsSeeOnlyCommandersIdentity() {
-        gd.playerCommandZones.get(player2.getId()).add(new EdgarMarkov());
+        gd.playerCommanders.put(player2.getId(), java.util.List.of(new EdgarMarkov()));
         harness.addToBattlefield(player2, new CommandTower());
         harness.addToBattlefield(player1, new ExoticOrchard());
 

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "INV", collectorNumber = "213")
 @CardRegistration(set = "VMA", collectorNumber = "237")
+@CardRegistration(set = "MAR", collectorNumber = "38")
+@CardRegistration(set = "OMB", collectorNumber = "38")
 public class Tangle extends Card {
 
     public Tangle() {

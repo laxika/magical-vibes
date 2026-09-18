@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,16 +14,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TimberwatchElf.class, LlanowarElves.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TimberwatchElf.class, LlanowarElves.class, GoblinCohort.class, Forest.class})
 class TimberwatchElfTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts a target creature by the number of Elves on all battlefields")
     void boostsByElvesOnAllBattlefields() {
-        addReadyTimberwatchElf(player1);
+        addCreatureReady(player1, new TimberwatchElf());
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player2, new LlanowarElves());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -35,10 +34,25 @@ class TimberwatchElfTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts Elves when the ability resolves")
+    void countsElvesAtResolution() {
+        addCreatureReady(player1, new TimberwatchElf());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        addReadyTimberwatchElf(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new TimberwatchElf());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -58,17 +72,12 @@ class TimberwatchElfTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        addReadyTimberwatchElf(player1);
+        addCreatureReady(player1, new TimberwatchElf());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private void addReadyTimberwatchElf(Player player) {
-        Permanent timberwatchElf = harness.addToBattlefieldAndReturn(player, new TimberwatchElf());
-        timberwatchElf.setSummoningSick(false);
     }
 
     private void addAbilityMana() {

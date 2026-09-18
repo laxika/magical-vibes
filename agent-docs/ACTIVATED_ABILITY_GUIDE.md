@@ -1035,6 +1035,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_OPPONENT_DISCARDS` | An opponent discards a card |
 | `ON_CONTROLLER_DISCARDS` | The controller discards a card ("whenever you discard a card"; cycling counts). Scanned on the discarding player's own battlefield in `TriggerCollectionService.checkDiscardTriggers`. Used by Necropotence (`ExileDiscardedCardFromGraveyardEffect`, resolved inline), Curator of Mysteries (`ScryEffect`, enqueued as a `TRIGGERED_ABILITY`), Drake Haven (`MayPayManaEffect`, enqueued as a `TRIGGERED_ABILITY` — its may-pay prompt comes up at resolution) and Hekma Sentinels (`BoostSelfEffect`, enqueued as a `TRIGGERED_ABILITY` carrying the source permanent id so "this creature gets +1/+1"). Targeted variants queue a `PermanentChoiceContext.DiscardControllerTriggerTarget` instead: Zenith Seeker (`GrantKeywordEffect` with `GrantScope.TARGET`) and Ominous Sphinx (`BoostTargetCreatureEffect` with an opponent-creature `filter`) — the effect's own predicate narrows the target |
 | `ON_CONTROLLER_DISCARD_EVENT` | The controller discards one or more cards as one event; the event context carries the number discarded. Used by Cryptcaller Chariot for one trigger that creates one token per discarded card and Marauding Mako for one trigger that puts that many counters on itself |
+| `ON_RING_TEMPTS_YOU` | The controller is tempted by the Ring; dispatched by `TriggerCollectionService.checkRingTemptsYouTriggers` and queued as a non-targeting triggered ability |
 | `ON_SELF_CYCLED` | This card is cycled. Queues a separate triggered ability above the cycling draw; targeted effects use their declared predicate through `DiscardControllerTriggerTarget`. With no legal target, the trigger is skipped and the cycling draw remains. Sanctuary Smasher |
 | `ON_SELF_DISCARDED` | This card is discarded for any reason ("When you discard this card"). Non-targeting effects (e.g. `MayPayManaEffect`) enqueue a `TRIGGERED_ABILITY`; any-target effects use `DiscardTriggerAnyTarget`. Used by Edgar's Awakening |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | This card is discarded by an opponent. Same split as `ON_SELF_DISCARDED`: any-target effects use the `DiscardTriggerAnyTarget` prompt (Guerrilla Tactics), non-targeting effects are enqueued straight onto the stack (Mangara's Blessing). `EnterBattlefieldOnDiscardEffect` is a replacement effect and is filtered out |
@@ -1114,6 +1115,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |
 | `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
 | `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |
+| `ON_RING_TEMPTS_YOU` | The controller is tempted by the Ring |
 | `ON_CONTROLLER_COPIES_SPELL` | Controller copies an instant or sorcery spell |
 | `ON_ANY_PLAYER_TAPS_LAND` | Any player taps a land |
 | `ON_CONTROLLER_TAPS_CREATURE_FOR_MANA` | The controller taps a creature they control for mana |

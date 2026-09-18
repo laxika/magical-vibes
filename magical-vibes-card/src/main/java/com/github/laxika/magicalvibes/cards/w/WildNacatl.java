@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "ALA", collectorNumber = "152")
 @CardRegistration(set = "DDH", collectorNumber = "4")
 @CardRegistration(set = "HA7", collectorNumber = "13")
+@CardRegistration(set = "SLZ", collectorNumber = "87")
+@CardRegistration(set = "SLZ", collectorNumber = "208")
+@CardRegistration(set = "SLZ", collectorNumber = "329")
 public class WildNacatl extends Card {
 
     public WildNacatl() {

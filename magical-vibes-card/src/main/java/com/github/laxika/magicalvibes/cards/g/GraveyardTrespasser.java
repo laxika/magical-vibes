@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "104")
+@CardRegistration(set = "DBL", collectorNumber = "104")
 public class GraveyardTrespasser extends Card {
 
     public GraveyardTrespasser() {

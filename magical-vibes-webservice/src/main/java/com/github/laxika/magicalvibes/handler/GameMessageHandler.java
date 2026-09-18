@@ -74,6 +74,28 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class GameMessageHandler implements MessageHandler {
+    @Override
+    public void dispatchGameRequest(Connection connection, com.github.laxika.magicalvibes.model.GameContext context,
+                                    MessageHandler.GameRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        GameData game = player == null ? null : gameRegistry.getGameForPlayer(player.getId());
+        if (game == null) { request.run(); return; }
+        var session = game.session;
+        session.lock.lock();
+        try {
+            var expected = session.context();
+            if (session.transitioning || (context == null ? expected.activationEpoch() > 0 : !expected.equals(context))) {
+                handleError(connection, "The active game has changed. Your action was not applied.");
+                gameResyncProjectionService.sendCurrentState(session.active(), player.getId(), MessageType.GAME_JOINED);
+                reconnectionService.resendAwaitingInput(session.active(), player.getId());
+                return;
+            }
+            request.run();
+        } finally {
+            session.lock.unlock();
+        }
+    }
+
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.GameSetupService commanderGameSetup;
 
@@ -174,6 +196,7 @@ public class GameMessageHandler implements MessageHandler {
                 gameTimeoutService.onPlayerReconnect(response.getUserId());
                 log.info("Connection {} registered for user {} ({}) - rejoining active game {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveGame().id());
                 if (activeGame != null) {
+                    gameResyncProjectionService.sendCurrentState(activeGame, response.getUserId(), MessageType.GAME_JOINED);
                     reconnectionService.resendAwaitingInput(activeGame, response.getUserId());
                 }
             } else if (response.getActiveDraftId() != null) {
@@ -1022,6 +1045,10 @@ public class GameMessageHandler implements MessageHandler {
 
         GameData gameData = gameRegistry.getGameForPlayer(player.getId());
         if (gameData != null) {
+            if (gameData.session.depth() > 0) {
+                gameService.surrender(gameData, player);
+                return;
+            }
             if (gameData.status == GameStatus.WAITING) {
                 // Leaving a WAITING game: cancel it and notify lobby users
                 LobbyGame lobbyGame = new LobbyGame(gameData.id, gameData.gameName,

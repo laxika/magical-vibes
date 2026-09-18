@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "89")
+@CardRegistration(set = "DBL", collectorNumber = "89")
 public class BloodlineCulling extends Card {
 
     public BloodlineCulling() {

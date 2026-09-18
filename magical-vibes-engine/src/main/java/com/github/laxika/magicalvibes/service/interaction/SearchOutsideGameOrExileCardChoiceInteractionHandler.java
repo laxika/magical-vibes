@@ -57,7 +57,7 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
                     gameData.playerIdToName.get(playerId) + " chooses not to put a "
                             + interaction.cardLabel() + " into their hand."));
         } else {
-            List<Card> sideboard = gameData.playerSideboards.get(playerId);
+            List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
             boolean fromSideboard = sideboard != null && sideboard.removeIf(
                     card -> card.getId().equals(chosenCard.getId()));
             if (fromSideboard) {
@@ -83,7 +83,7 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
 
     private Card findEligibleCard(GameData gameData, UUID playerId, UUID cardId,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate filter) {
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId);
         for (Card card : sideboard) {
             if (card.getId().equals(cardId)
                     && predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, playerId)) {

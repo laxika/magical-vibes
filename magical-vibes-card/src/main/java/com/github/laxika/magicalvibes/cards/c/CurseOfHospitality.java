@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "152")
+@CardRegistration(set = "DBL", collectorNumber = "419")
 public class CurseOfHospitality extends Card {
 
     public CurseOfHospitality() {

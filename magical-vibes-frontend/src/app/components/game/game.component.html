@@ -81,6 +81,9 @@
   </svg>
   <div class="game-layout">
     <div class="game-area">
+  @if (game()?.status !== GameStatus.WAITING) {
+    <div class="game-context" role="status">{{ subgameDepth() ? "Subgame depth " + subgameDepth() : "Main game" }}</div>
+  }
   @if (game()?.status === GameStatus.MULLIGAN) {
     <app-mulligan-modal
       [hand]="hand"
@@ -758,7 +761,7 @@
     <div class="game-over-overlay">
       <div class="game-over-card surrender-confirm-card">
         <h2>Surrender</h2>
-        <p class="winner-text">Do you want to surrender?</p>
+        <p class="winner-text">{{ subgameDepth() ? "Concede this subgame and return to its parent?" : "Do you want to surrender?" }}</p>
         <div class="surrender-confirm-buttons">
           <button class="btn-surrender-yes" (click)="confirmSurrender()">Yes</button>
           <button class="btn-keep" (click)="cancelSurrender()">No</button>

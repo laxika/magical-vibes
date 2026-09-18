@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "193")
+@CardRegistration(set = "DBL", collectorNumber = "460")
 public class CrawlingInfestation extends Card {
 
     public CrawlingInfestation() {

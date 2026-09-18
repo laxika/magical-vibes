@@ -31,6 +31,8 @@ import java.util.function.Supplier;
 public class GameMutationCoordinator {
 
     private final GameEventDispatcher dispatcher;
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.SubgameService> subgames;
     private final Map<GameData, ActionState> actionStates =
             Collections.synchronizedMap(new WeakHashMap<>());
     private final Set<ActionState> activeActions = ConcurrentHashMap.newKeySet();
@@ -51,6 +53,33 @@ public class GameMutationCoordinator {
     }
 
     public <T> T mutate(GameData gameData, Supplier<T> mutation) {
+        Objects.requireNonNull(gameData, "gameData");
+        ActionState current = currentThreadAction();
+        if (current != null && current != actionStateFor(gameData)) {
+            throw new IllegalStateException("A mutation scope cannot span multiple GameData instances");
+        }
+        if (Thread.holdsLock(gameData) && !isInAction(gameData)) {
+            throw new IllegalStateException(
+                    "Start the outermost GameMutationCoordinator scope before acquiring the GameData monitor");
+        }
+        var session = gameData.session;
+        session.lock.lock();
+        try {
+            if (session.transitionFailed) throw new IllegalStateException("The game transition requires recovery");
+            if (session.active() != gameData && !session.transitioning) {
+                throw new IllegalStateException("This game is suspended");
+            }
+            T result = mutateGame(gameData, mutation);
+            if (!isInAction(gameData) && !session.transitioning && subgames != null) {
+                subgames.getObject().advance(session);
+            }
+            return result;
+        } finally {
+            session.lock.unlock();
+        }
+    }
+
+    private <T> T mutateGame(GameData gameData, Supplier<T> mutation) {
         Objects.requireNonNull(gameData, "gameData");
         Objects.requireNonNull(mutation, "mutation");
 
@@ -129,6 +158,19 @@ public class GameMutationCoordinator {
      */
     public <T> T observe(GameData gameData, Supplier<T> projection) {
         Objects.requireNonNull(gameData, "gameData");
+        if (Thread.holdsLock(gameData)) {
+            throw new IllegalStateException("Start a read-only observation before acquiring the GameData monitor");
+        }
+        if (currentThreadAction() != null) {
+            throw new IllegalStateException("A read-only observation cannot begin inside a mutation action");
+        }
+        gameData.session.lock.lock();
+        try { return observeGame(gameData, projection); }
+        finally { gameData.session.lock.unlock(); }
+    }
+
+    private <T> T observeGame(GameData gameData, Supplier<T> projection) {
+        Objects.requireNonNull(gameData, "gameData");
         Objects.requireNonNull(projection, "projection");
         if (Thread.holdsLock(gameData)) {
             throw new IllegalStateException(
@@ -162,6 +204,12 @@ public class GameMutationCoordinator {
      */
     public <T> void observe(
             GameData gameData, Supplier<T> projection, Consumer<T> afterProjection) {
+        gameData.session.lock.lock();
+        try { observeGame(gameData, projection, afterProjection); }
+        finally { gameData.session.lock.unlock(); }
+    }
+
+    private <T> void observeGame(GameData gameData, Supplier<T> projection, Consumer<T> afterProjection) {
         Objects.requireNonNull(gameData, "gameData");
         Objects.requireNonNull(projection, "projection");
         Objects.requireNonNull(afterProjection, "afterProjection");

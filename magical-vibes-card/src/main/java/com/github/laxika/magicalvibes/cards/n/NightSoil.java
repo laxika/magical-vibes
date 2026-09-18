@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "FEM", collectorNumber = "124")
 @CardRegistration(set = "FEM", collectorNumber = "125")
 @CardRegistration(set = "ME2", collectorNumber = "173")
+@CardRegistration(set = "C13", collectorNumber = "158")
 public class NightSoil extends Card {
 
     public NightSoil() {

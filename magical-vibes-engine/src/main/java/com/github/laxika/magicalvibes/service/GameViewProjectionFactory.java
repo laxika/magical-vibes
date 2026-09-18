@@ -616,7 +616,7 @@ public class GameViewProjectionFactory {
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
         Set<UUID> alreadyIncluded = new HashSet<>();
         for (Card c : exiledCards) alreadyIncluded.add(c.getId());
-        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+        for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)) {
             if (gameData.outsideGamePlayPermissions.contains(card.getId())
                     && alreadyIncluded.add(card.getId())) {
                 exiledCards.add(card);
@@ -742,7 +742,7 @@ public class GameViewProjectionFactory {
                             gameData, playerId, card.getId())
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                            && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                            && gameQueryService.canPayLifeForCosts(gameData);
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 boolean canPayManaValueLifeAlternative = !foretellPermission
@@ -750,7 +750,7 @@ public class GameViewProjectionFactory {
                         gameData, playerId, card.getId())
                         && gameData.getLife(playerId) >= card.getManaValue()
                         && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                        && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                        && gameQueryService.canPayLifeForCosts(gameData);
                 if (canPayManaValueLifeAlternative) {
                     playable.add(exileCardView(gameData, playerId, card));
                     continue;
@@ -952,7 +952,7 @@ public class GameViewProjectionFactory {
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard)
                 && gameData.getLife(playerId) >= topCard.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                && gameQueryService.canPayLifeForCosts(gameData);
         boolean alternativeZeroCost = castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);
         CardView topCardView = cardViewFactory.create(topCard);

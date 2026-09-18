@@ -216,7 +216,7 @@ public class DestructionSupport {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerFilter != null && !playerFilter.contains(playerId)) return;
             for (Permanent perm : battlefield) {
-                if (perm.getCard().hasType(CardType.LAND)) {
+                if (gameQueryService.isLand(gameData, perm)) {
                     continue;
                 }
                 if (perm.getCard().getManaValue() == targetManaValue) {
@@ -979,14 +979,31 @@ public class DestructionSupport {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
         CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                 gameData, controllerId, token);
+        int additionalSoldierTokenCount = TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
+                gameData, controllerId, token);
+        CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
+                        gameData, controllerId, token)
+                : null;
         int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {
-            boolean isAdditionalFrog = count >= totalAmount;
-            CreateTokenEffect tokenToCreate = isAdditionalFrog ? additionalFrog : token;
-            int tokenPower = isAdditionalFrog ? 1 : token.tokenPower();
-            int tokenToughness = isAdditionalFrog ? 1 : token.tokenToughness();
+        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>();
+        for (int count = 0; count < totalAmount; count++) {
+            tokenBlueprints.add(token);
+        }
+        if (additionalFrog != null && totalAmount > 0) {
+            tokenBlueprints.add(additionalFrog);
+        }
+        if (totalAmount <= 0) {
+            additionalSoldierTokenCount = 0;
+        }
+        for (int i = 0; i < additionalSoldierTokenCount; i++) {
+            tokenBlueprints.add(additionalSoldier);
+        }
+        for (CreateTokenEffect tokenToCreate : tokenBlueprints) {
+            int tokenPower = tokenToCreate.tokenPower();
+            int tokenToughness = tokenToCreate.tokenToughness();
             boolean isCreature = tokenToCreate.primaryType() == CardType.CREATURE;
             Card tokenCard = TokenCardFactory.create(
                     tokenToCreate, tokenPower, tokenToughness, sourceSetCode);

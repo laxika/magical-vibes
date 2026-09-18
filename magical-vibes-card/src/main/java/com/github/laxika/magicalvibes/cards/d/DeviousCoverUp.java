@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 
 @CardRegistration(set = "GRN", collectorNumber = "35")
 @CardRegistration(set = "MID", collectorNumber = "48")
+@CardRegistration(set = "DBL", collectorNumber = "48")
 public class DeviousCoverUp extends Card {
 
     public DeviousCoverUp() {

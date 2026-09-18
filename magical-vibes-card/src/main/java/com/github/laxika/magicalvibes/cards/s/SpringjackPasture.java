@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "179")
+@CardRegistration(set = "C13", collectorNumber = "326")
 public class SpringjackPasture extends Card {
 
     public SpringjackPasture() {

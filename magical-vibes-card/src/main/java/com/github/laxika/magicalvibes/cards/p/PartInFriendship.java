@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefieldOrHandByManaValueEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "134")
+@CardRegistration(set = "HOC", collectorNumber = "134")
 public class PartInFriendship extends Card {
 
     public PartInFriendship() {

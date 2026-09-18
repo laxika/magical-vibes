@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "215")
+@CardRegistration(set = "DBL", collectorNumber = "215")
 public class CroakingCounterpart extends Card {
 
     public CroakingCounterpart() {

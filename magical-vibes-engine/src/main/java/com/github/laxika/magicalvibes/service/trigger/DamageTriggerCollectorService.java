@@ -1045,9 +1045,9 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
-    private boolean handleControllerDealtDamagePutCounters(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    private boolean handleControllerDealtDamageDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
         GameData gameData = match.gameData();
         Permanent perm = match.permanent();
@@ -2074,6 +2074,12 @@ public class DamageTriggerCollectorService {
         }
         addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effect, dc.damageDealt());
         return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_NONCOMBAT_DAMAGE_TO_SELF)
+    private boolean handleNoncombatDamageToSelfDefault(TriggerMatchContext match, CardEffect effect,
+                                                       TriggerContext ctx) {
+        return handleDealtDamageDefault(match, effect, ctx);
     }
 
     private TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "158")
+@CardRegistration(set = "DMU", collectorNumber = "57")
 public class Micromancer extends Card {
 
     public Micromancer() {

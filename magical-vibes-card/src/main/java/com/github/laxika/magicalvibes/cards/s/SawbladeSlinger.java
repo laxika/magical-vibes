@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "217")
+@CardRegistration(set = "DBL", collectorNumber = "484")
 public class SawbladeSlinger extends Card {
 
     public SawbladeSlinger() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "29")
+@CardRegistration(set = "DBL", collectorNumber = "29")
 public class OdricsOutrider extends Card {
 
     public OdricsOutrider() {

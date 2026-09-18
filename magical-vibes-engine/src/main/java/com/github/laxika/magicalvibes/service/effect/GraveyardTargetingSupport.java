@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -52,6 +53,13 @@ public class GraveyardTargetingSupport {
             // SequenceEffect, so the targeting step lives one level deeper (Iname, Life Aspect).
             if (targetEffect instanceof SequenceEffect sequence) {
                 Target nested = findTarget(sequence.steps());
+                if (nested != null) {
+                    return nested;
+                }
+                continue;
+            }
+            if (targetEffect instanceof MillEachOpponentThenIfMilledEffect mill) {
+                Target nested = findTarget(List.of(mill.thenEffect()));
                 if (nested != null) {
                     return nested;
                 }

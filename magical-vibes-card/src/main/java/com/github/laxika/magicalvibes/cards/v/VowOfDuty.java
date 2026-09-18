@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "E02", collectorNumber = "6")
 @CardRegistration(set = "GN3", collectorNumber = "21")
+@CardRegistration(set = "CMD", collectorNumber = "36")
 public class VowOfDuty extends Card {
 
     public VowOfDuty() {

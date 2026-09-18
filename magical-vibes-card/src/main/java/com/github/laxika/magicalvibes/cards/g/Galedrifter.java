@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "MID", collectorNumber = "55")
+@CardRegistration(set = "DBL", collectorNumber = "55")
 public class Galedrifter extends Card {
 
     public Galedrifter() {

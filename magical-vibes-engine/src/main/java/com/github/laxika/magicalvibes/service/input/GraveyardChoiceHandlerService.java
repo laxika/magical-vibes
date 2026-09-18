@@ -1509,9 +1509,10 @@ public class GraveyardChoiceHandlerService {
             if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep1(gameData, cardIds);
             } else if (pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN
-                    || pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED) {
-                // Gifts-style effects complete in one step: the chosen cards go to the controller's
-                // graveyard and the remaining cards go to their configured destination.
+                    || pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED
+                    || pileSeparation.disposition() == CardPileDisposition.THREATS_UNDETECTED) {
+                // Gifts-style effects complete in one step: the chosen cards go to their configured
+                // destination and the remaining cards go to the other configured destination.
                 graveyardReturnSupport.completeGiftsUngivenChoice(gameData, cardIds,
                         pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED);
                 if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {

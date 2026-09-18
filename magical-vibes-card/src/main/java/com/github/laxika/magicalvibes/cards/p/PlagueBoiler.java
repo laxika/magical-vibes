@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "269")
+@CardRegistration(set = "C13", collectorNumber = "254")
 public class PlagueBoiler extends Card {
 
     public PlagueBoiler() {

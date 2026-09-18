@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
+import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -157,6 +159,7 @@ public class LibrarySearchSupport {
                     .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
+            params = applyOppositionAgentControl(gameData, params);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library."));
             return true;
@@ -553,6 +556,24 @@ public class LibrarySearchSupport {
             LibrarySearchFollowUp followUp,
             UUID attachToPermanentId,
             Integer mayCastManaValueAtMost) {
+        return performLibrarySearch(gameData, controllerId, filter, noMatchDescription, prompt,
+                reveals, canFailToFind, destination, followUp, attachToPermanentId,
+                mayCastManaValueAtMost, true);
+    }
+
+    public boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination,
+            LibrarySearchFollowUp followUp,
+            UUID attachToPermanentId,
+            Integer mayCastManaValueAtMost,
+            boolean shuffleAfterSelection) {
         if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -562,7 +583,8 @@ public class LibrarySearchSupport {
             // Searching an empty library is still a search, so opponent-search triggers fire here too
             // (the interaction-starting path fires them in sendLibrarySearchToPlayer).
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            String logMsg = playerName + " searches their library but it is empty."
+                    + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
             return false;
         }
@@ -571,8 +593,11 @@ public class LibrarySearchSupport {
 
         if (matchingCards.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            String logMsg = playerName + " searches their library but finds no " + noMatchDescription + ". Library is shuffled.";
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
+            String logMsg = playerName + " searches their library but finds no " + noMatchDescription + "."
+                    + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDescription);
             return false;
@@ -583,6 +608,7 @@ public class LibrarySearchSupport {
                 .canFailToFind(canFailToFind)
                 .prompt(prompt)
                 .destination(destination)
+                .shuffleAfterSelection(shuffleAfterSelection)
                 .followUp(followUp)
                 .attachToPermanentId(attachToPermanentId)
                 .mayCastManaValueAtMost(mayCastManaValueAtMost)
@@ -622,6 +648,18 @@ public class LibrarySearchSupport {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
+                        if (pid.equals(searchingPlayerId)) {
+                            continue;
+                        }
+                        String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                        String sourceName = perm.getCard().getName();
+                        gameLogService.append(gameData, GameLog.text(
+                                playerName + "'s library search is prevented by " + sourceName + "."));
+                        log.info("Game {} - {} search prevented by {}",
+                                gameData.id, playerName, sourceName);
+                        return false;
+                    }
                     if (effect instanceof OpponentsCantSearchLibrariesEffect) {
                         if (causingControllerId == null
                                 || !libraryOwnerId.equals(causingControllerId)
@@ -699,6 +737,37 @@ public class LibrarySearchSupport {
         return deck.stream().filter(this::isLibrarySearchCastableCard).toList();
     }
 
+    /** Applies the controller of the most recently entered opposing Opposition Agent, if any. */
+    public LibrarySearchParams applyOppositionAgentControl(GameData gameData, LibrarySearchParams params) {
+        if (params.decisionPlayerId() != null
+                || params.sourceSideboard()
+                || params.sourceCards() != null
+                || (params.targetPlayerId() != null && !params.targetPlayerId().equals(params.playerId()))) {
+            return params;
+        }
+
+        UUID controllerId = null;
+        long newestTimestamp = Long.MIN_VALUE;
+        for (UUID battlefieldControllerId : gameData.orderedPlayerIds) {
+            if (battlefieldControllerId.equals(params.playerId())) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                boolean isOppositionAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OppositionAgentEffect.class::isInstance);
+                if (isOppositionAgent && permanent.getTimestamp() >= newestTimestamp) {
+                    newestTimestamp = permanent.getTimestamp();
+                    controllerId = battlefieldControllerId;
+                }
+            }
+        }
+        return controllerId == null ? params : params.withDecisionPlayerId(controllerId);
+    }
+
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind) {
         String playerName = gameData.playerIdToName.get(playerId);
@@ -730,7 +799,8 @@ public class LibrarySearchSupport {
                 String searcherName = gameData.playerIdToName.get(params.playerId());
                 gameLogService.append(gameData, GameLog.text(
                         searcherName + " finds no matching card among the top " + topLimit
-                                + " cards. Library is shuffled."));
+                                + " cards."
+                                + (params.shuffleAfterSelection() ? " Library is shuffled." : "")));
                 return;
             }
             params = params.withCards(restricted);
@@ -754,6 +824,8 @@ public class LibrarySearchSupport {
                 }
             }
         }
+
+        params = applyOppositionAgentControl(gameData, params);
 
         if (reverseMiracleSupport != null && reverseMiracleSupport.offerBeforeSearch(gameData, playerId, params,
                 prompt, canFailToFind, logMessage)) {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "41")
+@CardRegistration(set = "CMD", collectorNumber = "66")
 public class VedalkenPlotter extends Card {
 
     public VedalkenPlotter() {

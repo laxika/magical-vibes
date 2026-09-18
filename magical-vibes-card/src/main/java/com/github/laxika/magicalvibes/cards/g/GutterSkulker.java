@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "62")
+@CardRegistration(set = "DBL", collectorNumber = "329")
 public class GutterSkulker extends Card {
 
     public GutterSkulker() {

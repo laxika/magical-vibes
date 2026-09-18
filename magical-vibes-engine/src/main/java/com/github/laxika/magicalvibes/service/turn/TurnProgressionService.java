@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
@@ -870,6 +871,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedAttackerKeywordGrant.class);
         gameData.clearDelayedActions(DelayedNontokenAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
+        gameData.clearDelayedActions(DelayedAttackDamage.class);
         gameData.clearDelayedActions(DelayedAttackUntap.class);
         gameData.clearDelayedActions(DelayedVehicleAttack.class);
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class);
@@ -911,6 +913,7 @@ public class TurnProgressionService {
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.damageDealtToPermanentsBySourceThisTurn.clear();
         gameData.damageSourceNamesThisTurn.clear();
+        gameData.controllersOfPermanentsDealtExcessDamageThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnExileCastPermissionsUsedThisTurn.clear();
@@ -927,6 +930,7 @@ public class TurnProgressionService {
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
+        gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
         gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
@@ -1250,6 +1254,7 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
+        if (gameData.waitingForSubgame) return;
         // Process pending may abilities before auto-passing (e.g. attack-triggered "you may" effects)
         // Only when the stack is empty — otherwise stack items (e.g. Time Stop) must resolve first
         if (gameData.stack.isEmpty() && !gameData.pendingMayAbilities.isEmpty()

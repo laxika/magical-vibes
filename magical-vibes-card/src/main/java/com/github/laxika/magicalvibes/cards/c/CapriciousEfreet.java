@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "131")
+@CardRegistration(set = "C13", collectorNumber = "102")
 public class CapriciousEfreet extends Card {
 
     public CapriciousEfreet() {

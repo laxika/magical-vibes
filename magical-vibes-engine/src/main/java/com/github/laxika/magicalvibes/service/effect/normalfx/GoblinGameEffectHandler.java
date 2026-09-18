@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoblinGameEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves hidden-number choices and the resulting life loss for Goblin Game and Menacing Ogre. */
+/** Resolves hidden-number choices for Goblin Game, Menacing Ogre, and Wheel of Misfortune. */
 @Component
 @RequiredArgsConstructor
 public class GoblinGameEffectHandler implements NormalEffectHandlerBean {
@@ -28,6 +29,10 @@ public class GoblinGameEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final DiscardHandEffectHandler discardHandEffectHandler;
+    private final PlayerInteractionSupport playerInteractionSupport;
+    private final DamageSupport damageSupport;
+    private final GameOutcomeService gameOutcomeService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,9 +73,10 @@ public class GoblinGameEffectHandler implements NormalEffectHandlerBean {
         GoblinGameState state = gameData.goblinGame;
         UUID playerId = state.order.get(state.index);
         state.currentPlayerId = playerId;
+        boolean allowsZero = effect.highestNumberWins() || effect.discardNonLowestAndDrawSeven();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
-                playerId, effect.highestNumberWins() ? 0 : 1, Integer.MAX_VALUE,
-                effect.highestNumberWins()
+                playerId, allowsZero ? 0 : 1, Integer.MAX_VALUE,
+                allowsZero
                         ? "Choose a number for " + cardName + "."
                         : "Choose how many items to hide for " + cardName + ".",
                 cardName));
@@ -78,9 +84,11 @@ public class GoblinGameEffectHandler implements NormalEffectHandlerBean {
 
     private void finish(GameData gameData, GoblinGameState state, String cardName,
                         StackEntry entry, GoblinGameEffect effect) {
-        int winningNumber = effect.highestNumberWins()
+        boolean highestNumberWins = effect.highestNumberWins() || effect.discardNonLowestAndDrawSeven();
+        int winningNumber = highestNumberWins
                 ? state.itemCounts.values().stream().mapToInt(Integer::intValue).max().orElse(0)
                 : state.itemCounts.values().stream().mapToInt(Integer::intValue).min().orElse(0);
+        int lowestNumber = state.itemCounts.values().stream().mapToInt(Integer::intValue).min().orElse(0);
         List<UUID> winningPlayers = state.order.stream()
                 .filter(playerId -> state.itemCounts.get(playerId) == winningNumber)
                 .toList();
@@ -110,6 +118,21 @@ public class GoblinGameEffectHandler implements NormalEffectHandlerBean {
                             gameData, entry, source,
                             CounterType.PLUS_ONE_PLUS_ONE,
                             effect.countersOnSourceIfControllerWins());
+                }
+            }
+        } else if (effect.discardNonLowestAndDrawSeven()) {
+            if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+                int damage = gameQueryService.applyDamageMultiplier(gameData, winningNumber, entry);
+                for (UUID playerId : winningPlayers) {
+                    damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
+                }
+                gameOutcomeService.checkWinCondition(gameData);
+            }
+
+            for (UUID playerId : state.order) {
+                if (state.itemCounts.get(playerId) != lowestNumber) {
+                    discardHandEffectHandler.discardHand(gameData, playerId, entry.getControllerId(), cardName);
+                    playerInteractionSupport.applyDrawCards(gameData, playerId, 7);
                 }
             }
         } else {

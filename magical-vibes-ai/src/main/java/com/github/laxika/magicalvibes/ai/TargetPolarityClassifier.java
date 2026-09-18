@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
@@ -299,6 +300,12 @@ public class TargetPolarityClassifier {
         }
 
         // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction.
+        if (effect instanceof PutCountersOnTargetPermanentThenReflexiveEffect counter) {
+            // The reflexive ability chooses its own target later; only the initial counters
+            // determine which permanent should be targeted now.
+            return classify(gameData, new PutCounterOnTargetPermanentEffect(
+                    counter.counterType(), counter.count()), aiPlayerId);
+        }
         if (effect instanceof PutCounterOnTargetPermanentEffect counter) {
             if (counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.HARMFUL;
@@ -431,6 +438,7 @@ public class TargetPolarityClassifier {
             entry("DealDamageEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToOtherCreaturesControlledByTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("DealDamageToTargetCreaturesThenCreateTokensEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetControllerIfTargetHasKeywordEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -590,6 +598,7 @@ public class TargetPolarityClassifier {
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetCreatureForTargetPlayerEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("TemptingOfferCreateTokenCopyEffect", TargetPolarity.BENEFICIAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             // Fell the Mighty uses the target's power as a threshold and spares the target itself.

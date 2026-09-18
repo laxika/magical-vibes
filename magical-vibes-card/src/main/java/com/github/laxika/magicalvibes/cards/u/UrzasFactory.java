@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "280")
 @CardRegistration(set = "TSR", collectorNumber = "288")
+@CardRegistration(set = "C13", collectorNumber = "331")
 public class UrzasFactory extends Card {
 
     public UrzasFactory() {

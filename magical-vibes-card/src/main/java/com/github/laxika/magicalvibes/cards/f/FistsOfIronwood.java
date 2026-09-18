@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "RAV", collectorNumber = "164")
 @CardRegistration(set = "MM3", collectorNumber = "126")
 @CardRegistration(set = "RVR", collectorNumber = "139")
+@CardRegistration(set = "CMD", collectorNumber = "156")
 public class FistsOfIronwood extends Card {
 
     public FistsOfIronwood() {

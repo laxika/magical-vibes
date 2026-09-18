@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "192")
+@CardRegistration(set = "C13", collectorNumber = "245")
 public class LeoninBladetrap extends Card {
 
     public LeoninBladetrap() {

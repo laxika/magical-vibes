@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "50")
+@CardRegistration(set = "DBL", collectorNumber = "317")
 public class CemeteryIlluminator extends Card {
 
     public CemeteryIlluminator() {

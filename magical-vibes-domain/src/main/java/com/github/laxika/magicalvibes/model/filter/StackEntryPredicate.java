@@ -13,6 +13,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryCastFromZonePredicate,
         StackEntryColorInPredicate,
         StackEntryIsMulticoloredPredicate,
+        StackEntryControlledByChosenPlayerPredicate,
         StackEntryControlledByEnchantedPlayerPredicate,
         StackEntryControlledByPredicate,
         StackEntryHasTargetPredicate,

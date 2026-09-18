@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "113")
+@CardRegistration(set = "C13", collectorNumber = "82")
 public class MarrowBats extends Card {
 
     public MarrowBats() {

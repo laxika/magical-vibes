@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "181")
 @CardRegistration(set = "MM2", collectorNumber = "181")
+@CardRegistration(set = "CMD", collectorNumber = "212")
 public class Necrogenesis extends Card {
 
     public Necrogenesis() {

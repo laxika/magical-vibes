@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "108")
+@CardRegistration(set = "DBL", collectorNumber = "375")
 public class DreadfeastDemon extends Card {
 
     public DreadfeastDemon() {

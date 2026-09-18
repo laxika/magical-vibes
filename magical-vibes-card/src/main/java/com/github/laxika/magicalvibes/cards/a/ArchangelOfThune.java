@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "M14", collectorNumber = "5")
 @CardRegistration(set = "IMA", collectorNumber = "8")
 @CardRegistration(set = "2XM", collectorNumber = "5")
+@CardRegistration(set = "MAR", collectorNumber = "41")
 @CardRegistration(set = "PIO", collectorNumber = "4")
 public class ArchangelOfThune extends Card {
 

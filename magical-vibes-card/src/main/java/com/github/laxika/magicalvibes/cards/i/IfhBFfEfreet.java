@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ME1", collectorNumber = "123")
+@CardRegistration(set = "ARN", collectorNumber = "50")
 public class IfhBFfEfreet extends Card {
 
     public IfhBFfEfreet() {

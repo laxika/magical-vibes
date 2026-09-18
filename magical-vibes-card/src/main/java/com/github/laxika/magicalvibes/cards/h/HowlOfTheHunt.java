@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "188")
+@CardRegistration(set = "DBL", collectorNumber = "188")
 public class HowlOfTheHunt extends Card {
 
     public HowlOfTheHunt() {

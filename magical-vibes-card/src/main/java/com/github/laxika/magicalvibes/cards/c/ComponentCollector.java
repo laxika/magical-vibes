@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "43")
+@CardRegistration(set = "DBL", collectorNumber = "43")
 public class ComponentCollector extends Card {
 
     public ComponentCollector() {

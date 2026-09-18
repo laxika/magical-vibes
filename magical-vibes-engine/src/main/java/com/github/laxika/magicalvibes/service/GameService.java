@@ -364,6 +364,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 if (!gameData.stack.isEmpty()) {
                     stackResolutionService.resolveTopOfStack(gameData);
+                    if (gameData.waitingForSubgame) return;
                 } else {
                     turnProgressionService.advanceStep(gameData);
                 }
@@ -1973,6 +1974,18 @@ public class GameService {
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
+        }
+    }
+
+    public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateCommandZoneAbility(gameData, actionPlayer, cardId, abilityIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            abilityActivationService.activateCommandZoneAbility(gameData, player, cardId, abilityIndex);
         }
     }
 

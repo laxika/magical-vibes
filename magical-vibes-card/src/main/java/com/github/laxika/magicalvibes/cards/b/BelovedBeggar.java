@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "MID", collectorNumber = "3")
+@CardRegistration(set = "DBL", collectorNumber = "3")
 public class BelovedBeggar extends Card {
 
     public BelovedBeggar() {

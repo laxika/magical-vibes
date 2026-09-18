@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,15 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WhipgrassEntangler.class, GrizzlyBears.class})
+@CardUsed({WhipgrassEntangler.class, FugitiveWizard.class})
 class WhipgrassEntanglerTest extends BaseCardTest {
 
     @Test
     @DisplayName("The ability makes a creature pay for each Cleric when attacking")
     void attackTaxCountsClericsAtDeclaration() {
         Permanent entangler = addCreatureReady(player1, new WhipgrassEntangler());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player2, new FugitiveWizard());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -42,19 +43,41 @@ class WhipgrassEntanglerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The tax counts Clerics controlled by either player")
+    void attackTaxCountsClericsOnBothBattlefields() {
+        addCreatureReady(player1, new WhipgrassEntangler());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player2, new WhipgrassEntangler());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        declareAttackers(player1, List.of(1));
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("The ability also taxes blocking")
     void blockTaxIsPaidByBlockerController() {
         Permanent entangler = addCreatureReady(player1, new WhipgrassEntangler());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class);
@@ -65,6 +88,26 @@ class WhipgrassEntanglerTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(entangler.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The restriction wears off at end of turn")
+    void restrictionWearsOffAtEndOfTurn() {
+        addCreatureReady(player1, new WhipgrassEntangler());
+        Permanent target = addCreatureReady(player1, new FugitiveWizard());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+
+        assertThat(target.isAttacking()).isTrue();
     }
 
     @Test

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "6")
+@CardRegistration(set = "DBL", collectorNumber = "273")
 public class CemeteryProtector extends Card {
 
     public CemeteryProtector() {

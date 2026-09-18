@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "128")
+@CardRegistration(set = "DBL", collectorNumber = "128")
 public class ArdentElementalist extends Card {
 
     public ArdentElementalist() {
