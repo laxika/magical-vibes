@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "377")
 @CardRegistration(set = "4ED", collectorNumber = "325")
 @CardRegistration(set = "CMD", collectorNumber = "251")
+@CardRegistration(set = "2ED", collectorNumber = "248")
 public class HowlingMine extends Card {
 
     public HowlingMine() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "BRB", collectorNumber = "89")
 @CardRegistration(set = "SUM", collectorNumber = "221")
 @CardRegistration(set = "3ED", collectorNumber = "221")
+@CardRegistration(set = "2ED", collectorNumber = "221")
 public class Tranquility extends Card {
 
     public Tranquility() {

@@ -363,6 +363,14 @@ public class BlockLegalityService {
                 return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
             }
         }
+        for (Set<UUID> chosenGroundPile : gameData.ragingRiverBlockRestrictionsThisCombat
+                .getOrDefault(attacker.getId(), List.of())) {
+            if (!gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
+                    && !chosenGroundPile.contains(blocker.getId())) {
+                return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS,
+                        "creatures with flying or creatures in the chosen pile");
+            }
+        }
         if (!gameData.matchingCreatureBlockRestrictionsThisTurn.isEmpty()) {
             UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
             if (attackerControllerId != null) {

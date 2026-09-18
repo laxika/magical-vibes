@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "2ED", collectorNumber = "108")
 @CardRegistration(set = "NPH", collectorNumber = "60")
 @CardRegistration(set = "5ED", collectorNumber = "160")
 @CardRegistration(set = "4ED", collectorNumber = "136")

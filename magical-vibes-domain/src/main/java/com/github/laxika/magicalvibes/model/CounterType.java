@@ -98,6 +98,7 @@ public enum CounterType {
     MANIFESTATION,
     MANABOND,
     MINE,
+    MIRE,
     NIGHT,
     DEFENSE,
     DEPLETION,
