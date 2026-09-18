@@ -122,6 +122,7 @@ public sealed interface DelayedAction permits
         GrantChosenLandwalkAtNextUpkeep,
         ReboundAtNextUpkeep,
         DimensionalBreachUpkeepReturn,
+        CyclopeanTombMireCleanup,
         PendingExileReturn,
         ReturnExiledCardAtNextEndStepUnlessPays,
         EachPlayerHandExileReturnAtNextEndStep,

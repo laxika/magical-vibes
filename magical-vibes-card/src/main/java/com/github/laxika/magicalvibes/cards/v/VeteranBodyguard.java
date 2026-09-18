@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 
 @CardRegistration(set = "SUM", collectorNumber = "42")
 @CardRegistration(set = "3ED", collectorNumber = "42")
+@CardRegistration(set = "ME4", collectorNumber = "32")
 public class VeteranBodyguard extends Card {
 
     public VeteranBodyguard() {

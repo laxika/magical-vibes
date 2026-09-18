@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToSelfEffect;
 
 @CardRegistration(set = "ATQ", collectorNumber = "30")
+@CardRegistration(set = "ME4", collectorNumber = "143")
 public class ArgothianTreefolk extends Card {
 
     public ArgothianTreefolk() {

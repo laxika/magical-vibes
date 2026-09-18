@@ -1152,7 +1152,7 @@ public class InteractionPromptProjectionRegistry {
         List<CardView> cardViews =
                 cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
         return InteractionPromptMessage.cardIndexPick(
-                cardViews, interaction.validIndices(), interaction.prompt(), true);
+                cardViews, interaction.validIndices(), interaction.prompt(), !interaction.castCard());
     }
 
     private InteractionPromptMessage projectSpectersShriekChoice(

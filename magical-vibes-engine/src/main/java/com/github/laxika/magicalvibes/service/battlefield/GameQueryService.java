@@ -103,6 +103,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeControlledByOtherPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -6299,6 +6300,14 @@ public class GameQueryService {
             }
         }
         return hasGrantedEffect(gameData, target, CantBeEnchantedByOtherAurasEffect.class);
+    }
+
+    /** Returns whether another player is prevented from gaining control of the permanent. */
+    public boolean cantBeControlledByOtherPlayers(GameData gameData, Permanent target,
+                                                  UUID newControllerId) {
+        UUID currentControllerId = findPermanentController(gameData, target.getId());
+        return !newControllerId.equals(currentControllerId)
+                && hasGrantedEffect(gameData, target, CantBeControlledByOtherPlayersEffect.class);
     }
 
     /**

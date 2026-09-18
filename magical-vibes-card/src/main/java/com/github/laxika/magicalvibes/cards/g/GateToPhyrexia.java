@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "16")
+@CardRegistration(set = "ME4", collectorNumber = "82")
 public class GateToPhyrexia extends Card {
 
     public GateToPhyrexia() {

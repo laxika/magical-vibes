@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "4ED", collectorNumber = "278")
 @CardRegistration(set = "SUM", collectorNumber = "222")
 @CardRegistration(set = "3ED", collectorNumber = "222")
+@CardRegistration(set = "ME4", collectorNumber = "171")
 public class Tsunami extends Card {
 
     public Tsunami() {

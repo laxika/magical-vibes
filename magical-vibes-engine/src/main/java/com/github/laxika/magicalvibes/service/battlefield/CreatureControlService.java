@@ -94,9 +94,12 @@ public class CreatureControlService {
      * @param sourcePermanentId the source permanent for source/attachment-scoped durations, else {@code null}
      * @param sourceCardName    name of the card whose spell/ability created the effect
      */
-    public void applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
-                                   CardEffect wrappedEffect, EffectDuration duration,
-                                   UUID sourcePermanentId, String sourceCardName) {
+    public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
+                                      CardEffect wrappedEffect, EffectDuration duration,
+                                      UUID sourcePermanentId, String sourceCardName) {
+        if (gameQueryService.cantBeControlledByOtherPlayers(gameData, target, newControllerId)) {
+            return false;
+        }
         FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), null, null, duration, 0));
@@ -105,6 +108,7 @@ public class CreatureControlService {
                     stamped.id(), newControllerId, gameData.turnNumber));
         }
         recomputeControl(gameData, target);
+        return true;
     }
 
     /**
@@ -127,10 +131,10 @@ public class CreatureControlService {
             if (permanent == null || newControllerId == null) {
                 continue;
             }
-            applyControlEffect(gameData, newControllerId, permanent,
+            boolean controlApplied = applyControlEffect(gameData, newControllerId, permanent,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
                     null, "Debt of Loyalty");
-            applied = true;
+            applied |= controlApplied;
         }
         return applied;
     }

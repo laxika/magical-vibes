@@ -811,6 +811,8 @@ public class GameData {
      * Accessed under {@code synchronized (gameData)} in the engine, like the fields it replaced.
      */
     public final List<DelayedAction> delayedActions = Collections.synchronizedList(new ArrayList<>());
+    /** Lands marked by each Cyclopean Tomb, keyed by that Tomb's battlefield permanent object. */
+    public final Map<UUID, Set<UUID>> cyclopeanTombMireTargets = new ConcurrentHashMap<>();
 
     public PendingAbilityActivation pendingAbilityActivation;
     /** A graveyard-activated ability suspended on its "Discard a card" cost choice (Eternalize). */
@@ -2401,6 +2403,8 @@ public class GameData {
     public UUID mindControllerPlayerId;
     /** Whether the active mind control ends when the current combat phase ends. */
     public boolean mindControlUntilEndOfCombat;
+    /** Card id of a Word of Command spell whose resolution temporarily carries the control. */
+    public UUID mindControlUntilStackCardId;
 
     // Taunt — "creatures that player controls attack you if able" during their next turn
     /** Delayed effect: affectedPlayerId -> controllerId to attack, consumed when the affected player's turn begins. */
@@ -6137,6 +6141,8 @@ public class GameData {
                 copy.delayedActions.add(action);
             }
         });
+        this.cyclopeanTombMireTargets.forEach((tombId, landIds) ->
+                copy.cyclopeanTombMireTargets.put(tombId, new HashSet<>(landIds)));
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
@@ -6556,6 +6562,7 @@ public class GameData {
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
         copy.mindControlUntilEndOfCombat = this.mindControlUntilEndOfCombat;
+        copy.mindControlUntilStackCardId = this.mindControlUntilStackCardId;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);

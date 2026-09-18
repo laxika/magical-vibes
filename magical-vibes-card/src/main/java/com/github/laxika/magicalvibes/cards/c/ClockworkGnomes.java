@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "102")
+@CardRegistration(set = "ME4", collectorNumber = "191")
 public class ClockworkGnomes extends Card {
 
     public ClockworkGnomes() {

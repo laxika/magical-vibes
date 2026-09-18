@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -114,6 +115,7 @@ public class CardChoiceHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    @Lazy private final WordOfCommandCastSupport wordOfCommandCastSupport;
 
     /** Answers Retraced Image's mandatory hand reveal and conditional battlefield entry. */
     public void handleRetracedImageCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -1562,6 +1564,9 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
         if (cardIndex == -1) {
+            if (choice.castCard()) {
+                throw new IllegalStateException("A card must be chosen");
+            }
             gameData.interaction.clearAwaitingInput();
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
@@ -1577,6 +1582,11 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         Card chosenCard = targetHand.remove(cardIndex);
+        if (choice.castCard()) {
+            wordOfCommandCastSupport.playSelectedCard(
+                    gameData, player.getId(), choice.targetPlayerId(), chosenCard, cardIndex);
+            return;
+        }
         UUID originalOwnerId = chosenCard.getOwnerId() != null
                 ? chosenCard.getOwnerId() : choice.targetPlayerId();
         Permanent permanent = new Permanent(chosenCard);

@@ -204,6 +204,7 @@ public enum CardSet {
     SET_ME2("ME2"),
     SET_VMA("VMA"),
     SET_ME3("ME3"),
+    SET_ME4("ME4"),
     SET_FUT("FUT"),
     SET_ATH("ATH"),
     SET_LEG("LEG"),

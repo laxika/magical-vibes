@@ -5,6 +5,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Untapped creature protects your noncreature artifacts | `g/GuardianBeast.java` | Three STATIC `ConditionalEffect(SourceUntapped, ...)` grants over `OWN_PERMANENTS` filtered to artifact + not creature: `GrantKeywordEffect(INDESTRUCTIBLE)`, `GrantEffectEffect(CantBeEnchantedByOtherAurasEffect())`, and `GrantEffectEffect(CantBeControlledByOtherPlayersEffect())` |
 | Greatest-creature-count entry counters + two draw abilities | `i/InvestigatorsJournal.java` | `ON_ENTER_BATTLEFIELD` `EnterWithCountersEffect(SUSPECT, GreatestCreatureCountAmongPlayers())` + `{2}`,`{T}`,`RemoveCounterFromSourceCost` draw ability + `{2}`,`SacrificeSelfCost` draw ability |
 | Boost + combat-damage-to-creature Food trigger equip | `g/GiantsSkewer.java` | STATIC StaticBoostEffect(2, 1, EQUIPPED_CREATURE) + ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE CreateTokenWhenEquippedCreatureDealsCombatDamageToCreatureEffect(Food) + EquipActivatedAbility(`{3}`) |
 | Film-counter ability copy | `p/PeterParkersCamera.java` | EnterWithCountersEffect(FILM, Fixed(3)) + `{2}`, tap, RemoveCounterFromSourceCost(1, FILM) + `CopyTargetActivatedOrTriggeredAbilityEffect()` targeting `ACTIVATED_ABILITY` or `TRIGGERED_ABILITY` stack entries controlled by you |

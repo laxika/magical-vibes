@@ -14,5 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DPA", collectorNumber = "10")
 @CardRegistration(set = "UMA", collectorNumber = "64")
 @CardRegistration(set = "IMA", collectorNumber = "64")
+@CardRegistration(set = "ME4", collectorNumber = "52")
 public class MahamotiDjinn extends Card {
 }

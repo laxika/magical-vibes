@@ -202,6 +202,7 @@ public class StackResolutionService {
         }
 
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
+        clearWordOfCommandControlIfResolved(gameData, entry);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
@@ -1252,6 +1253,17 @@ public class StackResolutionService {
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
         checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
+        clearWordOfCommandControlIfResolved(gameData, entry);
+    }
+
+    private void clearWordOfCommandControlIfResolved(GameData gameData, StackEntry entry) {
+        if (entry.getCard() == null
+                || !entry.getCard().getId().equals(gameData.mindControlUntilStackCardId)) {
+            return;
+        }
+        gameData.mindControlledPlayerId = null;
+        gameData.mindControllerPlayerId = null;
+        gameData.mindControlUntilStackCardId = null;
     }
 
     private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {

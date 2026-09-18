@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "262")
 @CardRegistration(set = "3ED", collectorNumber = "262")
+@CardRegistration(set = "ME4", collectorNumber = "212")
 public class LivingWall extends Card {
 
     public LivingWall() {

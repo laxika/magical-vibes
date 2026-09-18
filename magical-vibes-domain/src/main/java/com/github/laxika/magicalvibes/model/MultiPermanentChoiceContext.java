@@ -409,6 +409,11 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** The controller chooses exactly the damaged amount of nontoken permanents to sacrifice. */
+    record SacrificeNontokenPermanentsOrLoseGame(int requiredCount)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Worms of the Earth: choose exactly two lands to sacrifice for its upkeep choice. */
     record WormsOfTheEarthSacrificeLands(UUID playerId, Card sourceCard, WormsOfTheEarthEffect effect)
             implements MultiPermanentChoiceContext {

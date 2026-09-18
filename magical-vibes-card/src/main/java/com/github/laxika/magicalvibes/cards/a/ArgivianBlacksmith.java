@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "2")
+@CardRegistration(set = "ME4", collectorNumber = "4")
 public class ArgivianBlacksmith extends Card {
 
     public ArgivianBlacksmith() {

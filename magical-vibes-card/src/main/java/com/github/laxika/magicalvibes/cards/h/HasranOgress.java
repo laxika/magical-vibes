@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "34")
+@CardRegistration(set = "ME4", collectorNumber = "86")
 public class HasranOgress extends Card {
 
     public HasranOgress() {

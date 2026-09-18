@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 
 @CardRegistration(set = "HML", collectorNumber = "34")
+@CardRegistration(set = "ME4", collectorNumber = "53")
 public class MysticDecree extends Card {
 
     public MysticDecree() {

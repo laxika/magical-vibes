@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "45")
 @CardRegistration(set = "RQS", collectorNumber = "44")
 @CardRegistration(set = "SUM", collectorNumber = "228")
+@CardRegistration(set = "ME4", collectorNumber = "172")
 public class WarMammoth extends Card {
 }

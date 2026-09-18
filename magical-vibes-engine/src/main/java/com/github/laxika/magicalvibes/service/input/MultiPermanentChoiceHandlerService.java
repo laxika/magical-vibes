@@ -164,6 +164,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesNonlandPermanentThenReturnRestEffectHandler
             eachPlayerChoosesNonlandPermanentThenReturnRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .SacrificeNontokenPermanentsOrLoseGameEffectHandler sacrificeNontokenPermanentsOrLoseGameEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
@@ -445,6 +447,11 @@ public class MultiPermanentChoiceHandlerService {
             })) {
                 throw new IllegalStateException("A selected permanent is no longer controlled by the chooser");
             }
+        }
+        if (context instanceof MultiPermanentChoiceContext.SacrificeNontokenPermanentsOrLoseGame sacrificeCtx
+                && permanentIds.size() != sacrificeCtx.requiredCount()) {
+            throw new IllegalStateException("Must select exactly " + sacrificeCtx.requiredCount()
+                    + " nontoken permanents to sacrifice");
         }
         if (context instanceof MultiPermanentChoiceContext.TapPermanentsForAmount tapCtx) {
             if (permanentIds.size() != tapCtx.requiredCount()) {
@@ -732,6 +739,9 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
             handleForcedSacrifice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeNontokenPermanentsOrLoseGame ctx) {
+            sacrificeNontokenPermanentsOrLoseGameEffectHandler.completeChoice(gameData, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {
             wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
                     gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
