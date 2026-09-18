@@ -34,6 +34,7 @@ class NantukoTracerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerDecks.get(player2.getId()))
                 .extracting(Card::getId)
                 .containsExactly(existingLibraryCard.getId(), target.getId());

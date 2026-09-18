@@ -16,10 +16,12 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "252")
 @CardRegistration(set = "SUM", collectorNumber = "203")
 @CardRegistration(set = "3ED", collectorNumber = "203")
+@CardRegistration(set = "ME4", collectorNumber = "157")
+@CardRegistration(set = "2ED", collectorNumber = "203")
 public class InstillEnergy extends Card {
 
     public InstillEnergy() {
-        // Enchant creature — the enchanted creature can attack as though it had haste.
+        // Enchant creature â€” the enchanted creature can attack as though it had haste.
         target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new EnchantedCreatureCanAttackAsThoughHasteEffect());
 
         // {0}: Untap enchanted creature. Activate only during your turn and only once each turn.

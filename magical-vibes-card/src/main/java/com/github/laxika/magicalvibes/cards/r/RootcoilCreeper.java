@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "238")
+@CardRegistration(set = "DBL", collectorNumber = "238")
 public class RootcoilCreeper extends Card {
 
     public RootcoilCreeper() {

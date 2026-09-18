@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "129")
+@CardRegistration(set = "HOC", collectorNumber = "129")
 public class MirkwoodPathmaker extends Card {
 
     public MirkwoodPathmaker() {

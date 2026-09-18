@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "THS", collectorNumber = "84")
+@CardRegistration(set = "PIO", collectorNumber = "290")
 public class DiscipleOfPhenax extends Card {
 
     public DiscipleOfPhenax() {

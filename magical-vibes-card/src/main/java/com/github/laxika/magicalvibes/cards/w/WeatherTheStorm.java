@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 
+@CardRegistration(set = "MH1", collectorNumber = "191")
 @CardRegistration(set = "STA", collectorNumber = "58")
 public class WeatherTheStorm extends Card {
 

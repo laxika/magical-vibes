@@ -20,6 +20,6 @@ public class Skullcage extends Card {
         // must still be put on the stack when the opponent has exactly three or four cards.
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, ConditionalEffect.unless(
                 new AnyOf(List.of(new ActivePlayerHandAtMost(2), new ActivePlayerHandAtLeast(5))),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER)));
+                new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER)));
     }
 }

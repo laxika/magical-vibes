@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "24")
+@CardRegistration(set = "DBL", collectorNumber = "24")
 public class HomesteadCourage extends Card {
 
     public HomesteadCourage() {

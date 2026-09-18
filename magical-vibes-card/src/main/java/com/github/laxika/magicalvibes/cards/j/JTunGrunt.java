@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
 @CardRegistration(set = "CSP", collectorNumber = "8")
+@CardRegistration(set = "CMD", collectorNumber = "16")
 public class JTunGrunt extends Card {
 
     public JTunGrunt() {

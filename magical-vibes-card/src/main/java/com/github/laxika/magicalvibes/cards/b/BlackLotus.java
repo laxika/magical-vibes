@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "4")
+@CardRegistration(set = "2ED", collectorNumber = "233")
 public class BlackLotus extends Card {
 
     public BlackLotus() {

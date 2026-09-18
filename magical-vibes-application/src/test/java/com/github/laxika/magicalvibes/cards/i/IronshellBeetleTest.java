@@ -51,7 +51,7 @@ class IronshellBeetleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can be cast without a target when no creatures are on the battlefield")
+    @DisplayName("Can be cast onto an empty battlefield and target itself with its ETB")
     void canCastWithoutTarget() {
         harness.setHand(player1, List.of(new IronshellBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -60,6 +60,10 @@ class IronshellBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ironshell Beetle");
+        Permanent beetle = findPermanent(player1, "Ironshell Beetle");
+        harness.handlePermanentChosen(player1, beetle.getId());
+        harness.passBothPriorities();
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.pendingInteractions).isEmpty();

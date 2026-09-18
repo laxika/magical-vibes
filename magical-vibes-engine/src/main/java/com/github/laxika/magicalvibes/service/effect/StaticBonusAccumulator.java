@@ -22,6 +22,7 @@ public class StaticBonusAccumulator {
     private String name;
     private int power;
     private int toughness;
+    private int creatureCount = 1;
     private final Set<Keyword> keywords = new HashSet<>();
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     private boolean animatedCreature;
@@ -101,6 +102,14 @@ public class StaticBonusAccumulator {
 
     public int getToughness() {
         return toughness;
+    }
+
+    public void setCreatureCount(int creatureCount) {
+        this.creatureCount = Math.max(this.creatureCount, creatureCount);
+    }
+
+    public int getCreatureCount() {
+        return creatureCount;
     }
 
     public Set<Keyword> getKeywords() {
@@ -285,8 +294,8 @@ public class StaticBonusAccumulator {
      */
     public StaticBonus toStaticBonus(int finalPower, int finalToughness, boolean animated) {
         return new StaticBonus(
-                finalPower, finalToughness, keywords, protectionColors, Set.of(),
-                animated, grantedActivatedAbilities, grantedEffects,
+                finalPower, finalToughness, keywords, protectionColors, Set.of(), false,
+                animated, creatureCount, grantedActivatedAbilities, grantedEffects,
                 grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                 basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,

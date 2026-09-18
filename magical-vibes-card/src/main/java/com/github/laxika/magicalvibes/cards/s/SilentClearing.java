@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "246")
 @CardRegistration(set = "HA7", collectorNumber = "24")
+@CardRegistration(set = "ACR", collectorNumber = "115")
 public class SilentClearing extends Card {
 
     public SilentClearing() {

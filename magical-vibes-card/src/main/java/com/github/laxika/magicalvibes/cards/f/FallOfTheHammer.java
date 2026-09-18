@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTarge
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "93")
+@CardRegistration(set = "PIO", collectorNumber = "134")
 public class FallOfTheHammer extends Card {
 
     public FallOfTheHammer() {

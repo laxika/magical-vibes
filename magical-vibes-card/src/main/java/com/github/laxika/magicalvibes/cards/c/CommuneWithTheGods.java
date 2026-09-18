@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "155")
 @CardRegistration(set = "EMA", collectorNumber = "162")
+@CardRegistration(set = "PIO", collectorNumber = "169")
 public class CommuneWithTheGods extends Card {
 
     public CommuneWithTheGods() {

@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "247")
 @CardRegistration(set = "HA7", collectorNumber = "22")
+@CardRegistration(set = "TLE", collectorNumber = "58")
+@CardRegistration(set = "ACR", collectorNumber = "111")
 public class SunbakedCanyon extends Card {
 
     public SunbakedCanyon() {

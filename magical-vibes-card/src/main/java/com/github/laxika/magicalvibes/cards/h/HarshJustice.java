@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.RegisterCombatDamageReflectionEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "18")
+@CardRegistration(set = "ME4", collectorNumber = "13")
 public class HarshJustice extends Card {
 
     public HarshJustice() {

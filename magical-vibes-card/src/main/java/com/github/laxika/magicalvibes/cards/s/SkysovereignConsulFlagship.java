@@ -20,6 +20,8 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "234")
 @CardRegistration(set = "KLR", collectorNumber = "272")
+@CardRegistration(set = "SPG", collectorNumber = "93")
+@CardRegistration(set = "SPG", collectorNumber = "103")
 public class SkysovereignConsulFlagship extends Card {
 
     public SkysovereignConsulFlagship() {

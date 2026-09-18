@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "19")
+@CardRegistration(set = "MB2", collectorNumber = "11")
 public class FlickeringWard extends Card {
 
     public FlickeringWard() {

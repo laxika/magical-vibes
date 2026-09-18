@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "204")
 @CardRegistration(set = "4ED", collectorNumber = "169")
+@CardRegistration(set = "2ED", collectorNumber = "134")
 @CardRegistration(set = "ITP", collectorNumber = "28")
 @CardRegistration(set = "RQS", collectorNumber = "27")
 @CardRegistration(set = "SUM", collectorNumber = "135")
 @CardRegistration(set = "3ED", collectorNumber = "135")
+@CardRegistration(set = "ME4", collectorNumber = "100")
 public class WarpArtifact extends Card {
 
     public WarpArtifact() {

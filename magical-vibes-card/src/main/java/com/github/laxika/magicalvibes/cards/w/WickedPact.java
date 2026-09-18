@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "117")
 @CardRegistration(set = "S99", collectorNumber = "92")
+@CardRegistration(set = "ME4", collectorNumber = "102")
 public class WickedPact extends Card {
 
     public WickedPact() {

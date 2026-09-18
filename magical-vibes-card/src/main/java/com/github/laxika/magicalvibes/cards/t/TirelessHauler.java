@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DireStrainBrawler;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "MID", collectorNumber = "203")
+@CardRegistration(set = "DBL", collectorNumber = "203")
 public class TirelessHauler extends Card {
 
     public TirelessHauler() {

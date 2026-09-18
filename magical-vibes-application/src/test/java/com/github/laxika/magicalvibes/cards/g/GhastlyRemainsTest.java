@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.InteractionState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,24 +14,55 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GhastlyRemains.class, WalkingCorpse.class, GrizzlyBears.class})
+@CardUsed({GhastlyRemains.class, GempalmPolluter.class, GoblinTurncoat.class})
 class GhastlyRemainsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enters with a +1/+1 counter for each Zombie card in your hand")
-    void entersWithCountersForZombieCardsInHand() {
+    @DisplayName("Enters with a +1/+1 counter for each revealed Zombie card")
+    void entersWithCountersForRevealedZombieCards() {
         GhastlyRemains card = new GhastlyRemains();
-        harness.setHand(player1, List.of(card, new WalkingCorpse(), new WalkingCorpse(), new GrizzlyBears()));
+        GempalmPolluter firstZombie = new GempalmPolluter();
+        GempalmPolluter secondZombie = new GempalmPolluter();
+        harness.setHand(player1, List.of(card, firstZombie, secondZombie, new GoblinTurncoat()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent remains = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(firstZombie.getId(), secondZombie.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstZombie.getId(), secondZombie.getId()));
+        harness.passBothPriorities();
+
+        Permanent remains = findPermanent(player1, "Ghastly Remains");
         assertThat(remains.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lets its controller choose how many Zombie cards to reveal for Amplify")
+    void choosesHowManyZombieCardsToReveal() {
+        GhastlyRemains card = new GhastlyRemains();
+        GempalmPolluter firstZombie = new GempalmPolluter();
+        GempalmPolluter secondZombie = new GempalmPolluter();
+        harness.setHand(player1, List.of(card, firstZombie, secondZombie, new GoblinTurncoat()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(firstZombie.getId(), secondZombie.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstZombie.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ghastly Remains")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -49,6 +80,42 @@ class GhastlyRemainsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(card.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(card.getId()));
+    }
+
+    @Test
+    void decliningAmplifyLetsZeroToughnessCreatureDieAfterEntering() {
+        GhastlyRemains remains = new GhastlyRemains();
+        GempalmPolluter zombie = new GempalmPolluter();
+        harness.setHand(player1, List.of(remains, zombie));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ghastly Remains");
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(remains);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertInGraveyard(player1, "Ghastly Remains");
+        harness.assertInHand(player1, "Gempalm Polluter");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void copyingPendingAmplifyDoesNotShareTheEnteringPermanent() {
+        harness.setHand(player1, List.of(new GhastlyRemains(), new GempalmPolluter()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice original = gd.interaction
+                .activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        InteractionState copy = gd.interaction.deepCopy();
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice copied = copy
+                .activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        copied.amplifyEntry().permanent().setAmplifyRevealedCards(1);
+
+        assertThat(original.amplifyEntry().permanent().getAmplifyRevealedCards()).isNull();
+        assertThat(copied.amplifyEntry().permanent()).isNotSameAs(original.amplifyEntry().permanent());
     }
 
     @Test

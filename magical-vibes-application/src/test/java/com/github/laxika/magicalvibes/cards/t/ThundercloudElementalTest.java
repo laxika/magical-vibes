@@ -54,6 +54,18 @@ class ThundercloudElementalTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentFlyer, Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @DisplayName("Does not affect creatures that enter after the ability resolves")
+    void doesNotAffectCreaturesEnteringLater() {
+        addCreatureReady(player1, new ThundercloudElemental());
+
+        activateAbility(1);
+
+        Permanent laterFlyer = addCreatureReady(player2, new AirElemental());
+
+        assertThat(gqs.hasKeyword(gd, laterFlyer, Keyword.FLYING)).isTrue();
+    }
+
     private void activateAbility(int abilityIndex) {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

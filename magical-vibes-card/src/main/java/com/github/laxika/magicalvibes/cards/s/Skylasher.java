@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "49")
+@CardRegistration(set = "PIO", collectorNumber = "195")
 public class Skylasher extends Card {
 
     public Skylasher() {

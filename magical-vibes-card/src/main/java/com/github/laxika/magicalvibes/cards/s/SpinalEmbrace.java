@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "276")
 @CardRegistration(set = "DMR", collectorNumber = "201")
+@CardRegistration(set = "C13", collectorNumber = "218")
 public class SpinalEmbrace extends Card {
 
     public SpinalEmbrace() {

@@ -119,6 +119,21 @@ class TargetLegalityServiceTest {
         assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
     }
 
+    @Test
+    void playerProtectionChecksEverySourceColor() {
+        Card source = new Card();
+        when(gameQueryService.getEffectiveCardColors(gd, source))
+                .thenReturn(Set.of(CardColor.BLUE, CardColor.BLACK));
+        when(gameQueryService.playerHasProtectionFromColor(eq(gd), eq(player2Id), any(CardColor.class)))
+                .thenAnswer(invocation -> invocation.getArgument(2) == CardColor.BLACK);
+        var filter = new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
+
+        assertThatThrownBy(() -> sut.validateSpellPlayerTarget(gd, player2Id, player1Id, source, filter))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
     @Mock
     private GameQueryService gameQueryService;
     @Mock
@@ -282,6 +297,25 @@ class TargetLegalityServiceTest {
         ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
 
         sut.validateMultiTargetGraveyardAbility(gd, player1Id, List.of(effect), List.of());
+    }
+
+    @Test
+    @DisplayName("An optional graveyard exile ability accepts an omitted target while a mandatory one rejects it")
+    void activatedGraveyardExileHonorsOptionalTargets() {
+        Card source = createCreature("Source", CardColor.BLACK);
+        ExileGraveyardCardsEffect optional = new ExileGraveyardCardsEffect(2,
+                GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                null, null, false, false, false, null, false, true);
+        ActivatedAbility ability = new ActivatedAbility(false, "{1}{B}", List.of(optional), "Exile up to two cards.");
+
+        sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                List.of(optional), null, Zone.GRAVEYARD, source, 0);
+
+        ExileGraveyardCardsEffect mandatory = new ExileGraveyardCardsEffect(1,
+                GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD);
+        assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                List.of(mandatory), null, Zone.GRAVEYARD, source, 0))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("requires a target");
     }
 
     @Test

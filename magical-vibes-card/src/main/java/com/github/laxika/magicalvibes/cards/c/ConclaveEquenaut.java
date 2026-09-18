@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "RAV", collectorNumber = "9")
 @CardRegistration(set = "DDF", collectorNumber = "19")
+@CardRegistration(set = "RVR", collectorNumber = "13")
 public class ConclaveEquenaut extends Card {
 }

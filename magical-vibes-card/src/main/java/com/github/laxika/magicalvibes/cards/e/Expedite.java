@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "108")
+@CardRegistration(set = "PIO", collectorNumber = "374")
 public class Expedite extends Card {
 
     public Expedite() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.PutControllerCardFromHandOnTopOfLibraryEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "34")
+@CardRegistration(set = "PIO", collectorNumber = "365")
 public class EnterTheInfinite extends Card {
 
     public EnterTheInfinite() {

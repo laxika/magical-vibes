@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "18")
+@CardRegistration(set = "PIO", collectorNumber = "281")
 public class FiendslayerPaladin extends Card {
 
     public FiendslayerPaladin() {

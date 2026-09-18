@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,6 +15,7 @@ public class ExtraArms extends Card {
         target(TargetFilters.creature());
 
         // Whenever enchanted creature attacks, it deals 2 damage to any target.
-        addEffect(EffectSlot.ON_ATTACK, new DealDamageToAnyTargetEffect(2));
+        addEffect(EffectSlot.ON_ATTACK, new DealDamageToAnyTargetEffect(
+                new Fixed(2), false, false, -1, null, false, false, false, true));
     }
 }

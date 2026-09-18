@@ -72,7 +72,7 @@ class BattleScreechTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
 
         assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
-                List.of(nonwhite.getId(), first.getId(), second.getId())))
+                List.of(first.getId(), second.getId(), nonwhite.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("required filter");
 
@@ -94,7 +94,7 @@ class BattleScreechTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
 
         assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
-                List.of(land.getId(), first.getId(), second.getId())))
+                List.of(first.getId(), second.getId(), land.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("required filter");
 
@@ -118,7 +118,7 @@ class BattleScreechTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
 
         assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
-                List.of(first.getId(), second.getId(), third.getId())))
+                List.of(second.getId(), third.getId(), first.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
 
@@ -130,7 +130,7 @@ class BattleScreechTest extends BaseCardTest {
 
         first.untap();
         assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
-                List.of(opponentCreature.getId(), first.getId(), second.getId())))
+                List.of(first.getId(), second.getId(), opponentCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not found on your battlefield");
 

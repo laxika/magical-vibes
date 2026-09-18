@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileUncastEnteringCreaturesE
 @CardRegistration(set = "MP2", collectorNumber = "3")
 @CardRegistration(set = "UMA", collectorNumber = "11")
 @CardRegistration(set = "TSR", collectorNumber = "292")
+@CardRegistration(set = "MB2", collectorNumber = "7")
 public class ContainmentPriest extends Card {
 
     public ContainmentPriest() {

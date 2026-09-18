@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "44")
+@CardRegistration(set = "PIO", collectorNumber = "44")
 public class AnchorToTheAether extends Card {
 
     public AnchorToTheAether() {

@@ -14,6 +14,7 @@ import java.util.List;
 public class Whipcorder extends Card {
 
     public Whipcorder() {
+        addMorph("{W}");
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}",

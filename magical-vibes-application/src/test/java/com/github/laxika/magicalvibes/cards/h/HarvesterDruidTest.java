@@ -86,6 +86,7 @@ class HarvesterDruidTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureMana(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

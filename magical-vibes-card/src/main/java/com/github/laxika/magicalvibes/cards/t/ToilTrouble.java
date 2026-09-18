@@ -36,6 +36,7 @@ import java.util.List;
  * Trouble so the drawn cards count toward Trouble's damage.
  */
 @CardRegistration(set = "DGM", collectorNumber = "133")
+@CardRegistration(set = "PIO", collectorNumber = "395")
 public class ToilTrouble extends Card {
 
     public ToilTrouble() {

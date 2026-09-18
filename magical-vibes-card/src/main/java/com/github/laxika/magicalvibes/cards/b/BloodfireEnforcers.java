@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "93")
+@CardRegistration(set = "PIO", collectorNumber = "124")
 public class BloodfireEnforcers extends Card {
 
     public BloodfireEnforcers() {

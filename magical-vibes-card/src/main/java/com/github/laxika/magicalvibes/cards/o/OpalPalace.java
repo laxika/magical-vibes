@@ -1,0 +1,25 @@
+package com.github.laxika.magicalvibes.cards.o;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+
+import java.util.List;
+
+@CardRegistration(set = "ECC", collectorNumber = "156")
+@CardRegistration(set = "C13", collectorNumber = "310")
+public class OpalPalace extends Card {
+
+    public OpalPalace() {
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{1}",
+                List.of(AwardAnyColorManaEffect.forCommanderCounter(1)),
+                "{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game."
+        ));
+    }
+}

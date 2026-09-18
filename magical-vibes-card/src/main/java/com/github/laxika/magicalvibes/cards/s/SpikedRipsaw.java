@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "220")
+@CardRegistration(set = "DBL", collectorNumber = "487")
 public class SpikedRipsaw extends Card {
 
     public SpikedRipsaw() {

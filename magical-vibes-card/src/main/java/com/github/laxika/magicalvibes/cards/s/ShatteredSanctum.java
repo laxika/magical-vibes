@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "SOS", collectorNumber = "303")
 @CardRegistration(set = "INR", collectorNumber = "283")
 @CardRegistration(set = "VOW", collectorNumber = "264")
+@CardRegistration(set = "DBL", collectorNumber = "531")
 public class ShatteredSanctum extends Card {
 
     public ShatteredSanctum() {

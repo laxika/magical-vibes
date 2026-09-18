@@ -540,6 +540,15 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null);
     }
 
+    public void castFromGraveyardWithDiscards(Player player, int graveyardCardIndex,
+                                              int firstDiscardHandCardIndex,
+                                              List<Integer> additionalDiscardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), null, null,
+                List.of(), firstDiscardHandCardIndex, null, List.of(), Map.of(), List.of(), List.of(),
+                additionalDiscardHandCardIndices);
+    }
+
     public void castFromGraveyardWithCounterCost(Player player, int graveyardCardIndex,
                                                   List<UUID> counterCostPermanentIds) {
         ensurePriority(player);
@@ -803,6 +812,13 @@ public class GameTestHarness {
     public void castEnchantment(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of(), false, null);
+    }
+
+    public void castEnchantmentWithRepeatedCosts(Player player, int cardIndex,
+                                                   List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, repeatedAdditionalCosts, false);
     }
 
     public void castArtifact(Player player, int cardIndex) {
@@ -1301,6 +1317,17 @@ public class GameTestHarness {
                 ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
                 null, null, List.of(), List.of(), false, null, null, null, null, null, false,
                 null, null, null, sacrificePermanentIds);
+    }
+
+    /** Casts a modal sorcery while paying a single creature sacrifice cost and supplying targets. */
+    public void castModalSorceryWithModesAndSacrifice(Player player, int cardIndex,
+                                                      int choicesRequired, int choicesMax,
+                                                      int[] modeIndices, List<UUID> targetIds,
+                                                      UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, targetIds, List.of(), false, sacrificePermanentId);
     }
 
     /** Casts a modal sorcery while paying a conditional multi-permanent tap cost. */

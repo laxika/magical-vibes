@@ -956,6 +956,23 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        var milledSagaAndLandContext = gameData.graveyardTargetOperation.milledSagaAndLandReturn;
+        if (milledSagaAndLandContext != null) {
+            List<UUID> selectedCardIds = new ArrayList<>(milledSagaAndLandContext.selectedCardIds());
+            for (UUID cardId : cardIds) {
+                if (!selectedCardIds.contains(cardId)) {
+                    selectedCardIds.add(cardId);
+                }
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledSagaAndLandReturn =
+                    new GraveyardTargetOperationState.MilledSagaAndLandReturnContext(
+                            milledSagaAndLandContext.sagaCardIds(), milledSagaAndLandContext.landCardIds(),
+                            milledSagaAndLandContext.categoryIndex(), selectedCardIds, false);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.milledCreaturesToHand != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.milledCreaturesToHand =
@@ -1492,9 +1509,10 @@ public class GraveyardChoiceHandlerService {
             if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep1(gameData, cardIds);
             } else if (pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN
-                    || pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED) {
-                // Gifts-style effects complete in one step: the chosen cards go to the controller's
-                // graveyard and the remaining cards go to their configured destination.
+                    || pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED
+                    || pileSeparation.disposition() == CardPileDisposition.THREATS_UNDETECTED) {
+                // Gifts-style effects complete in one step: the chosen cards go to their configured
+                // destination and the remaining cards go to the other configured destination.
                 graveyardReturnSupport.completeGiftsUngivenChoice(gameData, cardIds,
                         pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED);
                 if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "134")
+@CardRegistration(set = "SPG", collectorNumber = "154")
 public class MagusOfTheLibrary extends Card {
 
     public MagusOfTheLibrary() {

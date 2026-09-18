@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,15 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaneOfTheLiving.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({BaneOfTheLiving.class, EnormousBaloth.class, FugitiveWizard.class})
 class BaneOfTheLivingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Turning Bane of the Living face up gives all creatures -X/-X")
     void turnsFaceUpAndWeakensAllCreaturesByPaidX() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent opponentBaloth = harness.addToBattlefieldAndReturn(player2, new EnormousBaloth());
         Permanent bane = castFaceDown();
 
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -31,10 +31,10 @@ class BaneOfTheLivingTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 2);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gqs.getEffectivePower(gd, opponentGiant)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, opponentGiant)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        assertThat(gqs.getEffectivePower(gd, opponentBaloth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBaloth)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, bane)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bane)).isEqualTo(1);
     }
@@ -42,7 +42,7 @@ class BaneOfTheLivingTest extends BaseCardTest {
     @Test
     @DisplayName("Bane of the Living's face-up debuff wears off at end of turn")
     void faceUpDebuffWearsOffAtEndOfTurn() {
-        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent opponentBaloth = harness.addToBattlefieldAndReturn(player2, new EnormousBaloth());
         Permanent bane = castFaceDown();
 
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -51,15 +51,15 @@ class BaneOfTheLivingTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, opponentGiant)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentGiant)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBaloth)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBaloth)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, opponentGiant)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, opponentGiant)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentBaloth)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBaloth)).isEqualTo(7);
     }
 
     private Permanent castFaceDown() {

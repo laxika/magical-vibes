@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "249")
 @CardRegistration(set = "HA7", collectorNumber = "25")
+@CardRegistration(set = "ACR", collectorNumber = "116")
 public class WaterloggedGrove extends Card {
 
     public WaterloggedGrove() {

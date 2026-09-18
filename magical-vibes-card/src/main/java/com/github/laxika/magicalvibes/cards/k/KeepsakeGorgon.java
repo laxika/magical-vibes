@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "93")
+@CardRegistration(set = "PIO", collectorNumber = "293")
 public class KeepsakeGorgon extends Card {
 
     public KeepsakeGorgon() {

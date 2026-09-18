@@ -16,17 +16,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "164")
 @CardRegistration(set = "OTP", collectorNumber = "29")
 @CardRegistration(set = "OTP", collectorNumber = "73")
+@CardRegistration(set = "MAR", collectorNumber = "77")
 public class ForceOfVigor extends Card {
 
     public ForceOfVigor() {
         // If it's not your turn, you may exile a green card from your hand rather than pay this
         // spell's mana cost.
         addCastingOption(new AlternateHandCast(
-                List.of(new ExileCardsFromHandCastingCost(
-                        new CardColorPredicate(CardColor.GREEN), "green")),
-                new NotControllerTurn(), false));
+                List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.GREEN), "green")),
+                new NotControllerTurn(),
+                false));
 
         // Destroy up to two target artifacts and/or enchantments.
         target(new PermanentPredicateTargetFilter(

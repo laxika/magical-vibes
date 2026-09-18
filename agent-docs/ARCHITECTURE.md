@@ -57,3 +57,11 @@ Card tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/C
 ## Planechase
 
 Optional 1v1 Planechase state lives in `GameData.planechase`; face-up planar cards are command-zone objects, never battlefield permanents. See [PLANECHASE.md](PLANECHASE.md) for actions, source snapshots, projection, and extension rules.
+
+## Nested games
+
+See [SUBGAMES.md](SUBGAMES.md) for transitions, card transfers, runtime routing, and focused verification.
+
+`GameSession` owns independently mutable `GameData` frames and a stable root identity. Only the active frame accepts player actions. `GameMutationCoordinator` acquires the session lock before the per-game action lock and monitor; `SubgameService` drains transitions after the originating scope completes. Cross-game mutations are sequential, never nested. Suspended parents retain their deferred spell entries. Registry exact-ID lookup remains available to event projection, while `getActive` and player routing follow the active frame. Simulation copies duplicate the complete session and suppress registry/transport side effects.
+
+Outside-game selection uses `OutsideGameCards.view`, which includes eligible cards in suspended ancestors. Removing an ancestor candidate queues a `PendingAncestorTransfer`; the transition service removes it from the actual source and defers ancestor triggers. Do not read `playerSideboards` directly for general outside-game effects.

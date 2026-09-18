@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "129")
+@CardRegistration(set = "DBL", collectorNumber = "396")
 public class RotTideGargantua extends Card {
 
     public RotTideGargantua() {

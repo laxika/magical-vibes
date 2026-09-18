@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "175")
 @CardRegistration(set = "2XM", collectorNumber = "130")
+@CardRegistration(set = "SPG", collectorNumber = "137")
 public class HeatShimmer extends Card {
 
     public HeatShimmer() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "PC2", collectorNumber = "101")
 @CardRegistration(set = "EMA", collectorNumber = "204")
 @CardRegistration(set = "PCA", collectorNumber = "101")
+@CardRegistration(set = "ECC", collectorNumber = "127")
 public class MaelstromWanderer extends Card {
 
     public MaelstromWanderer() {

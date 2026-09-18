@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "11")
+@CardRegistration(set = "PIO", collectorNumber = "43")
 public class Aetherling extends Card {
 
     public Aetherling() {

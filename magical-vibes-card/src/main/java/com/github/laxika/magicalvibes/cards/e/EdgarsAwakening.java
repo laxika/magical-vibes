@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "108")
 @CardRegistration(set = "VOW", collectorNumber = "110")
+@CardRegistration(set = "DBL", collectorNumber = "377")
 public class EdgarsAwakening extends Card {
 
     public EdgarsAwakening() {

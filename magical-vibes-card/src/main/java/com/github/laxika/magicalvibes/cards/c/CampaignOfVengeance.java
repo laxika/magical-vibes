@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "EMN", collectorNumber = "182")
+@CardRegistration(set = "MB1", collectorNumber = "182")
 public class CampaignOfVengeance extends Card {
 
     public CampaignOfVengeance() {

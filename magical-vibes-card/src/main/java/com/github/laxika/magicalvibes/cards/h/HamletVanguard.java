@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "201")
+@CardRegistration(set = "DBL", collectorNumber = "468")
 public class HamletVanguard extends Card {
 
     public HamletVanguard() {

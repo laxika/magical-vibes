@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "246")
 @CardRegistration(set = "SNC", collectorNumber = "245")
+@CardRegistration(set = "TLE", collectorNumber = "170")
 public class SuspiciousBookcase extends Card {
 
     public SuspiciousBookcase() {

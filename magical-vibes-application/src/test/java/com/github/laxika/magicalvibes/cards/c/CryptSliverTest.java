@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.p.PlatedSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CryptSliver.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({CryptSliver.class, PlatedSliver.class, FugitiveWizard.class})
 class CryptSliverTest extends BaseCardTest {
 
     @Test
@@ -30,7 +30,7 @@ class CryptSliverTest extends BaseCardTest {
     @DisplayName("Crypt Sliver grants its tap ability to Slivers on either battlefield")
     void grantsAbilityToSliversOnEitherBattlefield() {
         Permanent cryptSliver = addCreatureReady(player1, new CryptSliver());
-        Permanent opposingSliver = addCreatureReady(player2, new MetallicSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new PlatedSliver());
 
         activateRegeneration(player2, 0, cryptSliver);
 
@@ -39,15 +39,40 @@ class CryptSliverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Another Sliver I control can use Crypt Sliver's ability")
+    void grantsAbilityToAnotherOwnSliver() {
+        Permanent cryptSliver = addCreatureReady(player1, new CryptSliver());
+        Permanent ownSliver = addCreatureReady(player1, new PlatedSliver());
+
+        activateRegeneration(player1, 1, cryptSliver);
+
+        assertThat(cryptSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(ownSliver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Slivers lose Crypt Sliver's granted ability when it leaves the battlefield")
+    void losesGrantedAbilityWhenSourceLeaves() {
+        Permanent cryptSliver = addCreatureReady(player1, new CryptSliver());
+        Permanent ownSliver = addCreatureReady(player1, new PlatedSliver());
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, ownSliver)).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(cryptSliver);
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, ownSliver)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Crypt Sliver's ability cannot target a non-Sliver")
     void cannotTargetNonSliver() {
         addCreatureReady(player1, new CryptSliver());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wizard = addCreatureReady(player2, new FugitiveWizard());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wizard.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "156")
+@CardRegistration(set = "RVR", collectorNumber = "270")
+@CardRegistration(set = "C13", collectorNumber = "264")
 public class SwordOfTheParuns extends Card {
 
     public SwordOfTheParuns() {

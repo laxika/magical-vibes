@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(SootfeatherFlock.class)
 class SootfeatherFlockTest extends BaseCardTest {
@@ -32,5 +33,25 @@ class SootfeatherFlockTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flock.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void cannotTurnFaceUpWithOnlyColorlessMana() {
+        harness.setHand(player1, List.of(new SootfeatherFlock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent flock = findPermanent(player1, "Sootfeather Flock");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(flock)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(flock.isFaceDown()).isTrue();
     }
 }

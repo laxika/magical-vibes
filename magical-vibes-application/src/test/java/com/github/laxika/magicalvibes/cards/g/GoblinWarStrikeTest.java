@@ -26,8 +26,7 @@ class GoblinWarStrikeTest extends BaseCardTest {
 
     private void cast(UUID targetId) {
         prepareCast();
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 
     @Test

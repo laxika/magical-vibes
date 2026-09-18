@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreserveCountersOnZoneChangeE
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "2X2", collectorNumber = "277")
+@CardRegistration(set = "CMD", collectorNumber = "227")
 public class SkullbriarTheWalkingGrave extends Card {
 
     public SkullbriarTheWalkingGrave() {

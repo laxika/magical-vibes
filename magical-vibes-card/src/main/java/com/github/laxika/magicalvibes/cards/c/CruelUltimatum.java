@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "V13", collectorNumber = "17")
 @CardRegistration(set = "MM3", collectorNumber = "158")
 @CardRegistration(set = "OTP", collectorNumber = "40")
+@CardRegistration(set = "C13", collectorNumber = "182")
 public class CruelUltimatum extends Card {
 
     public CruelUltimatum() {

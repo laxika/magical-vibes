@@ -74,8 +74,11 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
 
         gameData.graveyardTargetOperation.resolutionTimeExileThenEffectResume = true;
         gameData.rerunCurrentEffectAfterInteraction = true;
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, candidates, 1, 0,
-                entry.getCard().getName() + " — You may exile a matching card from your graveyard.");
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, candidates, 1,
+                exileThen.mandatory() ? 1 : 0,
+                entry.getCard().getName() + " — " + (exileThen.mandatory()
+                        ? "Choose a matching card from your graveyard."
+                        : "You may exile a matching card from your graveyard."));
     }
 
     private List<Card> matchingCards(GameData gameData, StackEntry entry,

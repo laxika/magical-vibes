@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "56")
 @CardRegistration(set = "VOW", collectorNumber = "52")
+@CardRegistration(set = "DBL", collectorNumber = "319")
 public class CobbledLancer extends Card {
 
     public CobbledLancer() {

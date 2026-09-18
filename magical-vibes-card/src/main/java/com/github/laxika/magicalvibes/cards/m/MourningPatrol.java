@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "MID", collectorNumber = "28")
+@CardRegistration(set = "DBL", collectorNumber = "28")
 public class MourningPatrol extends Card {
 
     public MourningPatrol() {

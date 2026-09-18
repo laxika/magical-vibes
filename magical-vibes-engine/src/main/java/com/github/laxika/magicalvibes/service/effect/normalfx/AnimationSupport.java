@@ -353,10 +353,14 @@ public class AnimationSupport {
         boolean untilNextTurn = effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN;
 
         for (Permanent perm : battlefield) {
-            if (!perm.getCard().hasType(CardType.LAND)) {
+            if (!gameQueryService.isLand(gameData, perm)) {
                 continue;
             }
 
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(), null, null,
+                    effect.duration(), 0));
             if (untilNextTurn) {
                 perm.setAnimatedUntilNextTurn(true);
                 perm.setUntilNextTurnAnimatedPower(power);
@@ -644,9 +648,8 @@ public class AnimationSupport {
         return permanent.getCard().getToughness() == null ? 0 : permanent.getCard().getToughness();
     }
 
-    /**
-     * TARGET scope, WHILE_SOURCE_ON_BATTLEFIELD duration — target land becomes a creature for as
-     * long as the source permanent remains on the battlefield (Awakener Druid). It's still a land.
+    /** TARGET scope, WHILE_SOURCE_ON_BATTLEFIELD duration — target permanent becomes a creature
+     * for as long as the source permanent remains on the battlefield (Awakener Druid).
      */
     public void animateWhileSource(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
@@ -678,6 +681,26 @@ public class AnimationSupport {
             if (!target.getGrantedSubtypes().contains(subtype)) {
                 target.getGrantedSubtypes().add(subtype);
             }
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,
+                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+        }
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), target.getId(), null, null,
+                EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+        for (CardType cardType : effect.grantedCardTypes()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
+                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+        }
+        if (!effect.grantedKeywords().isEmpty()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET), target.getId(), null, null,
+                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
 
         if (effect.animatedColor() != null) {
@@ -687,7 +710,8 @@ public class AnimationSupport {
         gameData.sourceLinkedAnimations.put(target.getId(), sourcePermanentId);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " becomes a " + power + "/" + toughness + " green Treefolk creature. It's still a land."));
+                " becomes a " + power + "/" + toughness + " creature for as long as "
+                        + entry.getCard().getName() + " remains on the battlefield."));
 
         log.info("Game {} - {} becomes a {}/{} creature while {} is on the battlefield",
                 gameData.id, target.getCard().getName(), power, toughness,

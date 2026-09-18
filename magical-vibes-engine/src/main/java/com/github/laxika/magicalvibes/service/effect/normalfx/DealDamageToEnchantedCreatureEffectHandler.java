@@ -29,6 +29,9 @@ public class DealDamageToEnchantedCreatureEffectHandler implements NormalEffectH
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToEnchantedCreatureEffect) effect;
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || !aura.isAttached()) {
             return;
         }

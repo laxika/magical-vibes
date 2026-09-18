@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "5")
+@CardRegistration(set = "DBL", collectorNumber = "272")
 public class ByInvitationOnly extends Card {
 
     public ByInvitationOnly() {

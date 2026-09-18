@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "243")
+@CardRegistration(set = "DBL", collectorNumber = "510")
 public class OdricBloodCursed extends Card {
 
     private static final Set<Keyword> COUNTED_ABILITIES = Set.of(

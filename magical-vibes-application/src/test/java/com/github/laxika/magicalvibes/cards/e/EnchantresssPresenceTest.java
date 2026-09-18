@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HonorOfThePure;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,17 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnchantresssPresence.class, Forest.class, GrizzlyBears.class, HonorOfThePure.class})
+@CardUsed({EnchantresssPresence.class, ElvishWarrior.class, Forest.class})
 class EnchantresssPresenceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting an enchantment spell draws a card")
     void enchantmentCastDrawsCard() {
         harness.addToBattlefield(player1, new EnchantresssPresence());
-        harness.setHand(player1, List.of(new HonorOfThePure()));
+        harness.setHand(player1, List.of(new EnchantresssPresence()));
         Forest drawn = new Forest();
-        setDeck(List.of(drawn));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -34,12 +32,30 @@ class EnchantresssPresenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Presence draws for the same enchantment spell")
+    void eachPresenceDrawsForTheSameEnchantmentSpell() {
+        harness.addToBattlefield(player1, new EnchantresssPresence());
+        harness.addToBattlefield(player1, new EnchantresssPresence());
+        harness.setHand(player1, List.of(new EnchantresssPresence()));
+        Forest firstDrawn = new Forest();
+        Forest secondDrawn = new Forest();
+        harness.setLibrary(player1, List.of(firstDrawn, secondDrawn));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstDrawn, secondDrawn);
+    }
+
+    @Test
     @DisplayName("Casting a non-enchantment spell does not draw a card")
     void nonEnchantmentCastDoesNotDrawCard() {
         harness.addToBattlefield(player1, new EnchantresssPresence());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ElvishWarrior()));
         Forest notDrawn = new Forest();
-        setDeck(List.of(notDrawn));
+        harness.setLibrary(player1, List.of(notDrawn));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -58,11 +74,10 @@ class EnchantresssPresenceTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new HonorOfThePure()));
+        harness.setHand(player2, List.of(new EnchantresssPresence()));
         Forest notDrawn = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(notDrawn);
-        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.setLibrary(player1, List.of(notDrawn));
+        harness.addMana(player2, ManaColor.GREEN, 3);
 
         harness.castEnchantment(player2, 0);
 
@@ -70,10 +85,5 @@ class EnchantresssPresenceTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(notDrawn);
         assertThat(gd.playerDecks.get(player1.getId())).contains(notDrawn);
-    }
-
-    private void setDeck(List<Forest> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
     }
 }

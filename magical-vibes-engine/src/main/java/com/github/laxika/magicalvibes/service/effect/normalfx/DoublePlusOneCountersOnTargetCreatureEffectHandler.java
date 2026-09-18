@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +41,8 @@ public class DoublePlusOneCountersOnTargetCreatureEffectHandler implements Norma
 
             int current = target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
             if (current > 0) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, target, current);
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, target,
+                        current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
             }
         }
     }

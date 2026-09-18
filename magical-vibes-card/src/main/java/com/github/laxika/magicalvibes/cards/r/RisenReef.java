@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "217")
+@CardRegistration(set = "SPG", collectorNumber = "143")
+@CardRegistration(set = "ECC", collectorNumber = "132")
 public class RisenReef extends Card {
 
     public RisenReef() {

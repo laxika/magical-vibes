@@ -1,8 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +11,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmbermageGoblin.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed(EmbermageGoblin.class)
 class EmbermageGoblinTest extends BaseCardTest {
 
     @Test
@@ -39,14 +35,14 @@ class EmbermageGoblinTest extends BaseCardTest {
     void acceptingMaySearchesForAnotherCopy() {
         setupAndCast();
         EmbermageGoblin copy = new EmbermageGoblin();
-        GrizzlyBears filler = new GrizzlyBears();
-        setLibrary(copy, filler);
+        EmbermageGoblin filler = new EmbermageGoblin();
+        harness.setLibrary(player1, List.of(copy, filler));
 
         resolveCreatureAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards()).containsExactly(copy);
+                .params().cards()).containsExactly(copy, filler);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
@@ -59,7 +55,7 @@ class EmbermageGoblinTest extends BaseCardTest {
     void decliningMayDoesNotSearch() {
         setupAndCast();
         EmbermageGoblin copy = new EmbermageGoblin();
-        setLibrary(copy);
+        harness.setLibrary(player1, List.of(copy));
 
         resolveCreatureAndTrigger();
         harness.handleMayAbilityChosen(player1, false);
@@ -84,13 +80,12 @@ class EmbermageGoblinTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature")
     void deals1DamageToCreature() {
         addReadyGoblin(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent target = addReadyGoblin(player2);
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Embermage Goblin");
     }
 
     @Test
@@ -127,15 +122,6 @@ class EmbermageGoblinTest extends BaseCardTest {
     }
 
     private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new EmbermageGoblin());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void setLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        return addCreatureReady(player, new EmbermageGoblin());
     }
 }

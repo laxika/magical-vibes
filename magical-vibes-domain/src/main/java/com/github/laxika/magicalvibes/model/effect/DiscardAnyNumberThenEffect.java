@@ -6,14 +6,20 @@ import java.util.Objects;
 
 /**
  * Lets the controller discard any number of matching cards, then pushes a reflexive effect when
- * one or more cards were discarded. The discard count is available to the reflexive effect as the
- * stack entry event value.
+ * one or more cards were discarded, unless {@code resolveThenEffectWhenZero} is enabled. The
+ * discard count is available to the reflexive effect as the stack entry event value.
  */
 public record DiscardAnyNumberThenEffect(
         CardPredicate cardFilter,
         CardEffect thenEffect,
-        String cardDescription
+        String cardDescription,
+        boolean resolveThenEffectWhenZero
 ) implements CardEffect {
+
+    public DiscardAnyNumberThenEffect(CardPredicate cardFilter, CardEffect thenEffect,
+                                      String cardDescription) {
+        this(cardFilter, thenEffect, cardDescription, false);
+    }
 
     public DiscardAnyNumberThenEffect {
         Objects.requireNonNull(cardFilter, "cardFilter");

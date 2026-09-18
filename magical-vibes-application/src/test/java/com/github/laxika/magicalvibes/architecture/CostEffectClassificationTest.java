@@ -64,6 +64,7 @@ class CostEffectClassificationTest {
             "PayEnergyCost",
             "PayLifeForEachCardInHandCost",
             "PayManaCost",
+            "PayMulticoloredSourceManaCost",
             "PutCounterOnSourceCost",
             "PutCounterOnOpponentCreatureCost",
             "PutTypedCounterOnSourceCost",
@@ -102,6 +103,7 @@ class CostEffectClassificationTest {
             "TapTwoCreaturesSharingTypeCost",
             "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
+            "UnattachEquipmentFromSourceCost",
             "UntapMultiplePermanentsCost");
 
     /**
@@ -133,6 +135,7 @@ class CostEffectClassificationTest {
             "DiscardXCardsCost",
             "EscalateDiscardCost",
             "EscalateManaCost",
+            "EntwineManaCost",
             "TieredManaCost",
             "RepeatableAdditionalManaCost",
             "SpreeAdditionalManaCost",

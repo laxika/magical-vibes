@@ -81,6 +81,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             case ACTIVE_PLAYER -> entry.getActivePlayerId();
             case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId();
             case CONTROLLER -> entry.getControllerId();
+            case TARGET_PLAYER -> entry.getTargetId();
         };
         if (controllerId == null) return;
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {

@@ -13,18 +13,10 @@ import java.util.List;
  * Read by {@code CastingPermissionService} / graveyard cast paths without branching on the concrete
  * effect.
  */
-public interface CastSpellsFromGraveyardPermission extends CardEffect {
+public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermission {
 
     /** Spells matching this predicate may be cast from the controller's graveyard. */
     CardPredicate filter();
-
-    /**
-     * True if the permission is limited to one spell during each of the controller's own turns
-     * (Gisa and Geralf). False grants an unlimited, any-turn permission (Abandoned Sarcophagus).
-     */
-    default boolean oncePerControllerTurn() {
-        return false;
-    }
 
     /** True if this permission applies only during its controller's turn. */
     default boolean onlyDuringControllerTurn() {

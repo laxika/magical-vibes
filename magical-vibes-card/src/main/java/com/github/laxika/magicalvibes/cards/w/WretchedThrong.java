@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "94")
 @CardRegistration(set = "VOW", collectorNumber = "91")
+@CardRegistration(set = "DBL", collectorNumber = "358")
 public class WretchedThrong extends Card {
 
     public WretchedThrong() {

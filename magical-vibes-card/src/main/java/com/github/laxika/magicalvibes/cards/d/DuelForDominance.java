@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "192")
 @CardRegistration(set = "MID", collectorNumber = "184")
+@CardRegistration(set = "DBL", collectorNumber = "184")
 public class DuelForDominance extends Card {
 
     public DuelForDominance() {

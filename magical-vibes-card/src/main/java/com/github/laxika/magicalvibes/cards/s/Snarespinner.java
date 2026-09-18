@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "207")
 @CardRegistration(set = "WAR", collectorNumber = "176")
+@CardRegistration(set = "DMU", collectorNumber = "179")
 public class Snarespinner extends Card {
 
     public Snarespinner() {

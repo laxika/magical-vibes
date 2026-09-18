@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "266")
+@CardRegistration(set = "CMD", collectorNumber = "263")
 public class Triskelavus extends Card {
 
     public Triskelavus() {

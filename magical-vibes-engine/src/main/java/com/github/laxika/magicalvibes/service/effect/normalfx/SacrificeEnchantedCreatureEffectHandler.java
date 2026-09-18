@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,9 @@ import org.springframework.stereotype.Component;
 public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,12 +53,22 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
             return;
         }
 
-        // Sacrifice the enchanted creature (its controller sacrifices it)
-        gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is sacrificed (", entry.getCard(), ")."));
-        log.info("Game {} - {} sacrificed by {}", gameData.id,
-                enchantedCreature.getCard().getName(), entry.getCard().getName());
+        UUID sacrificingPlayerId = entry.getTriggeringPermanentControllerId();
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, enchantedId);
+        if (sacrificingPlayerId == null) {
+            sacrificingPlayerId = currentControllerId;
+        }
+        if (sacrificingPlayerId == null || !sacrificingPlayerId.equals(currentControllerId)
+                || gameQueryService.cantBeSacrificed(gameData, enchantedCreature)
+                || !gameQueryService.canEffectCauseSacrifice(gameData, sacrificingPlayerId, entry.getControllerId())) {
+            return;
+        }
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature);
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, sacrificingPlayerId, enchantedCreature.getCard());
+            gameLogService.append(gameData, GameLog.cardThen(enchantedCreature.getCard(), " is sacrificed."));
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 }

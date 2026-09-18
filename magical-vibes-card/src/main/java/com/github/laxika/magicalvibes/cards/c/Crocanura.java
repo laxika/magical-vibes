@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "GTC", collectorNumber = "116")
+@CardRegistration(set = "RVR", collectorNumber = "135")
 public class Crocanura extends Card {
 
     public Crocanura() {

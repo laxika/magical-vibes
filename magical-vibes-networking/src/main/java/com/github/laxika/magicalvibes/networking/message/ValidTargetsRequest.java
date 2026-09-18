@@ -15,8 +15,12 @@ public record ValidTargetsRequest(
         List<UUID> alreadySelectedIds,
         Integer xValue,
         Boolean kicked,
-        Integer graveyardCardIndex, UUID planarObjectId
+        Integer graveyardCardIndex, UUID planarObjectId, UUID commandCardId
 ) {
+    public ValidTargetsRequest(Integer cardIndex, Integer permanentIndex, Integer abilityIndex,
+            List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked, Integer graveyardCardIndex, UUID planarObjectId) {
+        this(cardIndex, permanentIndex, abilityIndex, alreadySelectedIds, xValue, kicked, graveyardCardIndex, planarObjectId, null);
+    }
     public ValidTargetsRequest(Integer cardIndex, Integer permanentIndex, Integer abilityIndex,
             List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked, Integer graveyardCardIndex) {
         this(cardIndex, permanentIndex, abilityIndex, alreadySelectedIds, xValue, kicked, graveyardCardIndex, null);

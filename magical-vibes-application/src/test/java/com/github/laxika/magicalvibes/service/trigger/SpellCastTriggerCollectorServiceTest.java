@@ -1266,7 +1266,7 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("A same-name graveyard counter trigger snapshots the spell name and targets the spell")
+    @DisplayName("A same-name graveyard counter trigger snapshots the spell name without targeting it")
     void sameNameGraveyardCounterTriggerSnapshotsSpellName() {
         Permanent perm = createPermanent("Cephalid Shrine");
         var effect = new CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect();
@@ -1278,8 +1278,7 @@ class SpellCastTriggerCollectorServiceTest {
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(spellCard.getId());
-        assertThat(gd.stack.getLast().getTargetZone()).isEqualTo(Zone.STACK);
+        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
         assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
                 .isEqualTo(new CounterUnlessPaysEffect(
                         new CardsInGraveyard(new CardNamedPredicate("Grizzly Bears"), CountScope.ANY_PLAYER)));
@@ -1951,7 +1950,7 @@ class SpellCastTriggerCollectorServiceTest {
             CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new GainControlOfTargetCreatureByCastSpellManaValueEffect(filter);
             Card spellCard = createCard("Test Spell");
-            spellCard.setManaCost("{1}{R}");
+            spellCard.setManaCost("{X}{1}{R}");
             gd.stack.add(new StackEntry(
                     StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2));
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);

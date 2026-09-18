@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CrystalVein;
+import com.github.laxika.magicalvibes.cards.d.DjerusRenunciation;
 import com.github.laxika.magicalvibes.cards.p.PoliticalTrickery;
 import com.github.laxika.magicalvibes.cards.u.UnyaroBeeSting;
 import com.github.laxika.magicalvibes.cards.w.WaitingInTheWeeds;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Meddle.class, Boomerang.class, MtendaHerder.class, UnyaroBeeSting.class,
-        WaitingInTheWeeds.class, PoliticalTrickery.class, CrystalVein.class})
+        WaitingInTheWeeds.class, PoliticalTrickery.class, CrystalVein.class, DjerusRenunciation.class})
 class MeddleTest extends BaseCardTest {
 
     @Test
@@ -83,6 +85,59 @@ class MeddleTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(p2LifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Meddle does nothing when the target spell targets a noncreature permanent")
+    void doesNothingWhenTargetIsNonCreaturePermanent() {
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new CrystalVein()).getId();
+
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.setHand(player2, List.of(new Meddle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, landId);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, boomerang.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(landId);
+    }
+
+    @Test
+    @DisplayName("Meddle retargets a variable-target spell that has one target")
+    void retargetsVariableTargetSpellWithOneTarget() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new MtendaHerder());
+        Permanent replacementTarget = harness.addToBattlefieldAndReturn(player2, new MtendaHerder());
+
+        DjerusRenunciation renunciation = new DjerusRenunciation();
+        harness.setHand(player1, List.of(renunciation));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.setHand(player2, List.of(new Meddle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, List.of(originalTarget.getId()));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, renunciation.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(replacementTarget.getId());
+
+        harness.handlePermanentChosen(player2, replacementTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(originalTarget.isTapped()).isFalse();
+        assertThat(replacementTarget.isTapped()).isTrue();
     }
 
     @Test

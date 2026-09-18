@@ -99,14 +99,21 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
-            return;
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null
+                && (entry.getTargetingCard() == null || !entry.getTargetingCard().hasEffectTargetIndex(e))) {
+            targetIds = List.of(entry.getTargetId());
         }
-        applyEffect(gameData, entry, e, target);
-        gameLogService.append(gameData, GameLog.builder().card(target.getCard())
-                .text(" becomes a " + e.subtype().getDisplayName()
-                        + " in addition to its other types until end of turn.").build());
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+            applyEffect(gameData, entry, e, target);
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard())
+                    .text(" becomes a " + e.subtype().getDisplayName()
+                            + " in addition to its other types until end of turn.").build());
+        }
     }
 
     private void applyEffect(GameData gameData, StackEntry entry,

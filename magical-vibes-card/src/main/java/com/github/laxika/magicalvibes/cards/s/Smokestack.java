@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 @CardRegistration(set = "VMA", collectorNumber = "282")
 @CardRegistration(set = "V14", collectorNumber = "11")
 @CardRegistration(set = "SLC", collectorNumber = "1998")
+@CardRegistration(set = "SLC", collectorNumber = "59")
 public class Smokestack extends Card {
 
     public Smokestack() {

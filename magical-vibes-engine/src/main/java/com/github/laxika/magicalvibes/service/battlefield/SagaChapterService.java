@@ -52,6 +52,7 @@ public class SagaChapterService {
         sagaPermanent.setCounterCount(CounterType.LORE, loreCounters);
         gameLogService.append(gameData, GameLog.cardThen(card, " gets a lore counter (1)."));
         log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
+        triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
         triggerSagaChapter(gameData, sagaPermanent, card, controllerId, 1);
     }
 

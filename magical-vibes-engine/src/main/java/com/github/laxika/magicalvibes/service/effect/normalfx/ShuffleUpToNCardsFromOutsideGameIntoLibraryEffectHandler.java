@@ -28,7 +28,7 @@ public class ShuffleUpToNCardsFromOutsideGameIntoLibraryEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ShuffleUpToNCardsFromOutsideGameIntoLibraryEffect) effect;
-        List<Card> sideboard = gameData.playerSideboards.getOrDefault(entry.getControllerId(), List.of());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, entry.getControllerId());
         if (e.maxCount() <= 0 || sideboard.isEmpty()) {
             return;
         }

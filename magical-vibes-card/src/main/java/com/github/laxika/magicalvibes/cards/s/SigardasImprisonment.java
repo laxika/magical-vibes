@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "35")
+@CardRegistration(set = "DBL", collectorNumber = "302")
 public class SigardasImprisonment extends Card {
 
     public SigardasImprisonment() {

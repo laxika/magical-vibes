@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "253")
+@CardRegistration(set = "DBL", collectorNumber = "253")
 public class CrossroadsCandleguide extends Card {
 
     public CrossroadsCandleguide() {

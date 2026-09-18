@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "142")
+@CardRegistration(set = "MH1", collectorNumber = "126")
 public class Goatnap extends Card {
 
     public Goatnap() {

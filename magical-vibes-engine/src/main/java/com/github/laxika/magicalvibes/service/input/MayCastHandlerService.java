@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffec
 import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -54,6 +55,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -79,6 +81,91 @@ public class MayCastHandlerService {
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
+
+    /** Resolves Word of Command's accepted card choice using the targeted player's normal cast/play rules. */
+    public void handleWordOfCommandPlay(GameData gameData, Player player, boolean accepted,
+                                         PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID playerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        int cardIndex = hand == null ? -1 : indexOfCard(hand, card.getId());
+
+        if (!accepted || cardIndex < 0 || card.isCastOnlyFromGraveyard()) {
+            if (cardIndex < 0) {
+                gameLogService.append(gameData, GameLog.cardThen(card, " is no longer in hand."));
+            } else if (card.isCastOnlyFromGraveyard()) {
+                gameLogService.append(gameData, GameLog.cardThen(card, " can't be played from hand."));
+            } else {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " declines to play ", card, "."));
+            }
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        makeWordOfCommandPlayerActive(gameData, playerId);
+        try {
+            if (card.hasType(CardType.LAND)) {
+                spellCastingService.playCard(gameData, new Player(playerId, gameData.playerIdToName.get(playerId)),
+                        cardIndex, 0, null, Map.of(), List.of(), List.of(), false, null);
+                gameData.wordOfCommandCastingCard = false;
+                if (!gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+
+            List<CardEffect> spellEffects = permanentSpell(card)
+                    ? List.of() : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            if (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card)) {
+                List<UUID> validTargets = buildValidSpellTargets(
+                        gameData, card, spellEffects, playerId, 0, false);
+                if (validTargets.isEmpty()) {
+                    gameLogService.append(gameData, GameLog.cardThen(card, " has no legal targets and stays in hand."));
+                    gameData.wordOfCommandCastingCard = false;
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.HandCastSpellTarget(
+                                card, playerId, spellEffects, mapCardTypeToSpellType(card)));
+                playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
+                        "Choose a target for " + card.getName() + ".");
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " plays ", card, " from hand — choosing targets."));
+                return;
+            }
+
+            spellCastingService.playCard(gameData, new Player(playerId, gameData.playerIdToName.get(playerId)),
+                    cardIndex, 0, null, Map.of(), List.of(), List.of(), false, null);
+        } catch (IllegalArgumentException | IllegalStateException failure) {
+            log.info("Game {} - Word of Command could not play {}: {}", gameData.id,
+                    card.getName(), failure.getMessage());
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private static int indexOfCard(List<Card> hand, UUID cardId) {
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getId().equals(cardId)) return i;
+        }
+        return -1;
+    }
+
+    private static boolean permanentSpell(Card card) {
+        return card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)
+                || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER)
+                || card.hasType(CardType.BATTLE);
+    }
+
+    private void makeWordOfCommandPlayerActive(GameData gameData, UUID playerId) {
+        gameData.priorityPassedBy.clear();
+        if (!playerId.equals(gameData.activePlayerId)) {
+            gameData.priorityPassedBy.add(gameData.activePlayerId);
+        }
+    }
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -1353,6 +1440,21 @@ public class MayCastHandlerService {
     /** Handles casting one Eldrazi spell from the controller's outside-the-game card pool. */
     public void handleCastFromOutsideGameChoice(GameData gameData, Player player, boolean accepted,
                                                 PendingMayAbility ability) {
+        handleCastFromOutsideGameChoice(gameData, player, accepted, ability, player.getId(), null);
+    }
+
+    /** Handles casting one card from a targeted player's sideboard for free. */
+    public void handleCastFromSideboardWithoutPayingManaCost(GameData gameData, Player player,
+                                                              boolean accepted,
+                                                              PendingMayAbility ability,
+                                                              UUID sideboardOwnerId) {
+        handleCastFromOutsideGameChoice(gameData, player, accepted, ability, sideboardOwnerId,
+                MayCastFromSideboardWithoutPayingManaCostEffect.class);
+    }
+
+    private void handleCastFromOutsideGameChoice(GameData gameData, Player player, boolean accepted,
+                                                 PendingMayAbility ability, UUID sideboardOwnerId,
+                                                 Class<? extends CardEffect> pendingEffectType) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
         if (!accepted) {
@@ -1362,7 +1464,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        List<Card> sideboard = gameData.playerSideboards.get(player.getId());
+        List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, sideboardOwnerId);
         int cardIndex = -1;
         if (sideboard != null) {
             for (int i = 0; i < sideboard.size(); i++) {
@@ -1397,7 +1499,7 @@ public class MayCastHandlerService {
                 ? List.of()
                 : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(cardToCast)) {
+        if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
             if (validTargets.isEmpty()) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -1406,11 +1508,16 @@ public class MayCastHandlerService {
                 return;
             }
 
+            if (pendingEffectType != null) {
+                gameData.pendingMayAbilities.removeIf(pma ->
+                        pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+            }
             sideboard.remove(cardIndex);
             gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
-                            cardToCast, player.getId(), spellEffects, spellType));
+                            cardToCast, player.getId(), spellEffects, spellType, null, null,
+                            sideboardOwnerId));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToCast.getName() + ".");
             gameLogService.append(gameData, GameLog.textCardText(
@@ -1418,11 +1525,18 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (pendingEffectType != null) {
+            gameData.pendingMayAbilities.removeIf(pma ->
+                    pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+        }
         sideboard.remove(cardIndex);
         gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 spellType, cardToCast, player.getId(), cardToCast.getName(),
-                spellEffects, 0, (UUID) null, null));
+                spellEffects, 0, (UUID) null, null);
+        stackEntry.setOwnerIdOverride(sideboardOwnerId);
+        stackEntry.setSourceZone(Zone.OUTSIDE_GAME);
+        gameData.stack.add(stackEntry);
         gameData.recordSpellCast(player.getId(), cardToCast);
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(

@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "4ED", collectorNumber = "173")
 @CardRegistration(set = "5ED", collectorNumber = "206")
 @CardRegistration(set = "ATQ", collectorNumber = "20")
+@CardRegistration(set = "ME4", collectorNumber = "104")
 public class XenicPoltergeist extends Card {
 
     public XenicPoltergeist() {

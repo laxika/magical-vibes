@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "GRN", collectorNumber = "216")
+@CardRegistration(set = "RVR", collectorNumber = "182")
 public class FreshFacedRecruit extends Card {
 
     public FreshFacedRecruit() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "VOW", collectorNumber = "15")
+@CardRegistration(set = "DBL", collectorNumber = "282")
 public class GryffRider extends Card {
 
     public GryffRider() {

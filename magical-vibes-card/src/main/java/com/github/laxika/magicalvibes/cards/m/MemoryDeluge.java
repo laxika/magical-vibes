@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "INR", collectorNumber = "75")
 @CardRegistration(set = "INR", collectorNumber = "361")
 @CardRegistration(set = "MID", collectorNumber = "62")
+@CardRegistration(set = "DBL", collectorNumber = "62")
 public class MemoryDeluge extends Card {
 
     public MemoryDeluge() {

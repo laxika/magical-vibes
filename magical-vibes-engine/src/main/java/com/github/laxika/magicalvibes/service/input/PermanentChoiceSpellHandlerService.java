@@ -134,8 +134,13 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
 
-            // Check becomes-target-of-spell triggers for the new target (e.g. Livewire Lash)
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+            // Check becomes-target triggers for the new target (e.g. Livewire Lash).
+            if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                    || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetSpell);
+            } else {
+                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+            }
             if (gameData.interaction.isAwaitingInput()) return;
         }
 
@@ -198,6 +203,10 @@ public class PermanentChoiceSpellHandlerService {
                     null,
                     null
             );
+            if (lct.ownerIdOverride() != null) {
+                entry.setOwnerIdOverride(lct.ownerIdOverride());
+                entry.setSourceZone(Zone.OUTSIDE_GAME);
+            }
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(lct.controllerId(), lct.cardToCast());
@@ -224,8 +233,17 @@ public class PermanentChoiceSpellHandlerService {
             beginBottomReorder(gameData, lct.controllerId(), uncastCards);
             log.info("Game {} - {} Ripple cast target no longer exists", gameData.id, lct.cardToCast().getName());
         } else {
-            graveyardService.addCardToGraveyard(gameData, lct.controllerId(), lct.cardToCast());
-            gameLogService.append(gameData, GameLog.cardThen(lct.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
+            UUID ownerId = lct.ownerIdOverride() != null ? lct.ownerIdOverride() : lct.controllerId();
+            if (lct.ownerIdOverride() != null) {
+                gameData.playerSideboards.computeIfAbsent(ownerId, ignored -> new ArrayList<>())
+                        .add(lct.cardToCast());
+            } else {
+                graveyardService.addCardToGraveyard(gameData, ownerId, lct.cardToCast());
+            }
+            String destination = lct.ownerIdOverride() != null
+                    ? "'s target is no longer valid. It remains outside the game."
+                    : "'s target is no longer valid. It is put into the graveyard.";
+            gameLogService.append(gameData, GameLog.cardThen(lct.cardToCast(), destination));
             log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
         }
 
@@ -350,6 +368,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setCopy(ect.copy());
             entry.setSourceZone(Zone.EXILE);
+            entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
@@ -513,6 +532,7 @@ public class PermanentChoiceSpellHandlerService {
         );
         entry.setCopy(ect.copy());
         entry.setSourceZone(Zone.EXILE);
+        entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
@@ -634,6 +654,14 @@ public class PermanentChoiceSpellHandlerService {
     }
 
     public void handleHandCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.HandCastSpellTarget hct) {
+        if (gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(hct.cardToCast().getId())
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(hct.controllerId())) {
+            handleWordOfCommandSpellTarget(gameData, permanentId, hct);
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         Card graveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
@@ -711,6 +739,41 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleWordOfCommandSpellTarget(GameData gameData, UUID targetId,
+                                                  PermanentChoiceContext.HandCastSpellTarget context) {
+        List<Card> hand = gameData.playerHands.get(context.controllerId());
+        int cardIndex = -1;
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getId().equals(context.cardToCast().getId())) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+        if (cardIndex < 0) {
+            gameLogService.append(gameData, GameLog.cardThen(context.cardToCast(), " is no longer in hand."));
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        if (!context.controllerId().equals(gameData.activePlayerId)) {
+            gameData.priorityPassedBy.add(gameData.activePlayerId);
+        }
+        try {
+            spellCastingService.playCard(gameData,
+                    new Player(context.controllerId(), gameData.playerIdToName.get(context.controllerId())),
+                    cardIndex, context.xValue(), targetId, Map.of(), List.of(), List.of(), false, null);
+        } catch (IllegalArgumentException | IllegalStateException failure) {
+            log.info("Game {} - Word of Command could not play {}: {}", gameData.id,
+                    context.cardToCast().getName(), failure.getMessage());
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleOpponentChosenSpellTarget(GameData gameData, UUID chosenId,

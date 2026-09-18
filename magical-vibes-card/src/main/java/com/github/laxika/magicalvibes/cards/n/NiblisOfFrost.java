@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "72")
+@CardRegistration(set = "PIO", collectorNumber = "66")
 public class NiblisOfFrost extends Card {
 
     public NiblisOfFrost() {

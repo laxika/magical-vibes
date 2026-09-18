@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "187")
+@CardRegistration(set = "DBL", collectorNumber = "187")
 public class HoundTamer extends Card {
 
     public HoundTamer() {

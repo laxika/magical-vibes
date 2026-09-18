@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TOR", collectorNumber = "133")
+@CardRegistration(set = "MH1", collectorNumber = "173")
 public class NantukoCultivator extends Card {
 
     public NantukoCultivator() {

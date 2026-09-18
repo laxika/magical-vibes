@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "19")
+@CardRegistration(set = "DBL", collectorNumber = "286")
 public class HeronBlessedGeist extends Card {
 
     public HeronBlessedGeist() {

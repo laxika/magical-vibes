@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WordsOfWar.class, GrizzlyBears.class})
+@CardUsed({WordsOfWar.class, WretchedAnurid.class})
 class WordsOfWarTest extends BaseCardTest {
 
     @Test
@@ -22,7 +22,7 @@ class WordsOfWarTest extends BaseCardTest {
     void replacesNextDrawWithDamageToPlayer() {
         harness.addToBattlefield(player1, new WordsOfWar());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
         harness.setLife(player2, 20);
 
         activateWordsOfWar(player2.getId());
@@ -38,8 +38,8 @@ class WordsOfWarTest extends BaseCardTest {
     void replacesNextDrawWithDamageToPermanent() {
         harness.addToBattlefield(player1, new WordsOfWar());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WretchedAnurid());
 
         activateWordsOfWar(target.getId());
         draw(player1);
@@ -54,7 +54,7 @@ class WordsOfWarTest extends BaseCardTest {
     void repeatedActivationsReplaceSuccessiveDraws() {
         harness.addToBattlefield(player1, new WordsOfWar());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new WretchedAnurid(), new WretchedAnurid(), new WretchedAnurid()));
         harness.setLife(player2, 20);
 
         activateWordsOfWar(player2.getId());
@@ -67,6 +67,90 @@ class WordsOfWarTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain their individual targets")
+    void repeatedActivationsRetainTheirIndividualTargets() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid(), new WretchedAnurid()));
+        harness.setLife(player2, 20);
+        Permanent permanentTarget = harness.addToBattlefieldAndReturn(player2, new WretchedAnurid());
+
+        activateWordsOfWar(player2.getId());
+        activateWordsOfWar(permanentTarget.getId());
+
+        draw(player1);
+        draw(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(permanentTarget.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The replacement applies only to its controller's draw")
+    void replacesOnlyControllerDraw() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        harness.setLibrary(player2, List.of(new WretchedAnurid()));
+        harness.setLife(player2, 20);
+
+        activateWordsOfWar(player2.getId());
+        draw(player2);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        draw(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The replacement prevents an empty-library draw from causing a loss")
+    void replacesEmptyLibraryDrawWithoutLoss() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player2, 20);
+
+        activateWordsOfWar(player2.getId());
+        draw(player1);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The replacement expires at cleanup")
+    void replacementExpiresAtCleanup() {
+        harness.addToBattlefield(player1, new WordsOfWar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new WretchedAnurid()));
+        harness.setLife(player2, 20);
+
+        activateWordsOfWar(player2.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        draw(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void activateWordsOfWar(java.util.UUID targetId) {

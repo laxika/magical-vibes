@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "148")
+@CardRegistration(set = "PIO", collectorNumber = "310")
 public class KarametraGodOfHarvests extends Card {
 
     public KarametraGodOfHarvests() {

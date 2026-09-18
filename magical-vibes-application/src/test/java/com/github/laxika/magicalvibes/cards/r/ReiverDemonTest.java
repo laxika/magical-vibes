@@ -1,16 +1,22 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
 import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.cards.n.NimLasher;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({ReiverDemon.class, FangrenHunter.class, AlphaMyr.class, NimLasher.class, GreatFurnace.class})
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({ReiverDemon.class, FangrenHunter.class, AlphaMyr.class, NimLasher.class, GreatFurnace.class, BeaconOfUnrest.class})
 class ReiverDemonTest extends BaseCardTest {
 
     @Test
@@ -42,6 +48,23 @@ class ReiverDemonTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ReiverDemon());
         resolveAllTriggers();
 
+        harness.assertOnBattlefield(player1, "Reiver Demon");
+        harness.assertOnBattlefield(player2, "Fangren Hunter");
+    }
+
+    @Test
+    @DisplayName("Reanimating Reiver Demon does not destroy creatures")
+    void reanimatingDoesNotDestroyCreatures() {
+        harness.addToBattlefield(player2, new FangrenHunter());
+        ReiverDemon target = new ReiverDemon();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new BeaconOfUnrest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Reiver Demon");
         harness.assertOnBattlefield(player2, "Fangren Hunter");
     }

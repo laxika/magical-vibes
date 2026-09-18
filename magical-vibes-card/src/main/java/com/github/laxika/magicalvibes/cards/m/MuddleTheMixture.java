@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "60")
+@CardRegistration(set = "RVR", collectorNumber = "50")
 public class MuddleTheMixture extends Card {
 
     public MuddleTheMixture() {

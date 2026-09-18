@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "128")
+@CardRegistration(set = "PIO", collectorNumber = "340")
 public class CrumbleToDust extends Card {
 
     public CrumbleToDust() {

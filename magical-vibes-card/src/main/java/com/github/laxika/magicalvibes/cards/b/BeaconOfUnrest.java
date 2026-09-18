@@ -27,6 +27,7 @@ public class BeaconOfUnrest extends Card {
                         new CardTypePredicate(CardType.CREATURE)
                 )))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .targetGraveyard(true)
                 .build());
         addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
     }

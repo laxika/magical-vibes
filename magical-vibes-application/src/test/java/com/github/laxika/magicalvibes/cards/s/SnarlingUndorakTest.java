@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NosyGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,21 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SnarlingUndorak.class, GrizzlyBears.class})
+@CardUsed({SnarlingUndorak.class, NosyGoblin.class})
 class SnarlingUndorakTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can be cast face down and turned face up for its Morph cost")
     void canBeMorphedFaceDownAndTurnedFaceUp() {
-        harness.setHand(player1, List.of(new SnarlingUndorak()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        Permanent undorak = findPermanent(player1, "Snarling Undorak");
+        Permanent undorak = castFaceDown();
         assertThat(undorak.isFaceDown()).isTrue();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -40,9 +32,23 @@ class SnarlingUndorakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Turning it face up requires both green mana in its Morph cost")
+    void cannotTurnFaceUpWithoutFullMorphCost() {
+        Permanent undorak = castFaceDown();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(undorak)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(undorak.isFaceDown()).isTrue();
+    }
+
+    @Test
     @DisplayName("The ability gives a target Beast creature +1/+1 until end of turn")
     void boostsTargetBeastCreature() {
-        addCreatureReady(player1, new SnarlingUndorak());
+        Permanent source = addCreatureReady(player1, new SnarlingUndorak());
         Permanent target = addCreatureReady(player2, new SnarlingUndorak());
         addAbilityMana();
 
@@ -51,6 +57,18 @@ class SnarlingUndorakTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability requires its green mana")
+    void cannotActivateWithoutGreenMana() {
+        addCreatureReady(player1, new SnarlingUndorak());
+        Permanent target = addCreatureReady(player2, new SnarlingUndorak());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -74,7 +92,7 @@ class SnarlingUndorakTest extends BaseCardTest {
     @DisplayName("The ability cannot target a non-Beast creature")
     void cannotTargetNonBeastCreature() {
         addCreatureReady(player1, new SnarlingUndorak());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new NosyGoblin());
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -84,5 +102,17 @@ class SnarlingUndorakTest extends BaseCardTest {
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    private Permanent castFaceDown() {
+        harness.setHand(player1, List.of(new SnarlingUndorak()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        return findPermanent(player1, "Snarling Undorak");
     }
 }

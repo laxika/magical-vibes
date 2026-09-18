@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ICE", collectorNumber = "338")
+@CardRegistration(set = "ME4", collectorNumber = "228")
 public class SoldeviGolem extends Card {
 
     public SoldeviGolem() {

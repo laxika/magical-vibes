@@ -22,6 +22,7 @@ public enum LossReason {
      * CR 704.5a — state-based action for having 0 or less life. The only reason a
      * {@code CantLoseGameFromLifeEffect} (Phyrexian Unlife) prevents.
      */
+    COMMANDER_DAMAGE,
     LIFE,
 
     /** CR 704.5c — state-based action for having ten or more poison counters. */

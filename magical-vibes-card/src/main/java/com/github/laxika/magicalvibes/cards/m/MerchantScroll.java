@@ -14,6 +14,9 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "91")
 @CardRegistration(set = "HML", collectorNumber = "33")
+@CardRegistration(set = "SLZ", collectorNumber = "23")
+@CardRegistration(set = "SLZ", collectorNumber = "144")
+@CardRegistration(set = "SLZ", collectorNumber = "265")
 public class MerchantScroll extends Card {
 
     public MerchantScroll() {

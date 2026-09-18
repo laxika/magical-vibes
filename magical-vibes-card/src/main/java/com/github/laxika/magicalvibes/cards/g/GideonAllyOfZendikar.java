@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "29")
+@CardRegistration(set = "PIO", collectorNumber = "14")
 public class GideonAllyOfZendikar extends Card {
 
     public GideonAllyOfZendikar() {

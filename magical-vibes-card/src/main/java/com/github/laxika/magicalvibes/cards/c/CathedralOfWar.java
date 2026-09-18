@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "M13", collectorNumber = "221")
+@CardRegistration(set = "EOS", collectorNumber = "6")
+@CardRegistration(set = "EOS", collectorNumber = "51")
+@CardRegistration(set = "EOS", collectorNumber = "96")
+@CardRegistration(set = "EOS", collectorNumber = "141")
 public class CathedralOfWar extends Card {
 
     public CathedralOfWar() {

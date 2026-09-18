@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
+import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,34 +12,57 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TorrentOfFire.class, Forest.class, GrizzlyBears.class, WurmcoilEngine.class})
+@CardUsed({TorrentOfFire.class, GoblinBrigand.class, TwistedAbomination.class,
+        TempleOfTheFalseGod.class})
 class TorrentOfFireTest extends BaseCardTest {
 
     @Test
     void dealsDamageEqualToGreatestManaValueAmongYourPermanents() {
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new WurmcoilEngine());
-        harness.addToBattlefield(player2, new WurmcoilEngine());
+        harness.addToBattlefield(player1, new GoblinBrigand());
+        harness.addToBattlefield(player1, new TwistedAbomination());
         harness.setHand(player1, List.of(new TorrentOfFire()));
-        addMana(player1);
+        harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(14);
     }
 
     @Test
-    void evaluatesGreatestManaValueAtResolutionAndCanTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmcoilEngine());
-        harness.addToBattlefield(player1, new WurmcoilEngine());
+    void countsOnlyPermanentsControlledByTheSpellController() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GoblinBrigand());
+        harness.addToBattlefield(player2, new TwistedAbomination());
         harness.setHand(player1, List.of(new TorrentOfFire()));
-        addMana(player1);
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void dealsNoDamageWhenYouControlNoPermanents() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TorrentOfFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void evaluatesGreatestManaValueAtResolutionAndCanTargetCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TwistedAbomination());
+        harness.addToBattlefield(player1, new TwistedAbomination());
+        harness.setHand(player1, List.of(new TorrentOfFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castSorcery(player1, 0, target.getId());
         gd.playerBattlefields.get(player1.getId()).clear();
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GoblinBrigand());
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
@@ -49,15 +70,11 @@ class TorrentOfFireTest extends BaseCardTest {
 
     @Test
     void cannotTargetALand() {
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new TempleOfTheFalseGod());
         harness.setHand(player1, List.of(new TorrentOfFire()));
-        addMana(player1);
+        harness.addMana(player1, ManaColor.RED, 5);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private void addMana(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addMana(player, ManaColor.RED, 5);
     }
 }

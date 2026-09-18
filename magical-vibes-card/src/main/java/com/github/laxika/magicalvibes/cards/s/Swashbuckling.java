@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "167")
+@CardRegistration(set = "MB1", collectorNumber = "167")
 public class Swashbuckling extends Card {
 
     public Swashbuckling() {

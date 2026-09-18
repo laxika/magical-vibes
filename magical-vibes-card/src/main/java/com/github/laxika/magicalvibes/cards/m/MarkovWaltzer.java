@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "245")
 @CardRegistration(set = "VOW", collectorNumber = "242")
+@CardRegistration(set = "DBL", collectorNumber = "509")
 public class MarkovWaltzer extends Card {
 
     public MarkovWaltzer() {

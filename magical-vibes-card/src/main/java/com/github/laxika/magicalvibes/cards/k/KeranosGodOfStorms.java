@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "151")
+@CardRegistration(set = "PIO", collectorNumber = "311")
 public class KeranosGodOfStorms extends Card {
 
     public KeranosGodOfStorms() {

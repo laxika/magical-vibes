@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "143")
+@CardRegistration(set = "HOC", collectorNumber = "143")
 public class WoodlandWeavemaster extends Card {
 
     public WoodlandWeavemaster() {
