@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LoxodonMender.class, Ornithopter.class, LeoninScimitar.class, LeoninSkyhunter.class})
 class LoxodonMenderTest extends BaseCardTest {
 
     @Test
@@ -39,6 +40,18 @@ class LoxodonMenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can regenerate a noncreature artifact")
+    void canTargetNonCreatureArtifact() {
+        setupLoxodonMender();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        harness.activateAbility(player1, 0, null, equipment.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Activating taps Loxodon Mender")
     void tapsOnActivation() {
         Permanent mender = setupLoxodonMender();
@@ -53,14 +66,26 @@ class LoxodonMenderTest extends BaseCardTest {
     @DisplayName("Cannot target a non-artifact permanent")
     void cannotTargetNonArtifact() {
         setupLoxodonMender();
-        Card nonArtifactCard = new Card();
-        nonArtifactCard.setName("Test Permanent");
-        nonArtifactCard.setType(CardType.CREATURE);
-        Permanent nonArtifact = new Permanent(nonArtifactCard);
-        gd.playerBattlefields.get(player1.getId()).add(nonArtifact);
+        Permanent nonArtifact = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activation requires one white mana")
+    void requiresWhiteMana() {
+        Permanent mender = setupLoxodonMender(false);
+        Permanent artifact = addArtifact(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(mender.isTapped()).isFalse();
+        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -75,24 +100,24 @@ class LoxodonMenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(artifact.getRegenerationShield()).isZero();
     }
 
     private Permanent setupLoxodonMender() {
-        harness.addToBattlefield(player1, new LoxodonMender());
-        Permanent mender = findPermanent(player1, "Loxodon Mender");
+        return setupLoxodonMender(true);
+    }
+
+    private Permanent setupLoxodonMender(boolean addMana) {
+        Permanent mender = harness.addToBattlefieldAndReturn(player1, new LoxodonMender());
         mender.setSummoningSick(false);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        if (addMana) {
+            harness.addMana(player1, ManaColor.WHITE, 1);
+        }
         harness.forceActivePlayer(player1);
         return mender;
     }
 
     private Permanent addArtifact(Player player) {
-        Card artifactCard = new Card();
-        artifactCard.setName("Test Artifact");
-        artifactCard.setType(CardType.ARTIFACT);
-
-        Permanent permanent = new Permanent(artifactCard);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new Ornithopter());
     }
 }

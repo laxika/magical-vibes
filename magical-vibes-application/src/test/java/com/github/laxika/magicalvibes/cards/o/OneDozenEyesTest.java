@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(OneDozenEyes.class)
 class OneDozenEyesTest extends BaseCardTest {
 
     @Test
@@ -40,6 +43,17 @@ class OneDozenEyesTest extends BaseCardTest {
             assertThat(insect.getCard().getToughness()).isEqualTo(1);
             assertThat(insect.getCard().getSubtypes()).containsExactly(CardSubtype.INSECT);
         });
+    }
+
+    @Test
+    @DisplayName("Both modes create green tokens")
+    void createsGreenTokens() {
+        cast(new int[]{0, 1}, true);
+
+        assertThat(findPermanents(player1, "Beast").getFirst().getCard().getColor())
+                .isEqualTo(CardColor.GREEN);
+        assertThat(findPermanents(player1, "Insect"))
+                .allSatisfy(insect -> assertThat(insect.getCard().getColor()).isEqualTo(CardColor.GREEN));
     }
 
     @Test
