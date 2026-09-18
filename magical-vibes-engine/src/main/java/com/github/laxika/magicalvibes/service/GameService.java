@@ -1665,8 +1665,12 @@ public class GameService {
             boolean targetsPermanent = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (targetsGraveyard) {
+                int minimumGraveyardTargets = effects.stream()
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                        .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        permanent.getCard(), controllerId, effects, null, 1, xValue != null ? xValue : 0));
+                        permanent.getCard(), controllerId, effects, null,
+                        minimumGraveyardTargets, xValue != null ? xValue : 0));
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
                 if (autoPass) {
                     turnProgressionService.resolveAutoPass(gameData);

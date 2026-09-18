@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "BNG", collectorNumber = "111")
 @CardRegistration(set = "EA1", collectorNumber = "9")
 @CardRegistration(set = "Q06", collectorNumber = "7")
+@CardRegistration(set = "TLE", collectorNumber = "35")
 public class SearingBlood extends Card {
 
     public SearingBlood() {

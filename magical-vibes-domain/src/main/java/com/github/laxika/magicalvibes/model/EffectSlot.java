@@ -337,6 +337,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a creature card is put into any player's graveyard from a library. */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
+    /** Triggers once whenever one or more cards are put into any library from anywhere. */
+    ON_ANY_CARDS_PUT_INTO_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a nonblack card is put into any player's graveyard from anywhere. */
@@ -621,6 +623,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+    /** Triggers once whenever an opponent mills one or more cards. */
+    ON_OPPONENT_MILLS,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
@@ -1009,6 +1013,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever another creature controlled by the same player becomes the target of any
+     *  spell or ability. Fires on all permanents with this slot on that player's battlefield. The
+     *  targeted creature is stored as the triggered entry's non-targeting {@code targetId}. */
+    ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      * controlled by an opponent. Activated and triggered abilities do not trigger this slot. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,

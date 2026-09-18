@@ -1674,7 +1674,9 @@ public class ActivatedAbilityExecutionService {
                         delayed.sourceMustRemainOnBattlefield(),
                         delayed.targetFilter(),
                         new Permanent(permanent),
-                        null));
+                        null,
+                        delayed.untilNextTurn(),
+                        gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));

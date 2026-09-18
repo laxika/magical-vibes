@@ -36,8 +36,11 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
                 e.sourceMustRemainOnBattlefield(),
                 e.targetFilter(),
                 entry.getSourcePermanentSnapshot(),
-                null));
-        log.info("Game {} - {} registers a delayed spell-cast trigger for this turn",
-                gameData.id, entry.getCard().getName());
+                null,
+                e.untilNextTurn(),
+                gameData.turnNumber));
+        log.info("Game {} - {} registers a delayed spell-cast trigger {}",
+                gameData.id, entry.getCard().getName(),
+                e.untilNextTurn() ? "until their next turn" : "for this turn");
     }
 }

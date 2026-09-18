@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnE
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "152")
+@CardRegistration(set = "TLE", collectorNumber = "46")
 public class TauntingChallenge extends Card {
 
     public TauntingChallenge() {

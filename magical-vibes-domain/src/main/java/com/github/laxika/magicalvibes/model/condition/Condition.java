@@ -178,6 +178,7 @@ public sealed interface Condition permits
         CreatureCardsPutIntoGraveyardThisTurnAtLeast,
         CreatureDeathsThisTurnAtLeast,
         CreatureWithDifferentNameDiedThisTurn,
+        CreatureLeftBattlefieldUnderYourControlThisTurn,
         CreatureDiedUnderYourControlThisTurn,
         DealtDamageByRedSpellThisTurn,
         DefendingPlayerControlsPermanent,

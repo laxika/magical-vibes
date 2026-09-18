@@ -270,6 +270,8 @@ card-specific effects such as Hedge Shredder),
 `ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Dreadhound; fires once for each non-token
 creature card that actually enters any player's graveyard from a library, after replacement effects;
 checked in `GraveyardService.addCardToGraveyard`),
+`ON_ANY_CARDS_PUT_INTO_LIBRARY` (Dutiful Knowledge Seeker; fires once when one or more cards enter any
+player's library from another zone, with the library owner preserved in `TriggerContext.CardsPutIntoLibrary`),
 `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Soulcipher Board; fires on every permanent the
 graveyard owner controls whenever a non-token creature card enters their graveyard from any zone — uses
 printed card types, not battlefield creature-ness; checked in `GraveyardService.addCardToGraveyard`),
@@ -336,7 +338,8 @@ with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Wheneve
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER`,
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT`,
 `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
-`ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
+`ON_OPPONENT_MILLS` (Lo and Li, Royal Advisors; fires once when an opponent mills one or more
+cards in a single mill event), `ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
 `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
 with the slot whenever another creature leaves the battlefield by any means, checked in
 `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.

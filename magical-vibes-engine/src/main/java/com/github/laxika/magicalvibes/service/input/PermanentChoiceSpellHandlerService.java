@@ -134,8 +134,13 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
 
-            // Check becomes-target-of-spell triggers for the new target (e.g. Livewire Lash)
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+            // Check becomes-target triggers for the new target (e.g. Livewire Lash).
+            if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                    || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetSpell);
+            } else {
+                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+            }
             if (gameData.interaction.isAwaitingInput()) return;
         }
 
@@ -363,6 +368,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setCopy(ect.copy());
             entry.setSourceZone(Zone.EXILE);
+            entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
@@ -526,6 +532,7 @@ public class PermanentChoiceSpellHandlerService {
         );
         entry.setCopy(ect.copy());
         entry.setSourceZone(Zone.EXILE);
+        entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }

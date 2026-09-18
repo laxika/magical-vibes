@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "ECC", collectorNumber = "172")
+@CardRegistration(set = "TLE", collectorNumber = "262")
 public class ThrivingHeath extends Card {
 
     public ThrivingHeath() {
