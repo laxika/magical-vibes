@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "92")
 @CardRegistration(set = "3ED", collectorNumber = "92")
 @CardRegistration(set = "ME4", collectorNumber = "70")
+@CardRegistration(set = "2ED", collectorNumber = "92")
 public class WaterElemental extends Card {
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 @CardRegistration(set = "6ED", collectorNumber = "238")
 @CardRegistration(set = "5ED", collectorNumber = "312")
 @CardRegistration(set = "4ED", collectorNumber = "260")
+@CardRegistration(set = "2ED", collectorNumber = "210")
 @CardRegistration(set = "SUM", collectorNumber = "210")
 @CardRegistration(set = "3ED", collectorNumber = "210")
 @CardRegistration(set = "ME4", collectorNumber = "161")

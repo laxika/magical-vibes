@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 @CardRegistration(set = "3ED", collectorNumber = "194")
 @CardRegistration(set = "VMA", collectorNumber = "209")
 @CardRegistration(set = "ME4", collectorNumber = "152")
+@CardRegistration(set = "2ED", collectorNumber = "193")
 public class Fastbond extends Card {
 
     public Fastbond() {

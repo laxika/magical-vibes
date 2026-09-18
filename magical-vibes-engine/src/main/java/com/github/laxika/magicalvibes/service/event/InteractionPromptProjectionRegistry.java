@@ -197,6 +197,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.WordOfCommandCardChoice.class,
+                this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
@@ -1150,12 +1152,19 @@ public class InteractionPromptProjectionRegistry {
                 interaction.optional());
     }
 
+    private InteractionPromptMessage projectWordOfCommandCardChoice(
+            GameData gameData, PendingInteraction.WordOfCommandCardChoice interaction) {
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of())),
+                interaction.validIndices(), interaction.prompt(), false);
+    }
+
     private InteractionPromptMessage projectTargetedHandBattlefieldChoice(
             GameData gameData, PendingInteraction.TargetedHandBattlefieldChoice interaction) {
         List<CardView> cardViews =
                 cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
         return InteractionPromptMessage.cardIndexPick(
-                cardViews, interaction.validIndices(), interaction.prompt(), !interaction.castCard());
+                cardViews, interaction.validIndices(), interaction.prompt(), true);
     }
 
     private InteractionPromptMessage projectSpectersShriekChoice(

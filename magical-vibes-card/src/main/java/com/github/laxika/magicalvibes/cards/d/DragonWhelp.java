@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "133")
+@CardRegistration(set = "2ED", collectorNumber = "142")
 @CardRegistration(set = "DRB", collectorNumber = "4")
 @CardRegistration(set = "4ED", collectorNumber = "186")
 @CardRegistration(set = "3ED", collectorNumber = "143")

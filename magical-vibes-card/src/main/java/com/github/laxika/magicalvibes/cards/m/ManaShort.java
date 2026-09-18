@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "4ED", collectorNumber = "85")
 @CardRegistration(set = "SUM", collectorNumber = "67")
 @CardRegistration(set = "3ED", collectorNumber = "67")
+@CardRegistration(set = "2ED", collectorNumber = "66")
 public class ManaShort extends Card {
 
     public ManaShort() {

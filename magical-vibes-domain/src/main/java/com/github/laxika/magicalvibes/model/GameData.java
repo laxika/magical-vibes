@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
@@ -255,6 +256,9 @@ public class GameData {
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
     public final Set<UUID> declaredAttackerIdsThisCombat = ConcurrentHashMap.newKeySet();
+    /** Raging River: each attacking permanent maps to the independent nonflying pile restrictions
+     * chosen for it during the current combat. */
+    public final Map<UUID, List<Set<UUID>>> ragingRiverBlockRestrictionsThisCombat = new ConcurrentHashMap<>();
     /** Players who put at least one counter on a creature this turn. */
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs keyed by the player who put a counter on them during this turn. */
@@ -815,8 +819,6 @@ public class GameData {
      * Accessed under {@code synchronized (gameData)} in the engine, like the fields it replaced.
      */
     public final List<DelayedAction> delayedActions = Collections.synchronizedList(new ArrayList<>());
-    /** Lands marked by each Cyclopean Tomb, keyed by that Tomb's battlefield permanent object. */
-    public final Map<UUID, Set<UUID>> cyclopeanTombMireTargets = new ConcurrentHashMap<>();
 
     public PendingAbilityActivation pendingAbilityActivation;
     /** A graveyard-activated ability suspended on its "Discard a card" cost choice (Eternalize). */
@@ -2424,8 +2426,15 @@ public class GameData {
     public UUID mindControllerPlayerId;
     /** Whether the active mind control ends when the current combat phase ends. */
     public boolean mindControlUntilEndOfCombat;
-    /** Card id of a Word of Command spell whose resolution temporarily carries the control. */
-    public UUID mindControlUntilStackCardId;
+
+    /** Word of Command's short-lived player-control window and its parked resolution. */
+    public UUID wordOfCommandControllerPlayerId;
+    public UUID wordOfCommandControlledPlayerId;
+    public UUID wordOfCommandCardId;
+    public StackEntry wordOfCommandPendingResolutionEntry;
+    public int wordOfCommandPendingResolutionIndex;
+    public boolean wordOfCommandCastingCard;
+    public boolean wordOfCommandAwaitingCardResolution;
 
     // Taunt — "creatures that player controls attack you if able" during their next turn
     /** Delayed effect: affectedPlayerId -> controllerId to attack, consumed when the affected player's turn begins. */
@@ -3344,6 +3353,20 @@ public class GameData {
      */
     public void queueDelayedAction(DelayedAction action) {
         delayedActions.add(action);
+    }
+
+    /** Marks a land as already cleaned by the corresponding Cyclopean Tomb delayed trigger. */
+    public void markCyclopeanTombLandRemoved(UUID actionId, UUID landId) {
+        synchronized (delayedActions) {
+            for (int i = 0; i < delayedActions.size(); i++) {
+                DelayedAction action = delayedActions.get(i);
+                if (action instanceof CyclopeanTombUpkeepCleanup cleanup
+                        && cleanup.actionId().equals(actionId)) {
+                    delayedActions.set(i, cleanup.withLandRemoved(landId));
+                    return;
+                }
+            }
+        }
     }
 
     /** Updates the last-known source snapshot of delayed spell-cast triggers before a permanent leaves. */
@@ -5415,6 +5438,8 @@ public class GameData {
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
+        copy.wordOfCommandPendingResolutionEntry = this.wordOfCommandPendingResolutionEntry != null
+                ? new StackEntry(this.wordOfCommandPendingResolutionEntry) : null;
         copy.pendingReverseMiracleSearch = this.pendingReverseMiracleSearch;
         copy.resolvingMayEffectFromStack = this.resolvingMayEffectFromStack;
         copy.resolvedMayAccepted = this.resolvedMayAccepted;
@@ -5843,6 +5868,9 @@ public class GameData {
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.declaredAttackerIdsThisCombat.addAll(this.declaredAttackerIdsThisCombat);
+        this.ragingRiverBlockRestrictionsThisCombat.forEach((attackerId, restrictions) ->
+                copy.ragingRiverBlockRestrictionsThisCombat.put(attackerId,
+                        restrictions.stream().map(restriction -> Set.copyOf(restriction)).toList()));
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         this.permanentsWithCountersPutByPlayerThisTurn.forEach((playerId, permanentIds) ->
                 copy.permanentsWithCountersPutByPlayerThisTurn.put(playerId, new HashSet<>(permanentIds)));
@@ -6188,8 +6216,6 @@ public class GameData {
                 copy.delayedActions.add(action);
             }
         });
-        this.cyclopeanTombMireTargets.forEach((tombId, landIds) ->
-                copy.cyclopeanTombMireTargets.put(tombId, new HashSet<>(landIds)));
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
@@ -6609,7 +6635,12 @@ public class GameData {
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
         copy.mindControlUntilEndOfCombat = this.mindControlUntilEndOfCombat;
-        copy.mindControlUntilStackCardId = this.mindControlUntilStackCardId;
+        copy.wordOfCommandControllerPlayerId = this.wordOfCommandControllerPlayerId;
+        copy.wordOfCommandControlledPlayerId = this.wordOfCommandControlledPlayerId;
+        copy.wordOfCommandCardId = this.wordOfCommandCardId;
+        copy.wordOfCommandPendingResolutionIndex = this.wordOfCommandPendingResolutionIndex;
+        copy.wordOfCommandCastingCard = this.wordOfCommandCastingCard;
+        copy.wordOfCommandAwaitingCardResolution = this.wordOfCommandAwaitingCardResolution;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);

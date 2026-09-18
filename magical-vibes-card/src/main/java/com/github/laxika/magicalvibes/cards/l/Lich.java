@@ -22,6 +22,6 @@ public class Lich extends Card {
         addEffect(EffectSlot.STATIC, new NefariousLichLifeGainReplacementEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, new SacrificePermanentsOrLoseGameEffect(
                 new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate())));
-        addEffect(EffectSlot.ON_DEATH, new ControllerLosesGameEffect());
+        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new ControllerLosesGameEffect());
     }
 }

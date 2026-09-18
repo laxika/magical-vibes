@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -75,7 +76,6 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -115,7 +115,6 @@ public class CardChoiceHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
-    @Lazy private final WordOfCommandCastSupport wordOfCommandCastSupport;
 
     /** Answers Retraced Image's mandatory hand reveal and conditional battlefield entry. */
     public void handleRetracedImageCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -156,6 +155,41 @@ public class CardChoiceHandlerService {
     }
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
+    public void handleWordOfCommandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.WordOfCommandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.WordOfCommandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> targetHand = gameData.playerHands.get(choice.targetPlayerId());
+        if (targetHand == null || cardIndex >= targetHand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = targetHand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        gameData.wordOfCommandPendingResolutionEntry = gameData.pendingEffectResolutionEntry;
+        gameData.wordOfCommandPendingResolutionIndex = gameData.pendingEffectResolutionIndex;
+        gameData.pendingEffectResolutionEntry = null;
+        gameData.pendingEffectResolutionIndex = 0;
+        gameData.wordOfCommandCardId = selectedCard.getId();
+        gameData.wordOfCommandCastingCard = true;
+        gameData.wordOfCommandAwaitingCardResolution = false;
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses ", selectedCard, " from "
+                        + gameData.playerIdToName.getOrDefault(choice.targetPlayerId(), "that player") + "'s hand."));
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                selectedCard, choice.targetPlayerId(),
+                List.of(new PlayCardFromHandByWordOfCommandEffect()),
+                "Play " + selectedCard.getName() + " from hand.", null, selectedCard.getManaCost()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID choicePlayerId;
@@ -1564,9 +1598,6 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
         if (cardIndex == -1) {
-            if (choice.castCard()) {
-                throw new IllegalStateException("A card must be chosen");
-            }
             gameData.interaction.clearAwaitingInput();
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
@@ -1582,11 +1613,6 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         Card chosenCard = targetHand.remove(cardIndex);
-        if (choice.castCard()) {
-            wordOfCommandCastSupport.playSelectedCard(
-                    gameData, player.getId(), choice.targetPlayerId(), chosenCard, cardIndex);
-            return;
-        }
         UUID originalOwnerId = chosenCard.getOwnerId() != null
                 ? chosenCard.getOwnerId() : choice.targetPlayerId();
         Permanent permanent = new Permanent(chosenCard);

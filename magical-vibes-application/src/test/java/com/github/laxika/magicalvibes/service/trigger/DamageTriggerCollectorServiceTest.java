@@ -51,6 +51,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -1100,6 +1102,31 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
             assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DEALT_DAMAGE — SacrificePermanentsOrLoseGameEffect")
+    class ControllerDealtDamageSacrificeOrLose {
+
+        @Test
+        @DisplayName("enqueues a non-targeting trigger with the damage amount")
+        void enqueuesTriggerWithDamageAmount() {
+            Permanent lich = createPermanent("Lich");
+            var effect = new SacrificePermanentsOrLoseGameEffect(
+                    new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate()));
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(lich, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 

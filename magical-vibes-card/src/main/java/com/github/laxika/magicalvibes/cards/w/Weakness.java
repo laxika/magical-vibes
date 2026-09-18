@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "BRB", collectorNumber = "96")
 @CardRegistration(set = "SUM", collectorNumber = "136")
 @CardRegistration(set = "3ED", collectorNumber = "136")
+@CardRegistration(set = "2ED", collectorNumber = "135")
 public class Weakness extends Card {
 
     public Weakness() {

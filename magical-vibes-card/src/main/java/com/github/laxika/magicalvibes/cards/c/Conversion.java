@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "14")
 @CardRegistration(set = "3ED", collectorNumber = "14")
 @CardRegistration(set = "ME4", collectorNumber = "9")
+@CardRegistration(set = "2ED", collectorNumber = "16")
 public class Conversion extends Card {
 
     public Conversion() {

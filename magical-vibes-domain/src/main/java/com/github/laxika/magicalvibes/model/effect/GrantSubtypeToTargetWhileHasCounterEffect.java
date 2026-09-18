@@ -7,8 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * Creates a source-independent continuous effect that grants a subtype to the target while it
  * has a counter of the given type. The target is supplied by a sibling targeting effect.
  */
-public record GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype subtype, CounterType counterType)
+public record GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype subtype, CounterType counterType,
+                                                      boolean overriding)
         implements CardEffect {
+
+    public GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype subtype, CounterType counterType) {
+        this(subtype, counterType, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

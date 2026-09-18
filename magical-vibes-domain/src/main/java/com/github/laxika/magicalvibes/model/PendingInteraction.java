@@ -33,7 +33,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
-        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingBendOrBreak,
+        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingRagingRiver, PendingBendOrBreak,
         PendingPsychoticEpisodeChoice,
         PendingTruthOrTaleCardChoice,
         PendingWhimsOfTheFates,
@@ -111,6 +111,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
@@ -2586,19 +2587,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Choose one matching card from a target player's revealed hand to put onto the battlefield or play. */
+    /** Choose one matching card from a target player's revealed hand to put onto the battlefield. */
     record TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                          java.util.List<Integer> validIndices, String prompt,
-                                         boolean grantHaste, boolean sacrificeAtEndStep,
-                                         boolean castCard)
+                                         boolean grantHaste, boolean sacrificeAtEndStep)
             implements PendingInteraction {
-
-        public TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
-                                             java.util.List<Integer> validIndices, String prompt,
-                                             boolean grantHaste, boolean sacrificeAtEndStep) {
-            this(choosingPlayerId, targetPlayerId, validIndices, prompt,
-                    grantHaste, sacrificeAtEndStep, false);
-        }
 
         public TargetedHandBattlefieldChoice {
             validIndices = java.util.List.copyOf(validIndices);
@@ -2611,7 +2604,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, !castCard);
+            return new InteractionOptions.CardIndexPick(validIndices, true);
         }
     }
 
@@ -3215,6 +3208,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, !cloaked);
+        }
+    }
+
+    /** Word of Command's controller chooses one card from the targeted player's hand. */
+    record WordOfCommandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                   java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction {
+
+        public WordOfCommandCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 

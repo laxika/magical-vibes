@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "SUM", collectorNumber = "172")
 @CardRegistration(set = "3ED", collectorNumber = "172")
 @CardRegistration(set = "ME4", collectorNumber = "132")
+@CardRegistration(set = "2ED", collectorNumber = "171")
 public class RocOfKherRidges extends Card {
 }

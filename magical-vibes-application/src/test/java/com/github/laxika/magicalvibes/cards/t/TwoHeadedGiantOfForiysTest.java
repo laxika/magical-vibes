@@ -20,15 +20,13 @@ class TwoHeadedGiantOfForiysTest extends BaseCardTest {
     @DisplayName("Two-Headed Giant of Foriys can block two attackers")
     void canBlockTwoAttackers() {
         Permanent giant = addCreatureReady(player2, new TwoHeadedGiantOfForiys());
-        int giantIndex = gd.playerBattlefields.get(player2.getId()).indexOf(giant);
-
         addAttacker();
         addAttacker();
-        prepareDeclareBlockers(player1);
 
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(giantIndex, 0),
-                new BlockerAssignment(giantIndex, 1)
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)
         ));
 
         assertThat(giant.isBlocking()).isTrue();
@@ -38,18 +36,17 @@ class TwoHeadedGiantOfForiysTest extends BaseCardTest {
     @Test
     @DisplayName("Two-Headed Giant of Foriys cannot block three attackers")
     void cannotBlockThreeAttackers() {
-        Permanent giant = addCreatureReady(player2, new TwoHeadedGiantOfForiys());
-        int giantIndex = gd.playerBattlefields.get(player2.getId()).indexOf(giant);
+        addCreatureReady(player2, new TwoHeadedGiantOfForiys());
+        addAttacker();
+        addAttacker();
+        addAttacker();
 
-        addAttacker();
-        addAttacker();
-        addAttacker();
-        prepareDeclareBlockers(player1);
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(giantIndex, 0),
-                new BlockerAssignment(giantIndex, 1),
-                new BlockerAssignment(giantIndex, 2)
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too many times");

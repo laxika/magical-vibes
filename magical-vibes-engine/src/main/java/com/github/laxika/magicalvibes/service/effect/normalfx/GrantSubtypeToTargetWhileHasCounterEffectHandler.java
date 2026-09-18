@@ -45,7 +45,7 @@ public class GrantSubtypeToTargetWhileHasCounterEffectHandler implements NormalE
                     new PermanentHasCountersPredicate(grant.counterType())));
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                    new GrantSubtypeEffect(grant.subtype(), GrantScope.ALL_PERMANENTS, false, scope),
+                    new GrantSubtypeEffect(grant.subtype(), GrantScope.ALL_PERMANENTS, grant.overriding(), scope),
                     null, null, scope, EffectDuration.PERMANENT, 0));
         }
     }

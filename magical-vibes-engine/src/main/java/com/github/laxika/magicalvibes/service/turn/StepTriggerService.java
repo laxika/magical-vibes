@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateTokenAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateTokenCopy;
 import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEn
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.CyclopeanTombMireCleanup;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
@@ -45,7 +45,7 @@ import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpke
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveMireCountersFromCyclopeanTombLandEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChosenLandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
@@ -180,6 +180,11 @@ import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
@@ -244,11 +249,6 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -496,32 +496,36 @@ public class StepTriggerService {
             }
         }
 
-        if (gameData.hasDelayedAction(CyclopeanTombMireCleanup.class)) {
-            List<CyclopeanTombMireCleanup> pendingCleanups = gameData.drainDelayedActions(
-                    CyclopeanTombMireCleanup.class,
+        if (gameData.hasDelayedAction(CyclopeanTombUpkeepCleanup.class)) {
+            List<CyclopeanTombUpkeepCleanup> pendingCleanups = gameData.drainDelayedActions(
+                    CyclopeanTombUpkeepCleanup.class,
                     action -> action.controllerId().equals(gameData.activePlayerId));
-            for (CyclopeanTombMireCleanup action : pendingCleanups) {
-                if (action.landIds().isEmpty()) {
+            for (CyclopeanTombUpkeepCleanup action : pendingCleanups) {
+                Set<UUID> remainingLandIds = new java.util.HashSet<>(action.trackedLandIds());
+                remainingLandIds.removeAll(action.removedLandIds());
+                if (remainingLandIds.isEmpty()) {
                     continue;
                 }
-                List<PermanentPredicate> trackedLandPredicates =
-                        action.landIds().stream()
-                                .map(PermanentIsSpecificPermanentPredicate::new)
-                                .map(predicate -> (PermanentPredicate) predicate)
-                                .toList();
-                var trackedLand = trackedLandPredicates.size() == 1
-                        ? trackedLandPredicates.getFirst()
-                        : new PermanentAnyOfPredicate(trackedLandPredicates);
-                var targetFilter = new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(), trackedLand)),
-                        "Target must be a tracked land");
-                gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
-                        action.sourceCard(), action.controllerId(),
-                        List.of(new RemoveMireCountersFromCyclopeanTombLandEffect(action.tombPermanentId())),
-                        null, targetFilter, action.controllerId()));
-                // Keep the delayed trigger alive for the next upkeep; resolution removes the chosen
-                // land from the remembered set when the cleanup effect resolves.
+
+                PermanentPredicate trackedLandFilter = new PermanentAllOfPredicate(List.of(
+                        new PermanentIsLandPredicate(),
+                        new PermanentAnyOfPredicate(remainingLandIds.stream()
+                                .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new)
+                                .toList())));
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new RemoveAllMireCountersFromChosenLandEffect(
+                                action.actionId(), trackedLandFilter))));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
                 gameData.queueDelayedAction(action);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed mire-counter cleanup trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
             }
         }
 

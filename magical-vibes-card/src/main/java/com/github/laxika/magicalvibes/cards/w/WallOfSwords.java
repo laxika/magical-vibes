@@ -13,5 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "3ED", collectorNumber = "43")
 @CardRegistration(set = "M14", collectorNumber = "41")
 @CardRegistration(set = "SUM", collectorNumber = "43")
+@CardRegistration(set = "2ED", collectorNumber = "43")
 public class WallOfSwords extends Card {
 }

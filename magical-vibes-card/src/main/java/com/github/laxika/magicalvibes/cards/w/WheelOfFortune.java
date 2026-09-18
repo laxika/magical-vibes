@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "185")
 @CardRegistration(set = "3ED", collectorNumber = "185")
+@CardRegistration(set = "2ED", collectorNumber = "184")
 @CardRegistration(set = "VMA", collectorNumber = "192")
 @CardRegistration(set = "ME4", collectorNumber = "140")
 public class WheelOfFortune extends Card {

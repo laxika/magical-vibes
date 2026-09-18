@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,79 +18,65 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CyclopeanTomb.class, Mountain.class, Swamp.class, Shatter.class})
+@CardUsed({CyclopeanTomb.class, Forest.class, Swamp.class, Shatter.class})
 class CyclopeanTombTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Upkeep activation puts a mire counter on a non-Swamp land")
-    void activationMakesLandASwamp() {
-        Permanent tomb = addTomb();
-        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        prepareUpkeepActivation();
+    @DisplayName("Puts a mire counter on a non-Swamp land and makes it a Swamp")
+    void putsMireCounterAndGrantsSwamp() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, null, mountain.getId());
+        harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
         assertThat(tomb.isTapped()).isTrue();
-        assertThat(mountain.getCounterCount(CounterType.MIRE)).isEqualTo(1);
-        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.SWAMP);
+        assertThat(forest.getCounterCount(CounterType.MIRE)).isEqualTo(1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+
+        forest.setCounterCount(CounterType.MIRE, 0);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test
-    @DisplayName("A Swamp is not a legal target")
+    @DisplayName("Cannot target a Swamp")
     void cannotTargetSwamp() {
-        addTomb();
+        harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        prepareUpkeepActivation();
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, swamp.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("non-Swamp land");
     }
 
     @Test
-    @DisplayName("After the Tomb reaches the graveyard, each upkeep removes one remembered land's mire counters")
-    void graveyardTriggerRemovesRememberedCounter() {
-        Permanent tomb = addTomb();
-        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        prepareUpkeepActivation();
-        harness.activateAbility(player1, 0, null, mountain.getId());
+    @DisplayName("After leaving the battlefield, removes mire counters from a remembered land at upkeep")
+    void removesRememberedMireCountersAfterLeavingBattlefield() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Shatter()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.forceActivePlayer(player1);
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, tomb.getId());
+        harness.castInstant(player2, 0, tomb.getId());
         resolveAllTriggers();
 
-        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.SWAMP);
-
+        assertThat(tomb).isNotIn(gd.playerBattlefields.get(player1.getId()));
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
         advanceToUpkeep(player1);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, mountain.getId());
-        harness.passBothPriorities();
-
-        assertThat(mountain.getCounterCount(CounterType.MIRE)).isZero();
-        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
-    }
-
-    private Permanent addTomb() {
-        harness.setHand(player1, List.of(new CyclopeanTomb()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castArtifact(player1, 0);
         resolveAllTriggers();
-        Permanent tomb = findPermanent(player1, "Cyclopean Tomb");
-        tomb.setSummoningSick(false);
-        return tomb;
-    }
-
-    private void prepareUpkeepActivation() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThat(forest.getCounterCount(CounterType.MIRE)).isZero();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 }

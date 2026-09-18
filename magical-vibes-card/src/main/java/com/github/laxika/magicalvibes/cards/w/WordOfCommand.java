@@ -8,13 +8,14 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
+@CardRegistration(set = "2ED", collectorNumber = "137")
 @CardRegistration(set = "ME4", collectorNumber = "103")
 public class WordOfCommand extends Card {
 
     public WordOfCommand() {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new WordOfCommandEffect());
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.SPELL, new WordOfCommandEffect());
     }
 }

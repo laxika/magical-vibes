@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "142")
+@CardRegistration(set = "2ED", collectorNumber = "112")
 @CardRegistration(set = "6ED", collectorNumber = "138")
 @CardRegistration(set = "3ED", collectorNumber = "114")
 @CardRegistration(set = "4ED", collectorNumber = "141")

@@ -201,8 +201,16 @@ public class StackResolutionService {
             return;
         }
 
+        if (resumeWordOfCommandIfReady(gameData)) {
+            if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+                if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
+                }
+                return;
+            }
+        }
+
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
-        clearWordOfCommandControlIfResolved(gameData, entry);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
@@ -296,6 +304,40 @@ public class StackResolutionService {
         }
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /** Completes Word of Command after the card it controlled has finished resolving. */
+    private boolean resumeWordOfCommandIfReady(GameData gameData) {
+        StackEntry pendingEntry = gameData.wordOfCommandPendingResolutionEntry;
+        if (pendingEntry == null || gameData.wordOfCommandCastingCard) {
+            return false;
+        }
+        if (gameData.wordOfCommandAwaitingCardResolution
+                && gameData.stack.stream().anyMatch(entry -> entry.getCard() != null
+                && gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(entry.getCard().getId()))) {
+            return false;
+        }
+
+        gameData.wordOfCommandAwaitingCardResolution = false;
+        gameData.wordOfCommandPendingResolutionEntry = null;
+        gameData.wordOfCommandCardId = null;
+        if (gameData.wordOfCommandControllerPlayerId != null
+                && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
+            gameData.mindControllerPlayerId = null;
+            gameData.mindControlledPlayerId = null;
+            gameData.mindControlUntilEndOfCombat = false;
+        }
+        gameData.wordOfCommandControllerPlayerId = null;
+        gameData.wordOfCommandControlledPlayerId = null;
+        gameData.pendingEffectResolutionEntry = pendingEntry;
+        gameData.pendingEffectResolutionIndex = gameData.wordOfCommandPendingResolutionIndex;
+        gameData.wordOfCommandPendingResolutionIndex = 0;
+        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                gameData.pendingEffectResolutionIndex);
+        return true;
     }
 
     /** CR 702.146 / siege defeat: while cast transformed, the spell has back-face characteristics. */
@@ -1256,17 +1298,6 @@ public class StackResolutionService {
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
         checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
-        clearWordOfCommandControlIfResolved(gameData, entry);
-    }
-
-    private void clearWordOfCommandControlIfResolved(GameData gameData, StackEntry entry) {
-        if (entry.getCard() == null
-                || !entry.getCard().getId().equals(gameData.mindControlUntilStackCardId)) {
-            return;
-        }
-        gameData.mindControlledPlayerId = null;
-        gameData.mindControllerPlayerId = null;
-        gameData.mindControlUntilStackCardId = null;
     }
 
     private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {

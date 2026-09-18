@@ -595,7 +595,6 @@ public class TurnProgressionService {
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
         gameData.mindControlUntilEndOfCombat = false;
-        gameData.mindControlUntilStackCardId = null;
 
         UUID nextActive;
         Long extraTurnSequence = null;
