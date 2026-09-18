@@ -200,6 +200,7 @@ public class GraveyardTargetOperationState {
     /** As-enters choice that moves two opponent-owned exiled cards to their owners' graveyards. */
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
+    public MilledCreatureExileContext milledCreatureExile;
     public MilledCreaturesToHandContext milledCreaturesToHand;
 
     /**
@@ -244,6 +245,13 @@ public class GraveyardTargetOperationState {
 
     public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {
         public MilledCreatureReturnContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledCreatureExileContext(List<UUID> eligibleCardIds, List<UUID> chosenCardIds) {
+        public MilledCreatureExileContext {
+            eligibleCardIds = List.copyOf(eligibleCardIds);
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

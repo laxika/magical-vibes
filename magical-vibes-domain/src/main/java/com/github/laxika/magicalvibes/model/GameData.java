@@ -6273,6 +6273,8 @@ public class GameData {
                 this.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
         copy.graveyardTargetOperation.asEntersOpponentExileToGraveyard =
                 this.graveyardTargetOperation.asEntersOpponentExileToGraveyard;
+        copy.graveyardTargetOperation.milledCreatureExile =
+                this.graveyardTargetOperation.milledCreatureExile;
 
         copy.queenKaylaBinKroogOperation.active = this.queenKaylaBinKroogOperation.active;
         copy.queenKaylaBinKroogOperation.controllerId = this.queenKaylaBinKroogOperation.controllerId;

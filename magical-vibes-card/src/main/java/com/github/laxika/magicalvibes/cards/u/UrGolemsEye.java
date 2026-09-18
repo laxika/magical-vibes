@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "314")
 @CardRegistration(set = "DST", collectorNumber = "155")
+@CardRegistration(set = "C14", collectorNumber = "280")
 public class UrGolemsEye extends Card {
 
     public UrGolemsEye() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "39")
 @CardRegistration(set = "TD2", collectorNumber = "81")
+@CardRegistration(set = "C14", collectorNumber = "136")
 public class BlackSunsZenith extends Card {
 
     public BlackSunsZenith() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "100")
+@CardRegistration(set = "C14", collectorNumber = "229")
 public class Bonehoard extends Card {
 
     public Bonehoard() {

@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "EVG", collectorNumber = "10")
 @CardRegistration(set = "EMA", collectorNumber = "176")
 @CardRegistration(set = "HA4", collectorNumber = "15")
+@CardRegistration(set = "C14", collectorNumber = "205")
 public class LysAlanaHuntmaster extends Card {
 
     public LysAlanaHuntmaster() {

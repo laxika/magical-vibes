@@ -41,7 +41,8 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
             }
             String playerName = gameData.playerIdToName.get(recipientId);
 
-            gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), entry.getCard()));
+            gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), entry.getCard(),
+                    emblemEffect.activatedAbilities()));
             if (emblemEffect.staticEffects().stream().anyMatch(DrawOnControlledCreatureEntersEffect.class::isInstance)) {
                 gameData.creatureEntersDrawSources
                         .computeIfAbsent(recipientId, ignored -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))

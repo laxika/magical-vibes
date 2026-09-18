@@ -956,6 +956,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.milledCreatureExile != null) {
+            var context = gameData.graveyardTargetOperation.milledCreatureExile;
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledCreatureExile =
+                    new GraveyardTargetOperationState.MilledCreatureExileContext(
+                            context.eligibleCardIds(), List.copyOf(cardIds));
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.milledCreaturesToHand != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.milledCreaturesToHand =

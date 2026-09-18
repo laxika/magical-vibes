@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "234")
 @CardRegistration(set = "HA7", collectorNumber = "19")
 @CardRegistration(set = "C13", collectorNumber = "270")
+@CardRegistration(set = "C14", collectorNumber = "281")
 public class WayfarersBauble extends Card {
 
     public WayfarersBauble() {

@@ -1425,6 +1425,10 @@ public class SpellCastingService {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
+        if (beginOpponentChosenSpellTargetsIfNeeded(
+                gameData, player, cardIndex, xValue, targetId, targetIds, attempted, buyback)) {
+            return;
+        }
         if (beginOpponentChosenTargetChoiceIfNeeded(
                 gameData, player, cardIndex, xValue, targetId, attempted, buyback)) {
             return;
@@ -1480,11 +1484,82 @@ public class SpellCastingService {
                 .ifPresent(entry -> entry.setOpponentChosenTargetPlayerId(chosenOpponentId));
     }
 
+    public void playCardAfterOpponentChosenTargets(GameData gameData, Player player, int cardIndex,
+                                                   Integer xValue, List<UUID> targetIds, boolean buyback) {
+        playCard(gameData, player, cardIndex, xValue, null, Map.of(), targetIds, List.of(),
+                false, null, null, null, null, null, false, null, null, null, null, null,
+                List.of(), buyback);
+    }
+
     private boolean isOpponentChosenTargetSpell(Card card) {
         return card.getEffects(EffectSlot.SPELL).stream()
                 .filter(GainControlOfTargetEffect.class::isInstance)
                 .map(GainControlOfTargetEffect.class::cast)
                 .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget);
+    }
+
+    private boolean beginOpponentChosenSpellTargetsIfNeeded(
+            GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+            List<UUID> targetIds, Card attempted, boolean buyback) {
+        if (attempted == null || targetId != null
+                || attempted.getOpponentChosenSpellTargetIndices().isEmpty()
+                || targetIds == null) {
+            return false;
+        }
+
+        List<Integer> opponentTargetIndices = attempted.getOpponentChosenSpellTargetIndices();
+        int targetPositionCount = attempted.getMultiTargetFilters().size();
+        int casterTargetCount = targetPositionCount - opponentTargetIndices.size();
+        if (targetIds.size() != casterTargetCount) {
+            return false;
+        }
+
+        Map<Integer, UUID> selectedTargets = new HashMap<>();
+        int casterTargetIndex = 0;
+        for (int positionIndex = 0; positionIndex < targetPositionCount; positionIndex++) {
+            if (opponentTargetIndices.contains(positionIndex)) {
+                continue;
+            }
+            int groupIndex = targetGroupIndexForPosition(attempted, positionIndex);
+            UUID targetIdAtPosition = targetIds.get(casterTargetIndex++);
+            targetLegalityService.validateSpellTargetGroup(
+                    gameData, attempted, groupIndex, List.of(targetIdAtPosition),
+                    player.getId(), xValue != null ? xValue : 0, false);
+            selectedTargets.put(positionIndex, targetIdAtPosition);
+        }
+
+        beginOpponentChosenSpellTargetChoice(gameData, player, cardIndex, xValue, attempted,
+                buyback, selectedTargets, 0);
+        return true;
+    }
+
+    private void beginOpponentChosenSpellTargetChoice(GameData gameData, Player player, int cardIndex,
+                                                      Integer xValue, Card card, boolean buyback,
+                                                      Map<Integer, UUID> selectedTargets,
+                                                      int nextTargetIndex) {
+        int targetPosition = card.getOpponentChosenSpellTargetIndices().get(nextTargetIndex);
+        int groupIndex = targetGroupIndexForPosition(card, targetPosition);
+        List<UUID> validOpponentIds = targetLegalityService.computeValidOpponentChosenTargetGroupPlayers(
+                gameData, card, player.getId(), groupIndex, xValue != null ? xValue : 0, false);
+        if (validOpponentIds.isEmpty()) {
+            throw new IllegalStateException("No legal opponent can choose a target");
+        }
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
+                player, card, cardIndex, xValue, buyback, selectedTargets, nextTargetIndex, null));
+        playerInputService.beginPermanentChoice(gameData, player.getId(), validOpponentIds,
+                "Choose an opponent to choose a target for " + card.getName() + ".");
+    }
+
+    private int targetGroupIndexForPosition(Card card, int positionIndex) {
+        int positionOffset = 0;
+        for (SpellTarget target : card.getSpellTargets()) {
+            int targetCount = target.getMaxTargets();
+            if (positionIndex < positionOffset + targetCount) {
+                return target.getIndex();
+            }
+            positionOffset += targetCount;
+        }
+        throw new IllegalArgumentException("Unknown spell target position");
     }
 
     private boolean beginOpponentChosenTargetChoiceIfNeeded(
@@ -1613,6 +1688,10 @@ public class SpellCastingService {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
+        if (beginOpponentChosenSpellTargetsIfNeeded(
+                gameData, player, cardIndex, xValue, targetId, targetIds, attempted, buyback)) {
+            return;
+        }
         if (beginOpponentChosenTargetChoiceIfNeeded(
                 gameData, player, cardIndex, xValue, targetId, attempted, buyback)) {
             return;

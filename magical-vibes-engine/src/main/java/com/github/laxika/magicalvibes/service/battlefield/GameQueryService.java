@@ -194,6 +194,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenPlayersDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
@@ -6962,7 +6963,9 @@ public class GameQueryService {
         return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .map(effect -> staticEffectConditionResolver.resolve(
                         gameData, permanent, controllerId, effect))
-                .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance);
+                .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance)
+                || playerEmblemHasActiveStaticEffect(
+                        gameData, controllerId, AllowLoyaltyActivationAtInstantSpeedEffect.class);
     }
 
     /**
@@ -8226,8 +8229,13 @@ public class GameQueryService {
                     if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
                             && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
                         multiplier[0] *= MaroGoneNutsSupport.apply(
-                            gameData, effect, multiplyingEffect.damageMultiplier());
+                                gameData, effect, multiplyingEffect.damageMultiplier());
                     }
+                } else if (sourceControllerId != null
+                        && effect instanceof ChosenPlayersDamageMultiplyingEffect multiplyingEffect
+                        && multiplyingEffect.appliesTo(sourceControllerId, recipientPlayerId, p)) {
+                    multiplier[0] *= MaroGoneNutsSupport.apply(
+                            gameData, effect, multiplyingEffect.damageMultiplier());
                 }
             }
         });

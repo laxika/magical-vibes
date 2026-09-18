@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -2776,5 +2777,18 @@ class TargetLegalityServiceTest {
                 new PlayerControlsMoreCreaturesThanControllerPredicate())).isTrue();
         assertThat(sut.matchesPlayerPredicate(gd, player1Id, player1Id,
                 new PlayerControlsMoreCreaturesThanControllerPredicate())).isFalse();
+    }
+
+    @Test
+    void sourceOwnerPredicateExcludesOwnerButAllowsNonOwnerController() {
+        Card sourceCard = new Card();
+        sourceCard.setOwnerId(player1Id);
+        Permanent source = new Permanent(sourceCard);
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+
+        PlayerOtherThanSourceOwnerPredicate predicate = new PlayerOtherThanSourceOwnerPredicate();
+
+        assertThat(sut.matchesPlayerPredicate(gd, player2Id, player1Id, predicate, source.getId())).isFalse();
+        assertThat(sut.matchesPlayerPredicate(gd, player2Id, player2Id, predicate, source.getId())).isTrue();
     }
 }

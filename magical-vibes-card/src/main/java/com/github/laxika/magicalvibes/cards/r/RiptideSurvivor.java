@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "48")
+@CardRegistration(set = "C14", collectorNumber = "121")
 public class RiptideSurvivor extends Card {
 
     public RiptideSurvivor() {

@@ -2579,6 +2579,12 @@ public class LayerSystemService {
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), protection);
                     }
+                    case CantHaveOrGainKeywordEffect restriction -> {
+                        state.blockKeyword(restriction.keyword());
+                        state.addStaticEffect(restriction);
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), restriction);
+                    }
                     case GrantEffectEffect grant -> {
                         if (grant.scope() != GrantScope.TARGET && grant.scope() != GrantScope.SELF) {
                             continue;

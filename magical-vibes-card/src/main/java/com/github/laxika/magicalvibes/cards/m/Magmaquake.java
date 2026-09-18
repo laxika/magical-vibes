@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "140")
+@CardRegistration(set = "C14", collectorNumber = "180")
 public class Magmaquake extends Card {
 
     public Magmaquake() {

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreLandsThanCo
 import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -839,7 +840,8 @@ public class TargetLegalityService {
                     throw new IllegalStateException(peaceTalks);
                 }
                 validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
-                validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
+                validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage(),
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()));
                 continue;
             }
 
@@ -852,7 +854,8 @@ public class TargetLegalityService {
                     throw new IllegalStateException(peaceTalks);
                 }
                 validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
-                validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage());
+                validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage(),
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()));
                 continue;
             }
 
@@ -1560,11 +1563,13 @@ public class TargetLegalityService {
             return false;
         }
         if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
-                && !matchesPlayerPredicate(gameData, playerId, candidate, playerFilter.predicate())) {
+                && !matchesPlayerPredicate(gameData, playerId, candidate, playerFilter.predicate(),
+                findSourcePermanentIdByCardId(gameData, sourceCard.getId()))) {
             return false;
         }
         if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter
-                && !matchesPlayerPredicate(gameData, playerId, candidate, anyFilter.playerPredicate())) {
+                && !matchesPlayerPredicate(gameData, playerId, candidate, anyFilter.playerPredicate(),
+                findSourcePermanentIdByCardId(gameData, sourceCard.getId()))) {
             return false;
         }
         if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
@@ -1694,6 +1699,47 @@ public class TargetLegalityService {
                     && checkSpellTargeting(gameData, card, permanent.getId(), null, controllerId,
                     EffectResolution.needsTarget(card), xValue, kicked, false).isEmpty()) {
                 validTargets.add(permanent.getId());
+            }
+        }
+        return validTargets;
+    }
+
+    /** Returns the opponents who control a legal permanent for one marked spell target group. */
+    public List<UUID> computeValidOpponentChosenTargetGroupPlayers(GameData gameData, Card card,
+                                                                    UUID controllerId, int groupIndex,
+                                                                    int xValue, boolean kicked) {
+        if (gameQueryService.isPeaceTalksActive(gameData)) {
+            return List.of();
+        }
+        List<UUID> validPlayers = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!controllerId.equals(playerId)
+                    && !computeValidOpponentChosenTargetGroupPermanents(
+                    gameData, card, controllerId, playerId, groupIndex, xValue, kicked).isEmpty()) {
+                validPlayers.add(playerId);
+            }
+        }
+        return validPlayers;
+    }
+
+    /** Returns the legal permanents controlled by an opponent for one marked spell target group. */
+    public List<UUID> computeValidOpponentChosenTargetGroupPermanents(GameData gameData, Card card,
+                                                                        UUID controllerId,
+                                                                        UUID chosenOpponentId, int groupIndex,
+                                                                        int xValue, boolean kicked) {
+        if (chosenOpponentId == null || controllerId.equals(chosenOpponentId)
+                || !gameData.playerIds.contains(chosenOpponentId)
+                || gameQueryService.isPeaceTalksActive(gameData)) {
+            return List.of();
+        }
+        List<UUID> validTargets = new ArrayList<>();
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(chosenOpponentId, List.of())) {
+            try {
+                validateSpellTargetGroup(gameData, card, groupIndex, List.of(permanent.getId()),
+                        controllerId, xValue, kicked);
+                validTargets.add(permanent.getId());
+            } catch (IllegalArgumentException | IllegalStateException ignored) {
+                // The permanent simply does not satisfy this target group's filter.
             }
         }
         return validTargets;
@@ -4685,6 +4731,15 @@ public class TargetLegalityService {
         return switch (predicate) {
             case PlayerIdPredicate player -> player.playerId() != null
                     && player.playerId().equals(targetPlayerId);
+            case PlayerOtherThanSourceOwnerPredicate ignored -> {
+                if (sourcePermanentId == null || targetPlayerId == null) {
+                    yield false;
+                }
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                UUID ownerId = source == null || source.getOriginalCard() == null
+                        ? null : source.getOriginalCard().getOwnerId();
+                yield ownerId != null && !ownerId.equals(targetPlayerId);
+            }
             case PlayerRelationPredicate relationPredicate -> switch (relationPredicate.relation()) {
                 case ANY -> true;
                 case SELF -> controllerId != null && controllerId.equals(targetPlayerId);
