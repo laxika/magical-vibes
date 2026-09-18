@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(AnodetLurker.class)
 class AnodetLurkerTest extends BaseCardTest {
 
     @Test
@@ -23,7 +25,21 @@ class AnodetLurkerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
+        harness.assertLife(player1, 13);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A surviving Anodet Lurker does not trigger its death ability")
+    void doesNotTriggerWhileItSurvives() {
+        harness.setLife(player1, 10);
+        Permanent lurker = harness.addToBattlefieldAndReturn(player1, new AnodetLurker());
+        lurker.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Anodet Lurker");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 10);
     }
 }

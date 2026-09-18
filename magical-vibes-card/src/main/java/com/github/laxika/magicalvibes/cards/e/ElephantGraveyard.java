@@ -12,11 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "ARN", collectorNumber = "74")
 @CardRegistration(set = "ME4", collectorNumber = "244")
 public class ElephantGraveyard extends Card {
 
     public ElephantGraveyard() {
+        // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
+        // {T}: Regenerate target Elephant.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

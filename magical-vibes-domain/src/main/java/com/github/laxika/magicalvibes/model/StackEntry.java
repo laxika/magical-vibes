@@ -399,6 +399,8 @@ public class StackEntry {
     @Setter private int grantedDevour;
     /** Triggered abilities granted to the permanent as this spell enters the battlefield. */
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
+    /** Triggered abilities granted indefinitely to the permanent as this spell enters the battlefield. */
+    private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
     /** Explicit starting loyalty for a copied planeswalker spell, when the copy defines one. */
@@ -803,6 +805,8 @@ public class StackEntry {
         this.grantedDevour = source.grantedDevour;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
+        source.persistentTriggeredEffectsOnEntry.forEach((slot, effects) ->
+                this.persistentTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.startingLoyalty = source.startingLoyalty;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
@@ -816,6 +820,14 @@ public class StackEntry {
 
     public Map<EffectSlot, List<CardEffect>> getGrantedTriggeredEffectsOnEntry() {
         return grantedTriggeredEffectsOnEntry;
+    }
+
+    public void addPersistentTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
+        persistentTriggeredEffectsOnEntry.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(effect);
+    }
+
+    public Map<EffectSlot, List<CardEffect>> getPersistentTriggeredEffectsOnEntry() {
+        return persistentTriggeredEffectsOnEntry;
     }
 
     public int getCounterCount(CounterType counterType) {

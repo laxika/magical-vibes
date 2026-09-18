@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "PTK", collectorNumber = "36")
 @CardRegistration(set = "ME3", collectorNumber = "32")
 @CardRegistration(set = "GS1", collectorNumber = "17")
+@CardRegistration(set = "C13", collectorNumber = "34")
 public class BrilliantPlan extends Card {
 
     public BrilliantPlan() {

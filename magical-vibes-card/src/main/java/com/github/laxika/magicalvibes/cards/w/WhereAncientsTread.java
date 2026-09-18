@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerCondi
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "122")
+@CardRegistration(set = "C13", collectorNumber = "130")
 public class WhereAncientsTread extends Card {
 
     public WhereAncientsTread() {

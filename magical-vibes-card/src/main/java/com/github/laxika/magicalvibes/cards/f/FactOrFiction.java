@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffe
 @CardRegistration(set = "MH1", collectorNumber = "50")
 @CardRegistration(set = "DMR", collectorNumber = "48")
 @CardRegistration(set = "GN3", collectorNumber = "27")
+@CardRegistration(set = "CMD", collectorNumber = "45")
 public class FactOrFiction extends Card {
 
     public FactOrFiction() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "2X2", collectorNumber = "238")
+@CardRegistration(set = "CMD", collectorNumber = "207")
 public class KaradorGhostChieftain extends Card {
 
     public KaradorGhostChieftain() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 
 import java.util.List;
 
+@CardRegistration(set = "DMU", collectorNumber = "203")
 @CardRegistration(set = "FCA", collectorNumber = "17")
 public class JodahTheUnifier extends Card {
 

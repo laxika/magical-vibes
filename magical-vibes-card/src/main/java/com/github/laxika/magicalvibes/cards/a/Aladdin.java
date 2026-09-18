@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "44")
 @CardRegistration(set = "ME4", collectorNumber = "106")
+@CardRegistration(set = "ARN", collectorNumber = "34")
 public class Aladdin extends Card {
 
     public Aladdin() {

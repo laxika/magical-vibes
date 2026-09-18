@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -26,7 +27,8 @@ import java.util.Set;
 public record SearchTargetLibraryEffect(DynamicAmount count,
                                         CardPredicate filter,
                                         LibrarySearchDestination destination,
-                                        boolean canFailToFind) implements CombatDamageTriggerContextEffect {
+                                        boolean canFailToFind,
+                                        LibrarySearchPlayer searchPlayer) implements CombatDamageTriggerContextEffect {
 
     /**
      * The destinations a target-library search knows how to reach. Anything else would fall through
@@ -37,19 +39,36 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
             LibrarySearchDestination.EXILE_PLAYABLE,
             LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
             LibrarySearchDestination.GRAVEYARD,
-            LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER);
+            LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER,
+            LibrarySearchDestination.HAND);
 
     public SearchTargetLibraryEffect {
         if (!SUPPORTED_DESTINATIONS.contains(destination)) {
             throw new IllegalArgumentException(
                     "SearchTargetLibraryEffect does not support destination " + destination);
         }
+        if (searchPlayer == null) {
+            throw new IllegalArgumentException("SearchTargetLibraryEffect requires a search player");
+        }
+    }
+
+    /** Dynamic-count search with the controller as the searcher. */
+    public SearchTargetLibraryEffect(DynamicAmount count, CardPredicate filter,
+                                     LibrarySearchDestination destination, boolean canFailToFind) {
+        this(count, filter, destination, canFailToFind, LibrarySearchPlayer.CONTROLLER);
     }
 
     /** Fixed-count search (Jester's Cap, Life's Finale, Bribery, Praetor's Grasp). */
     public SearchTargetLibraryEffect(int count, CardPredicate filter,
                                      LibrarySearchDestination destination, boolean canFailToFind) {
-        this(new Fixed(count), filter, destination, canFailToFind);
+        this(new Fixed(count), filter, destination, canFailToFind, LibrarySearchPlayer.CONTROLLER);
+    }
+
+    /** Fixed-count search with an explicitly chosen searcher (e.g. a target player searches their own library). */
+    public SearchTargetLibraryEffect(int count, CardPredicate filter,
+                                     LibrarySearchDestination destination, boolean canFailToFind,
+                                     LibrarySearchPlayer searchPlayer) {
+        this(new Fixed(count), filter, destination, canFailToFind, searchPlayer);
     }
 
     @Override

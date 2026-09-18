@@ -15,26 +15,29 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "ARN", collectorNumber = "26")
 @CardRegistration(set = "ME4", collectorNumber = "85")
 public class GuardianBeast extends Card {
 
     public GuardianBeast() {
-        PermanentPredicate noncreatureArtifact = new PermanentAllOfPredicate(List.of(
+        var noncreatureArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate())));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceUntapped(),
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceUntapped(),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS,
                         noncreatureArtifact)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceUntapped(),
-                new GrantEffectEffect(new CantBeEnchantedByOtherAurasEffect(), GrantScope.OWN_PERMANENTS,
-                        noncreatureArtifact)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceUntapped(),
-                new GrantEffectEffect(new CantBeControlledByOtherPlayersEffect(), GrantScope.OWN_PERMANENTS,
-                        noncreatureArtifact)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceUntapped(),
+                new GrantEffectEffect(new CantBeEnchantedByOtherAurasEffect(),
+                        GrantScope.OWN_PERMANENTS, noncreatureArtifact)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceUntapped(),
+                new GrantEffectEffect(new CantBeControlledByOtherPlayersEffect(),
+                        GrantScope.OWN_PERMANENTS, noncreatureArtifact)));
     }
 }

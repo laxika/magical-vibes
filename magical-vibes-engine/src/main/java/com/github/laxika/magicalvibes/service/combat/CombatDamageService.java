@@ -2149,6 +2149,19 @@ public class CombatDamageService {
                     if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
                         firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
                     }
+                    // Player recipients on this trigger slot normally mean "that player":
+                    // bind the damaged player unless the card explicitly declares a target.
+                    if (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && (perm.getCard().hasEffectTargetIndex(authoredEffect)
+                            || perm.getCard().hasEffectTargetIndex(firedEffect)))) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
+                        continue;
+                    }
                     if (firedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                         UUID graveyardOwnerId = firedEffect.targetSpec().graveyardScope().orElse(null)
                                 == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
@@ -4252,6 +4265,11 @@ public class CombatDamageService {
             return;
         }
         if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source, true)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, target, null, source, true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

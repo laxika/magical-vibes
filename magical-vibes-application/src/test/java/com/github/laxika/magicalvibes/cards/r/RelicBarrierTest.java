@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BatteredGolem;
+import com.github.laxika.magicalvibes.cards.e.EonHub;
+import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RelicBarrier.class, EonHub.class, FurnaceWhelp.class, BatteredGolem.class})
 class RelicBarrierTest extends BaseCardTest {
 
     @Test
@@ -43,28 +44,39 @@ class RelicBarrierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap ability can target an already-tapped artifact creature")
+    void canTargetAlreadyTappedArtifactCreature() {
+        addReadyBarrier(player1);
+        Permanent artifactCreature = addArtifactCreature(player2);
+        artifactCreature.tap();
+
+        harness.activateAbility(player1, 0, null, artifactCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifactCreature.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Tap ability rejects a non-artifact target")
     void rejectsNonArtifactTarget() {
         addReadyBarrier(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new FurnaceWhelp());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyBarrier(Player player) {
-        Permanent perm = new Permanent(new RelicBarrier());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RelicBarrier());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addArtifact(Player player) {
-        Card card = new AngelsFeather();
-        card.setName("Test Artifact");
-        card.setType(CardType.ARTIFACT);
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new EonHub());
+    }
+
+    private Permanent addArtifactCreature(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new BatteredGolem());
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "34")
 @CardRegistration(set = "ME4", collectorNumber = "86")
+@CardRegistration(set = "ARN", collectorNumber = "27")
 public class HasranOgress extends Card {
 
     public HasranOgress() {

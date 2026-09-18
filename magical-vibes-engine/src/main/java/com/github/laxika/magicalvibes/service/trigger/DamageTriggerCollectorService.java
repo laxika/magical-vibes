@@ -61,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SacrificeNontokenPermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -1046,9 +1045,9 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
-    private boolean handleControllerDealtDamagePutCounters(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    private boolean handleControllerDealtDamageDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
         GameData gameData = match.gameData();
         Permanent perm = match.permanent();
@@ -1069,33 +1068,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
         log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE trigger fires ({} damage)",
                 gameData.id, perm.getCard().getName(), dc.amount());
-        return true;
-    }
-
-    @CollectsTrigger(value = SacrificeNontokenPermanentsOrLoseGameEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
-    private boolean handleControllerDealtDamageSacrificeOrLose(TriggerMatchContext match,
-            SacrificeNontokenPermanentsOrLoseGameEffect effect, TriggerContext ctx) {
-        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
-        if (dc.amount() <= 0 || match.permanent() == null) {
-            return false;
-        }
-
-        Permanent perm = match.permanent();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                perm.getCard(),
-                match.controllerId(),
-                perm.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                perm.getId());
-        entry.setEventValue(dc.amount());
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(perm.getCard()));
-        log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE sacrifice-or-lose trigger fires ({} damage)",
-                match.gameData().id, perm.getCard().getName(), dc.amount());
         return true;
     }
 

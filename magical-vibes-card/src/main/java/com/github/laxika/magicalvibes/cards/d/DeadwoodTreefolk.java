@@ -19,6 +19,8 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "126")
 @CardRegistration(set = "DMR", collectorNumber = "155")
+@CardRegistration(set = "C13", collectorNumber = "141")
+@CardRegistration(set = "CMD", collectorNumber = "150")
 public class DeadwoodTreefolk extends Card {
 
     public DeadwoodTreefolk() {

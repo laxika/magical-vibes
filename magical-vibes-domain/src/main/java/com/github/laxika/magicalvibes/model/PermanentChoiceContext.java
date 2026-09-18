@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfCh
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -273,6 +274,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> remainingOpponentIds,
             List<UUID> accumulatedChosenIds
     ) implements PermanentChoiceContext {}
+
+    /** Order of Succession: each player chooses a creature controlled by the next player. */
+    record OrderOfSuccessionCreatureChoice(UUID permanentId, UUID gainingPlayerId) {}
+
+    /**
+     * Order of Succession: stores the fixed table order and choices made before the next prompt.
+     */
+    record OrderOfSuccession(
+            UUID choosingPlayerId,
+            UUID chosenFromPlayerId,
+            String sourceCardName,
+            List<UUID> orderedPlayerIds,
+            GainControlOfNextPlayerNonlandPermanentsEffect.Direction direction,
+            List<UUID> remainingChooserIds,
+            List<OrderOfSuccessionCreatureChoice> accumulatedChoices
+    ) implements PermanentChoiceContext {
+        public OrderOfSuccession {
+            orderedPlayerIds = List.copyOf(orderedPlayerIds);
+            remainingChooserIds = List.copyOf(remainingChooserIds);
+            accumulatedChoices = List.copyOf(accumulatedChoices);
+        }
+    }
 
     /** Sothera: each opponent chooses a creature they control to exile with the source. */
     record EachOpponentChoosesCreatureToExileWithSource(

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 @CardRegistration(set = "SUM", collectorNumber = "238")
 @CardRegistration(set = "3ED", collectorNumber = "238")
 @CardRegistration(set = "ME4", collectorNumber = "185")
+@CardRegistration(set = "ARN", collectorNumber = "59")
 public class BrassMan extends Card {
 
     public BrassMan() {

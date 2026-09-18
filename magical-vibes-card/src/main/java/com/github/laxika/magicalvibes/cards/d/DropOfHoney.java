@@ -16,6 +16,7 @@ import java.util.List;
  * when there are no creatures on the battlefield.
  */
 @CardRegistration(set = "ME4", collectorNumber = "150")
+@CardRegistration(set = "ARN", collectorNumber = "47")
 public class DropOfHoney extends Card {
 
     public DropOfHoney() {

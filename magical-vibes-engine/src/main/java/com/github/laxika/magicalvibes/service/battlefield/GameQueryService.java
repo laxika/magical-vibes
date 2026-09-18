@@ -158,6 +158,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZone
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
@@ -245,7 +246,9 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromDesertsToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromDesertsToSelfAndBandedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedSpellDamagePreventionEffect;
@@ -662,7 +665,10 @@ public class GameQueryService {
                     && !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
         }
         if (!permanent.getCard().getSupertypes().contains(supertype)) {
-            if (gameData == null) {
+            // A departing permanent may still be queried while its attached Aura is being removed.
+            // It is absent from the layered board, so rebuilding its static bonus would recurse
+            // through the Aura's supertype filter without ever finding a layered state.
+            if (gameData == null || findPermanentById(gameData, permanent.getId()) == null) {
                 return false;
             }
             return computeStaticBonus(gameData, permanent).grantedSupertypes().contains(supertype);
@@ -1378,7 +1384,20 @@ public class GameQueryService {
      * restricted.
      */
     public boolean canPayLifeOrSacrificeCreaturesForCosts(GameData gameData) {
-        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+        return canPayLifeForCosts(gameData) && canSacrificeCreaturesForCosts(gameData);
+    }
+
+    /**
+     * Returns whether life may be paid as a spell or ability cost. Karn's Sylex does not prohibit
+     * life payments used to activate mana abilities, so that distinction is supplied by callers.
+     */
+    public boolean canPayLifeForCosts(GameData gameData) {
+        return canPayLifeForCosts(gameData, false);
+    }
+
+    public boolean canPayLifeForCosts(GameData gameData, boolean manaAbility) {
+        return (manaAbility || !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeEffect.class))
+                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
                 && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
     }
 
@@ -2461,6 +2480,21 @@ public class GameQueryService {
     /** Returns whether {@code playerId} controls strictly more creatures than {@code comparedPlayerId}. */
     public boolean controlsMoreCreaturesThan(GameData gameData, UUID playerId, UUID comparedPlayerId) {
         return countCreaturesControlled(gameData, playerId) > countCreaturesControlled(gameData, comparedPlayerId);
+    }
+
+    /** Returns whether {@code playerId} controls the most creatures, including ties for most. */
+    public boolean controlsMostCreaturesOrTied(GameData gameData, UUID playerId) {
+        if (playerId == null) return false;
+        int playerCreatureCount = countCreaturesControlled(gameData, playerId);
+        boolean foundPlayer = false;
+        for (UUID candidatePlayerId : gameData.orderedPlayerIds) {
+            if (candidatePlayerId.equals(playerId)) {
+                foundPlayer = true;
+            } else if (playerCreatureCount < countCreaturesControlled(gameData, candidatePlayerId)) {
+                return false;
+            }
+        }
+        return foundPlayer;
     }
 
     /**
@@ -6057,6 +6091,71 @@ public class GameQueryService {
                 && target.isBlocking() && target.getBlockingTargetIds().contains(source.getId());
     }
 
+    /**
+     * Returns whether damage from a Desert is prevented by an attacking Camel for itself or one of
+     * the other attacking creatures in that Camel's band.
+     */
+    public boolean isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+            GameData gameData, Permanent target, StackEntry entry, Permanent explicitSource,
+            boolean isCombatDamage) {
+        if (!isDamagePreventable(gameData, isCombatDamage) || target == null
+                || !isCreature(gameData, target)) {
+            return false;
+        }
+
+        Permanent source = explicitSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        Card sourceCard = source == null && entry != null ? entry.getEffectiveDamageSourceCard() : null;
+        boolean desertSource = source != null
+                ? hasEffectiveSubtype(gameData, source, CardSubtype.DESERT)
+                : sourceCard != null && sourceCard.getSubtypes().contains(CardSubtype.DESERT);
+        if (!desertSource) return false;
+
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent protector : battlefield) {
+                if (!protector.isAttacking()
+                        || !hasActiveStaticEffect(
+                        gameData, protector, PreventDamageFromDesertsToSelfAndBandedCreaturesEffect.class)) {
+                    continue;
+                }
+                if (protector.getId().equals(target.getId())
+                        || (protector.getBandId() != null && target.isAttacking()
+                        && protector.getBandId().equals(target.getBandId()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Returns whether damage from a Desert is prevented by the target creature's own static effect. */
+    public boolean isDamageFromDesertsToSelfPrevented(
+            GameData gameData, Permanent target, StackEntry entry, Permanent explicitSource,
+            boolean isCombatDamage) {
+        if (!isDamagePreventable(gameData, isCombatDamage) || target == null
+                || !isCreature(gameData, target)
+                || !hasActiveStaticEffect(gameData, target, PreventDamageFromDesertsToSelfEffect.class)) {
+            return false;
+        }
+
+        Permanent source = explicitSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        Card sourceCard = source == null && entry != null ? entry.getEffectiveDamageSourceCard() : null;
+        return source != null
+                ? hasEffectiveSubtype(gameData, source, CardSubtype.DESERT)
+                : sourceCard != null && sourceCard.getSubtypes().contains(CardSubtype.DESERT);
+    }
+
     public boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent explicitSource, Keyword keyword) {
         Permanent source = explicitSource;
         if (source == null && entry.getSourcePermanentId() != null) {
@@ -6303,11 +6402,10 @@ public class GameQueryService {
     }
 
     /** Returns whether another player is prevented from gaining control of the permanent. */
-    public boolean cantBeControlledByOtherPlayers(GameData gameData, Permanent target,
-                                                  UUID newControllerId) {
-        UUID currentControllerId = findPermanentController(gameData, target.getId());
-        return !newControllerId.equals(currentControllerId)
-                && hasGrantedEffect(gameData, target, CantBeControlledByOtherPlayersEffect.class);
+    public boolean cantBeControlledByOtherPlayers(GameData gameData, Permanent target) {
+        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBeControlledByOtherPlayersEffect.class::isInstance)
+                || hasGrantedEffect(gameData, target, CantBeControlledByOtherPlayersEffect.class);
     }
 
     /**

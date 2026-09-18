@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
 
-@CardRegistration(set = "HOC", collectorNumber = "111")
+@CardRegistration(set = "HOC", collectorNumber = "191")
 public class TrollOfKhazadDum extends Card {
 
     public TrollOfKhazadDum() {

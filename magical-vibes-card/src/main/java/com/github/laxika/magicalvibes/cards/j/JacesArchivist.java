@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDra
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "59")
+@CardRegistration(set = "C13", collectorNumber = "48")
 public class JacesArchivist extends Card {
 
     public JacesArchivist() {

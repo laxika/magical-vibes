@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Static marker preventing another player from gaining control of the permanent. */
+/**
+ * Static marker: other players can't gain control of the permanent carrying this effect.
+ * Read by the central control-change service; normally granted through {@link GrantEffectEffect}.
+ */
 public record CantBeControlledByOtherPlayersEffect() implements CardEffect {
 }

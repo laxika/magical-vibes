@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "GK1", collectorNumber = "74")
 @CardRegistration(set = "IMA", collectorNumber = "236")
 @CardRegistration(set = "2X2", collectorNumber = "324")
+@CardRegistration(set = "C13", collectorNumber = "291")
+@CardRegistration(set = "CMD", collectorNumber = "275")
 public class GolgariRotFarm extends Card {
 
     public GolgariRotFarm() {

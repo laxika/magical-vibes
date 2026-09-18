@@ -432,6 +432,18 @@ public class DamageSupport {
             return 0;
         }
         if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromDesertsToSelfPrevented(
+                gameData, target, entry, damageSource, false)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, target, entry, damageSource, false)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
                 && gameQueryService.isDamageFromControlledSourceToControlledCreaturePrevented(
                 gameData, target, sourceControllerId)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));

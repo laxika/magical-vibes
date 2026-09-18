@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "211")
 @CardRegistration(set = "4ED", collectorNumber = "177")
 @CardRegistration(set = "ME4", collectorNumber = "110")
+@CardRegistration(set = "ARN", collectorNumber = "37")
 public class BirdMaiden extends Card {
 }

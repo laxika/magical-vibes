@@ -18,8 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link EachPlayerPaysAnyManaForTokensEffect} (Liege of the Hollows): each player may
- * pay any amount of mana, then each creates one token per mana they paid.
+ * Resolves {@link EachPlayerPaysAnyManaForTokensEffect}: each player may pay any amount of mana,
+ * then each creates tokens according to the effect's configured payment scope.
  *
  * <p>Players are prompted once each in APNAP order (CR 101.4). The flow is driven one player at a
  * time and re-runs on every X-value choice. Each prompt is a mana-payment
@@ -72,7 +72,7 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
                 gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay {" + amount + "} for " + cardName
                                 + " (tap mana sources, then choose again)."));
-                promptPlayer(gameData, state, playerId, cardName);
+                promptPlayer(gameData, state, playerId, cardName, payEffect);
                 return;
             }
             new ManaCost("{0}").pay(pool, amount);
@@ -108,25 +108,32 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
                 state.index++;
                 continue;
             }
-            promptPlayer(gameData, state, playerId, cardName);
+            promptPlayer(gameData, state, playerId, cardName, effect);
             return;
         }
         finish(gameData, effect, cardName);
     }
 
-    private void promptPlayer(GameData gameData, EachPlayerPayManaState state, UUID playerId, String cardName) {
+    private void promptPlayer(GameData gameData, EachPlayerPayManaState state, UUID playerId, String cardName,
+                              EachPlayerPaysAnyManaForTokensEffect effect) {
         state.currentPlayerId = playerId;
-        String prompt = "Pay any amount of mana for " + cardName
-                + ". You will create a 1/1 Squirrel token for each mana paid.";
+        String tokenName = effect.token().tokenName();
+        String prompt = "Pay any amount of mana for " + cardName + "."
+                + (effect.eachPlayerCreatesTotal()
+                ? " You will create " + tokenName + " tokens equal to the total mana paid."
+                : " You will create one " + tokenName + " token for each mana paid.");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
                 playerId, maxPotentialX(gameData, playerId), prompt, cardName, true));
     }
 
-    /** Creates each player's tokens (one per mana paid) and clears the flow. */
+    /** Creates each player's tokens and clears the flow. */
     private void finish(GameData gameData, EachPlayerPaysAnyManaForTokensEffect effect, String cardName) {
         EachPlayerPayManaState state = gameData.eachPlayerPayMana;
+        int totalManaPaid = state.manaPaid.values().stream().mapToInt(Integer::intValue).sum();
         for (UUID playerId : state.order) {
-            int count = state.manaPaid.getOrDefault(playerId, 0);
+            int count = effect.eachPlayerCreatesTotal()
+                    ? totalManaPaid
+                    : state.manaPaid.getOrDefault(playerId, 0);
             if (count > 0) {
                 permanentControlSupport.applyCreateToken(gameData, playerId, effect.token(), count,
                         state.sourceSetCode);

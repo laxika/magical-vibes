@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Set;
@@ -90,8 +92,9 @@ class AphettoRunecasterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
 
-    @Test
-    void mayDrawWhenIllusionaryMaskCreatureTurnsFaceUpAfterDamage() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void mayDrawWhenIllusionaryMaskCreatureTurnsFaceUpAutomatically(boolean tapped) {
         Card drawn = new ScornfulEgotist();
         harness.setLibrary(player1, List.of(drawn));
         harness.addToBattlefield(player1, new AphettoRunecaster());
@@ -106,14 +109,24 @@ class AphettoRunecasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent maskedCreature = findPermanent(player1, "Scornful Egotist");
-        maskedCreature.addMarkedDamage(null, 1);
+        if (tapped) {
+            maskedCreature.tap();
+        } else {
+            maskedCreature.addMarkedDamage(null, 1);
+        }
         assertThat(maskedCreature.isFaceDown()).isFalse();
         harness.passBothPriorities();
+        if (!tapped) {
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(maskedCreature.getCard());
+        }
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(drawn);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(maskedCreature.isPendingAutomaticTurnFaceUp()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

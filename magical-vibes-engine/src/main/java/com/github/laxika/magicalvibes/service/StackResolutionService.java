@@ -347,6 +347,8 @@ public class StackResolutionService {
         perm.setGrantedDevour(entry.getGrantedDevour());
         entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
                 effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
+        entry.getPersistentTriggeredEffectsOnEntry().forEach((slot, effects) ->
+                effects.forEach(effect -> perm.addPersistentTriggeredEffect(slot, effect)));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
         if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()
@@ -1237,6 +1239,7 @@ public class StackResolutionService {
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }

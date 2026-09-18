@@ -67,8 +67,6 @@ class RushOfKnowledgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .anyMatch(permanent -> permanent.isFaceDown())).isTrue();
 

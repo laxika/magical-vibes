@@ -19,7 +19,7 @@ public class ObNixilisTheHateTwisted extends Card {
     public ObNixilisTheHateTwisted() {
         // Whenever an opponent draws a card, Ob Nixilis deals 1 damage to that player.
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
 
         // −2: Destroy target creature. Its controller draws two cards.
         addActivatedAbility(new ActivatedAbility(

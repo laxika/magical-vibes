@@ -1766,7 +1766,7 @@ public class CastingCostService {
 
         var lifeCost = altCast.getCost(LifeCastingCost.class);
         if (lifeCost.isPresent()
-                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && (!gameQueryService.canPayLifeForCosts(gameData)
                 || !gameQueryService.canPlayerLifeChange(gameData, playerId)
                 || gameData.getLife(playerId) < lifeCost.get().amount())) {
             return false;
@@ -1892,7 +1892,13 @@ public class CastingCostService {
         if (costs.isEmpty()) return true;
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null) return false;
-        return canMatchDiscardCosts(hand, sourceCard, costs, 0, new HashSet<>());
+        List<DiscardCardCastingCost> individualCosts = new ArrayList<>();
+        for (DiscardCardCastingCost cost : costs) {
+            for (int i = 0; i < cost.count(); i++) {
+                individualCosts.add(cost);
+            }
+        }
+        return canMatchDiscardCosts(hand, sourceCard, individualCosts, 0, new HashSet<>());
     }
 
     private boolean canMatchDiscardCosts(List<Card> hand, Card sourceCard,
@@ -2261,7 +2267,7 @@ public class CastingCostService {
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
-                || (gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || (gameQueryService.canPayLifeForCosts(gameData)
                 && gameData.getLife(playerId) >= lifeCost.get().amount());
     }
 
@@ -2401,7 +2407,7 @@ public class CastingCostService {
                 continue;
             } else if (cost instanceof LifeCastingCost lifeCost) {
                 if (gameData.getLife(playerId) < lifeCost.amount()
-                        || !gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+                        || !gameQueryService.canPayLifeForCosts(gameData)) {
                     return false;
                 }
             } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {

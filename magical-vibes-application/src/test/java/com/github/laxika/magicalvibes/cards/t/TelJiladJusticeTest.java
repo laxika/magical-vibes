@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +18,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TelJiladJustice.class, FountainOfYouth.class, Forest.class, GrizzlyBears.class})
 class TelJiladJusticeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target artifact and scries 2")
     void destroysArtifactAndScriesTwo() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()).getId();
         Card bottom = new Forest();
         Card top = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bottom, top));
@@ -31,8 +32,7 @@ class TelJiladJusticeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Fountain of Youth");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
@@ -58,5 +58,26 @@ class TelJiladJusticeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
+    }
+
+    @Test
+    @DisplayName("Fizzles without scrying if the target leaves before resolution")
+    void fizzlesWithoutScryingIfTargetLeavesBeforeResolution() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()).getId();
+        Card bottom = new Forest();
+        Card top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bottom, top));
+        harness.setHand(player1, List.of(new TelJiladJustice()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom, top);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Tel-Jilad Justice");
     }
 }

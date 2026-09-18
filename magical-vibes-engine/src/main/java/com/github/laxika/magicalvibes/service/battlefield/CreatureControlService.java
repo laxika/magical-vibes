@@ -95,9 +95,11 @@ public class CreatureControlService {
      * @param sourceCardName    name of the card whose spell/ability created the effect
      */
     public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
-                                      CardEffect wrappedEffect, EffectDuration duration,
-                                      UUID sourcePermanentId, String sourceCardName) {
-        if (gameQueryService.cantBeControlledByOtherPlayers(gameData, target, newControllerId)) {
+                                   CardEffect wrappedEffect, EffectDuration duration,
+                                   UUID sourcePermanentId, String sourceCardName) {
+        UUID currentControllerId = gameData.findControllerOf(target);
+        if (currentControllerId != null && !currentControllerId.equals(newControllerId)
+                && gameQueryService.cantBeControlledByOtherPlayers(gameData, target)) {
             return false;
         }
         FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
