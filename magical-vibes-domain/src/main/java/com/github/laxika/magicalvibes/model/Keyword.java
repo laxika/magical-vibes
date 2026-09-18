@@ -137,7 +137,8 @@ public enum Keyword {
     STORIED,
     UNDERDOG,
     DISGUISE,
-    STATION;
+    STATION,
+    FREERUNNING;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

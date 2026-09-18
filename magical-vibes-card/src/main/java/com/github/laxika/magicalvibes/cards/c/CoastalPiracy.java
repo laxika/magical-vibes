@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "67")
 @CardRegistration(set = "MMQ", collectorNumber = "68")
+@CardRegistration(set = "ACR", collectorNumber = "84")
 public class CoastalPiracy extends Card {
 
     public CoastalPiracy() {

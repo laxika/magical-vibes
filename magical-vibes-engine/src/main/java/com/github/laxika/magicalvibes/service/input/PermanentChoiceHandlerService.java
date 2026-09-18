@@ -424,6 +424,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateTokenCopiesAttacking(gameData, permanentId, tokenCopies);
+        } else if (context instanceof PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking tokenCopies) {
+            triggerHandler.handleCreateMemoryCounterTokenCopiesAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.RevealUntilCardPredicateAttackTarget revealAttack) {
             triggerHandler.handleRevealUntilCardPredicateAttackTarget(gameData, permanentId, revealAttack);
         } else if (context instanceof PermanentChoiceContext.ChosenPermanentAttackTarget chosenAttackTarget) {

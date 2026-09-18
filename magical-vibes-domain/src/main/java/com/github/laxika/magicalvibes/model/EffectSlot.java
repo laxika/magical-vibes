@@ -803,6 +803,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  while this card is in the controller's graveyard.  The attacker count is passed via
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+    /** Triggers once per unblocked creature the controller controls while this card is in exile. */
+    EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
     /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
      *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
      *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
@@ -896,6 +898,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+    /** Triggers once for each lore counter put on a Saga the controller controls. */
+    ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
     /** Triggers once for each counter put on a creature the controller controls. */
     ON_ALLY_COUNTER_PUT_ON_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "2XM", collectorNumber = "121")
 @CardRegistration(set = "KLR", collectorNumber = "116")
 @CardRegistration(set = "SS3", collectorNumber = "2")
+@CardRegistration(set = "ACR", collectorNumber = "94")
 @CardRegistration(set = "SLZ", collectorNumber = "55")
 @CardRegistration(set = "SLZ", collectorNumber = "176")
 @CardRegistration(set = "SLZ", collectorNumber = "297")

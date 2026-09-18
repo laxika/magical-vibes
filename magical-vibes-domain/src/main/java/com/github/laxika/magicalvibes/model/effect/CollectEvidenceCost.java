@@ -33,6 +33,12 @@ public record CollectEvidenceCost(int minimumManaValue, boolean optional, boolea
         return new CollectEvidenceCost(minimumSymbols, false, false, filter, color, false);
     }
 
+    /** Creates a filtered graveyard mana-value cost without triggering collect-evidence abilities. */
+    public static CollectEvidenceCost forManaValueWithoutCollectingEvidence(int minimumManaValue,
+                                                                              CardPredicate filter) {
+        return new CollectEvidenceCost(minimumManaValue, false, false, filter, null, false);
+    }
+
     public boolean usesTargetManaValue() {
         return targetManaValue;
     }
@@ -44,8 +50,8 @@ public record CollectEvidenceCost(int minimumManaValue, boolean optional, boolea
         if (targetManaValue && (cardFilter != null || manaSymbolColor != null)) {
             throw new IllegalArgumentException("Target mana value cannot use a card filter or colored mana symbols");
         }
-        if (manaSymbolColor == null && !triggersCollectEvidence) {
-            throw new IllegalArgumentException("A non-evidence graveyard threshold must count mana symbols");
+        if (manaSymbolColor == null && !triggersCollectEvidence && cardFilter == null) {
+            throw new IllegalArgumentException("A non-evidence graveyard threshold must count mana symbols or use a card filter");
         }
     }
 }

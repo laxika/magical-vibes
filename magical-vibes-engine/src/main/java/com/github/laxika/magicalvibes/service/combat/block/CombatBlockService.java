@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -257,6 +258,7 @@ public class CombatBlockService {
             }
             collectUnblockedAttackTriggers(gameData, activeId, defenderId);
             checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
+            checkUnblockedExileCardTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerGainLifeTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerUntapRemoveTriggers(gameData, unblockedAttackers);
@@ -808,6 +810,7 @@ public class CombatBlockService {
             }
         }
         checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
+        checkUnblockedExileCardTriggers(gameData, activeId, unblockedAttackers);
 
         // "Whenever a creature you control attacks and isn't blocked, you may have it deal damage
         // equal to its power to a target creature. If you do, it assigns no combat damage"
@@ -1562,6 +1565,58 @@ public class CombatBlockService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS_UNBLOCKED trigger for {} unblocked",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+            }
+        }
+        return pushed;
+    }
+
+    /** Collects triggers from face-up cards in exile that watch for unblocked attacks. */
+    private int checkUnblockedExileCardTriggers(GameData gameData, UUID activeId,
+                                                List<Permanent> unblockedAttackers) {
+        if (unblockedAttackers.isEmpty()) {
+            return 0;
+        }
+        int pushed = 0;
+        for (ExiledCardEntry exiled : new ArrayList<>(gameData.exiledCards)) {
+            if (!activeId.equals(exiled.ownerId()) || exiled.faceDown()) {
+                continue;
+            }
+            Card card = exiled.card();
+            List<CardEffect> effects = card.getEffects(EffectSlot.EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            for (Permanent attacker : unblockedAttackers) {
+                List<CardEffect> matchingEffects = new ArrayList<>();
+                for (CardEffect effect : effects) {
+                    if (effect instanceof TriggeringCardConditionalEffect conditional
+                            && !predicateEvaluationService.matchesCardPredicate(
+                            attacker.getCard(), conditional.predicate(), null, gameData, activeId)) {
+                        continue;
+                    }
+                    matchingEffects.add(effect instanceof TriggeringCardConditionalEffect conditional
+                            ? conditional.wrapped() : effect);
+                }
+                if (matchingEffects.isEmpty()) {
+                    continue;
+                }
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        activeId,
+                        card.getName() + "'s unblocked-attacker trigger",
+                        matchingEffects,
+                        attacker.getId(),
+                        exiled.sourcePermanentId());
+                trigger.setNonTargeting(true);
+                trigger.setAttackedTargetId(attacker.getAttackTarget());
+                trigger.setTriggeringPermanentId(attacker.getId());
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(card).text("'s unblocked-attacker ability triggers.").build());
+                log.info("Game {} - {} exile trigger for {} unblocked",
+                        gameData.id, card.getName(), attacker.getCard().getName());
+                pushed++;
             }
         }
         return pushed;

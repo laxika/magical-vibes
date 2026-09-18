@@ -326,6 +326,9 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for a lore counter placed on a Saga the placing player controls. */
+    record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
+
     /** Context for a controller untapping one or more permanents during their untap step. */
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */

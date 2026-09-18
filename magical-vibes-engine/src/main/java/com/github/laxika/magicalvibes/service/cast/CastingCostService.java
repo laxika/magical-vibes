@@ -1736,6 +1736,21 @@ public class CastingCostService {
                                 getAlternateHandCastCostModifier(gameData, playerId, card)))
                         .orElse(false);
             }
+            var grantedFreerunning = gameQueryService.findGrantedFreerunningAlternateCast(gameData, playerId, card);
+            if (grantedFreerunning.isPresent()) {
+                AlternateHandCast altCast = grantedFreerunning.get();
+                if (altCast.availabilityCondition() != null
+                        && !conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
+                    return false;
+                }
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
             var adventureCast = card.getCastingOption(AdventureCast.class);
             if (adventureCast.isPresent()) {
                 Card adventureFace = card.getBackFaceCard() != null ? card.getBackFaceCard() : card;

@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesInAllZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -120,6 +121,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEff
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMonocoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromModifiedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
@@ -278,6 +280,7 @@ public final class LayerClassifier {
         map.put(GrantSupertypeToPermanentsWithCountersEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSupertypeUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantChosenSubtypeToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantSubtypeToOwnCreaturesInAllZonesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantChosenBasicLandTypeToOwnLandsEffect.class, fixed(Layer.L4_TYPE, Layer.L6_ABILITIES));
         map.put(EnchantedPermanentBecomesTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(EnchantedPermanentBecomesChosenTypeEffect.class, fixed(Layer.L4_TYPE));
@@ -404,6 +407,7 @@ public final class LayerClassifier {
         map.put(GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect.class,
                 fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(RemoveAllProtectionUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(CountAsCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(MaroGoneNutsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveProtectionFromColorUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));

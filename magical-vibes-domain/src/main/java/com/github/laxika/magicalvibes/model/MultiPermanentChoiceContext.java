@@ -527,7 +527,7 @@ public sealed interface MultiPermanentChoiceContext {
     record DestroyRestChoice(java.util.List<PendingForcedSacrifice> remainingChoosers,
                              java.util.List<UUID> protectedIds, String sourceName,
                              com.github.laxika.magicalvibes.model.filter.PermanentPredicate destructionFilter,
-                             String choicePrompt, boolean requiresChoice)
+                             String choicePrompt, boolean requiresChoice, int requiredCount)
             implements MultiPermanentChoiceContext {
     }
 

@@ -1,4 +1,6 @@
 # Card Patterns: Artifacts, Vehicles & Equipment
+
+Conditional boost, indestructible, and all-damage prevention Equipment: `c/CaduceusStaffOfHermes.java` uses lifelink on the equipped creature plus two `ConditionalEffect(new ControllerLifeAtLeast(30), ...)` static effects for `StaticBoostEffect(5, 5, INDESTRUCTIBLE, EQUIPPED_CREATURE)` and `PreventAllDamageToAttachedCreatureEffect`, followed by `EquipActivatedAbility("{W}{W}")`.
 - Buster Sword: `STATIC StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE)` + `ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect(1)` + `MayCastAnySpellFromHandWithoutPayingManaCostEffect(new EventValue())` + `EquipActivatedAbility("{2}")`; the dynamic cap uses damage dealt to the player and excludes lands.
 
 All paths relative to `cards/`.
@@ -144,6 +146,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Vehicle with an Assassin-crewed attack trigger | `a/Adrestia.java` | CrewCost(1) + AnimatePermanentsEffect.crew(); gate the ON_ATTACK `DrawCardEffect(1)` and `SourceBecomesSubtypeUntilEndOfTurnEffect(ASSASSIN)` with `ConditionalEffect(new SourceWasCrewedBySubtypeThisTurn(ASSASSIN), SequenceEffect.of(...))`, recording the crewer's subtype at Crew payment time |
 | Creature that crews using toughness | `g/GiantOx.java` | STATIC `UseToughnessForCrewAndSaddleEffect()`; `CrewCostHandler` uses that creature's effective toughness instead of power |
 | Vehicle with Crew + combat trigger | `w/Weatherlight.java` | CrewCost(3) + AnimatePermanentsEffect.crew() activated ability (no tap, no mana). ON_COMBAT_DAMAGE_TO_PLAYER LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, CardIsHistoricPredicate()). Crew cost auto-pays when all creatures must be tapped; prompts interactively otherwise |
 | Vehicle with Crew + combat-damage mill and optional permanent reanimation | `m/MoleModule.java` | CrewCost(2) + AnimatePermanentsEffect.crew() activated ability. ON_COMBAT_DAMAGE_TO_PLAYER MillControllerAndPutMilledCardOntoBattlefieldEffect(4, CardIsPermanentPredicate, false) |
