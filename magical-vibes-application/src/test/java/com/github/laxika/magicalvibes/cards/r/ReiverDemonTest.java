@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.a.AlloyMyr;
@@ -43,16 +42,16 @@ class ReiverDemonTest extends BaseCardTest {
     void enteringWithoutBeingCastFromHandDoesNotDestroyCreatures() {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.setGraveyard(player1, List.of(new ReiverDemon()));
+        ReiverDemon target = new ReiverDemon();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
-        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, target.getName());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
