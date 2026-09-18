@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "129")
+@CardRegistration(set = "RVR", collectorNumber = "109")
 public class GreaterForgeling extends Card {
 
     public GreaterForgeling() {

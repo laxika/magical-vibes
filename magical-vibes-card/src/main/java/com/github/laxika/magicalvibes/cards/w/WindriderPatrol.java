@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "89")
+@CardRegistration(set = "PIO", collectorNumber = "80")
 public class WindriderPatrol extends Card {
 
     public WindriderPatrol() {

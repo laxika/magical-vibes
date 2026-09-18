@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.g.GoblinSledder;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -13,27 +13,27 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PatriarchsBidding.class, GrizzlyBears.class, HillGiant.class, AvianChangeling.class})
+@CardUsed({PatriarchsBidding.class, ElvishWarrior.class, GoblinSledder.class, AvianChangeling.class})
 class PatriarchsBiddingTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Each player chooses a type and returns matching creatures from their graveyard")
+    @DisplayName("Each player chooses a type and returns all matching creatures from their graveyard")
     void eachPlayerChoosesTheirOwnType() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new HillGiant()));
+        harness.setGraveyard(player1, List.of(new ElvishWarrior(), new ElvishWarrior(), new GoblinSledder()));
+        harness.setGraveyard(player2, List.of(new GoblinSledder(), new GoblinSledder(), new ElvishWarrior()));
         cast();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player1, "ELF");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, "GIANT");
+        harness.handleListChoice(player2, "GOBLIN");
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Hill Giant");
-        harness.assertInGraveyard(player1, "Hill Giant");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Elvish Warrior")).hasSize(2);
+        assertThat(findPermanents(player2, "Goblin Sledder")).hasSize(2);
+        harness.assertInGraveyard(player1, "Goblin Sledder");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
     }
 
     @Test
@@ -50,11 +50,47 @@ class PatriarchsBiddingTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Avian Changeling")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("No cards return when a chosen type is absent from a graveyard")
+    void doesNothingWhenChosenTypesAreAbsent() {
+        harness.setGraveyard(player1, List.of(new ElvishWarrior()));
+        harness.setGraveyard(player2, List.of());
+        cast();
+
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleListChoice(player2, "ELF");
+
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player2, "Goblin Sledder");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The active player chooses their creature type first")
+    void activePlayerChoosesFirst() {
+        harness.setGraveyard(player1, List.of(new ElvishWarrior()));
+        harness.setGraveyard(player2, List.of(new GoblinSledder()));
+        harness.forceActivePlayer(player2);
+        cast(player2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "GOBLIN");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleListChoice(player1, "ELF");
+
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+        harness.assertOnBattlefield(player2, "Goblin Sledder");
+    }
+
     private void cast() {
-        harness.setHand(player1, List.of(new PatriarchsBidding()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
+        cast(player1);
+    }
+
+    private void cast(Player caster) {
+        harness.castFromHand(caster, new PatriarchsBidding(), "{3}{B}{B}");
         harness.passBothPriorities();
     }
 }

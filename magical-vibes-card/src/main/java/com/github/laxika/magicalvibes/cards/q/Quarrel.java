@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTarge
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOB", collectorNumber = "135")
+@CardRegistration(set = "HOC", collectorNumber = "135")
 public class Quarrel extends Card {
 
     public Quarrel() {

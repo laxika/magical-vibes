@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "221")
+@CardRegistration(set = "RVR", collectorNumber = "248")
 public class AssureAssemble extends Card {
 
     public AssureAssemble() {

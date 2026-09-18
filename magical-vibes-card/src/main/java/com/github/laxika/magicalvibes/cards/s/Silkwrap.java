@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "38")
 @CardRegistration(set = "Q06", collectorNumber = "4")
+@CardRegistration(set = "PIO", collectorNumber = "33")
 public class Silkwrap extends Card {
 
     public Silkwrap() {

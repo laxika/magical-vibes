@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCast
 
 @CardRegistration(set = "DGM", collectorNumber = "96")
 @CardRegistration(set = "GK2", collectorNumber = "18")
+@CardRegistration(set = "PIO", collectorNumber = "394")
 public class RenderSilent extends Card {
 
     public RenderSilent() {

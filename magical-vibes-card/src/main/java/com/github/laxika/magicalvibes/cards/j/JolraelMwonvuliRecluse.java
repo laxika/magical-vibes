@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "191")
+@CardRegistration(set = "DMR", collectorNumber = "165")
 public class JolraelMwonvuliRecluse extends Card {
 
     public JolraelMwonvuliRecluse() {

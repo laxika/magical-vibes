@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "45")
 @CardRegistration(set = "DDQ", collectorNumber = "21")
+@CardRegistration(set = "SIR", collectorNumber = "52")
 public class Topplegeist extends Card {
 
     public Topplegeist() {

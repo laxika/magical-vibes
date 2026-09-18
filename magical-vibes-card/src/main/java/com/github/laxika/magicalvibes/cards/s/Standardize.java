@@ -6,13 +6,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 
-import java.util.Set;
-
 @CardRegistration(set = "ONS", collectorNumber = "116")
 public class Standardize extends Card {
 
     public Standardize() {
         addEffect(EffectSlot.SPELL,
-                new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope.ALL_CREATURES, Set.of()));
+                new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope.ALL_CREATURES));
     }
 }

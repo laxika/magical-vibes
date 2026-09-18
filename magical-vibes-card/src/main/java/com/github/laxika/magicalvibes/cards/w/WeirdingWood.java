@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "240")
+@CardRegistration(set = "SIR", collectorNumber = "226")
 public class WeirdingWood extends Card {
 
     public WeirdingWood() {

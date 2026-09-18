@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "180")
 @CardRegistration(set = "MID", collectorNumber = "166")
+@CardRegistration(set = "DBL", collectorNumber = "166")
 public class VoldarenAmbusher extends Card {
 
     public VoldarenAmbusher() {

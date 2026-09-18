@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "46")
+@CardRegistration(set = "RVR", collectorNumber = "42")
+@CardRegistration(set = "RVR", collectorNumber = "314")
 public class DriftOfPhantasms extends Card {
 
     public DriftOfPhantasms() {

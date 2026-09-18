@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,19 +16,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlashOfInsight.class, AirElemental.class, GrizzlyBears.class, Plains.class})
+@CardUsed({FlashOfInsight.class, HaplessResearcher.class, SuntailHawk.class})
 class FlashOfInsightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flashback exiles X blue cards and looks at X cards")
     void flashbackExilesBlueCardsAndResolvesXEffect() {
-        Card top1 = new GrizzlyBears();
-        Card top2 = new Plains();
-        Card top3 = new AirElemental();
-        Card belowTop = new GrizzlyBears();
-        Card blue1 = new AirElemental();
-        Card blue2 = new AirElemental();
-        Card blue3 = new AirElemental();
+        Card top1 = new SuntailHawk();
+        Card top2 = new HaplessResearcher();
+        Card top3 = new SuntailHawk();
+        Card belowTop = new SuntailHawk();
+        Card blue1 = new HaplessResearcher();
+        Card blue2 = new HaplessResearcher();
+        Card blue3 = new HaplessResearcher();
         Card spell = new FlashOfInsight();
 
         harness.setHand(player1, List.of());
@@ -65,8 +64,8 @@ class FlashOfInsightTest extends BaseCardTest {
     @DisplayName("Flashback rejects a non-blue or incorrectly sized graveyard selection")
     void flashbackRequiresExactlyXBlueCards() {
         Card spell = new FlashOfInsight();
-        Card blue = new AirElemental();
-        Card nonBlue = new GrizzlyBears();
+        Card blue = new HaplessResearcher();
+        Card nonBlue = new SuntailHawk();
         harness.setGraveyard(player1, List.of(spell, blue, nonBlue));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -77,5 +76,70 @@ class FlashOfInsightTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell, blue, nonBlue);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A normal cast looks at the top X cards even when the library is shorter than X")
+    void normalCastLooksAtAvailableCardsWhenLibraryIsShorterThanX() {
+        Card top1 = new SuntailHawk();
+        Card top2 = new HaplessResearcher();
+        Card spell = new FlashOfInsight();
+
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(top1, top2));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantForX(player1, 0, 3, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(top1, top2);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.reorderRemainingToBottom()).isTrue();
+
+        harness.handleMultipleCardsChosen(player1, List.of(top2.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot exile Flash of Insight itself")
+    void flashbackCannotExileItself() {
+        Card spell = new FlashOfInsight();
+        Card blue = new HaplessResearcher();
+        harness.setGraveyard(player1, List.of(spell, blue));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.ensurePriority(player1);
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 1, null, List.of(), List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell, blue);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Flashback with X equal to zero does not exile graveyard cards or open a library choice")
+    void zeroFlashbackDoesNotExileCardsOrOpenChoice() {
+        Card spell = new FlashOfInsight();
+        Card libraryCard = new SuntailHawk();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
     }
 }

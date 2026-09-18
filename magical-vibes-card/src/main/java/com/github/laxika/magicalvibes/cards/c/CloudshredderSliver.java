@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Set;
 
+@CardRegistration(set = "MH1", collectorNumber = "195")
 @CardRegistration(set = "TSR", collectorNumber = "373")
 public class CloudshredderSliver extends Card {
 

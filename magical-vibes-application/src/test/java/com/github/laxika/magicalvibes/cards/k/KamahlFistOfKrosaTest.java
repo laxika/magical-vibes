@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KamahlFistOfKrosa.class, Forest.class, GrizzlyBears.class})
+@CardUsed({KamahlFistOfKrosa.class, Forest.class, ElvishWarrior.class})
 @DisplayName("Kamahl, Fist of Krosa")
 class KamahlFistOfKrosaTest extends BaseCardTest {
 
@@ -25,6 +25,22 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
     void animatesTargetLand() {
         Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
         Permanent land = addPermanent(player1, new Forest());
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can animate a land controlled by an opponent")
+    void animatesOpponentLand() {
+        Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
+        Permanent land = addPermanent(player2, new Forest());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, battlefieldIndex(kamahl), 0, null, land.getId());
@@ -58,8 +74,8 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
     @DisplayName("Boosts your creatures and gives them trample, but not an opponent's creatures")
     void boostsOwnCreaturesAndGrantsTrample() {
         Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
-        Permanent ownCreature = addPermanent(player1, new GrizzlyBears());
-        Permanent opponentCreature = addPermanent(player2, new GrizzlyBears());
+        Permanent ownCreature = addPermanent(player1, new ElvishWarrior());
+        Permanent opponentCreature = addPermanent(player2, new ElvishWarrior());
         int kamahlPower = kamahl.getEffectivePower();
         int kamahlToughness = kamahl.getEffectiveToughness();
         int ownPower = ownCreature.getEffectivePower();
@@ -86,7 +102,7 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
     @DisplayName("The boost and trample wear off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
-        Permanent ownCreature = addPermanent(player1, new GrizzlyBears());
+        Permanent ownCreature = addPermanent(player1, new ElvishWarrior());
         int kamahlPower = kamahl.getEffectivePower();
         int ownPower = ownCreature.getEffectivePower();
 
@@ -108,7 +124,7 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
     @DisplayName("The first ability cannot target a nonland permanent")
     void cannotTargetNonland() {
         Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
-        Permanent creature = addPermanent(player2, new GrizzlyBears());
+        Permanent creature = addPermanent(player2, new ElvishWarrior());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
 

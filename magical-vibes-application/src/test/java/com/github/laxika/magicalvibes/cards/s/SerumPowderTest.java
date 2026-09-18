@@ -161,4 +161,19 @@ class SerumPowderTest extends BaseCardTest {
         assertThat(gameData.mulliganCounts).containsEntry(player.getId(), 0);
         assertThat(gameData.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    void anEmptyLibraryDuringPregameDrawDefersTheLossUntilPlayBegins() {
+        GameTestHarness mulliganHarness = new GameTestHarness();
+        Player player = mulliganHarness.getPlayer1();
+        GameData game = mulliganHarness.getGameData();
+        mulliganHarness.setHand(player, List.of(new SerumPowder()));
+        mulliganHarness.setLibrary(player, List.of());
+        mulliganHarness.getGameService().mulligan(game, player);
+        mulliganHarness.handleMayAbilityChosen(player, true);
+        assertThat(game.status).isEqualTo(GameStatus.MULLIGAN);
+        assertThat(game.gameResult).isNull();
+        assertThat(game.playersAttemptedDrawFromEmptyLibrary).contains(player.getId());
+        assertThat(game.playerHands.get(player.getId())).isEmpty();
+    }
 }

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "128")
 @CardRegistration(set = "M14", collectorNumber = "138")
+@CardRegistration(set = "GN3", collectorNumber = "72")
 public class DragonHatchling extends Card {
 
     public DragonHatchling() {

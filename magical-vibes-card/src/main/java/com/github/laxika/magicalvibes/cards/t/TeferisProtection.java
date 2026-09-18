@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextT
 import com.github.laxika.magicalvibes.model.effect.PhaseOutPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
+@CardRegistration(set = "2X2", collectorNumber = "32")
 @CardRegistration(set = "STA", collectorNumber = "11")
+@CardRegistration(set = "TLE", collectorNumber = "7")
+@CardRegistration(set = "MAR", collectorNumber = "51")
 public class TeferisProtection extends Card {
 
     public TeferisProtection() {

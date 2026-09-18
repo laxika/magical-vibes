@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "55")
+@CardRegistration(set = "DBL", collectorNumber = "322")
 public class CruelWitness extends Card {
 
     public CruelWitness() {

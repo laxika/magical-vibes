@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeDayAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "12")
+@CardRegistration(set = "DBL", collectorNumber = "12")
 public class CelestusSanctifier extends Card {
 
     public CelestusSanctifier() {

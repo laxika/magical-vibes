@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "267")
+@CardRegistration(set = "RVR", collectorNumber = "264")
 public class PariahsShield extends Card {
 
     public PariahsShield() {

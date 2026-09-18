@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "88")
+@CardRegistration(set = "AA4", collectorNumber = "17")
 public class DragonTyrant extends Card {
 
     public DragonTyrant() {

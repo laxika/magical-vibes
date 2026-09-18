@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "18")
+@CardRegistration(set = "DBL", collectorNumber = "18")
 public class FatefulAbsence extends Card {
 
     public FatefulAbsence() {

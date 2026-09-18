@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "255")
+@CardRegistration(set = "DBL", collectorNumber = "522")
 public class DollhouseOfHorrors extends Card {
 
     public DollhouseOfHorrors() {

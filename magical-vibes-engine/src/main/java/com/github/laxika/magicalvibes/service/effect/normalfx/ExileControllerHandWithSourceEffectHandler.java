@@ -46,7 +46,8 @@ public class ExileControllerHandWithSourceEffectHandler implements NormalEffectH
         List<Card> toExile = new ArrayList<>(hand);
         hand.clear();
         for (Card card : toExile) {
-            exileService.exileCard(gameData, controllerId, card, sourcePermanentId);
+            UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
+            exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
         }
 
         String controllerName = gameData.playerIdToName.get(controllerId);

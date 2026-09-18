@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "117")
+@CardRegistration(set = "DBL", collectorNumber = "117")
 public class NoviceOccultist extends Card {
 
     public NoviceOccultist() {

@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "MM3", collectorNumber = "9")
 @CardRegistration(set = "TSR", collectorNumber = "295")
 @CardRegistration(set = "HA5", collectorNumber = "3")
+@CardRegistration(set = "WOT", collectorNumber = "6")
 public class IntangibleVirtue extends Card {
 
     public IntangibleVirtue() {

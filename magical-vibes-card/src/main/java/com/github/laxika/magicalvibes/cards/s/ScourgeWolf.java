@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "SOI", collectorNumber = "179")
+@CardRegistration(set = "SIR", collectorNumber = "175")
 public class ScourgeWolf extends Card {
 
     public ScourgeWolf() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FurnaceDragon.class, DarksteelCitadel.class, CrazedGoblin.class})
+@CardUsed({FurnaceDragon.class, DarksteelCitadel.class, CrazedGoblin.class, BeaconOfUnrest.class})
 class FurnaceDragonTest extends BaseCardTest {
 
     @Test
@@ -86,9 +87,15 @@ class FurnaceDragonTest extends BaseCardTest {
     void enteringNotFromHandDoesNotExileArtifacts() {
         harness.addToBattlefield(player1, new DarksteelCitadel());
         harness.addToBattlefield(player2, new DarksteelCitadel());
+        FurnaceDragon target = new FurnaceDragon();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new BeaconOfUnrest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.enterBattlefieldAndReturn(player1, new FurnaceDragon());
+        harness.castSorcery(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Furnace Dragon");
         harness.assertOnBattlefield(player1, "Darksteel Citadel");
         harness.assertOnBattlefield(player2, "Darksteel Citadel");

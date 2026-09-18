@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,15 +13,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StagBeetle.class, GrizzlyBears.class, Forest.class})
+@CardUsed({StagBeetle.class, SpinedBasher.class, Island.class})
 class StagBeetleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with one +1/+1 counter for each other creature on the battlefield")
     void entersWithCountersForOtherCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new SpinedBasher());
+        harness.addToBattlefield(player2, new SpinedBasher());
+        harness.addToBattlefield(player1, new Island());
 
         harness.setHand(player1, List.of(new StagBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 5);

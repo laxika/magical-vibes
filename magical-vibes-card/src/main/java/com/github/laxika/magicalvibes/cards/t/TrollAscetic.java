@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "MRD", collectorNumber = "135")
 @CardRegistration(set = "DPA", collectorNumber = "86")
 @CardRegistration(set = "DDL", collectorNumber = "50")
+@CardRegistration(set = "CMD", collectorNumber = "176")
 public class TrollAscetic extends Card {
 
     public TrollAscetic() {

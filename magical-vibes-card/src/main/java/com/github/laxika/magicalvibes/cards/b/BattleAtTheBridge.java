@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "53")
+@CardRegistration(set = "PA1", collectorNumber = "2")
 public class BattleAtTheBridge extends Card {
 
     public BattleAtTheBridge() {

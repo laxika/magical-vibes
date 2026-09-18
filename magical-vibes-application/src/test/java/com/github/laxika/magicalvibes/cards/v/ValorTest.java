@@ -20,12 +20,13 @@ class ValorTest extends BaseCardTest {
     @DisplayName("Grants first strike to the controller's creatures while in the graveyard and a Plains is controlled")
     void grantsFirstStrikeWithPlainsInGraveyard() {
         harness.setGraveyard(player1, List.of(new Valor()));
-        harness.addToBattlefield(player1, new Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, plains, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -61,7 +62,7 @@ class ValorTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
 
-        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
     }

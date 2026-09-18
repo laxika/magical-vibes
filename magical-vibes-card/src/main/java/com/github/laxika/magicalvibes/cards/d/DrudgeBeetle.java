@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * A vanilla 2/2 body; only scavenge needs engine logic.
  */
 @CardRegistration(set = "RTR", collectorNumber = "122")
+@CardRegistration(set = "RVR", collectorNumber = "136")
 public class DrudgeBeetle extends Card {
 
     public DrudgeBeetle() {

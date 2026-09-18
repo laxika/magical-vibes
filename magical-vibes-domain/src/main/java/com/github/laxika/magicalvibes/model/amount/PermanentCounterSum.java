@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * The sum of a counter type on battlefield permanents matching a predicate within a scope.
+ * A {@code null} counter type sums all concrete counter types.
  */
 public record PermanentCounterSum(CounterType counterType, PermanentPredicate filter,
                                   CountScope scope) implements DynamicAmount {

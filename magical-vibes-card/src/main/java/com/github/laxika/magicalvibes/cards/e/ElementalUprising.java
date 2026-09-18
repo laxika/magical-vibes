@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "130")
+@CardRegistration(set = "MB1", collectorNumber = "130")
 public class ElementalUprising extends Card {
 
     public ElementalUprising() {

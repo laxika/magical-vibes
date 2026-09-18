@@ -11,11 +11,12 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 @CardRegistration(set = "VMA", collectorNumber = "190")
 @CardRegistration(set = "DDK", collectorNumber = "68")
 @CardRegistration(set = "EMA", collectorNumber = "150")
+@CardRegistration(set = "DMR", collectorNumber = "144")
 public class SulfuricVortex extends Card {
 
     public SulfuricVortex() {
         addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER));
+                new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER));
     }
 }

@@ -32,15 +32,18 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnly
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesInAllZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -64,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTy
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
@@ -618,15 +622,15 @@ public class LayerSystemService {
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
      *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
      *     (cheap insurance — no L4-L6 input reads hands today);</li>
-     * <li>player life totals, which dynamic base P/T setters may read while producing layer-7b
-     *     entries;</li>
+     * <li>player life totals and turns taken, which dynamic base P/T setters may read while
+     *     producing layer-7b entries;</li>
      * <li>{@code timestampCounter} as stamp-event insurance.</li>
      * </ul>
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
      * every query and only the finished board is cached): emblems, the conditions of the
-     * conditional wrappers the pass did not collect, step state, amount evaluation beyond
-     * the fields above. The wrappers the pass DOES collect are exactly those
+     * conditional wrappers the pass did not collect, amount evaluation beyond the fields above.
+     * The wrappers the pass DOES collect are exactly those
      * whose conditions read only what is hashed here — that is what
      * {@link ConditionBoardStability} decides, so widening it means widening this method too.
      *
@@ -641,6 +645,7 @@ public class LayerSystemService {
         h = mix(h, gameData.stolenCreatures.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         if (gameData.planechase != null) {
             h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));
             for (var planar : gameData.planechase.faceUp) {
@@ -652,6 +657,7 @@ public class LayerSystemService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
+            h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
@@ -728,6 +734,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isCloaked() ? 1 : 0);
         flags = flags << 1 | (p.isRoomDoorUnlocked(0) ? 1 : 0);
         flags = flags << 1 | (p.isRoomDoorUnlocked(1) ? 1 : 0);
+        flags = flags << 1 | (p.isBlockedWithoutBlockers() ? 1 : 0);
         // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.
@@ -783,6 +790,7 @@ public class LayerSystemService {
         h = mix(h, p.getFaceDownPower());
         h = mix(h, p.getFaceDownToughness());
         h = hashEnums(h, p.getFaceDownCardTypes());
+        h = hashEnums(h, p.getFaceDownSubtypes());
 
         h = hashEnums(h, p.getGrantedKeywords());
         h = hashEnums(h, p.getPersistentGrantedKeywords());
@@ -1562,8 +1570,19 @@ public class LayerSystemService {
                 for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
-                            null, false, false, grant.cardType(), null));
+                        null, false, false, grant.cardType(), null));
                 }
+            }
+            case GrantCardTypeToOwnCardsEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedCardTypes().stream().findFirst().ifPresent(grantedType -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addCardType(grantedType);
+                            record(board, instance, target, new L4Contribution(
+                                    null, false, false, grantedType, null));
+                        }));
             }
             case GrantCardTypeToOwnNonlandPermanentsEffect grant -> {
                 manage(board, instance);
@@ -1691,6 +1710,17 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(
                             chosen, false, false, null, null));
                 }
+            }
+            case GrantSubtypeToOwnCreaturesInAllZonesEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedSubtypes().stream().findFirst().ifPresent(subtype -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addSubtype(subtype);
+                            record(board, instance, target, new L4Contribution(
+                                    subtype, false, false, null, null));
+                        }));
             }
             case GrantChosenBasicLandTypeToOwnLandsEffect ignored -> {
                 manage(board, instance);
@@ -2537,6 +2567,8 @@ public class LayerSystemService {
                     }
                     case RemoveProtectionFromColorUntilEndOfTurnEffect remove ->
                             state.removeProtectionColors(Set.of(remove.color()));
+                    case RemoveAllProtectionUntilEndOfTurnEffect ignored ->
+                            state.removeAllProtection();
                     case GrantKeywordEffect grant -> {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),
@@ -2569,6 +2601,11 @@ public class LayerSystemService {
                         state.addStaticEffect(grant.effect());
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), grant.effect());
+                    }
+                    case GrantTriggeredAbilityEffect grant -> {
+                        state.addStaticEffect(grant);
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), grant);
                     }
                     default -> {
                         continue;

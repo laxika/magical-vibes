@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
-import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "148")
 @CardRegistration(set = "ONS", collectorNumber = "155")
 public class HeadGames extends Card {
 
     public HeadGames() {
-        addEffect(EffectSlot.SPELL, new HeadGamesEffect());
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"))
+                .addEffect(EffectSlot.SPELL, new HeadGamesEffect());
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "235")
+@CardRegistration(set = "SIR", collectorNumber = "222")
 public class UlvenwaldHydra extends Card {
 
     public UlvenwaldHydra() {

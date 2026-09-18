@@ -46,8 +46,7 @@ class OmnivorousFlytrapTest extends BaseCardTest {
         harness.setGraveyard(player1, sixCardTypes());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
         assertThat(flytrap.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

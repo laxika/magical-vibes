@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "HOU", collectorNumber = "35")
+@CardRegistration(set = "WOT", collectorNumber = "19")
 public class FrayingSanity extends Card {
 
     public FrayingSanity() {

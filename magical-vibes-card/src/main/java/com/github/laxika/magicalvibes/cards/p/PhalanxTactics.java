@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THB", collectorNumber = "31")
+@CardRegistration(set = "PIO", collectorNumber = "29")
 public class PhalanxTactics extends Card {
 
     public PhalanxTactics() {

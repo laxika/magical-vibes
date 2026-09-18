@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "36")
+@CardRegistration(set = "AA3", collectorNumber = "6")
 public class Miscalculation extends Card {
 
     public Miscalculation() {

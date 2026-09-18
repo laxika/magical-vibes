@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "102")
+@CardRegistration(set = "RVR", collectorNumber = "119")
 public class Mugging extends Card {
 
     public Mugging() {

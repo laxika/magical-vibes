@@ -81,6 +81,26 @@ public final class SetJsonCache {
         return json;
     }
 
+    /** Refreshable cache for legality snapshots; never used for frozen Oracle text. */
+    public synchronized String getRefreshing(String setCode, Duration maxAge) throws IOException, InterruptedException {
+        Files.createDirectories(cacheDir);
+        Path path = fileFor(setCode);
+        if (Files.exists(path) && Files.getLastModifiedTime(path).toInstant()
+                .plus(maxAge).isAfter(java.time.Instant.now())) return Files.readString(path);
+        try {
+            String json = fetch(setCode);
+            CardDataSupport.writeCacheFile(path, json);
+            return json;
+        } catch (IOException e) {
+            if (Files.exists(path)) return Files.readString(path);
+            throw e;
+        }
+    }
+
+    public java.time.Instant updatedAt(String setCode) throws IOException {
+        return Files.getLastModifiedTime(fileFor(setCode)).toInstant();
+    }
+
     private String fetch(String setCode) throws IOException, InterruptedException {
         for (int attempt = 1; attempt <= fetchAttempts; attempt++) {
             try {

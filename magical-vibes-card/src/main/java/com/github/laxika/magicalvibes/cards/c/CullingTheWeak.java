@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "EXO", collectorNumber = "55")
+@CardRegistration(set = "SOA", collectorNumber = "27")
 public class CullingTheWeak extends Card {
 
     public CullingTheWeak() {

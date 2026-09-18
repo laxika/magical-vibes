@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "P02", collectorNumber = "96")
+@CardRegistration(set = "ME4", collectorNumber = "120")
 public class GoblinFirestarter extends Card {
 
     public GoblinFirestarter() {

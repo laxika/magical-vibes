@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "219")
+@CardRegistration(set = "PIO", collectorNumber = "219")
+@CardRegistration(set = "SLC", collectorNumber = "76")
+@CardRegistration(set = "SLC", collectorNumber = "77")
 public class DragonlordOjutai extends Card {
 
     public DragonlordOjutai() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "26")
+@CardRegistration(set = "AA4", collectorNumber = "5")
 public class BringerOfTheBlueDawn extends Card {
 
     public BringerOfTheBlueDawn() {

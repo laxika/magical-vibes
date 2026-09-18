@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndSharingC
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "118")
+@CardRegistration(set = "CMD", collectorNumber = "116")
 public class CleansingBeam extends Card {
 
     public CleansingBeam() {

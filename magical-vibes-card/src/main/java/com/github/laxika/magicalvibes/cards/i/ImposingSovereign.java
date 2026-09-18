@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "22")
+@CardRegistration(set = "PIO", collectorNumber = "18")
 public class ImposingSovereign extends Card {
 
     public ImposingSovereign() {

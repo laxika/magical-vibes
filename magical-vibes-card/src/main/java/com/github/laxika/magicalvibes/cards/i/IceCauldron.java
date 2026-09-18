@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "321")
+@CardRegistration(set = "ME4", collectorNumber = "206")
 public class IceCauldron extends Card {
 
     public IceCauldron() {

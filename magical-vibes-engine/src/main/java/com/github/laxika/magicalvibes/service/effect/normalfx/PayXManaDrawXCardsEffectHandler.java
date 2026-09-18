@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -38,7 +41,11 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
         UUID controllerId = entry.getControllerId();
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
-        int lifeGained = Math.max(0, entry.getEventValue());
+        PayXManaDrawXCardsEffect payEffect = (PayXManaDrawXCardsEffect) effect;
+        int lifeGained = payEffect.maximumX() == null
+                ? Math.max(0, entry.getEventValue())
+                : Math.max(0, amountEvaluationService.evaluate(gameData, payEffect.maximumX(),
+                        AmountContext.forStackEntry(entry, null)));
 
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;

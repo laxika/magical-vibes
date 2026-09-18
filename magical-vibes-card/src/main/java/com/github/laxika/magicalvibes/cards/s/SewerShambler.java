@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Swampwalk is auto-loaded from Scryfall; only scavenge needs engine logic.
  */
 @CardRegistration(set = "RTR", collectorNumber = "75")
+@CardRegistration(set = "RVR", collectorNumber = "91")
 public class SewerShambler extends Card {
 
     public SewerShambler() {

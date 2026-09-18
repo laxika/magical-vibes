@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "137")
+@CardRegistration(set = "PIO", collectorNumber = "153")
 public class RimrockKnight extends Card {
 
     public RimrockKnight() {

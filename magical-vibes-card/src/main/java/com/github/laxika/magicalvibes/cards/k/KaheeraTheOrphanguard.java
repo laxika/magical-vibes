@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "224")
+@CardRegistration(set = "MUL", collectorNumber = "47")
+@CardRegistration(set = "MUL", collectorNumber = "112")
+@CardRegistration(set = "MUL", collectorNumber = "177")
 public class KaheeraTheOrphanguard extends Card {
 
     public KaheeraTheOrphanguard() {

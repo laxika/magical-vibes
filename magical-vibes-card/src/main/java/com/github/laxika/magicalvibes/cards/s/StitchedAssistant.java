@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "81")
+@CardRegistration(set = "DBL", collectorNumber = "348")
 public class StitchedAssistant extends Card {
 
     public StitchedAssistant() {

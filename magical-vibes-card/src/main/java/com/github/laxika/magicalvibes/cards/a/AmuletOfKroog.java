@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "347")
 @CardRegistration(set = "4ED", collectorNumber = "293")
 @CardRegistration(set = "ATQ", collectorNumber = "36")
+@CardRegistration(set = "ME4", collectorNumber = "179")
 public class AmuletOfKroog extends Card {
 
     public AmuletOfKroog() {

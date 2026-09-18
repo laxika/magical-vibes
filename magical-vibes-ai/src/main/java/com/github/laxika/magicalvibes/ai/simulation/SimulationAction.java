@@ -9,7 +9,9 @@ import java.util.UUID;
  */
 public sealed interface SimulationAction {
 
-    record PlayCard(int handIndex, UUID targetId, int xValue) implements SimulationAction {}
+    record PlayCard(int handIndex, UUID targetId, int xValue, UUID commandCardId) implements SimulationAction {
+        public PlayCard(int handIndex, UUID targetId, int xValue) { this(handIndex, targetId, xValue, null); }
+    }
 
     record PassPriority() implements SimulationAction {}
 

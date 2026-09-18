@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GlazeFiend;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BlindCreeper;
+import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BatteredGolem.class, ConjurersBauble.class, BlindCreeper.class})
 class BatteredGolemTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class BatteredGolemTest extends BaseCardTest {
         Permanent golem = addReadyGolem(player1);
         golem.tap();
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(golem.isTapped()).isTrue();
     }
@@ -77,39 +76,21 @@ class BatteredGolemTest extends BaseCardTest {
     @DisplayName("A non-artifact entering does not trigger Battered Golem")
     void nonArtifactDoesNotTrigger() {
         addReadyGolem(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlindCreeper(), "{1}{B}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private Permanent addReadyGolem(Player player) {
-        Permanent golem = harness.addToBattlefieldAndReturn(player, new BatteredGolem());
-        golem.setSummoningSick(false);
-        return golem;
+        return addCreatureReady(player, new BatteredGolem());
     }
 
     private void castArtifactFor(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player, List.of(new GlazeFiend()));
-        harness.addMana(player, ManaColor.BLACK, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new ConjurersBauble(), "{1}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }

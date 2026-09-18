@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnduringAngelLifeTotalReplacementEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "17")
+@CardRegistration(set = "DBL", collectorNumber = "17")
 public class EnduringAngel extends Card {
 
     public EnduringAngel() {

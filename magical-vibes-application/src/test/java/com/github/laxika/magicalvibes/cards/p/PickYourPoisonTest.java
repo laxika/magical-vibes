@@ -61,7 +61,7 @@ class PickYourPoisonTest extends BaseCardTest {
     private void cast(int mode) {
         harness.setHand(player1, List.of(new PickYourPoison()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castSorcery(player1, 0, mode);
+        harness.castModalSorcery(player1, 0, mode, List.of());
         harness.passBothPriorities();
     }
 }

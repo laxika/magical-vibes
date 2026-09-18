@@ -13,6 +13,8 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "88")
 @CardRegistration(set = "SUM", collectorNumber = "69")
 @CardRegistration(set = "3ED", collectorNumber = "69")
+@CardRegistration(set = "ME4", collectorNumber = "55")
+@CardRegistration(set = "2ED", collectorNumber = "68")
 public class PhantasmalForces extends Card {
 
     public PhantasmalForces() {

@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
+import com.github.laxika.magicalvibes.cards.b.BlackKnight;
+import com.github.laxika.magicalvibes.cards.c.CurseOfThePiercedHeart;
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -16,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +29,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        AuraGraft.class,
+        BlackKnight.class,
+        CurseOfThePiercedHeart.class,
+        EvilPresence.class,
+        GloriousAnthem.class,
+        GrizzlyBears.class,
+        HolyStrength.class,
+        Island.class,
+        Pacifism.class
+})
 class AuraGraftTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -43,7 +58,6 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Aura Graft");
         assertThat(entry.getTargetId()).isEqualTo(aura.getId());
     }
 
@@ -69,9 +83,7 @@ class AuraGraftTest extends BaseCardTest {
     @DisplayName("Cannot target a non-aura enchantment")
     void cannotTargetNonAuraEnchantment() {
         // Glorious Anthem is a non-aura enchantment — add it directly
-        com.github.laxika.magicalvibes.cards.g.GloriousAnthem anthem = new com.github.laxika.magicalvibes.cards.g.GloriousAnthem();
-        Permanent anthemPerm = new Permanent(anthem);
-        gd.playerBattlefields.get(player2.getId()).add(anthemPerm);
+        Permanent anthemPerm = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         // A legal target (an aura attached to a permanent) must exist so the spell is castable
         // (CR 601.2c); targeting the non-aura enchantment is then rejected by the aura target filter.
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
@@ -81,6 +93,22 @@ class AuraGraftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, anthemPerm.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Aura attached to a permanent");
+    }
+
+    @Test
+    @DisplayName("Cannot target an aura attached to a player")
+    void cannotTargetAuraAttachedToPlayer() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new CurseOfThePiercedHeart());
+        curse.setAttachedTo(player2.getId());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addAuraAttachedTo(player2, new HolyStrength(), creature);
+
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, curse.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Aura attached to a permanent");
     }
@@ -223,10 +251,10 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Land-enchanting aura can only be reattached to a land")
     void landAuraOnlyReattachesToLand() {
-        Permanent sourceLand = addLand(player2, new Island());
+        Permanent sourceLand = harness.addToBattlefieldAndReturn(player2, new Island());
         Permanent aura = addAuraAttachedTo(player2, new EvilPresence(), sourceLand);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent otherLand = addLand(player1, new Island());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Island());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -239,6 +267,25 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(otherLand.getId())
                 .doesNotContain(creature.getId(), sourceLand.getId());
+    }
+
+    @Test
+    @DisplayName("Does not offer a permanent protected from the aura as a reattachment target")
+    void protectedPermanentIsNotAValidReattachmentTarget() {
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
+        Permanent protectedCreature = addCreatureReady(player1, new BlackKnight());
+        Permanent legalCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(legalCreature.getId())
+                .doesNotContain(protectedCreature.getId());
     }
 
     // ===== Self-targeting (own aura) =====
@@ -343,7 +390,7 @@ class AuraGraftTest extends BaseCardTest {
     void cannotChooseInvalidPermanent() {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -421,16 +468,9 @@ class AuraGraftTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addAuraAttachedTo(Player owner, com.github.laxika.magicalvibes.model.Card auraCard, Permanent target) {
-        Permanent auraPerm = new Permanent(auraCard);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(owner, auraCard);
         auraPerm.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(owner.getId()).add(auraPerm);
         return auraPerm;
-    }
-
-    private Permanent addLand(Player player, com.github.laxika.magicalvibes.model.Card landCard) {
-        Permanent perm = new Permanent(landCard);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "63")
+@CardRegistration(set = "PIO", collectorNumber = "90")
 public class DevourFlesh extends Card {
 
     public DevourFlesh() {

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiptideLaboratory.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({RiptideLaboratory.class, RiptideBiologist.class, GlorySeeker.class})
 class RiptideLaboratoryTest extends BaseCardTest {
 
     @Test
@@ -30,23 +29,23 @@ class RiptideLaboratoryTest extends BaseCardTest {
     @DisplayName("Returns a Wizard you control to its owner's hand")
     void returnsWizardYouControl() {
         addReadyLaboratory();
-        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new RiptideBiologist());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 1, null, wizard.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
-        harness.assertInHand(player1, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player1, "Riptide Biologist");
+        harness.assertInHand(player1, "Riptide Biologist");
     }
 
     @Test
     @DisplayName("Only a Wizard you control is a legal target")
     void rejectsNonWizardOrOpponentWizard() {
         addReadyLaboratory();
-        Permanent nonWizard = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentWizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Permanent nonWizard = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        Permanent opponentWizard = harness.addToBattlefieldAndReturn(player2, new RiptideBiologist());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -56,6 +55,24 @@ class RiptideLaboratoryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, opponentWizard.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Wizard you control");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled Wizard to its owner's hand")
+    void returnsControlledWizardToItsOwnersHand() {
+        addReadyLaboratory();
+        RiptideBiologist wizardCard = new RiptideBiologist();
+        wizardCard.setOwnerId(player2.getId());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, wizardCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, wizard.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Riptide Biologist");
+        harness.assertNotInHand(player1, "Riptide Biologist");
+        harness.assertInHand(player2, "Riptide Biologist");
     }
 
     private Permanent addReadyLaboratory() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "VOW", collectorNumber = "122")
+@CardRegistration(set = "DBL", collectorNumber = "389")
 public class MindleechGhoul extends Card {
 
     public MindleechGhoul() {

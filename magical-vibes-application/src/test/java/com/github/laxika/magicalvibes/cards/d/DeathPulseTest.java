@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GustcloakSentinel;
+import com.github.laxika.magicalvibes.cards.k.KrosanColossus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,29 +15,45 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeathPulse.class, GrizzlyBears.class})
+@CardUsed({DeathPulse.class, GustcloakSentinel.class, KrosanColossus.class})
 class DeathPulseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives target creature -4/-4")
     void givesTargetCreatureMinusFourMinusFour() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GustcloakSentinel());
         harness.setHand(player1, List.of(new DeathPulse()));
         addSpellMana();
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Gustcloak Sentinel");
+        harness.assertInGraveyard(player2, "Gustcloak Sentinel");
+    }
+
+    @Test
+    @DisplayName("Gives a surviving target creature exactly -4/-4")
+    void givesTargetCreatureExactlyMinusFourMinusFour() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KrosanColossus());
+        harness.setHand(player1, List.of(new DeathPulse()));
+        addSpellMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-4);
+        assertThat(target.getToughnessModifier()).isEqualTo(-4);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Cycling gives a target creature -1/-1 and draws a card")
     void cyclingDebuffsCreatureAndDraws() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GustcloakSentinel());
         harness.setHand(player1, List.of(new DeathPulse()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GustcloakSentinel()));
         addCyclingMana();
 
         harness.activateHandAbility(player1, 0, target.getId());
@@ -45,30 +62,44 @@ class DeathPulseTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
         harness.assertInGraveyard(player1, "Death Pulse");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Gustcloak Sentinel");
     }
 
     @Test
     @DisplayName("Cycling may be declined and still draws a card")
     void cyclingMayBeDeclined() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GustcloakSentinel());
         harness.setHand(player1, List.of(new DeathPulse()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GustcloakSentinel()));
         addCyclingMana();
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Gustcloak Sentinel");
+        harness.assertInHand(player1, "Gustcloak Sentinel");
+    }
+
+    @Test
+    @DisplayName("Cycling with no creature target still draws a card")
+    void cyclingWithNoCreatureTargetStillDraws() {
+        harness.setHand(player1, List.of(new DeathPulse()));
+        harness.setLibrary(player1, List.of(new GustcloakSentinel()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Death Pulse");
+        harness.assertInHand(player1, "Gustcloak Sentinel");
     }
 
     @Test
     @DisplayName("Cycling debuff wears off at end of turn")
     void cyclingDebuffWearsOffAtEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GustcloakSentinel());
         harness.setHand(player1, List.of(new DeathPulse()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GustcloakSentinel()));
         addCyclingMana();
 
         harness.activateHandAbility(player1, 0, target.getId());

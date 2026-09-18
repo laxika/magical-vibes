@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
  * onto the battlefield; finally the spell exiles itself instead of going to the graveyard.
  */
 @CardRegistration(set = "ORI", collectorNumber = "179")
+@CardRegistration(set = "PIO", collectorNumber = "380")
 public class TheGreatAurora extends Card {
 
     public TheGreatAurora() {

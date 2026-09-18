@@ -20,17 +20,17 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
         CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
         boolean enterTapped, boolean enterAttacking,
         boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
-        boolean onlyCardsOwnedByController)
+        boolean onlyCardsOwnedByController, boolean grantHaste)
         implements CardEffect {
 
     public ReturnCardExiledWithSourceToBattlefieldEffect() {
-        this(null, false, null, false, false, false, false, 0, false);
+        this(null, false, null, false, false, false, false, 0, false, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
                                                          boolean requiresManaValueEqualsX,
                                                          CardSubtype grantedSubtype) {
-        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, false, 0, false);
+        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, false, 0, false, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
@@ -39,14 +39,22 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
                                                          boolean enterTapped,
                                                          boolean enterAttacking) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                enterTapped, enterAttacking, false, false, 0, false);
+                enterTapped, enterAttacking, false, false, 0, false, false);
+    }
+
+    public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
+                                                         boolean requiresManaValueEqualsX,
+                                                         CardSubtype grantedSubtype,
+                                                         boolean grantHaste) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype,
+                false, false, false, false, 0, false, grantHaste);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
             CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
             boolean enterTapped, boolean enterAttacking, boolean returnAtRandom) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                enterTapped, enterAttacking, returnAtRandom, false, 0, false);
+                enterTapped, enterAttacking, returnAtRandom, false, 0, false, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
@@ -54,20 +62,20 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
             boolean enterTapped, boolean enterAttacking, boolean targeted,
             int additionalPlusOnePlusOneCounters) {
         this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
-                false, targeted, additionalPlusOnePlusOneCounters, false);
+                false, targeted, additionalPlusOnePlusOneCounters, false, false);
     }
 
     public static ReturnCardExiledWithSourceToBattlefieldEffect targetedCreature(
             boolean enterTapped, int additionalPlusOnePlusOneCounters) {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
                 new CardTypePredicate(CardType.CREATURE), false, null,
-                enterTapped, false, false, true, additionalPlusOnePlusOneCounters, false);
+                enterTapped, false, false, true, additionalPlusOnePlusOneCounters, false, false);
     }
 
     /** Returns one source-tracked card owned by the ability controller. */
     public static ReturnCardExiledWithSourceToBattlefieldEffect ownedByController() {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
-                null, false, null, false, false, false, false, 0, true);
+                null, false, null, false, false, false, false, 0, true, false);
     }
 
     @Override

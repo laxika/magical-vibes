@@ -93,9 +93,8 @@ class NetherSpiritTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spirit));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
         harness.setGraveyard(player1, List.of(spirit, new ShockTroops()));
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(spirit.getId()));

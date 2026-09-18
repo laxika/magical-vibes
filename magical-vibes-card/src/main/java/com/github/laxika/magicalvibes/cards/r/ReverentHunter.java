@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControll
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "173")
+@CardRegistration(set = "PIO", collectorNumber = "302")
 public class ReverentHunter extends Card {
 
     public ReverentHunter() {

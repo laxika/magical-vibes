@@ -38,6 +38,8 @@ class PetravarkTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, petravark));
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Tainted Peak");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

@@ -3,7 +3,12 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /** Global replacement effect that doubles counters put on any permanent. */
-public record DoubleCountersOnAllPermanentsEffect() implements CounterReplacementEffect {
+public record DoubleCountersOnAllPermanentsEffect() implements CounterReplacementEffect, DoublingEffect {
+
+    @Override
+    public boolean appliesToAllPermanents() {
+        return true;
+    }
 
     @Override
     public int replace(CounterType counterType, int count) {

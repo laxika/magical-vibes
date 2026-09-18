@@ -11,16 +11,16 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MH1", collectorNumber = "149")
 @CardRegistration(set = "HA3", collectorNumber = "18")
 public class TectonicReformation extends Card {
 
     public TectonicReformation() {
-        addCycling("{2}");
-
-        ActivatedAbility landCardCycling = new ActivatedAbility(false, "{R}",
+        ActivatedAbility cycling = new ActivatedAbility(false, "{R}",
                 List.of(new DrawCardEffect(1)),
                 "Cycling {R} ({R}, Discard this card: Draw a card.)");
         addEffect(EffectSlot.STATIC, new GrantHandActivatedAbilityToCardsEffect(
-                landCardCycling, new CardTypePredicate(CardType.LAND)));
+                cycling, new CardTypePredicate(CardType.LAND), true));
+        addCycling("{2}");
     }
 }

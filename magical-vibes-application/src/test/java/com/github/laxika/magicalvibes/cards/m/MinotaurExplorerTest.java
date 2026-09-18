@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MinotaurExplorer.class, Mountain.class})
 class MinotaurExplorerTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,25 @@ class MinotaurExplorerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Minotaur Explorer");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mountain");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting with multiple cards discards exactly one at random")
+    void acceptingWithMultipleCardsDiscardsExactlyOneAtRandom() {
+        harness.castFromHand(player1, new MinotaurExplorer(), "{1}{R}");
+        harness.setHand(player1, List.of(new Mountain(), new Mountain()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Minotaur Explorer");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Mountain");
     }
 
     @Test
@@ -45,16 +62,13 @@ class MinotaurExplorerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Minotaur Explorer");
         harness.assertInGraveyard(player1, "Minotaur Explorer");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Mountain");
     }
 
     @Test
     @DisplayName("Auto-sacrifices with no card to discard")
     void autoSacrificesWithEmptyHand() {
-        harness.setHand(player1, List.of(new MinotaurExplorer()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MinotaurExplorer(), "{1}{R}");
         harness.setHand(player1, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -65,11 +79,8 @@ class MinotaurExplorerTest extends BaseCardTest {
     }
 
     private void castMinotaurExplorerWithCardInHand() {
-        harness.setHand(player1, List.of(new MinotaurExplorer()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new MinotaurExplorer(), "{1}{R}");
+        harness.setHand(player1, List.of(new Mountain()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 

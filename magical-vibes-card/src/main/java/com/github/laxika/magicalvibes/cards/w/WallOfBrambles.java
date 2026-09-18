@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "282")
 @CardRegistration(set = "SUM", collectorNumber = "224")
 @CardRegistration(set = "3ED", collectorNumber = "224")
+@CardRegistration(set = "2ED", collectorNumber = "224")
 public class WallOfBrambles extends Card {
 
     public WallOfBrambles() {

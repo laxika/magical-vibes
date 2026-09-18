@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "198")
+@CardRegistration(set = "C13", collectorNumber = "238")
 public class CarnageAltar extends Card {
 
     public CarnageAltar() {

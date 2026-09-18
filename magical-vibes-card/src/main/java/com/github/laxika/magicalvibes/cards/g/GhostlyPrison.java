@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 @CardRegistration(set = "CHK", collectorNumber = "10")
 @CardRegistration(set = "PC2", collectorNumber = "7")
 @CardRegistration(set = "PCA", collectorNumber = "7")
+@CardRegistration(set = "SPG", collectorNumber = "19")
+@CardRegistration(set = "CMD", collectorNumber = "14")
 public class GhostlyPrison extends Card {
 
     public GhostlyPrison() {

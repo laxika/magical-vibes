@@ -45,6 +45,23 @@ class ScryfallOracleLoaderTest {
         }
     }
 
+    @Test
+    void parsesEveryFaceNameOfAThreeFaceSplitCard() {
+        JsonNode card = MAPPER.readTree("""
+                {
+                  "name": "Smelt // Herd // Saw",
+                  "card_faces": [
+                    { "name": "Smelt" },
+                    { "name": "Herd" },
+                    { "name": "Saw" }
+                  ]
+                }
+                """);
+
+        assertThat(ScryfallOracleLoader.parseFaceNames(card))
+                .containsExactly("Smelt", "Herd", "Saw");
+    }
+
     /**
      * SOS prepare-spell cards use Scryfall's "prepare" layout: like transform DFCs, the front
      * face's oracle text, power and toughness live in card_faces[0] and there is no top-level

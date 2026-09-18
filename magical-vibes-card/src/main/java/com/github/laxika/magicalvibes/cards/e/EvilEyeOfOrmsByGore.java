@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "159")
 @CardRegistration(set = "TSB", collectorNumber = "42")
 @CardRegistration(set = "LEG", collectorNumber = "96")
+@CardRegistration(set = "DMR", collectorNumber = "83")
 public class EvilEyeOfOrmsByGore extends Card {
 
     public EvilEyeOfOrmsByGore() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -56,7 +57,8 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
             if (current <= 0) return;
             int before = current;
             permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, entry, target, effect.counterType(), current);
+                    gameData, entry, target, effect.counterType(),
+                    current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
             if (target.getCounterCount(effect.counterType()) > before) {
                 gameLogService.append(gameData,
                         GameLog.textCardText("Doubled the number of counters on ", target.getCard(), "."));
@@ -74,7 +76,8 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
             int current = target.getCounterCount(counterType);
             if (current > 0) {
                 permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, entry, target, counterType, current);
+                        gameData, entry, target, counterType,
+                        current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
                 doubledAny = true;
             }
         }

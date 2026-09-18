@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "BLB", collectorNumber = "114")
+@CardRegistration(set = "SOA", collectorNumber = "34")
 public class Stargaze extends Card {
 
     public Stargaze() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "77")
+@CardRegistration(set = "GN3", collectorNumber = "44")
 public class BushmeatPoacher extends Card {
 
     public BushmeatPoacher() {

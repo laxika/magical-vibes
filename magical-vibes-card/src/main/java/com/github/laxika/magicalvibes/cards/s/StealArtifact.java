@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "103")
+@CardRegistration(set = "2ED", collectorNumber = "82")
 @CardRegistration(set = "7ED", collectorNumber = "99")
 @CardRegistration(set = "5ED", collectorNumber = "128")
 @CardRegistration(set = "4ED", collectorNumber = "105")

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "176")
+@CardRegistration(set = "2X2", collectorNumber = "250")
 public class MasterBiomancer extends Card {
 
     public MasterBiomancer() {

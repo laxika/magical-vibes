@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "59")
+@CardRegistration(set = "SIR", collectorNumber = "68")
 public class ExultantCultist extends Card {
 
     public ExultantCultist() {

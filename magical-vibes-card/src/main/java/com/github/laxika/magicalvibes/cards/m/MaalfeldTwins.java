@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "112")
 @CardRegistration(set = "FDN", collectorNumber = "523")
+@CardRegistration(set = "GN3", collectorNumber = "56")
 public class MaalfeldTwins extends Card {
 
     public MaalfeldTwins() {

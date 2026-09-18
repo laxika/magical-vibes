@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "17")
 @CardRegistration(set = "UMA", collectorNumber = "23")
+@CardRegistration(set = "PIO", collectorNumber = "26")
 public class LotusEyeMystics extends Card {
 
     public LotusEyeMystics() {

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "249")
 @CardRegistration(set = "EMN", collectorNumber = "190")
+@CardRegistration(set = "SIR", collectorNumber = "245")
 public class TamiyoFieldResearcher extends Card {
 
     public TamiyoFieldResearcher() {

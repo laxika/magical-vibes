@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "145")
+@CardRegistration(set = "RVR", collectorNumber = "157")
 public class SproutingRenewal extends Card {
 
     public SproutingRenewal() {

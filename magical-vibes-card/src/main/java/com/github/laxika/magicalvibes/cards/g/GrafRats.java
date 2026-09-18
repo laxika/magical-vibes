@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "113")
 @CardRegistration(set = "EMN", collectorNumber = "91")
+@CardRegistration(set = "SIR", collectorNumber = "115")
 public class GrafRats extends Card {
 
     private static final String PARTNER_NAME = "Midnight Scavengers";

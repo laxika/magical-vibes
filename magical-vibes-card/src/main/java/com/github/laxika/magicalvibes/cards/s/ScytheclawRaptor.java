@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect
 
 @CardRegistration(set = "LCI", collectorNumber = "165")
 @CardRegistration(set = "LCI", collectorNumber = "323")
+@CardRegistration(set = "PIO", collectorNumber = "156")
 public class ScytheclawRaptor extends Card {
 
     public ScytheclawRaptor() {

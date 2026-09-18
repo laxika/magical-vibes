@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "44")
+@CardRegistration(set = "C13", collectorNumber = "61")
 public class ThornwindFaeries extends Card {
 
     public ThornwindFaeries() {

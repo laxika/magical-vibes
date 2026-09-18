@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -49,6 +50,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             targetId = groupTargets.getFirst();
+        }
+
+        // Optional hand-ability targets can be omitted (e.g. Decree of Silence cycling).
+        // Skip that optional effect while continuing the ability's remaining effects.
+        if (targetId == null && entry.isCyclingAbility()
+                && e.wrapped() instanceof CounterSpellEffect) {
+            return;
         }
 
         // CR 603.5 — "you may" choice happens at resolution time.

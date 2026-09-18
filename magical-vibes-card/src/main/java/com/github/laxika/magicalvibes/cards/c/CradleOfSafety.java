@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VOW", collectorNumber = "54")
+@CardRegistration(set = "DBL", collectorNumber = "321")
 public class CradleOfSafety extends Card {
 
     public CradleOfSafety() {

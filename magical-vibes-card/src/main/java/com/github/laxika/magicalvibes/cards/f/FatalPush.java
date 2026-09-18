@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "AER", collectorNumber = "57")
 @CardRegistration(set = "2XM", collectorNumber = "93")
 @CardRegistration(set = "KLR", collectorNumber = "84")
+@CardRegistration(set = "FCA", collectorNumber = "9")
+@CardRegistration(set = "ACR", collectorNumber = "90")
 public class FatalPush extends Card {
 
     public FatalPush() {

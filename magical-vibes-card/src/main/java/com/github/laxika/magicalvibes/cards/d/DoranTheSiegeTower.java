@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "247")
 @CardRegistration(set = "V11", collectorNumber = "3")
+@CardRegistration(set = "2X2", collectorNumber = "201")
 public class DoranTheSiegeTower extends Card {
 
     public DoranTheSiegeTower() {

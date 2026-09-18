@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "VOW", collectorNumber = "10")
+@CardRegistration(set = "DBL", collectorNumber = "277")
 public class DrogskolInfantry extends Card {
 
     public DrogskolInfantry() {

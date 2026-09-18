@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerLosesLifePerCreatureControlledEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,9 +31,9 @@ public class EachPlayerLosesLifePerCreatureControlledEffectHandler implements No
             }
             int creatureCount = 0;
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().hasType(CardType.CREATURE)
+                if (gameQueryService.isCreature(gameData, permanent)
                         && (!e.attackingOnly() || permanent.isAttacking())) {
-                    creatureCount++;
+                    creatureCount += CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService);
                 }
             }
 

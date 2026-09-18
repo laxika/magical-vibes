@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "64")
 @CardRegistration(set = "MMQ", collectorNumber = "62")
+@CardRegistration(set = "TLE", collectorNumber = "10")
 public class Bribery extends Card {
 
     public Bribery() {

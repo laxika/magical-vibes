@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
+import com.github.laxika.magicalvibes.cards.b.BladeSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,19 +12,20 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MagmaSliver.class, BonescytheSliver.class, GrizzlyBears.class})
+@CardUsed({MagmaSliver.class, BladeSliver.class, AvenEnvoy.class})
 class MagmaSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Slivers can tap to give a target Sliver +X/+0 based on all Slivers on the battlefield")
     void boostsTargetByNumberOfSlivers() {
-        addCreatureReady(player1, new MagmaSliver());
-        Permanent target = addCreatureReady(player2, new BonescytheSliver());
-        addCreatureReady(player2, new BonescytheSliver());
+        Permanent source = addCreatureReady(player1, new MagmaSliver());
+        Permanent target = addCreatureReady(player2, new BladeSliver());
+        addCreatureReady(player2, new BladeSliver());
         int basePower = gqs.getEffectivePower(gd, target);
         int baseToughness = gqs.getEffectiveToughness(gd, target);
 
         harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(source.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 3);
@@ -35,7 +36,7 @@ class MagmaSliverTest extends BaseCardTest {
     @DisplayName("The temporary Magma Sliver boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new MagmaSliver());
-        Permanent target = addCreatureReady(player1, new BonescytheSliver());
+        Permanent target = addCreatureReady(player1, new BladeSliver());
         int basePower = gqs.getEffectivePower(gd, target);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -50,12 +51,40 @@ class MagmaSliverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Sliver also gains and can activate the ability")
+    void opponentSliverCanActivateGrantedAbility() {
+        Permanent target = addCreatureReady(player1, new MagmaSliver());
+        Permanent source = addCreatureReady(player2, new BladeSliver());
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        assertThat(source.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
+    }
+
+    @Test
+    @DisplayName("A non-Sliver does not gain Magma Sliver's activated ability")
+    void nonSliverDoesNotGainAbility() {
+        Permanent nonSliver = addCreatureReady(player1, new AvenEnvoy());
+        Permanent target = addCreatureReady(player2, new MagmaSliver());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        assertThat(nonSliver.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The activated ability cannot target a non-Sliver creature")
     void cannotTargetNonSliver() {
         addCreatureReady(player1, new MagmaSliver());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonSliver = addCreatureReady(player2, new AvenEnvoy());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonSliver.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target does not match the required predicate");
     }

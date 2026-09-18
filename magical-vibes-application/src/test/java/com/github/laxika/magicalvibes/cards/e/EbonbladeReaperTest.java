@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -52,5 +53,27 @@ class EbonbladeReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Can be cast face down and turned face up for its morph cost")
+    void canBeCastFaceDownAndTurnedFaceUpForMorphCost() {
+        harness.setHand(player1, List.of(new EbonbladeReaper()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent reaper = findPermanent(player1, "Ebonblade Reaper");
+        assertThat(reaper.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(reaper));
+        harness.passBothPriorities();
+
+        assertThat(reaper.isFaceDown()).isFalse();
     }
 }

@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "123")
 @CardRegistration(set = "DDI", collectorNumber = "17")
+@CardRegistration(set = "DMR", collectorNumber = "199")
 public class SawtoothLoon extends Card {
 
     public SawtoothLoon() {

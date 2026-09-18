@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentTo
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -47,7 +48,11 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -1040,6 +1045,25 @@ class DamageTriggerCollectorServiceTest {
     class ControllerDealtDamagePutCounters {
 
         @Test
+        void genericDamageTriggerPreservesSacrificeEffectAndDamageAmount() {
+            Permanent lich = createPermanent("Lich");
+            var effect = new SacrificePermanentsOrLoseGameEffect(new EventValue(),
+                    new PermanentNotPredicate(new PermanentIsTokenPredicate()));
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 4);
+
+            boolean result = registry.dispatch(match(lich, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var entry = gd.stack.getFirst();
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(lich.getId());
+            assertThat(entry.getEventValue()).isEqualTo(4);
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
         @DisplayName("enqueues a triggered ability that snapshots the damage amount as eventValue")
         void enqueuesTriggerWithDamageAmount() {
             Permanent aura = createPermanent("Living Artifact");
@@ -1078,6 +1102,31 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
             assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DEALT_DAMAGE — SacrificePermanentsOrLoseGameEffect")
+    class ControllerDealtDamageSacrificeOrLose {
+
+        @Test
+        @DisplayName("enqueues a non-targeting trigger with the damage amount")
+        void enqueuesTriggerWithDamageAmount() {
+            Permanent lich = createPermanent("Lich");
+            var effect = new SacrificePermanentsOrLoseGameEffect(
+                    new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate()));
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(lich, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 

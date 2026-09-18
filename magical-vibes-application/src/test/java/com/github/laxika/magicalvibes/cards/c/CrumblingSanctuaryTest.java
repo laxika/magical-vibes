@@ -73,6 +73,7 @@ class CrumblingSanctuaryTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new CrumblingSanctuary());
         harness.addToBattlefield(player1, new ShockTroops());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GerrardsIrregulars()));
 
         harness.activateAbility(player1, 1, null, player1.getId());
@@ -127,6 +128,7 @@ class CrumblingSanctuaryTest extends BaseCardTest {
     void replacedCombatDamageDoesNotTriggerCombatDamageAbilities() {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new CrumblingSanctuary());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GerrardsIrregulars()));
         harness.setLibrary(player2, List.of(new GerrardsIrregulars()));
 

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "185")
+@CardRegistration(set = "2X2", collectorNumber = "241")
 public class LeagueGuildmage extends Card {
 
     public LeagueGuildmage() {

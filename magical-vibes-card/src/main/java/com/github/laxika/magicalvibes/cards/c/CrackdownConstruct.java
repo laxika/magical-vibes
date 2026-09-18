@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "148")
+@CardRegistration(set = "PIO", collectorNumber = "253")
 public class CrackdownConstruct extends Card {
 
     public CrackdownConstruct() {

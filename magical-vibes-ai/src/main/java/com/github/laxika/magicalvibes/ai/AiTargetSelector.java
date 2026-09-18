@@ -862,6 +862,11 @@ class AiTargetSelector {
             trial.add(candidate.getId());
             return targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS) {
+            List<UUID> trial = new ArrayList<>(chosenSoFar);
+            trial.add(candidate.getId());
+            return targetLegalityService.fitsAtMostTwoCreaturesAndTwoPlayers(gameData, trial);
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND) {
             List<UUID> trial = new ArrayList<>(chosenSoFar);
             trial.add(candidate.getId());
@@ -911,9 +916,10 @@ class AiTargetSelector {
                         .contains(candidate.getId());
                 case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
                 case DIFFERENT_MANA_VALUES -> other.getCard().getManaValue() != candidate.getCard().getManaValue();
-                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
+                     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                      ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
                      AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->

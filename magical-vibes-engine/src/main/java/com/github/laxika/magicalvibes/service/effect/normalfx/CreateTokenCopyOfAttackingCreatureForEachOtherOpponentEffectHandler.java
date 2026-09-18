@@ -9,13 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Kharasha Foothills' per-opponent attack trigger. */
+/** Resolves per-opponent attacking-copy triggers. */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
@@ -49,9 +48,14 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                 if (opponentId.equals(controllerId) || opponentId.equals(attackedPlayerId)) {
                     continue;
                 }
+                if (!effect.mayCreate()) {
+                    createTokenCopy(gameData, entry, effect, attacker, liveAttacker, controllerId, opponentId);
+                    continue;
+                }
                 gameData.pendingMayAbilities.add(new PendingMayAbility(
                         entry.getCard(), controllerId,
-                        List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(opponentId)),
+                        List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
+                                opponentId, true, effect.removeLegendary(), effect.exileAtEndStep(), effect.exileAtEndOfCombat())),
                         "Create a tapped and attacking token copy of " + attacker.getCard().getName()
                                 + " attacking " + gameData.playerIdToName.get(opponentId) + "?",
                         attackerId,
@@ -76,24 +80,23 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
             return;
         }
 
-        int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData,
-                controllerId,
-                1,
-                attacker.getCard().getSubtypes() == null ? List.of() : attacker.getCard().getSubtypes(),
-                true);
-        if (tokenCount <= 0) {
-            return;
-        }
+        createTokenCopy(gameData, entry, effect, attacker, liveAttacker, controllerId, effect.opponentId());
+    }
 
+    private void createTokenCopy(GameData gameData, StackEntry entry,
+                                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect effect,
+                                 Permanent attacker, Permanent liveAttacker, UUID controllerId, UUID opponentId) {
         tokenCopySupport.createTokenCopies(
                 gameData,
                 entry,
                 List.of(attacker.getCard()),
                 liveAttacker == attacker ? liveAttacker : null,
                 controllerId,
-                new CreateTokenCopyOfTargetPermanentEffect(false, true, false, true),
-                Collections.nCopies(tokenCount, effect.opponentId()));
+                effect.exileAtEndOfCombat()
+                        ? CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat()
+                        : CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingCopy(
+                                effect.removeLegendary(), effect.exileAtEndStep()),
+                List.of(opponentId));
     }
 
     private Permanent copyableAttacker(GameData gameData, Permanent liveAttacker, StackEntry entry) {

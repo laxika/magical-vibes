@@ -156,7 +156,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
             @DisplayName("Exiles target and tracks exiled card with source permanent")
             void exilesAndTracksWithSource() {
                 Card targetCard = createCreatureCard("Grizzly Bears");
-                Permanent target = new Permanent(targetCard);
+                Permanent target = addPermanent(player2Id, targetCard);
                 Card sourceCard = createCard("Karn Liberated");
                 Permanent source = addPermanent(player1Id, sourceCard);
 
@@ -181,7 +181,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
             @DisplayName("Falls back to finding source by card reference when sourcePermanentId is null")
             void fallsBackToCardReferenceForSource() {
                 Card targetCard = createCreatureCard("Grizzly Bears");
-                Permanent target = new Permanent(targetCard);
+                Permanent target = addPermanent(player2Id, targetCard);
                 Card sourceCard = createCard("Karn Liberated");
                 Permanent source = addPermanent(player1Id, sourceCard);
 

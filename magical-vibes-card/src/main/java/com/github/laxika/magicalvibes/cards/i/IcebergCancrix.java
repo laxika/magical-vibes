@@ -8,16 +8,25 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
+import java.util.List;
+
+@CardRegistration(set = "MH1", collectorNumber = "54")
 @CardRegistration(set = "HA4", collectorNumber = "5")
 public class IcebergCancrix extends Card {
 
     public IcebergCancrix() {
         // Whenever another snow permanent you control enters, you may have target player mill two cards.
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSupertypePredicate(CardSupertype.SNOW),
-                        new MayEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER), "Mill two cards?")));
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSupertypePredicate(CardSupertype.SNOW),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
+                        new MayEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER),
+                                "have target player mill two cards")));
     }
 }

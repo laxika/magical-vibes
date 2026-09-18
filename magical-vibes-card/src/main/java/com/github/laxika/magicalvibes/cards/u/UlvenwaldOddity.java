@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "225")
+@CardRegistration(set = "DBL", collectorNumber = "492")
 public class UlvenwaldOddity extends Card {
 
     public UlvenwaldOddity() {

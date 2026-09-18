@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "96")
+@CardRegistration(set = "DBL", collectorNumber = "96")
 public class DiregrafHorde extends Card {
 
     public DiregrafHorde() {

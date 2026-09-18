@@ -26,6 +26,9 @@ import java.util.List;
  */
 @CardRegistration(set = "RTR", collectorNumber = "111")
 @CardRegistration(set = "TSR", collectorNumber = "352")
+@CardRegistration(set = "SLZ", collectorNumber = "69")
+@CardRegistration(set = "SLZ", collectorNumber = "190")
+@CardRegistration(set = "SLZ", collectorNumber = "311")
 public class Vandalblast extends Card {
 
     public Vandalblast() {

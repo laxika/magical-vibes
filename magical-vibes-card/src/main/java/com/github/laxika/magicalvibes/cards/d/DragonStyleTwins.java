@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "108")
+@CardRegistration(set = "PIO", collectorNumber = "132")
 public class DragonStyleTwins extends Card {
 
     public DragonStyleTwins() {

@@ -85,6 +85,19 @@ class SwatTest extends BaseCardTest {
         harness.assertInHand(player1, "Bloated Toad");
     }
 
+    @Test
+    @DisplayName("Cycling requires two generic mana")
+    void cyclingRequiresTwoGenericMana() {
+        Swat swat = new Swat();
+        harness.setHand(player1, List.of(swat));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(swat);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void castSwat(Permanent target) {
         harness.setHand(player1, List.of(new Swat()));
         harness.addMana(player1, ManaColor.BLACK, 2);

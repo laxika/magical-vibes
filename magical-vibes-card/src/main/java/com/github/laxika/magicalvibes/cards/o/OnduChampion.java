@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "BFZ", collectorNumber = "149")
+@CardRegistration(set = "MB1", collectorNumber = "149")
 public class OnduChampion extends Card {
 
     public OnduChampion() {

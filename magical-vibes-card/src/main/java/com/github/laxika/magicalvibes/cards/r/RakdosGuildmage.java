@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "145")
 @CardRegistration(set = "GK2", collectorNumber = "69")
+@CardRegistration(set = "RVR", collectorNumber = "214")
 public class RakdosGuildmage extends Card {
 
     public RakdosGuildmage() {

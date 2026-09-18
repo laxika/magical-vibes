@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefe
 
 @CardRegistration(set = "LEG", collectorNumber = "174")
 @CardRegistration(set = "ME3", collectorNumber = "113")
+@CardRegistration(set = "DMR", collectorNumber = "149")
 public class Arboria extends Card {
 
     public Arboria() {

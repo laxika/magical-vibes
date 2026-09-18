@@ -79,6 +79,11 @@ public class AiPlayerService {
     }
 
     public void joinAsAi(GameData gameData, String aiDeckId, AiDifficulty aiDifficulty) {
+        joinAsAi(gameData, aiDeckId, aiDifficulty, null);
+    }
+
+    public void joinAsAi(GameData gameData, String aiDeckId, AiDifficulty aiDifficulty,
+                         com.github.laxika.magicalvibes.model.DeckDefinition acceptedDeck) {
         if (aiDifficulty == null) {
             aiDifficulty = AiDifficulty.EASY;
         }
@@ -112,7 +117,7 @@ public class AiPlayerService {
                 gameData.aiPlayerIds.add(aiPlayerId);
 
                 // Join the game — this triggers initializeGame() and joins this outer setup action.
-                gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
+                gameSetupService.joinGame(gameData, aiPlayer, aiDeckId, acceptedDeck);
             });
         } catch (RuntimeException e) {
             decisionEventSubscriber.unregister(gameData.id, aiPlayerId);

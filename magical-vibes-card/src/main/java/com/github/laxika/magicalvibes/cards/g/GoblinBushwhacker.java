@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "125")
+@CardRegistration(set = "SPG", collectorNumber = "78")
 public class GoblinBushwhacker extends Card {
 
     public GoblinBushwhacker() {

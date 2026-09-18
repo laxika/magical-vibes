@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "105")
 @CardRegistration(set = "VMA", collectorNumber = "99")
+@CardRegistration(set = "DMR", collectorNumber = "70")
 public class Turnabout extends Card {
 
     public Turnabout() {

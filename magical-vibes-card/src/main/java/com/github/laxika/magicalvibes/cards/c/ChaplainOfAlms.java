@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "13")
+@CardRegistration(set = "DBL", collectorNumber = "13")
 public class ChaplainOfAlms extends Card {
 
     public ChaplainOfAlms() {

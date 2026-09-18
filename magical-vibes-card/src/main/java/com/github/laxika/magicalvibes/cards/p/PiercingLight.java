@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "30")
+@CardRegistration(set = "DBL", collectorNumber = "297")
 public class PiercingLight extends Card {
 
     public PiercingLight() {

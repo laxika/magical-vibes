@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "129")
+@CardRegistration(set = "DBL", collectorNumber = "129")
 public class BloodthirstyAdversary extends Card {
 
     public BloodthirstyAdversary() {

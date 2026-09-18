@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "24")
 @CardRegistration(set = "EMN", collectorNumber = "28")
 @CardRegistration(set = "V17", collectorNumber = "10")
+@CardRegistration(set = "SIR", collectorNumber = "30")
 public class GiselaTheBrokenBlade extends Card {
 
     private static final String BRUNA_NAME = "Bruna, the Fading Light";

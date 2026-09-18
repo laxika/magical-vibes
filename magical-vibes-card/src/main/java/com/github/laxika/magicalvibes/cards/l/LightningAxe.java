@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 
 @CardRegistration(set = "INR", collectorNumber = "162")
 @CardRegistration(set = "INR", collectorNumber = "398")
+@CardRegistration(set = "SIR", collectorNumber = "166")
 @CardRegistration(set = "SOI", collectorNumber = "170")
 @CardRegistration(set = "TSP", collectorNumber = "168")
 @CardRegistration(set = "2XM", collectorNumber = "135")

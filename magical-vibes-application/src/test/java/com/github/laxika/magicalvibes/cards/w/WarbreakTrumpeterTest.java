@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WarbreakTrumpeter.class)
+@CardUsed({WarbreakTrumpeter.class})
 class WarbreakTrumpeterTest extends BaseCardTest {
 
     @Test

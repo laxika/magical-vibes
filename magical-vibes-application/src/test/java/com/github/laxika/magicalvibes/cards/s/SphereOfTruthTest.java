@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FlameBurst;
+import com.github.laxika.magicalvibes.cards.i.IridescentAngel;
+import com.github.laxika.magicalvibes.cards.k.Karma;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SphereOfTruth.class, IridescentAngel.class, FlameBurst.class, Karma.class, Swamp.class})
 class SphereOfTruthTest extends BaseCardTest {
 
     @Test
@@ -22,21 +22,9 @@ class SphereOfTruthTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SphereOfTruth());
         harness.setLife(player1, 20);
 
-        Permanent attacker = new Permanent(new SerraAngel());
-        attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.<BlockerAssignment>of());
-        harness.passBothPriorities();
+        addCreatureReady(player2, new IridescentAngel());
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
@@ -46,12 +34,57 @@ class SphereOfTruthTest extends BaseCardTest {
     void doesNotPreventNonwhiteDamage() {
         harness.addToBattlefield(player1, new SphereOfTruth());
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new FlameBurst()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevents 2 damage from a white noncombat source")
+    void preventsWhiteNoncombatDamage() {
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.addToBattlefield(player1, new Karma());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Prevents 2 damage from each white source")
+    void preventsDamageFromEachWhiteSource() {
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.setLife(player1, 20);
+
+        addCreatureReady(player2, new IridescentAngel());
+        addCreatureReady(player2, new IridescentAngel());
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Prevents damage only to its controller")
+    void preventsDamageOnlyToItsController() {
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        addCreatureReady(player1, new IridescentAngel());
+        declareAttackers(player1, List.of(1));
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 }

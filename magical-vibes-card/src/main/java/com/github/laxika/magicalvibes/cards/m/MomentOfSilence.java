@@ -13,6 +13,6 @@ public class MomentOfSilence extends Card {
     public MomentOfSilence() {
         // Target player skips their next combat phase this turn.
         addEffect(EffectSlot.SPELL,
-                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER));
+                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, false, true));
     }
 }

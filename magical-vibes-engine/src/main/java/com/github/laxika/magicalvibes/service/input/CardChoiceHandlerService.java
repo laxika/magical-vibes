@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -143,9 +144,7 @@ public class CardChoiceHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
-            if (card.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
-            }
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
         } else {
             hand.add(cardIndex, card);
             gameLogService.append(gameData,
@@ -156,6 +155,41 @@ public class CardChoiceHandlerService {
     }
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
+    public void handleWordOfCommandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.WordOfCommandCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.WordOfCommandCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> targetHand = gameData.playerHands.get(choice.targetPlayerId());
+        if (targetHand == null || cardIndex >= targetHand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = targetHand.get(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        gameData.wordOfCommandPendingResolutionEntry = gameData.pendingEffectResolutionEntry;
+        gameData.wordOfCommandPendingResolutionIndex = gameData.pendingEffectResolutionIndex;
+        gameData.pendingEffectResolutionEntry = null;
+        gameData.pendingEffectResolutionIndex = 0;
+        gameData.wordOfCommandCardId = selectedCard.getId();
+        gameData.wordOfCommandCastingCard = true;
+        gameData.wordOfCommandAwaitingCardResolution = false;
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses ", selectedCard, " from "
+                        + gameData.playerIdToName.getOrDefault(choice.targetPlayerId(), "that player") + "'s hand."));
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                selectedCard, choice.targetPlayerId(),
+                List.of(new PlayCardFromHandByWordOfCommandEffect()),
+                "Play " + selectedCard.getName() + " from hand.", null, selectedCard.getManaCost()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID choicePlayerId;
@@ -478,9 +512,7 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
         }
 
-        if (!replacedByBattlefield) {
-            followUp = followUp.withDiscardedCard(card.getId());
-        }
+        followUp = followUp.withDiscardedCard(card.getId());
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
@@ -506,7 +538,7 @@ public class CardChoiceHandlerService {
         if (followUp.targetOpponentsDiscardThenDraw()) {
             gameData.targetOpponentsDiscardThenDraw.selectedDiscards.add(
                     new TargetOpponentsDiscardThenDrawState.SelectedDiscard(
-                            playerId, card.getId(), card.getManaValue(), !replacedByBattlefield));
+                            playerId, card.getId(), card.getManaValue(), true));
         }
         if (followUp.enteringPermanent() != null) {
             gameData.interaction.clearAwaitingInput();
@@ -962,7 +994,7 @@ public class CardChoiceHandlerService {
                         followUp.thenEffectSourcePermanentId());
                 thenEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
                 thenEntry.setNonTargeting(true);
-                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard);
+                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard, followUp);
                 gameData.stack.add(thenEntry);
             } else {
                 StackEntry reflexiveEntry = followUp.thenEffectSourcePermanentId() == null
@@ -974,7 +1006,7 @@ public class CardChoiceHandlerService {
                 reflexiveEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
                 reflexiveEntry.setEventValue(followUp.thenEffectEventValue() > 0
                         ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount());
-                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard);
+                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard, followUp);
                 gameData.stack.add(reflexiveEntry);
             }
             log.info("Game {} - {} discard-then rider pushed for {}",
@@ -985,7 +1017,7 @@ public class CardChoiceHandlerService {
     }
 
     private List<Card> discardedCardsStillInGraveyard(GameData gameData, DiscardFollowUp followUp) {
-        if (followUp.discardedCardSelectionControllerId() == null) {
+        if (followUp.discardedCardSelectionControllerId() == null || followUp.thenEffect() != null) {
             return List.of();
         }
         List<Card> discardedLands = new ArrayList<>();
@@ -998,7 +1030,8 @@ public class CardChoiceHandlerService {
         return discardedLands;
     }
 
-    private void copyDiscardFollowUpContext(GameData gameData, StackEntry entry, Card discardedCard) {
+    private void copyDiscardFollowUpContext(GameData gameData, StackEntry entry, Card discardedCard,
+                                            DiscardFollowUp followUp) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null) {
             entry.setSourcePermanentSnapshot(pendingEntry.getSourcePermanentSnapshot());
@@ -1007,6 +1040,9 @@ public class CardChoiceHandlerService {
             entry.setTriggeringCardId(discardedCard.getId());
             entry.setTriggeringCardGraveyardEntryVersion(
                     gameData.graveyardEntryVersion(discardedCard.getId()));
+        }
+        if (!followUp.discardedCardIds().isEmpty()) {
+            entry.setTriggeringCardIds(followUp.discardedCardIds());
         }
     }
 
@@ -2018,6 +2054,10 @@ public class CardChoiceHandlerService {
         } else if (faceDown) {
             permanent.setFaceDown(faceDownPower, faceDownToughness, faceDownCardTypes);
         }
+        if (!cloaked && !faceDown && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+            permanent.setSummoningSick(false);
+        }
         if (enterTapped) {
             permanent.tap();
         }
@@ -2069,6 +2109,13 @@ public class CardChoiceHandlerService {
         }
 
         // Deathrender: "…and attach this Equipment to it" — attach the source Equipment to the entered creature.
+        if (!cloaked && !faceDown && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, permanent, playerId,
+                    CounterType.LOYALTY, card.getLoyalty());
+            permanent.setCounterCount(CounterType.LOYALTY, loyalty);
+            permanent.setSummoningSick(false);
+        }
+
         if (attachEquipmentCardId != null) {
             attachSourceEquipmentToPermanent(gameData, attachEquipmentCardId, permanent);
         }
