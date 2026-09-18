@@ -136,6 +136,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
 
@@ -251,6 +252,7 @@ public final class LayerClassifier {
         map.put(GainControlOfTargetAuraEffect.class, fixed(Layer.L2_CONTROL));
         map.put(ControlEnchantedCreatureEffect.class, fixed(Layer.L2_CONTROL));
         map.put(TargetPlayerGainsControlOfSourceCreatureEffect.class, fixed(Layer.L2_CONTROL));
+        map.put(ControllerGainsControlOfSourceCreatureEffect.class, fixed(Layer.L2_CONTROL));
         map.put(TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect.class, fixed(Layer.L2_CONTROL));
 
         // Layer 3 — text-changing effects (CR 613.2c / CR 612).

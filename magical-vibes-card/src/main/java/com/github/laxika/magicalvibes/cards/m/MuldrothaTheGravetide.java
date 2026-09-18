@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FDN", collectorNumber = "440")
 @CardRegistration(set = "2X2", collectorNumber = "258")
 @CardRegistration(set = "FCA", collectorNumber = "57")
+@CardRegistration(set = "ECC", collectorNumber = "128")
 public class MuldrothaTheGravetide extends Card {
 
     public MuldrothaTheGravetide() {

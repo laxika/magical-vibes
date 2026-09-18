@@ -5127,6 +5127,16 @@ public class GameData {
                                          UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
                                          Permanent sourcePermanentSnapshot, UUID sourceControllerId,
                                          UUID triggeringPermanentId) {
+        queueMayAbilityForPlayer(sourceCard, controllerId, may, targetCardId, sourcePermanentId,
+                choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringPermanentId,
+                null);
+    }
+
+    /** Queues a may ability with the triggering permanent's last-known power snapshot. */
+    public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
+                                         UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
+                                         Permanent sourcePermanentSnapshot, UUID sourceControllerId,
+                                         UUID triggeringPermanentId, Integer triggeringPermanentPowerAtTrigger) {
         pendingMayAbilities.add(new PendingMayAbility(
                 sourceCard,
                 controllerId,
@@ -5146,7 +5156,7 @@ public class GameData {
                 null,
                 0,
                 triggeringPermanentId,
-                null,
+                triggeringPermanentPowerAtTrigger,
                 null
         ));
     }

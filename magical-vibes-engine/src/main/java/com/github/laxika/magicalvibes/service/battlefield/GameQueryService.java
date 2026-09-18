@@ -223,6 +223,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitie
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProwlGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.EvokeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerFlagbearerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -1252,6 +1253,30 @@ public class GameQueryService {
                         return Optional.of(new AlternateHandCast(
                                 List.of(new ManaCastingCost(grant.prowlCost())), creatureTypes));
                     }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Returns the evoke alternate cast granted to a matching permanent spell by a permanent its controller controls. */
+    public Optional<AlternateHandCast> findGrantedEvokeAlternateCast(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || card == null || card.isToken()) {
+            return Optional.empty();
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                        gameData, permanent, playerId, effect);
+                if (activeEffect instanceof EvokeGrantingEffect grant
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, grant.evokeGrantFilter(), null, gameData, playerId)) {
+                    return Optional.of(new AlternateHandCast(
+                            List.of(new ManaCastingCost(grant.evokeCost()))));
                 }
             }
         }

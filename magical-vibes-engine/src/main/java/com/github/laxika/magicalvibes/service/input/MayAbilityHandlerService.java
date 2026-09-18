@@ -311,7 +311,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+            if (ability.sourceControllerId() != null) {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
@@ -382,7 +382,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+            if (ability.sourceControllerId() != null) {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());

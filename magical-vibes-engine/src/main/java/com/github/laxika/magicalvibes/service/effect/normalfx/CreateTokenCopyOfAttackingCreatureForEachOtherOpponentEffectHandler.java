@@ -51,7 +51,8 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                 }
                 gameData.pendingMayAbilities.add(new PendingMayAbility(
                         entry.getCard(), controllerId,
-                        List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(opponentId)),
+                        List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
+                                opponentId, effect.exileAtEndOfCombat())),
                         "Create a tapped and attacking token copy of " + attacker.getCard().getName()
                                 + " attacking " + gameData.playerIdToName.get(opponentId) + "?",
                         attackerId,
@@ -86,13 +87,17 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
             return;
         }
 
+        CreateTokenCopyOfTargetPermanentEffect copyEffect = effect.exileAtEndOfCombat()
+                ? CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat()
+                : new CreateTokenCopyOfTargetPermanentEffect(false, true, false, true);
+
         tokenCopySupport.createTokenCopies(
                 gameData,
                 entry,
                 List.of(attacker.getCard()),
                 liveAttacker == attacker ? liveAttacker : null,
                 controllerId,
-                new CreateTokenCopyOfTargetPermanentEffect(false, true, false, true),
+                copyEffect,
                 Collections.nCopies(tokenCount, effect.opponentId()));
     }
 

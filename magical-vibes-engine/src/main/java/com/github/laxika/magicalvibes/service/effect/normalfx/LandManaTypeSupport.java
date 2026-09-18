@@ -104,7 +104,8 @@ public class LandManaTypeSupport {
             if (effect instanceof AwardManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardAnyColorManaEffect mana) {
-                if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY) {
+                if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                        || mana.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER) {
                     types.addAll(ManaProductionSupport.commanderColorIdentity(gameData,
                             gameQueryService.findPermanentController(gameData, source.getId())));
                 } else {

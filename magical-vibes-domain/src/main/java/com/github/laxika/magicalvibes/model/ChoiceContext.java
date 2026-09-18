@@ -187,6 +187,23 @@ public sealed interface ChoiceContext {
     record ChosenPlayerManaColorChoice(UUID playerId, UUID sourceControllerId, UUID recipientPlayerId,
                                        boolean fromCreature, int amount) implements ChoiceContext {}
 
+    /** Chooses the color for Opal Palace-style mana carrying a commander-cast counter rider. */
+    record CommanderCastManaColorChoice(UUID playerId, int amount, List<ManaColor> fixedColorOptions,
+                                        UUID recipientPlayerId)
+            implements ChoiceContext {
+        public CommanderCastManaColorChoice(UUID playerId, int amount, List<ManaColor> fixedColorOptions) {
+            this(playerId, amount, fixedColorOptions, null);
+        }
+
+        public CommanderCastManaColorChoice {
+            fixedColorOptions = List.copyOf(fixedColorOptions);
+        }
+
+        public CommanderCastManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new CommanderCastManaColorChoice(playerId, amount, fixedColorOptions, recipientPlayerId);
+        }
+    }
+
     record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
                                    boolean fromCreature) implements ChoiceContext {
         public EnchantedManaCostChoice {
@@ -1593,6 +1610,27 @@ public sealed interface ChoiceContext {
 
         public List<String> options() {
             List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
+        }
+    }
+
+    record CounterSelection(UUID permanentId, CounterType counterType) {
+    }
+
+    record RemoveAnyNumberOfCountersFromAllPermanentsChoice(
+            StackEntry resolvingEntry, Map<String, CounterSelection> counterOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveAnyNumberOfCountersFromAllPermanentsChoice {
+            counterOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(counterOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(counterOptions.keySet());
             options.add(DONE);
             return List.copyOf(options);
         }

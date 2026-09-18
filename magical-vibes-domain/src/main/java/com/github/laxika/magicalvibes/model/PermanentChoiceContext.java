@@ -174,6 +174,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
             implements PermanentChoiceContext {}
 
+    /** Descendants' Fury: choose one of the creatures that dealt combat damage to sacrifice. */
+    record SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
+            UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect effect)
+            implements PermanentChoiceContext {}
+
     /** Eddie Brock: choose another creature to sacrifice before drawing and putting a permanent. */
     record SacrificeAnotherCreatureDrawAndMayPutPermanent(
             UUID controllerId, Card sourceCard, SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect)
@@ -2051,6 +2057,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Blight N. If you do, [effect]." */
     record BlightCreatureChoice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                 com.github.laxika.magicalvibes.model.effect.BlightEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Ward—Blight N: choose a creature to blight to prevent the targeted spell from being countered. */
+    record CounterUnlessBlightsCreatureChoice(UUID payingPlayerId, UUID sourceControllerId,
+                                              Card sourceCard, UUID targetCardId, int count)
             implements PermanentChoiceContext {}
 
     /** Each opponent chooses a creature they control for a mandatory blight action. */

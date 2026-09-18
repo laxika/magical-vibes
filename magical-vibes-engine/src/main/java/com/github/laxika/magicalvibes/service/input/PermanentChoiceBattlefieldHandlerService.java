@@ -174,6 +174,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler targetPlayerSacrificesPermanentThenDealsManaValueDamageHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffectHandler
+            sacrificeOneOfCombatDamageDealersThenRevealHandler;
     private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
@@ -190,6 +192,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport counterSupport;
     private final PutCounterOnEitherTargetPermanentEffectHandler putCounterOnEitherTargetEffectHandler;
     private final MayReturnPermanentToHandAndEnterWithCountersEffectHandler mayReturnPermanentToHandAndEnterWithCountersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
@@ -786,6 +789,46 @@ public class PermanentChoiceBattlefieldHandlerService {
                 0,
                 context.sourcePermanentId());
         blightEffectHandler.placeCountersAndQueueThen(gameData, sourceEntry, creature, context.effect());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        if (creature == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        sacrificeOneOfCombatDamageDealersThenRevealHandler.resolveAfterChoice(gameData, context, creature);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessBlightsCreatureChoice(GameData gameData, UUID permanentId,
+                                                          PermanentChoiceContext.CounterUnlessBlightsCreatureChoice context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean valid = creature != null
+                && context.payingPlayerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
+                && gameQueryService.isCreature(gameData, creature)
+                && !gameQueryService.cantHaveCounters(gameData, creature)
+                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, creature);
+
+        int placed = 0;
+        if (valid) {
+            placed = permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, new StackEntry(context.sourceCard(), context.payingPlayerId()), creature,
+                    com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE, context.count());
+        }
+
+        if (placed < context.count()) {
+            StackEntry counterSource = new StackEntry(context.sourceCard(), context.sourceControllerId());
+            StackEntry target = counterSupport.findCounterTarget(
+                    gameData, context.targetCardId(), counterSource);
+            if (target != null) {
+                counterSupport.counterSpell(gameData, counterSource, target);
+            }
+        }
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -556,7 +556,8 @@ public class PotentialManaService {
                             manaEffect.color()), amount, Integer::sum);
                 }
             } else if (effect instanceof AwardAnyColorManaEffect anyColor
-                    && anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY) {
+                    && (anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
+                    || anyColor.restriction() == ManaSpendRestriction.COMMANDER_CAST_COUNTER)) {
                 int amount = estimateManaAmount(anyColor.amount(), permanent, gameData);
                 if (amount > 0) {
                     for (ManaColor color : ManaProductionSupport.commanderColorIdentity(gameData, playerId)) {

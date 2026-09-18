@@ -16,6 +16,7 @@ public sealed interface CardPredicate permits
         CardDoesNotShareLandTypeWithControlledLandPredicate,
         CardDoesNotShareColorWithSourceControlledCreaturePredicate,
         CardSharesCreatureTypeWithSourcePredicate,
+        CardSharesCreatureTypeWithCommanderPredicate,
         CardHasDisturbPredicate,
         CardHasCyclingPredicate,
         CardHasAdventurePredicate,

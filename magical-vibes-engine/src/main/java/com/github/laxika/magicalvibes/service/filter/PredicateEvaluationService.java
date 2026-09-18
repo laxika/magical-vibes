@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -459,6 +460,18 @@ public class PredicateEvaluationService {
                 }
                 yield source != null && gameQueryService.isCreature(gameData, source)
                         && gameQueryService.shareCreatureType(gameData, source, card);
+            }
+            case CardSharesCreatureTypeWithCommanderPredicate ignored -> {
+                if (gameData == null || cardOwnerId == null || !card.hasType(CardType.CREATURE)) {
+                    yield false;
+                }
+                UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId;
+                yield gameData.playerCommanders.getOrDefault(cardOwnerId, List.of()).stream()
+                        .filter(commander -> gameQueryService.cardHasType(
+                                commander, CardType.CREATURE, gameData, commander.getOwnerId()))
+                        .anyMatch(commander -> sharesCreatureType(
+                                gameData, card, ownerId, commander,
+                                commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId));
             }
             case CardHasSourceChosenCardTypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

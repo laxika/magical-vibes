@@ -914,6 +914,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
      *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
     ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
+    /** Global watcher: triggers once whenever one or more -1/-1 counters are put on a creature.
+     *  Unlike {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, this fires once per placement
+     *  event regardless of how many counters were placed. */
+    ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
     /** Controller-restricted watcher: triggers only when the permanent's controller is the player who
      *  puts one or more -1/-1 counters on a creature (any creature, on any battlefield). Unlike the
      *  global {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, a counter an opponent puts (e.g.

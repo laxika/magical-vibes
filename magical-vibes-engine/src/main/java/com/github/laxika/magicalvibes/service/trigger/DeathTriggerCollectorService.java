@@ -3261,7 +3261,9 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         Permanent dyingPermanent = cd.dyingPermanent();
         if (dyingPermanent == null
-                || dyingPermanent.getCounterCount(effect.counterType()) < 1) {
+                || (effect.counterType() == CounterType.ANY
+                ? dyingPermanent.getTotalCounterCount()
+                : dyingPermanent.getCounterCount(effect.counterType())) < 1) {
             return false;
         }
         return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);

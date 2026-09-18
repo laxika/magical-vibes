@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkee
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
+import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
@@ -4062,6 +4063,34 @@ public class StepTriggerService {
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(
                         pending.sourceCard(), "'s delayed sacrifice ability triggers."));
+            }
+        }
+
+        if (gameData.hasDelayedAction(SacrificePermanentAtControllerEndStepUnlessPays.class,
+                action -> action.controllerId().equals(gameData.activePlayerId))) {
+            List<SacrificePermanentAtControllerEndStepUnlessPays> pendingSacrifices =
+                    gameData.drainDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class,
+                            action -> action.controllerId().equals(gameData.activePlayerId));
+            for (SacrificePermanentAtControllerEndStepUnlessPays action : pendingSacrifices) {
+                if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
+                    continue;
+                }
+                ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
+                        new PayManaCost(action.manaCost()),
+                        new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                        true);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(payOrSacrifice)),
+                        null,
+                        action.permanentId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers â€” sacrifice the token unless you pay " + action.manaCost() + "."));
             }
         }
 

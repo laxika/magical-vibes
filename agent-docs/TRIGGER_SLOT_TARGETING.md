@@ -376,6 +376,9 @@ actually places the +1/+1 counter),
 every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put
 on any creature from any source, via `PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers`;
 non-targeting — a "you may create …" is a `MayEffect` resolved on the stack),
+`ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE` (Auntie Ool, Cursewretch; global watcher — fires
+once per creature per -1/-1 counter-placement event regardless of the number of counters placed;
+the affected creature is carried as the trigger's target and its trigger-time controller is retained),
 `ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE` (Nest of Scarabs; controller-restricted variant of
 the above — same firing method and per-counter cadence, but a permanent only triggers when its controller
 is the player who put the counters. The placing player is `gameData.currentlyResolvingControllerId` for

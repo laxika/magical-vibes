@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
@@ -49,7 +50,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -263,6 +263,7 @@ public class TriggerCollectionService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private final AmountEvaluationService amountEvaluationService;
     @Autowired
     private ObjectProvider<StateTriggerService> stateTriggerService;
 
@@ -4458,6 +4459,12 @@ public class TriggerCollectionService {
                         log.info("Game {} - {} becomes-target-of-opponent-spell counter-unless-collect-evidence trigger queued",
                                 gameData.id, source.getCard().getName());
                     }
+                    case BLIGHT -> {
+                        gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                                "'s triggered ability triggers - counter unless controller blights a creature."));
+                        log.info("Game {} - {} becomes-target-of-opponent-spell blight ward trigger queued",
+                                gameData.id, source.getCard().getName());
+                    }
                 }
             }
         }
@@ -8406,7 +8413,8 @@ public class TriggerCollectionService {
                 boolean oncePerTurn = resolvedEffect instanceof OncePerTurnTriggerEffect;
                 resolvedEffect = unwrapOncePerTurnTrigger(gameData, perm, resolvedEffect);
                 if (resolvedEffect == null) continue;
-                resolvedEffect = snapshotDyingPermanentManaValue(resolvedEffect, dyingCard);
+                resolvedEffect = snapshotDyingPermanentManaValue(
+                        gameData, dyingCreatureControllerId, resolvedEffect, dyingPermanent);
                 if (resolvedEffect instanceof DyingCreatureCountersAwareEffect aware) {
                     resolvedEffect = aware.boundToDyingCreatureCounters(dyingCounters);
                 }
@@ -8502,13 +8510,16 @@ public class TriggerCollectionService {
         }
     }
 
-    private CardEffect snapshotDyingPermanentManaValue(CardEffect effect, Card dyingCard) {
+    private CardEffect snapshotDyingPermanentManaValue(GameData gameData, UUID controllerId,
+                                                       CardEffect effect, Permanent dyingPermanent) {
         if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                || !(returnEffect.dynamicMaxManaValue() instanceof SourceManaValueMinusOne)
-                || dyingCard == null) {
+                || returnEffect.dynamicMaxManaValue() == null
+                || dyingPermanent == null) {
             return effect;
         }
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(dyingCard.getManaValue() - 1);
+        int maxManaValue = amountEvaluationService.evaluateAtDeath(
+                gameData, returnEffect.dynamicMaxManaValue(), controllerId, dyingPermanent);
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(maxManaValue);
         CardPredicate filter = returnEffect.filter() == null
                 ? manaValueFilter
                 : new CardAllOfPredicate(List.of(returnEffect.filter(), manaValueFilter));
@@ -9587,15 +9598,19 @@ public class TriggerCollectionService {
             for (CardEffect effect : effects) {
                 // Death conditionals may reference the dying creature's on-battlefield state (e.g.
                 // Necroskitter's "with a -1/-1 counter on it") — evaluate against the dying permanent.
+                CardEffect triggerEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
+                if (triggerEffect == null) continue;
                 CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                        effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
+                        triggerEffect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
                 if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware
                         && dyingCard != null) {
                     resolvedEffect = aware.boundToDyingCard(dyingCard.getId());
                 }
                 var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
-                dispatch(match, EffectSlot.ON_OPPONENT_CREATURE_DIES, resolvedEffect, ctx);
+                if (dispatch(match, EffectSlot.ON_OPPONENT_CREATURE_DIES, resolvedEffect, ctx)) {
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, effect);
+                }
             }
         });
     }

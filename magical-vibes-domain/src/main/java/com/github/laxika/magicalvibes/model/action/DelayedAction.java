@@ -113,6 +113,7 @@ public sealed interface DelayedAction permits
         RandomDiscardCardsAtNextUpkeep,
         DrawCardsAtNextEndStep,
         SacrificeSelfAtNextEndStepTrigger,
+        SacrificePermanentAtControllerEndStepUnlessPays,
         ExileToOwnerGraveyardAtNextUpkeep,
         ExilePermanentAtNextUpkeep,
         GrantExilePlayPermissionAtNextTurn,

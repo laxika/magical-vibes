@@ -1713,6 +1713,16 @@ public class CastingCostService {
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
+            var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
+            if (grantedEvoke.isPresent()) {
+                AlternateHandCast altCast = grantedEvoke.get();
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
             if (grantedProwl.isPresent()) {
                 AlternateHandCast altCast = grantedProwl.get();

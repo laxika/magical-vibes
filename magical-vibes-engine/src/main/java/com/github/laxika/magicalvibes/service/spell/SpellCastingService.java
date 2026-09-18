@@ -152,6 +152,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -2802,6 +2803,10 @@ public class SpellCastingService {
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 && gameQueryService.findGrantedProwlAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).isPresent();
+        boolean usingGrantedEvoke = !fromGraveyard && forceAlternateCost && !usingGrantedProwl
+                && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
+                && gameQueryService.findGrantedEvokeAlternateCast(
+                gameData, playerId, handEarly.get(cardIndex)).isPresent();
         boolean usingSharedColorDiscardAlternativeCost = !fromGraveyard
                 && sharedColorDiscardHandCardIndex != null
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
@@ -2819,6 +2824,7 @@ public class SpellCastingService {
                 : null;
         boolean usingAlternateCost = usingBestowCost || forceAlternateCost
                 || usingGrantedProwl
+                || usingGrantedEvoke
                 || hasGraveyardExileAlternateCost
                 || usingCollectEvidenceAlternativeCost
                 || (!alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction)
@@ -3031,6 +3037,11 @@ public class SpellCastingService {
                 : usingPrototypeCost
                 ? prototypeRuntimeCopyForHandCast(hand, cardIndex)
                 : modalRuntimeCopyForHandCast(hand, cardIndex);
+        if (usingGrantedEvoke) {
+            preparedCard = preparedCard.createRuntimeCopy();
+            preparedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
+            hand.set(cardIndex, preparedCard);
+        }
         if (!spliceHandCardIndices.isEmpty()) {
             preparedCard = preparedCard.createRuntimeCopy();
             preparedCard.setAllowSharedTargets(true);
@@ -3042,7 +3053,10 @@ public class SpellCastingService {
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
-        AlternateHandCast alternateHandCast = usingGrantedProwl
+        AlternateHandCast alternateHandCast = usingGrantedEvoke
+                ? gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card).orElseThrow(
+                () -> new IllegalStateException("Card does not have a granted evoke cost"))
+                : usingGrantedProwl
                 ? gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted prowl cost"))
                 : card.getCastingOption(AlternateHandCast.class).orElse(null);
@@ -10068,6 +10082,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int commanderCastCounterGrantingBefore = commanderCastCounterGrantingManaAvailable(gameData, playerId);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
         boolean previousClassLevelManaPermission = pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery();
         if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
@@ -10094,6 +10109,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyCommanderCastCounterGrantingMana(gameData, playerId, card, commanderCastCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
@@ -10134,6 +10150,7 @@ public class SpellCastingService {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
+        int commanderCastCounterGrantingBefore = commanderCastCounterGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         null, false, 0, 0, 0, "", "", sourceZone, anyManaType, false);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
@@ -10150,6 +10167,7 @@ public class SpellCastingService {
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
         applyAdditionalCounterGrantingMana(gameData, playerId, card, additionalCounterGrantingBefore);
+        applyCommanderCastCounterGrantingMana(gameData, playerId, card, commanderCastCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
         return payment.phyrexianManaPaidWithLife();
     }
@@ -10227,6 +10245,11 @@ public class SpellCastingService {
     private int additionalCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getAdditionalCounterGrantingManaTotal() : 0;
+    }
+
+    private int commanderCastCounterGrantingManaAvailable(GameData gameData, UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return pool != null ? pool.getCommanderCastCounterGrantingManaTotal() : 0;
     }
 
     private int riotGrantingManaAvailable(GameData gameData, UUID playerId) {
@@ -11696,6 +11719,22 @@ public class SpellCastingService {
                 - additionalCounterGrantingManaAvailable(gameData, playerId);
         if (spent > 0) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), spent, Integer::sum);
+        }
+    }
+
+    /** Opal Palace: each tagged mana spent to cast the current commander grants its command-zone cast count. */
+    private void applyCommanderCastCounterGrantingMana(GameData gameData, UUID playerId, Card card,
+                                                       int commanderCastCounterGrantingBefore) {
+        if (!playerId.equals(gameData.commandCastPlayerId)
+                || !card.getId().equals(gameData.commandCastCardId)) {
+            return;
+        }
+        int spent = commanderCastCounterGrantingBefore
+                - commanderCastCounterGrantingManaAvailable(gameData, playerId);
+        if (spent > 0) {
+            int previousCommandZoneCasts = gameData.commanderTaxByCardId.getOrDefault(card.getId(), 0) / 2;
+            gameData.spellAdditionalEnterCounters.merge(
+                    card.getId(), spent * (previousCommandZoneCasts + 1), Integer::sum);
         }
     }
 

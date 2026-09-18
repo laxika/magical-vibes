@@ -159,7 +159,8 @@ class EnterTriggerCollectorServiceTest {
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameLogService, etbTokenTargetService,
                 new GrantedTriggeredAbilitySupport(gameQueryService),
-                new GraveyardTargetingSupport());
+                new GraveyardTargetingSupport(),
+                new AmountEvaluationService(predicateEvaluationService, gameQueryService));
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

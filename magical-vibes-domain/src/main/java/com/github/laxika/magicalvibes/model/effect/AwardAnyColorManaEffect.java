@@ -111,6 +111,12 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 false, false, false, false, false, true, Set.of(), false);
     }
 
+    /** "Add mana of any color in your commander's color identity. If spent to cast your commander,
+     * it enters with counters equal to the number of times it has been cast from the command zone." */
+    public static AwardAnyColorManaEffect forCommanderCastCounter(int amount) {
+        return new AwardAnyColorManaEffect(amount, ManaSpendRestriction.COMMANDER_CAST_COUNTER);
+    }
+
     /** "Add one mana of any color. This creature becomes that color until end of turn." */
     public AwardAnyColorManaEffect(boolean sourceBecomesProducedColorUntilEndOfTurn) {
         this(new Fixed(1), ManaSpendRestriction.NONE, null, sourceBecomesProducedColorUntilEndOfTurn,
@@ -222,7 +228,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  MANA_VALUE_AT_LEAST_FOUR,
                  CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS,
-                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY -> 0;
+                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY, COMMANDER_CAST_COUNTER -> 0;
         };
     }
 }

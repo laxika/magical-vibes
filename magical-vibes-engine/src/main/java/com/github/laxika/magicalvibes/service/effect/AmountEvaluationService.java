@@ -1065,7 +1065,9 @@ public class AmountEvaluationService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
-                    total += permanent.getCounterCount(amount.counterType());
+                    total += amount.counterType() == null
+                            ? permanent.getTotalCounterCount()
+                            : permanent.getCounterCount(amount.counterType());
                 }
             }
         }
