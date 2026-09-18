@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CentaurRootcaster.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CentaurRootcaster.class, Forest.class, SuntailHawk.class})
 class CentaurRootcasterTest extends BaseCardTest {
 
     @Test
@@ -34,16 +32,45 @@ class CentaurRootcasterTest extends BaseCardTest {
     void acceptingMayPutsBasicLandOntoBattlefieldTapped() {
         Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
         rootcaster.setAttacking(true);
-        List<Card> library = gd.playerDecks.get(player1.getId());
-        library.clear();
-        library.addAll(List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new SuntailHawk()));
 
         resolveCombat();
         harness.handleMayAbilityChosen(player1, true);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the may ability offers only basic land cards")
+    void acceptingMayOffersOnlyBasicLands() {
+        Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
+        rootcaster.setAttacking(true);
+        Forest forest = new Forest();
+        SuntailHawk nonBasic = new SuntailHawk();
+        harness.setLibrary(player1, List.of(forest, nonBasic));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Accepting the may ability with no basic land does not open a search")
+    void acceptingMayWithNoBasicLandSkipsSearch() {
+        Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
+        rootcaster.setAttacking(true);
+        harness.setLibrary(player1, List.of(new SuntailHawk()));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -63,7 +90,7 @@ class CentaurRootcasterTest extends BaseCardTest {
     void blockedCombatDoesNotTrigger() {
         Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
         rootcaster.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

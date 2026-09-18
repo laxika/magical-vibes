@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
+import com.github.laxika.magicalvibes.cards.b.BookBurning;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,15 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LivingWish.class, GrizzlyBears.class, Forest.class, Divination.class})
+@CardUsed({LivingWish.class, BattlewiseAven.class, KrosanVerge.class, BookBurning.class})
 class LivingWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers creature and land cards from outside the game and exiles Living Wish")
     void offersCreatureAndLandCardsFromOutsideTheGame() {
-        Card creature = new GrizzlyBears();
-        Card land = new Forest();
-        Card sorcery = new Divination();
+        Card creature = new BattlewiseAven();
+        Card land = new KrosanVerge();
+        Card sorcery = new BookBurning();
         setSideboard(creature, land, sorcery);
 
         LivingWish wish = castLivingWish();
@@ -46,7 +44,7 @@ class LivingWishTest extends BaseCardTest {
     @Test
     @DisplayName("May decline to take a creature or land and still exiles Living Wish")
     void mayDeclineToTakeCard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new BattlewiseAven();
         setSideboard(creature);
 
         LivingWish wish = castLivingWish();
@@ -60,7 +58,7 @@ class LivingWishTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prompt when outside-the-game cards are neither creatures nor lands")
     void noMatchingCardNoPrompt() {
-        Card sorcery = new Divination();
+        Card sorcery = new BookBurning();
         setSideboard(sorcery);
 
         LivingWish wish = castLivingWish();
@@ -70,12 +68,24 @@ class LivingWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Does not offer a matching card owned by an opponent")
+    void searchesOnlyControllerOutsideTheGameCards() {
+        Card ownSorcery = new BookBurning();
+        Card opponentCreature = new BattlewiseAven();
+        setSideboard(ownSorcery);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentCreature)));
+
+        LivingWish wish = castLivingWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
     private LivingWish castLivingWish() {
         LivingWish wish = new LivingWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{1}{G}");
         harness.passBothPriorities();
         return wish;
     }
@@ -91,6 +101,6 @@ class LivingWishTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

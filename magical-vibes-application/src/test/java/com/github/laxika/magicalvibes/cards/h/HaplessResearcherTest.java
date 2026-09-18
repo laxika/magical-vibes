@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,15 +12,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HaplessResearcher.class, GrizzlyBears.class, Shock.class})
+@CardUsed({HaplessResearcher.class, GiantWarthog.class, SuntailHawk.class})
 class HaplessResearcherTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing it draws a card, then discards a card")
     void sacrificesDrawsThenDiscards() {
         harness.addToBattlefield(player1, new HaplessResearcher());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new GiantWarthog()));
+        harness.setLibrary(player1, List.of(new SuntailHawk()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -30,9 +30,11 @@ class HaplessResearcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.assertInHand(player1, "Suntail Hawk");
+        harness.assertInHand(player1, "Giant Warthog");
         harness.handleCardChosen(player1, 0);
 
-        harness.assertInHand(player1, "Shock");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Giant Warthog");
     }
 }

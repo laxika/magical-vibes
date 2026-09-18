@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,35 +13,53 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MistOfStagnation.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({MistOfStagnation.class, BorderPatrol.class})
 class MistOfStagnationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents permanents from untapping during their controllers' untap steps")
     void preventsUntapDuringUntapSteps() {
-        addPermanent(player1, new MistOfStagnation());
-        Permanent ownLand = addReady(player1, new Forest());
-        Permanent opponentCreature = addReady(player2, new GrizzlyBears());
-        ownLand.tap();
-        opponentCreature.tap();
+        harness.addToBattlefieldAndReturn(player1, new MistOfStagnation());
+        Permanent ownPermanent = addCreatureReady(player1, new BorderPatrol());
+        Permanent opponentPermanent = addCreatureReady(player2, new BorderPatrol());
+        ownPermanent.tap();
+        opponentPermanent.tap();
 
         advanceToUpkeep(player1);
 
-        assertThat(ownLand.isTapped()).isTrue();
-        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(ownPermanent.isTapped()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(opponentPermanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not present a choice when the active player's graveyard is empty")
+    void doesNotPresentChoiceForEmptyActivePlayersGraveyard() {
+        harness.addToBattlefieldAndReturn(player1, new MistOfStagnation());
+        Permanent ownPermanent = addCreatureReady(player1, new BorderPatrol());
+        ownPermanent.tap();
+        harness.setGraveyard(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(ownPermanent.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("The active player chooses distinct permanents using their graveyard count")
     void choosesDistinctPermanentsForActivePlayersGraveyard() {
-        addPermanent(player1, new MistOfStagnation());
-        Permanent ownLand = addReady(player1, new Forest());
-        Permanent opponentCreature = addReady(player2, new GrizzlyBears());
-        ownLand.tap();
-        opponentCreature.tap();
+        Permanent mist = harness.addToBattlefieldAndReturn(player1, new MistOfStagnation());
+        Permanent ownPermanent = addCreatureReady(player1, new BorderPatrol());
+        Permanent opponentPermanent = addCreatureReady(player2, new BorderPatrol());
+        ownPermanent.tap();
+        opponentPermanent.tap();
 
-        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Shock()));
-        harness.setGraveyard(player2, List.of(new Shock()));
+        harness.setGraveyard(player1, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
+        harness.setGraveyard(player2, List.of(new BorderPatrol()));
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -56,42 +70,31 @@ class MistOfStagnationTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
-                gd.playerBattlefields.get(player1.getId()).get(0).getId(),
-                ownLand.getId(), opponentCreature.getId());
+                mist.getId(), ownPermanent.getId(), opponentPermanent.getId());
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
 
-        harness.handleMultiplePermanentsChosen(player2, List.of(opponentCreature.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentPermanent.getId()));
 
-        assertThat(opponentCreature.isTapped()).isFalse();
-        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(opponentPermanent.isTapped()).isFalse();
+        assertThat(ownPermanent.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Untaps all available permanents when the graveyard count is larger")
     void untapsAllAvailablePermanentsWhenCountIsLarger() {
-        Permanent mist = addReady(player1, new MistOfStagnation());
-        Permanent ownLand = addReady(player1, new Forest());
+        Permanent mist = harness.addToBattlefieldAndReturn(player1, new MistOfStagnation());
+        Permanent ownPermanent = addCreatureReady(player1, new BorderPatrol());
         mist.tap();
-        ownLand.tap();
-        harness.setGraveyard(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        ownPermanent.tap();
+        harness.setGraveyard(player2, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(mist.isTapped()).isFalse();
-        assertThat(ownLand.isTapped()).isFalse();
-    }
-
-    private Permanent addPermanent(Player player, Card card) {
-        return harness.addToBattlefieldAndReturn(player, card);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = addPermanent(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+        assertThat(ownPermanent.isTapped()).isFalse();
     }
 }

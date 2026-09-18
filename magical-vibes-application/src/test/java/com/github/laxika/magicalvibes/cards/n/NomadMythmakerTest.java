@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NomadMythmaker.class, HolyStrength.class, Pacifism.class, GrizzlyBears.class})
 class NomadMythmakerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -31,10 +33,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Nomad Mythmaker puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new NomadMythmaker()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NomadMythmaker(), "{2}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -45,10 +44,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Nomad Mythmaker puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new NomadMythmaker()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NomadMythmaker(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Nomad Mythmaker");
@@ -59,7 +55,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability targeting Aura in graveyard puts ability on stack")
     void activatingAbilityPutsOnStack() {
-        Permanent mythmakerPerm = addMythmakerReady(player1);
+        addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player2, holyStrength);
         addCreatureReady(player1, new GrizzlyBears());
@@ -205,7 +201,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple creatures available gives choice among all of them")
     void multipleCreaturesGivesChoice() {
-        addMythmakerReady(player1);
+        Permanent mythmaker = addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
         Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
@@ -217,7 +213,26 @@ class NomadMythmakerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Both creatures should be valid choices (Mythmaker is also a creature, so 3 total)
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(creature1.getId(), creature2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(mythmaker.getId(), creature1.getId(), creature2.getId());
+    }
+
+    @Test
+    @DisplayName("Attachment choice excludes creatures controlled by the opponent")
+    void attachmentChoiceExcludesOpponentsCreatures() {
+        addMythmakerReady(player1);
+        Card holyStrength = new HolyStrength();
+        addToGraveyard(player1, holyStrength);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(ownCreature.getId())
+                .doesNotContain(opponentCreature.getId());
     }
 
     // ===== Fizzle cases =====
@@ -247,7 +262,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if no creatures on controller's battlefield when resolving")
     void abilityFizzlesIfNoCreaturesWhenResolving() {
-        Permanent mythmakerPerm = addMythmakerReady(player1);
+        addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
         // Only creature is the Mythmaker itself — remove it before resolution

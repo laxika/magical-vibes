@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BattleScreech;
+import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.t.ToxicStench;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulcatchersAerie.class, SuntailHawk.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SoulcatchersAerie.class, SuntailHawk.class, BenevolentBodyguard.class,
+        ToxicStench.class, BattleScreech.class})
 class SoulcatchersAerieTest extends BaseCardTest {
 
     @Test
@@ -26,7 +28,7 @@ class SoulcatchersAerieTest extends BaseCardTest {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
         Permanent bird = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
 
-        killWithShock(player1, bird);
+        killWithToxicStench(player1, bird);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
     }
@@ -35,9 +37,9 @@ class SoulcatchersAerieTest extends BaseCardTest {
     @DisplayName("Does not trigger for a non-Bird creature")
     void doesNotTriggerForNonBird() {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonBird = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
 
-        killWithShock(player1, bears);
+        killWithToxicStench(player1, nonBird);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isZero();
     }
@@ -48,7 +50,7 @@ class SoulcatchersAerieTest extends BaseCardTest {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
         Permanent bird = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
 
-        killWithShock(player1, bird);
+        killWithToxicStench(player1, bird);
 
         assertThat(aerie.getCounterCount(CounterType.FEATHER)).isZero();
     }
@@ -64,14 +66,44 @@ class SoulcatchersAerieTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(3);
     }
 
-    private void killWithShock(Player caster, Permanent target) {
+    @Test
+    @DisplayName("The bonus applies to Birds controlled by either player, but not other creatures")
+    void boostsBirdsOnBothBattlefieldsButNotNonBirds() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+        aerie.setCounterCount(CounterType.FEATHER, 2);
+        Permanent opponentBird = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent nonBird = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
+
+        assertThat(gqs.getEffectivePower(gd, opponentBird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBird)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonBird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonBird)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Puts a feather counter on itself when a Bird token is put into its controller's graveyard")
+    void putsFeatherCounterWhenBirdTokenDies() {
+        Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
+
+        harness.castFromHand(player1, new BattleScreech(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        List<Permanent> birds = findPermanents(player1, "Bird");
+        assertThat(birds).hasSize(2);
+
+        killWithToxicStench(player1, birds.get(0));
+
+        assertThat(aerie.getCounterCount(CounterType.FEATHER)).isEqualTo(1);
+    }
+
+    private void killWithToxicStench(Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(caster, List.of(new Shock()));
-        harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.setHand(caster, List.of(new ToxicStench()));
+        harness.addMana(caster, ManaColor.BLACK, 1);
+        harness.addMana(caster, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(caster, 0, target.getId());
         harness.passBothPriorities();
     }
 }

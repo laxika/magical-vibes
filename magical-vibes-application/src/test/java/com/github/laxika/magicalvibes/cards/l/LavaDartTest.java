@@ -24,8 +24,7 @@ class LavaDartTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LavaDart()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -37,8 +36,7 @@ class LavaDartTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
     }
@@ -68,5 +66,17 @@ class LavaDartTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot sacrifice an opponent's Mountain")
+    void flashbackRejectsOpponentsMountainSacrifice() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setGraveyard(player1, List.of(new LavaDart()));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), mountain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mountain);
+        harness.assertInGraveyard(player1, "Lava Dart");
     }
 }

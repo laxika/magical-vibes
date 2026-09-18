@@ -30,6 +30,20 @@ class LeadAstrayTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Taps only the chosen creatures regardless of controller")
+    void tapsOnlyChosenCreaturesRegardlessOfController() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent unchosenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castLeadAstray(List.of(ownCreature.getId(), opponentCreature.getId()));
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(unchosenCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("May target one creature")
     void tapsOneTargetCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -57,6 +71,17 @@ class LeadAstrayTest extends BaseCardTest {
         addMana();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two target creatures")
+    void cannotChooseMoreThanTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> castLeadAstray(List.of(first.getId(), second.getId(), third.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

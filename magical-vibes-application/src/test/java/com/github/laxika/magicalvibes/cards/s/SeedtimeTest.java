@@ -1,33 +1,28 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Seedtime.class, MentalNote.class})
+@CardUsed({Seedtime.class, MentalNote.class, FlaringPain.class})
 class SeedtimeTest extends BaseCardTest {
 
     @Test
     void takesAnExtraTurnAfterOpponentCastsBlueSpellDuringYourTurn() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new MentalNote()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new MentalNote(), "{U}");
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Seedtime()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new Seedtime(), "{1}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
@@ -36,10 +31,35 @@ class SeedtimeTest extends BaseCardTest {
     void doesNotTakeAnExtraTurnWithoutOpponentBlueSpell() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Seedtime()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new Seedtime(), "{1}{G}");
+        harness.passBothPriorities();
 
-        harness.castAndResolveInstant(player1, 0);
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void doesNotTakeAnExtraTurnWhenOpponentCastsNonBlueSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passPriority(player1);
+        harness.castFromHand(player2, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Seedtime(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void doesNotTakeAnExtraTurnWhenControllerCastsBlueSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new MentalNote(), "{U}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Seedtime(), "{1}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.extraTurns).isEmpty();
     }
@@ -48,14 +68,10 @@ class SeedtimeTest extends BaseCardTest {
     void cannotBeCastDuringOpponentTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new MentalNote()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castAndResolveInstant(player2, 0);
+        harness.castFromHand(player2, new MentalNote(), "{U}");
+        harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Seedtime()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Seedtime(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

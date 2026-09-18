@@ -27,6 +27,26 @@ class BrawnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Forest controlled by another player does not enable Brawn's graveyard ability")
+    void requiresBrawnControllerToControlForest() {
+        gd.playerGraveyards.get(player1.getId()).add(new Brawn());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Brawn does not grant trample while it is on the battlefield")
+    void onlyFunctionsFromGraveyard() {
+        harness.addToBattlefield(player1, new Brawn());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Brawn's graveyard ability turns off without a Forest or after Brawn leaves the graveyard")
     void graveyardAbilityTurnsOffWhenConditionChanges() {
         Brawn brawn = new Brawn();

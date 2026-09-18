@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,8 +17,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Glory.class, GrizzlyBears.class})
+@CardUsed({Glory.class, SuntailHawk.class, NantukoMonastery.class})
 class GloryTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Glory has flying")
+    void hasFlying() {
+        Permanent glory = addCreatureReady(player1, new Glory());
+
+        assertThat(gqs.hasKeyword(gd, glory, Keyword.FLYING)).isTrue();
+    }
 
     @Test
     @DisplayName("The ability can only be activated while Glory is in a graveyard")
@@ -30,8 +41,8 @@ class GloryTest extends BaseCardTest {
     @Test
     @DisplayName("Grants your creatures protection from the chosen color")
     void grantsOwnCreaturesProtectionFromChosenColor() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
+        Permanent opposingCreature = addCreatureReady(player2, new SuntailHawk());
         harness.setGraveyard(player1, List.of(new Glory()));
         prepareAbilityMana();
 
@@ -45,9 +56,42 @@ class GloryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not grant protection to noncreatures you control")
+    void doesNotGrantProtectionToNoncreatures() {
+        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new NantukoMonastery());
+        harness.setGraveyard(player1, List.of(new Glory()));
+        prepareAbilityMana();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, ownLand, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can be activated during an opponent's turn")
+    void canBeActivatedDuringOpponentsTurn() {
+        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
+        harness.setGraveyard(player1, List.of(new Glory()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
     @DisplayName("Protection granted by Glory expires at end of turn")
     void protectionExpiresAtEndOfTurn() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
         harness.setGraveyard(player1, List.of(new Glory()));
         prepareAbilityMana();
 

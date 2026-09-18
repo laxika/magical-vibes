@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreakingPoint.class, DrudgeSkeletons.class, GrizzlyBears.class})
+@CardUsed({BreakingPoint.class, DrudgeSkeletons.class, GrizzlyBears.class, Forest.class, DarksteelMyr.class})
 class BreakingPointTest extends BaseCardTest {
 
     @Test
@@ -44,6 +46,24 @@ class BreakingPointTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining destroys only destructible creatures")
+    void decliningLeavesNoncreaturesAndIndestructibleCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new DarksteelMyr());
+
+        castBreakingPoint();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("The first accepting player stops the remaining choices")
     void firstAcceptanceStopsChoices() {
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -73,10 +93,7 @@ class BreakingPointTest extends BaseCardTest {
     }
 
     private void castBreakingPoint() {
-        harness.setHand(player1, java.util.List.of(new BreakingPoint()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BreakingPoint(), "{1}{R}{R}");
         harness.passBothPriorities();
     }
 }

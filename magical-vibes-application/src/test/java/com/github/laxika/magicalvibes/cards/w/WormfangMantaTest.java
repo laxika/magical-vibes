@@ -24,13 +24,26 @@ class WormfangMantaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its controller's next turn is skipped")
+    void skipsNextTurn() {
+        castManta();
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount).doesNotContainKey(player1.getId());
+    }
+
+    @Test
     @DisplayName("Leaving the battlefield gives its controller an extra turn")
     void leavingTheBattlefieldGivesExtraTurn() {
         Permanent manta = castManta();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, manta));
-        resolvePendingTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
@@ -40,14 +53,12 @@ class WormfangMantaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Wormfang Manta");
     }
 
-    private void resolvePendingTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+    private void advanceTurn() {
+        harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }

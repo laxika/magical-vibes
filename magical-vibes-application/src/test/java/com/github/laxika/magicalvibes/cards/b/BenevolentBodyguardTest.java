@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.w.WebOfInertia;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,14 +13,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenevolentBodyguard.class, GrizzlyBears.class, Forest.class})
+@CardUsed({BenevolentBodyguard.class, SuntailHawk.class, WebOfInertia.class})
 class BenevolentBodyguardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing this creature grants chosen-color protection to a creature you control")
     void sacrificeGrantsChosenColorProtection() {
         addCreatureReady(player1, new BenevolentBodyguard());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new SuntailHawk());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -34,7 +34,7 @@ class BenevolentBodyguardTest extends BaseCardTest {
     @DisplayName("The granted protection wears off at end of turn")
     void protectionWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new BenevolentBodyguard());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new SuntailHawk());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -51,7 +51,7 @@ class BenevolentBodyguardTest extends BaseCardTest {
     @DisplayName("The ability cannot target an opponent's creature")
     void cannotTargetOpponentCreature() {
         addCreatureReady(player1, new BenevolentBodyguard());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SuntailHawk());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -61,13 +61,26 @@ class BenevolentBodyguardTest extends BaseCardTest {
     @DisplayName("The ability cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         addCreatureReady(player1, new BenevolentBodyguard());
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new WebOfInertia());
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1,
                 0,
                 null,
-                harness.getPermanentId(player1, "Forest")
+                harness.getPermanentId(player1, "Web of Inertia")
         )).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Targeting this creature is legal, but its sacrifice makes the ability fizzle")
+    void targetingThisCreatureFizzlesAfterSacrifice() {
+        Permanent bodyguard = addCreatureReady(player1, new BenevolentBodyguard());
+
+        harness.activateAbility(player1, 0, null, bodyguard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, bodyguard, CardColor.RED)).isFalse();
+        harness.assertInGraveyard(player1, "Benevolent Bodyguard");
     }
 }

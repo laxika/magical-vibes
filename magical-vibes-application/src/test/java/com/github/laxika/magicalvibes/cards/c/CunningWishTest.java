@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.Envelop;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CunningWish.class, Counterspell.class, GrizzlyBears.class})
+@CardUsed({CunningWish.class, Envelop.class, SuntailHawk.class})
 class CunningWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers instant cards from outside the game and exiles Cunning Wish")
     void offersInstantCardsFromOutsideTheGame() {
-        Card instant = new Counterspell();
-        Card creature = new GrizzlyBears();
+        Card instant = new Envelop();
+        Card creature = new SuntailHawk();
         setSideboard(instant, creature);
 
         CunningWish wish = castCunningWish();
@@ -43,7 +42,7 @@ class CunningWishTest extends BaseCardTest {
     @Test
     @DisplayName("May decline to take an instant and still exiles Cunning Wish")
     void mayDeclineToTakeInstant() {
-        Card instant = new Counterspell();
+        Card instant = new Envelop();
         setSideboard(instant);
 
         CunningWish wish = castCunningWish();
@@ -57,7 +56,7 @@ class CunningWishTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prompt when outside-the-game cards do not include an instant")
     void noMatchingCardNoPrompt() {
-        Card creature = new GrizzlyBears();
+        Card creature = new SuntailHawk();
         setSideboard(creature);
 
         CunningWish wish = castCunningWish();
@@ -69,10 +68,7 @@ class CunningWishTest extends BaseCardTest {
 
     private CunningWish castCunningWish() {
         CunningWish wish = new CunningWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, wish, "{2}{U}");
         harness.passBothPriorities();
         return wish;
     }
@@ -88,6 +84,6 @@ class CunningWishTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

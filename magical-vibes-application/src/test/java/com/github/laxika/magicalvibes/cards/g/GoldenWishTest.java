@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -70,10 +68,7 @@ class GoldenWishTest extends BaseCardTest {
 
     private GoldenWish castGoldenWish() {
         GoldenWish wish = new GoldenWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{3}{W}{W}");
         harness.passBothPriorities();
         return wish;
     }
@@ -89,6 +84,6 @@ class GoldenWishTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

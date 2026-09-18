@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Chastise.class, AvenFogbringer.class})
 class ChastiseTest extends BaseCardTest {
 
     private void castChastise(UUID targetId) {
@@ -30,10 +32,8 @@ class ChastiseTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new AvenFogbringer());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(owner.getId()).add(attacker);
         return attacker;
     }
 
@@ -47,9 +47,9 @@ class ChastiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        // Grizzly Bears (2/2) destroyed -> into owner's graveyard
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        // Aven Fogbringer (2/1) destroyed -> into owner's graveyard
+        harness.assertNotOnBattlefield(player1, "Aven Fogbringer");
+        harness.assertInGraveyard(player1, "Aven Fogbringer");
         // Caster gains life equal to power (2): 15 + 2 = 17
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -72,8 +72,8 @@ class ChastiseTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addAttacker(player2); // valid target elsewhere so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new AvenFogbringer());
+        UUID targetId = harness.getPermanentId(player1, "Aven Fogbringer");
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

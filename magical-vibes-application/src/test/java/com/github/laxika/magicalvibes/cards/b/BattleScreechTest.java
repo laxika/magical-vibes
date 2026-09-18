@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BattleScreech.class, BishopsSoldier.class})
+@CardUsed({BattleScreech.class, SuntailHawk.class, AvenFogbringer.class})
 class BattleScreechTest extends BaseCardTest {
 
     @Test
@@ -25,8 +28,7 @@ class BattleScreechTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(birdTokens()).hasSize(2);
         assertThat(birdTokens()).allSatisfy(bird -> {
@@ -41,9 +43,9 @@ class BattleScreechTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback taps three untapped white creatures and creates two more Birds")
     void flashbackTapsThreeWhiteCreaturesAndCreatesBirds() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
-        Permanent third = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
+        Permanent first = addCreatureReady(player1, new SuntailHawk());
+        Permanent second = addCreatureReady(player1, new SuntailHawk());
+        Permanent third = addCreatureReady(player1, new SuntailHawk());
         Card spell = new BattleScreech();
         harness.setGraveyard(player1, List.of(spell));
 
@@ -56,6 +58,49 @@ class BattleScreechTest extends BaseCardTest {
         assertThat(third.isTapped()).isTrue();
         assertThat(birdTokens()).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback rejects a nonwhite creature for its tap cost")
+    void flashbackRejectsNonwhiteCreatureForTapCost() {
+        Permanent blueCreature = addCreatureReady(player1, new AvenFogbringer());
+        Permanent whiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Permanent anotherWhiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(blueCreature.getId(), whiteCreature.getId(), anotherWhiteCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Tap target does not match the required filter");
+
+        assertThat(blueCreature.isTapped()).isFalse();
+        assertThat(whiteCreature.isTapped()).isFalse();
+        assertThat(anotherWhiteCreature.isTapped()).isFalse();
+        assertThat(birdTokens()).isEmpty();
+        harness.assertInGraveyard(player1, "Battle Screech");
+    }
+
+    @Test
+    @DisplayName("Flashback rejects an already-tapped white creature for its tap cost")
+    void flashbackRejectsAlreadyTappedWhiteCreatureForTapCost() {
+        Permanent tappedWhiteCreature = addCreatureReady(player1, new SuntailHawk());
+        tappedWhiteCreature.tap();
+        Permanent whiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Permanent anotherWhiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(tappedWhiteCreature.getId(), whiteCreature.getId(), anotherWhiteCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Permanent is already tapped");
+
+        assertThat(tappedWhiteCreature.isTapped()).isTrue();
+        assertThat(whiteCreature.isTapped()).isFalse();
+        assertThat(anotherWhiteCreature.isTapped()).isFalse();
+        assertThat(birdTokens()).isEmpty();
+        harness.assertInGraveyard(player1, "Battle Screech");
     }
 
     private List<Permanent> birdTokens() {

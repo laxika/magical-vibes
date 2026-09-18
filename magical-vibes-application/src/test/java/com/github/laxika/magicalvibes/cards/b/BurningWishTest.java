@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +12,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BurningWish.class, Divination.class, GrizzlyBears.class})
+@CardUsed({BurningWish.class, BookBurning.class, BattlewiseAven.class})
 class BurningWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers sorcery cards from outside the game and exiles Burning Wish")
     void offersSorceryCardsFromOutsideTheGame() {
-        Card sorcery = new Divination();
-        Card creature = new GrizzlyBears();
+        Card sorcery = new BookBurning();
+        Card creature = new BattlewiseAven();
         setSideboard(sorcery, creature);
 
         BurningWish wish = castBurningWish();
@@ -44,7 +40,7 @@ class BurningWishTest extends BaseCardTest {
     @Test
     @DisplayName("May decline to take a sorcery and still exiles Burning Wish")
     void mayDeclineToTakeSorcery() {
-        Card sorcery = new Divination();
+        Card sorcery = new BookBurning();
         setSideboard(sorcery);
 
         BurningWish wish = castBurningWish();
@@ -58,7 +54,7 @@ class BurningWishTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prompt when outside-the-game cards do not include a sorcery")
     void noMatchingCardNoPrompt() {
-        Card creature = new GrizzlyBears();
+        Card creature = new BattlewiseAven();
         setSideboard(creature);
 
         BurningWish wish = castBurningWish();
@@ -68,12 +64,24 @@ class BurningWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Does not offer an opponent's outside-the-game sorcery")
+    void searchesOnlyControllerOutsideTheGameCards() {
+        Card ownCreature = new BattlewiseAven();
+        Card opponentSorcery = new BookBurning();
+        setSideboard(ownCreature);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentSorcery)));
+
+        BurningWish wish = castBurningWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentSorcery);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
     private BurningWish castBurningWish() {
         BurningWish wish = new BurningWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{1}{R}");
         harness.passBothPriorities();
         return wish;
     }
@@ -89,6 +97,6 @@ class BurningWishTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

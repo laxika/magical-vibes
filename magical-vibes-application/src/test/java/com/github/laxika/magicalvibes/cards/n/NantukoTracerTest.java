@@ -1,29 +1,27 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KrosanReclamation;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NantukoTracer.class, GrizzlyBears.class})
+@CardUsed({NantukoTracer.class, KrosanReclamation.class})
 class NantukoTracerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB puts a targeted card from any graveyard on the bottom of its owner's library")
     void etbPutsTargetedCardOnOwnersLibraryBottom() {
-        Card target = new GrizzlyBears();
-        Card existingLibraryCard = new GrizzlyBears();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
-        harness.setLibrary(player2, new ArrayList<>(List.of(existingLibraryCard)));
+        Card target = new KrosanReclamation();
+        Card existingLibraryCard = new KrosanReclamation();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of(existingLibraryCard));
 
         castTracer();
 
@@ -46,9 +44,9 @@ class NantukoTracerTest extends BaseCardTest {
     @Test
     @DisplayName("The optional ETB may be declined")
     void etbMayBeDeclined() {
-        Card target = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(target)));
-        harness.setLibrary(player1, new ArrayList<>());
+        Card target = new KrosanReclamation();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of());
 
         castTracer();
 
@@ -62,12 +60,17 @@ class NantukoTracerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("An empty graveyard produces no target choice")
+    void emptyGraveyardProducesNoTargetChoice() {
+        castTracer();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
     private void castTracer() {
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new NantukoTracer()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NantukoTracer(), "{1}{G}");
         harness.passBothPriorities();
     }
 }

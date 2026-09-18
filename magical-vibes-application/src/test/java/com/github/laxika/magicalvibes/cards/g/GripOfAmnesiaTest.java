@@ -34,17 +34,32 @@ class GripOfAmnesiaTest extends BaseCardTest {
     }
 
     @Test
+    void exilesEveryCardFromTargetSpellControllersGraveyard() {
+        Card firstGraveyardCard = new Forest();
+        Card secondGraveyardCard = new Forest();
+        Card drawCard = new Forest();
+        castAgainstOpponent(List.of(firstGraveyardCard, secondGraveyardCard), drawCard);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .contains(firstGraveyardCard, secondGraveyardCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
+    }
+
+    @Test
     void declinesToExileAndCountersTheSpellThenDraws() {
         Card graveyardCard = new Forest();
         Card drawCard = new Forest();
-        castAgainstOpponent(List.of(graveyardCard), drawCard);
+        GrizzlyBears spell = castAgainstOpponent(List.of(graveyardCard), drawCard);
 
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(graveyardCard);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .contains(graveyardCard)
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+                .contains(spell);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
     }
 
@@ -71,15 +86,13 @@ class GripOfAmnesiaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setGraveyard(player2, graveyard);
         harness.setLibrary(player1, List.of(drawCard));
-        harness.setHand(player2, List.of(spell));
         harness.setHand(player1, List.of(new GripOfAmnesia()));
 
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player2, spell, "{1}{G}");
+
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player2, 0);
         harness.passPriority(player2);
         harness.castInstant(player1, 0, 0, spell.getId());
         harness.passBothPriorities();

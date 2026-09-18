@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JeskaWarriorAdept.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({JeskaWarriorAdept.class, DwarvenDriller.class, SuntailHawk.class})
 class JeskaWarriorAdeptTest extends BaseCardTest {
 
     @Test
@@ -32,24 +35,39 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
     @DisplayName("Tap ability deals 1 damage to target creature")
     void deals1DamageToCreature() {
         addReadyJeska(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new SuntailHawk());
 
-        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Llanowar Elves"));
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Suntail Hawk"));
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     @Test
     @DisplayName("One damage does not destroy a 2/2 creature")
     void oneDamageDoesNotDestroyTwoToughnessCreature() {
         addReadyJeska(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DwarvenDriller());
 
-        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Dwarven Driller"));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Dwarven Driller");
+    }
+
+    @Test
+    @DisplayName("First strike lets Jeska survive combat with a 2/2 blocker")
+    void firstStrikeLetsJeskaSurviveCombat() {
+        Permanent jeska = addReadyJeska(player1);
+        harness.addToBattlefield(player2, new DwarvenDriller());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jeska);
+        harness.assertInGraveyard(player2, "Dwarven Driller");
     }
 
     @Test
@@ -74,9 +92,6 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
     }
 
     private Permanent addReadyJeska(Player player) {
-        Permanent permanent = new Permanent(new JeskaWarriorAdept());
-        permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new JeskaWarriorAdept());
     }
 }

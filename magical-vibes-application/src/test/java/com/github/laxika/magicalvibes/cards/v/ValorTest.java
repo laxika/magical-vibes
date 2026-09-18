@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ValorTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Grants first strike to the controller's creatures while in the graveyard and a Plains is controlled")
-    void grantsFirstStrikeWithPlainsInGraveyard() {
+    @DisplayName("Grants first strike to the controller's creatures from the graveyard while a Plains is controlled")
+    void grantsFirstStrikeWithPlainsControlled() {
         harness.setGraveyard(player1, List.of(new Valor()));
         harness.addToBattlefield(player1, new Plains());
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -50,6 +50,15 @@ class ValorTest extends BaseCardTest {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Grants first strike only to creatures, not to the controlled Plains")
+    void grantsFirstStrikeOnlyToCreatures() {
+        harness.setGraveyard(player1, List.of(new Valor()));
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        assertThat(gqs.hasKeyword(gd, plains, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

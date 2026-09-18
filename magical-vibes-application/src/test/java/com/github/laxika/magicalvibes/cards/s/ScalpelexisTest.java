@@ -6,21 +6,18 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Scalpelexis.class, GrizzlyBears.class, SerraAngel.class, SuntailHawk.class,
+        SamiteHealer.class, SteadfastGuard.class, SkyhunterProwler.class})
 class ScalpelexisTest extends BaseCardTest {
-
-    private void setDeck(Player player, List<Card> cards) {
-        harness.getGameData().playerDecks.put(player.getId(), new ArrayList<>(cards));
-    }
 
     // ===== Combat damage trigger =====
 
@@ -30,7 +27,7 @@ class ScalpelexisTest extends BaseCardTest {
         Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -54,7 +51,7 @@ class ScalpelexisTest extends BaseCardTest {
 
         // First batch: two GrizzlyBears share a name -> repeat
         // Second batch: all unique -> stop
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new GrizzlyBears(),
                 new SerraAngel(),
@@ -70,7 +67,7 @@ class ScalpelexisTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(8);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("repeating the process"));
+        assertThat(gameLogContains("repeating the process")).isTrue();
     }
 
     @Test
@@ -82,7 +79,7 @@ class ScalpelexisTest extends BaseCardTest {
         // First batch: two GrizzlyBears -> repeat
         // Second batch: two SerraAngels -> repeat
         // Third batch: all unique -> stop
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new GrizzlyBears(),
                 new SerraAngel(),
@@ -113,7 +110,7 @@ class ScalpelexisTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new GrizzlyBears(),
                 new SerraAngel(),
@@ -133,7 +130,7 @@ class ScalpelexisTest extends BaseCardTest {
         Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel()
         ));
@@ -151,13 +148,32 @@ class ScalpelexisTest extends BaseCardTest {
         Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
-        setDeck(player2, List.of());
+        harness.setLibrary(player2, List.of());
 
         resolveCombat();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
+        assertThat(gameLogContains("library is empty")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeats when a partial batch contains duplicate names")
+    void repeatsOnDuplicateNamesInPartialBatch() {
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
+        scalpelexis.setAttacking(true);
+
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(),
+                new GrizzlyBears()
+        ));
+
+        resolveCombat();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("repeating the process")).isTrue();
     }
 
     @Test
@@ -168,7 +184,7 @@ class ScalpelexisTest extends BaseCardTest {
 
         // First batch: duplicate names -> repeat
         // Second batch: only 2 cards left in library
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new GrizzlyBears(),
                 new SerraAngel(),
@@ -191,7 +207,7 @@ class ScalpelexisTest extends BaseCardTest {
         Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -210,7 +226,7 @@ class ScalpelexisTest extends BaseCardTest {
         Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -232,7 +248,7 @@ class ScalpelexisTest extends BaseCardTest {
         Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
-        setDeck(player2, List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -242,8 +258,9 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("Serra Angel"));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles cards from the top"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("Serra Angel"));
+        assertThat(gameLogContains("exiles cards from the top")).isTrue();
     }
 }
 

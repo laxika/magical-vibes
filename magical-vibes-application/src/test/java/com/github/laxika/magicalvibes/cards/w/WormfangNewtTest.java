@@ -1,35 +1,35 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WormfangNewt.class, Island.class})
+@CardUsed({WormfangNewt.class, KrosanVerge.class, SuntailHawk.class})
 class WormfangNewtTest extends BaseCardTest {
 
     @Test
     void exilesOneLandYouControlAndReturnsItWhenNewtLeaves() {
-        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Island());
-        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Island());
-        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new KrosanVerge());
+        Permanent nonLand = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
 
-        harness.setHand(player1, List.of(new WormfangNewt()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
+                .containsExactlyInAnyOrder(firstLand.getId(), secondLand.getId())
+                .doesNotContain(opponentLand.getId(), nonLand.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentLand.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
@@ -58,13 +58,53 @@ class WormfangNewtTest extends BaseCardTest {
 
     @Test
     void doesNothingWhenYouControlNoLand() {
-        harness.setHand(player1, List.of(new WormfangNewt()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        resolveAllTriggers();
 
         assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void returnsExiledLandToItsOwnerWhenNewtLeaves() {
+        KrosanVerge landCard = new KrosanVerge();
+        landCard.setOwnerId(player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, landCard);
+
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        resolveAllTriggers();
+
+        Permanent newt = findPermanent(player1, "Wormfang Newt");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.getCardsExiledByPermanent(newt.getId())).containsExactly(landCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, newt));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(landCard.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(landCard.getId()));
+        assertThat(gd.exiledCards)
+                .noneMatch(entry -> entry.card().getId().equals(landCard.getId()));
+    }
+
+    @Test
+    void landExiledAfterNewtLeavesBeforeEnterTriggerResolvesStaysExiled() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
+
+        harness.castFromHand(player1, new WormfangNewt(), "{1}{U}");
+        harness.passBothPriorities();
+
+        Permanent newt = findPermanent(player1, "Wormfang Newt");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, newt));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(land.getId()));
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getId().equals(land.getCard().getId())
+                        && newt.getId().equals(entry.sourcePermanentId()));
     }
 }

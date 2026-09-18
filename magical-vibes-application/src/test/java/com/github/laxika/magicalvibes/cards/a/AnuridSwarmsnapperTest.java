@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnuridSwarmsnapper.class, GrizzlyBears.class})
+@CardUsed({AnuridSwarmsnapper.class, BattlewiseAven.class})
 class AnuridSwarmsnapperTest extends BaseCardTest {
 
     @Test
@@ -24,7 +25,7 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
         Permanent swarmsnapper = addSwarmsnapper();
         addAttackers(2);
 
-        beginBlockers();
+        prepareDeclareBlockers();
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -40,7 +41,7 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
         addAttackers(2);
 
         activate(swarmsnapper);
-        beginBlockers();
+        prepareDeclareBlockers();
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
 
         gs.declareBlockers(gd, player2, List.of(
@@ -49,6 +50,40 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
         ));
 
         assertThat(swarmsnapper.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("Activating Anurid Swarmsnapper twice lets it block three creatures")
+    void blocksThreeCreaturesAfterActivatingTwice() {
+        Permanent swarmsnapper = addSwarmsnapper();
+        addAttackers(3);
+
+        activate(swarmsnapper);
+        activate(swarmsnapper);
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, 0),
+                new BlockerAssignment(blockerIdx, 1),
+                new BlockerAssignment(blockerIdx, 2)
+        ));
+
+        assertThat(swarmsnapper.getBlockingTargets()).containsExactlyInAnyOrder(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("Reach lets Anurid Swarmsnapper block a creature with flying")
+    void blocksFlyingCreatureWithReach() {
+        Permanent swarmsnapper = addSwarmsnapper();
+        addAttacker(new BattlewiseAven());
+
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, 0)));
+
+        assertThat(swarmsnapper.getBlockingTargets()).containsExactly(0);
     }
 
     @Test
@@ -62,7 +97,7 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         addAttackers(2);
-        beginBlockers();
+        prepareDeclareBlockers();
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -72,10 +107,7 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
     }
 
     private Permanent addSwarmsnapper() {
-        Permanent perm = new Permanent(new AnuridSwarmsnapper());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player2, new AnuridSwarmsnapper());
     }
 
     private void activate(Permanent swarmsnapper) {
@@ -88,18 +120,14 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent attacker = new Permanent(new GrizzlyBears());
-            attacker.setSummoningSick(false);
-            attacker.setAttacking(true);
-            attacker.setAttackTarget(player2.getId());
-            gd.playerBattlefields.get(player1.getId()).add(attacker);
+            addAttacker(new BattlewiseAven());
         }
     }
 
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    private Permanent addAttacker(Card card) {
+        Permanent attacker = addCreatureReady(player1, card);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        return attacker;
     }
 }

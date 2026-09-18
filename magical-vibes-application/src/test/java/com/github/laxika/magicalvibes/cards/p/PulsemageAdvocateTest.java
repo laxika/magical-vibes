@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.t.Twiddle;
+import com.github.laxika.magicalvibes.cards.a.AvenWarcraft;
+import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
+import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
+import com.github.laxika.magicalvibes.cards.g.GuidedStrike;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -17,17 +17,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PulsemageAdvocate.class, GrizzlyBears.class, LightningBolt.class, Shock.class, Twiddle.class})
+@CardUsed({PulsemageAdvocate.class, AvenWarcraft.class, GuidedStrike.class, FuneralPyre.class, BattlewiseAven.class})
 class PulsemageAdvocateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns three opponent cards to their hand and reanimates your creature")
     void returnsOpponentCardsAndReanimatesOwnCreature() {
         Permanent advocate = addReadyAdvocate();
-        Card first = new LightningBolt();
-        Card second = new Shock();
-        Card third = new Twiddle();
-        Card creature = new GrizzlyBears();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Card third = new FuneralPyre();
+        Card creature = new BattlewiseAven();
         harness.setGraveyard(player2, List.of(first, second, third));
         harness.setGraveyard(player1, List.of(creature));
 
@@ -48,11 +48,11 @@ class PulsemageAdvocateTest extends BaseCardTest {
     @DisplayName("Rejects a card from your graveyard in the opponent-card target group")
     void rejectsOwnCardForOpponentTargetGroup() {
         Permanent advocate = addReadyAdvocate();
-        Card firstOpponentCard = new LightningBolt();
-        Card secondOpponentCard = new Shock();
-        Card thirdOpponentCard = new Twiddle();
-        Card ownCard = new Shock();
-        Card ownCreature = new GrizzlyBears();
+        Card firstOpponentCard = new AvenWarcraft();
+        Card secondOpponentCard = new GuidedStrike();
+        Card thirdOpponentCard = new FuneralPyre();
+        Card ownCard = new AvenWarcraft();
+        Card ownCreature = new BattlewiseAven();
         harness.setGraveyard(player2, List.of(firstOpponentCard, secondOpponentCard, thirdOpponentCard));
         harness.setGraveyard(player1, List.of(ownCard, ownCreature));
 
@@ -65,12 +65,13 @@ class PulsemageAdvocateTest extends BaseCardTest {
     @DisplayName("Offers opponent graveyard cards for the first three targets and own creatures for the fourth")
     void exposesSeparateTargetGroups() {
         Permanent advocate = addReadyAdvocate();
-        Card first = new LightningBolt();
-        Card second = new Shock();
-        Card third = new Twiddle();
-        Card creature = new GrizzlyBears();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Card third = new FuneralPyre();
+        Card nonCreature = new AvenWarcraft();
+        Card creature = new BattlewiseAven();
         harness.setGraveyard(player2, List.of(first, second, third));
-        harness.setGraveyard(player1, List.of(creature));
+        harness.setGraveyard(player1, List.of(nonCreature, creature));
 
         var ability = advocate.getCard().getActivatedAbilities().getFirst();
         ValidTargetsResponse firstTargets = harness.getValidTargetService().computeValidTargetsForAbility(
@@ -84,11 +85,24 @@ class PulsemageAdvocateTest extends BaseCardTest {
         assertThat(creatureTargets.validGraveyardCardIds()).containsExactly(creature.getId());
     }
 
+    @Test
+    @DisplayName("Rejects a noncreature card for the reanimation target")
+    void rejectsNonCreatureForReanimationTarget() {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new GuidedStrike();
+        Card third = new FuneralPyre();
+        Card nonCreature = new AvenWarcraft();
+        harness.setGraveyard(player2, List.of(first, second, third));
+        harness.setGraveyard(player1, List.of(nonCreature));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), third.getId(), nonCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyAdvocate() {
-        Permanent advocate = new Permanent(new PulsemageAdvocate());
-        advocate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(advocate);
-        return advocate;
+        return addCreatureReady(player1, new PulsemageAdvocate());
     }
 
     private int index(Permanent advocate) {

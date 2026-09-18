@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathWish.class, GrizzlyBears.class})
+@CardUsed({DeathWish.class, BorderPatrol.class})
 class DeathWishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts a chosen outside-the-game card into hand, loses half life rounded up, and exiles Death Wish")
     void choosesOutsideTheGameCard() {
-        Card chosen = new GrizzlyBears();
+        Card chosen = new BorderPatrol();
         setSideboard(chosen);
         harness.setLife(player1, 11);
 
@@ -30,6 +28,8 @@ class DeathWishTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = pendingSearch();
         assertThat(search.params().cards()).containsExactly(chosen);
         assertThat(search.params().reveals()).isFalse();
+        assertThat(search.params().sourceSideboard()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
         choose(chosen);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
@@ -41,7 +41,7 @@ class DeathWishTest extends BaseCardTest {
     @Test
     @DisplayName("May decline the outside-the-game card and still loses half life and exiles Death Wish")
     void mayDeclineOutsideTheGameCard() {
-        Card available = new GrizzlyBears();
+        Card available = new BorderPatrol();
         setSideboard(available);
         harness.setLife(player1, 20);
 
@@ -66,12 +66,40 @@ class DeathWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Does not offer an opponent's outside-the-game card")
+    void searchesOnlyControllerOutsideTheGameCards() {
+        Card chosen = new BorderPatrol();
+        Card opponentCard = new BorderPatrol();
+        setSideboard(chosen);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentCard)));
+        harness.setLife(player1, 20);
+
+        DeathWish wish = castDeathWish();
+
+        PendingInteraction.LibrarySearch search = pendingSearch();
+        assertThat(search.params().cards()).containsExactly(chosen);
+        choose(chosen);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
+    @Test
+    @DisplayName("Exiles Death Wish even when the life loss is lethal")
+    void exilesAfterLethalLifeLoss() {
+        harness.setLife(player1, 1);
+
+        DeathWish wish = castDeathWish();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+    }
+
     private DeathWish castDeathWish() {
         DeathWish wish = new DeathWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{1}{B}{B}");
         harness.passBothPriorities();
         return wish;
     }
@@ -87,6 +115,6 @@ class DeathWishTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

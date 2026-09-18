@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.l.Lifelace;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -33,6 +35,20 @@ class MaskedGorgonTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFromSourceSubtypes(gd, whiteCreature, gorgon)).isTrue();
         assertThat(gqs.hasProtectionFromSourceSubtypes(gd, blueCreature, gorgon)).isFalse();
         assertThat(gqs.hasProtectionFromSourceSubtypes(gd, greenEnchantment, gorgon)).isFalse();
+    }
+
+    @Test
+    @CardUsed(Lifelace.class)
+    @DisplayName("A green Masked Gorgon has protection from Gorgons")
+    void greenMaskedGorgonHasProtectionFromGorgons() {
+        Permanent maskedGorgon = addMaskedGorgon(player1);
+
+        harness.setHand(player1, List.of(new Lifelace()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, maskedGorgon.getId());
+
+        assertThat(gqs.getEffectiveColors(gd, maskedGorgon)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, maskedGorgon, maskedGorgon)).isTrue();
     }
 
     @Test
