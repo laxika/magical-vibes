@@ -45,6 +45,7 @@ class ExiledDoomsayerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new ScornfulEgotist()));
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
+        harness.forceActivePlayer(player2);
         harness.castCreatureWithMorph(player2, 0);
         resolveAllTriggers();
 

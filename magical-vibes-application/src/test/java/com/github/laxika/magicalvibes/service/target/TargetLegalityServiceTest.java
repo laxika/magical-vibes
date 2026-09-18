@@ -119,6 +119,21 @@ class TargetLegalityServiceTest {
         assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
     }
 
+    @Test
+    void playerProtectionChecksEverySourceColor() {
+        Card source = new Card();
+        when(gameQueryService.getEffectiveCardColors(gd, source))
+                .thenReturn(Set.of(CardColor.BLUE, CardColor.BLACK));
+        when(gameQueryService.playerHasProtectionFromColor(eq(gd), eq(player2Id), any(CardColor.class)))
+                .thenAnswer(invocation -> invocation.getArgument(2) == CardColor.BLACK);
+        var filter = new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
+
+        assertThatThrownBy(() -> sut.validateSpellPlayerTarget(gd, player2Id, player1Id, source, filter))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
     @Mock
     private GameQueryService gameQueryService;
     @Mock

@@ -2998,6 +2998,8 @@ public class TriggerCollectionService {
                     auraControllerId,
                     aura.getId());
             entry.setEventValue(damageDealt);
+            entry.setSourcePermanentSnapshot(new Permanent(aura));
+            entry.setNonTargeting(true);
             entries.add(entry);
         });
     }
@@ -5278,7 +5280,11 @@ public class TriggerCollectionService {
                                                                 Permanent damagedPermanent,
                                                                 UUID damagedPermanentControllerId,
                                                                 int excessDamage) {
-        if (damagedPermanent == null || damagedPermanentControllerId == null || excessDamage <= 0) return;
+        if (damagedPermanent == null || damagedPermanentControllerId == null || excessDamage <= 0
+                || (!gameQueryService.isCreature(gameData, damagedPermanent)
+                && !damagedPermanent.getCard().hasType(CardType.PLANESWALKER))) return;
+
+        gameData.recordControllerOfPermanentDealtExcessDamageThisTurn(damagedPermanentControllerId);
 
         if (gameQueryService.isCreature(gameData, damagedPermanent)) {
             gameData.recordPermanentDealtExcessDamageThisTurn(damagedPermanent.getId());
@@ -5915,6 +5921,16 @@ public class TriggerCollectionService {
      */
     public void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
                                                                 StackEntry triggeredAbility) {
+        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, false);
+    }
+
+    public void checkEnlistmentTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
+                                                        StackEntry triggeredAbility) {
+        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, true);
+    }
+
+    private void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
+                                                                StackEntry triggeredAbility, boolean enlistment) {
         if (attacker == null || triggeredAbility == null) {
             return;
         }
@@ -5928,7 +5944,7 @@ public class TriggerCollectionService {
         }
 
         TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(
-                attacker, triggeredAbility);
+                attacker, triggeredAbility, enlistment);
         for (Permanent watcher : List.copyOf(battlefield)) {
             dispatchSlot(gameData, watcher, controllerId, EffectSlot.STATIC, context);
         }
@@ -8610,6 +8626,7 @@ public class TriggerCollectionService {
                 );
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 entry.setTriggeringPermanentId(dyingPermanent.getId());
+                entry.rememberLastKnownPermanentCard(dyingPermanent.getId(), dyingCard);
                 entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
                 entry.setEventValue(dyingPower);
                 int previousCopies = gameData.beginTriggeredAbilityCopies(1
@@ -12406,6 +12423,9 @@ public class TriggerCollectionService {
                 TargetFilter targetFilter = targetGroupIndex >= 0
                         ? perm.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
                         : perm.getCard().getTargetFilter();
+                boolean optionalTarget = targetGroupIndex >= 0
+                        && perm.getCard().getSpellTargets().get(targetGroupIndex).getMinTargets() == 0
+                        && perm.getCard().getSpellTargets().get(targetGroupIndex).getMaxTargets() == 1;
                 for (int i = 0; i < permanentTriggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(),
@@ -12415,7 +12435,11 @@ public class TriggerCollectionService {
                             targetFilter,
                             0,
                             perm.getId(),
-                            enteringPermanentId
+                            null,
+                            optionalTarget,
+                            enteringPermanentId,
+                            null,
+                            landControllerId
                     ));
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                             "'s landfall ability triggers — choose a target."));

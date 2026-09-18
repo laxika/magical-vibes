@@ -274,6 +274,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -375,7 +376,8 @@ public class StepTriggerService {
      * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
      * abilities and pushes them onto the stack or queues may-ability prompts.
      *
-     * <p>Handles slots: {@code UPKEEP_TRIGGERED}, {@code GRAVEYARD_UPKEEP_TRIGGERED},
+     * <p>Handles slots: {@code UPKEEP_TRIGGERED}, {@code COMMAND_ZONE_UPKEEP_TRIGGERED},
+     * {@code GRAVEYARD_UPKEEP_TRIGGERED},
      * {@code EACH_UPKEEP_TRIGGERED}, {@code OPPONENT_UPKEEP_TRIGGERED},
      * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED}, and
      * {@code ON_OPENING_HAND_REVEAL} (Chancellor cycle, turn 1 only).
@@ -899,6 +901,29 @@ public class StepTriggerService {
                     .filter(permanent -> gameQueryService.isLand(gameData, permanent))
                     .count();
         });
+
+        List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
+        if (commandZone != null) {
+            for (Card card : new ArrayList<>(commandZone)) {
+                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED)) {
+                    if (effect instanceof MayPayManaEffect mayPay) {
+                        gameData.queueMayAbility(card, activePlayerId, mayPay, null);
+                    } else if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, activePlayerId, may, null);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                activePlayerId,
+                                card.getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect))));
+                        gameLogService.append(gameData, GameLog.cardThen(card, "'s upkeep ability triggers."));
+                        log.info("Game {} - {} command-zone upkeep trigger pushed onto stack",
+                                gameData.id, card.getName());
+                    }
+                }
+            }
+        }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
@@ -5336,7 +5361,14 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                         continue;
                     }
-                    if (effect instanceof ChooseOneEffect chooseOneEffect) {
+                    if (effect instanceof ChooseModeNotYetChosenEffect chooseModeNotYetChosenEffect) {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), activePlayerId,
+                                new ChooseOneEffect(chooseModeNotYetChosenEffect.options()), perm.getId(), false, true));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} controller end-step trigger queued for consumed mode selection",
+                                gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ChooseOneEffect chooseOneEffect) {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                 perm.getCard(), activePlayerId, chooseOneEffect, perm.getId()));
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -5620,7 +5652,9 @@ public class StepTriggerService {
                         log.info("Game {} - {} controller end-step graveyard-target trigger queued",
                                 gameData.id, perm.getCard().getName());
                     } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                        if (perm.getCard().getSpellTargets().size() > 1
+                        if (effect.targetChosenAtRandom()) {
+                            pushRandomlyTargetedControllerEndStepTrigger(gameData, perm, activePlayerId, effect);
+                        } else if (perm.getCard().getSpellTargets().size() > 1
                                 || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId(),
@@ -5719,7 +5753,8 @@ public class StepTriggerService {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
-                        enchantedPermanentControllerId,
+                        effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect
+                                ? auraOwnerId : enchantedPermanentControllerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
                         perm.getAttachedTo(),
@@ -5727,6 +5762,7 @@ public class StepTriggerService {
                 );
                 entry.setNonTargeting(true);
                 entry.setTriggeringPermanentId(perm.getAttachedTo());
+                entry.setTriggeringPermanentControllerId(enchantedPermanentControllerId);
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 gameData.stack.add(entry);
 
@@ -5817,6 +5853,46 @@ public class StepTriggerService {
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                     "'s delayed ability triggers to remove counters."));
         }
+    }
+
+    private void pushRandomlyTargetedControllerEndStepTrigger(GameData gameData, Permanent sourcePermanent,
+                                                               UUID controllerId, CardEffect effect) {
+        Card sourceCard = sourcePermanent.getCard();
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                List.of(effect),
+                sourceCard.getTargetFilter(),
+                controllerId,
+                sourceCard,
+                TriggerTargetCollector.Options.END_STEP);
+        List<UUID> validTargets = result.validTargets().stream()
+                .filter(gameData.playerIds::contains)
+                .toList();
+        if (validTargets.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(sourceCard, "'s end step ability has no valid targets."));
+            log.info("Game {} - {} controller end-step random-target trigger skipped (no valid targets)",
+                    gameData.id, sourceCard.getName());
+            return;
+        }
+
+        UUID targetId = validTargets.get(ThreadLocalRandom.current().nextInt(validTargets.size()));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s end step ability",
+                new ArrayList<>(List.of(effect)),
+                targetId,
+                sourcePermanent.getId());
+        entry.setTargetFilter(sourceCard.getTargetFilter());
+        gameData.stack.add(entry);
+
+        String targetName = gameData.playerIdToName.get(targetId);
+        gameLogService.append(gameData,
+                GameLog.cardThen(sourceCard, "'s end step ability randomly targets " + targetName + "."));
+        log.info("Game {} - {} controller end-step trigger randomly targets {}",
+                gameData.id, sourceCard.getName(), targetName);
     }
 
     /**

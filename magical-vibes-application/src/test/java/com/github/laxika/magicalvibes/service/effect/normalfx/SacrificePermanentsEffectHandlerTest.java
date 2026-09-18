@@ -68,6 +68,32 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SacrificePermanentsEffectHandlerTest {
 
     @Test
+    void singlePlayerAutomaticSacrificesShareTheSimultaneousDeathSnapshot() {
+        Permanent first = addPermanent(player1Id, "First land", CardType.LAND);
+        Permanent second = addPermanent(player1Id, "Second land", CardType.LAND);
+        stubCount(2);
+        when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+        for (Permanent permanent : List.of(first, second)) {
+            when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+            org.mockito.Mockito.doAnswer(invocation -> {
+                assertThat(gd.simultaneousDyingPermanentControllers)
+                        .containsKeys(first.getId(), second.getId());
+                return true;
+            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gd, permanent);
+        }
+
+        handler.resolve(gd, entry(player1Id, null),
+                new SacrificePermanentsEffect(2, new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER)
+                        .withSimultaneousChoices());
+
+        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, first);
+        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, second);
+        assertThat(gd.simultaneousDyingPermanentControllers).isEmpty();
+    }
+
+    @Test
     void simultaneousChoicesStartWithTheActivePlayerEvenForASingleLegalCreature() {
         gd.activePlayerId = player2Id;
         Permanent first = addPermanent(player1Id, "First creature", CardType.CREATURE);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "28")
+@CardRegistration(set = "C13", collectorNumber = "15")
 public class KirtarsWrath extends Card {
 
     public KirtarsWrath() {

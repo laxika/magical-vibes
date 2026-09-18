@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "171")
 @CardRegistration(set = "DDH", collectorNumber = "63")
+@CardRegistration(set = "C13", collectorNumber = "192")
 public class GrixisCharm extends Card {
 
     public GrixisCharm() {

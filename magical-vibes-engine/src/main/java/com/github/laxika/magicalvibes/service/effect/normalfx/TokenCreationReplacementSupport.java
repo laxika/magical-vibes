@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCre
 import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddSoldierTokenToCreatureTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
@@ -178,6 +179,64 @@ public final class TokenCreationReplacementSupport {
                 original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
     }
 
+    /** Returns the Soldier token blueprint when Queen Allenal's replacement applies. */
+    public static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
+                                                                         UUID controllerId,
+                                                                         CreateTokenEffect original) {
+        return additionalSoldierTokenIfApplicable(gameData, controllerId,
+                original.primaryType() == CardType.CREATURE,
+                original.tappedAndAttacking(), original.tapped(),
+                original.exileAtEndOfCombat(), original.exileAtEndStep(),
+                original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn());
+    }
+
+    /** Returns the number of active Queen Allenal replacements for a token-creation event. */
+    public static int additionalSoldierTokenCountIfApplicable(GameData gameData,
+                                                               UUID controllerId,
+                                                               CreateTokenEffect original) {
+        return additionalSoldierTokenCountIfApplicable(gameData, controllerId,
+                original.primaryType() == CardType.CREATURE);
+    }
+
+    /** Returns the Soldier token blueprint for a token-copy creation event, when applicable. */
+    public static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
+                                                                         UUID controllerId,
+                                                                         boolean creatureTokenEvent,
+                                                                         boolean tappedAndAttacking,
+                                                                         boolean tapped) {
+        return additionalSoldierTokenIfApplicable(gameData, controllerId, creatureTokenEvent,
+                tappedAndAttacking, tapped, false, false, 0, Set.of());
+    }
+
+    /** Returns the number of active Queen Allenal replacements for a token-copy event. */
+    public static int additionalSoldierTokenCountIfApplicable(GameData gameData,
+                                                               UUID controllerId,
+                                                               boolean creatureTokenEvent) {
+        return creatureTokenEvent
+                ? staticEffectCount(gameData, controllerId, AddSoldierTokenToCreatureTokenCreationEffect.class)
+                : 0;
+    }
+
+    private static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
+                                                                          UUID controllerId,
+                                                                          boolean creatureTokenEvent,
+                                                                          boolean tappedAndAttacking,
+                                                                          boolean tapped,
+                                                                          boolean exileAtEndOfCombat,
+                                                                          boolean exileAtEndStep,
+                                                                          int initialCounters,
+                                                                          Set<Keyword> grantedKeywords) {
+        if (!creatureTokenEvent
+                || !hasStaticEffect(gameData, controllerId, AddSoldierTokenToCreatureTokenCreationEffect.class)) {
+            return null;
+        }
+        return new CreateTokenEffect(
+                CardType.CREATURE, 1, "Soldier", 1, 1, CardColor.WHITE, null,
+                List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), tappedAndAttacking, tapped,
+                Map.of(), List.of(), exileAtEndOfCombat, exileAtEndStep, false,
+                initialCounters, grantedKeywords, Set.of());
+    }
+
     /** Returns the number of Treasure tokens added by active Bilbo replacements. */
     static int additionalTreasureTokenCount(GameData gameData, UUID controllerId,
                                              CreateTokenEffect original, int amount) {
@@ -263,16 +322,26 @@ public final class TokenCreationReplacementSupport {
 
     private static boolean hasStaticEffect(GameData gameData, UUID controllerId,
                                             Class<? extends CardEffect> effectType) {
+        return staticEffectCount(gameData, controllerId, effectType) > 0;
+    }
+
+    private static int staticEffectCount(GameData gameData, UUID controllerId,
+                                         Class<? extends CardEffect> effectType) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
-            return false;
+            return 0;
         }
+        int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
-                return true;
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || permanent.isStaticEffectSuppressed(effectType)) {
+                continue;
             }
+            count += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(effectType::isInstance)
+                    .count();
         }
-        return false;
+        return count;
     }
 
     private static int additionalMapTokenCount(GameData gameData, UUID controllerId) {

@@ -239,10 +239,8 @@ public class GameData {
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastManaSpentOnX = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
-    /**
-     * Permanents whose once-per-your-turn graveyard cast permission has already been used this turn
-     * (Gisa and Geralf), keyed by the granting permanent's id.
-     */
+    /** Permanents whose once-per-your-turn graveyard play or cast permission has been used this
+     * turn, keyed by the granting permanent's id. */
     public final Set<UUID> oncePerTurnGraveyardCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
@@ -338,6 +336,8 @@ public class GameData {
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
     /** Directly phased-out permanent ids that remain phased out until their source leaves. */
     public final Map<UUID, Set<UUID>> phasedOutUntilSourceLeaves = new ConcurrentHashMap<>();
+    /** Directly phased-out permanent ids that remain phased out while their source stays controlled. */
+    public final Map<UUID, Map<UUID, Integer>> phasedOutWhileSourceControlled = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
@@ -2207,6 +2207,9 @@ public class GameData {
     /** Tracks controllers whose Giant, Wizard, or spell dealt damage to each permanent this turn. */
     public final Map<UUID, Set<UUID>> qualifyingDamageControllersByPermanentThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks the controllers whose creatures or planeswalkers were dealt excess damage this turn. */
+    public final Set<UUID> controllersOfPermanentsDealtExcessDamageThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Records that {@code amount} damage was dealt to {@code permanentId} this turn. */
     public void recordDamageToPermanent(UUID permanentId, int amount) {
         if (permanentId == null || amount <= 0) {
@@ -2260,6 +2263,20 @@ public class GameData {
         qualifyingDamageControllersByPermanentThisTurn
                 .computeIfAbsent(permanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(controllerId);
+    }
+
+    /** Records an excess-damage event against a creature or planeswalker this turn. */
+    public void recordControllerOfPermanentDealtExcessDamageThisTurn(UUID controllerId) {
+        if (controllerId == null) {
+            return;
+        }
+        controllersOfPermanentsDealtExcessDamageThisTurn.add(controllerId);
+    }
+
+    /** Returns whether an opponent-controlled creature or planeswalker was dealt excess damage this turn. */
+    public boolean wasOpponentPermanentDealtExcessDamageThisTurn(UUID controllerId) {
+        return controllerId != null && controllersOfPermanentsDealtExcessDamageThisTurn.stream()
+                .anyMatch(damagedControllerId -> !controllerId.equals(damagedControllerId));
     }
 
     /** Tracks which permanents (by UUID) have already provided their once-each-turn "you may pay {0}"
@@ -5971,6 +5988,8 @@ public class GameData {
             copy.damageDealtToPermanentsBySourceThisTurn.put(k, sources);
         });
         copy.damageSourceNamesThisTurn.putAll(this.damageSourceNamesThisTurn);
+        copy.controllersOfPermanentsDealtExcessDamageThisTurn.addAll(
+                this.controllersOfPermanentsDealtExcessDamageThisTurn);
         this.qualifyingDamageControllersByPermanentThisTurn.forEach((k, v) -> {
             Set<UUID> controllers = ConcurrentHashMap.newKeySet();
             controllers.addAll(v);
@@ -6083,6 +6102,11 @@ public class GameData {
             Set<UUID> targetIds = ConcurrentHashMap.newKeySet();
             targetIds.addAll(v);
             copy.phasedOutUntilSourceLeaves.put(k, targetIds);
+        });
+        this.phasedOutWhileSourceControlled.forEach((sourceId, targetSequences) -> {
+            Map<UUID, Integer> targetSequenceCopy = new ConcurrentHashMap<>();
+            targetSequenceCopy.putAll(targetSequences);
+            copy.phasedOutWhileSourceControlled.put(sourceId, targetSequenceCopy);
         });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---

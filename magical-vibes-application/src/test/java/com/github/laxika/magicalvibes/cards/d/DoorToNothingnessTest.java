@@ -4,13 +4,16 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(DoorToNothingness.class)
 class DoorToNothingnessTest extends BaseCardTest {
 
     @Test
@@ -62,6 +65,18 @@ class DoorToNothingnessTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Door to Nothingness");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the ability while Door to Nothingness is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent door = harness.addToBattlefieldAndReturn(player1, new DoorToNothingness());
+        door.tap();
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     private void addActivationMana() {

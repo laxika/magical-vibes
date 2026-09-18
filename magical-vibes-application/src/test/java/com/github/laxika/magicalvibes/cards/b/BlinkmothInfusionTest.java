@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
+import com.github.laxika.magicalvibes.cards.s.SkyhunterProwler;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlinkmothInfusion.class, ConjurersBauble.class, SkyhunterProwler.class})
 class BlinkmothInfusionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Affinity for artifacts reduces the generic mana cost")
     void affinityForArtifactsReducesGenericCost() {
         for (int i = 0; i < 12; i++) {
-            harness.addToBattlefield(player1, new Spellbook());
+            harness.addToBattlefield(player1, new ConjurersBauble());
         }
         harness.setHand(player1, List.of(new BlinkmothInfusion()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -39,7 +41,7 @@ class BlinkmothInfusionTest extends BaseCardTest {
     @DisplayName("Affinity counts only artifacts controlled by the spell's controller")
     void affinityCountsOnlyControlledArtifacts() {
         for (int i = 0; i < 12; i++) {
-            harness.addToBattlefield(player2, new Spellbook());
+            harness.addToBattlefield(player2, new ConjurersBauble());
         }
         harness.setHand(player1, List.of(new BlinkmothInfusion()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -54,10 +56,10 @@ class BlinkmothInfusionTest extends BaseCardTest {
     void untapsAllArtifactsButNotNonArtifacts() {
         List<Permanent> playerArtifacts = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
-            playerArtifacts.add(harness.addToBattlefieldAndReturn(player1, new Spellbook()));
+            playerArtifacts.add(harness.addToBattlefieldAndReturn(player1, new ConjurersBauble()));
         }
-        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
-        Permanent nonArtifact = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new ConjurersBauble());
+        Permanent nonArtifact = harness.addToBattlefieldAndReturn(player1, new SkyhunterProwler());
 
         playerArtifacts.forEach(Permanent::tap);
         opponentArtifact.tap();
@@ -65,8 +67,7 @@ class BlinkmothInfusionTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BlinkmothInfusion()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(playerArtifacts).allMatch(permanent -> !permanent.isTapped());
         assertThat(opponentArtifact.isTapped()).isFalse();

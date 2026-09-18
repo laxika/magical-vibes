@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "362")
+@CardRegistration(set = "ARN", collectorNumber = "78")
 public class Oasis extends Card {
 
     public Oasis() {

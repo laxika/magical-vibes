@@ -41,6 +41,7 @@ public record LibrarySearchParams(
         UUID sourcePermanentId,
         LibrarySearchFollowUp followUp,
         boolean requireDifferentNames,
+        boolean requireDifferentPowers,
         Integer manaValueBoundValue,
         boolean manaValueExact,
         Integer totalManaValueBound,
@@ -89,7 +90,7 @@ public record LibrarySearchParams(
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
-                filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
@@ -105,7 +106,7 @@ public record LibrarySearchParams(
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
-                filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
@@ -120,7 +121,7 @@ public record LibrarySearchParams(
                 count, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
@@ -134,7 +135,7 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
@@ -148,7 +149,7 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, names, grantHaste, exileAtEndStep,
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
@@ -185,6 +186,7 @@ public record LibrarySearchParams(
         private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
         private boolean requireDifferentNames;
+        private boolean requireDifferentPowers;
         private Integer manaValueBoundValue;
         private boolean manaValueExact;
         private Integer totalManaValueBound;
@@ -341,6 +343,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder requireDifferentPowers(boolean requireDifferentPowers) {
+            this.requireDifferentPowers = requireDifferentPowers;
+            return this;
+        }
+
         public Builder manaValueBound(Integer manaValueBoundValue, boolean manaValueExact) {
             this.manaValueBoundValue = manaValueBoundValue;
             this.manaValueExact = manaValueExact;
@@ -469,7 +476,7 @@ public record LibrarySearchParams(
                     restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     battlefieldControllerId,
-                    filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                    filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                     manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, exileAtEndStep,
                     returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,

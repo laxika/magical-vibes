@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "36")
+@CardRegistration(set = "C13", collectorNumber = "184")
 public class DeathbringerThoctar extends Card {
 
     public DeathbringerThoctar() {

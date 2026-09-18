@@ -17,6 +17,6 @@ public class SulfuricVortex extends Card {
     public SulfuricVortex() {
         addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER));
+                new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER));
     }
 }

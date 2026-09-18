@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "225")
+@CardRegistration(set = "C13", collectorNumber = "298")
 public class JundPanorama extends Card {
 
     public JundPanorama() {

@@ -199,6 +199,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
@@ -827,6 +828,18 @@ public class PermanentChoiceBattlefieldHandlerService {
         eachOpponentChoosesCreatureYouGainControlEffectHandler.completeChoice(gameData, permanentId, context);
 
         // More opponents may still need to choose — leave the parked resolution until all are done.
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleOrderOfSuccessionChoice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OrderOfSuccession context) {
+        orderOfSuccessionEffectHandler.completeChoice(gameData, permanentId, context);
+
+        // More players may still need to choose — leave the parked resolution until all are done.
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }

@@ -168,9 +168,29 @@ public class PhasingService {
         }
     }
 
+    /** Phases out a permanent and prevents its normal phase-in while the source remains controlled. */
+    public void phaseOutWhileSourceControlled(GameData gameData, Permanent source, Permanent target,
+                                              UUID sourceControllerId) {
+        if (target == null || target.getId() == null) {
+            return;
+        }
+
+        phaseOut(gameData, List.of(target));
+        if (source == null || source.getId() == null || sourceControllerId == null
+                || !sourceControllerId.equals(gameData.findControllerOf(source))
+                || findPhasedOutPermanent(gameData, target.getId()) == null) {
+            return;
+        }
+
+        gameData.phasedOutWhileSourceControlled
+                .computeIfAbsent(source.getId(), ignored -> new ConcurrentHashMap<>())
+                .put(target.getId(), source.getControlChangeSequence());
+    }
+
     /** Phases in every creature held by a source-leave phase-out and taps each creature. */
     public void phaseInWhenSourceLeaves(GameData gameData, UUID sourcePermanentId) {
         Set<UUID> targetIds = gameData.phasedOutUntilSourceLeaves.remove(sourcePermanentId);
+        gameData.phasedOutWhileSourceControlled.remove(sourcePermanentId);
         if (targetIds == null || targetIds.isEmpty()) {
             return;
         }
@@ -269,8 +289,21 @@ public class PhasingService {
     }
 
     private boolean isHeldUntilSourceLeaves(GameData gameData, Permanent permanent) {
-        return gameData.phasedOutUntilSourceLeaves.values().stream()
-                .anyMatch(targetIds -> targetIds.contains(permanent.getId()));
+        if (gameData.phasedOutUntilSourceLeaves.values().stream()
+                .anyMatch(targetIds -> targetIds.contains(permanent.getId()))) {
+            return true;
+        }
+        return gameData.phasedOutWhileSourceControlled.entrySet().stream()
+                .anyMatch(sourceEntry -> sourceEntry.getValue().entrySet().stream()
+                        .anyMatch(targetEntry -> targetEntry.getKey().equals(permanent.getId())
+                                && sourceStillAtControlSequence(gameData,
+                                sourceEntry.getKey(), targetEntry.getValue())));
+    }
+
+    private boolean sourceStillAtControlSequence(GameData gameData, UUID sourceId,
+                                                 int controlChangeSequence) {
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        return source != null && source.getControlChangeSequence() == controlChangeSequence;
     }
 
     private void clearSourceLeavePhaseOuts(GameData gameData, Collection<Permanent> permanents) {
@@ -279,6 +312,10 @@ public class PhasingService {
         gameData.phasedOutUntilSourceLeaves.values()
                 .forEach(targetIds -> targetIds.removeAll(phasedInIds));
         gameData.phasedOutUntilSourceLeaves.entrySet()
+                .removeIf(entry -> entry.getValue().isEmpty());
+        gameData.phasedOutWhileSourceControlled.values()
+                .forEach(targetSequences -> targetSequences.keySet().removeAll(phasedInIds));
+        gameData.phasedOutWhileSourceControlled.entrySet()
                 .removeIf(entry -> entry.getValue().isEmpty());
     }
 

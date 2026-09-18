@@ -1317,8 +1317,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int multiplier = MaroGoneNutsSupport.apply(gameData, effect, 2);
+                var manaBeforeDoubling = pool.getAllManaTotals();
                 for (ManaColor color : ManaColor.values()) {
-                    int current = pool.get(color);
+                    int current = manaBeforeDoubling.getOrDefault(color, 0);
                     for (int i = 1; i < multiplier; i++) {
                         pool.add(color, current);
                     }

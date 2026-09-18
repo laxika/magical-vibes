@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "51")
+@CardRegistration(set = "C13", collectorNumber = "90")
 public class QuagmireDruid extends Card {
 
     public QuagmireDruid() {

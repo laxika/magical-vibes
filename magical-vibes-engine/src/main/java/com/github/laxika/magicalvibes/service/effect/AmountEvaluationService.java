@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
@@ -149,6 +150,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
@@ -285,8 +287,16 @@ public class AmountEvaluationService {
             case WebSlingingReturnedCreatureManaValue ignored ->
                     ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
                             ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
+            // Cast triggers carry the triggering spell's payment in X, independently of
+            // the mana spent on the permanent that owns the ability.
             case ManaSpentToCast ignored ->
-                    ctx.xValue();
+                    ctx.stackEntry() != null && ctx.stackEntry().getTriggeringCardId() != null
+                            ? ctx.xValue()
+                            : ctx.sourcePermanent() != null
+                            ? ctx.sourcePermanent().getManaSpentToCast()
+                            : ctx.stackEntry() != null && ctx.stackEntry().getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                            ? ctx.stackEntry().getManaSpentToCast()
+                            : ctx.xValue();
             case SnowManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
             case TreasureManaSpentToCast ignored ->
@@ -485,6 +495,8 @@ public class AmountEvaluationService {
                     highestOpponentLifeTotal(gameData, ctx);
             case GreatestOpponentHandSize ignored ->
                     greatestOpponentHandSize(gameData, ctx);
+            case OpponentsWithAtLeastTwoMoreLandsThanController ignored ->
+                    opponentsWithAtLeastTwoMoreLandsThanController(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
@@ -1046,7 +1058,7 @@ public class AmountEvaluationService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
-                    total += permanent.getCard().getManaValue();
+                    total += permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue();
                 }
             }
         }
@@ -2021,7 +2033,7 @@ public class AmountEvaluationService {
                     permanent, amount.filter(), filterContext)) {
                 continue;
             }
-            greatest = Math.max(greatest, permanent.getCard().getManaValue());
+            greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
         }
         return greatest;
     }
@@ -2316,6 +2328,19 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(ctx.controllerId())) continue;
             if (gameData.playerHands.getOrDefault(playerId, List.of()).size() > controllerHandSize) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithAtLeastTwoMoreLandsThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerLandCount = countLandsControlledBy(gameData, ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && countLandsControlledBy(gameData, playerId) >= controllerLandCount + 2) {
                 count++;
             }
         }

@@ -1999,6 +1999,18 @@ public class GameService {
         }
     }
 
+    public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateCommandZoneAbility(gameData, actionPlayer, cardId, abilityIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            abilityActivationService.activateCommandZoneAbility(gameData, player, cardId, abilityIndex);
+        }
+    }
+
     public void activateStackAbility(GameData gameData, Player player, UUID stackCardId,
                                      Integer abilityIndex, Integer discardHandCardIndex) {
         Player actionPlayer = player;

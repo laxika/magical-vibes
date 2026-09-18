@@ -13,6 +13,7 @@ All paths relative to `cards/`.
 | Opponent's first spell each turn — exile top card and offer a free cast | `m/MindsDilation.java` | ON_OPPONENT_CASTS_SPELL `ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect()` — collector gates on the opponent's per-turn spell count equaling one, carries the caster as non-target context, then exiles that player's top card and offers a nonland card to the enchantment's controller through `MayPlayExiledCardWithoutPayingManaCostEffect` |
 | First noncreature spell each turn — counter it | `n/NullstoneGargoyle.java` | ON_ANY_PLAYER_CASTS_SPELL `FirstNoncreatureSpellCastTriggerEffect(List.of(new CounterSpellEffect()))` — collector counts matching spells globally across all players, including spells cast before the source entered the battlefield, and reuses the generic triggering-spell counter path |
 | Charge counter + exact-mana-value hand cast / variable scry | `b/BrainInAJar.java` | `{1}`+tap `PutCountersOnSelfEffect(CHARGE)` + `MayCastInstantOrSorceryFromHandWithManaValueEqualToSourceCountersEffect(CHARGE)`; `{3}`+tap+`RemoveXCountersFromSourceCost(CHARGE)` + `ScryEffect(new XValue())` |
+| Two-counter tap ability + source-counter-bounded artifact hand entry | `j/JhoiraAgelessInnovator.java` | `{T}` `PutCountersOnSelfEffect(INGENUITY, 2)` followed by `PutArtifactFromHandWithManaValueAtMostSourceCountersEffect(INGENUITY)`; the dynamic mana-value limit is evaluated after the counters are placed and artifact lands are eligible |
 
 ## Artifacts
 

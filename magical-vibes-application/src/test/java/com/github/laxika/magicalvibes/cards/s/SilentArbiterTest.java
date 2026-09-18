@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +14,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SilentArbiter.class, DrossCrocodile.class})
 class SilentArbiterTest extends BaseCardTest {
 
     @Test
     @DisplayName("No more than one creature can attack each combat")
     void limitsAttackers() {
-        addReadyPermanent(player2, new SilentArbiter());
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SilentArbiter());
+        addCreatureReady(player1, new DrossCrocodile());
+        addCreatureReady(player1, new DrossCrocodile());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
                 .isInstanceOf(IllegalStateException.class)
@@ -31,8 +32,8 @@ class SilentArbiterTest extends BaseCardTest {
     @Test
     @DisplayName("One attacker is legal")
     void allowsOneAttacker() {
-        addReadyPermanent(player2, new SilentArbiter());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SilentArbiter());
+        addCreatureReady(player1, new DrossCrocodile());
 
         assertThatCode(() -> declareAttackers(player1, List.of(0))).doesNotThrowAnyException();
     }
@@ -40,10 +41,10 @@ class SilentArbiterTest extends BaseCardTest {
     @Test
     @DisplayName("No more than one distinct creature can block each combat")
     void limitsBlockers() {
-        addReadyPermanent(player1, new SilentArbiter());
+        addCreatureReady(player1, new SilentArbiter());
         addReadyAttacker(player1);
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DrossCrocodile());
+        addCreatureReady(player2, new DrossCrocodile());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -56,24 +57,17 @@ class SilentArbiterTest extends BaseCardTest {
     @Test
     @DisplayName("One blocker is legal")
     void allowsOneBlocker() {
-        addReadyPermanent(player1, new SilentArbiter());
+        addCreatureReady(player1, new SilentArbiter());
         addReadyAttacker(player1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DrossCrocodile());
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1)))).doesNotThrowAnyException();
     }
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
     private Permanent addReadyAttacker(Player player) {
-        Permanent attacker = addCreatureReady(player, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player, new DrossCrocodile());
         attacker.setAttacking(true);
         return attacker;
     }

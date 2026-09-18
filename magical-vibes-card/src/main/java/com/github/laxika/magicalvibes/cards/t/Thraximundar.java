@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "113")
 @CardRegistration(set = "2X2", collectorNumber = "287")
+@CardRegistration(set = "C13", collectorNumber = "221")
 public class Thraximundar extends Card {
 
     public Thraximundar() {

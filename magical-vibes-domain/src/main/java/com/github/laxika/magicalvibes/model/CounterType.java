@@ -123,6 +123,7 @@ public enum CounterType {
     PARALYZATION,
     PETAL,
     PETRIFICATION,
+    PHYRESIS,
     PHYLACTERY,
     PIN,
     PLAN,

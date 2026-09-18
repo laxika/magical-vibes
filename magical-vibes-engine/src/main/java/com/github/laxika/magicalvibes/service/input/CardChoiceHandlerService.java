@@ -2054,6 +2054,10 @@ public class CardChoiceHandlerService {
         } else if (faceDown) {
             permanent.setFaceDown(faceDownPower, faceDownToughness, faceDownCardTypes);
         }
+        if (!cloaked && !faceDown && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+            permanent.setSummoningSick(false);
+        }
         if (enterTapped) {
             permanent.tap();
         }

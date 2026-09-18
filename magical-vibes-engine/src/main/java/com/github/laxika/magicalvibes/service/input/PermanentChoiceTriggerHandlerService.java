@@ -1015,11 +1015,15 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
             entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             if (att.triggeringPermanentId() != null) {
                 Permanent triggeringCreature = gameQueryService.findPermanentById(
                         gameData, att.triggeringPermanentId());
                 if (triggeringCreature != null) {
+                    entry.setAttachedPermanentSnapshot(new Permanent(triggeringCreature));
+                    entry.setTriggeringPermanentControllerId(
+                            gameQueryService.findPermanentController(gameData, triggeringCreature.getId()));
                     triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                             gameData, triggeringCreature, entry);
                 }
@@ -1090,6 +1094,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttackedTargetId(att.attackedTargetId());
         }
         entry.setTriggeringPermanentId(att.triggeringPermanentId());
+        entry.setActivePlayerId(gameData.activePlayerId);
         pushTriggeredEntry(gameData, entry);
         if (att.triggeringPermanentId() != null) {
             Permanent triggeringCreature = gameQueryService.findPermanentById(

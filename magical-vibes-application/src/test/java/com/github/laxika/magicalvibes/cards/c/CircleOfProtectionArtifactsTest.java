@@ -128,8 +128,8 @@ class CircleOfProtectionArtifactsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing an artifact spell protects the permanent it becomes")
-    void chosenArtifactSpellProtectsPermanentItBecomes() {
+    @DisplayName("Choosing an artifact spell protects against the permanent it becomes")
+    void chosenArtifactSpellProtectsAgainstPermanentItBecomes() {
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         RodOfRuin rod = new RodOfRuin();
@@ -159,6 +159,58 @@ class CircleOfProtectionArtifactsTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact source controlled by the Circle's controller can be chosen and protected")
+    void ownArtifactSourceCanBeChosenAndProtected() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(rod.getId());
+
+        harness.handlePermanentChosen(player1, rod.getId());
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the next damage event from the chosen artifact source is prevented")
+    void preventsOnlyNextDamageEventFromChosenSource() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rod.getId());
+
+        int rodIndex = gd.playerBattlefields.get(player2.getId()).indexOf(rod);
+        harness.activateAbility(player2, rodIndex, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+
+        harness.performUntapStep(player2);
+        harness.activateAbility(player2, rodIndex, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
     }
 
     @Test

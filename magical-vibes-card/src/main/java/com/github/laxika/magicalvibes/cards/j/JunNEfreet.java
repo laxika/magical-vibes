@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "143")
+@CardRegistration(set = "ARN", collectorNumber = "28")
 public class JunNEfreet extends Card {
 
     public JunNEfreet() {
