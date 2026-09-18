@@ -28,7 +28,8 @@ class BlazeOfGloryTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0, 1, 2));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1, 2)));
         castBlaze(blocker);
         prepareDeclareBlockers();
 
@@ -47,7 +48,8 @@ class BlazeOfGloryTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1)));
         castBlaze(blocker);
         prepareDeclareBlockers();
 
@@ -64,7 +66,8 @@ class BlazeOfGloryTest extends BaseCardTest {
         addCreatureReady(player1, new AirElemental());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1)));
         castBlaze(blocker);
         prepareDeclareBlockers();
 
@@ -94,10 +97,12 @@ class BlazeOfGloryTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
         castBlaze(blocker);
         assertThat(blocker.isMustBlockEachAttackingCreatureThisTurnIfAble()).isTrue();
 
+        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
