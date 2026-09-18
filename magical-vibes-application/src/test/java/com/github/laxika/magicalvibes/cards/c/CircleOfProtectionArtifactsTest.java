@@ -128,8 +128,8 @@ class CircleOfProtectionArtifactsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing an artifact spell does not protect the permanent it becomes")
-    void chosenArtifactSpellDoesNotProtectPermanentItBecomes() {
+    @DisplayName("Choosing an artifact spell protects against the permanent it becomes")
+    void chosenArtifactSpellProtectsAgainstPermanentItBecomes() {
         harness.setLife(player1, 20);
         addReadyCircle(player1);
         RodOfRuin rod = new RodOfRuin();
@@ -157,7 +157,7 @@ class CircleOfProtectionArtifactsTest extends BaseCardTest {
         harness.activateAbility(player2, rodIndex, null, player1.getId());
         harness.passBothPriorities();
 
-        harness.assertLife(player1, 19);
+        harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 

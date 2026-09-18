@@ -200,7 +200,7 @@ public class DestructionSupport {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerFilter != null && !playerFilter.contains(playerId)) return;
             for (Permanent perm : battlefield) {
-                if (perm.getCard().hasType(CardType.LAND)) {
+                if (gameQueryService.isLand(gameData, perm)) {
                     continue;
                 }
                 if (perm.getCard().getManaValue() == targetManaValue) {
