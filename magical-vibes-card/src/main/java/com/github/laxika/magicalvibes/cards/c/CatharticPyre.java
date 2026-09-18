@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "133")
 @CardRegistration(set = "DBL", collectorNumber = "133")
+@CardRegistration(set = "ECC", collectorNumber = "90")
 public class CatharticPyre extends Card {
 
     public CatharticPyre() {

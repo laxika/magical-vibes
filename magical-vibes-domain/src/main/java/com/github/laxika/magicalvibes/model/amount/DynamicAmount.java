@@ -153,6 +153,7 @@ public sealed interface DynamicAmount permits
         PermanentCounterSum,
         PermanentManaValueSum,
         PlayersInGame,
+        PlayersWhoDiscardedThisTurn,
         PlayersWithCardsInHandAtMost,
         RepeatedAdditionalCostCount,
         Scaled,

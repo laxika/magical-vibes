@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "ECC", collectorNumber = "63")
 @CardRegistration(set = "TMC", collectorNumber = "81")
 public class VernalFen extends Card {
 

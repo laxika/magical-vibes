@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAttac
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
@@ -63,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndDealTha
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfFromBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToPlayerAndDrawHalfEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageMillReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
@@ -184,6 +186,30 @@ public class DamagePreventionService {
         if (sourceControllerId != null) {
             for (int i = 0; i < damage; i++) {
                 drawService.resolveDrawCard(gameData, sourceControllerId);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Sokrates, Athenian Teacher: prevents combat damage to a player from the affected creature and
+     * makes the creature's controller and that player each draw half the damage, rounded down.
+     */
+    public boolean applySokraticDialogue(GameData gameData, Permanent source, int damage,
+                                         UUID sourceControllerId, UUID playerId) {
+        if (!gameQueryService.isDamagePreventable(gameData, true) || damage <= 0) return false;
+        if (!gameQueryService.hasActiveStaticEffectIncludingGranted(
+                gameData, source, PreventCombatDamageToPlayerAndDrawHalfEffect.class)) return false;
+
+        int cards = damage / 2;
+        if (sourceControllerId != null) {
+            for (int i = 0; i < cards; i++) {
+                drawService.resolveDrawCard(gameData, sourceControllerId);
+            }
+        }
+        if (playerId != null) {
+            for (int i = 0; i < cards; i++) {
+                drawService.resolveDrawCard(gameData, playerId);
             }
         }
         return true;
@@ -486,7 +512,12 @@ public class DamagePreventionService {
             }
             if (gameQueryService.isCreatureSourceDamageToSelfPrevented(
                     gameData, permanent, null, damageSource, isCombatDamage)) return 0;
+            if (gameQueryService.isDamageFromDesertsToSelfPrevented(
+                    gameData, permanent, null, damageSource, isCombatDamage)) return 0;
+            if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                    gameData, permanent, null, damageSource, isCombatDamage)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
+            if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAttachedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAttachedCreatureEffect.class)) return 0;

@@ -45,11 +45,16 @@ public class ReturnSourceCardFromExileToBattlefieldEffectHandler implements Norm
         if (returnEffect.tapped()) {
             permanent.tap();
         }
+        if (returnEffect.attacking()) {
+            permanent.setAttacking(true);
+            permanent.setAttackTarget(entry.getAttackedTargetId());
+        }
         UUID ownerId = exiled.ownerId();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(ownerId) + " returns ", card,
-                " from exile to the battlefield" + (returnEffect.tapped() ? " tapped" : "") + "."));
+                " from exile to the battlefield" + (returnEffect.tapped() ? " tapped" : "")
+                        + (returnEffect.attacking() ? " and attacking" : "") + "."));
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
         log.info("Game {} - {} returns from exile to the battlefield under its owner's control",
                 gameData.id, card.getName());

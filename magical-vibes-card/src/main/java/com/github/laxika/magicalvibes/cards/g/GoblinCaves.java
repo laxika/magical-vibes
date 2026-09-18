@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "64")
+@CardRegistration(set = "ME4", collectorNumber = "119")
 public class GoblinCaves extends Card {
 
     public GoblinCaves() {

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "238")
 @CardRegistration(set = "HA7", collectorNumber = "21")
+@CardRegistration(set = "ACR", collectorNumber = "112")
 public class FieryIslet extends Card {
 
     public FieryIslet() {

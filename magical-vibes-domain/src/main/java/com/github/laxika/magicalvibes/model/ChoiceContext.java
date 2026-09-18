@@ -90,7 +90,14 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record CommanderCounterManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record CommanderCounterManaColorChoice(UUID playerId, int amount, UUID recipientPlayerId) implements ChoiceContext {
+        public CommanderCounterManaColorChoice(UUID playerId, int amount) {
+            this(playerId, amount, null);
+        }
+        public CommanderCounterManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new CommanderCounterManaColorChoice(playerId, amount, recipientPlayerId);
+        }
+    }
 
     record SingleColorSubtypeSpellOrAbilityManaChoice(UUID playerId, int amount,
                                                        CardSubtype subtype, boolean fromCreature,
@@ -146,6 +153,8 @@ public sealed interface ChoiceContext {
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record NonHumanCreatureCounterManaColorChoice(UUID playerId, boolean fromCreature, int amount)
+            implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -1612,6 +1621,27 @@ public sealed interface ChoiceContext {
 
         public List<String> options() {
             List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
+            options.add(DONE);
+            return List.copyOf(options);
+        }
+    }
+
+    record CounterSelection(UUID permanentId, CounterType counterType) {
+    }
+
+    record RemoveAnyNumberOfCountersFromAllPermanentsChoice(
+            StackEntry resolvingEntry, Map<String, CounterSelection> counterOptions)
+            implements ChoiceContext {
+
+        public static final String DONE = "Done";
+
+        public RemoveAnyNumberOfCountersFromAllPermanentsChoice {
+            counterOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(counterOptions));
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(counterOptions.keySet());
             options.add(DONE);
             return List.copyOf(options);
         }

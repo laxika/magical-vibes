@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
@@ -163,6 +164,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PlusOnePlusOneCountersPutOnControlledCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
+import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
@@ -288,10 +290,14 @@ public class AmountEvaluationService {
             case WebSlingingReturnedCreatureManaValue ignored ->
                     ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
                             ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
+            // Cast triggers carry the triggering spell's payment in X, independently of
+            // the mana spent on the permanent that owns the ability.
             case ManaSpentToCast ignored ->
-                    ctx.sourcePermanent() != null
+                    ctx.stackEntry() != null && ctx.stackEntry().getTriggeringCardId() != null
+                            ? ctx.xValue()
+                            : ctx.sourcePermanent() != null
                             ? ctx.sourcePermanent().getManaSpentToCast()
-                            : ctx.stackEntry() != null
+                            : ctx.stackEntry() != null && ctx.stackEntry().getEntryType() != StackEntryType.TRIGGERED_ABILITY
                             ? ctx.stackEntry().getManaSpentToCast()
                             : ctx.xValue();
             case SnowManaSpentToCast ignored ->
@@ -348,6 +354,10 @@ public class AmountEvaluationService {
                     countPlayersWithCardsInHandAtMost(gameData, a, ctx);
             case PlayersInGame ignored ->
                     gameData.orderedPlayerIds.size();
+            case PlayersWhoDiscardedThisTurn ignored ->
+                    (int) gameData.orderedPlayerIds.stream()
+                            .filter(playerId -> gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0) > 0)
+                            .count();
             case AttachedPermanentColorCount ignored ->
                     attachedPermanentColorCount(gameData, ctx);
             case ColorsAmongCardsExiledWithSource ignored ->
@@ -1059,7 +1069,7 @@ public class AmountEvaluationService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
-                    total += permanent.getCard().getManaValue();
+                    total += permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue();
                 }
             }
         }
@@ -1084,7 +1094,9 @@ public class AmountEvaluationService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
-                    total += permanent.getCounterCount(amount.counterType());
+                    total += amount.counterType() == null
+                            ? permanent.getTotalCounterCount()
+                            : permanent.getCounterCount(amount.counterType());
                 }
             }
         }
@@ -2034,7 +2046,7 @@ public class AmountEvaluationService {
                     permanent, amount.filter(), filterContext)) {
                 continue;
             }
-            greatest = Math.max(greatest, permanent.getCard().getManaValue());
+            greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
         }
         return greatest;
     }

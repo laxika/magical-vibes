@@ -252,6 +252,7 @@ public class TurnCleanupService {
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
             p.setAllDamageToPlusOnePlusOneCounterPreventionShield(false);
             p.setDamageDestructionShield(0);
+            p.setLandDestructionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
             p.getOpponentDrawRegenerationShieldRecipients().clear();
@@ -371,6 +372,7 @@ public class TurnCleanupService {
                         && gameData.activePlayerId.equals(watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
+        gameData.damagedCreatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.chainsDrawReplacementsApplied.clear();

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "190")
+@CardRegistration(set = "ECC", collectorNumber = "126")
 public class KulrathKnight extends Card {
 
     public KulrathKnight() {

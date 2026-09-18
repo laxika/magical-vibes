@@ -978,6 +978,23 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        var milledSagaAndLandContext = gameData.graveyardTargetOperation.milledSagaAndLandReturn;
+        if (milledSagaAndLandContext != null) {
+            List<UUID> selectedCardIds = new ArrayList<>(milledSagaAndLandContext.selectedCardIds());
+            for (UUID cardId : cardIds) {
+                if (!selectedCardIds.contains(cardId)) {
+                    selectedCardIds.add(cardId);
+                }
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledSagaAndLandReturn =
+                    new GraveyardTargetOperationState.MilledSagaAndLandReturnContext(
+                            milledSagaAndLandContext.sagaCardIds(), milledSagaAndLandContext.landCardIds(),
+                            milledSagaAndLandContext.categoryIndex(), selectedCardIds, false);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.milledCreaturesToHand != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.milledCreaturesToHand =

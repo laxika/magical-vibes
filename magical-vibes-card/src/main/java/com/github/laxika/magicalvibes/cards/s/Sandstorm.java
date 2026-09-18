@@ -16,6 +16,8 @@ import java.util.List;
 @CardRegistration(set = "MIR", collectorNumber = "239")
 @CardRegistration(set = "BRB", collectorNumber = "64")
 @CardRegistration(set = "DMR", collectorNumber = "174")
+@CardRegistration(set = "ME4", collectorNumber = "164")
+@CardRegistration(set = "ARN", collectorNumber = "53")
 public class Sandstorm extends Card {
 
     private static final PermanentPredicate ATTACKING_CREATURE = new PermanentAllOfPredicate(List.of(

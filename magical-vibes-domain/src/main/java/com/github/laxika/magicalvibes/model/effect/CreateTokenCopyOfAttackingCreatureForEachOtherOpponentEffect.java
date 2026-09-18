@@ -16,6 +16,10 @@ public record CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
         this(opponentId, true, false, true, false);
     }
 
+    public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(boolean exileAtEndOfCombat) {
+        this(null, true, false, !exileAtEndOfCombat, exileAtEndOfCombat);
+    }
+
     public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
             UUID opponentId, boolean mayCreate, boolean removeLegendary, boolean exileAtEndStep) {
         this(opponentId, mayCreate, removeLegendary, exileAtEndStep, false);

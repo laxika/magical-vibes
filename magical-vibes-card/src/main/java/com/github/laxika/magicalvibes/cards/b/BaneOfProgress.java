@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 
 import java.util.List;
 
+@CardRegistration(set = "ECC", collectorNumber = "99")
 @CardRegistration(set = "C13", collectorNumber = "137")
 @CardRegistration(set = "C15", collectorNumber = "175")
 public class BaneOfProgress extends Card {

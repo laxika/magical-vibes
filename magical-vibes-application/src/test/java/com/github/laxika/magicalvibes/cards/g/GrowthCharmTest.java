@@ -57,6 +57,23 @@ class GrowthCharmTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
     }
 
+    @Test
+    void regrowthModeDoesNotReturnAnotherCardWhenTargetLeavesGraveyard() {
+        Card target = new GrizzlyBears();
+        Card otherCard = new Forest();
+        harness.setGraveyard(player1, List.of(target, otherCard));
+        prepareSpell();
+
+        harness.castModalInstant(player1, 0, 2, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void prepareSpell() {
         harness.setHand(player1, List.of(new GrowthCharm()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

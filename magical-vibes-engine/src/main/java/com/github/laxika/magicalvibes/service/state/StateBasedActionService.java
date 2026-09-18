@@ -95,8 +95,26 @@ public class StateBasedActionService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService turnFaceUpCopyService;
+
     public void performStateBasedActions(GameData gameData) {
         if (gameData.waitingForSubgame) return;
+        // Damage and tapping can turn a masked creature face up in the domain model. Collect
+        // its turn-up triggers before lethal damage can remove it from the battlefield.
+        List<Permanent> automaticallyTurnedFaceUp = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.isPendingAutomaticTurnFaceUp()) {
+                gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
+                automaticallyTurnedFaceUp.add(permanent);
+            }
+        });
+        for (Permanent permanent : automaticallyTurnedFaceUp) {
+            permanent.setPendingAutomaticTurnFaceUp(false);
+            turnFaceUpCopyService.turnFaceUpWithoutCost(gameData, permanent);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (graveyardService.hasPendingRegenerationChoice(gameData)) {
             graveyardService.processPendingRegenerationChoice(gameData);

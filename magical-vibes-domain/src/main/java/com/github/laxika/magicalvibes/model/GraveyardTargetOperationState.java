@@ -211,6 +211,8 @@ public class GraveyardTargetOperationState {
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
     public MilledCreaturesToHandContext milledCreaturesToHand;
+    /** Resolution-time choice state for cards milled by Eivor, Wolf-Kissed. */
+    public MilledSagaAndLandReturnContext milledSagaAndLandReturn;
 
     /**
      * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
@@ -261,6 +263,16 @@ public class GraveyardTargetOperationState {
     public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
         public MilledCreaturesToHandContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledSagaAndLandReturnContext(List<UUID> sagaCardIds, List<UUID> landCardIds,
+                                                  int categoryIndex, List<UUID> selectedCardIds,
+                                                  boolean awaitingChoice) {
+        public MilledSagaAndLandReturnContext {
+            sagaCardIds = List.copyOf(sagaCardIds);
+            landCardIds = List.copyOf(landCardIds);
+            selectedCardIds = List.copyOf(selectedCardIds);
         }
     }
 }

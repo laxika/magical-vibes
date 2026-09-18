@@ -59,16 +59,16 @@ class TiamatTest extends BaseCardTest {
     @Test
     @DisplayName("An uncast Tiamat entering the battlefield does not search")
     void uncastTiamatDoesNotSearch() {
-        harness.setGraveyard(player1, List.of(new Tiamat()));
+        Tiamat target = new Tiamat();
+        harness.setGraveyard(player1, List.of(target));
         setLibrary(new ShivanDragon());
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Tiamat");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)

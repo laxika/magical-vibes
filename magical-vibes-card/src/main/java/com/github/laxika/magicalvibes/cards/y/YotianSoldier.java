@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "4ED", collectorNumber = "360")
 @CardRegistration(set = "MRD", collectorNumber = "277")
 @CardRegistration(set = "ATQ", collectorNumber = "79")
+@CardRegistration(set = "ME4", collectorNumber = "240")
 public class YotianSoldier extends Card {
 }

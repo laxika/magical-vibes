@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "40")
+@CardRegistration(set = "ME4", collectorNumber = "49")
 public class FalseSummoning extends Card {
 
     public FalseSummoning() {

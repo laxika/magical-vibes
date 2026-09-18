@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "186")
+@CardRegistration(set = "ECC", collectorNumber = "121")
 public class EverlastingTorment extends Card {
 
     public EverlastingTorment() {

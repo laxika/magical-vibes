@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -16,6 +18,25 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Used by Raking Canopy ("Whenever a creature with flying attacks you, this enchantment deals
  * 4 damage to it.") with a {@code PermanentHasKeywordPredicate(FLYING)} condition.
  */
-public record DealDamageToTriggeringAttackerEffect(int damage, PermanentPredicate attackerCondition)
-        implements CardEffect {
+public record DealDamageToTriggeringAttackerEffect(DynamicAmount damage, PermanentPredicate attackerCondition)
+        implements DamageDealingEffect {
+
+    public DealDamageToTriggeringAttackerEffect(int damage, PermanentPredicate attackerCondition) {
+        this(new Fixed(damage), attackerCondition);
+    }
+
+    @Override
+    public DynamicAmount damageAmount() {
+        return damage;
+    }
+
+    @Override
+    public boolean canDamageCreatures() {
+        return true;
+    }
+
+    @Override
+    public boolean canDamagePlayers() {
+        return false;
+    }
 }

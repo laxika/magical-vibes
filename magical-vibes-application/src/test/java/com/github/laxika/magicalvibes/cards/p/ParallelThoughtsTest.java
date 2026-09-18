@@ -116,6 +116,16 @@ class ParallelThoughtsTest extends BaseCardTest {
         assertThat(subsequentSearch.params().cards())
                 .extracting(Card::getId)
                 .containsExactly(library.get(1).getId(), library.get(2).getId(), library.get(3).getId());
+
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+        UUID sourcePermanentId = harness.getPermanentId(player1, "Parallel Thoughts");
+        assertThat(gd.getCardsExiledByPermanent(sourcePermanentId)).extracting(Card::getId)
+                .containsExactlyInAnyOrderElementsOf(library.subList(0, 4).stream().map(Card::getId).toList());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrderElementsOf(library.subList(4, 8).stream().map(Card::getId).toList());
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

@@ -12,6 +12,6 @@ public class FateUnraveler extends Card {
 
     public FateUnraveler() {
         // Whenever an opponent draws a card, this creature deals 1 damage to that player.
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

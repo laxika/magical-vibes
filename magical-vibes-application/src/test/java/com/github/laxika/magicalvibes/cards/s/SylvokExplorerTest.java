@@ -2,14 +2,19 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.u.UrzasMine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SylvokExplorer.class, Forest.class, Island.class, UrzasMine.class})
 class SylvokExplorerTest extends BaseCardTest {
 
     @Test
@@ -73,5 +78,37 @@ class SylvokExplorerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Ignores an opponent land that can produce only colorless mana")
+    void ignoresOpponentLandThatProducesOnlyColorlessMana() {
+        Permanent explorer = addCreatureReady(player1, new SylvokExplorer());
+        harness.addToBattlefield(player2, new UrzasMine());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(explorer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Sylvok Explorer is summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SylvokExplorer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Sylvok Explorer is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent explorer = addCreatureReady(player1, new SylvokExplorer());
+        explorer.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1319,6 +1319,17 @@ public class GameTestHarness {
                 null, null, null, sacrificePermanentIds);
     }
 
+    /** Casts a modal sorcery while paying a single creature sacrifice cost and supplying targets. */
+    public void castModalSorceryWithModesAndSacrifice(Player player, int cardIndex,
+                                                      int choicesRequired, int choicesMax,
+                                                      int[] modeIndices, List<UUID> targetIds,
+                                                      UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, targetIds, List.of(), false, sacrificePermanentId);
+    }
+
     /** Casts a modal sorcery while paying a conditional multi-permanent tap cost. */
     public void castModalSorceryWithModesAndTaps(Player player, int cardIndex,
                                                  int choicesRequired, int choicesMax,
