@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.AnuridBarkripper;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ErhnamDjinn.class, GrizzlyBears.class, WallOfStone.class, Forest.class})
+@CardUsed({AnuridBarkripper.class, ErhnamDjinn.class, Forest.class, GrizzlyBears.class, WallOfStone.class})
 class ErhnamDjinnTest extends BaseCardTest {
 
     @Test
@@ -74,5 +75,21 @@ class ErhnamDjinnTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Forestwalk lasts through the source controller's next upkeep")
+    void forestwalkLastsUntilSourceControllerNextUpkeep() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new AnuridBarkripper());
+
+        grantForestwalk(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+
+        advanceToUpkeep(player2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
     }
 }
