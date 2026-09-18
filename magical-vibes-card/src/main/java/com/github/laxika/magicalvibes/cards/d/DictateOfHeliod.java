@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "JOU", collectorNumber = "8")
 @CardRegistration(set = "DDO", collectorNumber = "8")
 @CardRegistration(set = "PIO", collectorNumber = "11")
+@CardRegistration(set = "C15", collectorNumber = "68")
 public class DictateOfHeliod extends Card {
 
     public DictateOfHeliod() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "FCA", collectorNumber = "64")
+@CardRegistration(set = "C15", collectorNumber = "56")
 public class CommandBeacon extends Card {
 
     public CommandBeacon() {

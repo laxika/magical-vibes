@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 @CardRegistration(set = "WWK", collectorNumber = "130")
 @CardRegistration(set = "DDP", collectorNumber = "29")
 @CardRegistration(set = "C13", collectorNumber = "256")
+@CardRegistration(set = "C15", collectorNumber = "264")
 public class SeersSundial extends Card {
 
     public SeersSundial() {

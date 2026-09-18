@@ -152,7 +152,9 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithLifeAtMost;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
@@ -492,6 +494,10 @@ public class AmountEvaluationService {
                     greatestOpponentHandSize(gameData, ctx);
             case OpponentsWithAtLeastTwoMoreLandsThanController ignored ->
                     opponentsWithAtLeastTwoMoreLandsThanController(gameData, ctx);
+            case OpponentsWithLifeAtMost thresholdAmount ->
+                    opponentsWithLifeAtMost(gameData, thresholdAmount, ctx);
+            case OpponentsWithMoreLandsThanController ignored ->
+                    opponentsWithMoreLandsThanController(gameData, ctx);
             case OpponentsWithMoreCardsInHandThanController ignored ->
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
@@ -2336,6 +2342,32 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
                     && countLandsControlledBy(gameData, playerId) >= controllerLandCount + 2) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithLifeAtMost(GameData gameData, OpponentsWithLifeAtMost amount,
+                                        AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.getLife(playerId) <= amount.threshold()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithMoreLandsThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerLandCount = countLandsControlledBy(gameData, ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && countLandsControlledBy(gameData, playerId) > controllerLandCount) {
                 count++;
             }
         }

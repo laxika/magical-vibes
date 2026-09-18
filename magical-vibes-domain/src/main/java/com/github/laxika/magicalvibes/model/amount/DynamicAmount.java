@@ -138,6 +138,8 @@ public sealed interface DynamicAmount permits
         Min,
         OpponentPoisonCounters,
         OpponentsWithAtLeastTwoMoreLandsThanController,
+        OpponentsWithLifeAtMost,
+        OpponentsWithMoreLandsThanController,
         OpponentsWithMoreCardsInHandThanController,
         OpponentsAttackedThisTurn,
         OpponentsDealtCombatDamageThisTurn,

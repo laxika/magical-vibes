@@ -8067,7 +8067,8 @@ public class SpellCastingService {
         }
         if (isGraveyardCast) {
             validateGraveyardCastPermanentSacrificeCosts(gameData, player, card,
-                    graveyardCastOpt.orElseThrow(), tapPermanentIds);
+                    graveyardCastOpt.orElseThrow(), sacrificePermanentId,
+                    additionalCostSacrificePermanentIds, tapPermanentIds);
         }
         if (isHarmonize) {
             validateHarmonizeTapCost(gameData, player, tapPermanentIds);
@@ -12224,7 +12225,8 @@ public class SpellCastingService {
             }
             if (isGraveyardCast) {
                 payGraveyardCastPermanentSacrificeCosts(
-                        gameData, player, card, graveyardCastOpt.orElseThrow(), tapPermanentIds);
+                        gameData, player, card, graveyardCastOpt.orElseThrow(), sacrificePermanentId,
+                        additionalCostSacrificePermanentIds, tapPermanentIds);
             }
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
             return effectiveXValue;
@@ -12394,7 +12396,8 @@ public class SpellCastingService {
         }
         if (isGraveyardCast) {
             payGraveyardCastPermanentSacrificeCosts(
-                    gameData, player, card, graveyardCastOpt.orElseThrow(), tapPermanentIds);
+                    gameData, player, card, graveyardCastOpt.orElseThrow(), sacrificePermanentId,
+                    additionalCostSacrificePermanentIds, tapPermanentIds);
         }
         gameData.addSpellCastManaSpent(card.getId(), manaSpent);
         return effectiveXValue;
@@ -12460,8 +12463,10 @@ public class SpellCastingService {
 
     private void validateGraveyardCastPermanentSacrificeCosts(
             GameData gameData, Player player, Card card, GraveyardCast graveyardCast,
-            List<UUID> sacrificePermanentIds) {
-        List<UUID> selectedIds = sacrificePermanentIds == null ? List.of() : sacrificePermanentIds;
+            UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+            List<UUID> tapPermanentIds) {
+        List<UUID> selectedIds = selectedGraveyardCastSacrificeIds(
+                sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds);
         int requiredSacrificeCount = graveyardCast.additionalCosts().stream()
                 .filter(SacrificePermanentsCost.class::isInstance)
                 .mapToInt(cost -> ((SacrificePermanentsCost) cost).count())
@@ -12524,7 +12529,10 @@ public class SpellCastingService {
 
     private void payGraveyardCastPermanentSacrificeCosts(
             GameData gameData, Player player, Card card, GraveyardCast graveyardCast,
-            List<UUID> sacrificePermanentIds) {
+            UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+            List<UUID> tapPermanentIds) {
+        List<UUID> sacrificePermanentIds = selectedGraveyardCastSacrificeIds(
+                sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds);
         int selectedIndex = 0;
         for (CastingCost cost : graveyardCast.additionalCosts()) {
             if (cost instanceof SacrificePermanentsCost sacrificeCost) {
@@ -12545,6 +12553,18 @@ public class SpellCastingService {
                 }
             }
         }
+    }
+
+    private List<UUID> selectedGraveyardCastSacrificeIds(
+            UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+            List<UUID> tapPermanentIds) {
+        if (additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty()) {
+            return additionalCostSacrificePermanentIds;
+        }
+        if (tapPermanentIds != null && !tapPermanentIds.isEmpty()) {
+            return tapPermanentIds;
+        }
+        return sacrificePermanentId == null ? List.of() : List.of(sacrificePermanentId);
     }
 
     private void validateBestowManaCost(GameData gameData, UUID playerId, Card card, int targetingTax) {

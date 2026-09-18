@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "SPG", collectorNumber = "91")
 @CardRegistration(set = "SPG", collectorNumber = "101")
+@CardRegistration(set = "C15", collectorNumber = "38")
 public class PathbreakerIbex extends Card {
 
     public PathbreakerIbex() {

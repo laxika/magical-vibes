@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "66")
+@CardRegistration(set = "C15", collectorNumber = "123")
 public class EaterOfHope extends Card {
 
     public EaterOfHope() {

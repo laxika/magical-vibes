@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DIS", collectorNumber = "142")
+@CardRegistration(set = "C15", collectorNumber = "239")
 public class BiomanticMastery extends Card {
 
     public BiomanticMastery() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "1")
+@CardRegistration(set = "C15", collectorNumber = "58")
 public class AngelOfSerenity extends Card {
 
     public AngelOfSerenity() {

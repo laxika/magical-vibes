@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "67")
+@CardRegistration(set = "C15", collectorNumber = "128")
 public class GravePeril extends Card {
 
     public GravePeril() {

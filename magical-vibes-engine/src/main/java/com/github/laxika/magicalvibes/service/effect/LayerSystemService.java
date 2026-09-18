@@ -612,6 +612,7 @@ public class LayerSystemService {
      *     animation state, granted/removed keywords, colors, subtypes, card types, the
      *     transient land-type override, lose-all flags, text replacements and persistent
      *     granted activated abilities;</li>
+     * <li>commander designations, which are read by commander-filtered static effects;</li>
      * <li>the permanent's current {@code Card} identity (L1 copy swaps) plus its printed
      *     stats/types/keywords and relevant ability-slot counts as insurance for tests that mutate an
      *     unfrozen card in place ({@code TestCards.mutableCard});</li>
@@ -654,6 +655,13 @@ public class LayerSystemService {
         h = mix(h, gameData.activePlayerId == null ? 0 : gameData.activePlayerId.hashCode());
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
+            List<Card> commanders = gameData.playerCommanders.get(playerId);
+            h = mix(h, commanders == null ? -1 : commanders.size());
+            if (commanders != null) {
+                for (Card commander : commanders) {
+                    h = mix(h, commander.getId().hashCode());
+                }
+            }
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));

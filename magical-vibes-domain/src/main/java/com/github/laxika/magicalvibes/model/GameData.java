@@ -6295,6 +6295,16 @@ public class GameData {
                 this.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
         copy.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId =
                 this.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
+        copy.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume =
+                this.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume;
+        copy.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume =
+                this.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume;
+        copy.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentId =
+                this.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentId;
+        copy.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentCardId =
+                this.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentCardId;
+        copy.graveyardTargetOperation.dawnbreakReclaimerChosenOwnCardId =
+                this.graveyardTargetOperation.dawnbreakReclaimerChosenOwnCardId;
         copy.graveyardTargetOperation.asEntersOpponentExileToGraveyard =
                 this.graveyardTargetOperation.asEntersOpponentExileToGraveyard;
 

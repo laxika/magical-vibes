@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "WOT", collectorNumber = "7")
 @CardRegistration(set = "WOT", collectorNumber = "65")
 @CardRegistration(set = "WOT", collectorNumber = "85")
+@CardRegistration(set = "C15", collectorNumber = "72")
 public class KarmicJustice extends Card {
 
     public KarmicJustice() {

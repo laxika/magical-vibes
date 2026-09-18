@@ -2182,6 +2182,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record OpponentChoosesCardFromGraveyardToHand() implements PermanentChoiceContext {}
 
+    /** Dawnbreak Reclaimer: choose which opponent makes the second graveyard choice. */
+    record DawnbreakReclaimerOpponentChoice() implements PermanentChoiceContext {}
+
     /** Curator of Destinies: the controller chooses which opponent chooses between the two piles. */
     record CuratorOpponentChoice() implements PermanentChoiceContext {}
 

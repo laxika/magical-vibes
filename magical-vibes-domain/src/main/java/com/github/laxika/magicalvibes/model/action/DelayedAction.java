@@ -55,6 +55,7 @@ public sealed interface DelayedAction permits
         DelayedCreateToken,
         DelayedCreateTokenAtNextUpkeep,
         DelayedCreateTokenCopy,
+        DelayedRevealCreatureCardsToBattlefield,
         DelayedExileCreatedPermanentsAtEndStep,
         DelayedNontokenAttackTokenCreation,
         DelayedAttackTokenCreation,
