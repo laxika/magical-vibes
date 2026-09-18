@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "52")
 @CardRegistration(set = "2X2", collectorNumber = "50")
+@CardRegistration(set = "TLE", collectorNumber = "13")
 public class ForceOfNegation extends Card {
 
     public ForceOfNegation() {

@@ -1085,6 +1085,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            boolean playerTargetOnly, TargetFilter targetFilter,
                                            int spellManaSpentX, UUID sourcePermanentId,
+                                           Integer triggeringSpellManaValue) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId,
+                    triggeringSpellManaValue, null, false);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter,
+                                           int spellManaSpentX, UUID sourcePermanentId,
                                            Permanent sourcePermanentSnapshot) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, false, null, null, controllerId, null, null, false);

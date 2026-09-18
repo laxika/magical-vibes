@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "FDN", collectorNumber = "156")
 @CardRegistration(set = "EMN", collectorNumber = "65")
 @CardRegistration(set = "SIR", collectorNumber = "74")
+@CardRegistration(set = "TLE", collectorNumber = "14")
 public class ImprisonedInTheMoon extends Card {
 
     public ImprisonedInTheMoon() {

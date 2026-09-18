@@ -416,6 +416,8 @@ public class GameData {
     /** Counts creature deaths by effective creature subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
+    /** Source object id (permanent or spell card) → creature card ids it damaged this turn. */
+    public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySource = new ConcurrentHashMap<>();
     /**
      * Source permanent ids that dealt damage to a creature which later died this turn (Krovikan Vampire
      * intervening-if). Survives the card leaving the graveyard; cleared at turn cleanup.
@@ -1119,6 +1121,9 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Active "whenever a creature dies this turn" delayed triggers, cleared at turn cleanup. */
     public final List<CreatureDeathTriggerWatcher> creatureDeathTriggerWatchers =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Active delayed triggers for creatures damaged by a particular source, cleared at turn cleanup. */
+    public final List<DamagedCreatureDeathTriggerWatcher> damagedCreatureDeathTriggerWatchers =
             Collections.synchronizedList(new ArrayList<>());
     public final List<CreatureEntersTriggerWatcher> allyCreatureEntersTriggerWatchers =
             Collections.synchronizedList(new ArrayList<>());
@@ -5070,6 +5075,7 @@ public class GameData {
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
+        copy.damagedCreatureDeathTriggerWatchers.addAll(this.damagedCreatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.channelHarmShields.addAll(this.channelHarmShields);
@@ -5452,6 +5458,8 @@ public class GameData {
                 copy.sacrificedPermanentSubtypeCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
+        this.creatureCardsDamagedThisTurnBySource.forEach((k, v) ->
+                copy.creatureCardsDamagedThisTurnBySource.put(k, new HashSet<>(v)));
         copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
         this.creatureCardsDamagedBySourceThatDiedThisTurn.forEach((k, v) ->
                 copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));

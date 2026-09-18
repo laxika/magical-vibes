@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
@@ -1329,6 +1330,7 @@ public class GameSimulator {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof SacrificeFractionRoundedUpCost
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
@@ -1370,6 +1372,17 @@ public class GameSimulator {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
+            }
+            if (effect instanceof SacrificeFractionRoundedUpCost cost) {
+                List<Permanent> matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .toList();
+                int required = (matching.size() + cost.divisor() - 1) / cost.divisor();
+                List<UUID> chosen = matching.stream()
+                        .limit(required)
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == required ? chosen : List.of();
             }
             if (effect instanceof TapMultiplePermanentsCost cost
                     && cost.count() instanceof Fixed fixed) {

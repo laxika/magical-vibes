@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SS3", collectorNumber = "3")
+@CardRegistration(set = "TLE", collectorNumber = "165")
 public class FieryConfluence extends Card {
 
     public FieryConfluence() {

@@ -1554,6 +1554,25 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CARDS_PUT_INTO_LIBRARY)
+    private boolean handleCardsPutIntoLibraryDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        var source = match.permanent();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                match.controllerId(),
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                source.getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        return true;
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
@@ -2000,6 +2019,26 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE ──────────────────────────────
+
+    @CollectsTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
+            slot = EffectSlot.ON_OPPONENT_MILLS)
+    private boolean handlePutCountersOnOpponentMill(TriggerMatchContext match,
+            PutCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent mill (put counters on matching permanents)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,

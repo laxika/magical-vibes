@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "48")
+@CardRegistration(set = "TLE", collectorNumber = "12")
 public class CloneLegion extends Card {
 
     public CloneLegion() {

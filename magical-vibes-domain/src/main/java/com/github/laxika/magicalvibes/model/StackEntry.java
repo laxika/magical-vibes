@@ -362,7 +362,8 @@ public class StackEntry {
     @Setter private boolean primaryTargetStoredSeparately;
     /**
      * How many targets each declared target group actually contributed to the flat {@link #targetIds}
-     * list, in group order. Only set by the slot-by-slot trigger walker, which lets a controller
+     * list, in group order. Set by the slot-by-slot trigger walker and by casts whose variable target
+     * groups are separated explicitly, which lets a controller
      * decline an optional ("up to N") group — there the default assumption that every group consumed
      * its full {@code maxTargets} would shift the later groups' slices onto the wrong targets. Empty
      * means "unknown", which keeps the positional slicing every ordinary multi-target spell uses.

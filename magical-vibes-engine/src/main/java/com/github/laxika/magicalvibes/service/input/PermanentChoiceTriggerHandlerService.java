@@ -2183,6 +2183,25 @@ public class PermanentChoiceTriggerHandlerService {
                 declined ? null : permanentId,
                 est.sourcePermanentId()
         );
+        Permanent source = est.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, est.sourcePermanentId());
+        if (source != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+        }
+        if (!declined && gameQueryService.findCardInExileById(gameData, permanentId) != null) {
+            entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    est.sourceCard(),
+                    est.controllerId(),
+                    est.sourceCard().getName() + "'s end step ability",
+                    new ArrayList<>(est.effects()),
+                    permanentId,
+                    Zone.EXILE,
+                    est.sourcePermanentId());
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+        }
         pushTriggeredEntry(gameData, entry);
 
         if (declined) {

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.BlockabilityPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -338,9 +337,12 @@ public class BlockLegalityService {
                 && gameQueryService.getEffectivePower(gameData, blocker) < countIslandsControlledBy(gameData, attacker)) {
             return BlockDenial.CANT_BE_BLOCKED_BY_LESS_POWER;
         }
-        for (CanBlockOnlyIfAttackerMatchesPredicateEffect restriction : blk.attackerFilterRestrictions()) {
-            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
-                return new BlockDenial(BlockDenial.Reason.BLOCKER_LIMITED_TO_ATTACKERS, restriction.allowedAttackersDescription());
+        for (BlockingRestrictionEffect restriction : blk.attackerFilterRestrictions()) {
+            if (restriction.canBlockOnlyAttackersMatching() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, attacker, restriction.canBlockOnlyAttackersMatching())) {
+                return new BlockDenial(BlockDenial.Reason.BLOCKER_LIMITED_TO_ATTACKERS,
+                        restriction.canBlockOnlyAttackersDescription());
             }
         }
         // Board-wide "creatures matching X can't block creatures matching Y" restrictions
@@ -661,7 +663,7 @@ public class BlockLegalityService {
     private BlockLegalityContext.BlockerFacts buildBlockerFacts(BlockLegalityContext context, Permanent blocker) {
         GameData gameData = context.gameData;
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, blocker);
-        List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions = null;
+        List<BlockingRestrictionEffect> attackerFilterRestrictions = null;
         boolean cantBlockStatic = false;
         boolean cantBlockPowerAtLeastOwnToughnessStatic = false;
         boolean blocksShadowAsThoughShadow = false;
@@ -681,7 +683,8 @@ public class BlockLegalityService {
                         blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
                         addReachPermission(blocksAsThoughReachForAttackers, permission);
                     }
-                    if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
+                    if (effect instanceof BlockingRestrictionEffect restriction
+                            && restriction.canBlockOnlyAttackersMatching() != null) {
                         if (attackerFilterRestrictions == null) {
                             attackerFilterRestrictions = new ArrayList<>(2);
                         }
@@ -727,8 +730,10 @@ public class BlockLegalityService {
             blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
             addReachPermission(blocksAsThoughReachForAttackers, permission);
         }
-        List<CanBlockOnlyIfAttackerMatchesPredicateEffect> auraRestrictions =
-                gameQueryService.collectAuraEffects(gameData, blocker, CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
+        List<BlockingRestrictionEffect> auraRestrictions =
+                gameQueryService.collectAuraEffects(gameData, blocker, BlockingRestrictionEffect.class).stream()
+                        .filter(restriction -> restriction.canBlockOnlyAttackersMatching() != null)
+                        .toList();
         if (!auraRestrictions.isEmpty()) {
             if (attackerFilterRestrictions == null) {
                 attackerFilterRestrictions = new ArrayList<>(auraRestrictions.size());

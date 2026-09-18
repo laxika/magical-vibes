@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "329")
+@CardRegistration(set = "TLE", collectorNumber = "59")
 public class TarnishedCitadel extends Card {
 
     public TarnishedCitadel() {

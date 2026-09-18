@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -506,7 +507,36 @@ public class MayCopyHandlerService {
         Card spellCard = targetSpellEntry.getCard();
         List<UUID> validTargets = new ArrayList<>();
 
-        if (EffectResolution.needsSpellTarget(spellCard)) {
+        if (targetSpellEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetSpellEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            int permanentIndex = -1;
+            UUID sourcePermanentId = targetSpellEntry.getSourcePermanentId();
+            if (sourcePermanentId != null) {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                    if (battlefield == null) continue;
+                    for (int i = 0; i < battlefield.size(); i++) {
+                        if (battlefield.get(i).getId().equals(sourcePermanentId)) {
+                            permanentIndex = i;
+                            break;
+                        }
+                    }
+                    if (permanentIndex >= 0) break;
+                }
+            }
+
+            ActivatedAbility synthetic = new ActivatedAbility(
+                    false, null, List.copyOf(targetSpellEntry.getEffectsToResolve()),
+                    "redirect retarget", targetSpellEntry.getTargetFilter());
+            ValidTargetsResponse valid = validTargetService.computeValidTargetsForAbility(
+                    gameData, spellCard, synthetic, targetSpellEntry.getControllerId(), permanentIndex);
+            validTargets.addAll(valid.validPermanentIds());
+            validTargets.addAll(valid.validPlayerIds());
+            validTargets.removeAll(targetSpellEntry.getTargetIds());
+            if (targetSpellEntry.getTargetId() != null) {
+                validTargets.remove(targetSpellEntry.getTargetId());
+            }
+        } else if (EffectResolution.needsSpellTarget(spellCard)) {
             for (StackEntry se : gameData.stack) {
                 if (se.getTargetableId().equals(spellCardId)) continue;
                 try {

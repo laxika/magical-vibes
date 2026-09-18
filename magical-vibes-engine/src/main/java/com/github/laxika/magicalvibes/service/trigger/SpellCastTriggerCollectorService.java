@@ -2309,6 +2309,13 @@ public class SpellCastTriggerCollectorService {
         if (trigger.onlyDuringControllerTurn()
                 && !match.controllerId().equals(match.gameData().activePlayerId)) return false;
 
+        // Check the timing of the cast event itself, rather than the timing at which this
+        // triggered ability resolves.
+        if (trigger.onlyDuringCombat()
+                && (match.gameData().currentStep == null || !match.gameData().currentStep.isCombatPhase())) {
+            return false;
+        }
+
         StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(),

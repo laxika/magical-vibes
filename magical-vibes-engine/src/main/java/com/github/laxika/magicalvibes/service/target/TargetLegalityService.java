@@ -275,6 +275,44 @@ public class TargetLegalityService {
     }
 
     /**
+     * Validates a variable stack-target group followed by a variable permanent-target group.
+     * The flat target list is partitioned before validation because the two groups may each have
+     * fewer targets than their declared maximum.
+     */
+    public void validateVariableMixedSpellAndPermanentTargets(GameData gameData, Card card,
+                                                               List<UUID> stackTargetIds,
+                                                               List<UUID> permanentTargetIds,
+                                                               UUID controllerId, int xValue,
+                                                               boolean kicked, boolean giftPromised) {
+        if (card.getSpellTargets().size() != 2) {
+            throw new IllegalArgumentException("Expected exactly two target groups");
+        }
+        SpellTarget stackGroup = card.getSpellTargets().getFirst();
+        int stackMinTargets = giftPromised
+                ? stackGroup.getGiftPromisedMinTargets()
+                : kicked ? stackGroup.getKickedMinTargets() : stackGroup.getMinTargets();
+        if (stackGroup.isXScaled()) {
+            stackMinTargets = Math.min(xValue, stackMinTargets);
+        }
+        int stackMaxTargets = effectiveGroupMaxTargets(
+                gameData, controllerId, null, stackGroup, xValue, kicked, giftPromised);
+        validateMultiTargetCount(stackTargetIds, stackMinTargets, stackMaxTargets);
+        for (UUID targetId : stackTargetIds) {
+            validateSpellTargetOnStack(gameData, targetId, stackGroup.getFilter(), controllerId,
+                    xValue, kicked, giftPromised);
+        }
+
+        validateSpellTargetGroup(gameData, card, 1, permanentTargetIds, controllerId, xValue, kicked);
+        if (!card.isAllowSharedTargets()) {
+            List<UUID> allTargetIds = new ArrayList<>(stackTargetIds);
+            allTargetIds.addAll(permanentTargetIds);
+            if (new HashSet<>(allTargetIds).size() != allTargetIds.size()) {
+                throw new IllegalStateException("All targets must be different");
+            }
+        }
+    }
+
+    /**
      * Validates that the given graveyard card IDs are legal targets for a multi-target graveyard ability.
      * Each card must exist in an opponent's graveyard (not the controller's).
      */
@@ -3985,6 +4023,11 @@ public class TargetLegalityService {
      */
     public boolean isSpellOnStack(GameData gameData, UUID targetId) {
         return targetId != null && findSpellOnStack(gameData, targetId) != null;
+    }
+
+    /** Returns whether the ID identifies any spell or ability currently on the stack. */
+    public boolean isStackEntryOnStack(GameData gameData, UUID targetId) {
+        return targetId != null && findAnyEntryOnStack(gameData, targetId) != null;
     }
 
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -100,6 +101,7 @@ public class GraveyardReturnSupport {
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -372,6 +374,10 @@ public class GraveyardReturnSupport {
                                              ReturnCardFromGraveyardEffect effect, Card card,
                                              UUID sourceCardId) {
         if (card == null) {
+            return false;
+        }
+        if (effect.requiresPowerAtMostSacrificedPower()
+                && (card.getPower() == null || card.getPower() > entry.getSacrificedPower())) {
             return false;
         }
         if (effect.requiresManaValueEqualsX()
@@ -1374,10 +1380,12 @@ public class GraveyardReturnSupport {
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
                 || destination == GraveyardChoiceDestination.TOP_OF_CONTROLLERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addFirst(card);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, 1);
             
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " on top of their library from a graveyard."));
         } else if (destination == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addLast(card);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, 1);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " on the bottom of their library from a graveyard."));
         } else {
             putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);

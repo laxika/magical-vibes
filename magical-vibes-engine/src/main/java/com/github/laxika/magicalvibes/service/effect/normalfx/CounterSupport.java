@@ -136,6 +136,7 @@ public class CounterSupport {
             }
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {

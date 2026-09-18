@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "102")
+@CardRegistration(set = "TLE", collectorNumber = "19")
 public class Standstill extends Card {
 
     public Standstill() {
