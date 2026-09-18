@@ -33,6 +33,9 @@ public class SacrificePermanentsOrLoseGameEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var sacrifice = (SacrificePermanentsOrLoseGameEffect) effect;
+        if (entry.getControllerId() == null || !gameData.playerIds.contains(entry.getControllerId())) {
+            return;
+        }
         var source = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int count = amountEvaluationService.evaluate(gameData, sacrifice.count(),

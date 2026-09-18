@@ -56,15 +56,15 @@ class FurnaceDragonTest extends BaseCardTest {
     void enteringNotFromHandDoesNotExileArtifacts() {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player2, new Spellbook());
-        harness.setGraveyard(player1, List.of(new FurnaceDragon()));
+        FurnaceDragon target = new FurnaceDragon();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Furnace Dragon");
         harness.assertOnBattlefield(player1, "Spellbook");
         harness.assertOnBattlefield(player2, "Spellbook");

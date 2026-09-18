@@ -55,6 +55,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -80,6 +81,91 @@ public class MayCastHandlerService {
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
+
+    /** Resolves Word of Command's accepted card choice using the targeted player's normal cast/play rules. */
+    public void handleWordOfCommandPlay(GameData gameData, Player player, boolean accepted,
+                                         PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID playerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        int cardIndex = hand == null ? -1 : indexOfCard(hand, card.getId());
+
+        if (!accepted || cardIndex < 0 || card.isCastOnlyFromGraveyard()) {
+            if (cardIndex < 0) {
+                gameLogService.append(gameData, GameLog.cardThen(card, " is no longer in hand."));
+            } else if (card.isCastOnlyFromGraveyard()) {
+                gameLogService.append(gameData, GameLog.cardThen(card, " can't be played from hand."));
+            } else {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " declines to play ", card, "."));
+            }
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        makeWordOfCommandPlayerActive(gameData, playerId);
+        try {
+            if (card.hasType(CardType.LAND)) {
+                spellCastingService.playCard(gameData, new Player(playerId, gameData.playerIdToName.get(playerId)),
+                        cardIndex, 0, null, Map.of(), List.of(), List.of(), false, null);
+                gameData.wordOfCommandCastingCard = false;
+                if (!gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+
+            List<CardEffect> spellEffects = permanentSpell(card)
+                    ? List.of() : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            if (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card)) {
+                List<UUID> validTargets = buildValidSpellTargets(
+                        gameData, card, spellEffects, playerId, 0, false);
+                if (validTargets.isEmpty()) {
+                    gameLogService.append(gameData, GameLog.cardThen(card, " has no legal targets and stays in hand."));
+                    gameData.wordOfCommandCastingCard = false;
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.HandCastSpellTarget(
+                                card, playerId, spellEffects, mapCardTypeToSpellType(card)));
+                playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
+                        "Choose a target for " + card.getName() + ".");
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " plays ", card, " from hand — choosing targets."));
+                return;
+            }
+
+            spellCastingService.playCard(gameData, new Player(playerId, gameData.playerIdToName.get(playerId)),
+                    cardIndex, 0, null, Map.of(), List.of(), List.of(), false, null);
+        } catch (IllegalArgumentException | IllegalStateException failure) {
+            log.info("Game {} - Word of Command could not play {}: {}", gameData.id,
+                    card.getName(), failure.getMessage());
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private static int indexOfCard(List<Card> hand, UUID cardId) {
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getId().equals(cardId)) return i;
+        }
+        return -1;
+    }
+
+    private static boolean permanentSpell(Card card) {
+        return card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)
+                || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER)
+                || card.hasType(CardType.BATTLE);
+    }
+
+    private void makeWordOfCommandPlayerActive(GameData gameData, UUID playerId) {
+        gameData.priorityPassedBy.clear();
+        if (!playerId.equals(gameData.activePlayerId)) {
+            gameData.priorityPassedBy.add(gameData.activePlayerId);
+        }
+    }
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();

@@ -13237,6 +13237,11 @@ public class SpellCastingService {
         recordSpellCastPreservingEntryCounters(gameData, playerId, castCharacteristics,
                 castEntry != null && castEntry.isCastWithWarp());
         gameData.priorityPassedBy.clear();
+        if (castEntry != null && gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(card.getId())) {
+            gameData.wordOfCommandCastingCard = false;
+            gameData.wordOfCommandAwaitingCardResolution = true;
+        }
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " casts ")

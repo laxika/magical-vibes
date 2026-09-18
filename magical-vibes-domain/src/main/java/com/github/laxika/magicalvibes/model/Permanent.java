@@ -219,6 +219,9 @@ public class Permanent {
     /** When true, this creature must be declared as a blocker this turn if it can block any attacker
      *  (general "blocks this turn if able", e.g. Nacatl Hunt-Pride). Cleared at end of turn. */
     @Setter private boolean mustBlockThisTurnIfAble;
+    /** When true, this creature must block every attacking creature it can legally block this turn.
+     *  Cleared at end of turn. */
+    @Setter private boolean mustBlockEachAttackingCreatureThisTurnIfAble;
     /** When true, this creature must attack during the current combat if able. Cleared when combat ends. */
     @Setter private boolean mustAttackThisCombat;
     @Setter private boolean mustAttackThisTurn;
@@ -477,6 +480,8 @@ public class Permanent {
      *  layered static effect reads this map, so the grants survive turn resets but end when this
      *  permanent's static effects stop being collected. */
     private final Map<UUID, CardSubtype> landTypesUntilSourceLeaves = new HashMap<>();
+    /** Land permanent ids that this Cyclopean Tomb put mire counters onto while it was on the battlefield. */
+    private final Set<UUID> mireCounterLandIds = new HashSet<>();
     /** Number of untap steps this permanent should skip. Decremented each untap step.
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
@@ -780,6 +785,7 @@ public class Permanent {
         this.suspected = source.suspected;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
+        this.mustBlockEachAttackingCreatureThisTurnIfAble = source.mustBlockEachAttackingCreatureThisTurnIfAble;
         this.mustAttackThisCombat = source.mustAttackThisCombat;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
@@ -875,6 +881,7 @@ public class Permanent {
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.landTypesUntilSourceLeaves.putAll(source.landTypesUntilSourceLeaves);
+        this.mireCounterLandIds.addAll(source.mireCounterLandIds);
         this.skipUntapCount = source.skipUntapCount;
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);
@@ -1628,6 +1635,7 @@ public class Permanent {
         this.cantBlockThisTurn = false;
         this.additionalBlocksUntilEndOfTurn = 0;
         this.mustBlockThisTurnIfAble = false;
+        this.mustBlockEachAttackingCreatureThisTurnIfAble = false;
         this.mustAttackThisCombat = false;
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;

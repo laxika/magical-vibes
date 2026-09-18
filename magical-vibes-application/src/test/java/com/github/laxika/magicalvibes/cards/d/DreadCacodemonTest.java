@@ -38,13 +38,16 @@ class DreadCacodemonTest extends BaseCardTest {
     @DisplayName("When it enters from a graveyard, its hand-cast ability does not trigger")
     void enteringFromGraveyardDoesNotTriggerAbility() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new DreadCacodemon()));
+        DreadCacodemon target = new DreadCacodemon();
+        harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0, target.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, target.getName());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(findPermanent(player1, "Dread Cacodemon").isTapped()).isFalse();

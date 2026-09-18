@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DVD", collectorNumber = "10")
 @CardRegistration(set = "DDC", collectorNumber = "10")
 @CardRegistration(set = "3ED", collectorNumber = "40")
+@CardRegistration(set = "2ED", collectorNumber = "40")
 @CardRegistration(set = "DOM", collectorNumber = "33")
 @CardRegistration(set = "10E", collectorNumber = "39")
 @CardRegistration(set = "M12", collectorNumber = "33")

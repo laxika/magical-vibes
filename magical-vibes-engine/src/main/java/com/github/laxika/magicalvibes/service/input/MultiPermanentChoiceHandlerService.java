@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingRagingRiver;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -84,6 +86,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final TurnProgressionService turnProgressionService;
+    private final CombatBlockService combatBlockService;
     private final CombatAttackService combatAttackService;
     private final StateBasedActionService stateBasedActionService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
@@ -92,6 +95,7 @@ public class MultiPermanentChoiceHandlerService {
     private final DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler ragingRiverEffectHandler;
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
@@ -637,6 +641,9 @@ public class MultiPermanentChoiceHandlerService {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets ctx) {
             triggerHandler.handleAttackTrigger(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.CamouflagePileChoice ctx) {
+            turnProgressionService.handleCombatResult(
+                    combatBlockService.completeCamouflagePileChoice(gameData, ctx, permanentIds), gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
             abilityActivationService.completeActivatedAbilitySacrificeAnyNumberCostChoice(
                     gameData, player, sacrificeContext, permanentIds);
@@ -941,6 +948,8 @@ public class MultiPermanentChoiceHandlerService {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
             handlePileSeparation(gameData, permanentIds);
+        } else if (gameData.hasPendingInteraction(PendingRagingRiver.class)) {
+            ragingRiverEffectHandler.completeDefendingPlayerChoice(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingBendOrBreak.class)) {
             bendOrBreakEffectHandler.completeLandSeparation(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingWhimsOfTheFates.class)) {

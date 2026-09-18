@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TimeVaultReplacementEffect;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "287")
+@CardRegistration(set = "2ED", collectorNumber = "275")
 public class TimeVault extends Card {
 
     public TimeVault() {
