@@ -66,7 +66,7 @@ class FirecatBlitzTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
         harness.passBothPriorities();
 
-        Permanent cat = catsOnBattlefield().getFirst();
+        Permanent cat = findPermanents(player1, "Elemental Cat").getFirst();
         assertThat(cat.getCard().isToken()).isTrue();
         assertThat(cat.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(cat.getCard().getColors()).containsExactly(CardColor.RED);
@@ -116,7 +116,7 @@ class FirecatBlitzTest extends BaseCardTest {
                 .containsExactly(mountain3);
         harness.passBothPriorities();
 
-        assertThat(catsOnBattlefield()).hasSize(2);
+        assertThat(findPermanents(player1, "Elemental Cat")).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(card -> card.getName().equals("Mountain")))
                 .hasSize(2);
@@ -148,7 +148,7 @@ class FirecatBlitzTest extends BaseCardTest {
                 List.of(), Map.of());
         harness.passBothPriorities();
 
-        assertThat(catsOnBattlefield()).isEmpty();
+        assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Firecat Blitz"));
