@@ -490,6 +490,9 @@ public class DamageSupport {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
         } else if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        } else {
+            graveyardService.recordCreatureDamagedBySource(
+                    gameData, damageSourceKey(entry, null), target, damage);
         }
 
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
@@ -759,6 +762,9 @@ public class DamageSupport {
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        } else {
+            graveyardService.recordCreatureDamagedBySource(
+                    gameData, damageSourceKey(entry, null), target, damage);
         }
 
         if (damage > 0) {

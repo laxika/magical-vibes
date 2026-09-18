@@ -504,6 +504,7 @@ public class StackResolutionService {
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             gameData.playerDecks.get(ownerId).add(physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
         } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb()
                 || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
@@ -1221,6 +1222,7 @@ public class StackResolutionService {
                 Card dispositionCard = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.playerDecks.get(entry.getOwnerId()).add(dispositionCard);
+                    triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
                 } else if (entry.isCastWithFlashback() || entry.isCastWithEscape()
                         || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
@@ -1399,6 +1401,7 @@ public class StackResolutionService {
         } else if (entry.isCastWithOmen()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.playerDecks.get(ownerId).add(physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
         } else if (entry.isCastWithAdventure()) {
@@ -1427,6 +1430,7 @@ public class StackResolutionService {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             int position = Math.min(entry.getPutIntoLibraryPositionAfterResolving(), deck.size());
             deck.add(position, physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " is put " + (position + 1) + " from the top of its owner's library."));
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {
@@ -1454,6 +1458,7 @@ public class StackResolutionService {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             if (!deck.contains(physicalCard)) {
                 deck.add(physicalCard);
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
                 LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
                 gameLogService.append(gameData, GameLog.cardThen(
                         entry.getCard(), " is shuffled into its owner's library."));
@@ -1463,6 +1468,7 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(physicalCard);
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());

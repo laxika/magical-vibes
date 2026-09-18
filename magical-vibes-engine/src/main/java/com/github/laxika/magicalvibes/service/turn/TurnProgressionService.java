@@ -747,6 +747,10 @@ public class TurnProgressionService {
                 watcher.untilNextTurn()
                         && nextActive.equals(watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber());
+        gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
+                trigger -> trigger.untilNextTurn()
+                        && nextActive.equals(trigger.controllerId())
+                        && gameData.turnNumber != trigger.registrationTurnNumber());
         gameData.cardPutIntoExileThisTurn = false;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
@@ -858,6 +862,7 @@ public class TurnProgressionService {
         gameData.playersWhoAttackedPlayersThisTurn.clear();
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
+        gameData.crewedPermanentSubtypesThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageToken.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
@@ -873,7 +878,8 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedAttackDamage.class);
         gameData.clearDelayedActions(DelayedAttackUntap.class);
         gameData.clearDelayedActions(DelayedVehicleAttack.class);
-        gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class);
+        gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
+                trigger -> !trigger.untilNextTurn());
         gameData.clearDelayedActions(DelayedUnblockedAttackerGainLife.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerCubeCounter.class);
@@ -888,6 +894,7 @@ public class TurnProgressionService {
         gameData.combatDamageSourcesWithLegendaryThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
+        gameData.combatDamageSourcesThatWereCommandersThisTurn.clear();
         gameData.combatBlockOpponentSubtypesThisTurn.clear();
         gameData.combatBlockOpponentColorsThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
@@ -928,6 +935,7 @@ public class TurnProgressionService {
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
+        gameData.creatureCardsDamagedThisTurnBySource.clear();
         gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
         gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();

@@ -316,8 +316,9 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice choice
-                && choice.requiresChoice() && permanentIds.size() != 1) {
-            throw new IllegalStateException("Exactly one permanent must be selected");
+                && choice.requiredCount() > 0 && permanentIds.size() != choice.requiredCount()) {
+            throw new IllegalStateException("Exactly " + choice.requiredCount()
+                    + " permanents must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice choice
                 && permanentIds.size() != choice.requiredCount()) {

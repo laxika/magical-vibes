@@ -1713,10 +1713,35 @@ public class CastingCostService {
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
+            var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
+            if (grantedEvoke.isPresent()) {
+                AlternateHandCast altCast = grantedEvoke.get();
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
             if (grantedProwl.isPresent()) {
                 AlternateHandCast altCast = grantedProwl.get();
                 if (!prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
+                    return false;
+                }
+                return altCast.getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId),
+                                getAlternateHandCastCostModifier(gameData, playerId, card)))
+                        .orElse(false);
+            }
+            var grantedFreerunning = gameQueryService.findGrantedFreerunningAlternateCast(gameData, playerId, card);
+            if (grantedFreerunning.isPresent()) {
+                AlternateHandCast altCast = grantedFreerunning.get();
+                if (altCast.availabilityCondition() != null
+                        && !conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
                     return false;
                 }
                 return altCast.getCost(ManaCastingCost.class)

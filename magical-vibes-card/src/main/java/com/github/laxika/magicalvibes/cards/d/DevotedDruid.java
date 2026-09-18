@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "UMA", collectorNumber = "162")
 @CardRegistration(set = "2X2", collectorNumber = "143")
 @CardRegistration(set = "SPG", collectorNumber = "138")
+@CardRegistration(set = "ECC", collectorNumber = "104")
 public class DevotedDruid extends Card {
 
     public DevotedDruid() {

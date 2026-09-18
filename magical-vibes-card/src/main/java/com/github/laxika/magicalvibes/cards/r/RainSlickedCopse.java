@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "ECC", collectorNumber = "23")
+@CardRegistration(set = "ECC", collectorNumber = "43")
 @CardRegistration(set = "TMC", collectorNumber = "71")
 public class RainSlickedCopse extends Card {
 

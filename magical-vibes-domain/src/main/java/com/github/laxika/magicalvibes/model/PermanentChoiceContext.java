@@ -175,6 +175,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
             implements PermanentChoiceContext {}
 
+    /** Descendants' Fury: choose one of the creatures that dealt combat damage to sacrifice. */
+    record SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
+            UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect effect)
+            implements PermanentChoiceContext {}
+
     /** Eddie Brock: choose another creature to sacrifice before drawing and putting a permanent. */
     record SacrificeAnotherCreatureDrawAndMayPutPermanent(
             UUID controllerId, Card sourceCard, SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect)
@@ -918,10 +924,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Remembers the attack target for each copy entering tapped and attacking. */
     record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                      UUID targetPermanentId,
-                                      com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
-                                      int tokenCount, List<UUID> chosenAttackTargets)
+                                       UUID targetPermanentId,
+                                       com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                       int tokenCount, List<UUID> chosenAttackTargets)
             implements PermanentChoiceContext {}
+
+    /** Altaïr: remembers independent attack-target choices for copies of exiled creature cards. */
+    record CreateMemoryCounterTokenCopiesAttacking(UUID controllerId, Card sourceCard,
+                                                   UUID sourcePermanentId, List<Card> sourceCards,
+                                                   int cardIndex, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {}
+
     /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
     record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
                                                 List<Card> remainingRevealedCards)
@@ -1117,6 +1130,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            int spellManaSpentX, UUID sourcePermanentId) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
                     spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId, null, null, false);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter,
+                                           int spellManaSpentX, UUID sourcePermanentId,
+                                           Integer triggeringSpellManaValue) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, null, false, null, null, controllerId,
+                    triggeringSpellManaValue, null, false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -2098,6 +2120,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Blight N. If you do, [effect]." */
     record BlightCreatureChoice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                 com.github.laxika.magicalvibes.model.effect.BlightEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Ward—Blight N: choose a creature to blight to prevent the targeted spell from being countered. */
+    record CounterUnlessBlightsCreatureChoice(UUID payingPlayerId, UUID sourceControllerId,
+                                              Card sourceCard, UUID targetCardId, int count)
             implements PermanentChoiceContext {}
 
     /** Each opponent chooses a creature they control for a mandatory blight action. */

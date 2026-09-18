@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "ECC", collectorNumber = "143")
 @CardRegistration(set = "DMU", collectorNumber = "239")
 public class TimelessLotus extends Card {
 
@@ -23,8 +24,7 @@ public class TimelessLotus extends Card {
                         new AwardManaEffect(ManaColor.BLUE),
                         new AwardManaEffect(ManaColor.BLACK),
                         new AwardManaEffect(ManaColor.RED),
-                        new AwardManaEffect(ManaColor.GREEN)
-                ),
+                        new AwardManaEffect(ManaColor.GREEN)),
                 "{T}: Add {W}{U}{B}{R}{G}."
         ));
     }

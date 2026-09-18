@@ -28,6 +28,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #EACH_PLAYER} — every player loses life, in {@code orderedPlayerIds} order.</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller loses life, in
  *       {@code orderedPlayerIds} order.</li>
+ *   <li>{@link #EACH_OTHER_PLAYER} — every player other than the source card's owner loses life,
+ *       in {@code orderedPlayerIds} order.</li>
  * </ul>
  */
 public enum LoseLifeRecipient {
@@ -41,5 +43,6 @@ public enum LoseLifeRecipient {
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     EACH_PLAYER,
-    EACH_OPPONENT
+    EACH_OPPONENT,
+    EACH_OTHER_PLAYER
 }

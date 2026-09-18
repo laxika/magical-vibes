@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "275")
+@CardRegistration(set = "ECC", collectorNumber = "78")
 public class LilianaDeathWielder extends Card {
 
     public LilianaDeathWielder() {

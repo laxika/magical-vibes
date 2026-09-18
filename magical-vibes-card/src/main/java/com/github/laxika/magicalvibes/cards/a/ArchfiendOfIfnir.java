@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "78")
 @CardRegistration(set = "AKR", collectorNumber = "91")
+@CardRegistration(set = "ECC", collectorNumber = "70")
 public class ArchfiendOfIfnir extends Card {
 
     public ArchfiendOfIfnir() {

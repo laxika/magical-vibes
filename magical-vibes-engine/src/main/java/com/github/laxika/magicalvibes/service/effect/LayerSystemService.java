@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPerm
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesInAllZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTy
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
@@ -1709,6 +1711,17 @@ public class LayerSystemService {
                             chosen, false, false, null, null));
                 }
             }
+            case GrantSubtypeToOwnCreaturesInAllZonesEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedSubtypes().stream().findFirst().ifPresent(subtype -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addSubtype(subtype);
+                            record(board, instance, target, new L4Contribution(
+                                    subtype, false, false, null, null));
+                        }));
+            }
             case GrantChosenBasicLandTypeToOwnLandsEffect ignored -> {
                 manage(board, instance);
                 if (instance.source() == null) return;
@@ -2554,6 +2567,8 @@ public class LayerSystemService {
                     }
                     case RemoveProtectionFromColorUntilEndOfTurnEffect remove ->
                             state.removeProtectionColors(Set.of(remove.color()));
+                    case RemoveAllProtectionUntilEndOfTurnEffect ignored ->
+                            state.removeAllProtection();
                     case GrantKeywordEffect grant -> {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),

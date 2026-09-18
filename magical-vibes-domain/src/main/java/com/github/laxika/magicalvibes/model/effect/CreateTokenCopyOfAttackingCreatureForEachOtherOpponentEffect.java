@@ -4,19 +4,28 @@ import java.util.UUID;
 
 /** Creates a tapped and attacking token copy of the triggering attacker for each other opponent. */
 public record CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
-        UUID opponentId, boolean mayCreate, boolean removeLegendary, boolean exileAtEndStep)
+        UUID opponentId, boolean mayCreate, boolean removeLegendary, boolean exileAtEndStep, boolean exileAtEndOfCombat)
         implements CardEffect {
 
     public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect() {
-        this(null, true, false, true);
+        this(null, true, false, true, false);
     }
 
     public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(UUID opponentId) {
-        this(opponentId, true, false, true);
+        this(opponentId, true, false, true, false);
+    }
+
+    public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(boolean exileAtEndOfCombat) {
+        this(null, true, false, !exileAtEndOfCombat, exileAtEndOfCombat);
+    }
+
+    public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
+            UUID opponentId, boolean mayCreate, boolean removeLegendary, boolean exileAtEndStep) {
+        this(opponentId, mayCreate, removeLegendary, exileAtEndStep, false);
     }
 
     /** Creates the mandatory, nonlegendary variant used by Shredder, Shadow Master. */
     public static CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect mandatoryNonLegendary() {
-        return new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(null, false, true, false);
+        return new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(null, false, true, false, false);
     }
 }

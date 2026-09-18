@@ -55,7 +55,7 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                 gameData.pendingMayAbilities.add(new PendingMayAbility(
                         entry.getCard(), controllerId,
                         List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
-                                opponentId, true, effect.removeLegendary(), effect.exileAtEndStep())),
+                                opponentId, true, effect.removeLegendary(), effect.exileAtEndStep(), effect.exileAtEndOfCombat())),
                         "Create a tapped and attacking token copy of " + attacker.getCard().getName()
                                 + " attacking " + gameData.playerIdToName.get(opponentId) + "?",
                         attackerId,
@@ -92,8 +92,10 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                 List.of(attacker.getCard()),
                 liveAttacker == attacker ? liveAttacker : null,
                 controllerId,
-                CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingCopy(
-                        effect.removeLegendary(), effect.exileAtEndStep()),
+                effect.exileAtEndOfCombat()
+                        ? CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat()
+                        : CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingCopy(
+                                effect.removeLegendary(), effect.exileAtEndStep()),
                 List.of(opponentId));
     }
 
