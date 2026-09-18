@@ -52,9 +52,7 @@ class AngelOfTheDireHourTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, angel.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);

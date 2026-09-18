@@ -21,6 +21,6 @@ public class OverseerOfTheDamned extends Card {
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                        CreateTokenEffect.blackZombie(1)));
+                        CreateTokenEffect.blackZombie(1).withTapped(true)));
     }
 }

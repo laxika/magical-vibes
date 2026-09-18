@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,17 +43,15 @@ class BreachingLeviathanTest extends BaseCardTest {
     void enteringFromGraveyardDoesNotTriggerAbility() {
         Permanent nonblue = addCreatureReady(player1, new GrizzlyBears());
 
-        harness.setGraveyard(player1, List.of(new BreachingLeviathan()));
+        BreachingLeviathan leviathan = new BreachingLeviathan();
+        harness.setGraveyard(player1, List.of(leviathan));
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        assertThat(harness.getGameData().interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castSorcery(player1, 0, 0, leviathan.getId());
         harness.passBothPriorities();
 
         assertThat(nonblue.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Breaching Leviathan");
     }
 }
