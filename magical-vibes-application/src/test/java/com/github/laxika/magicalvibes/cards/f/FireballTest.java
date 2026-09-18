@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +25,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fireball.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class, Plains.class})
+@CardUsed({Fireball.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class, Plains.class,
+        AwakenedSkyclave.class, InvasionOfZendikar.class, ChandraNalaar.class})
 class FireballTest extends BaseCardTest {
 
     // ===== Single target =====
@@ -368,6 +374,34 @@ class FireballTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Air Elemental");
         // Player 2 takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Deals damage to a target battle")
+    void dealsDamageToBattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 3); // {2}{R}
+
+        harness.castAndResolveSorcery(player1, 0, 2, battle.getId());
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Invasion of Zendikar");
+    }
+
+    @Test
+    @DisplayName("Deals damage to a target planeswalker")
+    void dealsDamageToPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 3); // {2}{R}
+
+        harness.castAndResolveSorcery(player1, 0, 2, chandra.getId());
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Chandra Nalaar");
     }
 
     @Test

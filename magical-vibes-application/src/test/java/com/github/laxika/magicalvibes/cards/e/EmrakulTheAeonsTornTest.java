@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EmrakulTheAeonsTorn.class, Cancel.class, Terror.class, GrizzlyBears.class, LoxodonMystic.class})
 class EmrakulTheAeonsTornTest extends BaseCardTest {
 
     @Test
@@ -59,7 +61,7 @@ class EmrakulTheAeonsTornTest extends BaseCardTest {
     @DisplayName("Colored spells cannot target Emrakul, but colored permanent abilities can")
     void protectionOnlyAppliesToColoredSpells() {
         Permanent emrakul = addCreatureReady(player2, new EmrakulTheAeonsTorn());
-        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, emrakul.getId()))
@@ -95,8 +97,10 @@ class EmrakulTheAeonsTornTest extends BaseCardTest {
     @DisplayName("When Emrakul goes to a graveyard, its owner's graveyard is shuffled into their library")
     void shufflesItsOwnersGraveyardIntoLibrary() {
         harness.setLibrary(player1, List.of());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        Permanent emrakul = addCreatureReady(player1, new EmrakulTheAeonsTorn());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        EmrakulTheAeonsTorn emrakulCard = new EmrakulTheAeonsTorn();
+        Permanent emrakul = addCreatureReady(player1, emrakulCard);
         emrakul.setMarkedDamage(15);
 
         harness.runStateBasedActions();
@@ -104,7 +108,6 @@ class EmrakulTheAeonsTornTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         List<Card> library = gd.playerDecks.get(player1.getId());
-        assertThat(library).extracting(Card::getName)
-                .containsExactlyInAnyOrder("Emrakul, the Aeons Torn", "Grizzly Bears");
+        assertThat(library).containsExactlyInAnyOrder(emrakulCard, bears);
     }
 }

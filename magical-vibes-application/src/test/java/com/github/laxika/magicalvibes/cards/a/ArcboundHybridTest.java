@@ -1,19 +1,22 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.b.BronzeSable;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrossGolem;
+import com.github.laxika.magicalvibes.cards.d.DroolingOgre;
+import com.github.laxika.magicalvibes.cards.e.EchoingDecay;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArcboundHybrid.class, DrossGolem.class, DroolingOgre.class, EchoingDecay.class})
 class ArcboundHybridTest extends BaseCardTest {
 
     @Test
@@ -32,31 +35,47 @@ class ArcboundHybridTest extends BaseCardTest {
     void modularMayPutItsCountersOnTargetArtifactCreatureWhenItDies() {
         Permanent hybrid = addCreatureReady(player1, new ArcboundHybrid());
         hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        hybrid.tap();
-        Permanent bronzeSable = addCreatureReady(player1, new BronzeSable());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent drossGolem = addCreatureReady(player1, new DrossGolem());
+        Permanent opponentDrossGolem = addCreatureReady(player2, new DrossGolem());
+        Permanent ogre = addCreatureReady(player1, new DroolingOgre());
 
         destroyHybrid(hybrid);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(bronzeSable.getId()).doesNotContain(bears.getId());
+        assertThat(choice.validPermanentIds())
+                .contains(drossGolem.getId(), opponentDrossGolem.getId())
+                .doesNotContain(ogre.getId());
 
-        harness.handlePermanentChosen(player1, bronzeSable.getId());
+        harness.handlePermanentChosen(player1, drossGolem.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(drossGolem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void modularMayDeclineToPutItsCountersOnTargetArtifactCreature() {
+        Permanent hybrid = addCreatureReady(player1, new ArcboundHybrid());
+        hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent drossGolem = addCreatureReady(player1, new DrossGolem());
+
+        destroyHybrid(hybrid);
+
+        harness.handlePermanentChosen(player1, drossGolem.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(drossGolem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void destroyHybrid(Permanent hybrid) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new Assassinate()));
+        harness.setHand(player2, List.of(new EchoingDecay()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player2, 0, 0, hybrid.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hybrid.getId());
     }
 }

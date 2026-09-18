@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinStriker;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Lodestone Myr")
+@CardUsed({LodestoneMyr.class, Ornithopter.class, GoblinStriker.class, LeoninScimitar.class})
 class LodestoneMyrTest extends BaseCardTest {
 
     @Test
@@ -101,9 +103,37 @@ class LodestoneMyrTest extends BaseCardTest {
     void cannotActivateWithoutArtifact() {
         Permanent myr = addCreatureReady(player1, new LodestoneMyr());
         myr.tap();
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GoblinStriker());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's artifact")
+    void cannotTapOpponentsArtifact() {
+        Permanent myr = addCreatureReady(player1, new LodestoneMyr());
+        myr.tap();
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(opponentArtifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can tap a noncreature artifact")
+    void canTapNoncreatureArtifact() {
+        Permanent myr = addCreatureReady(player1, new LodestoneMyr());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(3);
+        assertThat(equipment.isTapped()).isTrue();
     }
 }

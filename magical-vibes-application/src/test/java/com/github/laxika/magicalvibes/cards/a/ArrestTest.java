@@ -62,9 +62,8 @@ class ArrestTest extends BaseCardTest {
     void arrestedCreatureCannotAttack() {
         Permanent bearsPerm = addCreatureReady(player1, new FreshVolunteers());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
         arrestPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(arrestPerm);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -78,9 +77,8 @@ class ArrestTest extends BaseCardTest {
     void arrestedCreatureCannotBlock() {
         Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player1, new Arrest());
         arrestPerm.setAttachedTo(blockerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(arrestPerm);
 
         Permanent atkPerm = addCreatureReady(player1, new FreshVolunteers());
         atkPerm.setAttacking(true);
@@ -98,9 +96,8 @@ class ArrestTest extends BaseCardTest {
     void arrestedCreatureCannotActivateAbilities() {
         Permanent dealerPerm = addCreatureReady(player1, new ArmsDealer());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
         arrestPerm.setAttachedTo(dealerPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(arrestPerm);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -112,9 +109,8 @@ class ArrestTest extends BaseCardTest {
     void arrestedCreatureCannotActivateTapAbility() {
         Permanent infantryPerm = addCreatureReady(player1, new CrossbowInfantry());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
         arrestPerm.setAttachedTo(infantryPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(arrestPerm);
 
         Permanent targetPerm = addCreatureReady(player2, new FreshVolunteers());
         targetPerm.setAttacking(true);
@@ -129,9 +125,8 @@ class ArrestTest extends BaseCardTest {
     void arrestedCreatureCannotActivateManaAbility() {
         Permanent trellisPerm = addCreatureReady(player1, new VineTrellis());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
         arrestPerm.setAttachedTo(trellisPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(arrestPerm);
 
         assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -145,9 +140,8 @@ class ArrestTest extends BaseCardTest {
     void creatureCanActivateAfterArrestRemoved() {
         Permanent infantryPerm = addCreatureReady(player1, new CrossbowInfantry());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
         arrestPerm.setAttachedTo(infantryPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(arrestPerm);
 
         Permanent targetPerm = addCreatureReady(player2, new FreshVolunteers());
         targetPerm.setAttacking(true);
@@ -171,9 +165,8 @@ class ArrestTest extends BaseCardTest {
     void creatureCanAttackAfterArrestRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new FreshVolunteers());
 
-        Permanent arrestPerm = new Permanent(new Arrest());
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
         arrestPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(arrestPerm);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

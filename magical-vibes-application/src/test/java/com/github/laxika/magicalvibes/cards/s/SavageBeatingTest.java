@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AuriokGlaivemaster;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SavageBeating.class, AuriokGlaivemaster.class, DarksteelCitadel.class})
 class SavageBeatingTest extends BaseCardTest {
 
     @Test
@@ -22,11 +25,13 @@ class SavageBeatingTest extends BaseCardTest {
     void doubleStrikeMode() {
         Permanent ownCreature = addCreature(player1);
         Permanent opponentCreature = addCreature(player2);
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
 
         cast(new int[]{0}, 2, 3);
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownLand, Keyword.DOUBLE_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
@@ -39,11 +44,14 @@ class SavageBeatingTest extends BaseCardTest {
     void extraCombatMode() {
         Permanent ownCreature = addTappedCreature(player1);
         Permanent opponentCreature = addTappedCreature(player2);
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
+        ownLand.tap();
 
         cast(new int[]{1}, 2, 3);
 
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(ownLand.isTapped()).isTrue();
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
@@ -66,6 +74,18 @@ class SavageBeatingTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Entwine requires the additional {1}{R}")
+    void entwineRequiresAdditionalMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        prepareManaAndHand(2, 4);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -97,9 +117,7 @@ class SavageBeatingTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        return addCreatureReady(player, new AuriokGlaivemaster());
     }
 
     private Permanent addTappedCreature(Player player) {
