@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
+import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerCubeCounter;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainLife;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
@@ -71,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -80,6 +83,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -117,6 +121,7 @@ public class CombatBlockService {
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+    private final PlayerInputService playerInputService;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -218,6 +223,19 @@ public class CombatBlockService {
     public CombatResult handleDeclareBlockersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+        if (gameData.hasDelayedAction(DelayedCamouflage.class)) {
+            List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
+            List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(defenderId, List.of());
+            List<UUID> creatureIds = defenderBattlefield.stream()
+                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!attackerIndices.isEmpty() && !creatureIds.isEmpty()) {
+                Card sourceCard = gameData.getDelayedActions(DelayedCamouflage.class).getLast().sourceCard();
+                return beginCamouflagePileSelection(gameData, defenderId, attackerIndices, creatureIds,
+                        List.of(), sourceCard);
+            }
+        }
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
         List<Integer> attackerIndices = getBlockableAttackerIndices(gameData, activeId, defenderId);
 
@@ -255,6 +273,93 @@ public class CombatBlockService {
         return CombatResult.DONE;
     }
 
+    private CombatResult beginCamouflagePileSelection(GameData gameData, UUID defenderId,
+                                                       List<Integer> attackerIndices,
+                                                       List<UUID> creatureIds,
+                                                       List<List<UUID>> piles,
+                                                       Card sourceCard) {
+        List<List<UUID>> updatedPiles = new ArrayList<>(piles);
+        while (updatedPiles.size() < attackerIndices.size()) {
+            List<UUID> selectable = camouflageSelectableCreatures(gameData, defenderId, creatureIds, updatedPiles);
+            if (!selectable.isEmpty()) {
+                int pileNumber = updatedPiles.size() + 1;
+                playerInputService.beginMultiPermanentChoice(gameData, defenderId, selectable, selectable.size(),
+                        new MultiPermanentChoiceContext.CamouflagePileChoice(
+                                defenderId, attackerIndices, creatureIds, updatedPiles, sourceCard),
+                        "Camouflage: choose any number of creatures for pile " + pileNumber + ".");
+                return CombatResult.DONE;
+            }
+            updatedPiles.add(List.of());
+        }
+        return finishCamouflage(gameData, defenderId, attackerIndices, updatedPiles);
+    }
+
+    /** Completes one pile choice and either opens the next pile or resolves the random assignment. */
+    public CombatResult completeCamouflagePileChoice(GameData gameData,
+                                                      MultiPermanentChoiceContext.CamouflagePileChoice choice,
+                                                      List<UUID> selectedIds) {
+        List<List<UUID>> piles = new ArrayList<>(choice.piles());
+        piles.add(List.copyOf(selectedIds));
+        return beginCamouflagePileSelection(gameData, choice.defenderId(), choice.attackerIndices(),
+                choice.creatureIds(), piles, choice.sourceCard());
+    }
+
+    private List<UUID> camouflageSelectableCreatures(GameData gameData, UUID defenderId,
+                                                      List<UUID> creatureIds,
+                                                      List<List<UUID>> piles) {
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(defenderId, List.of());
+        Map<UUID, Integer> selectedCounts = new HashMap<>();
+        for (List<UUID> pile : piles) {
+            for (UUID creatureId : pile) {
+                selectedCounts.merge(creatureId, 1, Integer::sum);
+            }
+        }
+        return creatureIds.stream()
+                .filter(creatureId -> {
+                    Permanent creature = defenderBattlefield.stream()
+                            .filter(permanent -> permanent.getId().equals(creatureId))
+                            .findFirst().orElse(null);
+                    return creature != null
+                            && gameQueryService.isCreature(gameData, creature)
+                            && selectedCounts.getOrDefault(creatureId, 0)
+                            < getMaxBlocksForCreature(gameData, creature, defenderBattlefield);
+                })
+                .toList();
+    }
+
+    private CombatResult finishCamouflage(GameData gameData, UUID defenderId,
+                                           List<Integer> attackerIndices,
+                                           List<List<UUID>> piles) {
+        UUID activeId = gameData.activePlayerId;
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.getOrDefault(activeId, List.of());
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(defenderId, List.of());
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(
+                gameData, defenderBattlefield);
+        List<Integer> shuffledAttackers = new ArrayList<>(attackerIndices);
+        Collections.shuffle(shuffledAttackers);
+        List<BlockerAssignment> assignments = new ArrayList<>();
+        for (int pileIndex = 0; pileIndex < piles.size(); pileIndex++) {
+            int attackerIndex = shuffledAttackers.get(pileIndex);
+            Permanent attacker = attackerBattlefield.get(attackerIndex);
+            for (UUID creatureId : piles.get(pileIndex)) {
+                int blockerIndex = -1;
+                for (int i = 0; i < defenderBattlefield.size(); i++) {
+                    if (defenderBattlefield.get(i).getId().equals(creatureId)) {
+                        blockerIndex = i;
+                        break;
+                    }
+                }
+                if (blockerIndex < 0) continue;
+                Permanent blocker = defenderBattlefield.get(blockerIndex);
+                if (blockLegalityService.canBlock(blockContext, blocker)
+                        && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                    assignments.add(new BlockerAssignment(blockerIndex, attackerIndex));
+                }
+            }
+        }
+        return declareCamouflageBlockers(gameData, assignments);
+    }
+
     /**
      * Validates and processes a player's blocker declaration.
      */
@@ -275,6 +380,20 @@ public class CombatBlockService {
                     : "Only the defending player can declare blockers");
         }
 
+        return processBlockerDeclaration(gameData, activeId, defenderId, player.getUsername(), blockerAssignments);
+    }
+
+    /** Processes Camouflage's randomly assigned blocks through the normal blocker pipeline. */
+    public CombatResult declareCamouflageBlockers(GameData gameData, List<BlockerAssignment> blockerAssignments) {
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+        return processBlockerDeclaration(gameData, activeId, defenderId,
+                gameData.playerIdToName.get(defenderId), blockerAssignments);
+    }
+
+    private CombatResult processBlockerDeclaration(GameData gameData, UUID activeId, UUID defenderId,
+                                                    String playerName,
+                                                    List<BlockerAssignment> blockerAssignments) {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
@@ -396,6 +515,8 @@ public class CombatBlockService {
                 gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
         validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
+        validateMustBlockEachAttackingCreatureRequirements(
+                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
 
         List<Permanent> declaredBlockers = blockerAssignments.stream()
                 .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
@@ -430,7 +551,7 @@ public class CombatBlockService {
         if (blockLifeTaxTotal > 0) {
             lifeSupport.applyLifePayment(gameData, defenderId, blockLifeTaxTotal, "block tax");
             gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
+                    playerName + " pays " + blockLifeTaxTotal + " life to declare blockers."));
         }
 
         combatTapCostService.payBlockCosts(gameData, defenderId, attackerBattlefield, declaredBlockers);
@@ -457,7 +578,7 @@ public class CombatBlockService {
                 gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
 
         if (!declaredBlockerAssignments.isEmpty()) {
-            String logEntry = player.getUsername() + " declares " + declaredBlockerAssignments.size() +
+            String logEntry = playerName + " declares " + declaredBlockerAssignments.size() +
                     " blocker" + (declaredBlockerAssignments.size() > 1 ? "s" : "") + ".";
             gameLogService.append(gameData, GameLog.text(logEntry));
         }
@@ -708,7 +829,7 @@ public class CombatBlockService {
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
-        log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
+        log.info("Game {} - {} declares {} blockers", gameData.id, playerName, blockerAssignments.size());
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
@@ -2447,6 +2568,39 @@ public class CombatBlockService {
                 if (attacker.isAttacking() && canBlockAsPartOfLegalDeclaration(gameData, blockContext,
                         attackerBattlefield, defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " must block this turn if able");
+                }
+            }
+        }
+    }
+
+    private void validateMustBlockEachAttackingCreatureRequirements(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            List<Integer> blockable,
+            List<BlockerAssignment> blockerAssignments) {
+        for (int blockerIdx : blockable) {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            if (!blocker.isMustBlockEachAttackingCreatureThisTurnIfAble()) {
+                continue;
+            }
+
+            for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                if (!attacker.isAttacking()
+                        || !canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                        defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
+                    continue;
+                }
+
+                int currentAttackerIdx = attackerIdx;
+                boolean blocksAttacker = blockerAssignments.stream()
+                        .anyMatch(assignment -> assignment.blockerIndex() == blockerIdx
+                                && assignment.attackerIndex() == currentAttackerIdx);
+                if (!blocksAttacker) {
+                    throw new IllegalStateException(blocker.getCard().getName()
+                            + " must block each attacking creature this turn if able");
                 }
             }
         }

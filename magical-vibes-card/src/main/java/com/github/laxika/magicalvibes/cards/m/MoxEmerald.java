@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "VMA", collectorNumber = "5")
+@CardRegistration(set = "2ED", collectorNumber = "262")
 public class MoxEmerald extends Card {
 
     public MoxEmerald() {

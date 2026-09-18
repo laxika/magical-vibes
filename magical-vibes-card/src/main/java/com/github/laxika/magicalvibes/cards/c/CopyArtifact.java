@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SUM", collectorNumber = "53")
 @CardRegistration(set = "3ED", collectorNumber = "53")
+@CardRegistration(set = "2ED", collectorNumber = "54")
 public class CopyArtifact extends Card {
 
     public CopyArtifact() {
