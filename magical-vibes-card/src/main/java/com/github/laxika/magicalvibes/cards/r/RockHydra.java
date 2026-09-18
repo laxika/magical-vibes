@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "173")
 @CardRegistration(set = "3ED", collectorNumber = "173")
+@CardRegistration(set = "2ED", collectorNumber = "172")
 public class RockHydra extends Card {
 
     public RockHydra() {

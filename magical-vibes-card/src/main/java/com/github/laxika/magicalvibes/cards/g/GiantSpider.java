@@ -26,5 +26,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLZ", collectorNumber = "75")
 @CardRegistration(set = "SLZ", collectorNumber = "196")
 @CardRegistration(set = "SLZ", collectorNumber = "317")
+@CardRegistration(set = "2ED", collectorNumber = "199")
 public class GiantSpider extends Card {
 }

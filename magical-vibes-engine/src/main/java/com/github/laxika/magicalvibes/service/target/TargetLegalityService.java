@@ -2961,6 +2961,10 @@ public class TargetLegalityService {
                                     graveyardCard, graveyardFilter.predicate(), entry.getCard().getId());
                         }
                     }
+                } else if (targetFilter == null && entry.getTargetCardIds().contains(targetId)) {
+                    // Modal graveyard effects can store the same target in both lists without
+                    // declaring a target group. Recheck it as a card, not a battlefield target.
+                    legal = isTargetCardLegalOnResolution(gameData, entry, targetId);
                 } else if ((secondaryTargetsAreOnStack
                         || declaredTargetPositionTargetsSpell(gameData, entry, i))
                         && (isSpellOnStack(gameData, targetId)

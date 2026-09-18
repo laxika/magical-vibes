@@ -654,6 +654,14 @@ public class PermanentChoiceSpellHandlerService {
     }
 
     public void handleHandCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.HandCastSpellTarget hct) {
+        if (gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(hct.cardToCast().getId())
+                && gameData.wordOfCommandControlledPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId.equals(hct.controllerId())) {
+            handleWordOfCommandSpellTarget(gameData, permanentId, hct);
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         Card graveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
@@ -731,6 +739,41 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleWordOfCommandSpellTarget(GameData gameData, UUID targetId,
+                                                  PermanentChoiceContext.HandCastSpellTarget context) {
+        List<Card> hand = gameData.playerHands.get(context.controllerId());
+        int cardIndex = -1;
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getId().equals(context.cardToCast().getId())) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+        if (cardIndex < 0) {
+            gameLogService.append(gameData, GameLog.cardThen(context.cardToCast(), " is no longer in hand."));
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        if (!context.controllerId().equals(gameData.activePlayerId)) {
+            gameData.priorityPassedBy.add(gameData.activePlayerId);
+        }
+        try {
+            spellCastingService.playCard(gameData,
+                    new Player(context.controllerId(), gameData.playerIdToName.get(context.controllerId())),
+                    cardIndex, context.xValue(), targetId, Map.of(), List.of(), List.of(), false, null);
+        } catch (IllegalArgumentException | IllegalStateException failure) {
+            log.info("Game {} - Word of Command could not play {}: {}", gameData.id,
+                    context.cardToCast().getName(), failure.getMessage());
+            gameData.wordOfCommandCastingCard = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleOpponentChosenSpellTarget(GameData gameData, UUID chosenId,
