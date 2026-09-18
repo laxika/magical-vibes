@@ -68,9 +68,9 @@ class PucasCovenantTest extends BaseCardTest {
     void triggersOnlyOnceEachTurn() {
         harness.addToBattlefield(player1, new PucasCovenant());
         Permanent firstDying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        firstDying.setCounterCount(CounterType.CHARGE, 1);
+        firstDying.setCounterCount(CounterType.CHARGE, 2);
         Permanent secondDying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        secondDying.setCounterCount(CounterType.CHARGE, 1);
+        secondDying.setCounterCount(CounterType.CHARGE, 2);
         Card firstTarget = new GrizzlyBears();
         Card secondTarget = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(firstTarget, secondTarget));
